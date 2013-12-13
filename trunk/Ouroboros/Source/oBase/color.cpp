@@ -176,7 +176,6 @@ static const MAPPING sMappedColors[] =
 	{ "WhiteSmoke", WhiteSmoke, },
 	{ "Yellow", Yellow, },
 	{ "YellowGreen", YellowGreen, },
-	{ "OOOiiGreen", OOOiiGreen, },
 	{ "TangentSpaceNormalBlue", TangentSpaceNormalBlue, },
 	{ "ObjectSpaceNormalGreen", ObjectSpaceNormalGreen, },
 };

@@ -258,7 +258,7 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	if (_Flags & oGDI_AIR_KEY_DRAW_KEY)
 	{
 		if (_LastAction == oGUI_ACTION_KEY_DOWN)
-			td.Foreground = OOOiiGreen;
+			td.Foreground = Lime;
 		td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
 		oGDIDrawText(_hDC, td, ouro::as_string(_Key.Key));
 	}

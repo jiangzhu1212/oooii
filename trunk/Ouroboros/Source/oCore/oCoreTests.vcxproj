@@ -26,6 +26,8 @@
     <ClCompile Include="Tests\TESTfilesystem.cpp" />
     <ClCompile Include="Tests\TESTfilesystem_monitor.cpp" />
     <ClCompile Include="Tests\TESTprocess_heap.cpp" />
+    <ClCompile Include="Tests\TESTwin_crt_leak_tracker.cpp" />
+    <ClCompile Include="Tests\TESTwin_registry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\tests\oCoreTests.h" />

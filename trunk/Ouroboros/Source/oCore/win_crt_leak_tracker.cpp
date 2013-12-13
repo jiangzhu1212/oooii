@@ -22,11 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oCRTLeakTracker.h"
-#include <oPlatform/Windows/oCRTHeap.h>
+#include <oCore/windows/win_crt_leak_tracker.h>
 #include <oCore/debugger.h>
 #include <oCore/process_heap.h>
-#include <oCOre/reporting.h>
+#include <oCore/reporting.h>
+#include <oCore/windows/win_crt_heap.h>
 
 namespace ouro {
 	namespace windows {
@@ -276,8 +276,3 @@ void release_delay()
 		} // namespace crt_leak_tracker
 	} // namespace windows
 } // namespace ouro
-
-void oConcurrency::enable_leak_tracking_threadlocal(bool _Enabled)
-{
-	ouro::windows::crt_leak_tracker::thread_local_tracking(_Enabled);
-}

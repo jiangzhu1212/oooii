@@ -142,10 +142,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStandards.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h" />
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h" />
-    <ClInclude Include="oCRTLeakTracker.h" />
     <ClInclude Include="oDispatchQueueConcurrentWTP.h" />
     <ClInclude Include="oDispatchQueueGlobalIOCP.h" />
     <ClInclude Include="oHTTPInternal.h" />
@@ -157,8 +153,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oConcurrency.cpp" />
-    <ClCompile Include="oCRTHeap.cpp" />
-    <ClCompile Include="oCRTLeakTracker.cpp" />
     <ClCompile Include="oDispatchQueueConcurrentWTP.cpp" />
     <ClCompile Include="oDispatchQueueGlobalIOCP.cpp" />
     <ClCompile Include="oEMail.cpp" />
@@ -182,8 +176,6 @@
     <ClCompile Include="oTest.cpp" />
     <ClCompile Include="oWebAppWindow.cpp" />
     <ClCompile Include="oWebServer.cpp" />
-    <ClCompile Include="oWinRegistry.cpp" />
-    <ClCompile Include="oWinSkeleton.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

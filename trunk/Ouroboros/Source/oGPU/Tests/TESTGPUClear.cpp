@@ -42,7 +42,7 @@ public:
 
 	bool Render() override
 	{
-		static color sClearColors[] = { OOOiiGreen, White };
+		static color sClearColors[] = { Lime, White };
 		PrimaryRenderTarget->SetClearColor(sClearColors[Device->GetFrameID() % oCOUNTOF(sClearColors)]);
 		CommandList->Begin();
 		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);

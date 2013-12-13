@@ -269,7 +269,7 @@ void oTraySetFocus()
 
 // Because this can call a timeout value that can occur after a synchronous 
 // report leaks, ensure we wait for it before reporting a false positive...
-#include "../Source/oPlatform/oCRTLeakTracker.h" // FIXME
+#include <oCore/windows/win_crt_leak_tracker.h>
 
 static void DeferredHideIcon(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
 {

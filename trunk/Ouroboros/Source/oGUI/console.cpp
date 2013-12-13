@@ -151,7 +151,7 @@ context& context::singleton()
 	if (!sInstance)
 	{
 		process_heap::find_or_allocate(
-			"console window"
+			"ouro::gui::console"
 			, process_heap::per_process
 			, process_heap::garbage_collected
 			, [=](void* _pMemory) { new (_pMemory) context(); }

@@ -22,24 +22,22 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/mutex.h>
-#include <oPlatform/Windows/oWinSkeleton.h>
-#include <oPlatform/oSingleton.h>
+#include <oCore/windows/win_skeleton.h>
 #include <oCore/process_heap.h>
+#include <oStd/mutex.h>
 
-using namespace oConcurrency;
+using namespace oStd;
 
-struct oWinSkeletonContext : oProcessSingleton<oWinSkeletonContext>
+namespace ouro {
+	namespace windows {
+		namespace skeleton {
+			
+class context
 {
-	static const oGUID GUID;
+public:
+	static context& singleton();
 
-	oWinSkeletonContext() {}
-	~oWinSkeletonContext()
-	{
-		oASSERT(Sources.empty(), "");
-	}
-
-	void RegisterSkeletonSource(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _Get)
+	void register_source(handle _hSkeleton, const std::function<void(bone_info* _pSkeleton)>& _Get)
 	{
 		lock_guard<shared_mutex> lock(Mutex);
 		if (Sources.find(_hSkeleton) != Sources.end())
@@ -47,7 +45,7 @@ struct oWinSkeletonContext : oProcessSingleton<oWinSkeletonContext>
 		Sources[_hSkeleton] = _Get;
 	}
 
-	void UnregisterSkeletonSource(HSKELETON _hSkeleton)
+	void unregister_source(handle _hSkeleton)
 	{
 		lock_guard<shared_mutex> lock(Mutex);
 		auto it = Sources.find(_hSkeleton);
@@ -55,36 +53,51 @@ struct oWinSkeletonContext : oProcessSingleton<oWinSkeletonContext>
 			Sources.erase(it);
 	}
 
-	bool GetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton)
+	bool get_info(handle _hSkeleton, bone_info* _pSkeleton)
 	{
-		// prevent Unregister() from being called during a read
 		shared_lock<shared_mutex> lock(Mutex);
 		auto it = Sources.find(_hSkeleton);
 		if (it == Sources.end())
-			return oErrorSetLast(std::errc::invalid_argument);
+			oTHROW_INVARG0();
 		it->second(_pSkeleton);
 		return true;
 	}
 
-	bool Close(HSKELETON _hSkeleton)
-	{
-		return true;
-	}
-
+private:
 	shared_mutex Mutex;
-	std::map<HSKELETON
-		, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>
-		, std::less<HSKELETON>
-		, ouro::process_heap::std_allocator<std::pair<HSKELETON, oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>>>> 
+	std::map<handle
+		, std::function<void(bone_info* _pSkeleton)>
+		, std::less<handle>
+		, process_heap::std_allocator<std::pair<handle, std::function<void(bone_info* _pSkeleton)>>>>
 	Sources;
+
+	context() {}
+	~context()
+	{
+		oASSERT(Sources.empty(), "");
+	}
 };
 
-// {7E5F5608-2C7A-43E7-B7A0-46293FEC653C}
-const oGUID oWinSkeletonContext::GUID = { 0x7e5f5608, 0x2c7a, 0x43e7, { 0xb7, 0xa0, 0x46, 0x29, 0x3f, 0xec, 0x65, 0x3c } };
+context& context::singleton()
+{
+	static context* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"ouro::windows::win_skeleton"
+			, process_heap::per_process
+			, process_heap::garbage_collected
+			, [=](void* _pMemory) { new (_pMemory) context(); }
+			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
+			, &sInstance);
+	}
+	return *sInstance;
+}
 
-oSINGLETON_REGISTER(oWinSkeletonContext);
+void register_source(handle _handle, const std::function<void(bone_info* _pSkeleton)>& _GetSkeleton) { context::singleton().register_source(_handle, _GetSkeleton); }
+void unregister_source(handle _handle) { context::singleton().unregister_source(_handle); }
+bool get_info(handle _handle, bone_info* _pSkeleton) { return context::singleton().get_info(_handle, _pSkeleton); }
 
-// Function exposure
-void oWinRegisterSkeletonSource(HSKELETON _hSkeleton, const oFUNCTION<void(oGUI_BONE_DESC* _pSkeleton)>& _Get) { oWinSkeletonContext::Singleton()->RegisterSkeletonSource(_hSkeleton, _Get); }
-void oWinUnregisterSkeletonSource(HSKELETON _hSkeleton) { oWinSkeletonContext::Singleton()->UnregisterSkeletonSource(_hSkeleton); }
-bool oWinGetSkeletonDesc(HSKELETON _hSkeleton, oGUI_BONE_DESC* _pSkeleton) { return oWinSkeletonContext::Singleton()->GetSkeletonDesc(_hSkeleton, _pSkeleton); }
+		} // namespace skeleton
+	} // namespace windows
+} // namespace ouro

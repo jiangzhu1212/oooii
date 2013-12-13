@@ -40,3 +40,7 @@ oTEST_REGISTER_CORE_TEST(debugger);
 oTEST_REGISTER_CORE_TEST0(filesystem);
 oTEST_REGISTER_CORE_TEST0(filesystem_monitor);
 oTEST_REGISTER_CORE_TEST0(process_heap);
+#if defined(_WIN32) || defined(_WIN64)
+	oTEST_REGISTER_CORE_TEST(win_crt_leak_tracker);
+	oTEST_REGISTER_CORE_TEST0(win_registry);
+#endif

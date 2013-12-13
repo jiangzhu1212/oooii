@@ -23,42 +23,49 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // Read / Write info to the registry
-//
 // http://msdn.microsoft.com/en-us/library/windows/desktop/ms724897%28v=vs.85%29.aspx
 #pragma once
-#ifndef oWinRegistry_h
-#define oWinRegistry_h
+#ifndef oCore_win_registry_h
+#define oCore_win_registry_h
 
 #include <oBase/fixed_string.h>
 
-enum oWIN_REGISTRY_ROOT
+namespace ouro {
+	namespace windows {
+		namespace registry {
+
+enum hkey
 {
-	oHKEY_CLASSES_ROOT,
-	oHKEY_CURRENT_USER,
-	oHKEY_LOCAL_MACHINE,
-	oHKEY_USERS,
+	classes_root,
+	current_user,
+	local_machine,
+	users,
 };
+
+void delete_value(hkey _hKey, const char* _KeyPath, const char* _ValueName);
+void delete_key(hkey _hKey, const char*_KeyPath, bool _Recursive = true);
 
 // Sets the specified key's value to _pValue as a string. If the key path does 
 // not exist, it is created. If _pValueName is null or "", then the (default) 
 // value key.
-bool oWinRegistrySetValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName, const char* _Value);
+void set(hkey _hKey, const char* _KeyPath, const char* _ValueName, const char* _Value);
 
-// Fills destination with the specified Key's path and returns _StrDestination. If the specified key does not exist, returns nullptr
-char* oWinRegistryGetValue(char* _StrDestination, size_t _SizeofStrDestination, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName);
+// Fills _StrDestination with the specified Key's path. Returns _StrDestination
+// or nullptr if the specified key does not exist.
+char* get(char* _StrDestination, size_t _SizeofStrDestination, hkey _hKey, const char* _KeyPath, const char* _ValueName);
+template<size_t size> char* get(char (&_StrDestination)[size], hkey _hKey, const char* _KeyPath, const char* _ValueName) { return get(_StrDestination, size, _hKey, _KeyPath, _ValueName); }
+template<size_t capacity> char* get(ouro::fixed_string<char, capacity>& _StrDestination, hkey _hKey, const char* _KeyPath, const char* _ValueName) { return get(_StrDestination, _StrDestination.capacity(), _hKey, _KeyPath, _ValueName); }
 
-bool oWinRegistryDeleteValue(oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName);
-bool oWinRegistryDeleteKey(oWIN_REGISTRY_ROOT _Root, const char*_KeyPath, bool _Recursive = true);
-
-template<size_t size> char* oWinRegistryGetValue(char (&_StrDestination)[size], oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, size, _Root, _KeyPath, _ValueName); }
-template<size_t capacity> char* oWinRegistryGetValue(ouro::fixed_string<char, capacity>& _StrDestination, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName) { return oWinRegistryGetValue(_StrDestination, _StrDestination.capacity(), _Root, _KeyPath, _ValueName); }
-
-template<typename T> bool oWinRegistryGetValue(T* _pTypedValue, oWIN_REGISTRY_ROOT _Root, const char* _KeyPath, const char* _ValueName)
+template<typename T> bool get(T* _pTypedValue, hkey _hKey, const char* _KeyPath, const char* _ValueName)
 {
-	oStd::sstring buf;
-	if (!oWinRegistryGetValue(buf, _Root, _KeyPath, _ValueName))
+	sstring buf;
+	if (!get(buf, _Root, _KeyPath, _ValueName))
 		return false;
-	return oStd::from_string(_pTypedValue, buf);
+	return from_string(_pTypedValue, buf);
 }
+
+		} // namespace registry
+	} // namespace windows
+} // namespace ouro
 
 #endif

@@ -197,7 +197,7 @@ context::~context()
 
 context& context::singleton()
 {
-	context* sInstance = nullptr;
+	static context* sInstance = nullptr;
 	if (!sInstance)
 	{
 		process_heap::find_or_allocate(

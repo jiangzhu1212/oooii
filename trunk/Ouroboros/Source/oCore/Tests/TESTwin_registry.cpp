@@ -23,29 +23,30 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oPlatform/Windows/oWinRegistry.h>
+#include <oCore/windows/win_registry.h>
 
-const char* KeyTestValue = "Value";
-const char* KeyPath = "Software/OOOii-oUnitTests/PLATFORM_oWinRegistry";
-const char* ValueName = "TestValue";
+using namespace ouro::windows;
 
-struct PLATFORM_oWinRegistry : public oTest
+namespace ouro {
+	namespace tests {
+
+void TESTwin_registry()
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		oTESTB(oWinRegistrySetValue(oHKEY_CURRENT_USER, KeyPath, ValueName, KeyTestValue), "Failed to set key %s", oErrorGetLastString());
-		ouro::lstring data;
-		oTESTB(!oWinRegistryGetValue(data, oHKEY_CURRENT_USER, KeyPath, "Non-existant-ValueName"), "Succeeded reading a non-existant key %s", oErrorGetLastString());
-		oTESTB(oWinRegistryGetValue(data, oHKEY_CURRENT_USER, KeyPath, ValueName), "Failed to read key %s", oErrorGetLastString());
+	static const registry::hkey hKey = registry::current_user;
+	static const char* KeyPath = "Software/Ouroboros/oUnitTests/TESTwin_registry";
+	static const char* ValueName = "TestValue";
+	static const char* TestValue = "Value";
+	registry::set(hKey, KeyPath, ValueName, TestValue);
+	lstring data;
+	bool failed = false;
+	try { registry::get(data, hKey, KeyPath, "Non-existant-ValueName"); }
+	catch (std::exception&) { failed = true; }
+	oCHECK(failed, "succeeded reading a non-existant key %s/%s", KeyPath, ValueName);
+	oCHECK0(registry::get(data, hKey, KeyPath, ValueName));
+	oCHECK(strcmp(data, TestValue) == 0, "Set/Read values do not match");
+	registry::delete_value(hKey, KeyPath, ValueName);
+	registry::delete_key(hKey, "Software/Ouroboros/oUnitTests");
+}
 
-		oTESTB(strcmp(data, KeyTestValue) == 0, "Set/Read values do not match");
-		oTESTB(oWinRegistryDeleteValue(oHKEY_CURRENT_USER, KeyPath, ValueName), "Failed to delete key %s", oErrorGetLastString());
-
-		// Delete oUnitTest (if empty) and delete OOOii (if empty)
-		oTESTB0(oWinRegistryDeleteKey(oHKEY_CURRENT_USER, "Software/OOOii-oUnitTests"));
-
-		return SUCCESS;
-	}
-};
-
-oTEST_REGISTER(PLATFORM_oWinRegistry);
+	} // namespace tests
+} // namespace ouro

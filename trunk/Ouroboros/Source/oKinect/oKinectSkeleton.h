@@ -39,6 +39,7 @@
 #undef INTERFACE_DEFINED
 #include <windows.h>
 #include <NuiApi.h>
+#include <oCore/windows/win_skeleton.h>
 
 class oKinectSkeleton
 {
@@ -63,16 +64,16 @@ public:
 	void CheckTrackingTimeout(HWND _hWnd, double _TimeoutThresholdInSeconds) threadsafe;
 
 	// Copies the most recent skeleton data to the specified pointer.
-	void GetSkeleton(oGUI_BONE_DESC* _pSkeleton) const threadsafe;
+	void GetSkeleton(ouro::windows::skeleton::bone_info* _pSkeleton) const threadsafe;
 
 	// Returns the skeleton ID
-	inline DWORD GetID() const threadsafe { return Skeleton.SourceID; }
+	inline DWORD GetID() const threadsafe { return Skeleton.source_id; }
 
 private:
 	double LastTrackedTimestamp;
 	oRefCount RefCount;
 	oConcurrency::shared_mutex Mutex;
-	oGUI_BONE_DESC Skeleton;
+	ouro::windows::skeleton::bone_info Skeleton;
 };
 
 inline void intrusive_ptr_add_ref(const threadsafe oKinectSkeleton* p) { const_cast<threadsafe oKinectSkeleton*>(p)->Reference(); }

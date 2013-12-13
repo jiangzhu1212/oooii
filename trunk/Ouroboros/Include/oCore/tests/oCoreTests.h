@@ -40,6 +40,10 @@ namespace ouro {
 		void TESTfilesystem();
 		void TESTfilesystem_monitor();
 		void TESTprocess_heap();
+		#if defined(_WIN32) || defined(_WIN64)
+			void TESTwin_crt_leak_tracker(test_services& _Services);
+			void TESTwin_registry();
+		#endif
 
 	} // namespace tests
 } // namespace ouro

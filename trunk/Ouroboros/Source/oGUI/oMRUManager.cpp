@@ -24,92 +24,48 @@
  **************************************************************************/
 #include <oGUI/oMRUManager.h>
 #include <oGUI/oGUIMenu.h>
+#include <oCore/windows/win_registry.h>
 
- // FIXME
-#include <oPlatform/Windows/oWinRegistry.h>
-#include <oBasis/oRefCount.h>
+using namespace ouro::windows;
 
-using namespace ouro;
+namespace ouro {
+	namespace gui {
 
-struct oMRUManagerRegistry : oMRUManager
+mru::mru(const info& _Info)
+	: Info(_Info)
+	, NumMRUs(_Info.last_id-_Info.first_id+1)
 {
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
-
-	oMRUManagerRegistry(const oMRU_DESC& _Desc, bool* _pSuccess);
-
-	void GetDesc(oMRU_DESC* _pDesc) override;
-	void Add(const char* _Entry) override;
-	char* Get(char* _StrDestination, size_t _SizeofStrDestination, int _ID) override;
-	void RefreshMenu() override;
-
-private:
-	oMRU_DESC Desc;
-	sstring MRUKeyFormat;
-	oRefCount RefCount;
-	int NumMRUs;
-
-	void GetEntryName(sstring& _EntryName, int _Index);
-	void GetEntries(std::vector<uri_string>& _Entries);
-};
-
-oMRUManagerRegistry::oMRUManagerRegistry(const oMRU_DESC& _Desc, bool* _pSuccess)
-	: Desc(_Desc)
-	, NumMRUs(_Desc.LastID-_Desc.FirstID+1)
-{
-		*_pSuccess = false;
-
-	if (_Desc.MRUEntryPrefix.empty())
-	{
-		oErrorSetLast(std::errc::invalid_argument, "An MRUEntryPrefix must be specified");
-		return;
-	}
-
-	if (0 > snprintf(MRUKeyFormat, "%s%%02d", _Desc.MRUEntryPrefix))
-	{
-		oErrorSetLast(std::errc::invalid_argument, "MRUEntryPrefix is too long.");
-		return;
-	}
-
-	*_pSuccess = true;
+	if (_Info.prefix.empty())
+		oTHROW_INVARG("A prefix must be specified");
+	if (0 > snprintf(KeyFormat, "%s%%02d", _Info.prefix))
+		oTHROW_INVARG("the prefix is too long");
 }
 
-bool oMRUManagerCreate(const oMRU_DESC& _Desc, oMRUManager** _ppMRUManager)
+sstring mru::entry_name(int _Index)
 {
-	bool success = false;
-	oCONSTRUCT(_ppMRUManager, oMRUManagerRegistry(_Desc, &success));
-	return success;
+	sstring n;
+	snprintf(n, "MRU%02d", _Index);
+	return n;
 }
 
-void oMRUManagerRegistry::GetEntryName(sstring& _EntryName, int _Index)
-{
-	snprintf(_EntryName, "MRU%02d", _Index);
-}
-
-void oMRUManagerRegistry::GetEntries(std::vector<uri_string>& _Entries)
+void mru::get_entries(std::vector<uri_string>& _Entries)
 {
 	uri_string Entry;
 	_Entries.clear();
 	_Entries.reserve(NumMRUs);
 	for (int i = 0; i < NumMRUs; i++)
 	{
-		sstring EntryName;
-		GetEntryName(EntryName, i);
-		if (oWinRegistryGetValue(Entry, oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName))
-			_Entries.push_back(Entry);
+		sstring EntryName = entry_name(i);
+		registry::get(Entry, registry::current_user, Info.registry_key, EntryName);
+		_Entries.push_back(Entry);
 	}
 }
 
-void oMRUManagerRegistry::GetDesc(oMRU_DESC* _pDesc)
-{
-	*_pDesc = Desc;
-}
-
-void oMRUManagerRegistry::Add(const char* _Entry)
+void mru::add(const char* _Entry)
 {
 	sstring EntryName;
 	std::vector<uri_string> Entries;
-	GetEntries(Entries);
+	get_entries(Entries);
 
 	// Remove any duplicates of the incoming URI
 	auto it = find_if(Entries, [&](const uri_string& x)->bool { return !_stricmp(x, _Entry); });
@@ -125,46 +81,34 @@ void oMRUManagerRegistry::Add(const char* _Entry)
 	// Write the list back out
 	int i = 0;
 	for (; i < oInt(Entries.size()); i++)
-	{
-		GetEntryName(EntryName, i);
-		oVERIFY(oWinRegistrySetValue(oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName, Entries[i]));
-	}
+		registry::set(registry::current_user, Info.registry_key, entry_name(i), Entries[i]);
 
 	// and delete any extra stale entries that remain as a result of the Entries
 	// list getting shorter
-	const int NumMRUs = Desc.LastID-Desc.FirstID+1;
+	const int NumIDs = Info.last_id-Info.first_id+1;
 	for (; i < NumMRUs; i++)
-	{
-		GetEntryName(EntryName, i);
-		oWinRegistryDeleteValue(oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName);
-	}
+		registry::delete_value(registry::current_user, Info.registry_key, entry_name(i));
 
-	RefreshMenu();
+	refresh();
 }
 
-char* oMRUManagerRegistry::Get(char* _StrDestination, size_t _SizeofStrDestination, int _ID)
+char* mru::get(char* _StrDestination, size_t _SizeofStrDestination, int _ID)
 {
-	if (_ID >= Desc.FirstID && _ID <= Desc.LastID)
-	{
-		sstring EntryName;
-		GetEntryName(EntryName, _ID - Desc.FirstID);
-		if (oWinRegistryGetValue(_StrDestination, _SizeofStrDestination, oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName))
-			return _StrDestination;
-	}
-
+	if (_ID >= Info.first_id && _ID <= Info.last_id)
+		return registry::get(_StrDestination, _SizeofStrDestination, registry::current_user, Info.registry_key, entry_name(_ID - Info.first_id));
 	return nullptr;
 }
 
-void oMRUManagerRegistry::RefreshMenu()
+void mru::refresh()
 {
-	oGUIMenuRemoveAllItems(Desc.hMenu);
-
-	sstring EntryName;
+	oGUIMenuRemoveAllItems(Info.menu);
 	uri_string Entry;
 	for (int i = 0; i < NumMRUs; i++)
 	{
-		GetEntryName(EntryName, i);
-		if (oWinRegistryGetValue(Entry, oHKEY_CURRENT_USER, Desc.MRURegistryKey, EntryName))
-			oGUIMenuAppendItem(Desc.hMenu, Desc.FirstID + i, Entry);
+		registry::get(Entry, registry::current_user, Info.registry_key, entry_name(i));
+		oGUIMenuAppendItem(Info.menu, Info.first_id + i, Entry);
 	}
 }
+
+	} // namespace gui
+} // namespace ouro

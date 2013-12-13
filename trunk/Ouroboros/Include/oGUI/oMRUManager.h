@@ -24,52 +24,73 @@
  **************************************************************************/
 // Encapsulate the handling of a most-recently-used menu.
 #pragma once
-#ifndef oMRUManager_h
-#define oMRUManager_h
+#ifndef oGUI_mru_h
+#define oGUI_mru_h
 
 #include <oBase/fixed_string.h>
 #include <oBasis/oGUI.h>
-#include <oBasis/oInterface.h>
+#include <vector>
 
-struct oMRU_DESC
+namespace ouro {
+	namespace gui {
+
+class mru
 {
-	// Path to where the MRUs will be kept
-	ouro::path_string MRURegistryKey;
+public:
+	struct info
+	{
+		info()
+			: menu(nullptr)
+			, first_id(0)
+			, last_id(-1)
+		{}
 
-	// Prefixes the MRUs so that several MRUs can be stored at the same key
-	ouro::sstring MRUEntryPrefix;
+		// Path to where the MRUs will be kept
+		path_string registry_key;
 
-	// The MRU menu that will be populated with a call to RefreshMenu
-	oGUI_MENU hMenu;
+		// Prefixes the MRUs so that several MRUs can be stored at the same key
+		sstring prefix;
 
-	// The menu ID to use for the first MRU file.
-	int FirstID;
+		// The MRU menu that will be populated with a call to RefreshMenu
+		oGUI_MENU menu;
 
-	// The last menu ID to use for MRU files. All IDs in between will be used. The 
-	// number of MRUs is determined by (LastID-FirstID+1).
-	int LastID;
-};
+		// The menu ID to use for the first MRU file.
+		int first_id;
 
-interface oMRUManager : oInterface
-{
-	virtual void GetDesc(oMRU_DESC* _pDesc) = 0;
+		// The last menu ID to use for MRU files. All IDs in between will be used. 
+		// The number of MRUs is determined by (LastID-FirstID+1).
+		int last_id;
+	};
+
+	mru(const info& _Info);
+
+	inline info get_info() const { return Info; }
 
 	// Adds an entry as the most recently used (MRU) and thus truncates the 
 	// existing list off the back of the list. This calls RefreshMenu()
-	virtual void Add(const char* _Entry) = 0;
+	void add(const char* _Entry);
 
 	// Retrieves the text of the entry at the specified _ID which must be between
-	// FirstID and LastID in the current oMRU_DESC.
-	virtual char* Get(char* _StrDestination, size_t _SizeofStrDestination, int _ID) = 0;
+	// FirstID and LastID in the current info.
+	char* get(char* _StrDestination, size_t _SizeofStrDestination, int _ID);
 
-	template<size_t size> char* Get(char (&_StrDestination)[size], int _ID) { return Get(_StrDestination, size, _ID); }
-	template<size_t capacity> char* Get(ouro::fixed_string<char, capacity>& _StrDestination, int _ID) { return Get(_StrDestination, _StrDestination.capacity(), _ID); }
+	template<size_t size> char* get(char (&_StrDestination)[size], int _ID) { return get(_StrDestination, size, _ID); }
+	template<size_t capacity> char* get(fixed_string<char, capacity>& _StrDestination, int _ID) { return get(_StrDestination, _StrDestination.capacity(), _ID); }
 
-	// Deletes all entries in the menu specified in oMRU_DESC and refills it with
-	// the latest data.
-	virtual void RefreshMenu() = 0;
+	// Deletes all entries in the menu specified in info and refills it with the 
+	// latest data.
+	void refresh();
+
+private:
+	info Info;
+	sstring KeyFormat;
+	int NumMRUs;
+
+	sstring entry_name(int _Index);
+	void get_entries(std::vector<uri_string>& _Entries);
 };
 
-bool oMRUManagerCreate(const oMRU_DESC& _Desc, oMRUManager** _ppMRUManager);
+	} // namespace gui
+} // namespace ouro
 
 #endif

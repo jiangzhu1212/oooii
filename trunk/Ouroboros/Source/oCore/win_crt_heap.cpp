@@ -22,10 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/Windows/oCRTHeap.h>
+#include <oCore/windows/win_crt_heap.h>
 #include <oCore/process_heap.h>
 #include <crtdbg.h>
-#include "oStaticMutex.h"
 
 // _____________________________________________________________________________
 // Copy-paste from $(VSInstallDir)crt\src\dbgint.h, to avoid including CRT 
@@ -63,7 +62,7 @@ namespace ouro {
 	namespace windows {
 		namespace crt_heap {
 
-_CrtMemBlockHeader* GetHead()
+_CrtMemBlockHeader* get_head()
 {
 	// New blocks are added to the head of the list
 	void* p = malloc(1);

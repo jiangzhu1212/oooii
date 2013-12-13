@@ -26,7 +26,7 @@
 #include <oKinect/oKinect.h>
 #include <oKinect/oKinectGDI.h>
 #include <oGUI/Windows/oGDI.h>
-#include <oPlatform/Windows/oWinSkeleton.h>
+#include <oCore/windows/win_skeleton.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
@@ -221,7 +221,7 @@ private:
 };
 
 oKinectTestApp::oKinectTestApp()
-	: hKinectPen(oGDICreatePen(OOOiiGreen, 2))
+	: hKinectPen(oGDICreatePen(Lime, 2))
 	, hKinectBrush(oGDICreateBrush(White))
 	, Ready(false)
 {
@@ -520,12 +520,18 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 
 		case oGUI_ACTION_SKELETON:
 		{
-			oGUI_BONE_DESC Skeleton;
-			oWinGetSkeletonDesc((HSKELETON)_Action.hSkeleton, &Skeleton);
-			AirKeyboard->Update(Skeleton, _Action.TimestampMS);
+			ouro::windows::skeleton::bone_info Skeleton;
+			ouro::windows::skeleton::get_info((ouro::windows::skeleton::handle)_Action.hSkeleton, &Skeleton);
+			
+			oGUI_BONE_DESC skel;
+			skel.SourceID = Skeleton.source_id;
+			skel.Clipping = *(oGUI_TRACKING_CLIPPING*)&Skeleton.clipping;
+			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.Positions.size(), skel.Positions.begin());
+			
+			AirKeyboard->Update(skel, _Action.TimestampMS);
 
 			// this doesn't differentiate between multiple skeletons yet...
-			UpdateStatusBar(kw.Window.get(), Skeleton, nullptr);
+			UpdateStatusBar(kw.Window.get(), skel, nullptr);
 			break;
 		}
 

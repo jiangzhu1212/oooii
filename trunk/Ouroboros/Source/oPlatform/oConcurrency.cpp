@@ -369,3 +369,9 @@ namespace oStd {
 	} // namespace condition_variable_requirements
 
 } // namespace oStd
+
+#include <oCore/windows/win_crt_leak_tracker.h>
+void oConcurrency::enable_leak_tracking_threadlocal(bool _Enabled)
+{
+	ouro::windows::crt_leak_tracker::thread_local_tracking(_Enabled);
+}

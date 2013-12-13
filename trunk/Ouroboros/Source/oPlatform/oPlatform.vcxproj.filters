@@ -16,9 +16,6 @@
     <Filter Include="Headers\UI">
       <UniqueIdentifier>{af021ec5-012f-4603-b440-708fe0820896}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\Windows API Convenience Wrappers">
-      <UniqueIdentifier>{f82bf6e4-b459-4db5-ba1a-e7c2198b4cb3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Memory">
       <UniqueIdentifier>{45248250-dc89-44c5-b6e0-92e5be162ba2}</UniqueIdentifier>
     </Filter>
@@ -28,22 +25,13 @@
     <Filter Include="Source\UI">
       <UniqueIdentifier>{11903540-3ad2-4b3d-9d43-540e9b8b885f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Windows API Convenience Wrappers">
+    <Filter Include="Source\Windows Soft Link">
       <UniqueIdentifier>{4f23875d-6e9f-491f-b4bb-c2e3d3d000b5}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Windows API Convenience Wrappers\SoftLink">
-      <UniqueIdentifier>{eaaf7035-5cb6-4a99-92f0-e23a3137abc8}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="oCRTLeakTracker.h">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="oIOCP.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h">
       <Filter>Headers\Memory</Filter>
@@ -60,15 +48,6 @@
     <ClInclude Include="oStaticMutex.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="SoftLink\oWinsock.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="SoftLink\oOpenSSL.h">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oCRTHeap.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oStream.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -77,9 +56,6 @@
     </ClInclude>
     <ClInclude Include="oDispatchQueueConcurrentWTP.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinRegistry.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h">
       <Filter>Headers\IO</Filter>
@@ -120,9 +96,6 @@
     <ClInclude Include="..\..\Include\oPlatform\all.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\Windows\oWinSkeleton.h">
-      <Filter>Headers\Windows API Convenience Wrappers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oRegistry.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -131,6 +104,15 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oTest.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="oIOCP.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oWinsock.h">
+      <Filter>Source\Windows Soft Link</Filter>
+    </ClInclude>
+    <ClInclude Include="SoftLink\oOpenSSL.h">
+      <Filter>Source\Windows Soft Link</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -143,29 +125,11 @@
     <ClCompile Include="oStandards.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oCRTLeakTracker.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="oIOCP.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
-    <ClCompile Include="oCRTHeap.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinsock.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oOpenSSL.cpp">
-      <Filter>Source\Windows API Convenience Wrappers\SoftLink</Filter>
-    </ClCompile>
     <ClCompile Include="oDispatchQueueConcurrentWTP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oDispatchQueueGlobalIOCP.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinRegistry.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
     </ClCompile>
     <ClCompile Include="oMirroredArena.cpp">
       <Filter>Source\Memory</Filter>
@@ -212,9 +176,6 @@
     <ClCompile Include="oHTTPHandler.cpp">
       <Filter>Source\IO</Filter>
     </ClCompile>
-    <ClCompile Include="oWinSkeleton.cpp">
-      <Filter>Source\Windows API Convenience Wrappers</Filter>
-    </ClCompile>
     <ClCompile Include="oRegistry.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -226,6 +187,15 @@
     </ClCompile>
     <ClCompile Include="oTest.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oIOCP.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oOpenSSL.cpp">
+      <Filter>Source\Windows Soft Link</Filter>
+    </ClCompile>
+    <ClCompile Include="SoftLink\oWinsock.cpp">
+      <Filter>Source\Windows Soft Link</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

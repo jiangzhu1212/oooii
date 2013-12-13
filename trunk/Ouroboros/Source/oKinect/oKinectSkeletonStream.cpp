@@ -163,16 +163,16 @@ void oKinectSkeletonStream::CheckTrackingTimeouts() threadsafe
 	}
 }
 
-bool oKinectSkeletonStream::GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe
+bool oKinectSkeletonStream::GetSkeletonByIndex(int _PlayerIndex, ouro::windows::skeleton::bone_info* _pSkeleton) const threadsafe
 {
 	if (_PlayerIndex < 0 || _PlayerIndex >= NUI_SKELETON_MAX_TRACKED_COUNT)
 		return false;
 	const int SkeletonIndex = oThreadsafe(ClosestSkeletonIndices)[_PlayerIndex];
 	oThreadsafe(Skeletons)[SkeletonIndex]->GetSkeleton(_pSkeleton);
-	return _pSkeleton->SourceID != 0;
+	return _pSkeleton->source_id != 0;
 }
 
-bool oKinectSkeletonStream::GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _pSkeleton) const threadsafe
+bool oKinectSkeletonStream::GetSkeletonByID(unsigned int _ID, ouro::windows::skeleton::bone_info* _pSkeleton) const threadsafe
 {
 	threadsafe oKinectSkeleton* found = nullptr;
 	oKinectSkeletonStream* pThis = thread_cast<oKinectSkeletonStream*>(this);
@@ -193,16 +193,16 @@ bool oKinectSkeletonStream::GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _p
 }
 
 int oKinectSkeletonStream::GetScreenSpaceBonePositions(
-	const oGUI_BONE_DESC& _Skeleton
+	const ouro::windows::skeleton::bone_info& _Skeleton
 	, const int2& _TargetPosition
 	, const int2& _TargetDimensions
 	, const int2& _DepthBufferResolution
 	, int2 _BonePositions[NUI_SKELETON_POSITION_COUNT]) const threadsafe
 {
 	int NumValid = 0;
-	oFORI(i, _Skeleton.Positions)
+	oFORI(i, _Skeleton.positions)
 	{
-		const float4& P = _Skeleton.Positions[i];
+		const float4& P = _Skeleton.positions[i];
 
 		if (P.w < 0.0f)
 			_BonePositions[i] = int2(oDEFAULT, oDEFAULT);

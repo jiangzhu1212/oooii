@@ -30,6 +30,12 @@
     <ClCompile Include="Tests\TESTfilesystem_monitor.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Tests\TESTwin_registry.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tests\TESTwin_crt_leak_tracker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\tests\oCoreTests.h">

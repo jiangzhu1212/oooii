@@ -24,20 +24,18 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oStd/future.h>
-#include "../oCRTLeakTracker.h"
+#include <oBase/finally.h>
+#include <oCore/windows/win_crt_leak_tracker.h>
 
-// @tony: This test has removed so many platform dependencies, it proves 
-// that refactoring oCRTLeakTracker into a better location/API may be worthwhile.
-
-// @tony: If this test can be moved to oBasis, unify this with 
-// oBasisTestCommon.h (maybe make that more public?) (_P for Platform)
-#define oTESTB0_P(test) do { if (!(test)) return false; } while(false) // pass through error
-#define oTESTB_P(test, msg, ...) do { if (!(test)) return oErrorSetLast(std::errc::protocol_error, msg, ## __VA_ARGS__); } while(false)
+#include "../../test_services.h"
 
 using namespace ouro;
 using namespace windows::crt_leak_tracker;
 
-bool TESTcrt_leak_tracker()
+namespace ouro {
+	namespace tests {
+
+void TESTwin_crt_leak_tracker(test_services& _Services)
 {
 	#ifdef _DEBUG
 		oTRACE("THIS TESTS THE LEAK REPORTING CODE, SO THIS WILL INTENTIONALLY REPORT LEAKS IN THE OUTPUT AS PART OF THAT TEST.");
@@ -52,41 +50,29 @@ bool TESTcrt_leak_tracker()
 
 		reset();
 
-		oTESTB_P(!report(), "Outstanding leaks detected at start of test");
+		oCHECK(!report(), "Outstanding leaks detected at start of test");
 
 		char* pCharAlloc = new char;
-		oTESTB_P(report(), "Tracker failed to detect char leak");
+		oCHECK(report(), "Tracker failed to detect char leak");
 		delete pCharAlloc;
 
 		oStd::future<void> check = oStd::async([=] {});
 		check.wait();
 		check = oStd::future<void>(); // zero-out the future because it makes an alloc
 
-		oTESTB_P(!report(), "Tracker erroneously detected leak from a different thread");
+		oCHECK(!report(), "Tracker erroneously detected leak from a different thread");
 
 		char* pCharAllocThreaded = nullptr;
 
 		check = oStd::async([&]() { pCharAllocThreaded = new char; });
 
 		check.wait();
-		oTESTB_P(report(), "Tracker failed to detect char leak from different thread");
+		oCHECK(report(), "Tracker failed to detect char leak from different thread");
 		delete pCharAllocThreaded;
-
-		oErrorSetLast(0, "");
-		return true;
 	#else
-		oErrorSetLast(std::errc::permission_denied, "Leak tracker not available in release builds");
-		return true;
+		_Services.report("Leak tracker not available in release builds");
 	#endif
 }
 
-struct PLATFORM_oCRTLeakTracker : public oTest
-{
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		oTESTB(TESTcrt_leak_tracker(), "%s", oErrorGetLastString());
-		return SUCCESS;
-	}
-};
-
-oTEST_REGISTER(PLATFORM_oCRTLeakTracker);
+	} // namespace tests
+} // namespace ouro

@@ -78,6 +78,18 @@
     <ClCompile Include="reporting.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="win_registry.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_crt_heap.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_skeleton.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_crt_leak_tracker.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">
@@ -145,6 +157,18 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\reporting.h">
       <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_registry.h">
+      <Filter>oCore\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_skeleton.h">
+      <Filter>oCore\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_crt_heap.h">
+      <Filter>oCore\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_crt_leak_tracker.h">
+      <Filter>oCore\windows</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

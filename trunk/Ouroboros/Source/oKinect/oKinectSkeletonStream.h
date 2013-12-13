@@ -56,8 +56,8 @@ public:
 	// it is checking for a time of no events to trigger a deactivated action.
 	void CheckTrackingTimeouts() threadsafe;
 
-	bool GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe;
-	bool GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _pSkeleton) const threadsafe;
+	bool GetSkeletonByIndex(int _PlayerIndex, ouro::windows::skeleton::bone_info* _pSkeleton) const threadsafe;
+	bool GetSkeletonByID(unsigned int _ID, ouro::windows::skeleton::bone_info* _pSkeleton) const threadsafe;
 
 private:
 	double TrackingTimeoutSeconds;
@@ -69,7 +69,7 @@ private:
 	void TrackClosestSkeletons(INuiSensor* _pSensor, const NUI_SKELETON_FRAME& _NSF) threadsafe;
 
 	int GetScreenSpaceBonePositions(
-		const oGUI_BONE_DESC& _Skeleton
+		const ouro::windows::skeleton::bone_info& _Skeleton
 		, const int2& _TargetPosition
 		, const int2& _TargetDimensions
 		, const int2& _DepthBufferResolution

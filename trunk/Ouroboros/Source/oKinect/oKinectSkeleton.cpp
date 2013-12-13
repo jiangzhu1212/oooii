@@ -23,28 +23,28 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oKinectSkeleton.h"
-#include <oPlatform/Windows/oWinSkeleton.h>
 #include <oGUI/Windows/oWinWindowing.h>
 
 #ifdef oHAS_KINECT_SDK
 
 using namespace oConcurrency;
+using namespace ouro::windows::skeleton;
 
-static oGUI_TRACKING_CLIPPING oKinectGetClipping(const NUI_SKELETON_DATA& _NSD)
+static tracking_clipping oKinectGetClipping(const NUI_SKELETON_DATA& _NSD)
 {
-	oGUI_TRACKING_CLIPPING Clipping;
-	Clipping.Right = !!(_NSD.dwQualityFlags & NUI_SKELETON_QUALITY_CLIPPED_RIGHT);
-	Clipping.Left = !!(_NSD.dwQualityFlags & NUI_SKELETON_QUALITY_CLIPPED_LEFT);
-	Clipping.Top = !!(_NSD.dwQualityFlags & NUI_SKELETON_QUALITY_CLIPPED_TOP);
-	Clipping.Bottom = !!(_NSD.dwQualityFlags & NUI_SKELETON_QUALITY_CLIPPED_BOTTOM);
-	return Clipping;
+	tracking_clipping c;
+	c.right = !!(_NSD.dwQualityFlags & NUI_SKELETON_QUALITY_CLIPPED_RIGHT);
+	c.left = !!(_NSD.dwQualityFlags & NUI_SKELETON_QUALITY_CLIPPED_LEFT);
+	c.top = !!(_NSD.dwQualityFlags & NUI_SKELETON_QUALITY_CLIPPED_TOP);
+	c.bottom = !!(_NSD.dwQualityFlags & NUI_SKELETON_QUALITY_CLIPPED_BOTTOM);
+	return c;
 }
 
 oKinectSkeleton::oKinectSkeleton()
 	: LastTrackedTimestamp(0.0)
 {
 	Invalidate();
-	oWinRegisterSkeletonSource((HSKELETON)this, oBIND(&oKinectSkeleton::GetSkeleton, this, oBIND1));
+	register_source((handle)this, oBIND(&oKinectSkeleton::GetSkeleton, this, oBIND1));
 }
 
 bool oKinectSkeletonCreate(threadsafe oKinectSkeleton** _ppSkeleton)
@@ -55,13 +55,13 @@ bool oKinectSkeletonCreate(threadsafe oKinectSkeleton** _ppSkeleton)
 
 oKinectSkeleton::~oKinectSkeleton()
 {
-	oWinUnregisterSkeletonSource((HSKELETON)this);
+	unregister_source((handle)this);
 }
 
 void oKinectSkeleton::Invalidate() threadsafe
 {
 	lock_guard<shared_mutex> lock(Mutex);
-	oThreadsafe(this)->Skeleton = oGUI_BONE_DESC(oThreadsafe(this)->Skeleton.SourceID);
+	oThreadsafe(this)->Skeleton = bone_info(oThreadsafe(this)->Skeleton.source_id);
 }
 
 void oKinectSkeleton::Cache(HWND _hWnd, const NUI_SKELETON_DATA& _NSD) threadsafe
@@ -70,18 +70,18 @@ void oKinectSkeleton::Cache(HWND _hWnd, const NUI_SKELETON_DATA& _NSD) threadsaf
 	{
 		LastTrackedTimestamp = ouro::timer::now();
 
-		if (!Skeleton.SourceID)
+		if (!Skeleton.source_id)
 		{
-			Skeleton.SourceID = _NSD.dwTrackingID;
-			PostMessage(_hWnd, oWM_USER_CAPTURED, Skeleton.SourceID, 0);
+			Skeleton.source_id = _NSD.dwTrackingID;
+			PostMessage(_hWnd, oWM_USER_CAPTURED, Skeleton.source_id, 0);
 		}
 
 		{
 			lock_guard<shared_mutex> lock(Mutex);
-			oThreadsafe(Skeleton).Clipping = oKinectGetClipping(_NSD);
+			oThreadsafe(Skeleton).clipping = oKinectGetClipping(_NSD);
 			std::copy((const float4*)_NSD.SkeletonPositions
 				, (const float4*)(_NSD.SkeletonPositions + NUI_SKELETON_POSITION_COUNT)
-				, (oThreadsafe(Skeleton).Positions.begin()));
+				, (oThreadsafe(Skeleton).positions.begin()));
 		}
 
 		// In most cases the absolute latest skeleton is desired, so leave out 
@@ -89,31 +89,31 @@ void oKinectSkeleton::Cache(HWND _hWnd, const NUI_SKELETON_DATA& _NSD) threadsaf
 		// that it's worth checking bone data again.
 		
 		
-		PostMessage(_hWnd, oWM_SKELETON, MAKEWPARAM(Skeleton.SourceID, 0), (LPARAM)this);
+		PostMessage(_hWnd, oWM_SKELETON, MAKEWPARAM(Skeleton.source_id, 0), (LPARAM)this);
 	}
 
 	else
 	{
-		if (Skeleton.SourceID)
+		if (Skeleton.source_id)
 		{
 			Invalidate();
-			PostMessage(_hWnd, oWM_USER_LOST, Skeleton.SourceID, 0);
-			Skeleton.SourceID = 0;
+			PostMessage(_hWnd, oWM_USER_LOST, Skeleton.source_id, 0);
+			Skeleton.source_id = 0;
 		}
 	}
 }
 
 void oKinectSkeleton::CheckTrackingTimeout(HWND _hWnd, double _TimeoutThresholdInSeconds) threadsafe
 {
-	if (Skeleton.SourceID && (ouro::timer::now() - LastTrackedTimestamp) > _TimeoutThresholdInSeconds)
+	if (Skeleton.source_id && (ouro::timer::now() - LastTrackedTimestamp) > _TimeoutThresholdInSeconds)
 	{
 		Invalidate();
-		PostMessage(_hWnd, oWM_USER_LOST, Skeleton.SourceID, 0);
-		Skeleton.SourceID = 0;
+		PostMessage(_hWnd, oWM_USER_LOST, Skeleton.source_id, 0);
+		Skeleton.source_id = 0;
 	}
 }
 
-void oKinectSkeleton::GetSkeleton(oGUI_BONE_DESC* _pSkeleton) const threadsafe
+void oKinectSkeleton::GetSkeleton(bone_info* _pSkeleton) const threadsafe
 {
 	shared_lock<shared_mutex> lock(Mutex);
 	*_pSkeleton = oThreadsafe(Skeleton);

@@ -8,34 +8,34 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStd.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCompute.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBase.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
     <ClCompile Include="oooii_icon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGUI.cpp">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -46,7 +46,7 @@
       <Filter>Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Ouroboros\Source\oPlatform\Tests\oTestIntegration.h">
-      <Filter>Source Files\Sub-Platform Tests</Filter>
+      <Filter>Source Files\Tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -56,7 +56,7 @@
     <Filter Include="Resource Files">
       <UniqueIdentifier>{68a750ec-c7ac-41c7-9c3e-8c361d78cfe0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Sub-Platform Tests">
+    <Filter Include="Source Files\Tests">
       <UniqueIdentifier>{fb620a58-f4d5-4857-8ea3-89eb329712a7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>

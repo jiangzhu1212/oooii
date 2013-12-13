@@ -40,10 +40,14 @@
     <ClCompile Include="serial_port.cpp" />
     <ClCompile Include="system.cpp" />
     <ClCompile Include="winmain.cpp" />
+    <ClCompile Include="win_crt_heap.cpp" />
+    <ClCompile Include="win_crt_leak_tracker.cpp" />
     <ClCompile Include="win_error.cpp" />
     <ClCompile Include="win_exception_handler.cpp" />
     <ClCompile Include="win_gsreport.cpp" />
     <ClCompile Include="win_iocp.cpp" />
+    <ClCompile Include="win_registry.cpp" />
+    <ClCompile Include="win_skeleton.cpp" />
     <ClCompile Include="win_version.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -63,9 +67,13 @@
     <ClInclude Include="..\..\Include\oCore\reporting.h" />
     <ClInclude Include="..\..\Include\oCore\serial_port.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
+    <ClInclude Include="..\..\Include\oCore\windows\win_crt_heap.h" />
+    <ClInclude Include="..\..\Include\oCore\windows\win_crt_leak_tracker.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_error.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_exception_handler.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_iocp.h" />
+    <ClInclude Include="..\..\Include\oCore\windows\win_registry.h" />
+    <ClInclude Include="..\..\Include\oCore\windows\win_skeleton.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_util.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_version.h" />
     <ClInclude Include="pch.h" />

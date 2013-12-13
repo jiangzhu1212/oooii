@@ -130,7 +130,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Tests\TESTCRTLeakTracker.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueueConcurrent.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueueConcurrentWTP.cpp" />
     <ClCompile Include="Tests\TESTFileAsync.cpp" />
@@ -139,7 +138,6 @@
     <ClCompile Include="Tests\TESTMirroredArena.cpp" />
     <ClCompile Include="Tests\TESTSocketAsync.cpp" />
     <ClCompile Include="Tests\TESTSocketBlocking.cpp" />
-    <ClCompile Include="Tests\TESTWinRegistry.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

@@ -43,7 +43,7 @@
 #include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
 #include <oPlatform/oStream.h> // oStreamExists
 #include <oPlatform/oStreamUtil.h> // used for loading buffers
-#include <oPlatform/Windows/oCRTHeap.h>
+#include <oCore/windows/win_crt_heap.h>
 #include <algorithm>
 #include <unordered_map>
 
@@ -247,7 +247,7 @@ struct oTestManager_Impl : public oTestManager
 	zombies_t PotentialZombies;
 };
 
-#include "oCRTLeakTracker.h"
+#include <oCore/windows/win_crt_leak_tracker.h>
 
 struct oTestManagerImplSingleton : oProcessSingleton<oTestManagerImplSingleton>
 {

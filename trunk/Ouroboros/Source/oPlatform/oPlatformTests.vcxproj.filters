@@ -30,12 +30,6 @@
     <ClCompile Include="Tests\TESTSocketBlocking.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTWinRegistry.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTCRTLeakTracker.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTDispatchQueueConcurrentWTP.cpp">
       <Filter>Source</Filter>
     </ClCompile>

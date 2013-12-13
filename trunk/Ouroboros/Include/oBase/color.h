@@ -275,7 +275,6 @@ static const color White(0xFFFFFFFF);
 static const color WhiteSmoke(0xFFF5F5F5);
 static const color Yellow(0xFFFFFF00);
 static const color YellowGreen(0xFF9ACD32);
-static const color OOOiiGreen(0xFF8DC81D);
 static const color MicrosoftBluePen(0xFFFF3232);
 static const color MicrosoftBlueBrush(0xFFA08064);
 static const color TangentSpaceNormalBlue(0xFF7F7FFF); // Z-Up

@@ -25,12 +25,12 @@
 #include <oKinect/oGestureManager.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oGUI/Windows/oGDI.h>
-#include <oPlatform/Windows/oWinSkeleton.h>
 #include <oKinect/oKinectGDI.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oRefCount.h>
 #include <oCore/windows/win_error.h>
+#include <oCore/windows/win_skeleton.h>
 
 #include "resource.h"
 
@@ -168,7 +168,7 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, con
 	: Window(_Window)
 	, VizDesc(_Init.VizDesc)
 	, DeviceVizDesc(_Init.DeviceVizDesc)
-	, hBonePen(oGDICreatePen(OOOiiGreen, 2))
+	, hBonePen(oGDICreatePen(Lime, 2))
 	, hBoneBrush(oGDICreateBrush(White))
 	, hBlankBG(oGDICreateBrush(Black))
 	, KinectDrawState(oKINECT_STATUS_DRAW_INITIALIZING_1)
@@ -768,9 +768,15 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 
 		case oGUI_ACTION_SKELETON:
 		{
-			oGUI_BONE_DESC Skeleton;
-			oWinGetSkeletonDesc((HSKELETON)_Action.hSkeleton, &Skeleton);
-			AirKeyboard->Update(Skeleton, _Action.TimestampMS);
+			windows::skeleton::bone_info Skeleton;
+			windows::skeleton::get_info((windows::skeleton::handle)_Action.hSkeleton, &Skeleton);
+
+			oGUI_BONE_DESC skel;
+			skel.SourceID = Skeleton.source_id;
+			skel.Clipping = *(oGUI_TRACKING_CLIPPING*)&Skeleton.clipping;
+			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.Positions.size(), skel.Positions.begin());
+
+			AirKeyboard->Update(skel, _Action.TimestampMS);
 			break;
 		}
 
