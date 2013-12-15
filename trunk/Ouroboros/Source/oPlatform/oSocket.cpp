@@ -76,27 +76,25 @@ namespace ouro {
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oNetHost& _Host)
 {
 	const oNetHost_Internal* pHost = reinterpret_cast<const oNetHost_Internal*>(&_Host);
-	oWinsock* ws = oWinsock::Singleton();
-	unsigned long addr = ws->ntohl(pHost->IP);
+	unsigned long addr = ntohl(pHost->IP);
 	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u.%u.%u.%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF) ? _StrDestination : nullptr;
 }
 
 bool from_string(oNetHost* _pHost, const char* _StrSource)
 {
 	oNetHost_Internal* pHost = reinterpret_cast<oNetHost_Internal*>(_pHost);
-	oWinsock* ws = oWinsock::Singleton();
 
 	ADDRINFO* pAddrInfo = nullptr;
 	ADDRINFO Hints;
 	memset(&Hints, 0, sizeof(Hints));
 	Hints.ai_family = AF_INET;
-	ws->getaddrinfo(_StrSource, nullptr, &Hints, &pAddrInfo);
+	getaddrinfo(_StrSource, nullptr, &Hints, &pAddrInfo);
 
 	if (!pAddrInfo)
 		return false;
 
 	pHost->IP = ((SOCKADDR_IN*)pAddrInfo->ai_addr)->sin_addr.s_addr;
-	ws->freeaddrinfo(pAddrInfo);
+	freeaddrinfo(pAddrInfo);
 	return true;
 }
 
@@ -105,9 +103,8 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oNetA
 	if (to_string(_StrDestination, _SizeofStrDestination, _Address.Host))
 	{
 		const oNetAddr_Internal* pAddress = reinterpret_cast<const oNetAddr_Internal*>(&_Address);
-		oWinsock* ws = oWinsock::Singleton();
 		size_t len = strlen(_StrDestination);
-		return -1 == snprintf(_StrDestination + len, _SizeofStrDestination - len, ":%u", ws->ntohs(pAddress->Port)) ? _StrDestination : nullptr;
+		return -1 == snprintf(_StrDestination + len, _SizeofStrDestination - len, ":%u", ntohs(pAddress->Port)) ? _StrDestination : nullptr;
 	}
 
 	return nullptr;
@@ -126,18 +123,17 @@ bool from_string(oNetAddr* _pAddress, const char* _StrSource)
 
 	*seperator = 0;
 
-	oWinsock* ws = oWinsock::Singleton();
 	ADDRINFO* pAddrInfo = nullptr;
 	ADDRINFO Hints;
 	memset(&Hints, 0, sizeof(Hints));
 	Hints.ai_family = AF_INET;
-	ws->getaddrinfo(tempStr, seperator+1, &Hints, &pAddrInfo);
+	getaddrinfo(tempStr, seperator+1, &Hints, &pAddrInfo);
 
 	if (!pAddrInfo)
 		return false;
 
 	oSockAddrToNetAddr(*((SOCKADDR_IN*)pAddrInfo->ai_addr), _pAddress);
-	ws->freeaddrinfo(pAddrInfo);
+	freeaddrinfo(pAddrInfo);
 	return true;
 }
 
@@ -181,16 +177,14 @@ bool from_string(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
 
 oAPI void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort)
 {
-	oWinsock* ws = oWinsock::Singleton();
 	const oNetAddr_Internal* pAddr = reinterpret_cast<const oNetAddr_Internal*>(&_Addr);
-	*_pPort = ws->ntohs(pAddr->Port);
+	*_pPort = ntohs(pAddr->Port);
 }
 
 oAPI void oSocketPortSet(const unsigned short _Port, oNetAddr* _pAddr)
 {
-	oWinsock* ws = oWinsock::Singleton();
 	oNetAddr_Internal* pAddr = reinterpret_cast<oNetAddr_Internal*>(_pAddr);
-	pAddr->Port = ws->htons(_Port);
+	pAddr->Port = htons(_Port);
 }
 
 
@@ -214,18 +208,16 @@ oAPI void oSocketEnumerateAllAddress( oFUNCTION<void(oNetAddr _Addr)> _Enumerato
 const int SaneMaxTimout = 60000;
 oSocket::size_t oWinsockRecvFromBlocking(SOCKET hSocket, void* _pData, oSocket::size_t _szReceive, unsigned int _Timeout, const SOCKADDR_IN& _RecvAddr, unsigned int _Flags = 0)
 {
-	oWinsock* ws = oWinsock::Singleton();
-
 	oSocket::size_t TotalReceived = 0;
 	
 	if (oInfiniteWait == _Timeout)
 		_Timeout = SaneMaxTimout; // oInfiniteWait doesn't seem to work with setsockopt, so use a sane max
 
-	if (SOCKET_ERROR == ws->setsockopt(hSocket, SOL_SOCKET, SO_RCVTIMEO,(char *)&_Timeout, sizeof(unsigned int))) 
+	if (SOCKET_ERROR == setsockopt(hSocket, SOL_SOCKET, SO_RCVTIMEO,(char *)&_Timeout, sizeof(unsigned int))) 
 		goto error;
 
 	int AddrSize = sizeof(_RecvAddr);
-	TotalReceived = ws->recvfrom(hSocket, (char*)_pData, _szReceive, _Flags, (sockaddr*)const_cast<SOCKADDR_IN*>(&_RecvAddr)/*const_cast for bad windows API*/, &AddrSize);
+	TotalReceived = recvfrom(hSocket, (char*)_pData, _szReceive, _Flags, (sockaddr*)const_cast<SOCKADDR_IN*>(&_RecvAddr)/*const_cast for bad windows API*/, &AddrSize);
 	if (SOCKET_ERROR == TotalReceived) 
 		goto error;
 	
@@ -233,7 +225,7 @@ oSocket::size_t oWinsockRecvFromBlocking(SOCKET hSocket, void* _pData, oSocket::
 
 error:
 
-	oErrorSetLast(std::errc::io_error, "%s", oWinsock::AsString(oWinsock::Singleton()->WSAGetLastError()));
+	oErrorSetLast(std::errc::io_error, "%s", oWinsockAsString(WSAGetLastError()));
 	return 0;
 }
 
@@ -378,7 +370,7 @@ bool oSocketImpl::Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyD
 				// so bind to INADDR_ANY and keep the port
 				SOCKADDR_IN LocalAddr;
 				oNetAddrToSockAddr(lockedThis->Desc.Addr, &LocalAddr);
-				LocalAddr.sin_addr.s_addr = oWinsock::Singleton()->htonl(INADDR_ANY);
+				LocalAddr.sin_addr.s_addr = htonl(INADDR_ANY);
 				hSocket = oWinsockCreate(LocalAddr, Options | oWINSOCK_ALLOW_BROADCAST, lockedThis->Desc.ConnectionTimeoutMS);
 			}
 			else
@@ -535,10 +527,8 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 	{
 		unsigned int _TimeoutMS = CurDesc.BlockingSettings.SendTimeout;
 
-		oWinsock* ws = oWinsock::Singleton();
-
 		oScopedPartialTimeout Timeout(&_TimeoutMS);
-		if (SOCKET_ERROR == ws->setsockopt(hSocket, SOL_SOCKET, SO_SNDTIMEO,(char *)&_TimeoutMS, sizeof(unsigned int)))
+		if (SOCKET_ERROR == setsockopt(hSocket, SOL_SOCKET, SO_SNDTIMEO,(char *)&_TimeoutMS, sizeof(unsigned int)))
 			return false;
 
 		if (!oWinsockSend(hSocket, _pHeader, _SizeHeader, &_Destination))
@@ -555,7 +545,6 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 	}
 	else
 	{
-		oWinsock* ws = oWinsock::Singleton();
 		oIOCPOp* pIOCPOp = pIOCP->AcquireSocketOp();
 		if (!pIOCPOp)
 			return oErrorSetLast(std::errc::no_buffer_space, "IOCPOpPool is empty, you're sending too fast.");
@@ -574,9 +563,9 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 		WSABUF* pBuff = pOp->Payload;
 		unsigned int BuffCount = _pBody ? 2 : 1;
 
-		if (0 != ws->WSASendTo(hSocket, pBuff, BuffCount, &bytesSent, 0, (SOCKADDR*)&pOp->SockAddr, sizeof(sockaddr_in), (WSAOVERLAPPED*)pIOCPOp, nullptr))
+		if (0 != WSASendTo(hSocket, pBuff, BuffCount, &bytesSent, 0, (SOCKADDR*)&pOp->SockAddr, sizeof(sockaddr_in), (WSAOVERLAPPED*)pIOCPOp, nullptr))
 		{
-			int lastError = ws->WSAGetLastError();
+			int lastError = WSAGetLastError();
 			if (lastError != WSA_IO_PENDING)
 				return false;
 		}
@@ -601,8 +590,6 @@ oSocket::size_t oSocketImpl::Recv(void* _pBuffer, oSocket::size_t _Size) threads
 	}
 	else
 	{
-		oWinsock* ws = oWinsock::Singleton();
-
 		oIOCPOp* pIOCPOp = pIOCP->AcquireSocketOp();
 		if (!pIOCPOp)
 		{
@@ -623,7 +610,7 @@ oSocket::size_t oSocketImpl::Recv(void* _pBuffer, oSocket::size_t _Size) threads
 
 		static DWORD bytesRecvd;
 
-		ws->WSARecvFrom(hSocket, pOp->Payload, 1, &bytesRecvd, &flags, (SOCKADDR*)&pOp->SockAddr, &sizeOfSockAddr, (WSAOVERLAPPED*)pIOCPOp, nullptr);
+		WSARecvFrom(hSocket, pOp->Payload, 1, &bytesRecvd, &flags, (SOCKADDR*)&pOp->SockAddr, &sizeOfSockAddr, (WSAOVERLAPPED*)pIOCPOp, nullptr);
 		return _Size;
 	}
 }
@@ -692,9 +679,8 @@ void oSocketImpl::IOCPCallback(oIOCPOp* pIOCPOp)
 		Header = pOp->Header;
 
 		DWORD flags;
-		oWinsock* ws = oWinsock::Singleton();
 		//this can fail if the socket is getting closed.
-		BOOL result = ws->WSAGetOverlappedResult(hSocket, (WSAOVERLAPPED*)pIOCPOp, (LPDWORD)&szData, false, &flags);
+		BOOL result = WSAGetOverlappedResult(hSocket, (WSAOVERLAPPED*)pIOCPOp, (LPDWORD)&szData, false, &flags);
 		oASSERT(result, "WSAGetOverlappedResult failed.");
 	}
 
@@ -930,12 +916,10 @@ oSocket* oSocketCreateFromServer(const char* _DebugName, SOCKET _hTarget, oSocke
 	{
 		// Place the socket into non-blocking mode by first clearing the event then disabling FIONBIO
 		{
-			oWinsock* ws = oWinsock::Singleton();
-
-			if (SOCKET_ERROR == ws->WSAEventSelect(_hTarget, NULL, NULL)) return nullptr;
+			if (SOCKET_ERROR == WSAEventSelect(_hTarget, NULL, NULL)) return nullptr;
 
 			u_long nonBlocking = 0;
-			if (SOCKET_ERROR == ws->ioctlsocket(_hTarget, FIONBIO, &nonBlocking)) return nullptr;
+			if (SOCKET_ERROR == ioctlsocket(_hTarget, FIONBIO, &nonBlocking)) return nullptr;
 		}
 	}
 
@@ -1026,8 +1010,8 @@ SocketServer_Impl::SocketServer_Impl(const char* _DebugName, const DESC& _Desc, 
 			return; // leave last error from inside oWinsockGetPort
 	}
 
-	hConnectEvent = oWinsock::Singleton()->WSACreateEvent();
-	if (SOCKET_ERROR == oWinsock::Singleton()->WSAEventSelect(hSocket, hConnectEvent, FD_ACCEPT))
+	hConnectEvent = WSACreateEvent();
+	if (SOCKET_ERROR == WSAEventSelect(hSocket, hConnectEvent, FD_ACCEPT))
 	{
 		oWINSOCK_SETLASTERROR("WSAEventSelect");
 		return;
@@ -1042,7 +1026,7 @@ SocketServer_Impl::~SocketServer_Impl()
 		oVERIFY(oWinsockClose(hSocket));
 
 	if (hConnectEvent)
-		oWinsock::Singleton()->WSACloseEvent(hConnectEvent);
+		WSACloseEvent(hConnectEvent);
 }
 
 const char* SocketServer_Impl::GetDebugName() const threadsafe 
@@ -1067,7 +1051,6 @@ static bool UNIFIED_WaitForConnection(
 	, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets)
 {
 	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(_Mutex);
-	oWinsock* ws = oWinsock::Singleton();
 	bool success = false;
 
 	oScopedPartialTimeout timeout = oScopedPartialTimeout(&_TimeoutMS);
@@ -1075,15 +1058,15 @@ static bool UNIFIED_WaitForConnection(
 	{
 		sockaddr_in saddr;
 		int size = sizeof(saddr);
-		ws->WSAResetEvent(_hConnectEvent); // be sure to reset otherwise the wait will always return immediately. however we could have more than 1 waiting to be accepted.
+		WSAResetEvent(_hConnectEvent); // be sure to reset otherwise the wait will always return immediately. however we could have more than 1 waiting to be accepted.
 		SOCKET hTarget;
 
-		hTarget = ws->accept(_hServerSocket, (sockaddr*)&saddr, &size);
+		hTarget = accept(_hServerSocket, (sockaddr*)&saddr, &size);
 		if (INVALID_SOCKET == hTarget)
 			return oErrorSetLast(std::errc::protocol_error, "Invalid socket");
 
 		u_long enabled = 1;
-		if (SOCKET_ERROR == ws->setsockopt(hTarget, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (const char*)&enabled, sizeof(enabled)))
+		if (SOCKET_ERROR == setsockopt(hTarget, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (const char*)&enabled, sizeof(enabled)))
 			return oErrorSetLast(std::errc::permission_denied, "Already have a socket on this port");
 
 		// Fill in the remaining portions of the desc
@@ -1176,12 +1159,10 @@ oSocket* oSocketCreateFromServer2(std::shared_ptr<oSocketImpl> _Target, oSocket:
 	{
 		// Place the socket into non-blocking mode by first clearing the event then disabling FIONBIO
 		{
-			oWinsock* ws = oWinsock::Singleton();
-
-			if (SOCKET_ERROR == ws->WSAEventSelect(_Target->GetHandle(), NULL, NULL)) return nullptr;
+			if (SOCKET_ERROR == WSAEventSelect(_Target->GetHandle(), NULL, NULL)) return nullptr;
 
 			u_long nonBlocking = 0;
-			if (SOCKET_ERROR == ws->ioctlsocket(_Target->GetHandle(), FIONBIO, &nonBlocking)) return nullptr;
+			if (SOCKET_ERROR == ioctlsocket(_Target->GetHandle(), FIONBIO, &nonBlocking)) return nullptr;
 		}
 	}
 
@@ -1544,7 +1525,7 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 		int SzAddrLocal;
 		sockaddr_in* AddrRemote;
 		int SzAddrRemote;
-		oWinSockAsyncAcceptExSockAddrs(pOp->Socket->GetHandle(), pOp->AcceptAddressesBuffer, (SOCKADDR**)&AddrLocal, &SzAddrLocal, (SOCKADDR**)&AddrRemote, &SzAddrRemote);
+		oWinsockAsyncAcceptExSockAddrs(pOp->Socket->GetHandle(), pOp->AcceptAddressesBuffer, (SOCKADDR**)&AddrLocal, &SzAddrLocal, (SOCKADDR**)&AddrRemote, &SzAddrRemote);
 		oSockAddrToNetAddr(*AddrRemote, &desc.Addr);
 
 		bool success;

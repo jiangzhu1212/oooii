@@ -149,7 +149,7 @@ bool oSocketEncryptor_Impl::OpenSSLConnection(SOCKET _hSocket, unsigned int _Tim
 		{
 			bWriteBlocked = false;
 			bReadBlocked = false;
-			if((res = oWinsock::Singleton()->select((int)_hSocket+1,&fdread,&fdwrite,NULL,&time)) == SOCKET_ERROR)
+			if((res = select((int)_hSocket+1,&fdread,&fdwrite,NULL,&time)) == SOCKET_ERROR)
 			{
 				FD_ZERO(&fdwrite);
 				FD_ZERO(&fdread);
@@ -202,8 +202,6 @@ void oSocketEncryptor_Impl::CleanupOpenSSL()
 
 int oSocketEncryptor_Impl::Send(SOCKET _hSocket, const void *_pSource, unsigned int _SizeofSource, unsigned int _TimeoutMS)
 {
-	oWinsock* ws = oWinsock::Singleton();
-
 	fd_set fdwrite;
 	fd_set fdread;
 	
@@ -230,7 +228,7 @@ int oSocketEncryptor_Impl::Send(SOCKET _hSocket, const void *_pSource, unsigned 
 			FD_SET(_hSocket, &fdread);
 		}
 
-		if((res = ws->select((int)_hSocket+1,&fdread,&fdwrite,NULL,&time)) == SOCKET_ERROR)
+		if((res = select((int)_hSocket+1,&fdread,&fdwrite,NULL,&time)) == SOCKET_ERROR)
 		{
 			FD_ZERO(&fdwrite);
 			FD_ZERO(&fdread);
@@ -245,7 +243,7 @@ int oSocketEncryptor_Impl::Send(SOCKET _hSocket, const void *_pSource, unsigned 
 			return 0;
 		}
 
-		if(ws->FD_ISSET(_hSocket,&fdwrite) || (bWriteBlockedOnRead && ws->FD_ISSET(_hSocket, &fdread)))
+		if(FD_ISSET(_hSocket,&fdwrite) || (bWriteBlockedOnRead && FD_ISSET(_hSocket, &fdread)))
 		{
 			res = oOpenSSL::Singleton().SSL_write(pSSL, _pSource, _SizeofSource);
 
@@ -276,7 +274,6 @@ int oSocketEncryptor_Impl::Send(SOCKET _hSocket, const void *_pSource, unsigned 
 
 int oSocketEncryptor_Impl::Receive(SOCKET _hSocket, char *_pData, unsigned int _BufferSize, unsigned int _TimeoutMS)
 {
-	oWinsock *ws = oWinsock::Singleton();
 	int res = 0, offset = 0;
 	fd_set fdread;
 	fd_set fdwrite;
@@ -297,7 +294,7 @@ int oSocketEncryptor_Impl::Receive(SOCKET _hSocket, char *_pData, unsigned int _
 		if(bReadBlockedOnWrite)
 			FD_SET(_hSocket, &fdwrite);
 
-		if((res = ws->select((int)_hSocket+1, &fdread, &fdwrite, NULL, &time)) == SOCKET_ERROR)
+		if((res = select((int)_hSocket+1, &fdread, &fdwrite, NULL, &time)) == SOCKET_ERROR)
 		{
 			FD_ZERO(&fdread);
 			FD_ZERO(&fdwrite);
@@ -312,7 +309,7 @@ int oSocketEncryptor_Impl::Receive(SOCKET _hSocket, char *_pData, unsigned int _
 			return 0;
 		}
 
-		if(ws->FD_ISSET(_hSocket,&fdread) || (bReadBlockedOnWrite && ws->FD_ISSET(_hSocket,&fdwrite)))
+		if(FD_ISSET(_hSocket,&fdread) || (bReadBlockedOnWrite && FD_ISSET(_hSocket,&fdwrite)))
 		{
 			while(1)
 			{
