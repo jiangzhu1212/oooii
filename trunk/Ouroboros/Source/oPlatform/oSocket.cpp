@@ -36,6 +36,7 @@
 #include <oCore/windows/win_error.h>
 
 using namespace ouro;
+using namespace ouro::windows;
 
 // The Internal versions of these structs simply have the private
 // classification removed. In the event that we need to address multiple
@@ -196,7 +197,7 @@ oAPI bool oSocketHostIsLocal( oNetHost _Host )
 
 oAPI void oSocketEnumerateAllAddress( oFUNCTION<void(oNetAddr _Addr)> _Enumerator )
 {
-	oWinsockEnumerateAllAddress(
+	winsock::enumerate_addresses(
 		[&](sockaddr_in _SockAddr)
 	{
 		oNetAddr NetAddr;
@@ -213,20 +214,12 @@ oSocket::size_t oWinsockRecvFromBlocking(SOCKET hSocket, void* _pData, oSocket::
 	if (oInfiniteWait == _Timeout)
 		_Timeout = SaneMaxTimout; // oInfiniteWait doesn't seem to work with setsockopt, so use a sane max
 
-	if (SOCKET_ERROR == setsockopt(hSocket, SOL_SOCKET, SO_RCVTIMEO,(char *)&_Timeout, sizeof(unsigned int))) 
-		goto error;
+	oWSAVB(setsockopt(hSocket, SOL_SOCKET, SO_RCVTIMEO,(char *)&_Timeout, sizeof(unsigned int)));
 
 	int AddrSize = sizeof(_RecvAddr);
 	TotalReceived = recvfrom(hSocket, (char*)_pData, _szReceive, _Flags, (sockaddr*)const_cast<SOCKADDR_IN*>(&_RecvAddr)/*const_cast for bad windows API*/, &AddrSize);
-	if (SOCKET_ERROR == TotalReceived) 
-		goto error;
-	
+	oWSAVB(TotalReceived);
 	return TotalReceived;
-
-error:
-
-	oErrorSetLast(std::errc::io_error, "%s", oWinsockAsString(WSAGetLastError()));
-	return 0;
 }
 
 struct oSocketImpl
@@ -344,8 +337,7 @@ oSocketImpl::oSocketImpl(const char* _DebugName, SOCKET _hTarget, bool* _pSucces
 
 oSocketImpl::~oSocketImpl()
 {
-	if (hSocket != INVALID_SOCKET)
-		oWinsockClose(hSocket);
+	winsock::close(hSocket);
 }
 
 bool oSocketImpl::Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyDeleterFn _ProxyDeleter) threadsafe
@@ -363,7 +355,7 @@ bool oSocketImpl::Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyD
 
 		if (INVALID_SOCKET == hSocket)
 		{
-			unsigned int Options = oWINSOCK_REUSE_ADDRESS | (Desc.Style == oSocket::BLOCKING ? oWINSOCK_BLOCKING : 0);
+			unsigned int Options = winsock::reuse_address | (Desc.Style == oSocket::BLOCKING ? winsock::blocking : 0);
 			if (oSocket::UDP == Desc.Protocol)
 			{
 				// For un-connected receives (UDP) it is necessary that we bind to a local address and port
@@ -371,11 +363,11 @@ bool oSocketImpl::Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyD
 				SOCKADDR_IN LocalAddr;
 				oNetAddrToSockAddr(lockedThis->Desc.Addr, &LocalAddr);
 				LocalAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-				hSocket = oWinsockCreate(LocalAddr, Options | oWINSOCK_ALLOW_BROADCAST, lockedThis->Desc.ConnectionTimeoutMS);
+				hSocket = winsock::make(LocalAddr, Options | winsock::allow_broadcast, lockedThis->Desc.ConnectionTimeoutMS);
 			}
 			else
 			{
-				hSocket = oWinsockCreate(Saddr, Options | oWINSOCK_RELIABLE,  lockedThis->Desc.ConnectionTimeoutMS);
+				hSocket = winsock::make(Saddr, Options | winsock::reliable, lockedThis->Desc.ConnectionTimeoutMS);
 			}
 		}
 		if (hSocket == INVALID_SOCKET)
@@ -531,16 +523,13 @@ bool oSocketImpl::SendToInternal(const void* _pHeader, oSocket::size_t _SizeHead
 		if (SOCKET_ERROR == setsockopt(hSocket, SOL_SOCKET, SO_SNDTIMEO,(char *)&_TimeoutMS, sizeof(unsigned int)))
 			return false;
 
-		if (!oWinsockSend(hSocket, _pHeader, _SizeHeader, &_Destination))
-		{
-			oWINSOCK_SETLASTERROR("Send");
-			return false;
-		}
+		try { winsock::send(hSocket, _pHeader, _SizeHeader, &_Destination); }
+		catch (std::exception& e) { return oErrorSetLast(e); }
 
-		if (_pBody &&  (!oWinsockSend(hSocket, _pBody, _SizeBody, &_Destination)))
+		if (_pBody)
 		{
-			oWINSOCK_SETLASTERROR("Send");
-			return false;
+			try { winsock::send(hSocket, _pBody, _SizeBody, &_Destination); }
+			catch (std::exception& e) { return oErrorSetLast(e); }
 		}
 	}
 	else
@@ -719,7 +708,7 @@ bool oSocketImpl::IsConnected() const threadsafe
 	if (Disabled)
 		return false;
 
-	return oWinsockIsConnected(hSocket);
+	return winsock::connected(hSocket);
 }
 
 bool oSocketImpl::GetHostname( char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort ) const threadsafe 
@@ -728,7 +717,8 @@ bool oSocketImpl::GetHostname( char* _OutHostname, size_t _SizeofOutHostname, ch
 	if (Disabled)
 		return false;
 
-	return oWinsockGetHostname(_OutHostname, _SizeofOutHostname, _OutIPAddress, _SizeofOutIPAddress, _OutPort, _SizeofOutPort, hSocket);
+	winsock::get_hostname(_OutHostname, _SizeofOutHostname, _OutIPAddress, _SizeofOutIPAddress, _OutPort, _SizeofOutPort, hSocket);
+	return true;
 }
 
 bool oSocketImpl::GetPeername( char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort ) const threadsafe 
@@ -737,7 +727,8 @@ bool oSocketImpl::GetPeername( char* _OutHostname, size_t _SizeofOutHostname, ch
 	if (Disabled)
 		return false;
 
-	return oWinsockGetPeername(_OutHostname, _SizeofOutHostname, _OutIPAddress, _SizeofOutIPAddress, _OutPort, _SizeofOutPort, hSocket);
+	winsock::get_peername(_OutHostname, _SizeofOutHostname, _OutIPAddress, _SizeofOutIPAddress, _OutPort, _SizeofOutPort, hSocket);
+	return true;
 }
 
 bool oSocketImpl::SetKeepAlive(unsigned int _TimeoutMS, unsigned int _IntervalMS) const threadsafe
@@ -746,7 +737,8 @@ bool oSocketImpl::SetKeepAlive(unsigned int _TimeoutMS, unsigned int _IntervalMS
 	if (Disabled)
 		return false;
 
-	return oWinsockSetKeepAlive(hSocket, _TimeoutMS, _IntervalMS);
+	winsock::set_keepalive(hSocket, _TimeoutMS, _IntervalMS);
+	return true;
 }
 
 struct oSocketImplProxy : public oSocketEncrypted
@@ -1000,30 +992,21 @@ SocketServer_Impl::SocketServer_Impl(const char* _DebugName, const DESC& _Desc, 
 	sockaddr_in SAddr;
 	oNetAddrToSockAddr(Addr, &SAddr);
 
-	hSocket = oWinsockCreate(SAddr, oWINSOCK_RELIABLE | oWINSOCK_EXCLUSIVE_ADDRESS, oInfiniteWait, Desc.MaxNumConnections);
+	hSocket = winsock::make(SAddr, winsock::reliable | winsock::exclusive_address, oInfiniteWait, Desc.MaxNumConnections);
 	if (INVALID_SOCKET == hSocket)
 		return; // leave last error from inside oWinsockCreate
 
 	if (!Desc.ListenPort)
-	{
-		if (!oWinsockGetPort(hSocket, &Desc.ListenPort))
-			return; // leave last error from inside oWinsockGetPort
-	}
+		Desc.ListenPort = winsock::get_port(hSocket);
 
 	hConnectEvent = WSACreateEvent();
-	if (SOCKET_ERROR == WSAEventSelect(hSocket, hConnectEvent, FD_ACCEPT))
-	{
-		oWINSOCK_SETLASTERROR("WSAEventSelect");
-		return;
-	}
-
+	oWSAVB(WSAEventSelect(hSocket, hConnectEvent, FD_ACCEPT));
 	*_pSuccess = true;
 }
 
 SocketServer_Impl::~SocketServer_Impl()
 {
-	if (INVALID_SOCKET != hSocket)
-		oVERIFY(oWinsockClose(hSocket));
+	winsock::close(hSocket);
 
 	if (hConnectEvent)
 		WSACloseEvent(hConnectEvent);
@@ -1036,7 +1019,8 @@ const char* SocketServer_Impl::GetDebugName() const threadsafe
 
 bool SocketServer_Impl::GetHostname(char* _pString, size_t _strLen) const threadsafe 
 {
-	return oWinsockGetHostname(_pString, _strLen, nullptr, NULL, nullptr, NULL, hSocket);
+	winsock::get_hostname(_pString, _strLen, nullptr, NULL, nullptr, NULL, hSocket);
+	return true;
 }
 
 static bool UNIFIED_WaitForConnection(
@@ -1054,7 +1038,7 @@ static bool UNIFIED_WaitForConnection(
 	bool success = false;
 
 	oScopedPartialTimeout timeout = oScopedPartialTimeout(&_TimeoutMS);
-	if (oWinsockWaitMultiple(thread_cast<WSAEVENT*>(&_hConnectEvent), 1, true, false, _TimeoutMS)) // thread_cast safe because of mutex
+	if (winsock::wait(thread_cast<WSAEVENT*>(&_hConnectEvent), _TimeoutMS)) // thread_cast safe because of mutex
 	{
 		sockaddr_in saddr;
 		int size = sizeof(saddr);
@@ -1233,7 +1217,7 @@ void SocketServerPool::AddNewSocket(int _Num)
 {
  	for (int i = 0;i < _Num; ++i)
  	{
-		SOCKET hSocket = oWinsockCreateForAsyncAccept();
+		SOCKET hSocket = winsock::make_async_accept();
 		bool success = true;
 		auto pSocket = new oSocketImpl("accept socket", hSocket, &success);
 		oASSERT(success, "This should always succeed, oSocketImpl constructor doesn't do anything");
@@ -1297,7 +1281,7 @@ private:
 		};
 		OperationType OpType;
 		oSocketImpl* Socket;
-		char AcceptAddressesBuffer[oWINSOCK_ACCEPT_BUFFER_SIZE]; //From msdn docs, buffer needs 16 bytes padding for each address. buffer will hold 2
+		char AcceptAddressesBuffer[winsock::accept_buffer_size]; //From msdn docs, buffer needs 16 bytes padding for each address. buffer will hold 2
 	};
 
 	void IOCPCallback(oIOCPOp* _pSocketOp);
@@ -1350,7 +1334,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	sockaddr_in SAddr;
 	oNetAddrToSockAddr(Addr, &SAddr);
 
-	hListenSocket = oWinsockCreate(SAddr, oWINSOCK_RELIABLE | oWINSOCK_EXCLUSIVE_ADDRESS, oInfiniteWait, oInvalid);
+	hListenSocket = winsock::make(SAddr, winsock::reliable | winsock::exclusive_address, oInfiniteWait, oInvalid);
 	if (INVALID_SOCKET == hListenSocket)
 		return; // leave last error from inside oWinsockCreate
 	
@@ -1392,8 +1376,7 @@ SocketServer2_Impl::~SocketServer2_Impl()
 	if (SocketPool)
 		SocketPool->ServerClosed();
 
-	if (INVALID_SOCKET != hListenSocket)
-		oVERIFY(oWinsockClose(hListenSocket));
+	winsock::close(hListenSocket);
 }
 
 int SocketServer2_Impl::Reference() threadsafe 
@@ -1438,8 +1421,8 @@ void SocketServer2_Impl::Accept()
 	myop->OpType = Operation::ACCEPT_REQUEST;
 	myop->Socket = socket;
 
-	oWINSOCK_ASYNC_RESULT result = oWinsockAsyncAccept(hListenSocket, socket->GetHandle(), myop->AcceptAddressesBuffer, iocpOp);
-	if (result == oWINSOCK_FAILED)
+	winsock::async_result result = winsock::accept_async(hListenSocket, socket->GetHandle(), myop->AcceptAddressesBuffer, iocpOp);
+	if (result == winsock::failed)
 	{
 		oASSERT(false, "Not really expecting the asyncex call to fail");
 
@@ -1449,7 +1432,7 @@ void SocketServer2_Impl::Accept()
 
 		return;
 	}
-	else if (result == oWINSOCK_COMPLETED) //handle very rare case where accept is completed synchronously
+	else if (result == winsock::completed) //handle very rare case where accept is completed synchronously
 	{
 		pIOCP->DispatchManualCompletion((oHandle)hListenSocket, iocpOp);
 	}
@@ -1469,13 +1452,17 @@ void SocketServer2_Impl::Disconnect(oSocketImpl* _Socket)
 	myop->OpType = Operation::DISCONNECT_REQUEST;
 	myop->Socket = _Socket;
 
-	oWINSOCK_ASYNC_RESULT result = oWinsockAsyncAcceptPrepForReuse(hListenSocket, _Socket->GetHandle(), iocpOp);
-	if (result == oWINSOCK_FAILED)
+	winsock::async_result result = winsock::failed;
+	
+	try { result = winsock::recycle_async_accept(hListenSocket, _Socket->GetHandle(), iocpOp); }
+	catch (std::exception&) {}
+
+	if (result == winsock::failed)
 	{
 		oASSERT(false, "not expecting disconectex to fail, if it is, can't recyle these sockets");
 		pIOCP->ReturnOp(iocpOp);
 	}
-	else if (result == oWINSOCK_COMPLETED) //handle very rare case where Disconnect is completed synchronously
+	else if (result == winsock::completed) //handle very rare case where Disconnect is completed synchronously
 	{
 		pIOCP->DispatchManualCompletion((oHandle)hListenSocket, iocpOp);
 	}
@@ -1487,7 +1474,8 @@ void SocketServer2_Impl::Disconnect(oSocketImpl* _Socket)
 
 bool SocketServer2_Impl::GetHostname(char* _pString, size_t _strLen) const threadsafe 
 {
-	return oWinsockGetHostname(_pString, _strLen, nullptr, NULL, nullptr, NULL, hListenSocket);
+	winsock::get_hostname(_pString, _strLen, nullptr, NULL, nullptr, NULL, hListenSocket);
+	return true;
 }
 
 class oSocketAsyncCallbackNOP : public oSocketAsyncCallback
@@ -1525,11 +1513,12 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 		int SzAddrLocal;
 		sockaddr_in* AddrRemote;
 		int SzAddrRemote;
-		oWinsockAsyncAcceptExSockAddrs(pOp->Socket->GetHandle(), pOp->AcceptAddressesBuffer, (SOCKADDR**)&AddrLocal, &SzAddrLocal, (SOCKADDR**)&AddrRemote, &SzAddrRemote);
+		winsock::acceptexsockaddrs_async(pOp->Socket->GetHandle(), pOp->AcceptAddressesBuffer, (SOCKADDR**)&AddrLocal, &SzAddrLocal, (SOCKADDR**)&AddrRemote, &SzAddrRemote);
 		oSockAddrToNetAddr(*AddrRemote, &desc.Addr);
 
-		bool success;
-		success = oWinsockCompleteAsyncAccept(hListenSocket, pOp->Socket->GetHandle());
+		bool success = true;
+		try { winsock::finish_async_accept(hListenSocket, pOp->Socket->GetHandle()); }
+		catch (std::exception&) { success = false; }
 
 		intrusive_ptr<oSocket> socket = nullptr;
 		intrusive_ptr<SocketServerPool> sPool = SocketPool;

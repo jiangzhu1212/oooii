@@ -23,217 +23,38 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oWinsock.h"
-#include <oBase/assert.h>
-#include <oBasis/oError.h>
-#include <oBasis/oScopedPartialTimeout.h>
-#include <oCore/reporting.h>
-#include <oGUI/oMsgBox.h>
-#include <cerrno>
+#include <oStd/atomic.h>
+#include <oBase/macros.h>
 
-#include <oCore/windows/win_version.h>
+#include <oBasis/oScopedPartialTimeout.h> // FIXME
 
-using namespace ouro;
+namespace ouro {
+	namespace windows {
+		namespace winsock {
 
-namespace detail {
-
-static const char* ws2_32_dll_Functions[] = 
-{
-	"accept",
-	"bind",
-	"closesocket",
-	"connect",
-	"freeaddrinfo",
-	"FreeAddrInfoEx",
-	"FreeAddrInfoW",
-	"getaddrinfo",
-	"GetAddrInfoW",
-	"gethostbyaddr",
-	"gethostbyname",
-	"gethostname",
-	"getnameinfo",
-	"GetNameInfoW",
-	"getpeername",
-	"getprotobyname",
-	"getprotobynumber",
-	"getservbyname",
-	"getservbyport",
-	"getsockname",
-	"getsockopt",
-	"htonl",
-	"htons",
-	"inet_addr",
-	"inet_ntoa",
-	"inet_pton",
-	"ioctlsocket",
-	"listen",
-	"ntohl",
-	"ntohs",
-	"recv",
-	"recvfrom",
-	"select",
-	"send",
-	"sendto",
-	"setsockopt",
-	"shutdown",
-	"socket",
-	"WSAAccept",
-	"WSAAddressToStringA",
-	"WSAAddressToStringW",
-	"WSAAsyncGetHostByAddr",
-	"WSAAsyncGetHostByName",
-	"WSAAsyncGetProtoByName",
-	"WSAAsyncGetProtoByNumber",
-	"WSAAsyncGetServByName",
-	"WSAAsyncGetServByPort",
-	"WSAAsyncSelect",
-	"WSACancelAsyncRequest",
-	"WSACleanup",
-	"WSACloseEvent",
-	"WSAConnect",
-	"WSAConnectByList",
-	"WSAConnectByNameA",
-	"WSAConnectByNameW",
-	"WSACreateEvent",
-	"WSADuplicateSocketA",
-	"WSADuplicateSocketW",
-	"WSAEnumNameSpaceProvidersA",
-	"WSAEnumNameSpaceProvidersW",
-	"WSAEnumNameSpaceProvidersExA",
-	"WSAEnumNameSpaceProvidersExW",
-	"WSAEnumNetworkEvents",
-	"WSAEnumProtocolsA",
-	"WSAEnumProtocolsW",
-	"WSAEventSelect",
-	"__WSAFDIsSet",
-	"WSAGetLastError",
-	"WSAGetOverlappedResult",
-	"WSAGetQOSByName",
-	"WSAGetServiceClassInfoA",
-	"WSAGetServiceClassInfoW",
-	"WSAGetServiceClassNameByClassIdA",
-	"WSAGetServiceClassNameByClassIdW",
-	"WSAHtonl",
-	"WSAHtons",
-	"WSAInstallServiceClassA",
-	"WSAInstallServiceClassW",
-	"WSAIoctl",
-	"WSAJoinLeaf",
-	"WSALookupServiceBeginA",
-	"WSALookupServiceBeginW",
-	"WSALookupServiceEnd",
-	"WSALookupServiceNextA",
-	"WSALookupServiceNextW",
-	"WSANSPIoctl",
-	"WSANtohl",
-	"WSANtohs",
-	"WSAPoll",
-	"WSAProviderConfigChange",
-	"WSARecv",
-	"WSARecvDisconnect",
-	"WSARecvFrom",
-	"WSARemoveServiceClass",
-	"WSAResetEvent",
-	"WSASend",
-	"WSASendDisconnect",
-	"WSASendMsg",
-	"WSASendTo",
-	"WSASetEvent",
-	"WSASetLastError",
-	"WSASetServiceA",
-	"WSASetServiceW",
-	"WSAStartup",
-	"WSAStringToAddressA",
-	"WSAStringToAddressW",
-	"WSAWaitForMultipleEvents",
-	"WSASocketA",
-	"WSASocketW",
-	"GetAddrInfoExA",
-	"GetAddrInfoExW",
-	"SetAddrInfoExA",
-	"SetAddrInfoExW",
-	"inet_ntop", // InetNtopA as a macro
-	"InetNtopW",
-};
-
-static const char* mswsock_dll_Functions[] = 
-{
-	"GetNameByTypeA",
-	"GetNameByTypeW",
-	"GetTypeByNameA",
-	"GetTypeByNameW",
-	"WSARecvEx",
-	"TransmitFile",
-};
-
-static const char* fwpucint_dll_Functions[] = 
-{
-	"WSADeleteSocketPeerTargetName",
-	"WSAImpersonateSocketPeer",
-	"WSAQuerySocketSecurity",
-	"WSARevertImpersonation",
-	"WSASetSocketSecurity",
-	"WSASetSocketPeerTargetName",
-};
-
-} // namespace detail
-
-// WSAIoctl functions with the SIO_GET_EXTENSION_FUNCTION_POINTER
-// "AcceptEx",
-// "ConnectEx",
-// "DisconnectEx",
-// "GetAcceptExSockaddrs",
-// TransmitPackets
-// "WSARecvMsg",
-
-const static unsigned int kWinsockMajorVersion = 2;
-const static unsigned int kWinsockMinorVersion = 2;
-
-class oWinsockStartup
-{
-public:
-	oWinsockStartup()
-	{
-		WORD wVersion = MAKEWORD(kWinsockMajorVersion, kWinsockMinorVersion);
-		WSADATA wsaData;
-
-		#ifdef oENABLE_ASSERTS
-			int err = 
-		#endif
-		WSAStartup(wVersion, &wsaData);
-		oWINSOCK_ASSERT(!err, "oWinsock 2.2 initialization failed");
-	}
-
-	~oWinsockStartup()
-	{
-		WSACleanup();
-	}
-};
-
-static oWinsockStartup sWinsockStartup;
-	
 struct WSA_ERR
 {
-	HRESULT WSAError;
-	const char* WSAErrorStr;
-	errno_t Errno;
-	const char* WSADesc;
+	HRESULT hresult;
+	const char* errstr;
+	std::errc::errc err;
+	const char* errdesc;
 };
 
 #ifndef ESOCKTNOSUPPORT
-#define ESOCKTNOSUPPORT -37
+	#define ESOCKTNOSUPPORT -37
 #endif
 #ifndef ESHUTDOWN
-#define ESHUTDOWN -36
+	#define ESHUTDOWN -36
 #endif
 
 #define WSAERR(x) x, #x
-#define WSAERRNO(x) WSA##x, "WSA" #x, x
-#define WSAERRNOX(x) WSA##x, "WSA" #x, EINVAL
-static const WSA_ERR sErrors[] =
+#define WSAERRNO(x) WSA##x, "WSA" #x, std::errc::errc(x)
+#define WSAERRNOX(x) WSA##x, "WSA" #x, std::errc::protocol_error
+static const WSA_ERR sWSAErrors[] =
 {
-	{ WSAERR(WSANOTINITIALISED), /*ENOTRECOVERABLE*/EINVAL, "Either the application has not called WSAStartup or WSAStartup failed. The application may be accessing a socket that the current active task does not own (that is, trying to share a socket between tasks), or WSACleanup has been called too many times." },
+	{ WSAERR(WSANOTINITIALISED), std::errc::state_not_recoverable , "Either the application has not called WSAStartup or WSAStartup failed. The application may be accessing a socket that the current active task does not own (that is, trying to share a socket between tasks), or WSACleanup has been called too many times." },
 	{ WSAERRNOX(ENETDOWN), 0 },
-	{ WSAERR(WSAVERNOTSUPPORTED), EINVAL, 0 },
+	{ WSAERR(WSAVERNOTSUPPORTED), std::errc::operation_not_supported, 0 },
 	{ WSAERRNOX(EAFNOSUPPORT), 0 },
 	{ WSAERRNOX(EINPROGRESS), 0 },
 	{ WSAERRNO(EMFILE), 0 },
@@ -242,8 +63,8 @@ static const WSA_ERR sErrors[] =
 	{ WSAERRNOX(EPROTONOSUPPORT), 0 },
 	{ WSAERRNOX(EPROTOTYPE), 0 },
 	{ WSAERRNO(ESOCKTNOSUPPORT), 0 },
-	{ WSAERR(WSASYSNOTREADY), EINVAL, 0 },
-	{ WSAERR(WSAEPROCLIM), EMLINK, 0 },
+	{ WSAERR(WSASYSNOTREADY), std::errc::protocol_not_supported, 0 },
+	{ WSAERR(WSAEPROCLIM), std::errc::too_many_links, 0 },
 	{ WSAERRNO(EFAULT), 0 },
 	{ WSAERRNOX(ENOTSOCK), 0 },
 	{ WSAERRNOX(ENETRESET), 0 },
@@ -256,84 +77,95 @@ static const WSA_ERR sErrors[] =
 	{ WSAERRNOX(EHOSTUNREACH), 0 },
 	{ WSAERRNOX(ETIMEDOUT), 0 },
 	{ WSAERRNOX(EWOULDBLOCK), 0 },
-	{ WSAERR(WSAEACCES), EPERM, 0 },
+	{ WSAERRNO(EACCES), 0 },
 	{ WSAERRNOX(EADDRINUSE), 0 },
 	{ WSAERRNOX(EOPNOTSUPP), 0 },
 	{ WSAERRNO(ESHUTDOWN), 0 },
 	{ WSAERRNOX(EMSGSIZE), 0 },
 };
 
-const char* oWinsockAsString(int _WSAWinSockError)
+const char* as_string_WSAerr(int _WSAError)
 {
-	oFORI(i, sErrors)
-		if (_WSAWinSockError == sErrors[i].WSAError)
-			return sErrors[i].WSAErrorStr;
-	return "Unknown WSA error";
+	oFORI(i, sWSAErrors)
+		if (_WSAError == sWSAErrors[i].hresult)
+			return sWSAErrors[i].errstr;
+	return "?";
 }
 
-const char* oWinsockGetErrorDesc(int _WSAWinSockError)
+const char* get_desc(int _WSAError)
 {
-	oFORI(i, sErrors)
-		if (_WSAWinSockError == sErrors[i].WSAError && sErrors[i].WSADesc)
-			return sErrors[i].WSADesc;
+	oFORI(i, sWSAErrors)
+		if (_WSAError == sWSAErrors[i].hresult && sWSAErrors[i].errdesc)
+			return sWSAErrors[i].errdesc;
 	
 	return "See http://msdn.microsoft.com/en-us/library/ms740668(v=vs.85).aspx for more information.";
 }
 
-errno_t oWinsockGetErrno(int _WSAWinSockError)
+std::errc::errc get_errc(int _WSAError)
 {
-	oFORI(i, sErrors)
-		if (_WSAWinSockError == sErrors[i].WSAError)
-			return sErrors[i].Errno;
-	
-	return EINVAL;
+	oFORI(i, sWSAErrors)
+		if (_WSAError == sWSAErrors[i].hresult)
+			return sWSAErrors[i].err;
+	return std::errc::state_not_recoverable;
 }
 
-bool oWinsockGetFunctionPointer_ConnectEx(SOCKET s, LPFN_CONNECTEX* ppConnectEx)
+LPFN_CONNECTEX getfn_ConnectEx(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
 	oGUID guid = WSAID_CONNECTEX;
-	return SOCKET_ERROR != WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppConnectEx, sizeof(LPFN_CONNECTEX), &dwBytesReturned, 0, 0);
+	LPFN_CONNECTEX pConnectEx = nullptr;
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pConnectEx, sizeof(LPFN_CONNECTEX), &dwBytesReturned, 0, 0));
+	return pConnectEx;
 }
 
-bool oWinsockGetFunctionPointer_DisconnectEx(SOCKET s, LPFN_DISCONNECTEX* ppDisconnectEx)
+LPFN_DISCONNECTEX getfn_DisconnectEx(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
 	oGUID guid = WSAID_DISCONNECTEX;
-	return SOCKET_ERROR != WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppDisconnectEx, sizeof(LPFN_DISCONNECTEX), &dwBytesReturned, 0, 0);
+	LPFN_DISCONNECTEX pDisconnectEx = nullptr;
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pDisconnectEx, sizeof(LPFN_DISCONNECTEX), &dwBytesReturned, 0, 0));
+	return pDisconnectEx;
 }
 
-bool oWinsockGetFunctionPointer_GetAcceptExSockaddrs(SOCKET s, LPFN_GETACCEPTEXSOCKADDRS* ppGetAcceptExSockaddrs)
+LPFN_GETACCEPTEXSOCKADDRS getfn_GetAcceptExSockaddrs(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
 	oGUID guid = WSAID_GETACCEPTEXSOCKADDRS;
-	return SOCKET_ERROR != WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppGetAcceptExSockaddrs, sizeof(LPFN_GETACCEPTEXSOCKADDRS), &dwBytesReturned, 0, 0);
+	LPFN_GETACCEPTEXSOCKADDRS pGetAcceptExSockaddrs = nullptr;
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pGetAcceptExSockaddrs, sizeof(LPFN_GETACCEPTEXSOCKADDRS), &dwBytesReturned, 0, 0));
+	return pGetAcceptExSockaddrs;
 }
 
-bool oWinsockGetFunctionPointer_TransmitPackets(SOCKET s, LPFN_TRANSMITPACKETS* ppTransmitPackets)
+LPFN_TRANSMITPACKETS getfn_TransmitPackets(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
 	oGUID guid = WSAID_TRANSMITPACKETS;
-	return SOCKET_ERROR != WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppTransmitPackets, sizeof(LPFN_TRANSMITPACKETS), &dwBytesReturned, 0, 0);
+	LPFN_TRANSMITPACKETS pTransmitPackets = nullptr;
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pTransmitPackets, sizeof(LPFN_TRANSMITPACKETS), &dwBytesReturned, 0, 0));
+	return pTransmitPackets;
 }
 
-bool oWinsockGetFunctionPointer_WSARecvMsg(SOCKET s, LPFN_WSARECVMSG* ppWSARecvMsg)
+LPFN_WSARECVMSG getfn_WSARecvMsg(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
 	oGUID guid = WSAID_WSARECVMSG;
-	return SOCKET_ERROR != WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppWSARecvMsg, sizeof(LPFN_WSARECVMSG), &dwBytesReturned, 0, 0);
+	LPFN_WSARECVMSG pWSARecvMsg = nullptr;
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pWSARecvMsg, sizeof(LPFN_WSARECVMSG), &dwBytesReturned, 0, 0));
+	return pWSARecvMsg;
 }
 
-bool oWinsockGetFunctionPointer_AcceptEx(SOCKET s, LPFN_ACCEPTEX* ppAcceptEx)
+LPFN_ACCEPTEX getfn_AcceptEx(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
 	oGUID guid = WSAID_ACCEPTEX;
-	return SOCKET_ERROR != WSAIoctl(s, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), ppAcceptEx, sizeof(LPFN_ACCEPTEX), &dwBytesReturned, 0, 0);
+	LPFN_ACCEPTEX pAcceptEx = nullptr;
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pAcceptEx, sizeof(LPFN_ACCEPTEX), &dwBytesReturned, 0, 0));
+	return pAcceptEx;
 }
 
-void oWinsockCreateAddr(sockaddr_in* _pOutSockAddr, const char* _Hostname)
+sockaddr_in make_addr(const char* _Hostname)
 {
-	char host[1024];
+	char host[256];
 	strlcpy(host, _Hostname);
 	unsigned short port = 0;
 	char* strPort = strstr(host, ":");
@@ -343,49 +175,119 @@ void oWinsockCreateAddr(sockaddr_in* _pOutSockAddr, const char* _Hostname)
 		*strPort = 0;
 	}
 
-	memset(_pOutSockAddr, 0, sizeof(sockaddr_in));
+	sockaddr_in sa;
+	memset(&sa, 0, sizeof(sa));
 	hostent* pHost = gethostbyname(host);
-	_pOutSockAddr->sin_family = AF_INET;
-	_pOutSockAddr->sin_port = htons(port);
-	_pOutSockAddr->sin_addr.s_addr = inet_addr(inet_ntoa(*(in_addr*)*pHost->h_addr_list));
+	sa.sin_family = AF_INET;
+	sa.sin_port = htons(port);
+	sa.sin_addr.s_addr = inet_addr(inet_ntoa(*(in_addr*)*pHost->h_addr_list));
+	return sa;
 }
 
-void oWinsockAddrToHostname(sockaddr_in* _pSockAddr, char* _OutHostname, size_t _SizeOfHostname)
+char* addr_to_hostname(char* _StrDestination, size_t _SizeofStrDestination, const sockaddr_in& _SockAddr)
 {
-	unsigned long addr = ntohl(_pSockAddr->sin_addr.s_addr);
-	unsigned short port = ntohs(_pSockAddr->sin_port);
-
-	snprintf(_OutHostname, _SizeOfHostname, "%u.%u.%u.%u:%u", (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF, port);
+	const unsigned long addr = ntohl(_SockAddr.sin_addr.s_addr);
+	const unsigned short port = ntohs(_SockAddr.sin_port);
+	if (-1 == snprintf(_StrDestination, _SizeofStrDestination
+		, "%u.%u.%u.%u:%u"
+		, (addr&0xFF000000)>>24, (addr&0xFF0000)>>16, (addr&0xFF00)>>8, addr&0xFF
+		, port))
+		oTHROW0(no_buffer_space);
+	return _StrDestination;
 }
 
-//#define FD_TRACE(TracePrefix, TraceName, FDEvent) oTRACE("%s%s%s: %s (%s)", oSAFESTR(TracePrefix), _TracePrefix ? " " : "", oSAFESTR(TraceName), #FDEvent, oWinsockGetErrorString(_pNetworkEvents->iErrorCode[FDEvent##_BIT]))
-#define FD_TRACE(TracePrefix, TraceName, FDEvent)
-
-// Assumes WSANETWORKEVENTS ne; int err;
-#define FD_CHECK(FDEvent) \
-	if (_pNetworkEvents->lNetworkEvents & FDEvent) \
-	{	FD_TRACE(_TracePrefix, _TraceName, ##FDEvent); \
-		err = _pNetworkEvents->iErrorCode[FDEvent##_BIT]; \
-	}
-
-// Checks all values from a network event and return an error based on what happened.
-bool oWinsockTraceEvents(const char* _TracePrefix, const char* _TraceName, const WSANETWORKEVENTS* _pNetworkEvents)
+static void get_name_base(char* _StrOutHostname, size_t _SizeofStrOutHostname, char* _StrOutIPAddress, size_t _SizeofStrOutIPAddress, char* _StrOutPort, size_t _SizeofStrOutPort, SOCKET _hSocket, const std::function<int(SOCKET _hSocket, sockaddr* _Name, int* _pNameLen)>& _GetSockAddr)
 {
-	int err = 0;
+	sockaddr_in saddr;
+	int size = sizeof(saddr);
+	oWSAVB(_GetSockAddr(_hSocket, (sockaddr*)&saddr, &size));
 
-	if (!_pNetworkEvents->lNetworkEvents)
-	{
-		// http://www.mombu.com/microsoft/alt-winsock-programming/t-wsaenumnetworkevents-returns-no-event-how-is-this-possible-1965867.html
-		// Also Google "spurious wakeup" 
-		oASSERT(false, "%s%s%s: WSAEVENT, but no lNetworkEvent: \"spurious wakeup\". You should ignore the event as if it never happened by testing for _pNetworkEvents->lNetworkEvents == 0 in calling code.", oSAFESTR(_TracePrefix), _TracePrefix ? " " : "", oSAFESTR(_TraceName));
-		return oErrorSetLast(std::errc::protocol_error, "%s%s%s: WSAEVENT, but no lNetworkEvent: \"spurious wakeup\". You should ignore the event as if it never happened by testing for _pNetworkEvents->lNetworkEvents == 0 in calling code.", oSAFESTR(_TracePrefix), _TracePrefix ? " " : "", oSAFESTR(_TraceName));
-	}
+	// Allow for the user to specify null for the parts they don't want
+	char localHostname[_MAX_PATH];
+	char localService[16];
+
+	char* pHostname = _StrOutHostname ? _StrOutHostname : localHostname;
+	size_t sizeofHostname = _StrOutHostname ? _SizeofStrOutHostname : oCOUNTOF(localHostname);
 	
-	FD_CHECK(FD_READ); FD_CHECK(FD_WRITE); FD_CHECK(FD_OOB); FD_CHECK(FD_CONNECT); 
-	FD_CHECK(FD_ACCEPT); FD_CHECK(FD_CLOSE); FD_CHECK(FD_QOS); FD_CHECK(FD_GROUP_QOS); 
-	FD_CHECK(FD_ROUTING_INTERFACE_CHANGE); FD_CHECK(FD_ADDRESS_LIST_CHANGE);
+	char* pService = _StrOutPort ? _StrOutPort : localService;
+	size_t sizeofService = _StrOutPort ? _SizeofStrOutPort : oCOUNTOF(localService);
 
-	return true;
+	getnameinfo((sockaddr*)&saddr, size, pHostname, static_cast<DWORD>(sizeofHostname), pService, static_cast<DWORD>(sizeofService), 0);
+
+	if (_StrOutIPAddress)
+	{
+		const char* ip = inet_ntoa(saddr.sin_addr);
+		if (strlcpy(_StrOutIPAddress, ip, _SizeofStrOutIPAddress) >= _SizeofStrOutIPAddress)
+			oTHROW0(no_buffer_space);
+	}
+}
+
+void get_hostname(char* _StrOutHostname, size_t _SizeofStrOutHostname, char* _StrOutIPAddress, size_t _SizeofStrOutIPAddress, char* _StrOutPort, size_t _SizeofStrOutPort, SOCKET _hSocket)
+{
+	get_name_base(_StrOutHostname, _SizeofStrOutHostname, _StrOutIPAddress, _SizeofStrOutIPAddress, _StrOutPort, _SizeofStrOutPort, _hSocket, getsockname);
+}
+
+void get_peername(char* _StrOutHostname, size_t _SizeofStrOutHostname, char* _StrOutIPAddress, size_t _SizeofStrOutIPAddress, char* _StrOutPort, size_t _SizeofStrOutPort, SOCKET _hSocket)
+{
+	get_name_base(_StrOutHostname, _SizeofStrOutHostname, _StrOutIPAddress, _SizeofStrOutIPAddress, _StrOutPort, _SizeofStrOutPort, _hSocket, getpeername);
+}
+
+unsigned short get_port(SOCKET _hSocket)
+{
+	sockaddr_in sa;
+	int size = sizeof(sa);
+	oWSAVB(getsockname(_hSocket, (sockaddr*)&sa, &size));
+	return ntohs(sa.sin_port);
+}
+
+// Not sure in what form we're sending data, so the flags may not be the ones
+// to test.
+// http://msdn.microsoft.com/en-us/library/windows/desktop/ms740094(v=vs.85).aspx
+
+bool connected(SOCKET _hSocket)
+{
+	WSAPOLLFD p;
+	p.fd = _hSocket;
+	p.events = POLLRDNORM|POLLWRNORM;
+	p.revents = 0;
+	oWSAVBE(WSAPoll(&p, 1, 0), WSAENETDOWN);
+	return ((p.revents & POLLHUP) != POLLHUP);
+}
+
+bool connected2(SOCKET _hSocket)
+{
+	WSAPOLLFD p;
+	p.fd = _hSocket;
+	p.events = POLLRDNORM|POLLWRNORM;
+	p.revents = 0;
+	oWSAVBE(WSAPoll(&p, 1, 0), WSAENETDOWN);
+	return ((p.revents & POLLRDNORM) == POLLRDNORM) || ((p.revents & POLLWRNORM) == POLLWRNORM);
+}
+
+void enumerate_addresses(const std::function<void(const sockaddr_in& _Addr)> _Enumerator)
+{
+	// Enumerates the addresses of all attached interfaces.
+	// From http://support.microsoft.com/kb/129315
+	if (_Enumerator)
+	{
+		char HostName[64];
+		gethostname(HostName, oCOUNTOF(HostName));
+		HOSTENT* pHostEntry = gethostbyname(HostName);
+
+		int Adapter = 0;
+		while (pHostEntry->h_addr_list[Adapter])
+		{
+			sockaddr_in sAddr;
+			memcpy(&sAddr.sin_addr.s_addr, pHostEntry->h_addr_list[Adapter], pHostEntry->h_length);
+			_Enumerator(sAddr);
+			Adapter++;
+		}
+	}
+}
+
+bool wait_multiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, unsigned int _TimeoutMS)
+{
+	return WSA_WAIT_TIMEOUT != WSAWaitForMultipleEvents(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == oInfiniteWait ? WSA_INFINITE : _TimeoutMS, FALSE);
 }
 
 // WSA_FLAG_NO_HANDLE_INHERIT
@@ -395,226 +297,145 @@ bool oWinsockTraceEvents(const char* _TracePrefix, const char* _TraceName, const
 // The GetHandleInformation function can be used to determine if a socket handle was created with the WSA_FLAG_NO_HANDLE_INHERIT flag set. The GetHandleInformation function will return that the HANDLE_FLAG_INHERIT value is set.
 // This flag is supported on Windows 7 with SP1, Windows Server 2008 R2 with SP1, and later
 #ifndef WSA_FLAG_NO_HANDLE_INHERIT
-#define WSA_FLAG_NO_HANDLE_INHERIT 0x80
+	#define WSA_FLAG_NO_HANDLE_INHERIT 0x80
 #endif
 
 template<typename SOCKADDR_T>
-SOCKET oWinsockCreateImpl( const SOCKADDR_T _Addr, int _ORedWinsockOptions, unsigned int _TimeoutMS /*= 0*/, unsigned int _MaxNumConnections /*= 0*/ )
+SOCKET makeT(const SOCKADDR_T& _Addr, int _Options, unsigned int _TimeoutMS, unsigned int _MaxNumConnections)
 {
-	if(_MaxNumConnections == oInvalid)
-		_MaxNumConnections =  SOMAXCONN;
+	if (_MaxNumConnections < 0)
+		_MaxNumConnections = SOMAXCONN;
 
-	const bool kReliable = !!(_ORedWinsockOptions & oWINSOCK_RELIABLE);
+	WSAEVENT hConnectEvent = nullptr;
+	bool CloseSocketOnExit = false;
 
-	WSAEVENT hConnectEvent = 0;
+	const bool kIsReliable = !!(_Options & reliable);
+	SOCKET hSocket = WSASocket(AF_INET, kIsReliable ? SOCK_STREAM : SOCK_DGRAM, kIsReliable ? IPPROTO_TCP : IPPROTO_UDP, 0, 0, WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
 
-	SOCKET hSocket = WSASocket(AF_INET, kReliable ? SOCK_STREAM : SOCK_DGRAM, kReliable ? IPPROTO_TCP : IPPROTO_UDP, 0, 0, WSA_FLAG_OVERLAPPED | WSA_FLAG_NO_HANDLE_INHERIT);
-	if (hSocket == INVALID_SOCKET) goto error;
+	finally CloseResources([&]
+	{
+		if (CloseSocketOnExit)
+			closesocket(hSocket);
+		if (hConnectEvent)
+			WSACloseEvent(hConnectEvent);
+	});
 
-	u_long enabled = !( _ORedWinsockOptions & oWINSOCK_BLOCKING );
-	if (SOCKET_ERROR == ioctlsocket(hSocket, FIONBIO, &enabled)) goto error;
-	if ((_ORedWinsockOptions & oWINSOCK_REUSE_ADDRESS) && SOCKET_ERROR == setsockopt(hSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&enabled, sizeof(enabled))) goto error;
-	if ((_ORedWinsockOptions & oWINSOCK_EXCLUSIVE_ADDRESS) && SOCKET_ERROR == setsockopt(hSocket, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (const char*)&enabled, sizeof(enabled))) goto error;
-	if (!kReliable && (_ORedWinsockOptions & oWINSOCK_ALLOW_BROADCAST) && SOCKET_ERROR == setsockopt(hSocket, SOL_SOCKET, SO_BROADCAST, (const char*)&enabled, sizeof(enabled))) goto error;
+	if (hSocket == INVALID_SOCKET)
+		oWSATHROWLAST();
+
+	CloseSocketOnExit = true; // in case of error
 	
-	if (kReliable)
+	u_long enabled = !(_Options & blocking);
+
+	oWSAVB(ioctlsocket(hSocket, FIONBIO, &enabled));
+
+	if (_Options & reuse_address) 
+		oWSAVB(setsockopt(hSocket, SOL_SOCKET, SO_REUSEADDR, (const char*)&enabled, sizeof(enabled)));
+
+	if (_Options & exclusive_address) 
+		oWSAVB(setsockopt(hSocket, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (const char*)&enabled, sizeof(enabled)));
+
+	if (!kIsReliable && (_Options & allow_broadcast))
+		oWSAVB(setsockopt(hSocket, SOL_SOCKET, SO_BROADCAST, (const char*)&enabled, sizeof(enabled)));
+	
+	if (kIsReliable)
 	{
 		if (_MaxNumConnections)
 		{
-			if (SOCKET_ERROR == bind(hSocket, (const sockaddr*)&_Addr, sizeof(_Addr))) goto error;
-			if (kReliable && SOCKET_ERROR == listen(hSocket, _MaxNumConnections)) goto error;
+			oWSAVB(bind(hSocket, (const sockaddr*)&_Addr, sizeof(_Addr)));
+			oWSAVB(listen(hSocket, _MaxNumConnections));
 		}
+
 		else
 		{
-			if( _TimeoutMS > 0 )
+			if (_TimeoutMS > 0)
 			{
 				hConnectEvent = WSACreateEvent();
-				if (SOCKET_ERROR == WSAEventSelect(hSocket, hConnectEvent, FD_CONNECT ) ) goto error;
+				oWSAVB(WSAEventSelect(hSocket, hConnectEvent, FD_CONNECT));
 			}
 
-			if (SOCKET_ERROR == connect(hSocket, (const sockaddr*)&_Addr, sizeof(_Addr)))
-				if (WSAGetLastError() != WSAEWOULDBLOCK) 
-					goto error;
+			oWSAVBE(connect(hSocket, (const sockaddr*)&_Addr, sizeof(_Addr)), WSAEWOULDBLOCK);
 
-			if( hConnectEvent )
-				if( !oWinsockWaitMultiple( &hConnectEvent, 1, true, false, _TimeoutMS ) ) 
-					goto error;
+			if (hConnectEvent)
+			{
+				if (!wait(hConnectEvent, _TimeoutMS))
+					oWSAVB(false);
 				else
 				{
-					if (!oWinsockIsConnected2(hSocket))
-					{
-						WSASetLastError(WSAEHOSTUNREACH); 
-						goto error; 
-					}
-					if (SOCKET_ERROR == WSAEventSelect(hSocket, nullptr, 0 ) ) goto error;
+					if (!connected2(hSocket))
+						oWSATHROW0(WSAEHOSTUNREACH);
+					oWSAVB(WSAEventSelect(hSocket, nullptr, 0));
 					unsigned long cmd = 0;
-					if(SOCKET_ERROR == ioctlsocket(hSocket, FIONBIO, &cmd) ) goto error;
-					WSACloseEvent(hConnectEvent);
+					oWSAVB(ioctlsocket(hSocket, FIONBIO, &cmd));
 				}
+			}
 		}
 	}
 	else
-	{
-		if (SOCKET_ERROR == bind(hSocket, (const sockaddr*)&_Addr, sizeof(_Addr))) goto error;
-	}
+		oWSAVB(bind(hSocket, (const sockaddr*)&_Addr, sizeof(_Addr)));
 
+	CloseSocketOnExit = false; // no error, don't clean up the new socket
 	return hSocket;
-error:
-	oWINSOCK_SETLASTERROR("oWinsockCreate");
-	if (hSocket != INVALID_SOCKET)
-		closesocket(hSocket);
-	if( hConnectEvent )
-		WSACloseEvent(hConnectEvent);
-
-	return INVALID_SOCKET;
 }
 
-SOCKET oWinsockCreate( const sockaddr_in _Addr, int _ORedWinsockOptions, unsigned int _TimeoutMS /*= 0*/, unsigned int _MaxNumConnections /*= 0*/ )
+SOCKET make(const sockaddr_in& _Addr, int _Options, unsigned int _TimeoutMS /*= 0*/, unsigned int _MaxNumConnections /*= 0*/)
 {
-	return oWinsockCreateImpl(_Addr, _ORedWinsockOptions, _TimeoutMS, _MaxNumConnections);
+	return makeT(_Addr, _Options, _TimeoutMS, _MaxNumConnections);
 }
 
-SOCKET oWinsockCreate( const sockaddr_in6 _Addr, int _ORedWinsockOptions, unsigned int _TimeoutMS /*= 0*/, unsigned int _MaxNumConnections /*= 0*/ )
+SOCKET make(const sockaddr_in6& _Addr, int _Options, unsigned int _TimeoutMS /*= 0*/, unsigned int _MaxNumConnections /*= 0*/)
 {
-	return oWinsockCreateImpl(_Addr, _ORedWinsockOptions, _TimeoutMS, _MaxNumConnections);
+	return makeT(_Addr, _Options, _TimeoutMS, _MaxNumConnections);
 }
 
-bool oWinsockGetPort(SOCKET _hSocket, unsigned short* _pPort)
+SOCKET make_async_accept()
 {
-	auto _GetSockAddr = getsockname;
-
-	sockaddr_in saddr;
-	int size = sizeof(saddr);
-	if (SOCKET_ERROR == _GetSockAddr(_hSocket, (sockaddr*)&saddr, &size))
-	{
-		errno_t err = oWinsockGetErrno(WSAGetLastError());
-		oErrorSetLast(std::errc::io_error, "%s: %s", oWinsockAsString(WSAGetLastError()), oWinsockGetErrorDesc(WSAGetLastError()));
-		return false;
-	}
-
-	*_pPort = ntohs(saddr.sin_port);
-
-	return true;
+	SOCKET hSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
+	if (hSocket == INVALID_SOCKET)
+		oWSATHROWLAST();
+	return hSocket;
 }
 
-SOCKET oWinsockCreateForAsyncAccept()
+void finish_async_accept(SOCKET _hListenSocket, SOCKET _hAcceptSocket)
 {
-	return WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
+	oWSAVB(setsockopt(_hAcceptSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&_hListenSocket, sizeof(_hListenSocket)));
 }
 
-oWINSOCK_ASYNC_RESULT oWinsockAsyncAccept(SOCKET _ListenSocket, SOCKET _AcceptSocket, void* _OutputBuffer, WSAOVERLAPPED* _Overlapped)
+async_result recycle_async_accept(SOCKET _hListenSocket, SOCKET _hAcceptSocket, WSAOVERLAPPED* _pOverlapped)
 {
-	LPFN_ACCEPTEX FNAcceptEx = 0;
-	if (!oWinsockGetFunctionPointer_AcceptEx(_ListenSocket, &FNAcceptEx))
-	{
-		oWINSOCK_SETLASTERROR("GetFunctionPointer_AcceptEx");
-		return oWINSOCK_FAILED;
-	}
-	
-	unsigned long bytesRead;
-	if(!FNAcceptEx(_ListenSocket, _AcceptSocket, _OutputBuffer, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &bytesRead, _Overlapped))
-	{
-		unsigned long lastError = ::WSAGetLastError();
-		if(lastError == ERROR_IO_PENDING)
-		{
-			return oWINSOCK_COMPLETED_ASYNC;
-		}
-		else
-		{
-			return oWINSOCK_FAILED;
-		}
-	}
-	else
-	{
-		oASSERT(bytesRead == oWINSOCK_ACCEPT_BUFFER_SIZE, "Should have read back the 2 addresses");
-		return oWINSOCK_COMPLETED;
-	}
+	LPFN_DISCONNECTEX pDisconnectEx = getfn_DisconnectEx(_hListenSocket);
+	if (!pDisconnectEx(_hAcceptSocket, _pOverlapped, TF_REUSE_SOCKET, 0))
+		return WSAGetLastError() == ERROR_IO_PENDING ? scheduled : failed;
+	return completed;
 }
 
-bool oWinsockCompleteAsyncAccept(SOCKET _hListenSocket, SOCKET _hAcceptSocket)
-{
-	return SOCKET_ERROR !=  setsockopt( _hAcceptSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char *)&_hListenSocket, sizeof(_hListenSocket) );
-}
-
-oWINSOCK_ASYNC_RESULT oWinsockAsyncAcceptPrepForReuse(SOCKET _hListenSocket, SOCKET _hAcceptSocket, WSAOVERLAPPED* _Overlapped)
-{
-	LPFN_DISCONNECTEX FNDisconnectEx = 0;
-	if (!oWinsockGetFunctionPointer_DisconnectEx(_hListenSocket, &FNDisconnectEx))
-	{
-		oWINSOCK_SETLASTERROR("GetFunctionPointer_DisconnectEx");
-		return oWINSOCK_FAILED;
-	}
-	if(!FNDisconnectEx(_hAcceptSocket, _Overlapped, TF_REUSE_SOCKET, 0))
-	{
-		unsigned long lastError = ::WSAGetLastError();
-		if(lastError == ERROR_IO_PENDING)
-		{
-			return oWINSOCK_COMPLETED_ASYNC;
-		}
-		else
-		{
-			return oWINSOCK_FAILED;
-		}
-	}
-	else
-	{
-		return oWINSOCK_COMPLETED;
-	}
-}
-
-oWINSOCK_ASYNC_RESULT oWinsockAsyncAcceptExSockAddrs(SOCKET _ListenSocket, void* _Buffer, LPSOCKADDR* _LocalAddr, LPINT _SzLocalAddr, LPSOCKADDR* _RemoteAddr, LPINT _SzRemoteAddr)
-{
-	LPFN_GETACCEPTEXSOCKADDRS FNAcceptExSockAddrs = 0;
-	if (!oWinsockGetFunctionPointer_GetAcceptExSockaddrs(_ListenSocket, &FNAcceptExSockAddrs))
-	{
-		oWINSOCK_SETLASTERROR("GetFunctionPointer_GetAcceptExSockaddrs");
-		return oWINSOCK_FAILED;
-	}
-	FNAcceptExSockAddrs(_Buffer, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, _LocalAddr, _SzLocalAddr, _RemoteAddr, _SzRemoteAddr);
-	return oWINSOCK_COMPLETED;
-}
-
-bool oWinsockClose(SOCKET _hSocket)
+void close(SOCKET _hSocket)
 {
 	// http://msdn.microsoft.com/en-us/library/ms738547(v=vs.85).aspx
 	// Specifically read the community comment that says the main article doesn't 
-	// work...
-
-	// @tony: Ignore WSAENOTCONN since we're closing this socket anyway. It 
+	// work. Also ignore WSAENOTCONN since we're closing this socket anyway - it 
 	// means the other side is detached already.
 
-	if (_hSocket)
+	if (_hSocket && _hSocket != INVALID_SOCKET)
 	{
-		if (SOCKET_ERROR == shutdown(_hSocket, SD_BOTH) && WSAGetLastError() != WSAENOTCONN)
+		int err = shutdown(_hSocket, SD_BOTH);
+		if (err == SOCKET_ERROR)
 		{
-			oWINSOCK_SETLASTERROR("shutdown");
-			return false;
+			err = shutdown(_hSocket, SD_SEND);
+			if (err == SOCKET_ERROR)
+				err = shutdown(_hSocket, SD_RECEIVE);
 		}
-
-		LPFN_DISCONNECTEX FNDisconnectEx = 0;
-		if (!oWinsockGetFunctionPointer_DisconnectEx(_hSocket, &FNDisconnectEx) && WSAGetLastError() != WSAENOTCONN)
-		{
-			oWINSOCK_SETLASTERROR("GetFunctionPointer_DisconnectEx");
-			return false;
-		}
-
-		if (!FNDisconnectEx(_hSocket, 0, 0, 0) && WSAGetLastError() != WSAENOTCONN)
-		{
-			oWINSOCK_SETLASTERROR("DisconnectEx");
-			return false;
-		}
-
-		if (SOCKET_ERROR == closesocket(_hSocket) && WSAGetLastError() != WSAENOTCONN)
-		{
-			oWINSOCK_SETLASTERROR("closesocket");
-			return false;
-		}
+		
+		if (err == SOCKET_ERROR && WSAGetLastError() != WSAENOTCONN && WSAGetLastError() != WSAEINVAL)
+			oWSATHROWLAST();
+		LPFN_DISCONNECTEX pDisconnectEx = getfn_DisconnectEx(_hSocket);
+		if (!pDisconnectEx(_hSocket, 0, 0, 0) && WSAGetLastError() != WSAENOTCONN)
+			oWSATHROWLAST();
+		oWSAVBE(closesocket(_hSocket), WSAENOTCONN);
 	}
-
-	return true;
 }
 
-bool oWinsockSetKeepAlive(SOCKET _hSocket, unsigned int _TimeoutMS, unsigned int _IntervalMS)
+void set_keepalive(SOCKET _hSocket, unsigned int _TimeoutMS, unsigned int _IntervalMS)
 {
 	if (_hSocket)
 	{
@@ -622,35 +443,44 @@ bool oWinsockSetKeepAlive(SOCKET _hSocket, unsigned int _TimeoutMS, unsigned int
 		KeepAlive.onoff = 1;
 		KeepAlive.keepalivetime = _TimeoutMS;
 		KeepAlive.keepaliveinterval = _IntervalMS;
-
 		DWORD dwBytesReturned = 0;
-		if (SOCKET_ERROR == WSAIoctl(_hSocket, SIO_KEEPALIVE_VALS, &KeepAlive.onoff, sizeof(KeepAlive), NULL, 0, &dwBytesReturned, 0, 0))
-		{
-			oWINSOCK_SETLASTERROR("WSAIoctl");
-			return false;
-		}
+		oWSAVB(WSAIoctl(_hSocket, SIO_KEEPALIVE_VALS, &KeepAlive.onoff, sizeof(KeepAlive), NULL, 0, &dwBytesReturned, 0, 0));
 	}
-	return true;
 }
 
+#define FD_TRACE(TracePrefix, TraceName, FDEvent) oTRACE("%s%s%s: %s (%s)", oSAFESTR(TracePrefix), _TracePrefix ? " " : "", oSAFESTR(TraceName), #FDEvent, get_desc(_pNetworkEvents->iErrorCode[FDEvent##_BIT]))
+//#define FD_TRACE(TracePrefix, TraceName, FDEvent)
 
-bool oWinsockWaitMultiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, bool _Alertable, unsigned int _TimeoutMS)
+// Assumes WSANETWORKEVENTS ne; int err;
+#define FD_CHECK(FDEvent) \
+	if (_pNetworkEvents->lNetworkEvents & FDEvent) \
+	{	FD_TRACE(_TracePrefix, _TraceName, ##FDEvent); \
+		err = _pNetworkEvents->iErrorCode[FDEvent##_BIT]; \
+	}
+
+// Checks all values from a network event and return an error based on what happened.
+static void wsatrace(const char* _TracePrefix, const char* _TraceName, const WSANETWORKEVENTS* _pNetworkEvents)
 {
-	// @tony: there is something called "spurious wakeups" (Google it for 
-	// more info) that can signal an event though no user-space event has been 
-	// triggered. My reading was that it only applied to the mask in 
-	// WSANETWORKEVENTS, so if you're not using that then this doesn't matter, but
-	// it's the event that gets triggered incorrectly, not the mask that gets 
-	// filled out incorrectly from my readings, so it *could* happen any time the
-	// event is waited on. If something funky occurs in this wait, start debugging 
-	// with more "spurious wakeup" investigation.
+	int err = 0;
 
-	return WSA_WAIT_TIMEOUT != WSAWaitForMultipleEvents(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == oInfiniteWait ? WSA_INFINITE : _TimeoutMS, _Alertable);
+	if (!_pNetworkEvents->lNetworkEvents)
+	{
+		// http://www.mombu.com/microsoft/alt-winsock-programming/t-wsaenumnetworkevents-returns-no-event-how-is-this-possible-1965867.html
+		// (spurious wakeup)
+		oTHROW(protocol_error, "%s%s%s: WSAEVENT, but no lNetworkEvent: \"spurious wakeup\". You should ignore the event as if it never happened by testing for _pNetworkEvents->lNetworkEvents == 0 in calling code."
+			, oSAFESTR(_TracePrefix), _TracePrefix ? " " : "", oSAFESTR(_TraceName));
+	}
+	
+	FD_CHECK(FD_READ); FD_CHECK(FD_WRITE); FD_CHECK(FD_OOB); FD_CHECK(FD_CONNECT); 
+	FD_CHECK(FD_ACCEPT); FD_CHECK(FD_CLOSE); FD_CHECK(FD_QOS); FD_CHECK(FD_GROUP_QOS); 
+	FD_CHECK(FD_ROUTING_INTERFACE_CHANGE); FD_CHECK(FD_ADDRESS_LIST_CHANGE);
 }
 
-// If the socket was created using oWinSockCreate (WSAEventSelect()), this function can 
-// be used to wait on that event and receive any events breaking the wait.
-bool oWinsockWait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEvents, unsigned int _TimeoutMS)
+// If the socket was created using wait (WSAEventSelect()) this function can 
+// be used to wait on that event and receive any events breaking the wait. This 
+// function handles spurious wakeups so if using WSANETWORKEVENTS structs, 
+// always use this wrapper.
+static bool wait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEvents, unsigned int _TimeoutMS)
 {
 	bool eventFired = true;
 	unsigned int timeout = _TimeoutMS;
@@ -658,53 +488,42 @@ bool oWinsockWait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEven
 	oScopedPartialTimeout spt(&timeout);
 	while (!_pNetEvents->lNetworkEvents && eventFired)
 	{
+		spt.UpdateTimeout();
+		eventFired = wait(_hEvent, timeout);
+		if (eventFired)
 		{
-			spt.UpdateTimeout();
-			eventFired = oWinsockWaitMultiple(&_hEvent, 1, true, false, timeout);
-			if (eventFired)
-			{
-				if (SOCKET_ERROR == WSAEnumNetworkEvents(_hSocket, _hEvent, _pNetEvents))
-				{
-					oErrorSetLast(std::errc::io_error, "%s", oWinsockAsString(WSAGetLastError()));
-					eventFired = false;
-					break;
-				}
-
-				if (_pNetEvents->lNetworkEvents)
-					break;
-			}
+			oWSAVB(WSAEnumNetworkEvents(_hSocket, _hEvent, _pNetEvents));
+			if (_pNetEvents->lNetworkEvents)
+				break;
 		}
 	}
 
 	return eventFired;
 }
 
-bool oWinsockSend(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, const sockaddr_in* _pDestination)
+void send(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, const sockaddr_in* _pDestination)
 {
 	oASSERT(_SizeofSource <= INT_MAX, "Underlying implementation uses 32-bit signed int for buffer size.");
 	int bytesSent = 0;
-	
 	if (_pDestination)
 		bytesSent = sendto(_hSocket, (const char*)_pSource, static_cast<int>(_SizeofSource), 0, (const sockaddr*)_pDestination, sizeof(sockaddr_in));
 	else
-		bytesSent = send(_hSocket, (const char*)_pSource, static_cast<int>(_SizeofSource), 0);
-	if (bytesSent == SOCKET_ERROR)
-		oErrorSetLast(std::errc::io_error, "%s", oWinsockAsString(WSAGetLastError()));
-	else if ((size_t)bytesSent == _SizeofSource)
-		oErrorSetLast(0);
-	return (size_t)bytesSent == _SizeofSource;
+		bytesSent = ::send(_hSocket, (const char*)_pSource, static_cast<int>(_SizeofSource), 0);
+
+	if (bytesSent == SOCKET_ERROR || size_t(bytesSent) != _SizeofSource)
+		oWSATHROWLAST();
 }
 
-size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, int* _pInOutCanReceive, sockaddr_in* _pSource)
+size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, int* _pInOutCanReceive, sockaddr_in* _pSource)
 {
-	oASSERT(_pInOutCanReceive, "_pInOutCanReceive must be specified.");
-	oASSERT(_SizeofDestination < INT_MAX, "Underlying implementation uses 32-bit signed int for buffer size.");
+	if (!_pInOutCanReceive)
+		oTHROW_INVARG("_pInOutCanReceive must be specified");
+
+	if (_SizeofDestination >= INT_MAX)
+		oTHROW_INVARG("Underlying implementation uses 32-bit signed int for buffer size.");
 
 	if (!_pDestination)
-	{
-		oErrorSetLast(std::errc::invalid_argument, "Must specify a destination buffer");
-		return 0;
-	}
+		oTHROW_INVARG("Must specify a destination buffer");
 
 	int err = 0;
 	WSANETWORKEVENTS ne;
@@ -712,9 +531,12 @@ size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, s
 	if (*_pInOutCanReceive)
 	{
 		err = WSAETIMEDOUT;
-		bool eventFired = oWinsockWait(_hSocket, _hEvent, &ne, _TimeoutMS);
+		bool eventFired = wait(_hSocket, _hEvent, &ne, _TimeoutMS);
 		if (eventFired)
-				err = oWinsockTraceEvents("oWinSockReceive", 0, &ne) ? 0 : EINVAL;
+		{
+			wsatrace("winsock::receive", 0, &ne);
+			err = 0;
+		}
 	}
 
 	int bytesReceived = 0;
@@ -731,7 +553,7 @@ size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, s
 
 		if (bytesReceived == SOCKET_ERROR)
 		{
-			err = oWinsockGetErrno(WSAGetLastError());
+			err = get_errc(WSAGetLastError());
 			bytesReceived = 0;
 		}
 
@@ -747,25 +569,20 @@ size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, s
 
 	else if ((ne.lNetworkEvents & FD_CLOSE) || ((ne.lNetworkEvents & FD_CONNECT) && err))
 	{
-		oErrorSetLast(std::errc::io_error, "%s", oWinsockAsString(ne.iErrorCode[FD_CLOSE_BIT]));
 		oStd::atomic_exchange(_pInOutCanReceive, false);
+		oWSATHROW0(ne.iErrorCode[FD_CLOSE_BIT]);
 	}
 
-	char strerr[256];
-	strerror_s(strerr, err);
-	oErrorSetLast(std::errc::invalid_argument, "%s", strerr);
 	return bytesReceived;
 }
 
-bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, sockaddr_in* _pSource, size_t* _pBytesReceived)
+size_t receive_nonblocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, sockaddr_in* _pSource)
 {
-	oASSERT(_SizeofDestination < INT_MAX, "Underlying implementation uses 32-bit signed int for buffer size.");
+	if (_SizeofDestination >= INT_MAX)
+		oTHROW_INVARG("Underlying implementation uses 32-bit signed int for buffer size.");
 
 	if (!_pDestination)
-	{
-		oErrorSetLast(std::errc::invalid_argument, "Must specify a destination buffer");
-		return false;
-	}
+		oTHROW_INVARG("Must specify a destination buffer");
 
 	timeval waitTime;
 	waitTime.tv_sec = 0;
@@ -775,11 +592,8 @@ bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDesti
 	FD_ZERO(&set);
 	FD_SET(_hSocket, &set);
 
-	if(!select(1, &set, nullptr, nullptr, &waitTime))
-	{
-		_pBytesReceived = 0;
-		return true;
-	}
+	if (!select(1, &set, nullptr, nullptr, &waitTime))
+		return 0;
 
 	int err = 0;
 	int bytesReceived = 0;
@@ -793,147 +607,57 @@ bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDesti
 		bytesReceived = recv(_hSocket, (char*)_pDestination, static_cast<int>(_SizeofDestination), 0);
 
 	if (bytesReceived == SOCKET_ERROR)
-	{
-		err = oWinsockGetErrno(WSAGetLastError());
-		bytesReceived = 0;
-	}
+		oWSATHROWLAST();
 
 	else if (!bytesReceived)
-	{
-		err = ESHUTDOWN;
-	}
+		oTHROW0(connection_reset); // ESHUTDOWN
 
 	//else if ((ne.lNetworkEvents & FD_CLOSE) || ((ne.lNetworkEvents & FD_CONNECT) && err))
 	//{
-	//	oErrorSetLast(oWinsockGetErrno(ne.iErrorCode[FD_CLOSE_BIT]));
 	//	atomic_exchange(_pInOutCanReceive, false);
+	//	oWSATHROW0(ne.iErrorCode[FD_CLOSE_BIT]);
 	//}
 
-	*_pBytesReceived = bytesReceived;
-
-	char strerr[256];
-	strerror_s(strerr, err);
-	oErrorSetLast(std::errc::invalid_argument, "%s", strerr);
-	return(0 == err);
+	return bytesReceived;
 }
 
-bool oWinsockGetNameBase(char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort, SOCKET _hSocket, oFUNCTION<int(SOCKET _hSocket, sockaddr* _Name, int* _pNameLen)> _GetSockAddr)
+async_result accept_async(SOCKET _ListenSocket, SOCKET _AcceptSocket, void* _OutputBuffer, WSAOVERLAPPED* _pOverlapped)
 {
-	sockaddr_in saddr;
-	int size = sizeof(saddr);
-	if (SOCKET_ERROR == _GetSockAddr(_hSocket, (sockaddr*)&saddr, &size))
+	LPFN_ACCEPTEX pAcceptEx = getfn_AcceptEx(_ListenSocket);
+	unsigned long bytesRead = 0;
+	if (!pAcceptEx(_ListenSocket, _AcceptSocket, _OutputBuffer, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, &bytesRead, _pOverlapped))
+		return WSAGetLastError() == ERROR_IO_PENDING ? scheduled : failed;
+	oASSERT(bytesRead == accept_buffer_size, "Should have read back the 2 addresses");
+	return completed;
+}
+
+async_result acceptexsockaddrs_async(SOCKET _ListenSocket, void* _Buffer, LPSOCKADDR* _LocalAddr, LPINT _SzLocalAddr, LPSOCKADDR* _RemoteAddr, LPINT _SzRemoteAddr)
+{
+	LPFN_GETACCEPTEXSOCKADDRS pAcceptExSockAddrs = getfn_GetAcceptExSockaddrs(_ListenSocket);
+	pAcceptExSockAddrs(_Buffer, 0, sizeof(SOCKADDR_IN) + 16, sizeof(SOCKADDR_IN) + 16, _LocalAddr, _SzLocalAddr, _RemoteAddr, _SzRemoteAddr);
+	return completed;
+}
+
+// Initialize winsock
+class wsa_startup
+{
+public:
+	wsa_startup()
 	{
-		errno_t err = oWinsockGetErrno(WSAGetLastError());
-		oErrorSetLast(std::errc::io_error, "%s: %s", oWinsockAsString(WSAGetLastError()), oWinsockGetErrorDesc(WSAGetLastError()));
-		return false;
+		WORD wVersion = MAKEWORD(2, 2);
+		WSADATA wsaData;
+		int err = WSAStartup(wVersion, &wsaData);
+		if (err)
+			oWSATHROW(err, "winsock 2.2 initialization failed: %s", as_string_WSAerr(err));
 	}
 
-	// Allow for the user to specify null for the parts they don't want.
-	char localHostname[_MAX_PATH];
-	char localService[16];
-
-	char* pHostname = _OutHostname ? _OutHostname : localHostname;
-	size_t sizeofHostname = _OutHostname ? _SizeofOutHostname : oCOUNTOF(localHostname);
-	
-	char* pService = _OutPort ? _OutPort : localService;
-	size_t sizeofService = _OutPort ? _SizeofOutPort : oCOUNTOF(localService);
-
-	getnameinfo((sockaddr*)&saddr, size, pHostname, static_cast<DWORD>(sizeofHostname), pService, static_cast<DWORD>(sizeofService), 0);
-
-	if (_OutIPAddress)
+	~wsa_startup()
 	{
-		const char* ip = inet_ntoa(saddr.sin_addr);
-		if (strlcpy(_OutIPAddress, ip, _SizeofOutIPAddress) >= _SizeofOutIPAddress)
-			return oErrorSetLast(std::errc::protocol_error);
+		WSACleanup();
 	}
+};
+static wsa_startup sWSAStartup;
 
-	return true;
-}
-
-bool oWinsockGetHostname(char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort, SOCKET _hSocket)
-{
-	return oWinsockGetNameBase(_OutHostname, _SizeofOutHostname, _OutIPAddress, _SizeofOutIPAddress, _OutPort, _SizeofOutPort, _hSocket, getsockname);
-}
-
-bool oWinsockGetPeername(char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort, SOCKET _hSocket)
-{
-	return oWinsockGetNameBase(_OutHostname, _SizeofOutHostname, _OutIPAddress, _SizeofOutIPAddress, _OutPort, _SizeofOutPort, _hSocket, getpeername);
-}
-
-bool oWinsockIsConnected(SOCKET _hSocket)
-{
-	// Not sure in what form we're sending data, so the flags may not be the ones
-	// to test.
-	// http://msdn.microsoft.com/en-us/library/windows/desktop/ms740094(v=vs.85).aspx
-
-	WSAPOLLFD p;
-	p.fd = _hSocket;
-	p.events = POLLRDNORM|POLLWRNORM;
-	p.revents = 0;
-
-	if (SOCKET_ERROR == WSAPoll(&p, 1, 0))
-	{
-		if (WSAGetLastError() != WSAENETDOWN)
-			return oErrorSetLast(std::errc::io_error, "%s", oWinsockAsString(WSAGetLastError()));
-		
-		return false;
-	}
-
-	return ((p.revents & POLLHUP) != POLLHUP);
-}
-
-bool oWinsockIsConnected2(SOCKET _hSocket)
-{
-	// Not sure in what form we're sending data, so the flags may not be the ones
-	// to test.
-	// http://msdn.microsoft.com/en-us/library/windows/desktop/ms740094(v=vs.85).aspx
-
-	WSAPOLLFD p;
-	p.fd = _hSocket;
-	p.events = POLLRDNORM|POLLWRNORM;
-	p.revents = 0;
-
-	if (SOCKET_ERROR == WSAPoll(&p, 1, 0))
-	{
-		if (WSAGetLastError() != WSAENETDOWN)
-			return oErrorSetLast(std::errc::io_error, "%s", oWinsockAsString(WSAGetLastError()));
-
-		return false;
-	}
-
-	return ((p.revents & POLLRDNORM) == POLLRDNORM) || ((p.revents & POLLWRNORM) == POLLWRNORM);
-}
-
-bool oWinsockIsConnected3(SOCKET _hSocket)
-{
-	// Another the internet says to test of a socket is connected is to attempt to receive from it using MSG_PEEK
-	// MSG_PEEK leaves the data readable, so when a real receive is called later the data is still there.
-	char buf;
-	if (SOCKET_ERROR == recv(_hSocket, &buf, 1, MSG_PEEK))
-	{
-		if (WSAGetLastError() != WSAEWOULDBLOCK) // for non-blocking sockets it may error if the read would block, but we are still good
-		{
-			return oErrorSetLast(std::errc::io_error, "%s", oWinsockAsString(WSAGetLastError()));
-		}
-	}
-
-	return true;
-}
-
-void oWinsockEnumerateAllAddress(oFUNCTION<void(sockaddr_in _Addr)> _Enumerator)
-{
-	// Enumerates the addresses of all attached interfaces.
-	// From http://support.microsoft.com/kb/129315
-	sstring HostName;
-	gethostname( HostName.c_str(), oInt(HostName.capacity()));
-	HOSTENT* pHostEntry = gethostbyname( HostName );
-
-	int Adapter = 0;
-	while ( pHostEntry->h_addr_list[Adapter] )
-	{
-		sockaddr_in sAddr;
-		memcpy ( &sAddr.sin_addr.s_addr, pHostEntry->h_addr_list[Adapter], pHostEntry->h_length);
-		_Enumerator(sAddr);
-		++Adapter;
-	}
-}
+		} // namespace winsock
+	} // namespace windows
+} // namespace ouro

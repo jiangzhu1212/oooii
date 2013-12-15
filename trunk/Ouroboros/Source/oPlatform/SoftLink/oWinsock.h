@@ -30,8 +30,8 @@
 #ifndef oCore_win_socket_h
 #define oCore_win_socket_h
 
-#include <oPlatform/oSingleton.h>
-#include <oCore/module.h>
+#include <oBase/fixed_string.h>
+#include <functional>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -42,143 +42,151 @@
 #include <Rpc.h>
 #include <Ws2tcpip.h>
 
-// Convenient assert for always printing out winsock-specific errors.
-#define oWINSOCK_ASSERT(x, msg, ...) oASSERT(x, msg "\n%s(%d): %s", ## __VA_ARGS__ oWinsockAsString(WSAGetLastError()), WSAGetLastError(), oWinsockGetErrorDesc(WSAGetLastError()))
+#define oWSATHROW(_WSAErr, _Message, ...) do { throw std::system_error(std::make_error_code(ouro::windows::winsock::get_errc(_WSAErr)), ouro::formatf(_Message, ## __VA_ARGS__)); } while(false)
+#define oWSATHROW0(_WSAErr) do { throw std::system_error(std::make_error_code(ouro::windows::winsock::get_errc(_WSAErr))); } while(false)
+#define oWSAVB(_Expression) do { if (SOCKET_ERROR == (_Expression)) oWSATHROW(WSAGetLastError(), "%s", #_Expression); } while(false)
+#define oWSAVBE(_Expression, _ExceptForResult) do { if (SOCKET_ERROR == (_Expression) && _ExceptForResult != WSAGetLastError()) oWSATHROW(WSAGetLastError(), "%s", #_Expression); } while(false)
+#define oWSATHROWLAST() do { oWSATHROW0(WSAGetLastError()); } while(false)
 
-// Call oErrorSetLast() with errno_t equivalent, but also include WSA error and extended desc in description
-#define oWINSOCK_SETLASTERROR(strFnName) oErrorSetLast(std::errc::io_error, "oWinsock::" strFnName " failed %s(%d): %s", oWinsockAsString(WSAGetLastError()), WSAGetLastError(), oWinsockGetErrorDesc(WSAGetLastError()))
+namespace ouro {
+	namespace windows {
+		namespace winsock {
 
-// Enum as string (similar to ouro::as_string())
-const char* oWinsockAsString(int _WSAWinSockError);
+// From msdn docs, buffer needs 16 bytes padding for each address. buffer will 
+// hold 2 addrs.
+static const int accept_buffer_size = 2 * sizeof(SOCKADDR_IN) + 32; 
 
-// Returns the extended MSDN error description of the error
-const char* oWinsockGetErrorDesc(int _WSAWinSockError);
-errno_t oWinsockGetErrno(int _WSAWinSockError);
-
-bool oWinsockGetFunctionPointer_ConnectEx(SOCKET s, LPFN_CONNECTEX* ppConnectEx);
-bool oWinsockGetFunctionPointer_DisconnectEx(SOCKET s, LPFN_DISCONNECTEX* ppDisconnectEx);
-bool oWinsockGetFunctionPointer_GetAcceptExSockaddrs(SOCKET s, LPFN_GETACCEPTEXSOCKADDRS* ppGetAcceptExSockaddrs);
-bool oWinsockGetFunctionPointer_TransmitPackets(SOCKET s, LPFN_TRANSMITPACKETS* ppTransmitPackets);
-bool oWinsockGetFunctionPointer_WSARecvMsg(SOCKET s, LPFN_WSARECVMSG* ppWSARecvMsg);
-bool oWinsockGetFunctionPointer_AcceptEx(SOCKET s, LPFN_ACCEPTEX* ppAcceptEx);
-
-// Hostname is an address or name with a port (i.e. localhost:123 or 127.0.0.1:123)
-// For INADDR_ANY, use 0.0.0.0 as the IP and any appropriate port.
-void oWinsockCreateAddr(sockaddr_in* _pOutSockAddr, const char* _Hostname);
-
-void oWinsockAddrToHostname(sockaddr_in* _pSockAddr, char* _OutHostname, size_t _SizeOfHostname);
-
-// Looks at a WSANETWORKEVENTS struct and if this returns false a summary error
-// is in oErrorGetLast(). Also traces out detailed information in debug. This is 
-// mostly a convenience function.
-bool oWinsockTraceEvents(const char* _TracePrefix, const char* _TraceName, const WSANETWORKEVENTS* _pNetworkEvents);
-
-// Create a WinSock socket that can support overlapped operations. MSDN docs 
-// seem to indicate it's a good idea for "most sockets" to enable overlapped ops
-// by default, so that's what we'll do.
-// _Hostname: IP/DNS name colon the port number (127.0.0.1:123 or myhostname:321)
-// WINSOCK_RELIABLE: if true this uses TCP, else UDP
-// WINSOCK_ALLOW_BROADCAST: Enable broadcast for UDP (ignored if _Reliable is true)
-// WINSOCK_REUSE_ADDRESS: allows other processes to share the address 
-// oWINSOCK_EXCLUSIVE_ADDRESS: ensures this socket has exclusive control of the specified address
-// _MaxNumConnections: if 0, the socket will be created and connect will be called. 
-//                     If non-zero the socket will be bind()'ed and put into a listen 
-//                     state as a server
-// _SendBufferSize: socket is configured with this buffer for sending. If 0, the 
-//                  default is used.
-// _ReceiveBufferSize: socket is configured with this buffer for receiving. If 0,
-//                     the default is used.
-// _hNonBlockingEvent: If non-zero and a valid WSAEVENT, the event will be registered
-//                     to fire on any FD_* event. Use oWinsockWait() to wait on the event.
-
-enum oWINSOCK_OPTIONS
+enum options
 {
-	oWINSOCK_RELIABLE = 0x1,
-	oWINSOCK_ALLOW_BROADCAST = 0x2,
-	oWINSOCK_REUSE_ADDRESS = 0x4,
-	oWINSOCK_EXCLUSIVE_ADDRESS = 0x8,
-	oWINSOCK_BLOCKING = 0x10,
+	reliable = 0x1, // if true the socket uses TCP, else UDP
+	allow_broadcast = 0x2, // enable broadcast for UDP (ignored if reliable is specified)
+	reuse_address = 0x4, // allows other processes to share the address 
+	exclusive_address = 0x8, // ensures this socket has exclusive control of the specified address
+	blocking = 0x10,
 };
 
-enum oWINSOCK_ASYNC_RESULT //some async functions have the option (decided by windows) of completing synchronously. There is no iocp callback when this happens.
+// Return value that describes if winsock completed the function synchronously. 
+// (There is no iocp callback when this happens.)
+enum async_result
 {
-	oWINSOCK_COMPLETED, //means the call has completed synchronously. there will be no iocp callback, handle appropriatly.
-	oWINSOCK_COMPLETED_ASYNC,
-	oWINSOCK_FAILED,
+	completed, // completed synchronously, there will be no iocp callback
+	scheduled, // the operation is scheduled: expect an iocp callback
+	failed, // the operation did not complete and there will be no iocp callback
 };
 
-//specify oInvalid for MaxNumConnections to create a listen socket, but let the driver decide on the max number of connections.
-SOCKET oWinsockCreate(const sockaddr_in _Addr, int _ORedWinsockOptions, unsigned int _TimeoutMS = 0, unsigned int _MaxNumConnections = 0);
-SOCKET oWinsockCreate(const sockaddr_in6 _Addr, int _ORedWinsockOptions, unsigned int _TimeoutMS = 0, unsigned int _MaxNumConnections = 0);
+// Return the define as a string
+const char* as_string(int _WSAError);
 
-// For when creating a Winsock with automatic port selection, get the selected port
-bool oWinsockGetPort(SOCKET _hSocket, unsigned short* _pPort);
+// Return a bit more robust description of the error
+const char* get_desc(int _WSAError);
 
-//For use with AcceptEx (IOCP). oWinsockCreateForAsyncAccept creates an unconnected socket, ready to be sent to AcceptEx. It is not usable at this point.
-//	Once iocp accepts a connection with this socket, you must call oWinsockCompleteAsyncAccept to finish prepping the socket for use.
-SOCKET oWinsockCreateForAsyncAccept();
-static const int oWINSOCK_ACCEPT_BUFFER_SIZE = 2*sizeof(SOCKADDR_IN)+32; //From msdn docs, buffer needs 16 bytes padding for each address. buffer will hold 2
-// _OutputBuffer must be at least oWINSOCK_ACCEPT_BUFFER_SIZE in size.
-oWINSOCK_ASYNC_RESULT oWinsockAsyncAccept(SOCKET _ListenSocket, SOCKET _AcceptSocket, void* _OutputBuffer, WSAOVERLAPPED* _Overlapped);
-bool oWinsockCompleteAsyncAccept(SOCKET _hListenSocket, SOCKET _hAcceptSocket);
-//This will disconnect the socket but not destroy it. It will be in the same state as a socket returned from oWinsockCreateForAsyncAccept. use to avoid time
-//	to delete and recreate a socket. May or may not complete asynchronously. you won't get an iocp callback if this completes synchronously.
-oWINSOCK_ASYNC_RESULT oWinsockAsyncAcceptPrepForReuse(SOCKET _hListenSocket, SOCKET _hAcceptSocket, WSAOVERLAPPED* _Overlapped);
-// This function parses the _OutputBuffer obtained from a call to the oWinsockAsyncAccept function and passes the local and remote addresses to a sockaddr structure.
-oWINSOCK_ASYNC_RESULT oWinsockAsyncAcceptExSockAddrs(SOCKET _ListenSocket, void* _Buffer, LPSOCKADDR* _LocalAddr, LPINT _SzLocalAddr, LPSOCKADDR* _RemoteAddr, LPINT _SzRemoteAddr);
+// Return the std::errc for the specified WSA error
+std::errc::errc get_errc(int _WSAError);
 
-// Thoroughly closes a socket according to best-practices described on the web.
-// If this returns false, check oErrorGetLast() for more information.
-bool oWinsockClose(SOCKET _hSocket);
+// These function calls must be initialized from a socket
+LPFN_CONNECTEX getfn_ConnectEx(SOCKET _hSocket);
+LPFN_DISCONNECTEX getfn_DisconnectEx(SOCKET _hSocket);
+LPFN_GETACCEPTEXSOCKADDRS getfn_GetAcceptExSockaddrs(SOCKET _hSocket);
+LPFN_TRANSMITPACKETS getfn_TransmitPackets(SOCKET _hSocket);
+LPFN_WSARECVMSG getfn_WSARecvMsg(SOCKET _hSocket);
+LPFN_ACCEPTEX getfn_AcceptEx(SOCKET _hSocket);
 
-// Set the keep alive time and interval (in milliseconds) default time is 2 hours and 1 second interval
-bool oWinsockSetKeepAlive(SOCKET _hSocket, unsigned int _TimeoutMS = 0x6DDD00, unsigned int _IntervalMS = 0x3E8);
+// Hostname is an address or name with a port (i.e. localhost:123 or 
+// 127.0.0.1:123). For INADDR_ANY use IP 0.0.0.0 and any appropriate port.
+sockaddr_in make_addr(const char* _Hostname);
 
-// This wrapper on WinSocks specialized event/wait system to make it look like
-// the above oWait*'s
-bool oWinsockWaitMultiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, bool _Alertable, unsigned int _TimeoutMS = oInfiniteWait);
-
-// If the socket was created using oSocketCreate (WSAEventSelect()), this function can 
-// be used to wait on that event and receive any events breaking the wait. This 
-// function handles "spurious waits", so if using WSANETWORKEVENTS structs, use
-// this wrapper always.
-bool oWinsockWait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEvents, unsigned int _TimeoutMS = oInfiniteWait);
-
-// Returns true if all data was sent. If false, use oErrorGetLast() for more details.
-bool oWinsockSend(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, const sockaddr_in* _pDestination);
-
-// Returns number of bytes read. This may include more than one Send()'s worth
-// of data due to Nagel's Algorithm. If size is 0, use oErrorGetLast() for more 
-// details. It can be that this function returns 0 and the error status is 
-// ESHUTDOWN, meaning a valid and error-free closing of the peer socket has 
-// occurred and no further steps should occur.
-// _pInOutCanReceive is the address of an integer used as a boolean (atomics 
-// used to change its state) that is 0 if Receive should not wait because of a 
-// bad socket state, or non-zero if the receive should block on FD_READ events.
-size_t oWinsockReceive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, int* _pInOutCanReceive, sockaddr_in* _pSource);
-
-// Returns true on success whether data was received or not. If return is false,
-// use oErrorGetLast() for more details. It can be that this function returns
-// false and the error status is ESHUTDOWN, meaning a valid and error-free
-// closing of the peer socket has occurred and no further steps should occur.
-bool oWinsockReceiveNonBlocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, sockaddr_in* _pSource, size_t* _pBytesReceived);
+char* addr_to_hostname(char* _StrDestination, size_t _SizeofStrDestination, const sockaddr_in& _SockAddr);
+template<size_t size> char* addr_to_hostname(char (&_StrDestination)[size], const sockaddr_in& _SockAddr) { return addr_to_hostname(_StrDestination, size, _SockAddr); }
+template<size_t capacity> char* addr_to_hostname(fixed_string<char, capacity>& _StrDestination, const sockaddr_in& _SockAddr) { return addr_to_hostname(_StrDestination, _StrDestination.capacity(), _SockAddr); }
 
 // Fills the specified buffers with data from the specified socket. Null can be 
 // specified for any one of these to opt out of getting a particular part of the
 // data. Hostname is THIS part of the socket, the local port of connection. Peer
 // name is the FOREIGN PART of the connection, meaning the ip/hostname and 
 // foreign port of the connection.
-bool oWinsockGetHostname(char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort, SOCKET _hSocket);
-template<size_t hostnameSize, size_t ipSize, size_t portSize> inline bool oWinsockGetHostname(char (&_OutHostname)[hostnameSize], char (&_OutIPAddress)[ipSize], char (&_OutPort)[portSize], SOCKET _hSocket) { return oWinsockGetHostname(_OutHostname, hostnameSize, _OutIPAddress, ipSize, _OutPort, portSize, _hSocket); }
+void get_hostname(char* _StrOutHostname, size_t _SizeofStrOutHostname, char* _StrOutIPAddress, size_t _SizeofStrOutIPAddress, char* _StrOutPort, size_t _SizeofStrOutPort, SOCKET _hSocket);
+template<size_t hostnameSize, size_t ipSize, size_t portSize> inline void get_hostname(char (&_OutHostname)[hostnameSize], char (&_OutIPAddress)[ipSize], char (&_OutPort)[portSize], SOCKET _hSocket) { get_hostname(_StrOutHostname, hostnameSize, _OutIPAddress, ipSize, _StrOutPort, portSize, _hSocket); }
 
-bool oWinsockGetPeername(char* _OutHostname, size_t _SizeofOutHostname, char* _OutIPAddress, size_t _SizeofOutIPAddress, char* _OutPort, size_t _SizeofOutPort, SOCKET _hSocket);
-template<size_t hostnameSize, size_t ipSize, size_t portSize> inline bool oWinsockGetPeername(char (&_OutHostname)[hostnameSize], char (&_OutIPAddress)[ipSize], char (&_OutPort)[portSize], SOCKET _hSocket) { return oWinsockGetPeername(_OutHostname, hostnameSize, _OutIPAddress, ipSize, _OutPort, portSize, _hSocket); }
+void get_peername(char* _StrOutHostname, size_t _SizeofStrOutHostname, char* _StrOutIPAddress, size_t _SizeofStrOutIPAddress, char* _StrOutPort, size_t _SizeofStrOutPort, SOCKET _hSocket);
+template<size_t hostnameSize, size_t ipSize, size_t portSize> inline void get_peername(char (&_OutHostname)[hostnameSize], char (&_OutIPAddress)[ipSize], char (&_OutPort)[portSize], SOCKET _hSocket) { get_peername(_StrOutHostname, hostnameSize, _StrOutIPAddress, ipSize, _StrOutPort, portSize, _hSocket); }
 
-// Use recommended practices from the web to determine if a socket is still 
-// connected to a peer.
-bool oWinsockIsConnected(SOCKET _hSocket);
+// For when creating a winsock with automatic port selection get the 
+// selected port.
+unsigned short get_port(SOCKET _hSocket);
+
+// Returns true if a poll reveals POLLHUP as not set.
+bool connected(SOCKET _hSocket);
+
+// Returns true if a poll reveals POLLRDNORM or POLLWRNORM as set.
+bool connected2(SOCKET _hSocket);
 
 // Enumerates the addresses of all attached interfaces
-void oWinsockEnumerateAllAddress(oFUNCTION<void(sockaddr_in _Addr)> _Enumerator);
+void enumerate_addresses(const std::function<void(const sockaddr_in& _Addr)> _Enumerator);
+
+// Returns false if timed out, otherwise this is just a thin wrapper around 
+// WSAWaitForMultipleEvents to make it more consistent with other API calls.
+bool wait_multiple(WSAEVENT* _phEvents, size_t _NumberOfEvents, bool _WaitAll, unsigned int _TimeoutMS);
+inline bool wait(WSAEVENT _hEvent, unsigned int _TimeoutMS) { return wait_multiple(&_hEvent, 1, true, _TimeoutMS); }
+
+// Create a winsock socket that can support overlapped operations.
+// _Hostname: IP/DNS colon the port number (127.0.0.1:123 or myhostname:321)
+// _Options: OR'ed together winsock::options values.
+// _TimeoutMS: Number of milliseconds to wait for this socket to connect. This 
+//             value is ignored if the socket is started as a server/listener.
+// _MaxNumConnections: If 0 the socket will be created and connect() will be 
+//                     called. If non-zero the socket will be bind()'ed and put 
+//                     into a listen state as a server. If negative, then 
+//                     SOMAXCONN will be used.
+SOCKET make(const sockaddr_in& _Addr, int _Options, unsigned int _TimeoutMS = 0, unsigned int _MaxNumConnections = 0);
+SOCKET make(const sockaddr_in6& _Addr, int _Options, unsigned int _TimeoutMS = 0, unsigned int _MaxNumConnections = 0);
+
+// For use with AcceptEx (iocp), this make creates an unconnected socket ready 
+// to be sent to AcceptEx. It is not usable at this point. Once iocp accepts a 
+// connection with this socket, you must call finish_async_accept to finish 
+// prepping the socket for use.
+SOCKET make_async_accept();
+void finish_async_accept(SOCKET _hListenSocket, SOCKET _hAcceptSocket);
+
+// This will disconnect the socket but not destroy it. It will be in the same 
+// state as a socket returned from make_async_accept. This is intended to 
+// improve server performance so a socket doesn't have to be deleted and 
+// recreated. This may or may not complete asynchronously. Remember to respond
+// appropriate to the returned values because if this returns synchronously an 
+// iocp event will not occur.
+async_result recycle_async_accept(SOCKET _hListenSocket, SOCKET _hAcceptSocket, WSAOVERLAPPED* _pOverlapped);
+
+// Thoroughly closes a socket according to best-practices described on the web.
+void close(SOCKET _hSocket);
+
+// Default is time is a 2 hour timeout with a 1 second interval.
+void set_keepalive(SOCKET _hSocket, unsigned int _TimeoutMS = 2 * 60 * 60 * 1000, unsigned int _IntervalMS = 1000);
+
+void send(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, const sockaddr_in* _pDestination = nullptr);
+
+// Returns number of bytes read. This may include more than one send()'s worth
+// of data due to Nagel's Algorithm. This can throw std::errc::connection_reset 
+// meaning a valid and error-free closing of the peer socket has occurred and no 
+// further steps should occur. _pInOutCanReceive is the address of an integer 
+// used as a boolean (atomics used to change its state) that is 0 if receive 
+// should not wait because of a bad _hSocket, or non-zero if the receive should 
+// block on FD_READ events.
+size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, int* _pInOutCanReceive, sockaddr_in* _pSource);
+
+// Returns the number of bytes received. This can throw std::errc::connection_reset 
+// meaning a valid and error-free closing of the peer socket has occurred and no 
+// further steps should occur.
+size_t receive_nonblocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, sockaddr_in* _pSource);
+
+// _OutputBuffer must be at least accept_buffer_size in size.
+async_result accept_async(SOCKET _ListenSocket, SOCKET _AcceptSocket, void* _OutputBuffer, WSAOVERLAPPED* _pOverlapped);
+
+// This function parses the _OutputBuffer obtained from a call to the 
+// accept_async function and passes the local and remote addresses to a 
+// sockaddr structure.
+async_result acceptexsockaddrs_async(SOCKET _ListenSocket, void* _Buffer, LPSOCKADDR* _LocalAddr, LPINT _SzLocalAddr, LPSOCKADDR* _RemoteAddr, LPINT _SzRemoteAddr);
+
+		} // namespace winsock
+	} // namespace windows
+} // namespace ouro
 
 #endif
