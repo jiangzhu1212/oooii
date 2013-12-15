@@ -52,13 +52,6 @@ oStd::thread::id::id()
 	: ID(UINT_MAX)
 {}
 
-bool std::operator==(oStd::thread::id x, oStd::thread::id y) { return *(unsigned int*)&x == *(unsigned int*)&y; }
-bool std::operator!=(oStd::thread::id x, oStd::thread::id y) { return *(unsigned int*)&x != *(unsigned int*)&y; }
-bool std::operator<(oStd::thread::id x, oStd::thread::id y) { return *(unsigned int*)&x < *(unsigned int*)&y; }
-bool std::operator<=(oStd::thread::id x, oStd::thread::id y) { return *(unsigned int*)&x <= *(unsigned int*)&y; }
-bool std::operator>(oStd::thread::id x, oStd::thread::id y) { return *(unsigned int*)&x > *(unsigned int*)&y; }
-bool std::operator>=(oStd::thread::id x, oStd::thread::id y) { return *(unsigned int*)&x >= *(unsigned int*)&y; }
-
 unsigned int oStd::thread::hardware_concurrency()
 {
 	SYSTEM_INFO si;
@@ -102,9 +95,9 @@ oStd::thread& oStd::thread::operator=(thread&& _That)
 	return *this;
 }
 
-void std::swap(oStd::thread& _this, oStd::thread& _That)
+void std::swap(oStd::thread& _This, oStd::thread& _That)
 {
-	_this.swap(_That);
+	_This.swap(_That);
 }
 
 void oStd::thread::swap(thread& _That)

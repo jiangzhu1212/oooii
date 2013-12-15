@@ -57,21 +57,7 @@ oOpenSSL::~oOpenSSL()
 	module::close(hModule);
 }
 
-oOpenSSL& oOpenSSL::Singleton()
-{
-	static oOpenSSL* sInstance = nullptr;
-	if (!sInstance)
-	{
-		process_heap::find_or_allocate(
-			"oOpenSSL"
-			, process_heap::per_process
-			, process_heap::garbage_collected
-			, [=](void* _pMemory) { new (_pMemory) oOpenSSL(); }
-			, [=](void* _pMemory) { ((oOpenSSL*)_pMemory)->~oOpenSSL(); }
-			, &sInstance);
-	}
-	return *sInstance;
-}
+oDEFINE_PROCESS_SINGLETON_TITLE_CASE("oOpenSSL", oOpenSSL);
 
 class oSocketEncryptor_Impl : public oSocketEncryptor
 {

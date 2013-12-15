@@ -195,21 +195,7 @@ context::~context()
 {
 }
 
-context& context::singleton()
-{
-	static context* sInstance = nullptr;
-	if (!sInstance)
-	{
-		process_heap::find_or_allocate(
-			"ouro::reporting"
-			, process_heap::per_process
-			, process_heap::garbage_collected
-			, [=](void* _pMemory) { new (_pMemory) context(); }
-			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
-			, &sInstance);
-	}
-	return *sInstance;
-}
+oDEFINE_PROCESS_SINGLETON("ouro::reporting", context);
 
 // Returns a pointer to the nul terminator of _StrDestination, or beyond its 
 // size if filled.

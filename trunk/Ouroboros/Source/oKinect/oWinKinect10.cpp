@@ -130,21 +130,7 @@ oWinKinect10::~oWinKinect10()
 		module::close(hModule);
 }
 
-oWinKinect10& oWinKinect10::Singleton()
-{
-	static oWinKinect10* sInstance = nullptr;
-	if (!sInstance)
-	{
-		process_heap::find_or_allocate(
-			"oWinKinect10"
-			, process_heap::per_process
-			, process_heap::garbage_collected
-			, [=](void* _pMemory) { new (_pMemory) oWinKinect10(); }
-			, [=](void* _pMemory) { ((oWinKinect10*)_pMemory)->~oWinKinect10(); }
-			, &sInstance);
-	}
-	return *sInstance;
-}
+oDEFINE_PROCESS_SINGLETON_TITLE_CASE("oWinKinect10", oWinKinect10);
 
 version oWinKinect10::GetVersion() const
 {

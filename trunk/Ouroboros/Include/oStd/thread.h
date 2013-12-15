@@ -16,7 +16,7 @@
  *                                                                        *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE *
  * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
@@ -98,6 +98,14 @@ namespace oStd {
 	{	unsigned int ID;
 	public:
 		id();
+
+		void swap(id& _That) { unsigned int tmp = ID; ID = _That.ID; _That.ID = tmp; }
+		bool operator==(const id& _That) const { return ID == _That.ID; }
+		bool operator!=(const id& _That) const { return ID != _That.ID; }
+		bool operator<(const id& _That) const { return ID < _That.ID; }
+		bool operator<=(const id& _That) const { return ID <= _That.ID; }
+		bool operator>(const id& _That) const { return ID > _That.ID; }
+		bool operator>=(const id& _That) const { return ID >= _That.ID; }
 	};
 
 	namespace this_thread
@@ -119,21 +127,7 @@ namespace oStd {
 namespace std
 {
 	void swap(oStd::thread& _This, oStd::thread& _That);
-	bool operator==(oStd::thread::id x, oStd::thread::id y);
-	bool operator!=(oStd::thread::id x, oStd::thread::id y);
-	bool operator<(oStd::thread::id x, oStd::thread::id y);
-	bool operator<=(oStd::thread::id x, oStd::thread::id y);
-	bool operator>(oStd::thread::id x, oStd::thread::id y);
-	bool operator>=(oStd::thread::id x, oStd::thread::id y);
-	template <> struct hash<oStd::thread::id> { size_t operator()(const oStd::thread::id& _ID) const { return std::hash<unsigned int>()(*(unsigned int*)&_ID); } };
 
 } // namespace std
-
-inline bool operator==(oStd::thread::id x, oStd::thread::id y) { return std::operator==(x, y); }
-inline bool operator!=(oStd::thread::id x, oStd::thread::id y) { return std::operator!=(x, y); }
-inline bool operator<(oStd::thread::id x, oStd::thread::id y) { return std::operator<(x, y); }
-inline bool operator<=(oStd::thread::id x, oStd::thread::id y) { return std::operator<=(x, y); }
-inline bool operator>(oStd::thread::id x, oStd::thread::id y) { return std::operator>(x, y); }
-inline bool operator>=(oStd::thread::id x, oStd::thread::id y) { return std::operator>=(x, y); }
 
 #endif

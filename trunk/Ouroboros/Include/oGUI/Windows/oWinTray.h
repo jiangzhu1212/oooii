@@ -24,44 +24,49 @@
  **************************************************************************/
 // Utilities for working with the Window's Tray
 #pragma once
-#ifndef oWinTray_h
-#define oWinTray_h
+#ifndef oGUI_win_tray_h
+#define oGUI_win_tray_h
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <oBasis/oGUI.h>
 
-// Return the HWND of the "system tray" or "notification area"
-HWND oTrayGetHwnd();
+namespace ouro {
+	namespace notification_area {
+
+// Return the oGUI_WINDOW of the "system tray" or "notification area"	
+oGUI_WINDOW native_handle();
 
 // Sets the focus on the tray itself, not any icon in it
-void oTraySetFocus();
+void focus();
 
 // Get the rectangle of the specified icon. Returns true if the rect is valid, 
 // or false if the icon doesn't exist.
-bool oTrayGetIconRect(HWND _hWnd, UINT _ID, RECT* _pRect);
+void icon_rect(oGUI_WINDOW _hWnd, unsigned int _ID, int* _pX, int* _pY, int* _pWidth, int* _pHeight);
 
 // Returns true of the tray icon exists
-inline bool oTrayExists(HWND _hWnd, UINT _ID) { RECT r; return oTrayGetIconRect(_hWnd, _ID, &r); }
+bool exists(oGUI_WINDOW _hWnd, unsigned int _ID);
 
-// Icons are identified by the HWND and the ID. If a CallbackMessage is not 
-// zero, then this is a message that can be handled in the HWND's WNDPROC. Use 
-// WM_USER+n for the custom code. If HICON is 0, the icon from the HWND will be 
-// used. If HICON is valid it will be used. All lifetime management is up to the 
-// user.
-void oTrayShowIcon(HWND _hWnd, UINT _ID, UINT _CallbackMessage, HICON _hIcon, bool _Show);
+// Icons are identified by the oGUI_WINDOW and the ID. If _CallbackMessage is not zero 
+// then this is a message that can be handled in the oGUI_WINDOW's WNDPROC. Use 
+// WM_USER+n for the custom code. If oGUI_ICON is nullptr the icon from the oGUI_WINDOW 
+// will be used. All lifetime management of a valid oGUI_ICON must be handled by 
+// client code.
+void show_icon(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _CallbackMessage, oGUI_ICON _hIcon, bool _Show);
 
-// Once an icon has been created with oTrayShowIcon, use this to display a 
-// message on it. If _hIcon is null, then the _hWnd's icon is used.
-bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const char* _Title, const char* _Message);
-
-// Helper function for the WNDPROC that handles the _CallbackMessage specified 
-// above.
-void oTrayDecodeCallbackMessageParams(WPARAM _wParam, LPARAM _lParam, UINT* _pNotificationEvent, UINT* _pID, int* _pX, int* _pY);
+// Once an icon has been created with show_icon, use this to display a message 
+// on it. If _hIcon is nullptr then the _hWnd's icon is used.
+void show_message(oGUI_WINDOW _hWnd, unsigned int _ID, oGUI_ICON _hIcon, unsigned int _TimeoutMS, const char* _Title, const char* _Message);
 
 // Minimize a window to the tray (animates a window to the tray)
-void oTrayMinimize(HWND _hWnd, UINT _CallbackMessage, HICON _hIcon);
+void minimize(oGUI_WINDOW _hWnd, unsigned int _CallbackMessage, oGUI_ICON _hIcon);
 
 // Animates an existing tray icon to a restored window
-void oTrayRestore(HWND _hWnd);
+void restore(oGUI_WINDOW _hWnd);
+
+// Use this in a windows message handler to decode the parameters for a callback
+// message as passed to one of the above APIs.
+void decode_callback_message_params(uintptr_t _wParam, uintptr_t _lParam, unsigned int* _pNotificationEvent, unsigned int* _pID, int* _pX, int* _pY);
+
+	} // namespace notification_area
+} // namespace ouro
 
 #endif

@@ -489,7 +489,7 @@ oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list 
 			// pass thru
 
 		case oMSGBOX_NOTIFY:
-			oVERIFY(oTrayShowMessage(hWnd, 0, hIcon, __max(2000, _Desc.TimeoutMS), _Desc.Title, ouro::data(msg)));
+			ouro::notification_area::show_message((oGUI_WINDOW)hWnd, 0, (oGUI_ICON)hIcon, __max(2000, _Desc.TimeoutMS), _Desc.Title, ouro::data(msg));
 			result = oMSGBOX_CONTINUE;
 			break;
 

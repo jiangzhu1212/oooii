@@ -362,21 +362,7 @@ context::~context()
 	RemoveVectoredExceptionHandler(static_on_exception);
 }
 
-context& context::singleton()
-{
-	context* sInstance = nullptr;
-	if (!sInstance)
-	{
-		process_heap::find_or_allocate(
-			"windows::exception::context"
-			, process_heap::per_process
-			, process_heap::garbage_collected
-			, [=](void* _pMemory) { new (_pMemory) context(); }
-			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
-			, &sInstance);
-	}
-	return *sInstance;
-}
+oDEFINE_PROCESS_SINGLETON("windows::exception", context);
 
 void set_handler(const handler& _Handler)
 {

@@ -78,21 +78,7 @@ private:
 	}
 };
 
-context& context::singleton()
-{
-	static context* sInstance = nullptr;
-	if (!sInstance)
-	{
-		process_heap::find_or_allocate(
-			"ouro::windows::win_skeleton"
-			, process_heap::per_process
-			, process_heap::garbage_collected
-			, [=](void* _pMemory) { new (_pMemory) context(); }
-			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
-			, &sInstance);
-	}
-	return *sInstance;
-}
+oDEFINE_PROCESS_SINGLETON("ouro::windows::win_skeleton", context);
 
 void register_source(handle _handle, const std::function<void(bone_info* _pSkeleton)>& _GetSkeleton) { context::singleton().register_source(_handle, _GetSkeleton); }
 void unregister_source(handle _handle) { context::singleton().unregister_source(_handle); }

@@ -145,22 +145,7 @@ private:
 	static BOOL CALLBACK static_ctrl_handler(DWORD fdwCtrlType) { return singleton().ctrl_handler(fdwCtrlType); }
 };
 
-context& context::singleton()
-{
-	static context* sInstance = nullptr;
-	if (!sInstance)
-	{
-		process_heap::find_or_allocate(
-			"ouro::gui::console"
-			, process_heap::per_process
-			, process_heap::garbage_collected
-			, [=](void* _pMemory) { new (_pMemory) context(); }
-			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
-			, &sInstance);
-	}
-
-	return *sInstance;
-}
+oDEFINE_PROCESS_SINGLETON("ouro::gui::console", context);
 
 console::info context::get_info() const
 {

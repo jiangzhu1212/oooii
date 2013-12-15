@@ -22,50 +22,159 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/mutex.h>
+#include <oGUI/windows/oWinTray.h>
+#include <oGUI/windows/oWinWindowing.h>
+#include <oBase/assert.h>
+#include <oBase/throw.h>
+#include <oStd/for.h>
 #include <oStd/thread.h>
-#include <oCore/reporting.h>
-#include <oPlatform/oSingleton.h>
 
-#undef interface
-#include <oGUI/Windows/oWinWindowing.h>
-#include <oGUI/Windows/oWinTray.h>
+#include <oCore/reporting.h>
 #include <oCore/windows/win_error.h>
 #include <oCore/windows/win_version.h>
+// Because this can call a timeout value that can occur after a synchronous 
+// report leaks, ensure we wait for it before reporting a false positive...
+#include <oCore/windows/win_crt_leak_tracker.h>
+
 #include <shellapi.h>
 #include <windowsx.h>
+#include <commctrl.h>
 
 #if (defined(NTDDI_WIN7) && (NTDDI_VERSION >= NTDDI_WIN7))
 	#define oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
 	#define oWINDOWS_HAS_TRAY_QUIETTIME
 #endif
 
-using namespace ouro;
+using namespace oStd;
 
-HWND oTrayGetHwnd()
+namespace ouro {
+	namespace notification_area {
+
+struct REMOVE_TRAY_ICON
 {
-	static const char* sHierarchy[] = 
-	{
-		"Shell_TrayWnd",
-		"TrayNotifyWnd",
-		"SysPager",
-		"ToolbarWindow32",
-	};
+	oGUI_WINDOW hWnd;
+	unsigned int ID;
+	unsigned int TimeoutMS;
+};
 
+bool operator==(const REMOVE_TRAY_ICON& _RTI1, const REMOVE_TRAY_ICON& _RTI2) { return _RTI1.hWnd == _RTI2.hWnd && _RTI1.ID == _RTI2.ID; }
+
+class cleanup
+{
+public:
+
+	static cleanup& singleton();
+
+	void register_window(oGUI_WINDOW _hWnd, UINT _ID)
+	{
+		lock_guard<shared_mutex> lock(Mutex);
+		if (!AllowInteraction)
+			return;
+
+		if (Removes.size() < Removes.capacity())
+		{
+			REMOVE_TRAY_ICON rti;
+			rti.hWnd = _hWnd;
+			rti.ID = _ID;
+			rti.TimeoutMS = 0;
+			Removes.push_back(rti);
+		}
+		else
+			OutputDebugStringA("--- Too many tray icons registered for cleanup: ignoring. ---");
+	}
+
+	void unregister_window(oGUI_WINDOW _hWnd, UINT _ID)
+	{
+		lock_guard<shared_mutex> lock(Mutex);
+		if (!AllowInteraction)
+			return;
+
+		REMOVE_TRAY_ICON rti;
+		rti.hWnd = _hWnd;
+		rti.ID = _ID;
+		rti.TimeoutMS = 0;
+
+		find_and_erase(Removes, rti);
+	}
+
+	void register_thread(thread&& _DeferredHideIconThread)
+	{
+		lock_guard<shared_mutex> lock(Mutex);
+		DeferredHideIconThreads.push_back(std::move(_DeferredHideIconThread));
+	}
+
+	void unregister_thread(const thread::id& _DeferredHideIconThreadID)
+	{
+		lock_guard<shared_mutex> lock(Mutex);
+		oFOR(auto& t, DeferredHideIconThreads)
+		{
+			if (_DeferredHideIconThreadID == t.get_id())
+			{
+				t = thread();
+				break;
+			}
+		}
+	}
+
+private:
+	cleanup()
+		: AllowInteraction(true)
+	{
+		reporting::ensure_initialized();
+	}
+
+	~cleanup()
+	{
+		{
+			lock_guard<shared_mutex> lock(Mutex);
+			AllowInteraction = false;
+		}
+
+		oFOR(auto& t, DeferredHideIconThreads)
+			t.join();
+
+		if (!Removes.empty())
+		{
+			xlstring buf;
+			mstring exec;
+			oTRACE("Cleaning up tray icons");
+		}
+
+		for (size_t i = 0; i < Removes.size(); i++)
+			show_icon(Removes[i].hWnd, Removes[i].ID, 0, 0, false);
+
+		Removes.clear();
+	}
+
+	fixed_vector<REMOVE_TRAY_ICON, 20> Removes;
+	fixed_vector<thread, 20> DeferredHideIconThreads;
+	shared_mutex Mutex;
+	volatile bool AllowInteraction;
+};
+
+oDEFINE_PROCESS_SINGLETON("ouro::notification_area::cleanup", cleanup);
+
+oGUI_WINDOW native_handle()
+{
+	static const char* sHierarchy[] = { "Shell_TrayWnd", "TrayNotifyWnd", "SysPager", "ToolbarWindow32", };
 	size_t i = 0;
 	HWND hWnd = FindWindow(sHierarchy[i++], nullptr);
 	while (hWnd && i < oCOUNTOF(sHierarchy))
 		hWnd = FindWindowEx(hWnd, nullptr, sHierarchy[i++], nullptr);
+	return (oGUI_WINDOW)hWnd;
+}
 
-	return hWnd;
+void focus()
+{
+	oV(Shell_NotifyIcon(NIM_SETFOCUS, nullptr));
 }
 
 #ifndef oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
-static bool Shell_NotifyIconGetRect_WAR(HWND _hWnd, UINT _ID, RECT* _pRect)
+static bool Shell_NotifyIconGetRect_workaround(HWND _hWnd, UINT _ID, RECT* _pRect)
 {
 	// http://social.msdn.microsoft.com/forums/en-US/winforms/thread/4ac8d81e-f281-4b32-9407-e663e6c234ae/
 	
-	HWND hTray = oTrayGetHwnd();
+	HWND hTray = (HWND)native_handle();
 	DWORD TrayProcID;
 	GetWindowThreadProcessId(hTray, &TrayProcID);
 	HANDLE hTrayProc = OpenProcess(PROCESS_ALL_ACCESS, 0, TrayProcID);
@@ -107,199 +216,87 @@ static bool Shell_NotifyIconGetRect_WAR(HWND _hWnd, UINT _ID, RECT* _pRect)
 }
 #endif
 
-// This API can be used to determine if the specified
-// icon exists at all.
-bool oTrayGetIconRect(HWND _hWnd, UINT _ID, RECT* _pRect)
+// returns true if the out params are valid, or false if _hWnd, _ID not found.
+static bool icon_rect_internal(oGUI_WINDOW _hWnd, unsigned int _ID, RECT* _pRect)
 {
 	#ifdef oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
 		NOTIFYICONIDENTIFIER nii;
 		memset(&nii, 0, sizeof(nii));
 		nii.cbSize = sizeof(nii);
-		nii.hWnd = _hWnd;
+		nii.hWnd = (HWND)_hWnd;
 		nii.uID = _ID;
-		HRESULT hr = Shell_NotifyIconGetRect(&nii, _pRect);
-		return SUCCEEDED(hr);
+		if (FAILED(Shell_NotifyIconGetRect(&nii, _pRect)))
+			return false;
 	#else
-		return Shell_NotifyIconGetRect_WAR(_hWnd, _ID, _pRect);
+	if (!Shell_NotifyIconGetRect_workaround((HWND)_hWnd, _ID, _pRect))
+		return false;
 	#endif
+	return true;
 }
 
-struct REMOVE_TRAY_ICON
+void icon_rect(oGUI_WINDOW _hWnd, unsigned int _ID, int* _pX, int* _pY, int* _pWidth, int* _pHeight)
 {
-	HWND hWnd;
-	UINT ID;
-	UINT TimeoutMS;
-};
+	RECT r;
+	if (!icon_rect_internal(_hWnd, _ID, &r))
+		oTHROW0(no_such_device);
+	*_pX = r.left;
+	*_pY = r.top;
+	*_pWidth = r.right - r.left;
+	*_pHeight = r.bottom - r.top;
+}
 
-bool operator==(const REMOVE_TRAY_ICON& _RTI1, const REMOVE_TRAY_ICON& _RTI2) { return _RTI1.hWnd == _RTI2.hWnd && _RTI1.ID == _RTI2.ID; }
-
-struct oTrayCleanup : public oProcessSingleton<oTrayCleanup>
+bool exists(oGUI_WINDOW _hWnd, unsigned int _ID)
 {
-	oTrayCleanup()
-		: AllowInteraction(true)
-	{
-		ouro::reporting::ensure_initialized();
-	}
+	RECT r;
+	return icon_rect_internal(_hWnd, _ID, &r);
+}
 
-	~oTrayCleanup()
-	{
-		{
-			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-			AllowInteraction = false;
-		}
-
-		if (!DeferredHideIconThreads.empty())
-		{
-			for (auto it = std::begin(DeferredHideIconThreads); it != std::end(DeferredHideIconThreads); ++it)
-				it->join();
-		}
-
-		if (!Removes.empty())
-		{
-			xlstring buf;
-			mstring exec;
-			snprintf(buf, "oWindows Trace %s Cleaning up tray icons\n", ouro::system::exec_path(exec));
-			OutputDebugStringA(buf);
-		}
-
-		for (size_t i = 0; i < Removes.size(); i++)
-			oTrayShowIcon(Removes[i].hWnd, Removes[i].ID, 0, 0, false);
-
-		Removes.clear();
-	}
-
-	void Register(HWND _hWnd, UINT _ID)
-	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-		if (!AllowInteraction)
-			return;
-
-		if (Removes.size() < Removes.capacity())
-		{
-			REMOVE_TRAY_ICON rti;
-			rti.hWnd = _hWnd;
-			rti.ID = _ID;
-			rti.TimeoutMS = 0;
-			Removes.push_back(rti);
-		}
-		else
-			OutputDebugStringA("--- Too many tray icons registered for cleanup: ignoring. ---");
-	}
-
-	void Unregister(HWND _hWnd, UINT _ID)
-	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-		if (!AllowInteraction)
-			return;
-
-		REMOVE_TRAY_ICON rti;
-		rti.hWnd = _hWnd;
-		rti.ID = _ID;
-		rti.TimeoutMS = 0;
-
-		find_and_erase(Removes, rti);
-	}
-
-	void Register(oStd::thread&& _DeferredHideIconThread)
-	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-		DeferredHideIconThreads.push_back(std::move(_DeferredHideIconThread));
-	}
-
-	void Unregister(oStd::thread::id _DeferredHideIconThreadID)
-	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-		for (auto it = std::begin(DeferredHideIconThreads); it != std::end(DeferredHideIconThreads); ++it)
-		{
-			if (it->get_id() == _DeferredHideIconThreadID)
-			{
-				*it = oStd::thread();
-				break;
-			}
-		}
-	}
-
-	static const oGUID GUID;
-	fixed_vector<REMOVE_TRAY_ICON, 20> Removes;
-	fixed_vector<oStd::thread, 20> DeferredHideIconThreads;
-	oConcurrency::shared_mutex Mutex;
-	volatile bool AllowInteraction;
-};
-
-// {1D072014-4CA5-4BA9-AD2C-96AD1510F2A0}
-const oGUID oTrayCleanup::GUID = { 0x1d072014, 0x4ca5, 0x4ba9, { 0xad, 0x2c, 0x96, 0xad, 0x15, 0x10, 0xf2, 0xa0 } };
-oSINGLETON_REGISTER(oTrayCleanup);
-
-void oTrayShowIcon(HWND _hWnd, UINT _ID, UINT _CallbackMessage, HICON _hIcon, bool _Show)
+static NOTIFYICONDATA init_basics(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _CallbackMessage, oGUI_ICON _hIcon)
 {
 	NOTIFYICONDATA nid;
 	memset(&nid, 0, sizeof(nid));
 	nid.cbSize = sizeof(nid);
-	nid.hWnd = _hWnd;
-	nid.hIcon = _hIcon ? _hIcon : oWinGetIcon(_hWnd, false);
+	nid.hWnd = (HWND)_hWnd;
+	nid.hIcon = _hIcon ? (HICON)_hIcon : oWinGetIcon((HWND)_hWnd, false);
 	if (!nid.hIcon)
-		nid.hIcon = oWinGetIcon(_hWnd, true);
+		nid.hIcon = oWinGetIcon((HWND)_hWnd, true);
 	nid.uID = _ID;
 	nid.uCallbackMessage = _CallbackMessage;
-	nid.uFlags = NIF_ICON | (_CallbackMessage ? NIF_MESSAGE : 0);
+	nid.uFlags |= (_CallbackMessage ? NIF_MESSAGE : 0);
+	return nid;
+}
+
+void show_icon(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _CallbackMessage, oGUI_ICON _hIcon, bool _Show)
+{
+	NOTIFYICONDATA nid = init_basics(_hWnd, _ID, _CallbackMessage, _hIcon);
+	nid.uFlags |= NIF_ICON;
 	nid.uVersion = NOTIFYICON_VERSION_4;
 	oV(Shell_NotifyIcon(_Show ? NIM_ADD : NIM_DELETE, &nid));
 
-	// we should always be valid when showing, but there may be a scheduled hide 
-	// that sneaks in after static deinit clears this singleton
-	oTrayCleanup* pTrayCleanup = oTrayCleanup::Singleton();
-	if (pTrayCleanup)
-	{
-		// Ensure we know exactly what version behavior we're dealing with
-		oV(Shell_NotifyIcon(NIM_SETVERSION, &nid));
-		pTrayCleanup->Register(_hWnd, _ID);
-	}
-
-	else
-	{
-		if (pTrayCleanup)
-			pTrayCleanup->Unregister(_hWnd, _ID);
-	}
+	// Ensure we know exactly what version behavior we're dealing with
+	oV(Shell_NotifyIcon(NIM_SETVERSION, &nid));
+	cleanup::singleton().register_window(_hWnd, _ID);
 }
 
-void oTraySetFocus()
-{
-	oV(Shell_NotifyIcon(NIM_SETFOCUS, nullptr));
-}
-
-// Because this can call a timeout value that can occur after a synchronous 
-// report leaks, ensure we wait for it before reporting a false positive...
-#include <oCore/windows/win_crt_leak_tracker.h>
-
-static void DeferredHideIcon(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
+static void hide_icon(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _TimeoutMS)
 {
 	Sleep(_TimeoutMS);
 	oTRACE("Auto-closing tray icon HWND=0x%p ID=%u", _hWnd, _ID);
-	oTrayShowIcon(_hWnd, _ID, 0, 0, false);
-
-	oTrayCleanup::Singleton()->Unregister(oStd::this_thread::get_id());
-
+	show_icon(_hWnd, _ID, 0, 0, false);
+	cleanup::singleton().unregister_thread(this_thread::get_id());
 	windows::crt_leak_tracker::release_delay();
 }
 
-static void oTrayScheduleIconHide(HWND _hWnd, UINT _ID, unsigned int _TimeoutMS)
+static void schedule_icon_hide(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _TimeoutMS)
 {
 	windows::crt_leak_tracker::add_delay();
-	oStd::thread t(DeferredHideIcon, _hWnd, _ID, _TimeoutMS);
-	oTrayCleanup::Singleton()->Register(std::move(t));
+	cleanup::singleton().register_thread(std::move(thread(hide_icon, _hWnd, _ID, _TimeoutMS)));
 }
 
-bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const char* _Title, const char* _Message)
+void show_message(oGUI_WINDOW _hWnd, unsigned int _ID, oGUI_ICON _hIcon, unsigned int _TimeoutMS, const char* _Title, const char* _Message)
 {
-	NOTIFYICONDATA nid;
-	memset(&nid, 0, sizeof(nid));
-	nid.cbSize = sizeof(nid);
-	nid.hWnd = _hWnd;
-	nid.hIcon = _hIcon ? _hIcon : oWinGetIcon(_hWnd, false);
-	if (!nid.hIcon)
-		nid.hIcon = oWinGetIcon(_hWnd, true);
-	nid.uID = _ID;
-	nid.uFlags = NIF_INFO;
+	NOTIFYICONDATA nid = init_basics(_hWnd, _ID, 0, _hIcon);
+	nid.uFlags |= NIF_INFO;
 	nid.uTimeout = __max(__min(_TimeoutMS, 30000), 10000);
 
 	// MS recommends truncating at 200 for English: http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
@@ -318,14 +315,14 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 	#endif
 
 	RECT r;
-	if (!oTrayGetIconRect(_hWnd, _ID, &r))
+	if (!icon_rect_internal(_hWnd, _ID, &r))
 	{
 		UINT timeout = 0;
-		switch (ouro::windows::get_version())
+		switch (windows::get_version())
 		{
-			case ouro::windows::version::win2000:
-			case ouro::windows::version::xp:
-			case ouro::windows::version::server_2003:
+			case windows::version::win2000:
+			case windows::version::xp:
+			case windows::version::server_2003:
 				timeout = nid.uTimeout;
 				break;
 			default:
@@ -337,16 +334,44 @@ bool oTrayShowMessage(HWND _hWnd, UINT _ID, HICON _hIcon, UINT _TimeoutMS, const
 			};
 		}
 
-		oTrayShowIcon(_hWnd, _ID, 0, _hIcon, true);
+		show_icon(_hWnd, _ID, 0, _hIcon, true);
 		if (timeout != oInfiniteWait)
-			oTrayScheduleIconHide(_hWnd, _ID, timeout);
+			schedule_icon_hide(_hWnd, _ID, timeout);
 	}
 
 	oVB(Shell_NotifyIcon(NIM_MODIFY, &nid));
-	return true;
 }
 
-void oTrayDecodeCallbackMessageParams(WPARAM _wParam, LPARAM _lParam, UINT* _pNotificationEvent, UINT* _pID, int* _pX, int* _pY)
+// _ToSysTray false means animate from sys tray out to window position
+static void animate_window_respectful(oGUI_WINDOW _hWnd, bool _ToSysTray)
+{
+	RECT rDesktop, rWindow;
+	GetWindowRect(GetDesktopWindow(), &rDesktop);
+	GetWindowRect((HWND)_hWnd, &rWindow);
+	rDesktop.left = rDesktop.right;
+	rDesktop.top = rDesktop.bottom;
+	const RECT& from = _ToSysTray ? rWindow : rDesktop;
+	const RECT& to = _ToSysTray ? rDesktop : rWindow;
+	oWinAnimate((HWND)_hWnd, from, to);
+}
+
+void minimize(oGUI_WINDOW _hWnd, unsigned int _CallbackMessage, oGUI_ICON _hIcon)
+{
+	animate_window_respectful(_hWnd, true);
+	ShowWindow((HWND)_hWnd, SW_HIDE);
+	show_icon(_hWnd, 0, _CallbackMessage, _hIcon, true);
+}
+
+void restore(oGUI_WINDOW _hWnd)
+{
+	animate_window_respectful(_hWnd, false);
+	ShowWindow((HWND)_hWnd, SW_SHOW);
+	SetActiveWindow((HWND)_hWnd);
+	SetForegroundWindow((HWND)_hWnd);
+	show_icon(_hWnd, 0, 0, 0, false);
+}
+
+void decode_callback_message_params(uintptr_t _wParam, uintptr_t _lParam, unsigned int* _pNotificationEvent, unsigned int* _pID, int* _pX, int* _pY)
 {
 	// http://msdn.microsoft.com/en-us/library/bb773352(v=vs.85).aspx
 	// Search for uCallbackMessage
@@ -359,32 +384,5 @@ void oTrayDecodeCallbackMessageParams(WPARAM _wParam, LPARAM _lParam, UINT* _pNo
 		*_pY = GET_Y_LPARAM(_wParam);
 }
 
-// false means animate from sys tray out to window position
-static void oTrayRespectfulAnimateWindow(HWND _hWnd, bool _ToSysTray)
-{
-	RECT rDesktop, rWindow;
-	GetWindowRect(GetDesktopWindow(), &rDesktop);
-	GetWindowRect(_hWnd, &rWindow);
-	rDesktop.left = rDesktop.right;
-	rDesktop.top = rDesktop.bottom;
-	const RECT& from = _ToSysTray ? rWindow : rDesktop;
-	const RECT& to = _ToSysTray ? rDesktop : rWindow;
-	oWinAnimate(_hWnd, from, to);
-}
-
-void oTrayMinimize(HWND _hWnd, UINT _CallbackMessage, HICON _hIcon)
-{
-	oTrayRespectfulAnimateWindow(_hWnd, true);
-	ShowWindow(_hWnd, SW_HIDE);
-	oTrayShowIcon(_hWnd, 0, _CallbackMessage, _hIcon, true);
-}
-
-void oTrayRestore(HWND _hWnd)
-{
-	oTrayRespectfulAnimateWindow(_hWnd, false);
-	ShowWindow(_hWnd, SW_SHOW);
-	SetActiveWindow(_hWnd);
-	SetForegroundWindow(_hWnd);
-	oTrayShowIcon(_hWnd, 0, 0, 0, false);
-}
-
+	} // namespace notification_area
+} // namespace ouro

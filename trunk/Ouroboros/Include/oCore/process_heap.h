@@ -118,4 +118,23 @@ oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(std_allocator)
 
 oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(ouro::process_heap::std_allocator) { return true; }
 
+// Convenience macro for defining a member function that acts as a singleton 
+// instantiator that will be singular throughout the entire process, even with 
+// DLLs.
+
+#define oDEFINE_PROCESS_SINGLETON__(_APIName, _StrName, _ClassName) \
+	_ClassName& _ClassName::_APIName() \
+	{	static _ClassName* sInstance = nullptr; \
+		if (!sInstance) \
+		{	process_heap::find_or_allocate(_StrName, process_heap::per_process, process_heap::garbage_collected \
+				, [=](void* _pMemory) { new (_pMemory) _ClassName(); } \
+				, [=](void* _pMemory) { ((_ClassName*)_pMemory)->~_ClassName(); } \
+				, &sInstance); \
+		} \
+		return *sInstance; \
+	}
+
+#define oDEFINE_PROCESS_SINGLETON(_StrName, _ClassName) oDEFINE_PROCESS_SINGLETON__(singleton, _StrName, _ClassName)
+#define oDEFINE_PROCESS_SINGLETON_TITLE_CASE(_StrName, _ClassName) oDEFINE_PROCESS_SINGLETON__(Singleton, _StrName, _ClassName)
+
 #endif
