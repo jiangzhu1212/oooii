@@ -31,12 +31,12 @@
 #include <windows.h>
 #include <NuiApi.h>
 #include <oCore/process_heap.h>
-#include <oPlatform/oModuleUtil.h>
 
-struct oWinKinect10 : oProcessSingleton<oWinKinect10>
-{	static const oGUID GUID;
-	oWinKinect10();
-	~oWinKinect10();
+class oWinKinect10
+{	
+public:
+
+	static oWinKinect10& Singleton();
 
 	ouro::version GetVersion() const;
 
@@ -78,6 +78,9 @@ struct oWinKinect10 : oProcessSingleton<oWinKinect10>
 	void SafeNuiShutdown(INuiSensor* _pSensor);
 
 protected: 
+	oWinKinect10();
+	~oWinKinect10();
+
 	ouro::module::id hModule;
 	std::vector<oStd::thread::id, ouro::process_heap::std_allocator<oStd::thread::id>> TIDs;
 	bool TIDsRecorded;

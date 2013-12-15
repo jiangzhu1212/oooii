@@ -26,14 +26,16 @@
 #ifndef oOPENSSL_h
 #define oOPENSSL_h
 
-#include <oPlatform/oModuleUtil.h>
-
 #include "oWinsock.h"
 #undef interface
 #undef INTERFACE_DEFINED
 #include <openssl/ssl.h>
 
-oDECLARE_DLL_SINGLETON_BEGIN(oOpenSSL)
+class oOpenSSL
+{
+public:
+	static oOpenSSL& Singleton();
+
 	int (*SSL_library_init)(void);
 	void (*SSL_load_error_strings)(void);
 	SSL_CTX * (*SSL_CTX_new)(const SSL_METHOD *meth);
@@ -49,7 +51,13 @@ oDECLARE_DLL_SINGLETON_BEGIN(oOpenSSL)
 	int (*SSL_connect)(SSL *ssl);
 	int (*SSL_read)(SSL *ssl,void *buf,int num);
 	int (*SSL_pending)(const SSL *s);
-oDECLARE_DLL_SINGLETON_END()
+
+private:
+	oOpenSSL();
+	~oOpenSSL();
+
+	ouro::module::id hModule;
+};
 
 #define interface struct __declspec(novtable)
 interface oSocketEncryptor : oInterface

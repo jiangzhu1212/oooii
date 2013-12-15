@@ -46,16 +46,14 @@ oKinectManager::oKinectManager()
 	: WMInputDeviceChange(0)
 	, CurrentDeviceInstanceName(0)
 {
-	oWinKinect10::Singleton()->Reference();
-	oWinKinect10::Singleton()->SafeNuiSetDeviceStatusCallback(StatusProc, this);
+	oWinKinect10::Singleton().SafeNuiSetDeviceStatusCallback(StatusProc, this);
 	WMInputDeviceChange = oWinGetNativeRegisteredMessage(oWM_INPUT_DEVICE_CHANGE);
 }
 
 oKinectManager::~oKinectManager()
 {
 	oASSERT(Kinects.empty(), "");
-	oWinKinect10::Singleton()->SafeNuiSetDeviceStatusCallback(nullptr, nullptr);
-	oWinKinect10::Singleton()->Release();
+	oWinKinect10::Singleton().SafeNuiSetDeviceStatusCallback(nullptr, nullptr);
 }
 
 void oKinectManager::Register(threadsafe oKinect* _pKinect)

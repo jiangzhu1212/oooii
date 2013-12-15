@@ -95,11 +95,11 @@ bool oKinectImpl::Reinitialize()
 {
 	if (Desc.ID.empty())
 	{
-		HRESULT hr = oWinKinect10::Singleton()->SafeNuiCreateSensorByIndex(Desc.Index, &NUISensor); 
+		HRESULT hr = oWinKinect10::Singleton().SafeNuiCreateSensorByIndex(Desc.Index, &NUISensor); 
 		if (hr == E_NUI_BADIINDEX)
 			return oErrorSetLast(std::errc::no_such_device);
 		else if (FAILED(hr))
-			throw ouro::windows::error(hr);
+			throw windows::error(hr);
 
 		oASSERT(NUISensor->NuiInstanceIndex() == Desc.Index, "");
 		Desc.ID = NUISensor->NuiDeviceConnectionId();
@@ -110,11 +110,11 @@ bool oKinectImpl::Reinitialize()
 	{
 		static_assert(sizeof(wchar_t) == sizeof(std::remove_pointer<BSTR>::type), "BSTR size mismatch");
 		swstring wID = Desc.ID;
-		HRESULT hr = oWinKinect10::Singleton()->SafeNuiCreateSensorById(wID, &NUISensor); 
+		HRESULT hr = oWinKinect10::Singleton().SafeNuiCreateSensorById(wID, &NUISensor); 
 		if (hr == E_NUI_BADIINDEX)
 			return oErrorSetLast(std::errc::no_such_device);
 		else if (FAILED(hr))
-			throw ouro::windows::error(hr);
+			throw windows::error(hr);
 		Desc.Index = NUISensor->NuiInstanceIndex();
 	}
 
@@ -168,7 +168,7 @@ bool oKinectImpl::Reinitialize()
 	return true;
 }
 
-oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::window>& _Window, bool* _pSuccess)
+oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Window, bool* _pSuccess)
 	: Desc(_Desc)
 	, Window(_Window)
 	, hColorStream(nullptr)
@@ -178,7 +178,7 @@ oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::
 {
 	*_pSuccess = false;
 
-	version v = oWinKinect10::Singleton()->GetVersion();
+	version v = oWinKinect10::Singleton().GetVersion();
 
 	if (v.major != oKINECT_SDK_MAJOR || v.minor != oKINECT_SDK_MINOR)
 	{
@@ -212,7 +212,7 @@ void oKinectImpl::Shutdown()
 	PitchThread.join();
 	EventThread.join();
 
-	oWinKinect10::Singleton()->SafeNuiShutdown(NUISensor);
+	oWinKinect10::Singleton().SafeNuiShutdown(NUISensor);
 
 	NUISensor = nullptr;
 	hColorStream = nullptr;
@@ -239,7 +239,7 @@ void oKinectImpl::GetDesc(oKINECT_DESC* _pDesc) const threadsafe
 
 int2 oKinectImpl::GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe
 {
-	ouro::surface::info inf;
+	surface::info inf;
 
 	oKinectImpl* pThis = thread_cast<oKinectImpl*>(this);
 
@@ -259,7 +259,7 @@ int2 oKinectImpl::GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe
 
 bool oKinectImpl::GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe
 {
-	ouro::windows::skeleton::bone_info Skeleton;
+	windows::skeleton::bone_info Skeleton;
 	if (Skeletons.GetSkeletonByIndex(_PlayerIndex, &Skeleton))
 	{
 		_pSkeleton->SourceID = Skeleton.source_id;
@@ -272,7 +272,7 @@ bool oKinectImpl::GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleto
 
 bool oKinectImpl::GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _pSkeleton) const threadsafe
 {
-	ouro::windows::skeleton::bone_info Skeleton;
+	windows::skeleton::bone_info Skeleton;
 	if (Skeletons.GetSkeletonByID(_ID, &Skeleton))
 	{
 		_pSkeleton->SourceID = Skeleton.source_id;
@@ -334,7 +334,7 @@ void oKinectImpl::OnPitch()
 	oConcurrency::end_thread();
 }
 
-bool oKinectImpl::MapRead(oKINECT_FRAME_TYPE _Type, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pMapped) const threadsafe
+bool oKinectImpl::MapRead(oKINECT_FRAME_TYPE _Type, surface::info* _pInfo, surface::const_mapped_subresource* _pMapped) const threadsafe
 {
 	int2 ByteDimensions;
 
@@ -430,7 +430,7 @@ int oKinectGetCount()
 	return Count;
 }
 
-bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::window>& _Window, threadsafe oKinect** _ppKinect)
+bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Window, threadsafe oKinect** _ppKinect)
 {
 	bool success = false;
 	oCONSTRUCT(_ppKinect, oKinectImpl(_Desc, _Window, &success));
@@ -445,7 +445,7 @@ int oKinectGetCount()
 	return oInvalid;
 }
 
-bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<ouro::window>& _Window, threadsafe oKinect** _ppKinect)
+bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Window, threadsafe oKinect** _ppKinect)
 {
 	return oErrorSetLast(std::errc::no_such_device, "library not compiled with Kinect support");
 }

@@ -24,6 +24,9 @@
  **************************************************************************/
 #include "oOpenSSL.h"
 #include <oBase/assert.h>
+#include <oCore/process_heap.h>
+
+using namespace ouro;
 
 static const char* sExportedAPIs[] = 
 {
@@ -44,10 +47,31 @@ static const char* sExportedAPIs[] =
 	"SSL_pending",
 };
 
-oDEFINE_DLL_SINGLETON_CTOR(oOpenSSL, "ssleay32.dll", SSL_library_init)
+oOpenSSL::oOpenSSL()
+{
+	hModule = module::link("ssleay32.dll", sExportedAPIs, (void**)&SSL_library_init, oCOUNTOF(sExportedAPIs));
+}
 
-// {3F8F7F52-E9F9-4704-BE7D-6E7F678E12C0}
-const oGUID oOpenSSL::GUID = { 0x3f8f7f52, 0xe9f9, 0x4704, { 0xbe, 0x7d, 0x6e, 0x7f, 0x67, 0x8e, 0x12, 0xc0 } };
+oOpenSSL::~oOpenSSL()
+{
+	module::close(hModule);
+}
+
+oOpenSSL& oOpenSSL::Singleton()
+{
+	static oOpenSSL* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"oOpenSSL"
+			, process_heap::per_process
+			, process_heap::garbage_collected
+			, [=](void* _pMemory) { new (_pMemory) oOpenSSL(); }
+			, [=](void* _pMemory) { ((oOpenSSL*)_pMemory)->~oOpenSSL(); }
+			, &sInstance);
+	}
+	return *sInstance;
+}
 
 class oSocketEncryptor_Impl : public oSocketEncryptor
 {
@@ -78,9 +102,9 @@ bool oSocketEncryptor::Create(oSocketEncryptor** _ppEncryptor)
 oSocketEncryptor_Impl::oSocketEncryptor_Impl(bool *_pSuccess)
 {
 	pCtx = NULL;
-	oOpenSSL::Singleton()->SSL_library_init();
-	//oOpenSSL::Singleton()->SSL_load_error_strings();
-	pCtx = oOpenSSL::Singleton()->SSL_CTX_new (oOpenSSL::Singleton()->SSLv23_client_method());
+	oOpenSSL::Singleton().SSL_library_init();
+	//oOpenSSL::Singleton().SSL_load_error_strings();
+	pCtx = oOpenSSL::Singleton().SSL_CTX_new (oOpenSSL::Singleton().SSLv23_client_method());
 	*_pSuccess = (pCtx != NULL);
 }
 
@@ -94,12 +118,12 @@ bool oSocketEncryptor_Impl::OpenSSLConnection(SOCKET _hSocket, unsigned int _Tim
 	if (!pCtx)
 		return false;
 	
-	pSSL = oOpenSSL::Singleton()->SSL_new (pCtx);   
+	pSSL = oOpenSSL::Singleton().SSL_new (pCtx);   
 	if(!pSSL)
 		return false;
 
-	oOpenSSL::Singleton()->SSL_set_fd (pSSL, (int)_hSocket);
-    oOpenSSL::Singleton()->SSL_set_mode(pSSL, SSL_MODE_AUTO_RETRY);
+	oOpenSSL::Singleton().SSL_set_fd (pSSL, (int)_hSocket);
+    oOpenSSL::Singleton().SSL_set_mode(pSSL, SSL_MODE_AUTO_RETRY);
 
 	int res = 0;
 	fd_set fdwrite;
@@ -139,8 +163,8 @@ bool oSocketEncryptor_Impl::OpenSSLConnection(SOCKET _hSocket, unsigned int _Tim
 				return false;
 			}
 		}
-		res = oOpenSSL::Singleton()->SSL_connect(pSSL);
-		switch(oOpenSSL::Singleton()->SSL_get_error(pSSL, res))
+		res = oOpenSSL::Singleton().SSL_connect(pSSL);
+		switch(oOpenSSL::Singleton().SSL_get_error(pSSL, res))
 		{
 		  case SSL_ERROR_NONE:
 			FD_ZERO(&fdwrite);
@@ -165,13 +189,13 @@ void oSocketEncryptor_Impl::CleanupOpenSSL()
 {
 	if(pSSL != NULL)
 	{
-		oOpenSSL::Singleton()->SSL_shutdown (pSSL);  /* send SSL/TLS close_notify */
-		oOpenSSL::Singleton()->SSL_free (pSSL);
+		oOpenSSL::Singleton().SSL_shutdown (pSSL);  /* send SSL/TLS close_notify */
+		oOpenSSL::Singleton().SSL_free (pSSL);
 		pSSL = NULL;
 	}
 	if(pCtx != NULL)
 	{
-		oOpenSSL::Singleton()->SSL_CTX_free (pCtx);	
+		oOpenSSL::Singleton().SSL_CTX_free (pCtx);	
 		pCtx = NULL;
 	}
 }
@@ -223,9 +247,9 @@ int oSocketEncryptor_Impl::Send(SOCKET _hSocket, const void *_pSource, unsigned 
 
 		if(ws->FD_ISSET(_hSocket,&fdwrite) || (bWriteBlockedOnRead && ws->FD_ISSET(_hSocket, &fdread)))
 		{
-			res = oOpenSSL::Singleton()->SSL_write(pSSL, _pSource, _SizeofSource);
+			res = oOpenSSL::Singleton().SSL_write(pSSL, _pSource, _SizeofSource);
 
-			switch(oOpenSSL::Singleton()->SSL_get_error(pSSL,res))
+			switch(oOpenSSL::Singleton().SSL_get_error(pSSL,res))
 			{
 			  case SSL_ERROR_NONE:
 				remaining -= res;
@@ -297,9 +321,9 @@ int oSocketEncryptor_Impl::Receive(SOCKET _hSocket, char *_pData, unsigned int _
 				const int buff_len = 1024;
 				char buff[buff_len];
 
-				res = oOpenSSL::Singleton()->SSL_read(pSSL, buff, buff_len);
+				res = oOpenSSL::Singleton().SSL_read(pSSL, buff, buff_len);
 
-				int ssl_err = oOpenSSL::Singleton()->SSL_get_error(pSSL, res);
+				int ssl_err = oOpenSSL::Singleton().SSL_get_error(pSSL, res);
 
 				if(ssl_err == SSL_ERROR_NONE)
 				{
@@ -311,7 +335,7 @@ int oSocketEncryptor_Impl::Receive(SOCKET _hSocket, char *_pData, unsigned int _
 					}
 					memcpy(_pData + offset, buff, res);
 					offset += res;
-					if(oOpenSSL::Singleton()->SSL_pending(pSSL))
+					if(oOpenSSL::Singleton().SSL_pending(pSSL))
 					{
 						continue;
 					}

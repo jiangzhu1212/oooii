@@ -40,12 +40,9 @@ static const char* sExportedAPIs[] =
 	"NuiGetSensorCount",
 };
 
-// {88A26003-9F51-4828-9C8F-70B50C48B2CF}
-const oGUID oWinKinect10::GUID = { 0x88a26003, 0x9f51, 0x4828, { 0x9c, 0x8f, 0x70, 0xb5, 0xc, 0x48, 0xb2, 0xcf } };
-
 void oWinKinect10::RecordPreKinectThreads()
 {
-	ouro::this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
+	this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
 	{
 		TIDs.push_back(_ThreadID);
 		return true;
@@ -56,7 +53,7 @@ void oWinKinect10::RecordKinectWorkerThreads()
 {
 	auto BeforeTIDs = TIDs;
 	TIDs.clear();
-	ouro::this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
+	this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
 	{
 		TIDs.push_back(_ThreadID);
 		return true;
@@ -104,9 +101,8 @@ oWinKinect10::oWinKinect10()
 	, KinectThreadTerminated(false)
 	, NuiSetDeviceStatusCallbackWasCalled(false)
 {	
-	hModule = ouro::module::link("Kinect10.dll", sExportedAPIs, (void**)&NuiCreateSensorByIndex__, oCOUNTOF(sExportedAPIs));
+	hModule = module::link("Kinect10.dll", sExportedAPIs, (void**)&NuiCreateSensorByIndex__, oCOUNTOF(sExportedAPIs));
 }
-oSINGLETON_REGISTER(oWinKinect10);
 
 oWinKinect10::~oWinKinect10()
 {
@@ -131,12 +127,28 @@ oWinKinect10::~oWinKinect10()
 	if (NuiSetDeviceStatusCallbackWasCalled)
 		oTRACE("NuiSetDeviceStatusCallback was called, which would cause the DLL unload to crash, so skipping unload.");
 	else
-		ouro::module::close(hModule);
+		module::close(hModule);
+}
+
+oWinKinect10& oWinKinect10::Singleton()
+{
+	static oWinKinect10* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"oWinKinect10"
+			, process_heap::per_process
+			, process_heap::garbage_collected
+			, [=](void* _pMemory) { new (_pMemory) oWinKinect10(); }
+			, [=](void* _pMemory) { ((oWinKinect10*)_pMemory)->~oWinKinect10(); }
+			, &sInstance);
+	}
+	return *sInstance;
 }
 
 version oWinKinect10::GetVersion() const
 {
-	ouro::module::info mi = ouro::module::get_info(*(ouro::module::id*)&hModule);
+	module::info mi = module::get_info(*(module::id*)&hModule);
 	return mi.version;
 }
 
