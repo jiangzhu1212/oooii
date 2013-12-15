@@ -108,9 +108,6 @@
     <ClInclude Include="oIOCP.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="SoftLink\oWinsock.h">
-      <Filter>Source\Windows Soft Link</Filter>
-    </ClInclude>
     <ClInclude Include="SoftLink\oOpenSSL.h">
       <Filter>Source\Windows Soft Link</Filter>
     </ClInclude>
@@ -192,9 +189,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="SoftLink\oOpenSSL.cpp">
-      <Filter>Source\Windows Soft Link</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oWinsock.cpp">
       <Filter>Source\Windows Soft Link</Filter>
     </ClCompile>
   </ItemGroup>

@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oWinsock.h"
+#include <oCore/windows/win_winsock.h>
 #include <oStd/atomic.h>
 #include <oBase/macros.h>
 
@@ -112,54 +112,54 @@ std::errc::errc get_errc(int _WSAError)
 LPFN_CONNECTEX getfn_ConnectEx(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
-	oGUID guid = WSAID_CONNECTEX;
+	guid g = WSAID_CONNECTEX;
 	LPFN_CONNECTEX pConnectEx = nullptr;
-	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pConnectEx, sizeof(LPFN_CONNECTEX), &dwBytesReturned, 0, 0));
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &g, sizeof(guid), &pConnectEx, sizeof(LPFN_CONNECTEX), &dwBytesReturned, 0, 0));
 	return pConnectEx;
 }
 
 LPFN_DISCONNECTEX getfn_DisconnectEx(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
-	oGUID guid = WSAID_DISCONNECTEX;
+	guid g = WSAID_DISCONNECTEX;
 	LPFN_DISCONNECTEX pDisconnectEx = nullptr;
-	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pDisconnectEx, sizeof(LPFN_DISCONNECTEX), &dwBytesReturned, 0, 0));
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &g, sizeof(guid), &pDisconnectEx, sizeof(LPFN_DISCONNECTEX), &dwBytesReturned, 0, 0));
 	return pDisconnectEx;
 }
 
 LPFN_GETACCEPTEXSOCKADDRS getfn_GetAcceptExSockaddrs(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
-	oGUID guid = WSAID_GETACCEPTEXSOCKADDRS;
+	guid g = WSAID_GETACCEPTEXSOCKADDRS;
 	LPFN_GETACCEPTEXSOCKADDRS pGetAcceptExSockaddrs = nullptr;
-	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pGetAcceptExSockaddrs, sizeof(LPFN_GETACCEPTEXSOCKADDRS), &dwBytesReturned, 0, 0));
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &g, sizeof(guid), &pGetAcceptExSockaddrs, sizeof(LPFN_GETACCEPTEXSOCKADDRS), &dwBytesReturned, 0, 0));
 	return pGetAcceptExSockaddrs;
 }
 
 LPFN_TRANSMITPACKETS getfn_TransmitPackets(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
-	oGUID guid = WSAID_TRANSMITPACKETS;
+	guid g = WSAID_TRANSMITPACKETS;
 	LPFN_TRANSMITPACKETS pTransmitPackets = nullptr;
-	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pTransmitPackets, sizeof(LPFN_TRANSMITPACKETS), &dwBytesReturned, 0, 0));
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &g, sizeof(guid), &pTransmitPackets, sizeof(LPFN_TRANSMITPACKETS), &dwBytesReturned, 0, 0));
 	return pTransmitPackets;
 }
 
 LPFN_WSARECVMSG getfn_WSARecvMsg(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
-	oGUID guid = WSAID_WSARECVMSG;
+	guid g = WSAID_WSARECVMSG;
 	LPFN_WSARECVMSG pWSARecvMsg = nullptr;
-	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pWSARecvMsg, sizeof(LPFN_WSARECVMSG), &dwBytesReturned, 0, 0));
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &g, sizeof(guid), &pWSARecvMsg, sizeof(LPFN_WSARECVMSG), &dwBytesReturned, 0, 0));
 	return pWSARecvMsg;
 }
 
 LPFN_ACCEPTEX getfn_AcceptEx(SOCKET _hSocket)
 {
 	DWORD dwBytesReturned = 0;
-	oGUID guid = WSAID_ACCEPTEX;
+	guid g = WSAID_ACCEPTEX;
 	LPFN_ACCEPTEX pAcceptEx = nullptr;
-	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(GUID), &pAcceptEx, sizeof(LPFN_ACCEPTEX), &dwBytesReturned, 0, 0));
+	oWSAVB(WSAIoctl(_hSocket, SIO_GET_EXTENSION_FUNCTION_POINTER, &g, sizeof(guid), &pAcceptEx, sizeof(LPFN_ACCEPTEX), &dwBytesReturned, 0, 0));
 	return pAcceptEx;
 }
 

@@ -26,7 +26,7 @@
 #ifndef oOPENSSL_h
 #define oOPENSSL_h
 
-#include "oWinsock.h"
+#include <oCore/windows/win_winsock.h>
 #undef interface
 #undef INTERFACE_DEFINED
 #include <openssl/ssl.h>

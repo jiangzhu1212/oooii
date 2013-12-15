@@ -29,7 +29,7 @@
 #include <oBasis/oScopedPartialTimeout.h>
 #include <oConcurrency/concurrent_queue.h>
 #include <oPlatform/oSocket.h>
-#include "SoftLink/oWinsock.h"
+#include <oCore/windows/win_winsock.h>
 #include "oIOCP.h"
 #include "SoftLink/oOpenSSL.h"
 

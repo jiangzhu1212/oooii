@@ -90,6 +90,9 @@
     <ClCompile Include="win_crt_leak_tracker.cpp">
       <Filter>Source\windows</Filter>
     </ClCompile>
+    <ClCompile Include="win_winsock.cpp">
+      <Filter>Source\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">
@@ -168,6 +171,9 @@
       <Filter>oCore\windows</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\windows\win_crt_leak_tracker.h">
+      <Filter>oCore\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\windows\win_winsock.h">
       <Filter>oCore\windows</Filter>
     </ClInclude>
   </ItemGroup>

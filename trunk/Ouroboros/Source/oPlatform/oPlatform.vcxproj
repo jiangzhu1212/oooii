@@ -149,7 +149,6 @@
     <ClInclude Include="oStaticMutex.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SoftLink\oOpenSSL.h" />
-    <ClInclude Include="SoftLink\oWinsock.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oConcurrency.cpp" />
@@ -183,7 +182,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SoftLink\oOpenSSL.cpp" />
-    <ClCompile Include="SoftLink\oWinsock.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

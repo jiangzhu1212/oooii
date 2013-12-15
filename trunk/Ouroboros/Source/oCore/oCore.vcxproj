@@ -49,6 +49,7 @@
     <ClCompile Include="win_registry.cpp" />
     <ClCompile Include="win_skeleton.cpp" />
     <ClCompile Include="win_version.cpp" />
+    <ClCompile Include="win_winsock.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\adapter.h" />
@@ -76,6 +77,7 @@
     <ClInclude Include="..\..\Include\oCore\windows\win_skeleton.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_util.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_version.h" />
+    <ClInclude Include="..\..\Include\oCore\windows\win_winsock.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

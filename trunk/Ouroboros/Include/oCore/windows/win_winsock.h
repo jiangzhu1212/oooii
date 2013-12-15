@@ -22,10 +22,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A singleton providing soft-link to Window's winsock API as 
-// well as some wrappers that address some of the odd and 
-// boilerplate work required when dealing with networking on
-// Windows.
+// Winsock is built on top of a sockets API. It is a complex and just awful API
+// so this tries to wrap up some of the gory details to simplify usage. It's not 
+// quite a socket interface, just enough to make implementing a socket interface 
+// bareable on top of sockets and winsock.
 #pragma once
 #ifndef oCore_win_socket_h
 #define oCore_win_socket_h
