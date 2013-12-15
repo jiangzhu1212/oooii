@@ -276,7 +276,8 @@ LONG context::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 			const char* err = (0 == pRecord->ExceptionInformation[0]) ? "Read" : "Write";
 			lstring ErrorMessage;
 			snprintf(ErrorMessage, "%s access violation at 0x%p", err, pAddress);
-			Handler(ErrorMessage, CppException, (uintptr_t)_pExceptionPointers);
+			if (Handler)
+				Handler(ErrorMessage, CppException, (uintptr_t)_pExceptionPointers);
 			break;
 		}
 
@@ -334,7 +335,8 @@ LONG context::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 		case oEXCEPTION_PROCEDURE_NOT_FOUND:
 		case oEXCEPTION_SIGINT:
 		case oEXCEPTION_SIGTERM:
-			Handler(as_string_exception_code(pRecord->ExceptionCode), CppException, (uintptr_t)_pExceptionPointers);
+			if (Handler)
+				Handler(as_string_exception_code(pRecord->ExceptionCode), CppException, (uintptr_t)_pExceptionPointers);
 			break;
 
 		default:

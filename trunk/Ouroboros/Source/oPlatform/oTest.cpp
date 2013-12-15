@@ -563,6 +563,8 @@ bool oTest::TestImage(const surface::buffer* _pTestImage, unsigned int _NthImage
 	return oErrorSetLast(std::errc::no_such_file_or_directory, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());
 }
 
+//#define DEBUG_SPECIAL_TEST
+
 bool oSpecialTest::CreateProcess(const char* _SpecialTestName, std::shared_ptr<process>* _pProcess)
 {
 	if (!_SpecialTestName || !_pProcess)
@@ -575,20 +577,18 @@ bool oSpecialTest::CreateProcess(const char* _SpecialTestName, std::shared_ptr<p
 	process::info pi;
 	pi.command_line = cmdline;
 	pi.stdout_buffer_size = oKB(64);
+	#ifdef DEBUG_SPECIAL_TEST
+		pi.suspended = true;
+	#endif
 	*_pProcess = process::make(pi);
 	return true;
 }
-
-//#define DEBUG_SPECIAL_TEST
 
 bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStrStatus, int* _pExitCode, unsigned int _TimeoutMS)
 {
 	if (!_pProcess || !_StrStatus || !_pExitCode)
 		return oErrorSetLast(std::errc::invalid_argument);
 
-	#ifdef DEBUG_SPECIAL_TEST
-		pi.suspended = true;
-	#endif
 	process::info pi = _pProcess->get_info();
 	const char* SpecialTestName = rstrstr(pi.command_line, "-s ") + 3;
 	if (!SpecialTestName || !*SpecialTestName)
@@ -599,7 +599,7 @@ bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStr
 	ouro::process::event Started(interprocessName);
 	oASSERTA(!Started.wait_for(oStd::chrono::milliseconds(0)), "Started event set when it shouldn't be (before start).");
 	#ifdef DEBUG_SPECIAL_TEST
-		_pProcess->Start();
+		_pProcess->start();
 	#endif
 
 	oTestManager::DESC testingDesc;
