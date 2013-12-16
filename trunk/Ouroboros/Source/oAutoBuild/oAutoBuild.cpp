@@ -416,9 +416,7 @@ int main(int argc, const char* argv[])
 {
 	if (!oP4IsAvailable()) 
 	{
-		oMSGBOX_DESC mb;
-		mb.Type = oMSGBOX_WARN;
-		oMsgBox(mb, "SCC is not available.  Shutting down.");
+		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "SCC is not available.  Shutting down.");
 		return -1;
 	}
 
@@ -453,9 +451,7 @@ int main(int argc, const char* argv[])
 	intrusive_ptr<oP4ChangelistBuilder> CLManager;
 	if (!oChangelistManagerCreate(*INI, logroot.c_str(), Settings.Port, &CLManager))
 	{
-		oMSGBOX_DESC mb;
-		mb.Type = oMSGBOX_WARN;
-		oMsgBox(mb, "Invalid settings: %s", oErrorGetLastString());
+		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Invalid settings: %s", oErrorGetLastString());
 		return -1;
 	}
 
@@ -479,9 +475,7 @@ int main(int argc, const char* argv[])
 	// 1) Create the web server that will handle all app specific requests
 	if (!oWebServerCreate(ServerDesc, &WebServer))
 	{
-		oMSGBOX_DESC mb;
-		mb.Type = oMSGBOX_WARN;
-		oMsgBox(mb, "Couldn't start build server: %s", oErrorGetLastString());
+		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Couldn't start build server: %s", oErrorGetLastString());
 		return -1;
 	}
 
@@ -514,9 +508,7 @@ int main(int argc, const char* argv[])
 
 		if (!oHTTPServerCreate(HTTPServerDesc, &BuildServer))
 		{
-			oMSGBOX_DESC mb;
-			mb.Type = oMSGBOX_WARN;
-			oMsgBox(mb, "Couldn't start build server: %s", oErrorGetLastString());
+			ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Couldn't start build server: %s", oErrorGetLastString());
 			return -1;
 		}
 	}
@@ -532,12 +524,7 @@ int main(int argc, const char* argv[])
 
 	intrusive_ptr<threadsafe oStreamMonitor> NewVersionMonitor;
 	if (!oStreamMonitorCreate(md, oBIND(OnNewVersion, oBIND1, oBIND2, Window), &NewVersionMonitor))
-	{
-		oMSGBOX_DESC mb;
-		mb.Type = oMSGBOX_WARN;
-		oMsgBox(mb, "Error starting OnNewVersion monitor.\n%s", oErrorGetLastString());
-	}
-
+		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Error starting OnNewVersion monitor.\n%s", oErrorGetLastString());
 
 	int WorkCountUILast = -1;
 	uint LastP4CheckMS = 0;

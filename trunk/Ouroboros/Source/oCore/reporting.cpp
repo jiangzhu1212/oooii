@@ -72,20 +72,20 @@ void emit_log(const assert_context& _Assertion, const char* _Message, filesystem
 // _____________________________________________________________________________
 // Nove this code out of this module so as not to depend on oGUI.
 
-static assert_action::value to_action(oMSGBOX_RESULT _Result)
+static assert_action::value to_action(msg_result::value _Result)
 {
 	switch (_Result)
 	{
-		case oMSGBOX_ABORT: return assert_action::abort;
-		case oMSGBOX_BREAK: return assert_action::debug;
-		case oMSGBOX_IGNORE: return assert_action::ignore_always;
+		case msg_result::abort: return assert_action::abort;
+		case msg_result::debug: return assert_action::debug;
+		case msg_result::ignore: return assert_action::ignore_always;
 		default: break;
 	}
 
 	return assert_action::ignore;
 }
 
-static assert_action::value show_msgbox(const assert_context& _Assertion, oMSGBOX_TYPE _Type, const char* _String)
+static assert_action::value show_msgbox(const assert_context& _Assertion, msg_type::value _Type, const char* _String)
 {
 	#ifdef _DEBUG
 		#define MSGBOX_BUILD_TYPE "Debug"
@@ -100,7 +100,7 @@ static assert_action::value show_msgbox(const assert_context& _Assertion, oMSGBO
 	char* end = format + sizeof(format);
 	char* cur = format;
 	cur += snprintf(format, MSGBOX_BUILD_TYPE " %s!\nFile: %s(%d)\nCommand Line: %s\n"
-		, _Type == oMSGBOX_WARN ? "Warning" : "Error"
+		, _Type == msg_type::warn ? "Warning" : "Error"
 		, _Assertion.filename
 		, _Assertion.line
 		, this_process::command_line(cmdline)
@@ -116,11 +116,7 @@ static assert_action::value show_msgbox(const assert_context& _Assertion, oMSGBO
 	path AppPath = filesystem::app_path(true);
 	char title[64];
 	snprintf(title, "%s (%s)", DIALOG_BOX_TITLE, AppPath.c_str());
-
-	oMSGBOX_DESC mb;
-	mb.Type = _Type;
-	mb.Title = title;
-	return to_action(oMsgBox(mb, "%s", format));
+	return to_action(msgbox(_Type, nullptr, title, "%s", format));
 }
 
 assert_action::value prompt_msgbox(const assert_context& _Assertion, const char* _Message)
@@ -134,7 +130,7 @@ assert_action::value prompt_msgbox(const assert_context& _Assertion, const char*
 			break;
 
 		case assert_type::assertion:
-			action = show_msgbox(_Assertion, oMSGBOX_DEBUG, _Message);
+			action = show_msgbox(_Assertion, msg_type::debug, _Message);
 			break;
 	}
 

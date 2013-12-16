@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGUI/oMsgBox.h>
-#include <oBase/byte.h>
 #include <oGUI/Windows/oWinCursor.h>
 #include <oGUI/Windows/oWinDialog.h>
 #include <oGUI/Windows/oWinRect.h>
@@ -120,23 +119,48 @@ int MessageBoxTimeoutW(HWND hWnd, LPCWSTR lpText,
     return 0;
 }
 
-#define IDMESSAGE 20
-#define IDCOPYTOCLIPBOARD 21
-#define IDICON 22
+namespace ouro {
 
-oMSGBOX_RESULT AsAction(WORD _ID)
+static msg_result::value as_action(WORD _ID)
 {
 	switch (_ID)
 	{
-		case IDCANCEL: return oMSGBOX_ABORT;
-		case IDRETRY: return oMSGBOX_BREAK;
-		case IDCONTINUE: return oMSGBOX_CONTINUE;
-		case IDIGNORE: return oMSGBOX_IGNORE;
-		default: return oMSGBOX_CONTINUE;
+		case IDCANCEL: return msg_result::abort;
+		case IDRETRY: return msg_result::debug;
+		default: 
+		case IDCONTINUE: return msg_result::ignore;
+		case IDIGNORE: return msg_result::ignore_always;
 	}
 }
 
-HICON LoadIcon(oMSGBOX_TYPE _Type)
+static UINT as_flags(msg_type::value type)
+{
+	switch (type)
+	{
+		default:
+		case msg_type::info: return MB_ICONINFORMATION|MB_OK;
+		case msg_type::warn: return MB_ICONWARNING|MB_OK;
+		case msg_type::yesno: return MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON1;
+		case msg_type::error: return MB_ICONERROR|MB_OK|MB_TASKMODAL;
+		case msg_type::debug: return MB_ICONERROR|MB_ABORTRETRYIGNORE;
+	}
+}
+
+static msg_result::value get_result(int _MessageBoxResult)
+{
+	switch (_MessageBoxResult)
+	{
+		default:
+		case IDOK: return msg_result::yes;
+		case IDABORT: return msg_result::abort;
+		case IDIGNORE: return msg_result::ignore; 
+		case IDRETRY: return msg_result::debug;
+		case IDYES: return msg_result::yes;
+		case IDNO: return msg_result::no;
+	}
+}
+
+static HICON load_icon(msg_type::value _Type)
 {
 	static LPCSTR map[] =
 	{
@@ -152,9 +176,14 @@ HICON LoadIcon(oMSGBOX_TYPE _Type)
 	};
 
 	if (_Type >= oCOUNTOF(map))
-		_Type = oMSGBOX_ERR;
-	return LoadIcon(0, map[_Type]);
+		_Type = msg_type::error;
+	return LoadIconA(0, map[_Type]);
 }
+
+#define IDMESSAGE 20
+#define IDCOPYTOCLIPBOARD 21
+#define IDICON 22
+
 
 static VOID CALLBACK WndDialogTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, DWORD dwTime)
 {
@@ -262,7 +291,7 @@ INT_PTR CALLBACK DLGAssert::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPAR
 	return false;
 }
 
-static void calcStringRect(RECT& rString, const char* string, LONG minW, LONG minH, LONG maxW, LONG maxH)
+static void calc_string_rect(RECT& rString, const char* string, LONG minW, LONG minH, LONG maxW, LONG maxH)
 {
 	rString.left = 0;
 	rString.top = 0;
@@ -279,7 +308,7 @@ static void calcStringRect(RECT& rString, const char* string, LONG minW, LONG mi
 		rString.right = maxW;
 }
 
-oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char* _String, unsigned int _DialogTimeoutMS, unsigned int _IgnoreDisableTimeoutMS)
+msg_result::value assert_dialog(msg_type::value _Type, const char* _Caption, const char* _String, unsigned int _DialogTimeoutMS, unsigned int _IgnoreDisableTimeoutMS)
 {
 	const LONG FrameSpacingX = 5;
 	const LONG FrameSpacingY = 6;
@@ -296,8 +325,8 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 	RECT rString;
 	std::vector<char> string(oKB(128));
 
-	ouro::replace(ouro::data(string), ouro::size(string), _String, "\n", "\r\n");
-	calcStringRect(rString, ouro::data(string), MinW, MinH, MaxW, MaxH);
+	replace(data(string), size(string), _String, "\n", "\r\n");
+	calc_string_rect(rString, data(string), MinW, MinH, MaxW, MaxH);
 
 	// Figure out where interface goes based on string RECT
 	const LONG BtnPanelLeft = (rString.right - BtnPanelW) - FrameSpacingX;
@@ -333,7 +362,7 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 		{ "&Continue", oDLG_BUTTON, IDCONTINUE, rContinue, TimedoutControlledEnable, true, true },
 		{ "I&gnore", oDLG_BUTTON, IDIGNORE, rIgnore, TimedoutControlledEnable, true, true },
 		{ "Copy &To Clipboard", oDLG_BUTTON, IDCOPYTOCLIPBOARD, rCopyToClipboard, true, true, true },
-		{ ouro::data(string), oDLG_LARGELABEL, IDMESSAGE, rString, true, true, true },
+		{ data(string), oDLG_LARGELABEL, IDMESSAGE, rString, true, true, true },
 		{ "", oDLG_ICON, IDICON, rIcon, true, true, false },
 	};
 
@@ -352,7 +381,7 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 
 	LPDLGTEMPLATE lpDlgTemplate = oDlgNewTemplate(dlg);
 
-	HICON hIcon = LoadIcon(_Type);
+	HICON hIcon = load_icon(_Type);
 
 	DLGAssert Dialog(hIcon, _DialogTimeoutMS, _IgnoreDisableTimeoutMS);
 	INT_PTR int_ptr = DialogBoxIndirectParam(GetModuleHandle(0), lpDlgTemplate, GetDesktopWindow(), DLGAssert::StaticWndProc, (LPARAM)&Dialog);
@@ -361,42 +390,15 @@ oMSGBOX_RESULT AssertDialog(oMSGBOX_TYPE _Type, const char* _Caption, const char
 
 	if (int_ptr == -1)
 	{
-		std::string msg = ouro::windows::category().message(GetLastError());
+		std::string msg = windows::category().message(GetLastError());
 		oTRACE("DialogBoxIndirectParam failed. %s\n", msg.c_str());
 		__debugbreak(); // debug msgbox called from oASSERTs, so don't recurse into it
 	}
 
 	DeleteObject(hIcon);
 
-	oMSGBOX_RESULT result = AsAction(static_cast<WORD>(int_ptr));
+	msg_result::value result = as_action(static_cast<WORD>(int_ptr));
 	return result;
-}
-
-UINT AsFlags(oMSGBOX_TYPE type)
-{
-	switch (type)
-	{
-		default:
-		case oMSGBOX_INFO: return MB_ICONINFORMATION|MB_OK;
-		case oMSGBOX_WARN: return MB_ICONWARNING|MB_OK;
-		case oMSGBOX_YESNO: return MB_ICONQUESTION|MB_YESNO|MB_DEFBUTTON1;
-		case oMSGBOX_ERR: return MB_ICONERROR|MB_OK|MB_TASKMODAL;
-		case oMSGBOX_DEBUG: return MB_ICONERROR|MB_ABORTRETRYIGNORE;
-	}
-}
-
-oMSGBOX_RESULT GetResult(int messageBoxResult)
-{
-	switch (messageBoxResult)
-	{
-		default:
-		case IDOK: return oMSGBOX_YES;
-		case IDABORT: return oMSGBOX_ABORT;
-		case IDIGNORE: return oMSGBOX_CONTINUE; 
-		case IDRETRY: return oMSGBOX_BREAK;
-		case IDYES: return oMSGBOX_YES;
-		case IDNO: return oMSGBOX_NO;
-	}
 }
 
 namespace WFNWCV
@@ -446,7 +448,7 @@ namespace WFNWCV
 		return result;
 	}
 
-	LRESULT Install(int _nCode, WPARAM _wParam, LPARAM _lParam)
+	LRESULT install(int _nCode, WPARAM _wParam, LPARAM _lParam)
 	{
 		CWPSTRUCT& cwp = *(CWPSTRUCT*)_lParam;
 		if (_nCode == HC_ACTION && cwp.message == WM_INITDIALOG && !OrigWndProc)
@@ -456,50 +458,55 @@ namespace WFNWCV
 
 } // WFNWCV
 
-void oSetupNextMessageBoxWndProc(HWND _hParent)
+void set_next_MessageBox_WndProc(HWND _hParent)
 {
 	WFNWCV::hParent = _hParent;
 	if (WFNWCV::hParent)
-		WFNWCV::Hook = SetWindowsHookEx(WH_CALLWNDPROC, (HOOKPROC)WFNWCV::Install, nullptr,  GetWindowThreadProcessId(_hParent, nullptr));
+		WFNWCV::Hook = SetWindowsHookEx(WH_CALLWNDPROC, (HOOKPROC)WFNWCV::install, nullptr, GetWindowThreadProcessId(_hParent, nullptr));
 }
 
-oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list _Args)
+msg_result::value msgboxv(msg_type::value _Type, oGUI_WINDOW _hParent, const char* _Title, const char* _Format, va_list _Args)
 {
+	static const unsigned int _TimeoutMS = INFINITE;
+
 	std::vector<char> msg(oKB(128));
-	ouro::vsnprintf(ouro::data(msg), ouro::size(msg), _Format, _Args);
-	oMSGBOX_RESULT result = oMSGBOX_YES;
+	vsnprintf(data(msg), size(msg), _Format, _Args);
+	msg_result::value result = msg_result::yes;
 	HICON hIcon = nullptr;
 
-	HWND hWnd = (HWND)_Desc.hParent;
 	oStd::thread::id ThreadID;
 
-	if (!hWnd)
-		oWinGetProcessTopWindowAndThread(ouro::this_process::get_id(), &hWnd, &ThreadID);
+	HWND hWnd = (HWND)_hParent;
 
-	switch (_Desc.Type)
+	if (!hWnd)
+		oWinGetProcessTopWindowAndThread(this_process::get_id(), &hWnd, &ThreadID);
+
+	switch (_Type)
 	{
-		case oMSGBOX_DEBUG:
-			result = AssertDialog(_Desc.Type, _Desc.Title, ouro::data(msg), _Desc.TimeoutMS, 0);
+		case msg_type::debug:
+			result = assert_dialog(_Type, _Title, msg.data(), _TimeoutMS, 0);
 			break;
 		
-		case oMSGBOX_NOTIFY_INFO:
-		case oMSGBOX_NOTIFY_WARN:
-		case oMSGBOX_NOTIFY_ERR:
-			hIcon = LoadIcon(_Desc.Type);
+		case msg_type::notify_info:
+		case msg_type::notify_warn:
+		case msg_type::notify_error:
+			hIcon = load_icon(_Type);
 			// pass thru
 
-		case oMSGBOX_NOTIFY:
-			ouro::notification_area::show_message((oGUI_WINDOW)hWnd, 0, (oGUI_ICON)hIcon, __max(2000, _Desc.TimeoutMS), _Desc.Title, ouro::data(msg));
-			result = oMSGBOX_CONTINUE;
+		case msg_type::notify:
+			notification_area::show_message((oGUI_WINDOW)hWnd, 0, (oGUI_ICON)hIcon, __max(2000, _TimeoutMS), _Title, msg.data());
+			result = msg_result::ignore;
 			break;
 
 		default:
 		{
-			oSetupNextMessageBoxWndProc(hWnd);
-			result = GetResult(MessageBoxTimeout(hWnd, ouro::data(msg), _Desc.Title, AsFlags(_Desc.Type), 0, _Desc.TimeoutMS));
+			set_next_MessageBox_WndProc(hWnd);
+			result = get_result(MessageBoxTimeout(hWnd, msg.data(), _Title, as_flags(_Type), 0, _TimeoutMS));
 			break;
 		}
 	}
 
 	return result;
 }
+
+} // namespace ouro

@@ -294,10 +294,10 @@ oKinectTestApp::oKinectTestApp()
 	}
 	
 	else if (nKinects == 0)
-		oMsgBox(oMSGBOX_DESC(oMSGBOX_INFO, "oKinect Test App"), "No Kinects attached.");
+		ouro::msgbox(ouro::msg_type::info, nullptr, "oKinect Test App", "No Kinects attached.");
 
 	else if (nKinects == oInvalid)
-		oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "oKinect Test App")
+		ouro::msgbox(ouro::msg_type::error, nullptr, "oKinect Test App"
 			, "This application was not built with Kinect support. It will need to be recompiled against the Kinect SDK to support Kinect features.");
 
 	// Register input handlers
@@ -565,12 +565,12 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 				}
 
 				else
-					oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "oKinect Test App"), "Failed to parse input set list file %s.\n%s", _ChangedURI.c_str(), oErrorGetLastString());
+					ouro::msgbox(ouro::msg_type::error, nullptr, "oKinect Test App", "Failed to parse input set list file %s.\n%s", _ChangedURI.c_str(), oErrorGetLastString());
 			}
 
 			catch (std::exception& e)
 			{
-				oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "oKinect Test App"), "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
+				ouro::msgbox(ouro::msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
 			}
 		}
 
@@ -598,7 +598,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 			}
 			catch (std::exception& e)
 			{
-				oMsgBox(oMSGBOX_DESC(oMSGBOX_ERR, "oKinect Test App"), "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
+				ouro::msgbox(ouro::msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
 			}
 		}
 	}

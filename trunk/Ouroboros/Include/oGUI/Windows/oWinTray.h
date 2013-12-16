@@ -22,7 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Utilities for working with the Window's Tray
+// Functions for working with the GUI's taskbar notification area 
+// (Window's tray).
 #pragma once
 #ifndef oGUI_win_tray_h
 #define oGUI_win_tray_h
@@ -62,9 +63,12 @@ void minimize(oGUI_WINDOW _hWnd, unsigned int _CallbackMessage, oGUI_ICON _hIcon
 // Animates an existing tray icon to a restored window
 void restore(oGUI_WINDOW _hWnd);
 
-// Use this in a windows message handler to decode the parameters for a callback
-// message as passed to one of the above APIs.
-void decode_callback_message_params(uintptr_t _wParam, uintptr_t _lParam, unsigned int* _pNotificationEvent, unsigned int* _pID, int* _pX, int* _pY);
+#if defined(_WIN32) || defined(_WIN64)
+	// Use this in a windows message handler to decode the parameters for a callback
+	// message as passed to one of the above APIs.
+	void decode_callback_message_params(uintptr_t _wParam, uintptr_t _lParam
+		, unsigned int* _pNotificationEvent, unsigned int* _pID, int* _pX, int* _pY);
+#endif
 
 	} // namespace notification_area
 } // namespace ouro

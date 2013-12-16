@@ -358,8 +358,5 @@ void oEmailAdminAndStop(const oAutoBuildEmailSettings& _EmailSettings, const cha
 		}
 	}
 
-	oMSGBOX_DESC mb;
-	mb.Type = oMSGBOX_WARN;
-	mb.TimeoutMS = 10000;
-	oMsgBox(mb, Subject);
+	ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, Subject);
 }

@@ -49,6 +49,8 @@
 
 #include <oSurface/codec.h>
 
+static const char* sMsgBoxTitle = "Ouroboros Test Environment Discovery";
+
 using namespace ouro;
 
 // Some well-known apps cause grief in the unit tests (including older versions
@@ -90,16 +92,13 @@ static bool oTestTerminateInterferingProcesses(bool _PromptUser = true)
 
 	if (!ActiveProcesses.empty())
 	{
-		oMSGBOX_DESC mb;
-		mb.Title = "Ouroboros Test Environment Discovery";
-		mb.Type = oMSGBOX_YESNO;
-		oMSGBOX_RESULT r = oMSGBOX_YES;
+		msg_result::value r = msg_result::yes;
 		if (_PromptUser)
-			r = oMsgBox(mb, Message.c_str());
+			r = msgbox(msg_type::yesno, nullptr, sMsgBoxTitle, Message.c_str());
 
 		int retries = 10;
 TryAgain:
-		if (r == oMSGBOX_YES && retries)
+		if (r == msg_result::yes && retries)
 		{
 			oFOR(auto PID, ActiveProcesses)
 			{
@@ -116,14 +115,14 @@ TryAgain:
 						}
 
 						if (_PromptUser)
-							r = oMsgBox(mb, "Terminating Process '%s' (%u) failed. Please close the process manually.\n\nTry Again?", Name.c_str(), PID);
+							r = msgbox(msg_type::yesno, nullptr, sMsgBoxTitle, "Terminating Process '%s' (%u) failed. Please close the process manually.\n\nTry Again?", Name.c_str(), PID);
 						else
 						{
 							if (0 == --retries)
 								return oErrorSetLast(std::errc::permission_denied, "Process '%s' (%u) could not be terminated", Name.c_str(), PID);
 						}
 
-						if (r == oMSGBOX_NO)
+						if (r == msg_result::no)
 							return oErrorSetLast(std::errc::operation_canceled, "Process '%s' (%u) could not be terminated and the user elected to continue", Name.c_str(), PID);
 
 						goto TryAgain;
@@ -160,15 +159,11 @@ static bool oTestNotifyOfAntiVirus(bool _PromptUser)
 
 	if (AVPID)
 	{
-		oMSGBOX_DESC mb;
-		mb.Title = "Ouroboros Test Environment Discovery";
-		mb.Type = oMSGBOX_YESNO;
-		mb.TimeoutMS = 10000;
-		oMSGBOX_RESULT r = oMSGBOX_YES;
+		msg_result::value r = msg_result::yes;
 		if (_PromptUser)
-			r = oMsgBox(mb, "An Anti-Virus program was detected. This can severely impact the time taken on some tests of large buffers. Do you want to continue?");
+			r = msgbox(msg_type::yesno, nullptr, sMsgBoxTitle, "An Anti-Virus program was detected. This can severely impact the time taken on some tests of large buffers. Do you want to continue?");
 
-		if (r != oMSGBOX_YES)
+		if (r != msg_result::yes)
 			return oErrorSetLast(std::errc::permission_denied);
 	}
 
@@ -854,11 +849,7 @@ bool oTestManager_Impl::KillZombies(const char* _Name)
 		process::terminate(pids[i], std::errc::operation_canceled);
 		if (!process::wait_for(pids[i], oSeconds(5)))
 		{
-			oMSGBOX_DESC mb;
-			mb.Type = oMSGBOX_WARN;
-			mb.TimeoutMS = 20000;
-			mb.Title = "OOOii Test Manager";
-			oMsgBox(mb, "Cannot terminate stale process %u, please end this process before continuing.", pids[i]);
+			msgbox(msg_type::warn, nullptr, "OOOii Test Manager", "Cannot terminate stale process %u, please end this process before continuing.", pids[i]);
 			if (--retries == 0)
 				return false;
 
@@ -973,9 +964,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 {
 	if (!adapter::all_up_to_date())
 	{
-		oMSGBOX_DESC mb;
-		mb.Type = oMSGBOX_YESNO;
-		if (oMSGBOX_YES != oMsgBox(mb, "Display adapter drivers are out-of-date. Do you want to continue?"))
+		if (msg_result::yes != msgbox(msg_type::yesno, nullptr, nullptr, "Display adapter drivers are out-of-date. Do you want to continue?"))
 			return oTest::FAILURE;
 	}
 

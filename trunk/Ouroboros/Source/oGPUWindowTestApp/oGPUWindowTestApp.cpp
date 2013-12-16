@@ -256,11 +256,7 @@ void oGPUWindowThread::Run()
 
 		catch (std::exception& e)
 		{
-			oMSGBOX_DESC m;
-			m.hParent = nullptr;
-			m.Title = "oGPUWindowTestApp";
-			m.Type = oMSGBOX_INFO;
-			oMsgBox(m, "ERROR\n%s", e.what());
+			ouro::msgbox(ouro::msg_type::info, nullptr, "oGPUWindowTestApp", "ERROR\n%s", e.what());
 		}
 
 		pGPUWindow = nullptr;
@@ -562,11 +558,7 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 				}
 				case oWMI_HELP_ABOUT:
 				{
-					oMSGBOX_DESC m;
-					m.hParent = _Action.hWindow;
-					m.Title = "About";
-					m.Type = oMSGBOX_INFO;
-					oMsgBox(m, "oGPUWindowTestApp: a small program to show a basic window and its events and actions");
+					ouro::msgbox(msg_type::info, _Action.hWindow, "About", "oGPUWindowTestApp: a small program to show a basic window and its events and actions");
 					break;
 				}
 				default:
@@ -638,11 +630,7 @@ void oGPUWindowTestApp::Run()
 	}
 	catch (std::exception& e)
 	{
-		oMSGBOX_DESC m;
-		m.hParent = nullptr;
-		m.Title = "oGPUWindowTestApp";
-		m.Type = oMSGBOX_INFO;
-		oMsgBox(m, "ERROR\n%s", e.what());
+		ouro::msgbox(ouro::msg_type::info, nullptr, "oGPUWindowTestApp", "ERROR\n%s", e.what());
 	}
 }
 

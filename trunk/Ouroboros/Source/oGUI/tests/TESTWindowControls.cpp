@@ -410,7 +410,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			else
 				oTRACE("Open dialog canceled.");
 
-			oMsgBox(oMSGBOX_DESC(oMSGBOX_INFO, "TESTWindowUI"), "User selected path:\n\t%s", path.c_str());
+			ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "User selected path:\n\t%s", path.c_str());
 			break;
 		}
 		case MENU_FILE_SAVE:
@@ -423,7 +423,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			else
 				oTRACE("SaveAs dialog canceled.");
 
-			oMsgBox(oMSGBOX_DESC(oMSGBOX_INFO, "TESTWindowUI"), "User selected path:\n\t%s", path.c_str());
+			ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "User selected path:\n\t%s", path.c_str());
 			break;
 		}
 		case MENU_FILE_EXIT:
@@ -440,15 +440,13 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			ouro::color c = ouro::Red;
 
 			if (!oWinDialogGetColor(&c, _hWnd))
-			{
-				oMsgBox(oMSGBOX_DESC(oMSGBOX_INFO, "TESTWindowUI"), "No color!");
-			}
+				ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "No color!");
 
 			else
 			{
 				int r,g,b,a;
 				c.decompose(&r, &g, &b, &a);
-				oMsgBox(oMSGBOX_DESC(oMSGBOX_INFO, "TESTWindowUI"), "Color: %d,%d,%d", r,g,b);
+				ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "Color: %d,%d,%d", r,g,b);
 			}
 			
 			break;
@@ -459,21 +457,13 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			LOGFONT lf = {0};
 			GetObject((HFONT)GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf);
 			if (!oWinDialogGetFont(&lf, &c, _hWnd))
-			{
-				oMSGBOX_DESC mb;
-				mb.Type = oMSGBOX_INFO;
-				mb.Title = "TESTWindowUI";
-				oMsgBox(mb, "No color!");
-			}
+				ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "No color!");
 
 			else
 			{
-				oMSGBOX_DESC mb;
-				mb.Type = oMSGBOX_INFO;
-				mb.Title = "TESTWindowUI";
 				int r,g,b,a;
 				c.decompose(&r, &g, &b, &a);
-				oMsgBox(mb, "Color: %d,%d,%d", r,g,b);
+				ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "Color: %d,%d,%d", r,g,b);
 			}
 			
 			break;

@@ -105,10 +105,7 @@ int oLauncherMain(int argc, const char* argv[])
 	if (0 /*&& !oLauncherMain1(argc, argv)*/)
 	{
 		path ModuleName = ouro::this_module::path();
-		oMSGBOX_DESC d;
-		d.Title = ModuleName.filename();
-		d.Type = oMSGBOX_ERR;
-		oMsgBox(d, "%s", oErrorGetLastString());
+		ouro::msgbox(ouro::msg_type::error, nullptr, ModuleName.filename(), "%s", oErrorGetLastString());
 		return oErrorGetLast();
 	}
 

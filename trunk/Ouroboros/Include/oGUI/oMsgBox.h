@@ -22,56 +22,47 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Printf-style interface for displaying OS message boxes
+// Printf-style interface for displaying platform message boxes
 #pragma once
-#ifndef oMsgBox_h
-#define oMsgBox_h
+#ifndef oGUI_msgbox_h
+#define oGUI_msgbox_h
 
 #include <oBasis/oGUI.h>
 #include <oBasis/oStddef.h>
 #include <stdarg.h>
 
-enum oMSGBOX_TYPE
-{
-	oMSGBOX_INFO,
-	oMSGBOX_WARN,
-	oMSGBOX_YESNO,
-	oMSGBOX_ERR,
-	oMSGBOX_DEBUG,
-	oMSGBOX_NOTIFY,
-	oMSGBOX_NOTIFY_INFO,
-	oMSGBOX_NOTIFY_WARN,
-	oMSGBOX_NOTIFY_ERR,
-};
+namespace ouro {
 
-enum oMSGBOX_RESULT
-{
-	oMSGBOX_NO,
-	oMSGBOX_YES,
-	oMSGBOX_ABORT,
-	oMSGBOX_BREAK,
-	oMSGBOX_CONTINUE,
-	oMSGBOX_IGNORE,
-};
+  namespace msg_type
+  { enum value {
+  
+    info,
+    warn,
+    error,
+    debug,
+    yesno,
+    notify,
+    notify_info,
+    notify_warn,
+    notify_error,
 
-struct oMSGBOX_DESC
-{
-	oMSGBOX_DESC(oMSGBOX_TYPE _Type = oMSGBOX_INFO, const char* _Title = "", oGUI_WINDOW _hParent = nullptr, unsigned int _TimeoutMS = oInfiniteWait)
-		: Type(_Type)
-		, Title(nullptr)
-		, hParent(nullptr)
-		, TimeoutMS(_TimeoutMS)
-	{}
+  };}
+  
+  namespace msg_result
+  { enum value {
 
-	oMSGBOX_TYPE Type;
-	unsigned int TimeoutMS;
-	oGUI_WINDOW hParent;
-	const char* Title;
-};
+    no,
+    yes,
+    abort,
+    debug,
+    ignore,
+    ignore_always,
 
+  };}
 
-// For no timeout, specify oInfiniteWait
-oMSGBOX_RESULT oMsgBoxV(const oMSGBOX_DESC& _Desc, const char* _Format, va_list _Args);
-inline oMSGBOX_RESULT oMsgBox(const oMSGBOX_DESC& _Desc, const char* _Format, ...) { va_list args; va_start(args, _Format); oMSGBOX_RESULT r = oMsgBoxV(_Desc, _Format, args); va_end(args); return r; }
+	msg_result::value msgboxv(msg_type::value _Type, oGUI_WINDOW _hParent, const char* _Title, const char* _Format, va_list _Args);
+  inline msg_result::value msgbox(msg_type::value _Type, oGUI_WINDOW _hParent, const char* _Title, const char* _Format, ...) { va_list args; va_start(args, _Format); msg_result::value r = msgboxv(_Type, _hParent, _Title, _Format, args); va_end(args); return r; }
+
+} // namespace ouro
 
 #endif

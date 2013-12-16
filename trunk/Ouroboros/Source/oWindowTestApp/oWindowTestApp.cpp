@@ -353,11 +353,7 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 					break;
 				case oWMI_HELP_ABOUT:
 				{
-					oMSGBOX_DESC m;
-					m.hParent = _Action.hWindow;
-					m.Title = "About";
-					m.Type = oMSGBOX_INFO;
-					oMsgBox(m, "oWindowTestApp: a small program to show a basic window and its events and actions");
+					ouro::msgbox(ouro::msg_type::info, _Action.hWindow, "About", "oWindowTestApp: a small program to show a basic window and its events and actions");
 					break;
 				}
 				default:

@@ -87,8 +87,7 @@ void InitEnv()
 
 #if defined(WIN64) || defined(WIN32)
 	oGDIScopedObject<HICON> hIcon = oGDILoadIcon(IDI_APPICON);
-	oWinSetIconAsync(GetConsoleWindow(), hIcon, false);
-	oWinSetIconAsync(GetConsoleWindow(), hIcon, true);
+	console::icon((oGUI_ICON)(HICON)hIcon);
 #endif
 }
 
@@ -407,18 +406,13 @@ bool TerminateDuplicateInstances(const char* _Name)
 
 	while (duplicatePID)
 	{
-		oMSGBOX_DESC mb;
-		mb.Type = oMSGBOX_YESNO;
-		mb.TimeoutMS = 20000;
-		mb.Title = sTITLE;
-
-		oMSGBOX_RESULT result = oMsgBox(mb, "An instance of the unittest executable was found at process %u. Do you want to kill it now? (no means this application will exit)", duplicatePID);
-		if (result == oMSGBOX_NO)
+		msg_result::value result = msgbox(msg_type::yesno, nullptr, sTITLE, "An instance of the unittest executable was found at process %u. Do you want to kill it now? (no means this application will exit)", duplicatePID);
+		if (result == msg_result::no)
 			return false;
 
 		process::terminate(duplicatePID, ECANCELED);
 		if (!process::wait_for(duplicatePID, oSeconds(5)))
-			oMsgBox(mb, "Cannot terminate stale process %u, please end this process before continuing.", duplicatePID);
+			msgbox(msg_type::yesno, nullptr, sTITLE, "Cannot terminate stale process %u, please end this process before continuing.", duplicatePID);
 
 		duplicatePID = process::id();
 		process::enumerate(std::bind(FindDuplicateProcessInstanceByName
@@ -495,13 +489,7 @@ int main(int argc, const char* argv[])
 		// ShowTrayStatus = true;
 
 		if (ShowTrayStatus)
-		{
-			oMSGBOX_DESC mb;
-			mb.Type = result ? oMSGBOX_NOTIFY_ERR : oMSGBOX_NOTIFY;
-			mb.TimeoutMS = 10000;
-			mb.Title = sTITLE;
-			oMsgBox(mb, "Completed%s", result ? " with errors" : " successfully");
-		}
+			msgbox(result ? msg_type::notify_error : msg_type::notify, nullptr, sTITLE, "Completed%s", result ? " with errors" : " successfully");
 
 		if (this_process::has_debugger_attached())
 		{
