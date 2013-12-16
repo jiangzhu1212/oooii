@@ -28,8 +28,9 @@
 #ifndef oGUI_all_h
 #define oGUI_all_h
 #include <oGUI/oGUIMenu.h>
-#include <oGUI/oMRUManager.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/mru.h>
+#include <oGUI/msgbox.h>
+#include <oGUI/notification_area.h>
 #include <oGUI/progress_bar.h>
 #include <oGUI/window.h>
 #endif

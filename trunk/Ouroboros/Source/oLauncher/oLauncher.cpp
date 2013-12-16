@@ -24,7 +24,7 @@
  **************************************************************************/
 using namespace ouro;
 
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 //#include <oPlatform/oVersionUpdate.h>
 
 #define WIN32_LEAN_AND_MEAN

@@ -30,7 +30,7 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 #include <oGUI/window.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>

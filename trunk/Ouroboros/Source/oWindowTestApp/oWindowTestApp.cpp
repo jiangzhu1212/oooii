@@ -25,7 +25,7 @@
 
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/oGUIMenu.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 #include <oPlatform/oStream.h>
 #include <oGUI/window.h>
 #include "resource.h"

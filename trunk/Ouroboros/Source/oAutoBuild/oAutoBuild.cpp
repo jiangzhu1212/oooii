@@ -30,7 +30,7 @@
 #include <oPlatform/oHTTPHandler.h>
 #include <oPlatform/oWebServer.h>
 #include <oPlatform/oStandards.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oGUI/Windows/oWinDialog.h>
 #include <oGUI/Windows/oWinRect.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 
 static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
 {

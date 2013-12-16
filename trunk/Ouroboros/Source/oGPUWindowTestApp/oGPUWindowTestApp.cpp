@@ -24,7 +24,7 @@
  **************************************************************************/
 
 #include <oBase/backoff.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/oGUIMenu.h>
 #include <oPlatform/oStream.h>

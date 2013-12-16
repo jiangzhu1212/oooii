@@ -25,7 +25,7 @@
 #include "oAutoBuildOutput.h"
 #include "oMSBuild.h"
 #include <oPlatform/oEMail.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 
 using namespace ouro;
 

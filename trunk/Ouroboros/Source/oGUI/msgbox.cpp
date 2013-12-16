@@ -22,11 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 #include <oGUI/Windows/oWinCursor.h>
 #include <oGUI/Windows/oWinDialog.h>
 #include <oGUI/Windows/oWinRect.h>
-#include <oGUI/Windows/oWinTray.h>
+#include <oGUI/notification_area.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/windows/win_error.h>
 

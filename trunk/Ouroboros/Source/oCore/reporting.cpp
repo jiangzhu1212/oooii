@@ -35,7 +35,7 @@
 #include <oStd/for.h>
 #include <oStd/mutex.h>
 
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 
 namespace ouro {
 

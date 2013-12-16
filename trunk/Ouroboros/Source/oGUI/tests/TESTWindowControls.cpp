@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGUI/oGUIMenu.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 #include <oBase/timer.h>
 #include <oGUI/window.h>
 #include <oGUI/Windows/oGDI.h>

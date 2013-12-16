@@ -25,7 +25,7 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/oHTTPClient.h>
 #include <oPlatform/oHTTPServer.h>
-#include <oGUI/oMsgBox.h>
+#include <oGUI/msgbox.h>
 #include <oPlatform/oStream.h>
 #include <oBase/finally.h>
 #include <oSurface/codec.h>

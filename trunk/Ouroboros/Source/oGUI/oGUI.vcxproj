@@ -21,9 +21,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\Include\oGUI\all.h" />
     <ClInclude Include="..\..\Include\oGUI\console.h" />
+    <ClInclude Include="..\..\Include\oGUI\mru.h" />
+    <ClInclude Include="..\..\Include\oGUI\msgbox.h" />
+    <ClInclude Include="..\..\Include\oGUI\notification_area.h" />
     <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h" />
-    <ClInclude Include="..\..\Include\oGUI\oMRUManager.h" />
-    <ClInclude Include="..\..\Include\oGUI\oMsgBox.h" />
     <ClInclude Include="..\..\Include\oGUI\progress_bar.h" />
     <ClInclude Include="..\..\Include\oGUI\window.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oGDI.h" />
@@ -35,16 +36,16 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinKey.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinRect.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinStatusBar.h" />
-    <ClInclude Include="..\..\Include\oGUI\Windows\oWinTray.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinWindowing.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="console.cpp" />
+    <ClCompile Include="mru.cpp" />
+    <ClCompile Include="msgbox.cpp" />
+    <ClCompile Include="notification_area.cpp" />
     <ClCompile Include="oGDI.cpp" />
     <ClCompile Include="oGUIMenu.cpp" />
-    <ClCompile Include="oMRUManager.cpp" />
-    <ClCompile Include="oMsgBox.cpp" />
     <ClCompile Include="oWinAsString.cpp" />
     <ClCompile Include="oWinCommonDialog.cpp" />
     <ClCompile Include="oWinControlSet.cpp" />
@@ -53,7 +54,6 @@
     <ClCompile Include="oWinKey.cpp" />
     <ClCompile Include="oWinRect.cpp" />
     <ClCompile Include="oWinStatusBar.cpp" />
-    <ClCompile Include="oWinTray.cpp" />
     <ClCompile Include="oWinWindowing.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
