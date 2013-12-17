@@ -47,9 +47,6 @@
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_worklist.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\condition_variable.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\fixed_block_allocator.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
@@ -87,6 +84,9 @@
       <Filter>oConcurrency\Wrappers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\mutex.h">
+      <Filter>oConcurrency\Wrappers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oConcurrency\condition_variable.h">
       <Filter>oConcurrency\Wrappers</Filter>
     </ClInclude>
   </ItemGroup>
