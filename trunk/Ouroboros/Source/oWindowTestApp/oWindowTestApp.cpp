@@ -32,6 +32,8 @@
 
 #include <oCore/filesystem_monitor.h>
 
+#include "../about_ouroboros.h"
+
 using namespace ouro;
 
 enum oWMENU
@@ -110,6 +112,7 @@ public:
 
 private:
 	std::shared_ptr<window> Window;
+	std::shared_ptr<ouro::about> About;
 	oGUI_MENU Menus[oWMENU_COUNT];
 	oWindowTestAppPulseContext PulseContext;
 	oGUIMenuEnumRadioListHandler MERL; 
@@ -160,6 +163,7 @@ oWindowTestApp::oWindowTestApp()
 		i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
 		i.alt_f4_closes = true;
 		i.cursor_state = oGUI_CURSOR_HAND;
+		i.debug = true;
 
 		Window = window::make(i);
 	}
@@ -353,7 +357,14 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 					break;
 				case oWMI_HELP_ABOUT:
 				{
-					ouro::msgbox(ouro::msg_type::info, _Action.hWindow, "About", "oWindowTestApp: a small program to show a basic window and its events and actions");
+					#if 1
+						oDECLARE_ABOUT_INFO(i, oGDILoadIcon(IDI_APPICON));
+						if (!About)
+							About = ouro::about::make(i);
+						About->show_modal(Window);
+					#else
+						ouro::msgbox(ouro::msg_type::info, _Action.hWindow, "About", "oWindowTestApp: a small program to show a basic window and its events and actions");
+					#endif
 					break;
 				}
 				default:

@@ -52,6 +52,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{6D2DEECB-E53A-4E56-B553-2E531B068BA9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{214923A8-7DC6-4CC0-ACE3-B40564F05945}"
+	ProjectSection(SolutionItems) = preProject
+		Ouroboros\Include\Ouroboros.h = Ouroboros\Include\Ouroboros.h
+		Ouroboros\Include\Ouroboros_externals.h = Ouroboros\Include\Ouroboros_externals.h
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "oKinect", "Ouroboros\Source\oKinect\oKinect.vcxproj", "{0DC2D3E8-1010-4EE2-9DBF-E5950C8CC860}"
 EndProject

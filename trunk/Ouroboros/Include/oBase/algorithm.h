@@ -202,6 +202,23 @@ size_t sparse_set(ContainerT& _Container, const T& _Item)
 	return _Container.size()-1;
 }
 
+// Uses strtok_r to tokenize the specified string into a vector of tokens
+inline void tokenize(std::vector<std::string>& _Container, const char* _StrTok, const char* _StrDelim)
+{
+	_Container.clear();
+	if (_StrTok)
+	{
+		std::string copy(_StrTok);
+		char* ctx = nullptr;
+		const char* tok = strtok_r((char*)copy.c_str(), _StrDelim, &ctx);
+		while (tok)
+		{
+			_Container.push_back(tok);
+			tok = strtok_r(nullptr, _StrDelim, &ctx);
+		}
+	}
+}
+
 // Returns true if the item is found, false if not found
 template<typename T, typename ContainerT>
 bool find_and_erase(ContainerT& _Container, const T& _Item)

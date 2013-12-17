@@ -22,7 +22,6 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
 #include <oBase/backoff.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/Windows/oGDI.h>
@@ -30,6 +29,8 @@
 #include <oPlatform/oStream.h>
 #include <oGUI/window.h>
 #include "resource.h"
+
+#include "../about_ouroboros.h"
 
 // Whereas oGPU is an abstraction of modern hardware-accelerated graphics APIs,
 // oGfx is an abstraction of a particular rendering policy. It so happens to 
@@ -558,7 +559,13 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 				}
 				case oWMI_HELP_ABOUT:
 				{
-					ouro::msgbox(msg_type::info, _Action.hWindow, "About", "oGPUWindowTestApp: a small program to show a basic window and its events and actions");
+					#if 1
+						oDECLARE_ABOUT_INFO(i, oGDILoadIcon(IDI_APPICON));
+						std::shared_ptr<ouro::about> a = ouro::about::make(i);
+						a->show_modal(AppWindow);
+					#else
+						ouro::msgbox(msg_type::info, _Action.hWindow, "About", "oGPUWindowTestApp: a small program to show a basic window and its events and actions");
+					#endif
 					break;
 				}
 				default:

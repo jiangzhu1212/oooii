@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oGUI\about.h" />
     <ClInclude Include="..\..\Include\oGUI\all.h" />
     <ClInclude Include="..\..\Include\oGUI\console.h" />
     <ClInclude Include="..\..\Include\oGUI\mru.h" />
@@ -40,6 +41,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="about.cpp" />
     <ClCompile Include="console.cpp" />
     <ClCompile Include="mru.cpp" />
     <ClCompile Include="msgbox.cpp" />

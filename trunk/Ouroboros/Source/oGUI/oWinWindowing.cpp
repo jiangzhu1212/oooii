@@ -1158,7 +1158,7 @@ bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 	if (_WaitForNext)
 	{
 		int n = GetMessage(&msg, nullptr, 0, 0);
-		if (n == 0)
+		if (n == 0 || msg.message == oWM_QUIT)
 			return oErrorSetLast(std::errc::operation_canceled);
 		HasMessage = n > 0;
 	}

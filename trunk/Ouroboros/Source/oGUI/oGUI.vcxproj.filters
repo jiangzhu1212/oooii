@@ -72,6 +72,9 @@
     <ClInclude Include="..\..\Include\oGUI\msgbox.h">
       <Filter>oGUI</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\about.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
@@ -126,6 +129,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="notification_area.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="about.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

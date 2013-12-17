@@ -83,6 +83,20 @@ enum oWM
 	oWM_DESTROY,
 
 	/**
+		This exists the currently running oWinDispatchMessage, but does not exit
+		the Windows message pump for the thread. This way modal windows can run 
+		their own blocking oWinDispatchMessage and exit it, yielding control back
+		to any calling oWinDispatchMesage.
+		wParam
+			This parameter is not used.
+		lParam
+			This parameter is not used.
+		lResult
+			Returns 0.
+	*/
+	oWM_QUIT,
+
+	/**
 		Received when an input device has updated skeleton data. Use of this message 
 		is an attempt to model Kinect/Skeleton data (i.e. low-level gesture) on
 		WM_TOUCH.
@@ -269,7 +283,7 @@ inline bool oWinIsRegisteredMessage(UINT _uMsg) { return _uMsg >= 0xC000 && _uMs
 // message was not dispatched. If the message queue is valid and empty, 
 // oErrorGetLast() will return std::errc::no_message_available, which might mean
 // to client code "do something else", like render a 3D scene or play a video. 
-// If a  WM_QUIT message is received, this will return false with a last error
+// If a WM_QUIT message is received, this will return false with a last error
 // of std::errc::operation_canceled, implying the thread pump loop should exit.
 oAPI bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext = true);
 

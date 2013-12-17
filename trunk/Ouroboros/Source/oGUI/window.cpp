@@ -773,7 +773,8 @@ void window_impl::flush_messages(bool _WaitForNext)
 
 void window_impl::quit()
 {
-	dispatch_internal([=] { PostQuitMessage(0); });
+	PostMessage(hWnd, oWM_QUIT, 0, 0);
+	//dispatch_internal([=] { PostQuitMessage(0); });
 };
 
 void window_impl::trigger_generic_event(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* _pShape)
