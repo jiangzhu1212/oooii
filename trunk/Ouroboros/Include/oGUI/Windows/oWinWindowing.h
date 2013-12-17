@@ -793,6 +793,14 @@ bool oWinControlGetErrorState(HWND _hControl);
 bool oWinControlClampPositionToSelected(HWND _hControl);
 
 // _____________________________________________________________________________
+// Misc
+
+// Moves the mouse cursor offscreen so even in the system unhides it (if the app
+// crashes), the mouse should be in an inconspicuous spot. This is primarily 
+// useful for fullscreen apps.
+void oWinMoveMouseCursorOffscreen();
+
+// _____________________________________________________________________________
 // @tony: Dialog-related stuff. I still don't quite understand the 
 // difference between a window and a dialog - it seems like dialogs were once a 
 // simple idea that benefited from some simplification, but it seems that time

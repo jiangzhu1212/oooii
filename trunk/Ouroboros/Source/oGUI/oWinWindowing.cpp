@@ -3166,3 +3166,10 @@ bool oWinControlClampPositionToSelected(HWND _hControl)
 			return oErrorSetLastBadType(_hControl, type);
 	}
 }
+
+void oMoveMouseCursorOffscreen()
+{
+	int2 p, sz;
+	ouro::display::virtual_rect(&p.x, &p.y, &sz.x, &sz.y);
+	SetCursorPos(p.x + sz.x, p.y-1);
+}

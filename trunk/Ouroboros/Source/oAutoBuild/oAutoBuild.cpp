@@ -29,13 +29,45 @@
 #include <oBasis/oURIQuerySerialize.h>
 #include <oPlatform/oHTTPHandler.h>
 #include <oPlatform/oWebServer.h>
-#include <oPlatform/oStandards.h>
 #include <oGUI/msgbox.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 using namespace ouro;
+
+// Finds the path to the specified ini according to OOOii's override rules which 
+// are ordered as follows:
+// /..
+// AppDir/..
+// /.
+// /AppDir/..
+// This ordering is used as our typical installation has the launcher running from
+// the /.. directory.
+bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame )
+{
+	snprintf(_StrDestination, _SizeofStrDestination, "../%s", _pININame);
+	if(oStreamExists(_StrDestination))
+		return true;
+
+	path AppDir = ouro::filesystem::app_path();
+
+	snprintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
+	if(oStreamExists(_StrDestination))
+		return true;
+
+	snprintf(_StrDestination, _SizeofStrDestination, "%s", _pININame);
+	if(oStreamExists(_StrDestination))
+		return true;
+
+	snprintf(_StrDestination, _SizeofStrDestination, "%s/%s", AppDir, _pININame);
+	if(oStreamExists(_StrDestination))
+		return true;
+
+	return oErrorSetLast(std::errc::no_such_file_or_directory, "No ini file %s found.", _pININame);
+}
+template<size_t size> bool oINIFindPath(char (&_StrDestination)[size], const char* _pININame) { return oINIFindPath(_StrDestination, size, _pININame); }
+template<size_t CAPACITY> bool oINIFindPath(ouro::fixed_string<char, CAPACITY>& _StrDestination, const char* _pININame) { return oINIFindPath(_StrDestination, _StrDestination.capacity(), _pININame); }
 
 // @oooii-jeffrey: If other code needs these, move them to a better place
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oNetHost)

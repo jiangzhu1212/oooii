@@ -40,7 +40,6 @@
 #include <oGUI/console.h>
 #include <oGUI/msgbox.h> // only used to notify about zombies
 #include <oGUI/progress_bar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
-#include <oPlatform/oStandards.h> // standard colors for a console app, maybe this can be callouts? log file path... can be an option?
 #include <oPlatform/oStream.h> // oStreamExists
 #include <oPlatform/oStreamUtil.h> // used for loading buffers
 #include <oCore/windows/win_crt_heap.h>
@@ -52,6 +51,64 @@
 static const char* sMsgBoxTitle = "Ouroboros Test Environment Discovery";
 
 using namespace ouro;
+
+// @tony tear this down and use console directly
+namespace oConsoleReporting {
+
+enum REPORT_TYPE
+{
+	DEFAULT,
+	SUCCESS,
+	INFO,
+	HEADING,
+	WARN,
+	ERR,
+	CRIT,
+	NUM_REPORT_TYPES,
+};
+
+void VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
+{
+	static const color fg[] = 
+	{
+		color(0),
+		Lime,
+		White,
+		color(0),
+		Yellow,
+		Red,
+		Yellow,
+	};
+	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
+
+	static const color bg[] = 
+	{
+		color(0),
+		color(0),
+		color(0),
+		color(0),
+		color(0),
+		color(0),
+		Red,
+	};
+	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
+
+	if (_Type == HEADING)
+	{
+		char msg[2048];
+		vsnprintf(msg, _Format, _Args);
+		toupper(msg);
+		console::fprintf(stdout, fg[_Type], bg[_Type], msg);
+	}
+	else
+	{
+		console::vfprintf(stdout,fg[_Type], bg[_Type], _Format, _Args );
+	}
+}
+
+inline void Report(REPORT_TYPE _Type, const char* _Format, ...) { va_list args; va_start(args, _Format); VReport(_Type, _Format, args); va_end(args); }
+
+} // namespace oConsoleReporting
 
 // Some well-known apps cause grief in the unit tests (including older versions
 // of the unit test exe), so prompt, shout, and kill where possible to ensure
@@ -262,7 +319,7 @@ oTestManagerImplSingleton::oTestManagerImplSingleton()
 {
 	// oTestManager can be instantiated very early in static init, so make sure 
 	// we're tracking memory for it
-	//ouro::windows::crt_heap::enable_at_exit_leak_report(true);
+	//windows::crt_heap::enable_at_exit_leak_report(true);
 	pImpl = new oTestManager_Impl();
 }
 
@@ -591,7 +648,7 @@ bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStr
 
 	mstring interprocessName;
 	snprintf(interprocessName, "oTest.%s.Started", SpecialTestName);
-	ouro::process::event Started(interprocessName);
+	process::event Started(interprocessName);
 	oASSERTA(!Started.wait_for(oStd::chrono::milliseconds(0)), "Started event set when it shouldn't be (before start).");
 	#ifdef DEBUG_SPECIAL_TEST
 		_pProcess->start();
@@ -636,7 +693,7 @@ void oSpecialTest::NotifyReady()
 	mstring interprocessName;
 	const char* testName = type_name(typeid(*this).name());
 	snprintf(interprocessName, "oTest.%s.Started", testName);
-	ouro::process::event Ready(interprocessName);
+	process::event Ready(interprocessName);
 	oASSERTA(!Ready.wait_for(oStd::chrono::milliseconds(0)), "Ready event set when it shouldn't be (in NotifyReady).");
 	Ready.set();
 }
@@ -1076,7 +1133,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	windows::crt_leak_tracker::capture_callstack(Desc.CaptureCallstackForTestLeaks);
 
 	xlstring timeMessage;
-	double allIterationsStartTime = ouro::timer::now();
+	double allIterationsStartTime = timer::now();
 	for (size_t r = 0; r < Desc.NumRunIterations; r++)
 	{
 		size_t Count[oTest::NUM_TEST_RESULTS];
@@ -1111,7 +1168,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 			Report(oConsoleReporting::HEADING, messageSpec, "Status Message");
 		}
 
-		double totalTestStartTime = ouro::timer::now();
+		double totalTestStartTime = timer::now();
 		oFOR(auto pRTB, Tests)
 		{
 			if (pRTB && !pRTB->IsSpecialTest())
@@ -1140,9 +1197,9 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 						}
 
 						oTRACE("========== Begin %s Run %u ==========", TestName.c_str(), r+1);
-						double testStart = ouro::timer::now();
+						double testStart = timer::now();
 						result = RunTest(pRTB, statusMessage.c_str(), statusMessage.capacity());
-						testDuration = ouro::timer::now() - testStart;
+						testDuration = timer::now() - testStart;
 						oTRACE("========== End %s Run %u (%s) ==========", TestName.c_str(), r+1, as_string(result));
 						Count[result]++;
 
@@ -1229,7 +1286,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		size_t NumLeaks = Count[oTest::LEAKS]; 
 		size_t NumSkipped = Count[oTest::SKIPPED] + Count[oTest::FILTERED] + Count[oTest::BUGGED] + Count[oTest::NOTREADY];
 
-		format_duration(timeMessage, round(ouro::timer::now() - totalTestStartTime));
+		format_duration(timeMessage, round(timer::now() - totalTestStartTime));
     if ((NumSucceeded + NumFailed + NumLeaks) == 0)
   		Report(oConsoleReporting::ERR, "========== Unit Tests: ERROR NO TESTS RUN ==========\n");
     else
@@ -1249,7 +1306,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	
 	if (Desc.NumRunIterations != 1) // != so we report if somehow a 0 got through to here
 	{
-		format_duration(timeMessage, round(ouro::timer::now() - allIterationsStartTime));
+		format_duration(timeMessage, round(timer::now() - allIterationsStartTime));
 		Report(oConsoleReporting::INFO, "========== %u Iterations: %u succeeded, %u failed, %u leaked, %u skipped in %s ==========\n", Desc.NumRunIterations, TotalNumSucceeded, TotalNumFailed, TotalNumLeaks, TotalNumSkipped, timeMessage.c_str());
 	}
 
