@@ -27,48 +27,48 @@
 
 namespace ouro {
 
-const char* as_string(const oTYPE_ID& _TypeID)
+const char* as_string(const type::value& _TypeID)
 {
 	switch (_TypeID)
 	{
 		default:
-		case oTYPE_UNKNOWN: return "unknown_type";
-		case oTYPE_BOOL: return "bool";
-		case oTYPE_CHAR: return "char";
-		case oTYPE_UCHAR: return "unsigned char";
-		case oTYPE_WCHAR: return "wchar";
-		case oTYPE_SHORT: return "short";
-		case oTYPE_USHORT: return "unsigned short";
-		case oTYPE_INT: return "int";
-		case oTYPE_UINT: return "unsigned int";
-		case oTYPE_LONG: return "long";
-		case oTYPE_ULONG: return "unsigned long";
-		case oTYPE_LLONG: return "long long";
-		case oTYPE_ULLONG: return "unsigned long long";
-		case oTYPE_FLOAT: return "float";
-		case oTYPE_DOUBLE: return "double";
-		case oTYPE_HALF: return "half";
-		case oTYPE_INT2: return "int2";
-		case oTYPE_INT3: return "int3";
-		case oTYPE_INT4: return "int4";
-		case oTYPE_UINT2: return "uint2";
-		case oTYPE_UINT3: return "uint3";
-		case oTYPE_UINT4: return "uint4";
-		case oTYPE_FLOAT2: return "float2";
-		case oTYPE_FLOAT3: return "float3";
-		case oTYPE_FLOAT4: return "float4";
-		case oTYPE_FLOAT4X4: return "float4x4";
+		case type::unknown: return "unknown_type";
+		case type::bool_: return "bool";
+		case type::char_: return "char";
+		case type::uchar_: return "unsigned char";
+		case type::wchar_: return "wchar";
+		case type::short_: return "short";
+		case type::ushort_: return "unsigned short";
+		case type::int_: return "int";
+		case type::uint_: return "unsigned int";
+		case type::long_: return "long";
+		case type::ulong_: return "unsigned long";
+		case type::llong_: return "long long";
+		case type::ullong_: return "unsigned long long";
+		case type::float_: return "float";
+		case type::double_: return "double";
+		case type::half_: return "half";
+		case type::int2_: return "int2";
+		case type::int3_: return "int3";
+		case type::int4_: return "int4";
+		case type::uint2_: return "uint2";
+		case type::uint3_: return "uint3";
+		case type::uint4_: return "uint4";
+		case type::float2_: return "float2";
+		case type::float3_: return "float3";
+		case type::float4_: return "float4";
+		case type::float4x4_: return "float4x4";
 	}
 }
 
-bool from_string(oTYPE_ID* _pTypeID, const char* _StrSource)
+bool from_string(type::value* _pTypeID, const char* _StrSource)
 {
-	*_pTypeID = oTYPE_UNKNOWN;
-	for (int i = 0; i < oNUM_TYPES; i++)
+	*_pTypeID = type::unknown;
+	for (int i = 0; i < type::count; i++)
 	{
-		if (!strcmp(_StrSource, as_string(oTYPE_ID(i))))
+		if (!strcmp(_StrSource, as_string(type::value(i))))
 		{
-			*_pTypeID = oTYPE_ID(i);
+			*_pTypeID = type::value(i);
 			return true;
 		}
 	}
@@ -76,7 +76,7 @@ bool from_string(oTYPE_ID* _pTypeID, const char* _StrSource)
 	return false;
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oTYPE_ID& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const type::value& _Value)
 {
 	return strlcpy(_StrDestination, as_string(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 }

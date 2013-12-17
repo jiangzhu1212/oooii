@@ -132,7 +132,7 @@ template<typename T> struct type_info
 
 	// creates a value that is either an oTYPE_ID or a hash of the RTTI name for
 	// enums, classes, and unions
-	static unsigned int id() { return is_type_id<T>::value ? oTypeID<T>::value : ouro::fnv1a<unsigned int>(simple_name()); }
+	static unsigned int id() { return is_type_id<T>::value ? ouro::type_id<T>::value : ouro::fnv1a<unsigned int>(simple_name()); }
 
 	// returns the vtable pointer for the specified class (nullptr if the class is 
 	// not polymorphic)
