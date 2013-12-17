@@ -37,9 +37,11 @@
 #include <d3d11.h>
 #include <d3dx11.h>
 
-using namespace ouro;
+namespace ouro {
+	namespace windows {
+		namespace as_string {
 
-const char* oWinAsStringHT(int _HTCode)
+const char* HT(int _HTCode)
 {
 	switch (_HTCode)
 	{
@@ -79,7 +81,7 @@ const char* oWinAsStringHT(int _HTCode)
 	return "unrecognized HTCODE";
 }
 
-const char* oWinAsStringSC(int _SCCode)
+const char* SC(int _SCCode)
 {
 #define oSC_DRAGMOVE 0xf012
 
@@ -114,7 +116,7 @@ const char* oWinAsStringSC(int _SCCode)
 	return "unrecognized SCCODE";
 }
 
-const char* oWinAsStringSW(int _SWCode)
+const char* SW(int _SWCode)
 {
 	switch (_SWCode)
 	{
@@ -127,7 +129,7 @@ const char* oWinAsStringSW(int _SWCode)
 	return "unrecognized SWCODE";
 }
 
-const char* oWinAsStringWM(int _uMsg)
+const char* WM(int _uMsg)
 {
 	switch (_uMsg)
 	{
@@ -262,7 +264,7 @@ const char* oWinAsStringWM(int _uMsg)
 	return "unrecognized WMCODE";
 }
 
-const char* oWinAsStringWS(int _WSFlag)
+const char* WS(int _WSFlag)
 {
 	switch (_WSFlag)
 	{
@@ -292,7 +294,7 @@ const char* oWinAsStringWS(int _WSFlag)
 	return "unrecognized WS flag";
 }
 
-const char* oWinAsStringWSEX(int _WSEXFlag)
+const char* WSEX(int _WSEXFlag)
 {
 	switch (_WSEXFlag)
 	{
@@ -328,7 +330,7 @@ const char* oWinAsStringWSEX(int _WSEXFlag)
 	return "unrecognized WS_EX flag";
 }
 
-const char* oWinAsStringWA(int _WACode)
+const char* WA(int _WACode)
 {
 	switch (_WACode)
 	{
@@ -341,7 +343,7 @@ const char* oWinAsStringWA(int _WACode)
 	return "unrecognized WACode";
 }
 
-const char* oWinAsStringBST(int _BSTCode)
+const char* BST(int _BSTCode)
 {
 	switch (_BSTCode)
 	{
@@ -358,7 +360,7 @@ const char* oWinAsStringBST(int _BSTCode)
 	return "unrecognized BSTCode";
 }
 
-const char* oWinAsStringNM(int _NMCode)
+const char* NM(int _NMCode)
 {
 	switch (_NMCode)
 	{
@@ -391,7 +393,7 @@ const char* oWinAsStringNM(int _NMCode)
 	return "unrecognized NMCode";
 }
 
-const char* oWinAsStringSWP(int _SWPCode)
+const char* SWP(int _SWPCode)
 {
 	switch (_SWPCode)
 	{
@@ -418,7 +420,7 @@ const char* oWinAsStringSWP(int _SWPCode)
 	return "unrecognized SWPCode";
 }
 
-const char* oWinAsStringGWL(int _GWLCode)
+const char* GWL(int _GWLCode)
 {
 	switch (_GWLCode)
 	{
@@ -437,7 +439,7 @@ const char* oWinAsStringGWL(int _GWLCode)
 	return "unrecognized GWLCode";
 }
 
-const char* oWinAsStringGWLP(int _GWLPCode)
+const char* GWLP(int _GWLPCode)
 {
 	switch (_GWLPCode)
 	{
@@ -452,7 +454,7 @@ const char* oWinAsStringGWLP(int _GWLPCode)
 	return "unrecognized GWLPCode";
 }
 
-const char* oWinAsStringTCN(int _TCNCode)
+const char* TCN(int _TCNCode)
 {
 	switch (_TCNCode)
 	{
@@ -467,7 +469,7 @@ const char* oWinAsStringTCN(int _TCNCode)
 	return "unrecognized TCNCode";
 }
 
-const char* oWinAsStringDBT(int _DBTEvent)
+const char* DBT(int _DBTEvent)
 {
 	switch (_DBTEvent)
 	{
@@ -489,7 +491,7 @@ const char* oWinAsStringDBT(int _DBTEvent)
 	return "unrecognized DBT event";
 }
 
-const char* oWinAsStringDBTDT(int _DBTDevType)
+const char* DBTDT(int _DBTDevType)
 {
 	switch (_DBTDevType)
 	{
@@ -504,7 +506,7 @@ const char* oWinAsStringDBTDT(int _DBTDevType)
 	return "unrecognized DBT devtype event";
 }
 
-const char* oWinAsStringSPDRP(int _SPDRPValue)
+const char* SPDRP(int _SPDRPValue)
 {
 	switch (_SPDRPValue)
 	{
@@ -550,42 +552,7 @@ const char* oWinAsStringSPDRP(int _SPDRPValue)
 	return "unrecognized SPDRP value";
 }
 
-char* oWinParseStyleFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags)
-{
-	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSFlags, oWinAsStringWS(WS_OVERLAPPED), oWinAsStringWS);
-}
-
-char* oWinParseStyleExFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSEXFlags)
-{
-	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSEXFlags, oWinAsStringWSEX(0), oWinAsStringWSEX);
-}
-
-char* oWinParseSWPFlags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags)
-{
-	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_SWPFlags & 0x07ff, "0", oWinAsStringSWP);
-}
-
-static char* oWinPrintStyleChange(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _MsgName, WPARAM _wParam, LPARAM _lParam)
-{
-	char tmp[1024];
-	char tmp2[1024];
-	const char* StyleName = "GWL_STYLE";
-	if (_wParam == GWL_EXSTYLE)
-	{
-		oWinParseStyleExFlags(tmp, ((STYLESTRUCT*)_lParam)->styleOld);
-		oWinParseStyleExFlags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew);
-		StyleName = "GWL_EXSTYLE";
-	}
-	else 
-	{
-		oWinParseStyleFlags(tmp, ((STYLESTRUCT*)_lParam)->styleOld);
-		oWinParseStyleFlags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew);
-	}
-	snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s %s %s -> %s", _hWnd, _MsgName, StyleName, tmp, tmp2);
-	return _StrDestination;
-}
-
-static const char* oWinAsStringWMSW(LPARAM _lParam)
+static const char* WMSW(LPARAM _lParam)
 {
 	switch (_lParam)
 	{
@@ -599,33 +566,69 @@ static const char* oWinAsStringWMSW(LPARAM _lParam)
 	return "unrecognized WM_SHOWWINDOW LPARAM value";
 }
 
+char* style_flags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSFlags)
+{
+	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSFlags, as_string::WS(WS_OVERLAPPED), as_string::WS);
+}
 
-char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
+char* style_ex_flags(char* _StrDestination, size_t _SizeofStrDestination, UINT _WSEXFlags)
+{
+	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_WSEXFlags, as_string::WSEX(0), as_string::WSEX);
+}
+
+char* swp_flags(char* _StrDestination, size_t _SizeofStrDestination, UINT _SWPFlags)
+{
+	return strbitmask(_StrDestination, _SizeofStrDestination, *(int*)&_SWPFlags & 0x07ff, "0", as_string::SWP);
+}
+
+		} // namespace as_string
+
+static char* print_style_change(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, const char* _MsgName, WPARAM _wParam, LPARAM _lParam)
+{
+	char tmp[1024];
+	char tmp2[1024];
+	const char* StyleName = "GWL_STYLE";
+	if (_wParam == GWL_EXSTYLE)
+	{
+		as_string::style_ex_flags(tmp, ((STYLESTRUCT*)_lParam)->styleOld);
+		as_string::style_ex_flags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew);
+		StyleName = "GWL_EXSTYLE";
+	}
+	else 
+	{
+		as_string::style_flags(tmp, ((STYLESTRUCT*)_lParam)->styleOld);
+		as_string::style_flags(tmp2, ((STYLESTRUCT*)_lParam)->styleNew);
+	}
+	snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s %s %s -> %s", _hWnd, _MsgName, StyleName, tmp, tmp2);
+	return _StrDestination;
+}
+
+char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 {
 	// http://www.autoitscript.com/autoit3/docs/appendix/WinMsgCodes.htm
 
-	#define KEYSTR as_string(oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)))
+	#define KEYSTR ouro::as_string(oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)))
 
 	switch (_uMsg)
 	{ 
-		case WM_ACTIVATE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATE %s, other HWND 0x%x %sactivated", _hWnd, oWinAsStringWA((UINT)_wParam), _lParam, _wParam == WA_INACTIVE ? "" : "de"); break;
+		case WM_ACTIVATE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATE %s, other HWND 0x%x %sactivated", _hWnd, as_string::WA((UINT)_wParam), _lParam, _wParam == WA_INACTIVE ? "" : "de"); break;
 		case WM_ACTIVATEAPP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_ACTIVATEAPP %sactivated, other thread %d %sactivated", _hWnd, _wParam ? "" : "de", _lParam, _wParam ? "de" : ""); break;
 		case WM_NCACTIVATE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NCACTIVATE titlebar/icon needs to be changed: %s lParam=%x", _hWnd, _wParam ? "true" : "false", _lParam); break;
 		case WM_SETTEXT: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETTEXT: lParam=%s", _hWnd, _lParam); break;
-		case WM_WINDOWPOSCHANGING: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGING hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
-		case WM_WINDOWPOSCHANGED: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGED hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, oWinParseSWPFlags(tmp, wp.flags)); break; }
-		case WM_STYLECHANGING: { oWinPrintStyleChange(_StrDestination, _SizeofStrDestination, _hWnd, "WM_STYLECHANGING", _wParam, _lParam); break; }
-		case WM_STYLECHANGED: { oWinPrintStyleChange(_StrDestination, _SizeofStrDestination, _hWnd, "WM_STYLECHANGED", _wParam, _lParam); break; }
+		case WM_WINDOWPOSCHANGING: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGING hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, as_string::swp_flags(tmp, wp.flags)); break; }
+		case WM_WINDOWPOSCHANGED: { char tmp[1024]; WINDOWPOS& wp = *(WINDOWPOS*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_WINDOWPOSCHANGED hwndInsertAfter=%x xy=%d,%d wh=%dx%d flags=%s", _hWnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, as_string::swp_flags(tmp, wp.flags)); break; }
+		case WM_STYLECHANGING: { print_style_change(_StrDestination, _SizeofStrDestination, _hWnd, "WM_STYLECHANGING", _wParam, _lParam); break; }
+		case WM_STYLECHANGED: { print_style_change(_StrDestination, _SizeofStrDestination, _hWnd, "WM_STYLECHANGED", _wParam, _lParam); break; }
 		case WM_DISPLAYCHANGE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DISPLAYCHANGE %dx%dx%d", _hWnd, static_cast<int>(GET_X_LPARAM(_lParam)), static_cast<int>(GET_Y_LPARAM(_lParam)), _wParam); break;
 		case WM_DWMCOLORIZATIONCOLORCHANGED: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMCOLORIZATIONCOLORCHANGED", _hWnd); break;
 		case WM_DWMCOMPOSITIONCHANGED: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMCOMPOSITIONCHANGED", _hWnd); break;
 		case WM_DWMNCRENDERINGCHANGED: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMNCRENDERINGCHANGED Desktop Window Manager (DWM) %s", _hWnd, (BOOL)_wParam ? "enabled" : "disabled"); break;
 		case WM_DWMWINDOWMAXIMIZEDCHANGE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DWMWINDOWMAXIMIZEDCHANGE", _hWnd); break;
 		case WM_MOVE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_MOVE %d,%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_SETCURSOR: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETCURSOR %s hit=%s, id=%s", _hWnd, (HWND)_wParam == _hWnd ? "In Window" : "Out of Window", oWinAsStringHT(GET_X_LPARAM(_lParam)), oWinAsStringWM(GET_Y_LPARAM(_lParam))); break;
-		case WM_SHOWWINDOW: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SHOWWINDOW: wParam=%s lParam=%s", _hWnd, _wParam ? "shown" : "hidden", oWinAsStringWMSW(_lParam));  break;
+		case WM_SETCURSOR: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SETCURSOR %s hit=%s, id=%s", _hWnd, (HWND)_wParam == _hWnd ? "In Window" : "Out of Window", as_string::HT(GET_X_LPARAM(_lParam)), as_string::WM(GET_Y_LPARAM(_lParam))); break;
+		case WM_SHOWWINDOW: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SHOWWINDOW: wParam=%s lParam=%s", _hWnd, _wParam ? "shown" : "hidden", as_string::WMSW(_lParam)); break;
 		case WM_SIZE: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SIZE %dx%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
-		case WM_SYSCOMMAND: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSCOMMAND: wParam=%s screenpos=%d,%d", _hWnd, oWinAsStringSC((UINT)(_wParam&0xfff0)), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
+		case WM_SYSCOMMAND: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSCOMMAND: wParam=%s screenpos=%d,%d", _hWnd, as_string::SC((UINT)(_wParam&0xfff0)), GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam)); break;
 		case WM_SYSKEYDOWN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
 		case WM_SYSKEYUP: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_SYSKEYUP: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
 		case WM_KEYDOWN: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_KEYDOWN: wParam=%s lParam=%0x", _hWnd, KEYSTR, _lParam); break;
@@ -651,7 +654,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 		case WM_CTLCOLORMSGBOX: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORMSGBOX HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
 		case WM_CTLCOLORSCROLLBAR: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSCROLLBAR HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
 		case WM_CTLCOLORSTATIC: snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_CTLCOLORSTATIC HDC 0x%x DlgItemhwnd = %p", _hWnd, _wParam, _lParam); break;
-		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY WPARAM=%u from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, _wParam, h.hwndFrom, h.idFrom, oWinAsStringNM(h.code)); break; }
+		case WM_NOTIFY: { const NMHDR& h = *(NMHDR*)_lParam; snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_NOTIFY WPARAM=%u from hwndFrom=0x%x idFrom=%d notification code=%s", _hWnd, _wParam, h.hwndFrom, h.idFrom, as_string::NM(h.code)); break; }
 		case WM_DROPFILES:
 		{
 			path_string p;
@@ -694,7 +697,7 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 		case WM_DEVICECHANGE: 
 		{ 
 			DEV_BROADCAST_HDR* pDBHdr = (DEV_BROADCAST_HDR*)_lParam;
-			const char* devtype = pDBHdr ? oWinAsStringDBTDT(pDBHdr->dbch_devicetype) : "(null)";
+			const char* devtype = pDBHdr ? as_string::DBTDT(pDBHdr->dbch_devicetype) : "(null)";
 
 			const guid* pGUID = &null_guid;
 			const char* name = "(null)";
@@ -745,12 +748,12 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 			}
 
 			sstring StrGUID;
-			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, oWinAsStringDBT(oInt(_wParam)), devtype, to_string(StrGUID, *pGUID), name);
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, as_string::DBT(oInt(_wParam)), devtype, to_string(StrGUID, *pGUID), name);
 			break;
 		}
 		default:
 		{
-			const char* WMStr = oWinAsStringWM(_uMsg);
+			const char* WMStr = as_string::WM(_uMsg);
 			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x %s", _hWnd, WMStr);
 			if (*WMStr == 'u') // unrecognized
 				snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x Unrecognized uMsg=0x%x (%u)", _hWnd, _uMsg, _uMsg); break;
@@ -760,3 +763,6 @@ char* oWinParseWMMessage(char* _StrDestination, size_t _SizeofStrDestination, oW
 
 	return _StrDestination;
 }
+
+	} // namespace windows
+} // namespace ouro

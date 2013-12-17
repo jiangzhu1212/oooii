@@ -1129,7 +1129,7 @@ LRESULT window_impl::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 	if ((Debug || kForceDebug))
 	{
 		xlstring s;
-		oTRACE("%s", oWinParseWMMessage(s, s.capacity(), &ControlKeyState, _hWnd, _uMsg, _wParam, _lParam));
+		oTRACE("%s", windows::parse_wm_message(s, s.capacity(), &ControlKeyState, _hWnd, _uMsg, _wParam, _lParam));
 	}
 
 	LRESULT lResult = -1;
