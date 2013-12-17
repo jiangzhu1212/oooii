@@ -208,6 +208,9 @@
     <ClCompile Include="tlsf_allocator.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
+    <ClCompile Include="type_id.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -401,6 +404,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\tlsf_allocator.h">
       <Filter>oBase\allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\type_id.h">
+      <Filter>oBase</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

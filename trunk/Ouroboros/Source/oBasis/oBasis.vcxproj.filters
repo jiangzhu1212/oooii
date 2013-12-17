@@ -46,9 +46,6 @@
     <Filter Include="Source\Concurrency">
       <UniqueIdentifier>{ae304858-be37-4332-948a-f8f83ee11fa8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Language Enhancements">
-      <UniqueIdentifier>{8b57e10e-8a96-4ab9-b54e-7c60a5bef5d3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Serialization">
       <UniqueIdentifier>{fc7f0451-3b9b-487e-bb44-83a0efd7f6da}</UniqueIdentifier>
     </Filter>
@@ -155,9 +152,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oOBJ.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oTypeID.h">
-      <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oRTTI.h">
       <Filter>oBasis\RTTI</Filter>
@@ -308,9 +302,6 @@
     <ClCompile Include="oMIME.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oTypeID.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oRTTI.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -377,9 +368,6 @@
     <ClCompile Include="oINISerialize.cpp">
       <Filter>Source\Serialization</Filter>
     </ClCompile>
-    <ClCompile Include="oError.cpp">
-      <Filter>Source\Language Enhancements</Filter>
-    </ClCompile>
     <ClCompile Include="oJSONSerialize.cpp">
       <Filter>Source\Serialization</Filter>
     </ClCompile>
@@ -414,6 +402,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oScopedPartialTimeout.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="oError.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

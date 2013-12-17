@@ -85,7 +85,6 @@
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h" />
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h" />
-    <ClInclude Include="..\..\Include\oBasis\oTypeID.h" />
     <ClInclude Include="..\..\Include\oBasis\oTypes.h" />
     <ClInclude Include="..\..\Include\oBasis\oURI.h" />
     <ClInclude Include="..\..\Include\oBasis\oURIQuerySerialize.h" />
@@ -132,7 +131,6 @@
     <ClCompile Include="oScopedPartialTimeout.cpp" />
     <ClCompile Include="oSnappy.cpp" />
     <ClCompile Include="oStrTok.cpp" />
-    <ClCompile Include="oTypeID.cpp" />
     <ClCompile Include="oURI.cpp" />
     <ClCompile Include="oURIQuerySerialize.cpp" />
     <ClCompile Include="oXMLSerialize.cpp" />

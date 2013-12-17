@@ -33,7 +33,7 @@
 #define oBase_type_info_h
 
 #include <oBasis/oMathTypes.h> // @tony fixme
-#include <oBasis/oTypeID.h> // @tony fixme
+#include <oBase/type_id.h>
 #include <oBase/fnv1a.h>
 #include <type_traits>
 
