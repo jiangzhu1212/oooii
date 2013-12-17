@@ -26,8 +26,6 @@
 #include <oStd/atomic.h>
 #include <oBase/macros.h>
 
-#include <oBasis/oScopedPartialTimeout.h> // FIXME
-
 namespace ouro {
 	namespace windows {
 		namespace winsock {
@@ -287,7 +285,7 @@ void enumerate_addresses(const std::function<void(const sockaddr_in& _Addr)> _En
 
 bool wait_multiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, unsigned int _TimeoutMS)
 {
-	return WSA_WAIT_TIMEOUT != WSAWaitForMultipleEvents(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == oInfiniteWait ? WSA_INFINITE : _TimeoutMS, FALSE);
+	return WSA_WAIT_TIMEOUT != WSAWaitForMultipleEvents(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == ~0u ? WSA_INFINITE : _TimeoutMS, FALSE);
 }
 
 // WSA_FLAG_NO_HANDLE_INHERIT
@@ -483,18 +481,21 @@ static void wsatrace(const char* _TracePrefix, const char* _TraceName, const WSA
 static bool wait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEvents, unsigned int _TimeoutMS)
 {
 	bool eventFired = true;
-	unsigned int timeout = _TimeoutMS;
 	_pNetEvents->lNetworkEvents = 0;
-	oScopedPartialTimeout spt(&timeout);
+	unsigned int Start = timer::now_ms();
 	while (!_pNetEvents->lNetworkEvents && eventFired)
 	{
-		spt.UpdateTimeout();
-		eventFired = wait(_hEvent, timeout);
+		eventFired = wait(_hEvent, _TimeoutMS);
 		if (eventFired)
 		{
 			oWSAVB(WSAEnumNetworkEvents(_hSocket, _hEvent, _pNetEvents));
 			if (_pNetEvents->lNetworkEvents)
 				break;
+
+			unsigned int Now = timer::now_ms();
+			unsigned int Diff = Now - Start;
+			if (Diff < _TimeoutMS)
+				_TimeoutMS -= Diff;
 		}
 	}
 
