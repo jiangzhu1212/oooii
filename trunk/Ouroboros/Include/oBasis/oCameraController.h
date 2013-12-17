@@ -29,7 +29,8 @@
 
 #include <oBasis/oGUI.h>
 #include <oBasis/oInterface.h>
-#include <oBasis/oMathTypes.h>
+#include <oBasis/oPlatformFeatures.h>
+#include <oBase/types.h>
 
 // Yaw is up/down, pitch is left/right, roll is spin left/spin right. This 
 // includes rotation around a lookat point/center of interest

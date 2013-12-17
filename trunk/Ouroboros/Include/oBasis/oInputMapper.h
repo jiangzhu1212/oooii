@@ -32,6 +32,7 @@
 #define oInputMapper_h
 
 #include <oBasis/oGUI.h>
+#include <oBasis/oInterface.h>
 #include <oBasis/oRTTI.h>
 #include <oBase/xml.h>
 

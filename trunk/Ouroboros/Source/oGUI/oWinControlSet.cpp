@@ -27,7 +27,7 @@
 #include <oBase/algorithm.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/oWinRect.h>
-
+#include <oBasis/oError.h> // @tony fixme
 
 using namespace ouro;
 

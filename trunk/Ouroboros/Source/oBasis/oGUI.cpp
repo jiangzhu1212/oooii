@@ -23,6 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oGUI.h>
+#include <oCompute/linear_algebra.h>
+#include <oBasis/oInterface.h>
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_INPUT_DEVICE_TYPE)
 	oRTTI_ENUM_BEGIN_VALUES(oGUI_INPUT_DEVICE_TYPE)

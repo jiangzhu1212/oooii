@@ -26,6 +26,7 @@
 #include <oGUI/Windows/oGDI.h>
 #include <Commdlg.h>
 #include <CdErr.h>
+#include <oBasis/oError.h> // @tony fixme
 
 using namespace ouro;
 

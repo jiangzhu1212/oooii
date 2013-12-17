@@ -27,9 +27,9 @@
 #include <oBasis/tests/oBasisTests.h>
 #include "oBasisTestCommon.h"
 #include "oBasisTestOBJ.h"
-
 #include <oBase/finally.h>
 #include <oBase/timer.h>
+#include <oCompute/linear_algebra.h>
 
 using namespace ouro;
 

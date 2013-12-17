@@ -63,7 +63,6 @@
     <ClInclude Include="..\..\Include\oBasis\oLZMA.h" />
     <ClInclude Include="..\..\Include\oBasis\oManipulator.h" />
     <ClInclude Include="..\..\Include\oBasis\oMath.h" />
-    <ClInclude Include="..\..\Include\oBasis\oMathTypes.h" />
     <ClInclude Include="..\..\Include\oBasis\oMeshUtil.h" />
     <ClInclude Include="..\..\Include\oBasis\oMIME.h" />
     <ClInclude Include="..\..\Include\oBasis\oOBJ.h" />
@@ -85,7 +84,6 @@
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h" />
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h" />
-    <ClInclude Include="..\..\Include\oBasis\oTypes.h" />
     <ClInclude Include="..\..\Include\oBasis\oURI.h" />
     <ClInclude Include="..\..\Include\oBasis\oURIQuerySerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oXMLSerialize.h" />

@@ -83,8 +83,8 @@ protected:
 	// Utility functions that don't include mutex locking because that is done at 
 	// a higher level, so these aren't threadsafe per-sae
 	threadsafe oSchemeHandler* GetSchemeHandler(const char* _Scheme);
-	bool VisitURIReferenceInternal(const char* _URIReference, const oFUNCTION<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor);
-	bool VisitURIReference(const char* _URIReference, const oFUNCTION<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor) threadsafe;
+	bool VisitURIReferenceInternal(const char* _URIReference, const std::function<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor);
+	bool VisitURIReference(const char* _URIReference, const std::function<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor) threadsafe;
 
 	oConcurrency::shared_mutex URIBasesMutex;
 	oConcurrency::shared_mutex SchemeHandlersMutex;
@@ -213,7 +213,7 @@ threadsafe oSchemeHandler* oStreamContext::GetSchemeHandler(const char* _Scheme)
 	return nullptr;
 }
 
-bool oStreamContext::VisitURIReferenceInternal(const char* _URIReference, const oFUNCTION<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor)
+bool oStreamContext::VisitURIReferenceInternal(const char* _URIReference, const std::function<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor)
 {
 	oURIParts URIParts;
 	threadsafe oSchemeHandler* sh = nullptr;
@@ -238,7 +238,7 @@ bool oStreamContext::VisitURIReferenceInternal(const char* _URIReference, const 
 	return _URIVisitor(sh, URIParts);
 }
 
-bool oStreamContext::VisitURIReference(const char* _URIReference, const oFUNCTION<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor) threadsafe
+bool oStreamContext::VisitURIReference(const char* _URIReference, const std::function<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor) threadsafe
 {
 	uri_string URI;
 	auto pThis = oLockThis(SchemeHandlersMutex);

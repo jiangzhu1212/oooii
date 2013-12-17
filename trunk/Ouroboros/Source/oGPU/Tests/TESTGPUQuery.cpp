@@ -49,7 +49,7 @@ struct GPU_Query : public oTest
 			oTESTB0(Device->CreateQuery("Timer", QueryDesc, &Query));
 
 			ICL->BeginQuery(Query);
-			oSleep(1000);
+			oStd::this_thread::sleep_for(oStd::chrono::seconds(1));
 			ICL->EndQuery(Query);
 
 			double SecondsPast = 0.0;

@@ -26,6 +26,7 @@
 #include <oCore/display.h>
 #include <oCore/windows/win_util.h>
 #include <oBase/guid.h>
+#include <oHLSL/oHLSLMath.h>
 #include <regex>
 
 #define WIN32_LEAN_AND_MEAN

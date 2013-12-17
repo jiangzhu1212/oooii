@@ -25,6 +25,7 @@
 #include <oBasis/oURI.h>
 #include <oBasis/oError.h>
 #include <oBasis/oINISerialize.h>
+#include <oHLSL/oHLSLMath.h>
 #include "oBasisTestCommon.h"
 #include <vector>
 

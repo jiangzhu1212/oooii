@@ -36,6 +36,7 @@
 #include <vector>
 #include <windowsx.h>
 #include <Shellapi.h>
+#include <oBasis/oError.h> // @tony fixme
 
 namespace ouro {
 

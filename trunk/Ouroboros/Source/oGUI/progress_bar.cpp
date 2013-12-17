@@ -99,7 +99,7 @@ private:
 private:
 	void on_event(const oGUI_EVENT_DESC& _Event);
 	void on_action(const oGUI_ACTION_DESC& _Action);
-	bool make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
+	void make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
 	HWND get(PB_CONTROL _Control) const { return (HWND)oThreadsafe(this)->Controls[_Control]; }
 	void set_percentage_internal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage);
 	void set_percentage_internal(int _Percentage) { set_percentage_internal(get(PB_PROGRESS), get(PB_MARQUEE), get(PB_PERCENT), _Percentage); }
@@ -127,7 +127,7 @@ std::shared_ptr<progress_bar> progress_bar::make(const char* _Title, oGUI_ICON _
 	return std::make_shared<progress_bar_impl>(_Title, _hIcon, _OnStop);
 }
 
-bool progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
+void progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 {
 	const int2 ProgressBarSize(270, 22);
 	const int2 ButtonSize(75, 23);
@@ -187,8 +187,6 @@ bool progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent
 		Descs[i].ID = i;
 		Controls[i] = (oGUI_WINDOW)oWinControlCreate(Descs[i]);
 	}
-
-	return true;
 }
 
 void progress_bar_impl::on_event(const oGUI_EVENT_DESC& _Event)
@@ -197,8 +195,7 @@ void progress_bar_impl::on_event(const oGUI_EVENT_DESC& _Event)
 	{
 		case oGUI_CREATING:
 		{
-			if (!make_controls(_Event.AsCreate()))
-				oThrowLastError();
+			make_controls(_Event.AsCreate());
 			break;
 		}
 
@@ -276,7 +273,8 @@ void progress_bar_impl::set_percentage_internal(HWND _hProgress, HWND _hMarquee,
 		char buf[16];
 		snprintf(buf, "%u%%", p);
 		ellipsize(buf);
-		oVERIFY(oWinControlSetText(_hPercent, buf));
+		if (!oWinControlSetText(_hPercent, buf))
+			throw std::runtime_error("oWinControlSetText failed");
 
 		ensure_hidden(_hMarquee);
 		ensure_visible(_hProgress);

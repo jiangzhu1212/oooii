@@ -28,6 +28,7 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinStatusBar.h>
 #include <oBase/timer.h>
+#include <oBasis/oError.h> // @tony fixme
 
 #undef interface
 #include <oCore/windows/win_error.h>
@@ -1342,7 +1343,7 @@ bool oWinIsFullscreenExclusive(HWND _hWnd)
 	return !!(GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & oEF_FULLSCREEN_EXCLUSIVE);
 }
 
-oAPI bool oWinSetIsFullscreenExclusive(HWND _hWnd, bool _IsFullscreenExclusive)
+bool oWinSetIsFullscreenExclusive(HWND _hWnd, bool _IsFullscreenExclusive)
 {
 	oWIN_CHECK(_hWnd);
 	LONG_PTR flags = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
@@ -3093,7 +3094,7 @@ int oWinControlGetRangePosition(HWND _hControl)
 	}
 }
 
-oAPI bool oWinControlSetTick(HWND _hControl, int _Position)
+bool oWinControlSetTick(HWND _hControl, int _Position)
 {
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch(type)
@@ -3106,7 +3107,7 @@ oAPI bool oWinControlSetTick(HWND _hControl, int _Position)
 	}
 }
 
-oAPI bool oWinControlClearTicks(HWND _hControl)
+bool oWinControlClearTicks(HWND _hControl)
 {
 	oGUI_CONTROL_TYPE type = oWinControlGetType(_hControl);
 	switch(type)

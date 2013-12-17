@@ -111,7 +111,7 @@ private:
 
 	void on_event(const oGUI_EVENT_DESC& _Event);
 	void on_action(const oGUI_ACTION_DESC& _Action);
-	bool make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
+	void make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
 };
 
 static const int kComponentHeight = 100;
@@ -148,7 +148,7 @@ std::shared_ptr<about> about::make(const info& _Info)
 	return std::make_shared<about_impl>(_Info);
 }
 
-bool about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
+void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 {
 	const init& Init = *(const init*)_CreateEvent.pUser;
 	const info& Info = Init.info;
@@ -347,8 +347,6 @@ bool about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 		else
 			Controls[i] = nullptr;
 	}
-
-	return true;
 }
 
 void about_impl::on_event(const oGUI_EVENT_DESC& _Event)
@@ -357,8 +355,7 @@ void about_impl::on_event(const oGUI_EVENT_DESC& _Event)
 	{
 		case oGUI_CREATING:
 		{
-			if (!make_controls(_Event.AsCreate()))
-				oThrowLastError();
+			make_controls(_Event.AsCreate());
 			break;
 		}
 

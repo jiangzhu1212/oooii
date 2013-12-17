@@ -126,7 +126,7 @@ public:
 	{
 		AssertIsMain();
 		Mutex.unlock();
-		oSleep(_YieldMS);
+		oStd::this_thread::sleep_for(oStd::chrono::milliseconds(_YieldMS));
 		Mutex.lock();
 	}
 	void MainThreadRelease()

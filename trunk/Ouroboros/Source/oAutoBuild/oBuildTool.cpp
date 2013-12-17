@@ -87,7 +87,7 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	// If timed out, wait a little bit otherwise the log files will get a
 	// sharing violation when we try to read them.
 	if (!Finished)
-		oSleep(3000);
+		oStd::this_thread::sleep_for(oStd::chrono::seconds(3));
 
 	_pResults->TimePassedSeconds = (float)((1000*_TestSettings.TimeoutSeconds) - TimeoutMS) / 1000.0f;
 

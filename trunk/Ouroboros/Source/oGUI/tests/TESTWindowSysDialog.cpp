@@ -122,7 +122,7 @@ public:
 	};
 
 public:
-	oSystemProperties(bool* _pSuccess);
+	oSystemProperties();
 
 	window* GetWindow() { return Window.get(); }
 	bool GetRunning() const { return Running; }
@@ -244,11 +244,9 @@ bool from_string(tests::oSystemProperties::CONTROL* _pControl, const char* _StrS
 
 namespace tests {
 
-oSystemProperties::oSystemProperties(bool* _pSuccess)
+oSystemProperties::oSystemProperties()
 	: Running(true)
 {
-	*_pSuccess = false;
-
 	window::init i;
 	i.title = "TESTWindowSysDialog";
 	i.event_hook = std::bind(&oSystemProperties::EventHook, this, std::placeholders::_1);
@@ -256,9 +254,7 @@ oSystemProperties::oSystemProperties(bool* _pSuccess)
 	i.shape.Style = oGUI_WINDOW_DIALOG;
 	i.shape.State = oGUI_WINDOW_RESTORED;
 	i.shape.ClientSize = int2(410,436);
-
-	try { Window = window::make(i); }
-	catch (std::exception& e) { oErrorSetLast(e); return; }
+	Window = window::make(i);
 
 	{
 		#if oENABLE_ASSERTS
@@ -291,8 +287,6 @@ oSystemProperties::oSystemProperties(bool* _pSuccess)
 
 		Window->set_hotkeys(HotKeys);
 	}
-	
-	*_pSuccess = true;
 }
 
 bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
@@ -314,7 +308,7 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 	ControlSet.Deinitialize();
 
 	oWinControlSet::IDFROMSTRING FromString = [&](int* _pID, const char* _StrSource)->bool { return ouro::from_string((oSystemProperties::CONTROL*)_pID, _StrSource); };
-	oVERIFY(ControlSet.Initialize(_hParent, _ClientSize, *XML, FromString));
+	oCHECK0(ControlSet.Initialize(_hParent, _ClientSize, *XML, FromString));
 
 	if (ControlSet[ID_COMPUTER_NAME_VALUE])
 	{
@@ -345,7 +339,7 @@ void oSystemProperties::EventHook(const oGUI_EVENT_DESC& _Event)
 	{
 		case oGUI_CREATING:
 		{
-			oVERIFY(Reload((HWND)_Event.hWindow, _Event.AsCreate().Shape.ClientSize));
+			oCHECK0(Reload((HWND)_Event.hWindow, _Event.AsCreate().Shape.ClientSize));
 			break;
 		}
 	}
@@ -387,7 +381,7 @@ void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
 		case oGUI_ACTION_HOTKEY:
 		{
 			if (_Action.DeviceID == ID_RELOAD_UI)
-				oVERIFY(Reload((HWND)Window->native_handle(), Window->client_size()));
+				oCHECK0(Reload((HWND)Window->native_handle(), Window->client_size()));
 			
 			break;
 		}
@@ -415,10 +409,7 @@ void TESTSysDialog(test_services& _Services)
 	if (ouro::system::is_remote_session())
 		oTHROW(permission_denied, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 
-	bool success = false;
-	oSystemProperties test(&success);
-	if (!success)
-		oTHROW(protocol_error, "failed to construct test window");
+	oSystemProperties test;
 		
 	do
 	{

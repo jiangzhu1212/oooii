@@ -26,6 +26,10 @@
 #include <oBase/fixed_string.h>
 #include <oBasis/oRTTI.h>
 #include "oBasisTestCommon.h"
+#include <oCompute/linear_algebra.h>
+#include <oCompute/oAABox.h>
+#include <oCompute/oFrustum.h>
+#include <oCompute/oSphere.h>
 
 using namespace ouro;
 

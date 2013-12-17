@@ -27,6 +27,7 @@
 #include <oBase/byte.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinWindowing.h>
+#include <oBasis/oError.h> // @tony fixme
 
 using namespace ouro;
 

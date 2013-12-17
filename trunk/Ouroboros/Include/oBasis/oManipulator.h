@@ -27,7 +27,7 @@
 #define oManipulator_h
 
 #include <oBasis/oInterface.h>
-#include <oBasis/oMathTypes.h>
+#include <oBase/types.h>
 
 // Manipulators are geometries that are used to visual manipulate
 // the position, scale and rotation of other geometries.  This

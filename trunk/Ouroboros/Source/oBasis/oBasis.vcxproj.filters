@@ -78,9 +78,6 @@
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oMathTypes.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oInterface.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
@@ -98,9 +95,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h">
       <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oTypes.h">
-      <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oCompression.h">
       <Filter>oBasis</Filter>

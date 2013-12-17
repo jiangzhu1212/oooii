@@ -77,7 +77,7 @@ private:
 	void InitMenu(oGUI_MENU _hWindowMenu);
 	void InitVCRControls(HWND _hParent, const int2& _Position);
 
-	bool OnCreate(HWND _hWnd, oGUI_MENU _hMenu);
+	void OnCreate(HWND _hWnd, oGUI_MENU _hMenu);
 	void OnMenuCommand(HWND _hWnd, int _MenuID);
 
 	enum
@@ -249,9 +249,7 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	i.shape.State = oGUI_WINDOW_RESTORED;
 	i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
 	i.shape.ClientSize = int2(640,480);
-
-	try { Window = window::make(i); }
-	catch (std::exception& e) { oErrorSetLast(e); return; }
+	Window = window::make(i);
 
 	int Widths[2] = { 100, oInvalid };
 	Window->set_num_status_sections(Widths);
@@ -282,7 +280,7 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	*_pSuccess = true;
 }
 
-bool oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
+void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 {
 	InitMenu(_hMenu);
 	InitVCRControls(_hWnd, int2(150, 30));
@@ -334,8 +332,8 @@ bool oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	SliderDesc.ID = ID_SLIDER;
 	Controls[ID_SLIDER] = oWinControlCreate(SliderDesc);
 
-	oVERIFY(oWinControlSetRange(Controls[ID_SLIDER], 20, 120));
-	oVERIFY(oWinControlSetRangePosition(Controls[ID_SLIDER], 70));
+	oCHECK0(oWinControlSetRange(Controls[ID_SLIDER], 20, 120));
+	oCHECK0(oWinControlSetRangePosition(Controls[ID_SLIDER], 70));
 
 	SliderDesc.Type = oGUI_CONTROL_SLIDER_SELECTABLE;
 	SliderDesc.Text = "SliderSelectable";
@@ -343,9 +341,9 @@ bool oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	SliderDesc.ID = ID_SLIDER_SELECTABLE;
 	Controls[ID_SLIDER_SELECTABLE] = oWinControlCreate(SliderDesc);
 
-	oVERIFY(oWinControlSetRange(Controls[ID_SLIDER_SELECTABLE], 0, 100));
-	oVERIFY(oWinControlSelect(Controls[ID_SLIDER_SELECTABLE], 10, 50));
-	oVERIFY(oWinControlSetRangePosition(Controls[ID_SLIDER_SELECTABLE], 30));
+	oCHECK0(oWinControlSetRange(Controls[ID_SLIDER_SELECTABLE], 0, 100));
+	oCHECK0(oWinControlSelect(Controls[ID_SLIDER_SELECTABLE], 10, 50));
+	oCHECK0(oWinControlSetRangePosition(Controls[ID_SLIDER_SELECTABLE], 30));
 
 	oGUI_CONTROL_DESC ProgressBarDesc;
 	ProgressBarDesc.hParent = (oGUI_WINDOW)_hWnd;
@@ -356,9 +354,9 @@ bool oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	ProgressBarDesc.ID = ID_PROGRESSBAR;
 	Controls[ID_PROGRESSBAR] = oWinControlCreate(ProgressBarDesc);
 	
-	oVERIFY(oWinControlSetRange(Controls[ID_PROGRESSBAR], 20, 30));
-	oVERIFY(oWinControlSetRangePosition(Controls[ID_PROGRESSBAR], 25));
-	oVERIFY(oWinControlSetErrorState(Controls[ID_PROGRESSBAR], true));
+	oCHECK0(oWinControlSetRange(Controls[ID_PROGRESSBAR], 20, 30));
+	oCHECK0(oWinControlSetRangePosition(Controls[ID_PROGRESSBAR], 25));
+	oCHECK0(oWinControlSetErrorState(Controls[ID_PROGRESSBAR], true));
 
 	// Marquee animates itself, making it a poor element of an automated image
 	// test, so disable this for screen grabs, but show it's working in 
@@ -392,8 +390,6 @@ bool oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	oWinControlInsertSubItem(Controls[ID_COMBOTEXTBOX], "After3", oInvalid);
 	oWinControlInsertSubItem(Controls[ID_COMBOTEXTBOX], "Btwn2And3", 2);
 	oWinControlSetText(Controls[ID_COMBOTEXTBOX], "Select...");
-
-	return true;
 }
 
 void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)

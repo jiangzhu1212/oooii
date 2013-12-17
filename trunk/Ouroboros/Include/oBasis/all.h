@@ -60,9 +60,7 @@
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oSnappy.h>
-#include <oBasis/oStddef.h>
 #include <oBasis/oStdStringSupport.h>
 #include <oBasis/oStrTok.h>
-#include <oBasis/oTypes.h>
 #include <oBasis/oURI.h>
 #endif

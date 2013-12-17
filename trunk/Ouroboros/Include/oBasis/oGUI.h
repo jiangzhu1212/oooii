@@ -30,7 +30,7 @@
 #define oGUI_h
 
 #include <oBase/fixed_string.h>
-#include <oBasis/oStddef.h>
+#include <oCompute/oAABox.h>
 #include <oBasis/oRTTI.h>
 #include <array>
 

@@ -25,6 +25,12 @@
 #include <oBasis/oRTTI.h>
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/oComputeColor.h>
+#include <oCompute/oAABox.h>
+#include <oCompute/oFrustum.h>
+#include <oCompute/oPlane.h>
+#include <oCompute/oQuaternion.h>
+#include <oCompute/oSphere.h>
+#include <oCompute/linear_algebra.h>
 #include <oBasis/oError.h>
 #include <oBase/fixed_string.h>
 #include <oBase/fixed_vector.h>

@@ -49,4 +49,40 @@ typedef TVEC2<llong> llong2; typedef TVEC2<ullong> ullong2;
 typedef TVEC3<llong> llong3; typedef TVEC3<ullong> ullong3;
 typedef TVEC4<llong> llong4; typedef TVEC4<ullong> ullong4;
 
+// the static value is true if the specified type is a linear algebra type
+// this is modeled after std::is_arithmetic for the linear algrebra types found
+// in shader/compute languages as well as appearing commonly in Ouroboros C++.
+template<typename T> struct is_linear_algebra
+{
+	static const bool value = 
+		std::is_same<char2,std::remove_cv<T>::type>::value ||
+		std::is_same<char3,std::remove_cv<T>::type>::value ||
+		std::is_same<char4,std::remove_cv<T>::type>::value ||
+		std::is_same<uchar2,std::remove_cv<T>::type>::value ||
+		std::is_same<uchar3,std::remove_cv<T>::type>::value ||
+		std::is_same<uchar4,std::remove_cv<T>::type>::value ||
+		std::is_same<short2,std::remove_cv<T>::type>::value ||
+		std::is_same<short3,std::remove_cv<T>::type>::value ||
+		std::is_same<short4,std::remove_cv<T>::type>::value ||
+		std::is_same<ushort2,std::remove_cv<T>::type>::value ||
+		std::is_same<ushort3,std::remove_cv<T>::type>::value ||
+		std::is_same<ushort4,std::remove_cv<T>::type>::value ||
+		std::is_same<int2,std::remove_cv<T>::type>::value ||
+		std::is_same<int3,std::remove_cv<T>::type>::value ||
+		std::is_same<int4,std::remove_cv<T>::type>::value ||
+		std::is_same<uint2,std::remove_cv<T>::type>::value ||
+		std::is_same<uint3,std::remove_cv<T>::type>::value ||
+		std::is_same<uint4,std::remove_cv<T>::type>::value ||
+		std::is_same<llong2,std::remove_cv<T>::type>::value ||
+		std::is_same<llong3,std::remove_cv<T>::type>::value ||
+		std::is_same<llong4,std::remove_cv<T>::type>::value ||
+		std::is_same<ullong2,std::remove_cv<T>::type>::value ||
+		std::is_same<ullong3,std::remove_cv<T>::type>::value ||
+		std::is_same<ullong4,std::remove_cv<T>::type>::value ||
+		std::is_same<float2,std::remove_cv<T>::type>::value ||
+		std::is_same<float3,std::remove_cv<T>::type>::value ||
+		std::is_same<float4,std::remove_cv<T>::type>::value ||
+		std::is_same<float4x4,std::remove_cv<T>::type>::value;
+};
+
 #endif

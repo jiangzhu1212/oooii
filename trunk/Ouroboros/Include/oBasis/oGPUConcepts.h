@@ -40,8 +40,10 @@
 
 #include <oBase/resized_type.h>
 #include <oBasis/oRTTI.h>
+#include <oBasis/oPlatformFeatures.h>
 #include <oBase/vendor.h>
 #include <oBase/version.h>
+#include <oCompute/oAABox.h>
 #include <oSurface/surface.h>
 #include <array>
 

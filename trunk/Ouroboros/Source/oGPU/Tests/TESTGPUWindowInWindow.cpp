@@ -197,7 +197,7 @@ struct GPU_WindowInWindow : public oTest
 			{
 				test.flush_messages();
 
-				oSleep(1000);
+				oStd::this_thread::sleep_for(oStd::chrono::seconds(1));
 				test.IncrementClearCounter();
 
 				test.Render();

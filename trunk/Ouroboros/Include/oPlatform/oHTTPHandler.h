@@ -27,7 +27,7 @@
 #define oWebPage_h
 #include <oBasis/oInterface.h>
 #include <oPlatform/oHTTP.h>
-#include <oBasis/oMathTypes.h>
+#include <oBase/types.h>
 
 interface oHTTPURICapture : oInterface
 {

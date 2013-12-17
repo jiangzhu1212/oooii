@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oInputMapper.h>
+#include <oBasis/oError.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/mutex.h>
 #include <array>

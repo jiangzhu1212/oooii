@@ -98,24 +98,7 @@ LPARAM oWinKeyToLParam(const KBDLLHOOKSTRUCT& _KB, unsigned short _RepeatCount, 
 // _MousePosition is respected only for mouse keys.
 void oWinKeySend(HWND _hWnd, oGUI_KEY _Key, bool _IsDown, const int2& _MousePosition = int2(oDEFAULT, oDEFAULT));
 
-#if 0
-
-// Sends the position of the mouse as a WM_MOUSEMOVE
-void oWinKeySendMouse(HWND _hWnd, const int2& _Position);
-
-// Sends a down then up for each key in the specified array
-void oWinKeySend(HWND _hWnd, const oGUI_KEY* _pKeys, size_t _NumKeys);
-template<size_t size> void oWinKeySend(HWND _hWnd, const oGUI_KEY (&_pKeys)[size]) { oWinKeySend(_hWnd, _pKeys, Size); }
-
-// Convenience wrapper for sending a readable string. There is no special format 
-// analysis does for this, it basically sends what is specified.
-void oWinKeySend(HWND _hWnd, const char* _String);
-
-#else
-
-bool oWinSendKeys(HWND _Hwnd, unsigned int _ThreadID, short int* _pVKeys, int _NumberKeys);
-bool oWinSendASCIIMessage(HWND _Hwnd, unsigned int _ThreadID, const char* _pMessage);
-
-#endif
+void oWinSendKeys(HWND _Hwnd, unsigned int _ThreadID, short int* _pVKeys, int _NumberOfKeys);
+void oWinSendASCIIMessage(HWND _Hwnd, unsigned int _ThreadID, const char* _pMessage);
 
 #endif

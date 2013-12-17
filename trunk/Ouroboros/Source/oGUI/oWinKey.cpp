@@ -557,135 +557,6 @@ LPARAM oWinKeyToLParam(const KBDLLHOOKSTRUCT& _KB, unsigned short _RepeatCount, 
 	return (LPARAM)(_RepeatCount | ((_KB.scanCode & 0xff) << 16) | (IsExtended ? (1<<24) : 0) | ((_PrevStateDown ? 1 : 0) << 30) | ((IsDown ? 0 : 1) << 31));
 }
 
-#if 0
-
-static LPARAM oWinKeytoKeyLParam(DWORD _vkCode, bool _IsDown)
-{
-	LPARAM lParam = 0;
-	if (_IsDown)
-		lParam |= 1; // 1 repeat count
-
-	if (oWinKeyIsExtended(_vkCode))
-		lParam |= (1<<24);
-
-	if (!_IsDown)
-		lParam |= (3<<30);
-
-	return lParam;
-}
-
-static UINT oWinKeyToMouseMsg(DWORD _vkCodeMouse, bool _IsDown)
-{
-	switch (_vkCodeMouse)
-	{
-	case VK_LBUTTON: return _IsDown ? WM_LBUTTONDOWN : WM_LBUTTONUP;
-	case VK_RBUTTON: return _IsDown ? WM_RBUTTONDOWN : WM_RBUTTONUP;
-	case VK_MBUTTON: return _IsDown ? WM_MBUTTONDOWN : WM_MBUTTONUP;
-	case VK_XBUTTON1: case VK_XBUTTON2: return _IsDown ? WM_XBUTTONDOWN : WM_XBUTTONUP;
-	default: break;
-	}
-	return WM_NULL;
-}
-
-static WPARAM oWinKeyToMouseWParam(oGUI_KEY _MouseKey, bool _IsDown)
-{
-	if (_IsDown)
-	{
-		switch (_MouseKey)
-		{
-		case oGUI_KEY_MOUSE_LEFT: return MK_LBUTTON;
-		case oGUI_KEY_MOUSE_RIGHT: return MK_RBUTTON;
-		case oGUI_KEY_MOUSE_MIDDLE: return MK_MBUTTON;
-		case oGUI_KEY_MOUSE_SIDE1: return MAKEWPARAM(MK_XBUTTON1, XBUTTON1);
-		case oGUI_KEY_MOUSE_SIDE2: return MAKEWPARAM(MK_XBUTTON2, XBUTTON2);
-		default: break;
-		}
-	}
-	return 0;
-}
-static short2 oWinCalcMousePosition(HWND _hWnd, const int2& _MousePosition)
-{
-	WINDOWPLACEMENT wp;	
-	GetWindowPlacement(_hWnd, &wp);	
-	unsigned short X = (unsigned short)(65535 * (_MousePosition.x + wp.rcNormalPosition.left) / GetSystemMetrics(SM_CXSCREEN));
-	unsigned short Y = (unsigned short)(65535 * (_MousePosition.y + wp.rcNormalPosition.top) / GetSystemMetrics(SM_CYSCREEN));
-	return short2(*(short*)&X, *(short*)&Y);
-}
-
-static LPARAM oWinCalcMousePosition(HWND _hWnd, const int2& _MousePosition)
-{
-	WINDOWPLACEMENT wp;	
-	GetWindowPlacement(_hWnd, &wp);	
-	unsigned short X = (unsigned short)(65535 * (_MousePosition.x + wp.rcNormalPosition.left) / GetSystemMetrics(SM_CXSCREEN));
-	unsigned short Y = (unsigned short)(65535 * (_MousePosition.y + wp.rcNormalPosition.top) / GetSystemMetrics(SM_CYSCREEN));
-	return MAKELPARAM(X,Y);
-}
-
-void oWinKeySend(HWND _hWnd, oGUI_KEY _Key, bool _IsDown, const int2& _MousePosition)
-{
-	oGUI_INPUT_DEVICE_TYPE Dev = oGUIDeviceFromKey(_Key);
-
-	UINT msg = WM_NULL;
-	WPARAM wParam = 0;
-	LPARAM lParam = 0;
-
-	switch (Dev)
-	{
-		case oGUI_INPUT_DEVICE_KEYBOARD:
-		{
-			msg = _IsDown ? WM_KEYDOWN : WM_KEYUP;
-			wParam = oWinKeyFromKey(_Key);
-			lParam = oWinKeytoKeyLParam((DWORD)wParam, _IsDown);
-			break;
-		}
-
-		case oGUI_INPUT_DEVICE_MOUSE:
-		{
-			msg = oWinKeyToMouseMsg(_Key, _IsDown);
-			wParam = oWinKeyToMouseWParam(_Key, _IsDown);
-			lParam = oWinCalcMousePosition(_hWnd, _MousePosition);
-		}
-
-		default:
-			break;
-	}
-
-	if (msg != WM_NULL)
-		PostMessage(_hWnd, msg, wParam, lParam);
-}
-
-void oWinKeySend(HWND _hWnd, const oGUI_KEY* _pKeys, size_t _NumKeys)
-{
-	for (size_t i = 0; i < _NumKeys; i++)
-	{
-		oWinKeySend(_hWnd, _pKeys[i], true);
-		oWinKeySend(_hWnd, _pKeys[i], false);
-	}
-}
-
-void oWinKeySendMouse(HWND _hWnd, const int2& _Position)
-{
-	PostMessage(_hWnd, WM_MOUSEMOVE, 0, oWinCalcMousePosition(_hWnd, _Position));
-}
-
-void oWinKeySend(HWND _hWnd, const char* _String)
-{
-	size_t len = strlen(_String);
-	if (len)
-	{
-		for (size_t i = 0; i < len; i++)
-		{
-			DWORD vkCode = VkKeyScanEx(_String[i], GetKeyboardLayout(0));
-			LPARAM lParamDN = oWinKeytoKeyLParam(vkCode, true);
-			LPARAM lParamUP = oWinKeytoKeyLParam(vkCode, false);
-			PostMessage(_hWnd, WM_KEYDOWN, vkCode, lParamDN);
-			PostMessage(_hWnd, WM_KEYUP, vkCode, lParamUP);
-		}
-	}
-}
-
-
-#else
 #include <oGUI/Windows/oWinWindowing.h>
 void AppendKey(short int _Key, bool _KeyUp, INPUT** _ppInput)
 {
@@ -759,13 +630,16 @@ void oWinKeySend(HWND _hWnd, oGUI_KEY _Key, bool _IsDown, const int2& _MousePosi
 	AttachThreadInput(GetCurrentThreadId(), asdword(tid), false);
 }
 
-bool oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _NumberKeys)
+void oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _NumberOfKeys)
 {
 	static const int MAX_KEYS = 64;
-	INPUT Input[(MAX_KEYS + 2 ) * 4]; // We need to ensure we have twice as many keys so we can send both an up and down command as well as adjust caps
+	
+	// Ensure twice as many keys so both an up and down command as well as 
+	// adjust caps can be sent.
+	INPUT Input[(MAX_KEYS + 2) * 4];
 
-	if(_NumberKeys > MAX_KEYS)
-		return oErrorSetLast(std::errc::no_buffer_space, "Only support %d keys", MAX_KEYS);
+	if (_NumberOfKeys > MAX_KEYS)
+		oTHROW(no_buffer_space, "Only support %d keys", MAX_KEYS);
 
 	AttachThreadInput(GetCurrentThreadId(), _ThreadID, true);
 
@@ -777,7 +651,7 @@ bool oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _N
 		AppendKey(VK_CAPITAL, true, &pKeyHead);
 	}
 
-	for(int i = 0; i < _NumberKeys; ++i)
+	for (int i = 0; i < _NumberOfKeys; i++)
 	{
 		short int Key = _pVKeys[i];
 
@@ -792,7 +666,8 @@ bool oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _N
 		if(ShouldShift)
 			AppendKey(VK_SHIFT, true, &pKeyHead);
 	}
-	if(CapsLockWasOn)
+
+	if (CapsLockWasOn)
 	{
 		AppendKey(VK_CAPITAL, false, &pKeyHead);
 		AppendKey(VK_CAPITAL, true, &pKeyHead);
@@ -804,24 +679,17 @@ bool oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _N
 	SendInput(NumberOfKeys, Input, sizeof(INPUT));
 
 	AttachThreadInput(GetCurrentThreadId(), _ThreadID, false);
-	return true;
 }
 
-bool oWinSendASCIIMessage(HWND _hWnd, unsigned int _ThreadID, const char* _pMessage)
+void oWinSendASCIIMessage(HWND _hWnd, unsigned int _ThreadID, const char* _pMessage)
 {
 	short int VirtualKeys[64];
 	int MessageLength = oInt(strlen(_pMessage));
 	if(MessageLength > oCOUNTOF(VirtualKeys))
-		return oErrorSetLast(std::errc::no_buffer_space, "Only support %d length messages", oCOUNTOF(VirtualKeys));
+		oTHROW(no_buffer_space, "Only support %d length messages", oCOUNTOF(VirtualKeys));
 
 	oFORI(i, VirtualKeys)
-	{
 		VirtualKeys[i] = VkKeyScanEx(_pMessage[i], GetKeyboardLayout(0));
-	}
 
-	return oWinSendKeys(_hWnd, _ThreadID, VirtualKeys, MessageLength);
+	oWinSendKeys(_hWnd, _ThreadID, VirtualKeys, MessageLength);
 }
-
-
-
-#endif

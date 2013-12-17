@@ -37,7 +37,13 @@
 #include <Math.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oCompute/oComputeConstants.h>
-#include <oBasis/oMathTypes.h>
+#include <oBase/types.h>
+#include <oCompute/oAABox.h>
+#include <oCompute/oFrustum.h>
+#include <oCompute/oPlane.h>
+#include <oCompute/oQuaternion.h>
+#include <oCompute/oSphere.h>
+#include <oCompute/linear_algebra.h>
 #include <limits>
 
 #include <oStd/intrinsics.h> // for _BitScanReverse

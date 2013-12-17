@@ -30,6 +30,7 @@
 
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oInterface.h>
+#include <oCompute/oAABox.h>
 #include <oCompute/oComputeColor.h>
 
 // http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/
@@ -217,12 +218,12 @@ struct oOBJ_INIT
 // many small allocations internally that then need to be freed, which can take 
 // a long time. As an optimization, client code can pass a hint in 
 // _InternalReserve to make internal memory management a lot faster.
-oAPI bool oOBJCreate(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ);
-oAPI bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** _ppMTL);
+bool oOBJCreate(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ);
+bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** _ppMTL);
 
 // Convenience function to collapse groups into an array of ranges. If this 
 // succeeds, the number of valid ranges will be Desc.NumRanges.
-oAPI bool oOBJCopyRanges(oGPU_RANGE* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc);
+bool oOBJCopyRanges(oGPU_RANGE* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc);
 template<size_t size> bool oOBJCopyRanges(oGPU_RANGE (&_pDestination)[size], const oOBJ_DESC& _Desc) { return oOBJCopyRanges(_pDestination, size, _Desc); }
 
 #endif

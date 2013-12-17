@@ -27,6 +27,7 @@
 #define oGPUTestPipelines_h
 
 #include <oGPU/oGPU.h>
+#include <oCompute/oQuaternion.h>
 
 enum oGPU_TEST_PIPELINE
 {

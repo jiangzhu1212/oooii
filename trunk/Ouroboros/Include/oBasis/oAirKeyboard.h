@@ -36,7 +36,8 @@
 #define oAirKeyboard_h
 
 #include <oBasis/oGUI.h>
-#include <oBasis/oMathTypes.h>
+#include <oBasis/oInterface.h>
+#include <oBase/types.h>
 #include <oBase/xml.h>
 
 struct oAIR_KEY

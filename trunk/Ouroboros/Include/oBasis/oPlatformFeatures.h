@@ -71,8 +71,6 @@
 	#define oAPI
 #endif
 
-typedef unsigned char uchar;
-
 #define oMODULE_DEBUG_SUFFIX_A "D"
 
 #ifdef _DEBUG

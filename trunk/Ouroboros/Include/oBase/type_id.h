@@ -29,7 +29,6 @@
 #define oBase_type_id_h
 
 #include <oHLSL/oHLSLTypes.h>
-#include <oBasis/oPlatformFeatures.h>
 #include <type_traits>
 
 namespace ouro {

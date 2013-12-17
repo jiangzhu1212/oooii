@@ -28,8 +28,9 @@
 #ifndef oMeshUtil_h
 #define oMeshUtil_h
 
-#include <oBasis/oMathTypes.h>
+#include <oBase/types.h>
 #include <oBasis/oPlatformFeatures.h>
+#include <oCompute/oAABox.h>
 
 void oTransformPoints(const float4x4& _Matrix, float3* oRESTRICT _pDestination, unsigned int _DestinationStride, const float3* oRESTRICT _pSource, unsigned int _SourceStride, unsigned int _NumPoints);
 void oTransformVectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination, unsigned int _DestinationStride, const float3* oRESTRICT _pSource, unsigned int _SourceStride, unsigned int _NumVectors);

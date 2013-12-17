@@ -321,7 +321,7 @@ public:
 	oGDIScopedObject(HGDIOBJType _hObject) : hObject(_hObject) {}
 	~oGDIScopedObject() { if (hObject) DeleteObject(hObject); }
 	
-	// threadsafe in the sense that this swaps the internal value and then 
+	// in the sense that this swaps the internal value and then 
 	// after that's done cleans up the object. This way one thread can assign
 	// null and another thread can test for null and recreate the object as
 	// appropriate
@@ -343,14 +343,6 @@ public:
 			hObject.exchange(hTemp);
 			if (hThisTemp) DeleteObject(hThisTemp);
 		}
-		return *this;
-	}
-
-	const threadsafe oGDIScopedObject& operator=(HGDIOBJType _hObject) threadsafe
-	{
-		HGDIOBJType hTemp = hObject;
-		hObject.exchange(_hObject);
-		if (hTemp) DeleteObject(hTemp); 
 		return *this;
 	}
 
@@ -494,7 +486,7 @@ bool oGDIDrawEllipse(HDC _hDC, const RECT& _rBox);
 
 // Returns the rect required for a single line of text using the specified HDC's 
 // font and other settings.
-oAPI RECT oGDICalcTextRect(HDC _hDC, const char* _Text);
+RECT oGDICalcTextRect(HDC _hDC, const char* _Text);
 
 // Draws text using GDI.
 bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text);

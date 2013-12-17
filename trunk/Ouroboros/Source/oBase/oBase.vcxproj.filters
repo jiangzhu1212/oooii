@@ -25,9 +25,6 @@
     <ClCompile Include="scc_svn.cpp">
       <Filter>Source\scc</Filter>
     </ClCompile>
-    <ClCompile Include="opttok.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="version.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
@@ -199,9 +196,6 @@
     <ClCompile Include="string\argtok.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
-    <ClCompile Include="leak_tracker.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="index_allocator_base.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
@@ -209,7 +203,13 @@
       <Filter>Source\allocator</Filter>
     </ClCompile>
     <ClCompile Include="type_id.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\traits</Filter>
+    </ClCompile>
+    <ClCompile Include="leak_tracker.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="opttok.cpp">
+      <Filter>Source\string</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -294,29 +294,11 @@
     <ClInclude Include="..\..\Include\oBase\uri.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\path_traits.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\uri_traits.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\type_info.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\scc.h">
       <Filter>oBase</Filter>
     </ClInclude>
     <ClInclude Include="scc_svn.h">
       <Filter>Source\scc</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\event.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\backoff.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\opttok.h">
-      <Filter>oBase</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\version.h">
       <Filter>oBase\types</Filter>
@@ -372,9 +354,6 @@
     <ClInclude Include="..\..\Include\oBase\all_libc.h">
       <Filter>oBase</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\countdown_latch.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
@@ -396,17 +375,38 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\leak_tracker.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\container_support.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\tlsf_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\backoff.h">
+      <Filter>oBase\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\countdown_latch.h">
+      <Filter>oBase\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\event.h">
+      <Filter>oBase\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\uri_traits.h">
+      <Filter>oBase\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\type_info.h">
+      <Filter>oBase\traits</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\type_id.h">
-      <Filter>oBase</Filter>
+      <Filter>oBase\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\path_traits.h">
+      <Filter>oBase\traits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\leak_tracker.h">
+      <Filter>oBase\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\opttok.h">
+      <Filter>oBase\string</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -463,6 +463,18 @@
     </Filter>
     <Filter Include="Source\allocator">
       <UniqueIdentifier>{9894e0ad-b396-4c37-9e08-db792ce0fd10}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\concurrency">
+      <UniqueIdentifier>{4490e2e7-ee4b-4705-9c77-8c280786991e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\concurrency">
+      <UniqueIdentifier>{f538199e-3667-45d3-bc23-1779fd189b3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\traits">
+      <UniqueIdentifier>{13c70c7a-a442-4046-bcd7-01d043f5d2dc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\traits">
+      <UniqueIdentifier>{e6234b8f-0d23-4f87-bacd-8e5839e35563}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

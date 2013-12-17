@@ -28,11 +28,12 @@
 #ifndef oStream_h
 #define oStream_h
 
-#include <oBasis/oFunction.h>
 #include <oBase/memory.h>
 #include <oBasis/oInterface.h>
-#include <oBasis/oURI.h>
+#include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oRTTI.h>
+#include <oBasis/oURI.h>
+#include <functional>
 
 enum oSTREAM_EVENT
 {
@@ -43,7 +44,7 @@ enum oSTREAM_EVENT
 	oSTREAM_ACCESSIBLE, // after an add the stream is polled until it can be accessed for reading. Once it can, this event occurs.
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oSTREAM_EVENT)
-typedef oFUNCTION<void (oSTREAM_EVENT _Event, const ouro::uri_string& _ChangedURI)> oSTREAM_ON_EVENT;
+typedef std::function<void (oSTREAM_EVENT _Event, const ouro::uri_string& _ChangedURI)> oSTREAM_ON_EVENT;
 
 struct oSTREAM_DESC
 {
@@ -151,7 +152,7 @@ interface oStreamReader : oStream
 	// to occur asynchronously. The actual read can be serviced by any thread in
 	// the task manager.
 
-	typedef oFUNCTION<void(bool _Success, threadsafe oStreamReader* _pReader, const oSTREAM_READ& _Read)> continuation_t;
+	typedef std::function<void(bool _Success, threadsafe oStreamReader* _pReader, const oSTREAM_READ& _Read)> continuation_t;
 	virtual void DispatchRead(const oSTREAM_READ& _Read, continuation_t _Continuation) threadsafe = 0;
 
 	//This stream will no longer be usable after this call. Any pending reads/writes will not complete. 
@@ -166,7 +167,7 @@ interface oStreamWriter : oStream
 
 	// Bind a function to be called immediately after the write finishes in the 
 	// same thread which processes the write.
-	typedef oFUNCTION<void(bool _Success, threadsafe oStreamWriter* _pWriter, const oSTREAM_WRITE& _Write)> continuation_t;
+	typedef std::function<void(bool _Success, threadsafe oStreamWriter* _pWriter, const oSTREAM_WRITE& _Write)> continuation_t;
 	virtual void DispatchWrite(const oSTREAM_WRITE& _Write, continuation_t _Continuation) threadsafe = 0;
 
 	//This stream will no longer be usable after this call. Any pending reads/writes will not complete. 

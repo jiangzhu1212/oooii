@@ -26,6 +26,7 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/windows/win_error.h>
+#include <oBasis/oError.h> // @tony fixme
 #include <CommCtrl.h>
 
 using namespace ouro;
