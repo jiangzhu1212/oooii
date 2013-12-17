@@ -28,7 +28,6 @@
 #define oGUI_msgbox_h
 
 #include <oBasis/oGUI.h>
-#include <oBasis/oStddef.h>
 #include <stdarg.h>
 
 namespace ouro {

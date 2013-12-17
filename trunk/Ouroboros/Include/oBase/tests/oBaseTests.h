@@ -42,6 +42,7 @@ namespace ouro {
 		void TESTfourcc();
 		void TESTindex_allocator();
 		void TESTini();
+		void TESTjson();
 		void TESTpath();
 		void TESTtlsf_allocator(test_services& _Services);
 		void TESTuri();

@@ -60,9 +60,6 @@
     <ClInclude Include="..\..\Include\oGUI\window.h">
       <Filter>oGUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGUI\Windows\oWinAsString.h">
-      <Filter>oGUI\Windows</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGUI\notification_area.h">
       <Filter>oGUI</Filter>
     </ClInclude>
@@ -74,6 +71,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oGUI\about.h">
       <Filter>oGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_as_string.h">
+      <Filter>oGUI\Windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -113,9 +113,6 @@
     <ClCompile Include="console.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oWinAsString.cpp">
-      <Filter>Source\Windows</Filter>
-    </ClCompile>
     <ClCompile Include="window.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -133,6 +130,9 @@
     </ClCompile>
     <ClCompile Include="about.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="win_as_string.cpp">
+      <Filter>Source\Windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -22,9 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGUI/Windows/oWinAsString.h>
+#include <oGUI/Windows/win_as_string.h>
 #include <oGUI/Windows/oWinWindowing.h>
-#include <oBasis/oError.h>
 
 #undef interface
 #include <Windowsx.h>
