@@ -131,7 +131,7 @@ info get_info(id _ModuleID);
 	namespace this_module {
 
 module::id get_id();
-path path();
+path get_path();
 module::info get_info();
 
 	} // namespace this_module

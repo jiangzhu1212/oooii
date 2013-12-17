@@ -465,7 +465,7 @@ enum oGUI_CONTROL_TYPE
 	oGUI_CONTROL_LABEL_CENTERED,
 	oGUI_CONTROL_HYPERLABEL, // supports multiple markups of <a href="<somelink>">MyLink</a> or <a id="someID">MyID</a>. There can be multiple in one string.
 	oGUI_CONTROL_LABEL_SELECTABLE,
-	oGUI_CONTROL_ICON, // oGUI_CONTROL_DESC::Text should be the native handle to the icon resource (HICON on Windows)
+	oGUI_CONTROL_ICON,
 	oGUI_CONTROL_TEXTBOX,
 	oGUI_CONTROL_TEXTBOX_SCROLLABLE,
 	oGUI_CONTROL_FLOATBOX, // textbox that only allows floating point (single-precision) numbers to be entered. Specify oDEFAULT for Size values to use icon's values.
@@ -478,6 +478,7 @@ enum oGUI_CONTROL_TYPE
 	oGUI_CONTROL_SLIDER,
 	oGUI_CONTROL_SLIDER_SELECTABLE, // displays a portion of the slider as selected
 	oGUI_CONTROL_SLIDER_WITH_TICKS, // Same as Slider but tick marks can be added
+	oGUI_CONTROL_LISTBOX, // Supports specifying contents all at once, delimited by '|'. i.e. "Text1|Text2|Text3"
 	oGUI_CONTROL_TYPE_COUNT,
 };
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGUI_CONTROL_TYPE)
@@ -812,11 +813,13 @@ struct oGUI_EVENT_CREATE_DESC : oGUI_EVENT_DESC
 	oGUI_EVENT_CREATE_DESC(oGUI_WINDOW _hWindow
 		, oGUI_STATUSBAR _hStatusBar
 		, oGUI_MENU _hMenu
-		, const oGUI_WINDOW_SHAPE_DESC& _Shape)
+		, const oGUI_WINDOW_SHAPE_DESC& _Shape
+		, void* _pUser)
 		: oGUI_EVENT_DESC(_hWindow, oGUI_CREATING)
 		, hStatusBar(_hStatusBar)
 		, hMenu(_hMenu)
 		, Shape(_Shape)
+		, pUser(_pUser)
 	{}
 
 	// Native handle of the window's status bar.
@@ -825,6 +828,9 @@ struct oGUI_EVENT_CREATE_DESC : oGUI_EVENT_DESC
 	// Native handle of the top-level window's menu.
 	oGUI_MENU hMenu;
 	oGUI_WINDOW_SHAPE_DESC Shape;
+
+	// The user can pass a value to this for usage.
+	void* pUser;
 };
 
 struct oGUI_EVENT_SHAPE_DESC : oGUI_EVENT_DESC
@@ -1036,7 +1042,12 @@ struct oGUI_CONTROL_DESC
 	// a '|'-terminated set of strings to immediately populate all
 	// items. ("Item1|Item2|Item3"). This is valid for:
 	// COMBOBOX, COMBOTEXTBOX, TAB
-	const char* Text;
+	union
+	{
+		const char* Text;
+		oGUI_ICON Icon;
+	};
+
 	int2 Position;
 	int2 Size;
 	unsigned short ID;

@@ -124,6 +124,7 @@ public:
 		init()
 		: title("")
 		, icon(nullptr)
+		, create_user_data(nullptr)
 		, cursor(nullptr)
 		, cursor_state(oGUI_CURSOR_ARROW)
 		, sort_order(oGUI_WINDOW_SORTED)
@@ -135,6 +136,7 @@ public:
   
 		const char* title;
 		oGUI_ICON icon;
+		void* create_user_data; // user data accessible in the create event
 		oGUI_CURSOR cursor;
 		oGUI_CURSOR_STATE cursor_state;
 		oGUI_WINDOW_SORT_ORDER sort_order;

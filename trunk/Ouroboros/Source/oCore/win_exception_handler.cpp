@@ -289,7 +289,7 @@ LONG context::on_exception(EXCEPTION_POINTERS* _pExceptionPointers)
 			if (!CppException.what.empty())
 			{
 				xlstring msg;
-				path ModulePath = std::move(this_module::path());
+				path ModulePath = this_module::get_path();
 				#ifdef _WIN64
 					#define LOWER_CASE_PTR_FMT "%016llx"
 				#else

@@ -341,7 +341,7 @@ info get_info(id _ModuleID)
 
 	namespace this_module {
 
-ouro::path path()
+ouro::path get_path()
 {
 	return module::get_path(module::id());
 }

@@ -162,7 +162,7 @@ context::context()
 	atexit(at_exit);
 	valid = true;
 
-	path modulePath = this_module::path();
+	path modulePath = this_module::get_path();
 	lstring buf;
 	mstring exec;
 	snprintf(buf, "%s(%d): {%s} %s process_heap initialized at 0x%p\n", __FILE__, __LINE__, modulePath.c_str(), system::exec_path(exec), this);
@@ -379,7 +379,7 @@ void context::report()
 			nIgnoredLeaks++;
 	}
 
-	path moduleName = this_module::path();
+	path moduleName = this_module::get_path();
 	
 	xlstring buf;
 	

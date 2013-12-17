@@ -593,37 +593,37 @@ oAPI bool oWinControlClearSubItems(HWND _hControl);
 // Inserts before the specified subitem index. If _SubItemIndex is oInvalid (-1) 
 // then the item is appended. This returns the index of the item set, or 
 // oInvalid on failure.
-// Valid for: ComboBox, ComboTextbox, Tab
+// Valid for: ComboBox, ComboTextbox, Tab, ListBox
 oAPI int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex);
 
 // Deletes the nth subitem
-// Valid for: ComboBox, ComboTextbox, Tab
+// Valid for: ComboBox, ComboTextbox, Tab, ListBox
 oAPI bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex);
 
 // Adds all items in the specified delimited list in order.
-// Valid for: ComboBox, ComboTextbox, Tab
+// Valid for: ComboBox, ComboTextbox, Tab, ListBox
 oAPI bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _Delimiter = '|');
 
 // Returns the index of the first subitem to match the specified text, or 
 // oInvalid if not found (or other error).
-// Valid For: ComboBox, ComboTextbox, Tab
+// Valid For: ComboBox, ComboTextbox, Tab, ListBox
 oAPI int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText);
 
 // Sets the specified index as the selected item/text for the combobox
-// Valid for: ComboBox, ComboTextbox, Tab
+// Valid for: ComboBox, ComboTextbox, Tab, ListBox
 oAPI bool oWinControlSelectSubItem(HWND _hControl, int _Index);
 
 // Sets the specified text as the selected item/text for the combobox (if it 
 // exists)
-// Valid for: ComboBox, ComboTextbox, Tab
+// Valid for: ComboBox, ComboTextbox, Tab, ListBox
 inline bool oWinControlSelectSubItem(HWND _hControl, const char* _SubItemText) { return oWinControlSelectSubItem(_hControl, oWinControlFindSubItem(_hControl, _SubItemText)); }
 
 // Selects n from the currently selected, properly wrapping around either end
-// Valid for: ComboBox, ComboTextBox, Tab
+// Valid for: ComboBox, ComboTextBox, Tab, ListBox
 oAPI bool oWinControlSelectSubItemRelative(HWND _hControl, int _Offset);
 
 // Returns the index of the currently selected item, or -1 if none selected
-// Valid for: ComboBox, ComboTextBox, Tab
+// Valid for: ComboBox, ComboTextBox, Tab, ListBox
 oAPI int oWinControlGetSelectedSubItem(HWND _hControl);
 
 // _____________________________________________________________________________

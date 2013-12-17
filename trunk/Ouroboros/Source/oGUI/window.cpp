@@ -367,7 +367,8 @@ oGUI_WINDOW_SHAPE_DESC window_impl::shape() const
 
 void window_impl::icon(oGUI_ICON _hIcon)
 {
-	DISPATCH(oWinSetIcon(hWnd, (HICON)_hIcon));
+	DISPATCH(oWinSetIcon(hWnd, (HICON)_hIcon, true));
+	DISPATCH(oWinSetIcon(hWnd, (HICON)_hIcon, false));
 }
 
 oGUI_ICON window_impl::icon() const
@@ -811,7 +812,7 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 			oGUI_EVENT_CREATE_DESC e((oGUI_WINDOW)_hWnd
 				, (oGUI_STATUSBAR)oWinGetStatusBar(_hWnd)
 				, (oGUI_MENU)oWinGetMenu(_hWnd)
-				, wcs->Shape);
+				, wcs->Shape, pInit->create_user_data);
 			EventHooks.Visit(e);
 			break;
 		}

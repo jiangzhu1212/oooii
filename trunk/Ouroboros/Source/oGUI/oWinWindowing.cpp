@@ -2175,27 +2175,28 @@ static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(oGUI_CONTROL_TYPE
 	static const CONTROL_CREATION_DESC sDescs[] = 
 	{
 		{ "Unknown", 0, 0, false, nullptr, GetSizeExplicit, },
-		{ "Button", WS_VISIBLE|WS_CHILD|BS_GROUPBOX, 0, true, OnCreateGroup, GetSizeExplicit, },
-		{ "Button", WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_MULTILINE|BS_PUSHBUTTON, 0, true, nullptr, GetSizeButtonDefault, },
-		{ "Button", WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_MULTILINE|BS_TOP|BS_AUTOCHECKBOX, 0, true, nullptr, GetSizeExplicit, },
-		{ "Button", WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_MULTILINE|BS_TOP|BS_AUTORADIOBUTTON, 0, true, nullptr, GetSizeExplicit, },
-		{ "Static", WS_VISIBLE|WS_CHILD|SS_EDITCONTROL, 0, true, nullptr, GetSizeExplicit, },
-		{ "Static", WS_VISIBLE|WS_CHILD|SS_EDITCONTROL|SS_CENTER, 0, true, nullptr, GetSizeExplicit, },
+		{ WC_BUTTON, WS_VISIBLE|WS_CHILD|BS_GROUPBOX, 0, true, OnCreateGroup, GetSizeExplicit, },
+		{ WC_BUTTON, WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_MULTILINE|BS_PUSHBUTTON, 0, true, nullptr, GetSizeButtonDefault, },
+		{ WC_BUTTON, WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_MULTILINE|BS_TOP|BS_AUTOCHECKBOX, 0, true, nullptr, GetSizeExplicit, },
+		{ WC_BUTTON, WS_VISIBLE|WS_CHILD|WS_TABSTOP|BS_MULTILINE|BS_TOP|BS_AUTORADIOBUTTON, 0, true, nullptr, GetSizeExplicit, },
+		{ WC_STATIC, WS_VISIBLE|WS_CHILD|SS_EDITCONTROL, 0, true, nullptr, GetSizeExplicit, },
+		{ WC_STATIC, WS_VISIBLE|WS_CHILD|SS_EDITCONTROL|SS_CENTER, 0, true, nullptr, GetSizeExplicit, },
 		{ "SysLink", WS_VISIBLE|WS_CHILD|WS_TABSTOP|LWS_NOPREFIX, 0, true, nullptr, GetSizeExplicit, },
-		{ "Edit", WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_READONLY|ES_NOHIDESEL|ES_AUTOHSCROLL, 0, true, nullptr, GetSizeExplicit, },
-		{ "Static", WS_VISIBLE|WS_CHILD|SS_ICON|SS_REALSIZECONTROL, 0, false, OnCreateIcon, GetSizeIcon, },
-		{ "Edit", WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL|ES_AUTOVSCROLL|ES_MULTILINE|ES_WANTRETURN, WS_EX_CLIENTEDGE, 0, nullptr, GetSizeExplicit, },
-		{ "Edit", WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL|ES_AUTOVSCROLL|WS_VSCROLL|ES_MULTILINE|ES_WANTRETURN, WS_EX_CLIENTEDGE, 0, nullptr, GetSizeExplicit, },
-		{ "Edit", WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL|ES_RIGHT, WS_EX_CLIENTEDGE, false, OnCreateFloatBox, GetSizeExplicit, },
+		{ WC_EDIT, WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_READONLY|ES_NOHIDESEL|ES_AUTOHSCROLL, 0, true, nullptr, GetSizeExplicit, },
+		{ WC_STATIC, WS_VISIBLE|WS_CHILD|SS_ICON|SS_REALSIZECONTROL, 0, false, OnCreateIcon, GetSizeIcon, },
+		{ WC_EDIT, WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL|ES_AUTOVSCROLL|ES_MULTILINE|ES_WANTRETURN, WS_EX_CLIENTEDGE, 0, nullptr, GetSizeExplicit, },
+		{ WC_EDIT, WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL|ES_AUTOVSCROLL|WS_VSCROLL|ES_MULTILINE|ES_WANTRETURN, WS_EX_CLIENTEDGE, 0, nullptr, GetSizeExplicit, },
+		{ WC_EDIT, WS_VISIBLE|WS_CHILD|WS_TABSTOP|ES_NOHIDESEL|ES_AUTOHSCROLL|ES_RIGHT, WS_EX_CLIENTEDGE, false, OnCreateFloatBox, GetSizeExplicit, },
 		{ UPDOWN_CLASS, WS_VISIBLE|WS_CHILD|WS_TABSTOP|UDS_ALIGNRIGHT|UDS_ARROWKEYS|UDS_HOTTRACK|UDS_NOTHOUSANDS|UDS_WRAP, 0,false, OnCreateFloatBoxSpinner, GetSizeExplicit, },
-		{ "Combobox", WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_HASSTRINGS, 0, false, OnCreateAddSubItems, GetSizeExplicit, },
-		{ "Combobox", WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWN|CBS_HASSTRINGS, 0, false, OnCreateAddSubItems, GetSizeExplicit, },
+		{ WC_COMBOBOX, WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWNLIST|CBS_HASSTRINGS, 0, false, OnCreateAddSubItems, GetSizeExplicit, },
+		{ WC_COMBOBOX, WS_VISIBLE|WS_CHILD|WS_TABSTOP|CBS_DROPDOWN|CBS_HASSTRINGS, 0, false, OnCreateAddSubItems, GetSizeExplicit, },
 		{ PROGRESS_CLASS, WS_VISIBLE|WS_CHILD, 0, true, nullptr, GetSizeExplicit, },
 		{ PROGRESS_CLASS, WS_VISIBLE|WS_CHILD|PBS_MARQUEE, 0, true, OnCreateMarquee, GetSizeExplicit, },
 		{ WC_TABCONTROL, WS_VISIBLE|WS_CHILD|WS_TABSTOP, WS_EX_CONTROLPARENT, true, OnCreateTab, GetSizeExplicit, },
 		{ TRACKBAR_CLASS, WS_VISIBLE|WS_CHILD|WS_TABSTOP|TBS_NOTICKS, 0, true, nullptr, GetSizeExplicit, },
 		{ TRACKBAR_CLASS, WS_VISIBLE|WS_CHILD|WS_TABSTOP|TBS_NOTICKS|TBS_ENABLESELRANGE, 0, true, nullptr, GetSizeExplicit, },
 		{ TRACKBAR_CLASS, WS_VISIBLE|WS_CHILD|WS_TABSTOP, 0, true, nullptr, GetSizeExplicit, }, 
+		{ WC_LISTBOX, WS_VISIBLE|WS_CHILD|WS_TABSTOP|WS_VSCROLL|WS_HSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT|LBS_HASSTRINGS|LBS_USETABSTOPS|WS_BORDER, 0, true, OnCreateAddSubItems, GetSizeExplicit, }, 
 	};
 	static_assert(oGUI_CONTROL_TYPE_COUNT == oCOUNTOF(sDescs), "oGUI_CONTROL_TYPE_COUNT count mismatch");
 	return sDescs[_Type];
@@ -2250,7 +2251,7 @@ bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeade
 		case oGUI_CONTROL_FLOATBOX_SPINNER:
 			if (_NotifyMessageHeader.code == UDN_DELTAPOS)
 			{
-				HWND hBuddyFloatBox =oWinControlGetBuddy(_NotifyMessageHeader.hwndFrom);
+				HWND hBuddyFloatBox = oWinControlGetBuddy(_NotifyMessageHeader.hwndFrom);
 				if (hBuddyFloatBox)
 				{
 					const NMUPDOWN& ud = (const NMUPDOWN&)_NotifyMessageHeader;
@@ -2404,6 +2405,7 @@ int oWinControlGetNumSubItems(HWND _hControl)
 	{
 		case oGUI_CONTROL_COMBOBOX:
 		case oGUI_CONTROL_COMBOTEXTBOX: return ComboBox_GetCount(_hControl);
+		case oGUI_CONTROL_LISTBOX: return ListBox_GetCount(_hControl);
 		case oGUI_CONTROL_TAB: return TabCtrl_GetItemCount(_hControl);
 		default: return 0;
 	}
@@ -2418,6 +2420,9 @@ bool oWinControlClearSubItems(HWND _hControl)
 		case oGUI_CONTROL_COMBOBOX:
 		case oGUI_CONTROL_COMBOTEXTBOX:
 			ComboBox_ResetContent(_hControl);
+			return true;
+		case oGUI_CONTROL_LISTBOX:
+			ListBox_ResetContent(_hControl);
 			return true;
 		case oGUI_CONTROL_TAB:
 			oVB(TabCtrl_DeleteAllItems(_hControl));
@@ -2445,6 +2450,23 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 				index = ComboBox_AddString(_hControl, _SubItemText);
 
 			if (index == CB_ERRSPACE)
+			{
+				oErrorSetLast(std::errc::no_buffer_space, "String is too large");
+				index = CB_ERR;
+			}
+
+			return index;
+		}
+
+		case oGUI_CONTROL_LISTBOX:
+		{
+			int index = LB_ERR;
+			if (_SubItemIndex >= 0 && _SubItemIndex < ListBox_GetCount(_hControl))
+				index = ListBox_InsertString(_hControl, _SubItemIndex, _SubItemText);
+			else
+				index = ListBox_AddString(_hControl, _SubItemText);
+
+			if (index == LB_ERRSPACE)
 			{
 				oErrorSetLast(std::errc::no_buffer_space, "String is too large");
 				index = CB_ERR;
@@ -2481,11 +2503,14 @@ bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _Sub
 	{
 		case oGUI_CONTROL_COMBOBOX:
 		case oGUI_CONTROL_COMBOTEXTBOX:
-		{
 			if (_SubItemIndex >= 0)
 				ComboBox_DeleteString(_hControl, _SubItemIndex);
 			break;
-		}
+
+		case oGUI_CONTROL_LISTBOX:
+			if (_SubItemIndex >= 0)
+				ListBox_DeleteString(_hControl, _SubItemIndex);
+			break;
 
 		case oGUI_CONTROL_TAB:
 			TabCtrl_DeleteItem(_hControl, _SubItemIndex);
@@ -2523,6 +2548,14 @@ int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 		case oGUI_CONTROL_COMBOTEXTBOX:
 		{
 			int index = ComboBox_FindStringExact(_hControl, 0, _SubItemText);
+			if (index == CB_ERR)
+				oErrorSetLast(std::errc::invalid_argument, "Text %s was not found in %s %p (%d)", oSAFESTRN(_SubItemText), as_string(type), _hControl, GetDlgCtrlID(_hControl));
+			break;
+		}
+
+		case oGUI_CONTROL_LISTBOX:
+		{
+			int index = ListBox_FindStringExact(_hControl, 0, _SubItemText);
 			if (index == CB_ERR)
 				oErrorSetLast(std::errc::invalid_argument, "Text %s was not found in %s %p (%d)", oSAFESTRN(_SubItemText), as_string(type), _hControl, GetDlgCtrlID(_hControl));
 			break;
@@ -2567,6 +2600,11 @@ bool oWinControlSelectSubItem(HWND _hControl, int _SubItemIndex)
 		case oGUI_CONTROL_COMBOBOX:
 		case oGUI_CONTROL_COMBOTEXTBOX:
 			if (CB_ERR == ComboBox_SetCurSel(_hControl, _SubItemIndex))
+				return oErrorSetLastBadIndex(_hControl, type, _SubItemIndex);
+			break;
+
+		case oGUI_CONTROL_LISTBOX:
+			if (CB_ERR == ListBox_SetCurSel(_hControl, _SubItemIndex))
 				return oErrorSetLastBadIndex(_hControl, type, _SubItemIndex);
 			break;
 
@@ -2615,6 +2653,15 @@ bool oWinControlSelectSubItemRelative(HWND _hControl, int _Offset)
 				return oErrorSetLastBadIndex(_hControl, type, next);
 			break;
 
+		case oGUI_CONTROL_LISTBOX:
+			count = ListBox_GetCount(_hControl);
+			next = ListBox_GetCurSel(_hControl) + _Offset;
+			while (next < 0) next += count;
+			while (next >= count) next -= count;
+			if (CB_ERR == ListBox_SetCurSel(_hControl, next))
+				return oErrorSetLastBadIndex(_hControl, type, next);
+			break;
+
 		case oGUI_CONTROL_TAB:
 			count = TabCtrl_GetItemCount(_hControl);
 			next = TabCtrl_GetCurSel(_hControl) + _Offset;
@@ -2638,6 +2685,7 @@ int oWinControlGetSelectedSubItem(HWND _hControl)
 	{
 		case oGUI_CONTROL_COMBOBOX:
 		case oGUI_CONTROL_COMBOTEXTBOX: return ComboBox_GetCurSel(_hControl);
+		case oGUI_CONTROL_LISTBOX: return ListBox_GetCurSel(_hControl);
 		case oGUI_CONTROL_TAB: return TabCtrl_GetCurSel(_hControl);
 		default: break;
 	}
@@ -2738,6 +2786,9 @@ oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl)
 		else
 			return oGUI_CONTROL_SLIDER_WITH_TICKS;
 	}
+	else if (!_stricmp(oWinControlGetCreationDesc(oGUI_CONTROL_LISTBOX).ClassName, ClassName))
+		return oGUI_CONTROL_LISTBOX;
+
 	return oGUI_CONTROL_UNKNOWN;
 }
 
@@ -2805,6 +2856,28 @@ char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestina
 				if (start)
 					strlcpy(_StrDestination, _StrDestination + start, _SizeofStrDestination);
 				_StrDestination[len] = 0;
+			}
+
+			return _StrDestination;
+		}
+
+		case oGUI_CONTROL_LISTBOX:
+		{
+			int index = ListBox_GetCurSel(_hControl);
+			if (index != LB_ERR)
+				return nullptr;
+
+			size_t len = ListBox_GetTextLen(_hControl, index);
+			if (len >= _SizeofStrDestination)
+			{
+				oErrorSetLast(std::errc::no_buffer_space, "Buffer too small to receive string");
+				return nullptr;
+			}
+
+			if (LB_ERR == ListBox_GetText(_hControl, index, _StrDestination))
+			{
+				oErrorSetLast(std::errc::protocol_error, "GetText failed");
+				return nullptr;
 			}
 
 			return _StrDestination;

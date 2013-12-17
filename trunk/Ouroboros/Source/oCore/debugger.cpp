@@ -464,7 +464,7 @@ bool dump(const path& _Path, bool _Full, void* _Exceptions)
 
 static sstring make_dump_filename()
 {
-	sstring DumpFilename = this_module::path().basename();
+	sstring DumpFilename = this_module::get_path().basename();
 	DumpFilename += "_v";
 	
 	module::info mi = this_module::get_info();
@@ -520,7 +520,7 @@ void dump_and_terminate(void* _exception, const char* _Message)
 			, _Message
 			, Mini || Full ? "\n\nA .dmp file has been written." : "");
 
-		MessageBox(NULL, msg.c_str(), this_module::path().c_str(), MB_ICONERROR|MB_OK|MB_TASKMODAL); 
+		MessageBox(NULL, msg.c_str(), this_module::get_path().c_str(), MB_ICONERROR|MB_OK|MB_TASKMODAL); 
 	}
 	std::exit(-1);
 }
