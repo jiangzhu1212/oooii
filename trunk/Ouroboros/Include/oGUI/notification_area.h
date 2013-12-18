@@ -33,35 +33,35 @@
 namespace ouro {
 	namespace notification_area {
 
-// Return the oGUI_WINDOW of the "system tray" or "notification area"	
-oGUI_WINDOW native_handle();
+// Return the ouro::window_handle of the "system tray" or "notification area"	
+ouro::window_handle native_handle();
 
 // Sets the focus on the tray itself, not any icon in it
 void focus();
 
 // Get the rectangle of the specified icon. Returns true if the rect is valid, 
 // or false if the icon doesn't exist.
-void icon_rect(oGUI_WINDOW _hWnd, unsigned int _ID, int* _pX, int* _pY, int* _pWidth, int* _pHeight);
+void icon_rect(ouro::window_handle _hWnd, unsigned int _ID, int* _pX, int* _pY, int* _pWidth, int* _pHeight);
 
 // Returns true of the tray icon exists
-bool exists(oGUI_WINDOW _hWnd, unsigned int _ID);
+bool exists(ouro::window_handle _hWnd, unsigned int _ID);
 
-// Icons are identified by the oGUI_WINDOW and the ID. If _CallbackMessage is not zero 
-// then this is a message that can be handled in the oGUI_WINDOW's WNDPROC. Use 
-// WM_USER+n for the custom code. If oGUI_ICON is nullptr the icon from the oGUI_WINDOW 
-// will be used. All lifetime management of a valid oGUI_ICON must be handled by 
+// Icons are identified by the ouro::window_handle and the ID. If _CallbackMessage is not zero 
+// then this is a message that can be handled in the ouro::window_handle's WNDPROC. Use 
+// WM_USER+n for the custom code. If ouro::icon_handle is nullptr the icon from the ouro::window_handle 
+// will be used. All lifetime management of a valid ouro::icon_handle must be handled by 
 // client code.
-void show_icon(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _CallbackMessage, oGUI_ICON _hIcon, bool _Show);
+void show_icon(ouro::window_handle _hWnd, unsigned int _ID, unsigned int _CallbackMessage, ouro::icon_handle _hIcon, bool _Show);
 
 // Once an icon has been created with show_icon, use this to display a message 
 // on it. If _hIcon is nullptr then the _hWnd's icon is used.
-void show_message(oGUI_WINDOW _hWnd, unsigned int _ID, oGUI_ICON _hIcon, unsigned int _TimeoutMS, const char* _Title, const char* _Message);
+void show_message(ouro::window_handle _hWnd, unsigned int _ID, ouro::icon_handle _hIcon, unsigned int _TimeoutMS, const char* _Title, const char* _Message);
 
 // Minimize a window to the tray (animates a window to the tray)
-void minimize(oGUI_WINDOW _hWnd, unsigned int _CallbackMessage, oGUI_ICON _hIcon);
+void minimize(ouro::window_handle _hWnd, unsigned int _CallbackMessage, ouro::icon_handle _hIcon);
 
 // Animates an existing tray icon to a restored window
-void restore(oGUI_WINDOW _hWnd);
+void restore(ouro::window_handle _hWnd);
 
 #if defined(_WIN32) || defined(_WIN64)
 	// Use this in a windows message handler to decode the parameters for a callback

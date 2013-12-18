@@ -45,7 +45,7 @@ public:
 		{}
 
 		// Icon used to represent the app in the about dialog
-		oGUI_ICON icon;
+		ouro::icon_handle icon;
 
 		// A URL that will be clickable in the about dialog under "visit our website"
 		const char* website;

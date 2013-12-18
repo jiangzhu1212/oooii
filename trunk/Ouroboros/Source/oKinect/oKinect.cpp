@@ -257,27 +257,27 @@ int2 oKinectImpl::GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe
 	return inf.dimensions.xy();
 }
 
-bool oKinectImpl::GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe
+bool oKinectImpl::GetSkeletonByIndex(int _PlayerIndex, ouro::tracking_skeleton* _pSkeleton) const threadsafe
 {
 	windows::skeleton::bone_info Skeleton;
 	if (Skeletons.GetSkeletonByIndex(_PlayerIndex, &Skeleton))
 	{
-		_pSkeleton->SourceID = Skeleton.source_id;
-		_pSkeleton->Clipping = *(oGUI_TRACKING_CLIPPING*)&Skeleton.clipping;
-		std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->Positions.size(), _pSkeleton->Positions.begin());
+		_pSkeleton->source_id = Skeleton.source_id;
+		_pSkeleton->clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
+		std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->positions.size(), _pSkeleton->positions.begin());
 	}
 
 	return false;
 }
 
-bool oKinectImpl::GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _pSkeleton) const threadsafe
+bool oKinectImpl::GetSkeletonByID(unsigned int _ID, ouro::tracking_skeleton* _pSkeleton) const threadsafe
 {
 	windows::skeleton::bone_info Skeleton;
 	if (Skeletons.GetSkeletonByID(_ID, &Skeleton))
 	{
-		_pSkeleton->SourceID = Skeleton.source_id;
-		_pSkeleton->Clipping = *(oGUI_TRACKING_CLIPPING*)&Skeleton.clipping;
-		std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->Positions.size(), _pSkeleton->Positions.begin());
+		_pSkeleton->source_id = Skeleton.source_id;
+		_pSkeleton->clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
+		std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->positions.size(), _pSkeleton->positions.begin());
 	}
 
 	return false;

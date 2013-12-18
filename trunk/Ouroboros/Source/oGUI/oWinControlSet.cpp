@@ -124,8 +124,8 @@ bool oWinControlSet::ParseFontDesc(const xml& _XML, xml::node _hNode, oGUI_FONT_
 
 bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, const controls_t& _Controls, oGUI_CONTROL_DESC* _pDesc)
 {
-	_pDesc->hParent = (oGUI_WINDOW)_ControlContext.hParent;
-	_pDesc->hFont = (oGUI_FONT)_ControlContext.hFont;
+	_pDesc->hParent = (ouro::window_handle)_ControlContext.hParent;
+	_pDesc->hFont = (ouro::font_handle)_ControlContext.hFont;
 
 	const char* StrID = _XmlContext.pXML->find_attr_value(_XmlContext.hNode, "ID");
 	if (!oSTRVALID(StrID))
@@ -152,7 +152,7 @@ bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONT
 		auto it = _XmlContext.Fonts.find(StrFont);
 		if (it == _XmlContext.Fonts.end())
 			return oErrorSetLast(std::errc::invalid_argument, "Invalid or missing Font %s defined in Control %s", StrFont, StrID);
-		_pDesc->hFont = (oGUI_FONT)it->second;
+		_pDesc->hFont = (ouro::font_handle)it->second;
 	}
 
 	// Resolve size relative to parent/context

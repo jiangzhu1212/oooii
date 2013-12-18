@@ -92,7 +92,7 @@ struct oGestureManagerImpl : oGestureManager
 
 	int SetHeadMessageV(int _SkeletonIndex, const char* _Format, va_list _Args) override;
 
-	void GDIDraw(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize) override;
+	void GDIDraw(ouro::draw_context_handle _hDC, const int2& _ClientSize) override;
 
 	bool SetCurrentKeyset(const char* _KeysetName);
 	bool SetCurrentInputSet(const oRTTI* _pDynamicEnum);
@@ -150,11 +150,11 @@ private:
 	void AttachKinect(bool _Attached, const char* _InstanceName);
 	void EnableGesture(bool _Enabled);
 
-	bool GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize);
-	void GDIDrawNoKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize);
-	void GDIDrawKinectStatus(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize);
-	void GDIDrawKinectStatusIcon(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize);
-	void GDIDrawNotStatusIcon(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize);
+	bool GDIDrawKinect(ouro::draw_context_handle _hDC, const int2& _ClientSize);
+	void GDIDrawNoKinect(ouro::draw_context_handle _hDC, const int2& _ClientSize);
+	void GDIDrawKinectStatus(ouro::draw_context_handle _hDC, const int2& _ClientSize);
+	void GDIDrawKinectStatusIcon(ouro::draw_context_handle _hDC, const int2& _ClientSize);
+	void GDIDrawNotStatusIcon(ouro::draw_context_handle _hDC, const int2& _ClientSize);
 
 	void OnEvent(const oGUI_EVENT_DESC& _Event);
 	void OnAction(const oGUI_ACTION_DESC& _Action);
@@ -427,7 +427,7 @@ bool oGestureManagerImpl::SetCurrentGestureSet(const char* _KeySetName, const oR
 	return true;
 }
 
-bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)
+bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const int2& _ClientSize)
 {
 	shared_lock<shared_mutex> lock(KinectMutex);
 
@@ -476,7 +476,7 @@ bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _Cli
 			oGUI_FONT_DESC fd;
 			oGDIGetFontDesc(hFont, &fd);
 
-			oGUI_BONE_DESC Skeleton;
+			ouro::tracking_skeleton Skeleton;
 			int SkelIndex = 0;
 			float VerticalOffset = (float)rTarget.top;
 			while (Kinect->GetSkeletonByIndex(SkelIndex, &Skeleton))
@@ -488,7 +488,7 @@ bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _Cli
 				td.Position = float2((float)rTarget.left, VerticalOffset);
 				td.Size = oWinRectSize(rTarget);
 				td.Shadow = Black;
-				const float4& h = Skeleton.Positions[ouro::skeleton_bone::hip_center];
+				const float4& h = Skeleton.positions[ouro::skeleton_bone::hip_center];
 				mstring text;
 				snprintf(text, "HIP: %.02f %.02f %.02f\n", h.x, h.y, h.z);
 				oGDIDrawText(hDC, td, text);
@@ -497,7 +497,7 @@ bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _Cli
 				VerticalOffset += oWinRectH(rText);
 
 				if (!ComboMessage[SkelIndex].empty())
-					oGDIDrawBoneText(hDC, rTarget, Skeleton.Positions[ouro::skeleton_bone::head], ouro::alignment::bottom_center, int2(0, -75), ouro::alignment::bottom_center, ComboMessage[SkelIndex]);
+					oGDIDrawBoneText(hDC, rTarget, Skeleton.positions[ouro::skeleton_bone::head], ouro::alignment::bottom_center, int2(0, -75), ouro::alignment::bottom_center, ComboMessage[SkelIndex]);
 
 				SkelIndex++;
 			}
@@ -507,7 +507,7 @@ bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _Cli
 	return !!Kinect;
 }
 
-void oGestureManagerImpl::GDIDrawNoKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)
+void oGestureManagerImpl::GDIDrawNoKinect(ouro::draw_context_handle _hDC, const int2& _ClientSize)
 {
 	HDC hDC = (HDC)_hDC;
 
@@ -531,7 +531,7 @@ void oGestureManagerImpl::GDIDrawNoKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _C
 	oGDIDrawText(hDC, td, NoKinectMessage);
 }
 
-void oGestureManagerImpl::GDIDrawKinectStatusIcon(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)
+void oGestureManagerImpl::GDIDrawKinectStatusIcon(ouro::draw_context_handle _hDC, const int2& _ClientSize)
 {
 	if (DeviceVizDesc.hGestureDevice)
 	{
@@ -544,7 +544,7 @@ void oGestureManagerImpl::GDIDrawKinectStatusIcon(oGUI_DRAW_CONTEXT _hDC, const 
 	}
 }
 
-void oGestureManagerImpl::GDIDrawNotStatusIcon(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)
+void oGestureManagerImpl::GDIDrawNotStatusIcon(ouro::draw_context_handle _hDC, const int2& _ClientSize)
 {
 	if (DeviceVizDesc.hNotOverlay)
 	{
@@ -557,7 +557,7 @@ void oGestureManagerImpl::GDIDrawNotStatusIcon(oGUI_DRAW_CONTEXT _hDC, const int
 	}
 }
 
-void oGestureManagerImpl::GDIDrawKinectStatus(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)
+void oGestureManagerImpl::GDIDrawKinectStatus(ouro::draw_context_handle _hDC, const int2& _ClientSize)
 {
 	shared_lock<shared_mutex> lock(DeviceIconMutex);
 
@@ -605,7 +605,7 @@ void oGestureManagerImpl::GDIDrawKinectStatus(oGUI_DRAW_CONTEXT _hDC, const int2
 	}
 }
 
-void oGestureManagerImpl::GDIDraw(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize)
+void oGestureManagerImpl::GDIDraw(ouro::draw_context_handle _hDC, const int2& _ClientSize)
 {
 	if (VizDesc.Visualization != oGESTURE_VIZ_NONE && !GDIDrawKinect(_hDC, _ClientSize))
 		GDIDrawNoKinect(_hDC, _ClientSize);
@@ -771,10 +771,10 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 			windows::skeleton::bone_info Skeleton;
 			windows::skeleton::get_info((windows::skeleton::handle)_Action.hSkeleton, &Skeleton);
 
-			oGUI_BONE_DESC skel;
-			skel.SourceID = Skeleton.source_id;
-			skel.Clipping = *(oGUI_TRACKING_CLIPPING*)&Skeleton.clipping;
-			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.Positions.size(), skel.Positions.begin());
+			ouro::tracking_skeleton skel;
+			skel.source_id = Skeleton.source_id;
+			skel.clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
+			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.positions.size(), skel.positions.begin());
 
 			AirKeyboard->Update(skel, _Action.TimestampMS);
 			break;

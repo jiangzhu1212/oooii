@@ -85,7 +85,7 @@ static void oGDIDrawKinectSkeleton(HDC _hDC, int _BoneRadius, int2 _ScreenSpaceB
 		oGDIDrawKinectJoint(_hDC, _ScreenSpaceBonePositions[i], _BoneRadius);
 }
 
-static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const oGUI_TRACKING_CLIPPING& _Clipping)
+static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const ouro::tracking_clipping& _Clipping)
 {
 	const int2 Offset = oWinRectPosition(_rTarget);
 	const int2 Dimensions = oWinRectSize(_rTarget);
@@ -96,25 +96,25 @@ static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const oGUI_TRACKING
 	oGDIScopedBkMode TransparentBk(_hDC, TRANSPARENT);
 	oGDIScopedSelect SelectNoPen(_hDC, GetStockObject(NULL_PEN));
 
-	if (_Clipping.Left)
+	if (_Clipping.left)
 	{
 		const RECT r = { 0, 0, ClippingDimensions.x, Dimensions.y };
 		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset));
 	}
 
-	if (_Clipping.Top)
+	if (_Clipping.top)
 	{
 		const RECT r = { 0, 0, Dimensions.x, ClippingDimensions.y };
 		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset));
 	}
 
-	if (_Clipping.Right)
+	if (_Clipping.right)
 	{
 		const RECT r = { 0, 0, ClippingDimensions.x, Dimensions.y };
 		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset + int2(oWinRectW(_rTarget) - oWinRectW(r), 0)));
 	}
 
-	if (_Clipping.Bottom)
+	if (_Clipping.bottom)
 	{
 		const RECT r = { 0, 0, Dimensions.x, ClippingDimensions.y };
 		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset + int2(0, oWinRectH(_rTarget) - oWinRectH(r))));
@@ -193,7 +193,7 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 		const int2 DepthDimensions = _pKinect->GetDimensions(oKINECT_FRAME_DEPTH);
 		int2 ScreenSpaceBonePositions[ouro::skeleton_bone::count];
 
-		oGUI_BONE_DESC Skeleton;
+		ouro::tracking_skeleton Skeleton;
 		for (int i = 0; i < NUI_SKELETON_MAX_TRACKED_COUNT; i++)
 		{
 			if (_pKinect->GetSkeletonByIndex(i, &Skeleton))
@@ -210,7 +210,7 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 					oGDIDrawKinectSkeleton(_hDC, kJointThickness, ScreenSpaceBonePositions);
 
 				if (_Flags & oGDI_KINECT_DRAW_CLIPPING)
-					oGDIDrawClipping(_hDC, _rTarget, Skeleton.Clipping);
+					oGDIDrawClipping(_hDC, _rTarget, Skeleton.clipping);
 
 				if (_Flags & oGDI_KINECT_DRAW_BONE_NAMES)
 					oGDIDrawKinectBoneNames(_hDC, _rTarget, ScreenSpaceBonePositions);
@@ -219,11 +219,11 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 	}
 }
 
-void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::gui_action::value _LastAction, const oGUI_BONE_DESC& _Skeleton)
+void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::gui_action::value _LastAction, const ouro::tracking_skeleton& _Skeleton)
 {
 	oAABoxf Bounds = _Key.Bounds;
 	if (_Key.Origin != ouro::skeleton_bone::invalid)
-		oTranslate(Bounds, _Skeleton.Positions[_Key.Origin].xyz());
+		oTranslate(Bounds, _Skeleton.positions[_Key.Origin].xyz());
 
 	float3 Min = Bounds.Min;
 	float3 Max = Bounds.Max;
@@ -320,7 +320,7 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 {
 }
 
-void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::gui_action::value _LastAction, const oGUI_BONE_DESC& _Skeleton)
+void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::gui_action::value _LastAction, const ouro::tracking_skeleton& _Skeleton)
 {
 }
 

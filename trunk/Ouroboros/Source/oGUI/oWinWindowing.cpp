@@ -679,10 +679,10 @@ HWND oWinCreate(HWND _hParent
 	RECT rWindow = oWinRectWH(NewPosition, NewSize);
 	oVB(AdjustWindowRectEx(&rWindow, dwInitialStyle, false, dwInitialStyleEx));
 	oWIN_CREATESTRUCT wcs;
-	wcs.Shape.State = ouro::window_state::hidden;
-	wcs.Shape.Style = _Style;
-	wcs.Shape.ClientPosition = NewPosition;
-	wcs.Shape.ClientSize = NewSize;
+	wcs.Shape.state = ouro::window_state::hidden;
+	wcs.Shape.style = _Style;
+	wcs.Shape.client_position = NewPosition;
+	wcs.Shape.client_size = NewSize;
 	wcs.pThis = _pThis;
 	wcs.pInit = _pInit;
 
@@ -771,9 +771,9 @@ static void oWinSaveRestoredPosSize(HWND _hWnd)
 		LONG_PTR extra = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
 		if (0 == (extra & (oEF_FULLSCREEN_COOPERATIVE|oEF_FULLSCREEN_COOPERATIVE|oEF_NO_SAVE_RESTORED_POSITION_SIZE)))
 		{
-			oGUI_WINDOW_SHAPE_DESC s = oWinGetShape(_hWnd);
-			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION, (LONG_PTR)MAKELPARAM(s.ClientPosition.x, s.ClientPosition.y));
-			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE, (LONG_PTR)MAKELPARAM(s.ClientSize.x, s.ClientSize.y));
+			ouro::window_shape s = oWinGetShape(_hWnd);
+			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION, (LONG_PTR)MAKELPARAM(s.client_position.x, s.client_position.y));
+			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE, (LONG_PTR)MAKELPARAM(s.client_size.x, s.client_size.y));
 		}
 	}
 }
@@ -802,14 +802,14 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				SetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE, (LONG_PTR)oWinDeviceChangeCreate());
 				SetWindowLongPtr(_hWnd, oGWLP_MENU, (LONG_PTR)CreateMenu());
 				SetWindowLongPtr(_hWnd, oGWLP_STATUSBAR, (LONG_PTR)oWinStatusBarCreate(_hWnd, (HMENU)0x00005747));
-				oVERIFY(oWinShowStatusBar(_hWnd, ouro::has_statusbar(wcs->Shape.Style)));
+				oVERIFY(oWinShowStatusBar(_hWnd, ouro::has_statusbar(wcs->Shape.style)));
 
-				if (ouro::has_statusbar(wcs->Shape.Style))
+				if (ouro::has_statusbar(wcs->Shape.style))
 					oVB(SetWindowPos(_hWnd, 0, cs->x, cs->y, cs->cx, cs->cy + oWinGetStatusBarHeight(_hWnd), SWP_NOZORDER|SWP_FRAMECHANGED|SWP_NOMOVE));
 
 				oWinSaveRestoredPosSize(_hWnd);
-				oWinSetTempChange(_hWnd, wcs->Shape.State != ouro::window_state::maximized);
-				oWinShowMenu(_hWnd, ouro::has_menu(wcs->Shape.Style));
+				oWinSetTempChange(_hWnd, wcs->Shape.state != ouro::window_state::maximized);
+				oWinShowMenu(_hWnd, ouro::has_menu(wcs->Shape.style));
 				oWinSetTempChange(_hWnd, false);
 
 				SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)wcs->pThis);
@@ -859,28 +859,28 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				// Take over control of syscommands to resize since oWinSetShape does
 				// extra work DefWindowProc is not aware of.
 
-				oGUI_WINDOW_SHAPE_DESC s;
+				ouro::window_shape s;
 				switch (_wParam)
 				{
 					case SC_MAXIMIZE:
-						s.State = ouro::window_state::maximized;
+						s.state = ouro::window_state::maximized;
 						oWinSetShape(_hWnd, s);
 						return 0;
 					case SC_MINIMIZE:
-						s.State = ouro::window_state::minimized;
+						s.state = ouro::window_state::minimized;
 						oWinSetShape(_hWnd, s);
 						return 0;
 					case SC_RESTORE:
 					{
-						oGUI_WINDOW_SHAPE_DESC Old = oWinGetShape(_hWnd);
-						if (Old.State == ouro::window_state::minimized)
+						ouro::window_shape Old = oWinGetShape(_hWnd);
+						if (Old.state == ouro::window_state::minimized)
 						{
-							s.State = (ouro::window_state::value)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE);
-							if (s.State == ouro::window_state::hidden)
-								s.State = ouro::window_state::restored;
+							s.state = (ouro::window_state::value)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE);
+							if (s.state == ouro::window_state::hidden)
+								s.state = ouro::window_state::restored;
 						}
 						else 
-							s.State = ouro::window_state::restored;
+							s.state = ouro::window_state::restored;
 
 						oWinSetShape(_hWnd, s);
 						return 0;
@@ -1539,85 +1539,85 @@ static ouro::window_style::value oWinGetStyle(HWND _hWnd)
 	#undef oSET
 }
 
-oGUI_WINDOW_SHAPE_DESC oWinGetShape(HWND _hWnd)
+ouro::window_shape oWinGetShape(HWND _hWnd)
 {
-	oGUI_WINDOW_SHAPE_DESC s;
+	ouro::window_shape s;
 	RECT rClient;
 	oVERIFY(oWinGetClientRect(_hWnd, &rClient));
-	s.ClientSize = oWinRectSize(rClient);
-	s.ClientPosition = oWinRectPosition(rClient);
-	s.State = oWinGetState(_hWnd);
-	s.Style = oWinGetStyle(_hWnd);
+	s.client_size = oWinRectSize(rClient);
+	s.client_position = oWinRectPosition(rClient);
+	s.state = oWinGetState(_hWnd);
+	s.style = oWinGetStyle(_hWnd);
 	return s;
 }
 
-bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
+bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
 {
 	oWIN_CHECK(_hWnd);
 
-	oGUI_WINDOW_SHAPE_DESC New = _Shape;
-	oGUI_WINDOW_SHAPE_DESC Old = oWinGetShape(_hWnd);
-	oASSERT(Old.State != ouro::window_state::invalid && Old.Style != ouro::window_style::default_style, "");
+	ouro::window_shape New = _Shape;
+	ouro::window_shape Old = oWinGetShape(_hWnd);
+	oASSERT(Old.state != ouro::window_state::invalid && Old.style != ouro::window_style::default_style, "");
 
-	if (New.State == ouro::window_state::invalid)
-		New.State = Old.State;
+	if (New.state == ouro::window_state::invalid)
+		New.state = Old.state;
 
-	if (New.Style == ouro::window_style::default_style)
-		New.Style = Old.Style;
+	if (New.style == ouro::window_style::default_style)
+		New.style = Old.style;
 
-	if (ouro::has_statusbar(New.Style) && oWinIsRenderTarget(_hWnd))
+	if (ouro::has_statusbar(New.style) && oWinIsRenderTarget(_hWnd))
 		return oErrorSetLast(std::errc::protocol_error, "HWND 0x%x is marked as a render target, disallowing status bar styles to be set", _hWnd);
 
-	if (Old.State == ouro::window_state::restored)
+	if (Old.state == ouro::window_state::restored)
 		oWinSaveRestoredPosSize(_hWnd);
 
 	finally f([&] {SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) &~ oEF_NO_SAVE_RESTORED_POSITION_SIZE);});
-	if (New.State == ouro::window_state::fullscreen || New.State == ouro::window_state::minimized || New.State == ouro::window_state::maximized)
+	if (New.state == ouro::window_state::fullscreen || New.state == ouro::window_state::minimized || New.state == ouro::window_state::maximized)
 		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) | oEF_NO_SAVE_RESTORED_POSITION_SIZE);
 
-	if (Old.State != New.State)
-		SetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE, (LONG_PTR)Old.State);
+	if (Old.state != New.state)
+		SetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE, (LONG_PTR)Old.state);
 
-	if (Old.State != ouro::window_state::fullscreen)
-		SetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE, (LONG_PTR)Old.Style);
+	if (Old.state != ouro::window_state::fullscreen)
+		SetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE, (LONG_PTR)Old.style);
 
-	if (New.State == ouro::window_state::fullscreen)
+	if (New.state == ouro::window_state::fullscreen)
 	{
-		New.Style = ouro::window_style::borderless;
+		New.style = ouro::window_style::borderless;
 		LONG_PTR extra = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
-		if (New.State == ouro::window_state::fullscreen)
+		if (New.state == ouro::window_state::fullscreen)
 			extra |= oEF_FULLSCREEN_COOPERATIVE;
 		else
 			extra &=~ oEF_FULLSCREEN_COOPERATIVE;
 		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, extra);
 	}
-	else if (Old.State == ouro::window_state::fullscreen)
+	else if (Old.state == ouro::window_state::fullscreen)
 	{
-		New.Style = (ouro::window_style::value)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE);
+		New.style = (ouro::window_style::value)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE);
 		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & ~(oEF_FULLSCREEN_COOPERATIVE|oEF_FULLSCREEN_EXCLUSIVE));
 	}
 
-	if (New.State == ouro::window_state::restored)
+	if (New.state == ouro::window_state::restored)
 	{
 		LONG_PTR lParam = GetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION);
 		const int2 RestoredClientPosition(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		New.ClientPosition = oGUIResolveRectPosition(New.ClientPosition, RestoredClientPosition);
+		New.client_position = oGUIResolveRectPosition(New.client_position, RestoredClientPosition);
 		lParam = GetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE);
 		const int2 RestoredClientSize(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		New.ClientSize = oGUIResolveRectPosition(New.ClientSize, RestoredClientSize);
+		New.client_size = oGUIResolveRectPosition(New.client_size, RestoredClientSize);
 	}
 
-	else if (New.State == ouro::window_state::fullscreen)
+	else if (New.state == ouro::window_state::fullscreen)
 	{
 		ouro::display::info di = ouro::display::get_info(oWinGetDisplayId(_hWnd));
-		New.ClientPosition = int2(di.x, di.y);
-		New.ClientSize = int2(di.mode.width, di.mode.height);
+		New.client_position = int2(di.x, di.y);
+		New.client_size = int2(di.mode.width, di.mode.height);
 	}
 
 	else
 	{
-		New.ClientPosition = oGUIResolveRectPosition(New.ClientPosition, Old.ClientPosition);
-		New.ClientSize = oGUIResolveRectPosition(New.ClientSize, Old.ClientSize);
+		New.client_position = oGUIResolveRectPosition(New.client_position, Old.client_position);
+		New.client_size = oGUIResolveRectPosition(New.client_size, Old.client_size);
 	}
 
 	int StatusBarHeight = 0;
@@ -1628,26 +1628,26 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 	}
 
 	DWORD dwAllFlags = (DWORD)GetWindowLongPtr(_hWnd, GWL_STYLE);
-	if (Old.Style != New.Style)
+	if (Old.style != New.style)
 	{
 		// Change only the bits we mean to change and preserve the others
 		const bool HasParent = !!GetParent(_hWnd);
-		DWORD dwCurrentStyleFlags = oWinGetStyle(Old.Style, HasParent);
+		DWORD dwCurrentStyleFlags = oWinGetStyle(Old.style, HasParent);
 		dwAllFlags &=~ dwCurrentStyleFlags;
-		dwAllFlags |= oWinGetStyle(New.Style, HasParent);
+		dwAllFlags |= oWinGetStyle(New.style, HasParent);
 
 		// When in maximized state and doing nothing more than toggling status bar
 		// visibility, the client area has changed, so spoof a WM_SIZE to notify
 		// the system of that change. If the menu changes, then allow the WM_SIZE to 
 		// be sent by oWinShowMenu.
-		oVERIFY(oWinShowStatusBar(_hWnd, ouro::has_statusbar(New.Style)));
+		oVERIFY(oWinShowStatusBar(_hWnd, ouro::has_statusbar(New.style)));
 
-		if (Old.State == ouro::window_state::maximized && New.State == ouro::window_state::maximized 
-			&& ouro::has_statusbar(New.Style) != ouro::has_statusbar(Old.Style)
-			&& ouro::has_menu(New.Style) == ouro::has_menu(Old.Style))
+		if (Old.state == ouro::window_state::maximized && New.state == ouro::window_state::maximized 
+			&& ouro::has_statusbar(New.style) != ouro::has_statusbar(Old.style)
+			&& ouro::has_menu(New.style) == ouro::has_menu(Old.style))
 		{
-			int2 NewMaxSize = Old.ClientSize;
-			if (ouro::has_statusbar(New.Style))
+			int2 NewMaxSize = Old.client_size;
+			if (ouro::has_statusbar(New.style))
 				NewMaxSize.y -= StatusBarHeight;
 			else
 				NewMaxSize.y += StatusBarHeight;
@@ -1658,21 +1658,21 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 		// squelch this one from making it all the way through to an ouro::gui_event::value.
 		// However, during a style change to a maximized window, that affects the 
 		// menu other calls won't be made, so let this be the authority in that case.
-		oWinSetTempChange(_hWnd, !(Old.State == ouro::window_state::maximized && New.State == ouro::window_state::maximized));
-		oWinShowMenu(_hWnd, ouro::has_menu(New.Style));
+		oWinSetTempChange(_hWnd, !(Old.state == ouro::window_state::maximized && New.state == ouro::window_state::maximized));
+		oWinShowMenu(_hWnd, ouro::has_menu(New.style));
 		oWinSetTempChange(_hWnd, false);
 	}
 
 	// Resolve position and size to a rectangle. Add extra room for the status bar.
-	RECT r = oWinRectWH(New.ClientPosition, New.ClientSize);
-	if (ouro::has_statusbar(New.Style))
+	RECT r = oWinRectWH(New.client_position, New.client_size);
+	if (ouro::has_statusbar(New.style))
 		r.bottom += StatusBarHeight;
 
 	// @tony: are these bit-clears needed?
-	if (New.State != ouro::window_state::maximized)
+	if (New.state != ouro::window_state::maximized)
 		dwAllFlags &=~ WS_MAXIMIZE;
 
-	if (New.State != ouro::window_state::minimized)
+	if (New.state != ouro::window_state::minimized)
 		dwAllFlags &=~ WS_MINIMIZE;
 
 	// Transform the rectangle to with-border values for the new style
@@ -1687,22 +1687,22 @@ bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape)
 
 	// Allow the system to calculate minimized/maximized sizes for us, so don't
 	// modify them here, that will happen in SetWindowPlacement.
-	if (!(Old.State == ouro::window_state::fullscreen && New.State == ouro::window_state::maximized))
+	if (!(Old.state == ouro::window_state::fullscreen && New.state == ouro::window_state::maximized))
 	{
 		UINT uFlags = SWP_NOZORDER|SWP_FRAMECHANGED;
-		if (New.State == ouro::window_state::minimized || New.State == ouro::window_state::maximized)
+		if (New.state == ouro::window_state::minimized || New.state == ouro::window_state::maximized)
 			uFlags |= SWP_NOMOVE|SWP_NOSIZE;
 		oVB(SetWindowPos(_hWnd, 0, r.left, r.top, oWinRectW(r), oWinRectH(r), uFlags));
 	}
 
 	// Now handle visibility, min/max/restore
-	if (Old.State != New.State)
+	if (Old.state != New.state)
 	{
 		WINDOWPLACEMENT WP;
 		WP.length = sizeof(WINDOWPLACEMENT);
 		GetWindowPlacement(_hWnd, &WP);
 
-		switch (New.State)
+		switch (New.state)
 		{
 			case ouro::window_state::invalid: case ouro::window_state::hidden:
 				WP.showCmd = SW_HIDE;
@@ -2302,7 +2302,7 @@ bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam,
 		{
 			_pAction->DeviceType = ouro::input_device_type::control;
 			_pAction->DeviceID = LOWORD(_wParam);
-			_pAction->hWindow = (oGUI_WINDOW)_hWnd;
+			_pAction->hWindow = (ouro::window_handle)_hWnd;
 			_pAction->Key = ouro::input_key::none;
 			_pAction->Position = 0.0f;
 
@@ -2313,7 +2313,7 @@ bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam,
 			}
 			else
 			{
-				_pAction->hWindow = (oGUI_WINDOW)_lParam;
+				_pAction->hWindow = (ouro::window_handle)_lParam;
 				_pAction->Action = ouro::gui_action::control_activated;
 				_pAction->ActionCode = HIWORD(_wParam);
 			}
@@ -2325,7 +2325,7 @@ bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam,
 		{
 			if (_lParam != 0)
 			{
-				_pAction->hWindow = (oGUI_WINDOW)(_lParam);
+				_pAction->hWindow = (ouro::window_handle)(_lParam);
 				_pAction->DeviceType = ouro::input_device_type::control;
 				_pAction->DeviceID = oInvalid;
 				_pAction->Key = ouro::input_key::none;
@@ -2352,7 +2352,7 @@ bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam,
 			_pAction->DeviceType = ouro::input_device_type::control;
 			oCHECK_SIZE(int, nmhdr.idFrom);
 			_pAction->DeviceID = static_cast<int>(nmhdr.idFrom);
-			_pAction->hWindow = (oGUI_WINDOW)nmhdr.hwndFrom;
+			_pAction->hWindow = (ouro::window_handle)nmhdr.hwndFrom;
 			_pAction->Position = 0.0f;
 			_pAction->ActionCode = nmhdr.code;
 

@@ -52,7 +52,7 @@ namespace ouro {
 
 struct REMOVE_TRAY_ICON
 {
-	oGUI_WINDOW hWnd;
+	ouro::window_handle hWnd;
 	unsigned int ID;
 	unsigned int TimeoutMS;
 };
@@ -65,7 +65,7 @@ public:
 
 	static cleanup& singleton();
 
-	void register_window(oGUI_WINDOW _hWnd, UINT _ID)
+	void register_window(ouro::window_handle _hWnd, UINT _ID)
 	{
 		lock_guard<shared_mutex> lock(Mutex);
 		if (!AllowInteraction)
@@ -83,7 +83,7 @@ public:
 			OutputDebugStringA("--- Too many tray icons registered for cleanup: ignoring. ---");
 	}
 
-	void unregister_window(oGUI_WINDOW _hWnd, UINT _ID)
+	void unregister_window(ouro::window_handle _hWnd, UINT _ID)
 	{
 		lock_guard<shared_mutex> lock(Mutex);
 		if (!AllowInteraction)
@@ -154,14 +154,14 @@ private:
 
 oDEFINE_PROCESS_SINGLETON("ouro::notification_area::cleanup", cleanup);
 
-oGUI_WINDOW native_handle()
+ouro::window_handle native_handle()
 {
 	static const char* sHierarchy[] = { "Shell_TrayWnd", "TrayNotifyWnd", "SysPager", "ToolbarWindow32", };
 	size_t i = 0;
 	HWND hWnd = FindWindow(sHierarchy[i++], nullptr);
 	while (hWnd && i < oCOUNTOF(sHierarchy))
 		hWnd = FindWindowEx(hWnd, nullptr, sHierarchy[i++], nullptr);
-	return (oGUI_WINDOW)hWnd;
+	return (ouro::window_handle)hWnd;
 }
 
 void focus()
@@ -217,7 +217,7 @@ static bool Shell_NotifyIconGetRect_workaround(HWND _hWnd, UINT _ID, RECT* _pRec
 #endif
 
 // returns true if the out params are valid, or false if _hWnd, _ID not found.
-static bool icon_rect_internal(oGUI_WINDOW _hWnd, unsigned int _ID, RECT* _pRect)
+static bool icon_rect_internal(ouro::window_handle _hWnd, unsigned int _ID, RECT* _pRect)
 {
 	#ifdef oWINDOWS_HAS_TRAY_NOTIFYICONIDENTIFIER
 		NOTIFYICONIDENTIFIER nii;
@@ -234,7 +234,7 @@ static bool icon_rect_internal(oGUI_WINDOW _hWnd, unsigned int _ID, RECT* _pRect
 	return true;
 }
 
-void icon_rect(oGUI_WINDOW _hWnd, unsigned int _ID, int* _pX, int* _pY, int* _pWidth, int* _pHeight)
+void icon_rect(ouro::window_handle _hWnd, unsigned int _ID, int* _pX, int* _pY, int* _pWidth, int* _pHeight)
 {
 	RECT r;
 	if (!icon_rect_internal(_hWnd, _ID, &r))
@@ -245,13 +245,13 @@ void icon_rect(oGUI_WINDOW _hWnd, unsigned int _ID, int* _pX, int* _pY, int* _pW
 	*_pHeight = r.bottom - r.top;
 }
 
-bool exists(oGUI_WINDOW _hWnd, unsigned int _ID)
+bool exists(ouro::window_handle _hWnd, unsigned int _ID)
 {
 	RECT r;
 	return icon_rect_internal(_hWnd, _ID, &r);
 }
 
-static NOTIFYICONDATA init_basics(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _CallbackMessage, oGUI_ICON _hIcon)
+static NOTIFYICONDATA init_basics(ouro::window_handle _hWnd, unsigned int _ID, unsigned int _CallbackMessage, ouro::icon_handle _hIcon)
 {
 	NOTIFYICONDATA nid;
 	memset(&nid, 0, sizeof(nid));
@@ -266,7 +266,7 @@ static NOTIFYICONDATA init_basics(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned 
 	return nid;
 }
 
-void show_icon(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _CallbackMessage, oGUI_ICON _hIcon, bool _Show)
+void show_icon(ouro::window_handle _hWnd, unsigned int _ID, unsigned int _CallbackMessage, ouro::icon_handle _hIcon, bool _Show)
 {
 	NOTIFYICONDATA nid = init_basics(_hWnd, _ID, _CallbackMessage, _hIcon);
 	nid.uFlags |= NIF_ICON;
@@ -278,7 +278,7 @@ void show_icon(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _CallbackMessag
 	cleanup::singleton().register_window(_hWnd, _ID);
 }
 
-static void hide_icon(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _TimeoutMS)
+static void hide_icon(ouro::window_handle _hWnd, unsigned int _ID, unsigned int _TimeoutMS)
 {
 	Sleep(_TimeoutMS);
 	oTRACE("Auto-closing tray icon HWND=0x%p ID=%u", _hWnd, _ID);
@@ -287,13 +287,13 @@ static void hide_icon(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _Timeout
 	windows::crt_leak_tracker::release_delay();
 }
 
-static void schedule_icon_hide(oGUI_WINDOW _hWnd, unsigned int _ID, unsigned int _TimeoutMS)
+static void schedule_icon_hide(ouro::window_handle _hWnd, unsigned int _ID, unsigned int _TimeoutMS)
 {
 	windows::crt_leak_tracker::add_delay();
 	cleanup::singleton().register_thread(std::move(thread(hide_icon, _hWnd, _ID, _TimeoutMS)));
 }
 
-void show_message(oGUI_WINDOW _hWnd, unsigned int _ID, oGUI_ICON _hIcon, unsigned int _TimeoutMS, const char* _Title, const char* _Message)
+void show_message(ouro::window_handle _hWnd, unsigned int _ID, ouro::icon_handle _hIcon, unsigned int _TimeoutMS, const char* _Title, const char* _Message)
 {
 	NOTIFYICONDATA nid = init_basics(_hWnd, _ID, 0, _hIcon);
 	nid.uFlags |= NIF_INFO;
@@ -343,7 +343,7 @@ void show_message(oGUI_WINDOW _hWnd, unsigned int _ID, oGUI_ICON _hIcon, unsigne
 }
 
 // _ToSysTray false means animate from sys tray out to window position
-static void animate_window_respectful(oGUI_WINDOW _hWnd, bool _ToSysTray)
+static void animate_window_respectful(ouro::window_handle _hWnd, bool _ToSysTray)
 {
 	RECT rDesktop, rWindow;
 	GetWindowRect(GetDesktopWindow(), &rDesktop);
@@ -355,14 +355,14 @@ static void animate_window_respectful(oGUI_WINDOW _hWnd, bool _ToSysTray)
 	oWinAnimate((HWND)_hWnd, from, to);
 }
 
-void minimize(oGUI_WINDOW _hWnd, unsigned int _CallbackMessage, oGUI_ICON _hIcon)
+void minimize(ouro::window_handle _hWnd, unsigned int _CallbackMessage, ouro::icon_handle _hIcon)
 {
 	animate_window_respectful(_hWnd, true);
 	ShowWindow((HWND)_hWnd, SW_HIDE);
 	show_icon(_hWnd, 0, _CallbackMessage, _hIcon, true);
 }
 
-void restore(oGUI_WINDOW _hWnd)
+void restore(ouro::window_handle _hWnd)
 {
 	animate_window_respectful(_hWnd, false);
 	ShowWindow((HWND)_hWnd, SW_SHOW);

@@ -47,9 +47,9 @@ public:
 			window::init i;
 			i.title = "Window-In-Window Test";
 			i.event_hook = std::bind(&WindowInWindow::ParentEventHook, this, oBIND1);
-			i.shape.State = ouro::window_state::hidden;
-			i.shape.Style = ouro::window_style::sizable;
-			i.shape.ClientSize = int2(640, 480);
+			i.shape.state = ouro::window_state::hidden;
+			i.shape.style = ouro::window_style::sizable;
+			i.shape.client_size = int2(640, 480);
 			try { ParentWindow = window::make(i); }
 			catch (std::exception& e) { oErrorSetLast(e); return; }
 		}
@@ -69,10 +69,10 @@ public:
 
 		{
 			window::init i;
-			i.shape.State = ouro::window_state::restored;
-			i.shape.Style = ouro::window_style::borderless;
-			i.shape.ClientPosition = int2(20,20);
-			i.shape.ClientSize = int2(600,480-65);
+			i.shape.state = ouro::window_state::restored;
+			i.shape.style = ouro::window_style::borderless;
+			i.shape.client_position = int2(20,20);
+			i.shape.client_size = int2(600,480-65);
 			i.event_hook = std::bind(&WindowInWindow::GPUWindowEventHook, this, std::placeholders::_1);
 
 			try { GPUWindow = window::make(i); }
@@ -134,12 +134,12 @@ public:
 			case ouro::gui_event::sized:
 			{
 				if (GPUWindow)
-					GPUWindow->client_size(_Event.AsShape().Shape.ClientSize - int2(40,65));
+					GPUWindow->client_size(_Event.AsShape().Shape.client_size - int2(40,65));
 
 				if (PrimaryRenderTarget)
-					PrimaryRenderTarget->Resize(int3(_Event.AsShape().Shape.ClientSize - int2(40,65), 1));
+					PrimaryRenderTarget->Resize(int3(_Event.AsShape().Shape.client_size - int2(40,65), 1));
 
-				SetWindowPos(hButton, 0, 10, _Event.AsShape().Shape.ClientSize.y-10-25, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+				SetWindowPos(hButton, 0, 10, _Event.AsShape().Shape.client_size.y-10-25, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 				break;
 			}
 

@@ -32,17 +32,12 @@
 #include <oBase/assert.h>
 #include <oBase/color.h>
 #include <oBase/fixed_string.h>
+#include <oBase/macros.h>
 #include <oCompute/oAABox.h>
 #include <array>
 #include <functional>
 
-#define oGUI_IN_RANGE(_EnumPrefix, _Value) ouro::in_range(ouro::input_key::_EnumPrefix##_first, ouro::input_key::_EnumPrefix##_last, _Value)
-
 namespace ouro {
-
-// Commonly used when creating enums of GUI functionality to have associated
-// runs in the enum - such as for a radio selection list.
-inline bool in_range(int _First, int _Last, int _Value) { return _Value >= _First && _Value <= _Last; }
 
 namespace input_device_type
 {	enum value {
@@ -522,23 +517,113 @@ namespace gui_action
 
 };}
 
+oDECLARE_HANDLE(draw_context_handle);
+oDECLARE_HANDLE(window_handle);
+oDECLARE_HANDLE(skeleton_handle);
+oDECLARE_HANDLE(menu_handle);
+oDECLARE_DERIVED_HANDLE(window_handle, statusbar_handle);
+oDECLARE_DERIVED_HANDLE(window_handle, control_handle);
+oDECLARE_HANDLE(font_handle);
+oDECLARE_HANDLE(icon_handle);
+oDECLARE_HANDLE(cursor_handle);
+
+struct tracking_clipping
+{
+	tracking_clipping()
+		: left(false)
+		, right(false)
+		, top(false)
+		, bottom(false)
+		, front(false)
+		, back(false)
+	{}
+
+	bool left : 1;
+	bool right : 1;
+	bool top : 1;
+	bool bottom : 1;
+	bool front : 1;
+	bool back : 1;
+};
+
+struct tracking_skeleton
+{
+	tracking_skeleton(unsigned int _SourceID = 0)
+		: source_id(_SourceID)
+	{ positions.fill(float4(0.0f, 0.0f, 0.0f, -1.0f)); }
+
+	unsigned int source_id;
+	tracking_clipping clipping;
+	std::array<float4, skeleton_bone::count> positions;
+};
+
+struct window_shape
+{
+	window_shape()
+		: state(window_state::invalid)
+		, style(window_style::default_style)
+		, client_position(oDEFAULT, oDEFAULT)
+		, client_size(oDEFAULT, oDEFAULT)
+	{}
+
+	// The desired Shape of the window. Minimize and maximize will override/ignore 
+	// client_position and client_size values. Use window_state::invalid to 
+	// indicate the state should remain untouched (only respect client_position 
+	// and client_size values).
+	window_state::value state;
+
+	// The desired style of the non-client area of the window (the OS decoration) 
+	// Use window_style::default_style to indicate that the state should remain 
+	// untouched. Changing style will not affect client size/position.
+	window_style::value style;
+
+	// This always refers to non-minimized, non-maximized Shapes. oDEFAULT values 
+	// imply "use whatever was there before". For example, if the state is set to 
+	// maximized, and some non-default value is applied to ClientSize, then the 
+	// next time the state is set to restored. Changing the style while maximized 
+	// can also change the dimensions, but since the state's goal is to maximize 
+	// client area, these values will be ignored.
+	int2 client_position;
+	int2 client_size;
+};
+
+struct window_cursor_shape
+{
+	// This only describes the cursor when over a particular window, not the 
+	// global cursor.
+
+	window_cursor_shape()
+		: client_state(cursor_state::arrow)
+		, nonclient_state(cursor_state::arrow)
+		, has_capture(false)
+	{}
+
+	// state of cursor when in the client area
+	cursor_state::value client_state;
+	
+	// state of cursor when in the OS decoration area
+	cursor_state::value nonclient_state; 
+	
+	// forces messages to the window even if the focus/cursor is outside the 
+	// window. Setting this to true will also bring the window to the foreground.
+	bool has_capture;
+};
+
 inline input_device_type::value get_type(const input_key::value& _Key)
 {
-	if (oGUI_IN_RANGE(keyboard, _Key)) return input_device_type::keyboard;
-	if (oGUI_IN_RANGE(mouse, _Key)) return input_device_type::mouse;
-	if (oGUI_IN_RANGE(joystick, _Key)) return input_device_type::joystick;
-	if (oGUI_IN_RANGE(touch, _Key)) return input_device_type::touch;
+	#define IF_IS(_DeviceType) do { if (_Key >= input_key::_DeviceType##_first && _Key <= input_key::_DeviceType##_last) return input_device_type::_DeviceType; } while(false)
+	IF_IS(keyboard); IF_IS(mouse); IF_IS(joystick); IF_IS(touch);
 	return input_device_type::unknown;
+	#undef IF_IS
 }
 
-// A standard key issues both an oGUI_ACTION_KEYDOWN and oGUI_ACTION_KEYUP 
-// without special handling.
+// A standard key issues both an keydown and keyup without special handling.
 // Non-standard keys can behave poorly. For example on Windows they are hooked
 // by the OS/driver to do something OS-specific and thus do not come through
 // as key events, but rather as an app event that is singular, not a down/up.
 inline bool is_standard_key(const input_key::value& _Key)
 {
-	return in_range(input_key::standard_first, input_key::standard_last, _Key);
+	return _Key >= input_key::standard_first && _Key <= input_key::standard_last;
 }
 
 // Invalid, hidden and minimized windows are not visible
@@ -583,38 +668,6 @@ inline bool is_shape_event(const gui_event::value& _Event)
 
 } // namespace ouro
 
-struct oGUI_TRACKING_CLIPPING
-{
-	oGUI_TRACKING_CLIPPING()
-		: Left(false)
-		, Right(false)
-		, Top(false)
-		, Bottom(false)
-		, Front(false)
-		, Back(false)
-	{}
-
-	bool Left : 1;
-	bool Right : 1;
-	bool Top : 1;
-	bool Bottom : 1;
-	bool Front : 1;
-	bool Back : 1;
-};
-
-struct oGUI_BONE_DESC
-{
-	oGUI_BONE_DESC(unsigned int _SourceID = 0)
-		: SourceID(_SourceID)
-	{
-		Positions.fill(float4(0.0f, 0.0f, 0.0f, -1.0f));
-	}
-
-	unsigned int SourceID;
-	oGUI_TRACKING_CLIPPING Clipping;
-	std::array<float4, ouro::skeleton_bone::count> Positions;
-};
-
 struct oGUI_MENU_ITEM_DESC_NO_CTOR
 {
 	const char* Text;
@@ -632,171 +685,10 @@ struct oGUI_MENU_ITEM_DESC : oGUI_MENU_ITEM_DESC_NO_CTOR
 	}
 };
 
-// Abstractions for native platform handles
-oDECLARE_HANDLE(oGUI_DRAW_CONTEXT);
-oDECLARE_HANDLE(oGUI_WINDOW);
-oDECLARE_HANDLE(oGUI_SKELETON);
-oDECLARE_HANDLE(oGUI_MENU);
-oDECLARE_DERIVED_HANDLE(oGUI_WINDOW, oGUI_STATUSBAR);
-oDECLARE_DERIVED_HANDLE(oGUI_WINDOW, oGUI_CONTROL);
-oDECLARE_HANDLE(oGUI_FONT);
-oDECLARE_HANDLE(oGUI_ICON);
-oDECLARE_HANDLE(oGUI_CURSOR);
 
-struct oGUI_WINDOW_DESC
-{
-	oGUI_WINDOW_DESC()
-		: hParent(nullptr)
-		, hOwner(nullptr)
-		, hIcon(nullptr)
-		, ClientPosition(oDEFAULT, oDEFAULT)
-		, ClientSize(oDEFAULT, oDEFAULT)
-		, State(ouro::window_state::restored)
-		, Style(ouro::window_style::fixed)
-		, Debug(false)
-		, Enabled(true)
-		, HasFocus(true)
-		, AlwaysOnTop(false)
-		, ShowMenu(false)
-		, ShowStatusBar(false)
-		, DefaultEraseBackground(true)
-		, AllowClientDragToMove(false)
-		, AllowAltF1(true)
-		, AllowAltF4(true)
-		, AllowAltEnter(true)
-		, AllowTouch(true)
-		, EnableMainLoopEvent(true)
-		, EnableDeviceChangeEvent(true)
-	{
-		StatusWidths.fill(-1);
-	}
-
-	// Specifying a parent makes this window a child window, meaning it becomes a 
-	// control (see oGUI_CONTROL code below). This means top-level decoration such
-	// as a border or min/max/restore controls will not be shown.
-	oGUI_WINDOW hParent;
-
-	// Owner is the relationship of this window as a (modal) dialog box to that 
-	// which it has disabled. By specifying an owner the relationship will be 
-	// preserved.
-	oGUI_WINDOW hOwner;
-
-	// The icon displayed when the window is minimized and appears in the upper
-	// left of the window's border on some systems. When set, the window owns the
-	// lifetime of the hIcon. If the icon is then changed, the prior icon is still
-	// the responsibility of client code, so if changing an icon, grab the old one
-	// first and free it after it has been disassociated from the window.
-	oGUI_ICON hIcon;
-
-	int2 ClientPosition;
-	int2 ClientSize;
-	ouro::window_state::value State;
-	ouro::window_style::value Style;
-	std::array<short, 8> StatusWidths;
-
-	// If true, platform-specific action and event information will be spewed to 
-	// the debug window and log file.
-	bool Debug;
-	
-	// If true the window accepts actions.
-	bool Enabled;
-
-	// Only one window on an operating system can have focus. If true, this window
-	// is the one.
-	bool HasFocus;
-
-	// If true this is in a class of windows that self-sort separately from normal
-	// windows. There may still be other operating system windows with even higher
-	// sort priority (such as the Windows task bar) so this may be inadequate in
-	// final fullscreen deployments.
-	bool AlwaysOnTop;
-
-	bool ShowMenu;
-	bool ShowStatusBar;
-
-	// By default this should be true to allow the operating system to do its 
-	// normal painting. For media windows that use complex paint algorithms (such
-	// as video update or 3D rendering) this should be set false to avoid conflict 
-	// with more robust clearing handled by the media algorithm.
-	bool DefaultEraseBackground;
-
-	// If true, the window can be moved by left-clicking anywhere in the client
-	// area and dragging.
-	bool AllowClientDragToMove;
-
-	// allow toggle of mouse cursor visibility
-	bool AllowAltF1;
-
-	// allow immediate close of window
-	bool AllowAltF4;
-
-	// allow toggle of fullscreen (exclusive or cooperative)
-	bool AllowAltEnter;
-	
-	// Touch often causes mouse messages to behave atypically, so only enable 
-	// touch if the application is specifically ready for it.
-	bool AllowTouch;
-
-	// By default this should be false as most operating system GUIs are event-
-	// driven. For media windows or other "main loop" simulations that use complex 
-	// paint algorithms (such as video update or 3D rendering) this should be set 
-	// true and logic to refresh the client area should be handled in the main 
-	// loop event.
-	bool EnableMainLoopEvent;
-
-	// Enable extra bookkeeping and registration for the window to respond to the
-	// oGUI_EVENT_DEVICE_CHANGE message. If this is false, this message may not 
-	// occur.
-	bool EnableDeviceChangeEvent;
-};
-
-struct oGUI_WINDOW_SHAPE_DESC
-{
-	oGUI_WINDOW_SHAPE_DESC()
-		: State(ouro::window_state::invalid)
-		, Style(ouro::window_style::default_style)
-		, ClientPosition(oDEFAULT, oDEFAULT)
-		, ClientSize(oDEFAULT, oDEFAULT)
-	{}
-
-	// The desired Shape of the window. Minimize and maximize will override/ignore  
-	// ClientPosition and ClientSize values. Use ouro::window_state::invalid to indicate
-	// that the state should remain untouched (only respect ClientPosition and 
-	// ClientSize values).
-	ouro::window_state::value State;
-
-	// The desired style of the non-client area of the window (the OS decoration)
-	// Use ouro::window_style::default_style to indicate that the state should remain 
-	// untouched. Changing style will not affect client size/position.
-	ouro::window_style::value Style;
-
-	// This always refers to non-minimized, non-maximized Shapes. oDEFAULT values
-	// imply "use whatever was there before". For example, if the state is set to 
-	// maximized, and some non-default value is applied to ClientSize, then the 
-	// next time the state is set to restored. Changing the style while maximized 
-	// can also change the dimensions, but since the state's goal is to maximize
-	// client area, these values will be ignored.
-	int2 ClientPosition;
-	int2 ClientSize;
-};
-
-// This only describes the cursor when over a particular window, not the global
-// cursor.
-struct oGUI_WINDOW_CURSOR_DESC
-{
-	oGUI_WINDOW_CURSOR_DESC()
-		: ClientState(ouro::cursor_state::arrow)
-		, NonClientState(ouro::cursor_state::arrow)
-		, HasCapture(false)
-	{}
-
-	ouro::cursor_state::value ClientState; // state of cursor when in the client area
-	ouro::cursor_state::value NonClientState; // state of cursor when in the OS decoration area
-	bool HasCapture; // forces messages to the window even if the focus/cursor is outside the window. Setting this to true will also bring the window to the foreground.
-};
 
 // _____________________________________________________________________________
-// oGUI_WINDOW events
+// ouro::window_handle events
 
 struct oGUI_EVENT_CREATE_DESC;
 struct oGUI_EVENT_SHAPE_DESC;
@@ -807,13 +699,13 @@ struct oGUI_EVENT_CUSTOM_DESC;
 
 struct oGUI_EVENT_DESC
 {
-	oGUI_EVENT_DESC(oGUI_WINDOW _hWindow, ouro::gui_event::value _Type)
+	oGUI_EVENT_DESC(ouro::window_handle _hWindow, ouro::gui_event::value _Type)
 		: hWindow(_hWindow)
 		, Type(_Type)
 	{}
 
 	// Native window handle
-	oGUI_WINDOW hWindow;
+	ouro::window_handle hWindow;
 
 	// Type of event. This is the base class; use the downcasting accessors below
 	// based on this type value.
@@ -831,10 +723,10 @@ struct oGUI_EVENT_DESC
 
 struct oGUI_EVENT_CREATE_DESC : oGUI_EVENT_DESC
 {
-	oGUI_EVENT_CREATE_DESC(oGUI_WINDOW _hWindow
-		, oGUI_STATUSBAR _hStatusBar
-		, oGUI_MENU _hMenu
-		, const oGUI_WINDOW_SHAPE_DESC& _Shape
+	oGUI_EVENT_CREATE_DESC(ouro::window_handle _hWindow
+		, ouro::statusbar_handle _hStatusBar
+		, ouro::menu_handle _hMenu
+		, const ouro::window_shape& _Shape
 		, void* _pUser)
 		: oGUI_EVENT_DESC(_hWindow, ouro::gui_event::creating)
 		, hStatusBar(_hStatusBar)
@@ -844,11 +736,11 @@ struct oGUI_EVENT_CREATE_DESC : oGUI_EVENT_DESC
 	{}
 
 	// Native handle of the window's status bar.
-	oGUI_STATUSBAR hStatusBar;
+	ouro::statusbar_handle hStatusBar;
 
 	// Native handle of the top-level window's menu.
-	oGUI_MENU hMenu;
-	oGUI_WINDOW_SHAPE_DESC Shape;
+	ouro::menu_handle hMenu;
+	ouro::window_shape Shape;
 
 	// The user can pass a value to this for usage.
 	void* pUser;
@@ -856,19 +748,19 @@ struct oGUI_EVENT_CREATE_DESC : oGUI_EVENT_DESC
 
 struct oGUI_EVENT_SHAPE_DESC : oGUI_EVENT_DESC
 {
-	oGUI_EVENT_SHAPE_DESC(oGUI_WINDOW _hWindow
+	oGUI_EVENT_SHAPE_DESC(ouro::window_handle _hWindow
 		, ouro::gui_event::value _Type
-		, const oGUI_WINDOW_SHAPE_DESC& _Shape)
+		, const ouro::window_shape& _Shape)
 		: oGUI_EVENT_DESC(_hWindow, _Type)
 		, Shape(_Shape)
 	{}
 
-	oGUI_WINDOW_SHAPE_DESC Shape;
+	ouro::window_shape Shape;
 };
 
 struct oGUI_EVENT_TIMER_DESC : oGUI_EVENT_DESC
 {
-	oGUI_EVENT_TIMER_DESC(oGUI_WINDOW _hWindow, uintptr_t _Context)
+	oGUI_EVENT_TIMER_DESC(ouro::window_handle _hWindow, uintptr_t _Context)
 		: oGUI_EVENT_DESC(_hWindow, ouro::gui_event::timer)
 		, Context(_Context)
 	{}
@@ -880,7 +772,7 @@ struct oGUI_EVENT_TIMER_DESC : oGUI_EVENT_DESC
 
 struct oGUI_EVENT_DROP_DESC : oGUI_EVENT_DESC
 {
-	oGUI_EVENT_DROP_DESC(oGUI_WINDOW _hWindow
+	oGUI_EVENT_DROP_DESC(ouro::window_handle _hWindow
 		, const ouro::path_string* _pPaths
 		, int _NumPaths
 		, const int2& _ClientDropPosition)
@@ -896,7 +788,7 @@ struct oGUI_EVENT_DROP_DESC : oGUI_EVENT_DESC
 
 struct oGUI_EVENT_INPUT_DEVICE_DESC : oGUI_EVENT_DESC
 {
-	oGUI_EVENT_INPUT_DEVICE_DESC(oGUI_WINDOW _hWindow
+	oGUI_EVENT_INPUT_DEVICE_DESC(ouro::window_handle _hWindow
 		, ouro::input_device_type::value _Type
 		, ouro::input_device_status::value _Status
 		, const char* _InstanceName)
@@ -913,7 +805,7 @@ struct oGUI_EVENT_INPUT_DEVICE_DESC : oGUI_EVENT_DESC
 
 struct oGUI_EVENT_CUSTOM_DESC : oGUI_EVENT_DESC
 {
-	oGUI_EVENT_CUSTOM_DESC(oGUI_WINDOW _hWindow, int _EventCode, uintptr_t _Context)
+	oGUI_EVENT_CUSTOM_DESC(ouro::window_handle _hWindow, int _EventCode, uintptr_t _Context)
 		: oGUI_EVENT_DESC(_hWindow, ouro::gui_event::custom_event)
 		, EventCode(_EventCode)
 		, Context(_Context)
@@ -949,7 +841,7 @@ struct oGUI_ACTION_DESC
 	{ hSkeleton = nullptr; }
 
 	oGUI_ACTION_DESC(
-		oGUI_WINDOW _hWindow
+		ouro::window_handle _hWindow
 		, unsigned int _TimestampMS
 		, ouro::gui_action::value _Action
 		, ouro::input_device_type::value _DeviceType
@@ -968,7 +860,7 @@ struct oGUI_ACTION_DESC
 	// Common across all actions
 
 	// Control devices have their own handle and sometimes their own sub-action.
-	oGUI_WINDOW hWindow;
+	ouro::window_handle hWindow;
 
 	// Time at which the message was sent in milliseconds.
 	unsigned int TimestampMS;
@@ -1003,7 +895,7 @@ struct oGUI_ACTION_DESC
 
 		// if Action is an ouro::gui_action::skeleton, the hSkeleton is  a handle fit for 
 		// use with a platform-specific accessor to the actual skeleton data.
-		oGUI_SKELETON hSkeleton;
+		ouro::skeleton_handle hSkeleton;
 	};
 };
 
@@ -1051,10 +943,10 @@ struct oGUI_CONTROL_DESC
 	{}
 
 	// All controls must have a parent
-	oGUI_WINDOW hParent;
+	ouro::window_handle hParent;
 
 	// If nullptr is specified, then the system default font will be used.
-	oGUI_FONT hFont;
+	ouro::font_handle hFont;
 
 	// Type of control to create
 	ouro::control_type::value Type;
@@ -1066,7 +958,7 @@ struct oGUI_CONTROL_DESC
 	union
 	{
 		const char* Text;
-		oGUI_ICON Icon;
+		ouro::icon_handle Icon;
 	};
 
 	int2 Position;

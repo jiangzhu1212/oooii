@@ -109,8 +109,8 @@ interface oKinect : oInterface
 	virtual void UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe = 0;
 
 	// Returns the number of valid bones.
-	virtual bool GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe = 0;
-	virtual bool GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _pSkeleton) const threadsafe = 0;
+	virtual bool GetSkeletonByIndex(int _PlayerIndex, ouro::tracking_skeleton* _pSkeleton) const threadsafe = 0;
+	virtual bool GetSkeletonByID(unsigned int _ID, ouro::tracking_skeleton* _pSkeleton) const threadsafe = 0;
 };
 
 // Returns number of Kinects on the system. This can include disconnected 

@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This uses oGUI_BONE_DESC input to collide specific bones against 
+// This uses ouro::tracking_skeleton input to collide specific bones against 
 // specific skeleton-space (often camera-space) boxes to broadcast 
 // ouro::gui_action::key_down/ouro::gui_action::key_up events for an ouro::input_key::value. The 
 // pathological case would be a full reproduction of a typical keyboard using 
@@ -129,7 +129,7 @@ public:
 	// Analyze the specified skeleton for interaction with an oAirKeySet and 
 	// trigger oGUI_ACTION_DESCs appropriately. The specified timestamp will be
 	// passed through to any triggered actions.
-	virtual void Update(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS) threadsafe;
+	virtual void Update(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe;
 
 	// Manually trigger an action
 	virtual void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe;

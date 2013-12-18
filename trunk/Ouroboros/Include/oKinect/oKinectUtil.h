@@ -96,7 +96,7 @@ int2 oKinectSkeletonToScreen(
 // Returns number of valid bones. The value int2(oDEFAULT, oDEFAULT) is set to
 // any invalid bone.
 int oKinectCalcScreenSpacePositions(
-	const oGUI_BONE_DESC& _Skeleton
+	const ouro::tracking_skeleton& _Skeleton
 	, const int2& _TargetPosition
 	, const int2& _TargetDimensions
 	, const int2& _DepthBufferResolution
@@ -105,6 +105,6 @@ int oKinectCalcScreenSpacePositions(
 #endif // oHAS_KINECT_SDK
 
 // Converts the _OriginBone to 0,0,0 and makes all positions relative to that.
-void oKinectCalcBoneSpacePositions(ouro::skeleton_bone::value _OriginBone, oGUI_BONE_DESC& _Skeleton);
+void oKinectCalcBoneSpacePositions(ouro::skeleton_bone::value _OriginBone, ouro::tracking_skeleton& _Skeleton);
 
 #endif

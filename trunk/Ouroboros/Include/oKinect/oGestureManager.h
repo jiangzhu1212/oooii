@@ -71,8 +71,8 @@ struct oGESTURE_DEVICE_VISUALIZATION_DESC
 	// Representations of the gesture device to be displayed when the device 
 	// becomes unplugged or unresponsive. The system internally will free the
 	// resources when a manager instance is destroyed.
-	oGUI_ICON	hGestureDevice;
-	oGUI_ICON hNotOverlay;
+	ouro::icon_handle	hGestureDevice;
+	ouro::icon_handle hNotOverlay;
 
 	// Where on the screen the icon shows
 	ouro::alignment::value Alignment;
@@ -164,7 +164,7 @@ interface oGestureManager : oInterface
 	
 	// Call this between BeginOSFrame and EndOSFrame from an oGPUDevice to render 
 	// gesture-related visualization according to the Desc's above visualization.
-	virtual void GDIDraw(oGUI_DRAW_CONTEXT _hDC, const int2& _ClientSize) = 0;
+	virtual void GDIDraw(ouro::draw_context_handle _hDC, const int2& _ClientSize) = 0;
 
 	// Call this from an oStreamMonitor callback to handle the reload of 
 	// airkeyboard and combo files.

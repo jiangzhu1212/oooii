@@ -461,7 +461,7 @@ bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 	_pAction->DeviceID = 0;
 	_pAction->Key = ouro::input_key::none;
 	_pAction->Position = 0.0f;
-	_pAction->hWindow = (oGUI_WINDOW)_hWnd;
+	_pAction->hWindow = (ouro::window_handle)_hWnd;
 	_pAction->TimestampMS = _TimestampMS;
 	_pAction->ActionCode = -1;
 

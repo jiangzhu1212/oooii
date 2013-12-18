@@ -36,76 +36,76 @@
 #include <oBase/throw.h>
 #include <vector>
 
-// If _IsTopLevelMenu is true, the returned oGUI_MENU can be associated with an
+// If _IsTopLevelMenu is true, the returned ouro::menu_handle can be associated with an
 // oWindow. If false, "popup" menu will be created fit use as a submenu or 
 // right-click menus.
-oGUI_MENU oGUIMenuCreate(bool _IsTopLevelMenu = false);
+ouro::menu_handle oGUIMenuCreate(bool _IsTopLevelMenu = false);
 
 // This only needs to be called on oGUI_MENUs with no parents, such as those 
-// detached from a window or parent menu. If an oGUI_MENU is attached, then the 
+// detached from a window or parent menu. If an ouro::menu_handle is attached, then the 
 // parent manages the lifetime.
-void oGUIMenuDestroy(oGUI_MENU _hMenu);
+void oGUIMenuDestroy(ouro::menu_handle _hMenu);
 
-// Transfer ownership of oGUI_MENU lifetime to a window and show it. Setting a 
-// null _hMenu will detach the oGUI_MENU and client code is responsible for its
+// Transfer ownership of ouro::menu_handle lifetime to a window and show it. Setting a 
+// null _hMenu will detach the ouro::menu_handle and client code is responsible for its
 // lifetime.
-void oGUIMenuAttach(oGUI_WINDOW _hWindow, oGUI_MENU _hMenu);
+void oGUIMenuAttach(ouro::window_handle _hWindow, ouro::menu_handle _hMenu);
 
 // Returns the number of items in the specified menu
-int oGUIMenuGetNumItems(oGUI_MENU _hMenu);
+int oGUIMenuGetNumItems(ouro::menu_handle _hMenu);
 
 // The parent menu can be a top-level window. Once a submenu is attached it's 
 // lifetime is managed by the parent menu.
-void oGUIMenuAppendSubmenu(oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu, const char* _Text);
+void oGUIMenuAppendSubmenu(ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu, const char* _Text);
 
 // Detaches the specified submenu without destroying it.
-void oGUIMenuRemoveSubmenu(oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu);
+void oGUIMenuRemoveSubmenu(ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu);
 
 // Convert the specified menuitem into a submenu, preserving the text. This is 
 // primarily intended for code to take a disabled, empty submenu to having a 
 // menu to be populated.
-void oGUIMenuItemToSubmenu(oGUI_MENU _hParentMenu, int _ItemID, oGUI_MENU _hSubmenu);
+void oGUIMenuItemToSubmenu(ouro::menu_handle _hParentMenu, int _ItemID, ouro::menu_handle _hSubmenu);
 
 // Converts the specified submenu into a menuitem with the specified ID. By 
 // default it is created disabled because the primary use of this utility is to 
 // disable the top-level entry for a submenu when it has zero entries.
-void oGUIMenuSubmenuToItem(oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu, int _ItemID, bool _Enabled = false);
+void oGUIMenuSubmenuToItem(ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu, int _ItemID, bool _Enabled = false);
 
-void oGUIMenuAppendItem(oGUI_MENU _hParentMenu, int _ItemID, const char* _Text);
-void oGUIMenuRemoveItem(oGUI_MENU _hParentMenu, int _ItemID);
+void oGUIMenuAppendItem(ouro::menu_handle _hParentMenu, int _ItemID, const char* _Text);
+void oGUIMenuRemoveItem(ouro::menu_handle _hParentMenu, int _ItemID);
 
 // Any submenus will be destroyed. Take care not to use dangling handles to 
 // submenus once this is called.
-void oGUIMenuRemoveAllItems(oGUI_MENU _hMenu);
+void oGUIMenuRemoveAllItems(ouro::menu_handle _hMenu);
 
-void oGUIMenuAppendSeparator(oGUI_MENU _hParentMenu);
+void oGUIMenuAppendSeparator(ouro::menu_handle _hParentMenu);
 
-void oGUIMenuEnable(oGUI_MENU _hMenu, int _ItemID, bool _Enabled = true);
-bool oGUIMenuIsEnabled(oGUI_MENU _hMenu, int _ItemID);
+void oGUIMenuEnable(ouro::menu_handle _hMenu, int _ItemID, bool _Enabled = true);
+bool oGUIMenuIsEnabled(ouro::menu_handle _hMenu, int _ItemID);
 
-void oGUIMenuCheck(oGUI_MENU _hMenu, int _ItemID, bool _Checked = true);
-bool oGUIMenuIsChecked(oGUI_MENU _hMenu, int _ItemID);
+void oGUIMenuCheck(ouro::menu_handle _hMenu, int _ItemID, bool _Checked = true);
+bool oGUIMenuIsChecked(ouro::menu_handle _hMenu, int _ItemID);
 
 // Radio API ensures only zero or one is selected in a range. Use oGUIMenuCheck
 // to zero out a selected one.
-void oGUIMenuCheckRadio(oGUI_MENU _hMenu, int _ItemIDRadioRangeFirst, int _ItemIDRadioRangeLast, int _ItemIDToCheck);
+void oGUIMenuCheckRadio(ouro::menu_handle _hMenu, int _ItemIDRadioRangeFirst, int _ItemIDRadioRangeLast, int _ItemIDToCheck);
 
 // If none are checked, this returns oInvalid.
-int oGUIMenuGetCheckedRadio(oGUI_MENU _hMenu, int _ItemIDRadioRangeFirst, int _ItemIDRadioRangeLast);
+int oGUIMenuGetCheckedRadio(ouro::menu_handle _hMenu, int _ItemIDRadioRangeFirst, int _ItemIDRadioRangeLast);
 
-char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, oGUI_MENU _hMenu, int _ItemID);
-template<size_t size> char* oGUIMenuGetText(char (&_StrDestination)[size], oGUI_MENU _hMenu, int _ItemID) { return oGUIMenuGetText(_StrDestination, size, _hMenu, _ItemID); }
-template<size_t capacity> char* oGUIMenuGetText(ouro::fixed_string<char, capacity>& _StrDestination, oGUI_MENU _hMenu, int _ItemID) { return oGUIMenuGetText(_StrDestination, _StrDestination.capacity(), _hMenu, _ItemID); }
+char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, ouro::menu_handle _hMenu, int _ItemID);
+template<size_t size> char* oGUIMenuGetText(char (&_StrDestination)[size], ouro::menu_handle _hMenu, int _ItemID) { return oGUIMenuGetText(_StrDestination, size, _hMenu, _ItemID); }
+template<size_t capacity> char* oGUIMenuGetText(ouro::fixed_string<char, capacity>& _StrDestination, ouro::menu_handle _hMenu, int _ItemID) { return oGUIMenuGetText(_StrDestination, _StrDestination.capacity(), _hMenu, _ItemID); }
 
-char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, oGUI_MENU _hMenu, oGUI_MENU _hSubmenu);
-template<size_t size> char* oGUIMenuGetText(char (&_StrDestination)[size], oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu) { return oGUIMenuGetText(_StrDestination, size, _hParentMenu, _hSubmenu); }
-template<size_t capacity> char* oGUIMenuGetText(ouro::fixed_string<char, capacity>& _StrDestination, oGUI_MENU _hParentMenu, oGUI_MENU _hSubmenu) { return oGUIMenuGetText(_StrDestination, _StrDestination.capacity(), _hParentMenu, _hSubmenu); }
+char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, ouro::menu_handle _hMenu, ouro::menu_handle _hSubmenu);
+template<size_t size> char* oGUIMenuGetText(char (&_StrDestination)[size], ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu) { return oGUIMenuGetText(_StrDestination, size, _hParentMenu, _hSubmenu); }
+template<size_t capacity> char* oGUIMenuGetText(ouro::fixed_string<char, capacity>& _StrDestination, ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu) { return oGUIMenuGetText(_StrDestination, _StrDestination.capacity(), _hParentMenu, _hSubmenu); }
 
 // Create a menu populated with all values of an enum in the specified range.
 // This is useful to pair with oGUIMenuEnumRadioListHandler below for quick
 // menu construction for radio selection groups. _InitialItem will evaluate to
 // _FirstMenuItem by default.
-template<typename enumT> void oGUIMenuAppendEnumItems(const enumT& _NumEnumValues, oGUI_MENU _hMenu, int _FirstMenuItem, int _LastMenuItem, int _InitialValue = -1)
+template<typename enumT> void oGUIMenuAppendEnumItems(const enumT& _NumEnumValues, ouro::menu_handle _hMenu, int _FirstMenuItem, int _LastMenuItem, int _InitialValue = -1)
 {
 	const int nItems = _LastMenuItem - _FirstMenuItem + 1;
 	if (nItems != _NumEnumValues)
@@ -125,7 +125,7 @@ public:
 	// have a rebased value of 0.
 	typedef std::function<void(int _RebasedMenuItem)> callback_t;
 
-	inline void Register(oGUI_MENU _hMenu, int _FirstMenuItem, int _LastMenuItem, const callback_t& _Callback)
+	inline void Register(ouro::menu_handle _hMenu, int _FirstMenuItem, int _LastMenuItem, const callback_t& _Callback)
 	{
 		ENTRY e;
 		e.hMenu = _hMenu;
@@ -166,7 +166,7 @@ public:
 private:
 	struct ENTRY
 	{
-		oGUI_MENU hMenu;
+		ouro::menu_handle hMenu;
 		int First;
 		int Last;
 		callback_t Callback;

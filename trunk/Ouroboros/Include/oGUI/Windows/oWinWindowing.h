@@ -197,7 +197,7 @@ bool oWinIsClass(HWND _hWnd, WNDPROC _Wndproc);
 // Passed as the platform-provided init parameter.
 struct oWIN_CREATESTRUCT
 {
-	oGUI_WINDOW_SHAPE_DESC Shape;
+	ouro::window_shape Shape;
 	void* pThis;
 	void* pInit;
 };
@@ -500,10 +500,10 @@ RECT oWinGetRelativeRect(HWND _hWnd, HWND _hExplicitParent = nullptr);
 
 // Returns the shape of the specified window, i.e. all information that affects
 // the size and position of the window.
-oGUI_WINDOW_SHAPE_DESC oWinGetShape(HWND _hWnd);
+ouro::window_shape oWinGetShape(HWND _hWnd);
 
 // Sets the shape of the specified window.
-bool oWinSetShape(HWND _hWnd, const oGUI_WINDOW_SHAPE_DESC& _Shape);
+bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape);
 
 // There's a known issue that a simple ShowWindow doesn't always work on some 
 // minimized apps. The WAR seems to be to set focus to anything else, then try 

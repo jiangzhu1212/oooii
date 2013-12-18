@@ -68,16 +68,16 @@ private:
 		MENU_HELP_ABOUT,
 	};
 
-	oGUI_MENU hFileMenu;
-	oGUI_MENU hEditMenu;
-	oGUI_MENU hViewMenu;
-	oGUI_MENU hStatusBarMenu;
-	oGUI_MENU hHelpMenu;
+	ouro::menu_handle hFileMenu;
+	ouro::menu_handle hEditMenu;
+	ouro::menu_handle hViewMenu;
+	ouro::menu_handle hStatusBarMenu;
+	ouro::menu_handle hHelpMenu;
 
-	void InitMenu(oGUI_MENU _hWindowMenu);
+	void InitMenu(ouro::menu_handle _hWindowMenu);
 	void InitVCRControls(HWND _hParent, const int2& _Position);
 
-	void OnCreate(HWND _hWnd, oGUI_MENU _hMenu);
+	void OnCreate(HWND _hWnd, ouro::menu_handle _hMenu);
 	void OnMenuCommand(HWND _hWnd, int _MenuID);
 
 	enum
@@ -117,7 +117,7 @@ void oWindowUITest::EventHook(const oGUI_EVENT_DESC& _Event)
 	switch (_Event.Type)
 	{
 		case ouro::gui_event::sized:
-			oTRACE("NewClientSize = %dx%d%s", _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y, _Event.AsShape().Shape.State == ouro::window_state::minimized ? " (minimized)" : "");
+			oTRACE("NewClientSize = %dx%d%s", _Event.AsShape().Shape.client_size.x, _Event.AsShape().Shape.client_size.y, _Event.AsShape().Shape.state == ouro::window_state::minimized ? " (minimized)" : "");
 			break;
 		case ouro::gui_event::creating:
 		{
@@ -157,7 +157,7 @@ void oWindowUITest::ActionHook(const oGUI_ACTION_DESC& _Action)
 	}
 }
 
-void oWindowUITest::InitMenu(oGUI_MENU _hWindowMenu)
+void oWindowUITest::InitMenu(ouro::menu_handle _hWindowMenu)
 {
 	hFileMenu = oGUIMenuCreate();
 	hEditMenu = oGUIMenuCreate();
@@ -201,7 +201,7 @@ void oWindowUITest::InitVCRControls(HWND _hParent, const int2& _Position)
 	HFONT hWebdings = oGDICreateFont(fd);
 
 	oGUI_CONTROL_DESC b;
-	b.hParent = (oGUI_WINDOW)_hParent;
+	b.hParent = (ouro::window_handle)_hParent;
 	b.Type = ouro::control_type::button;
 	b.Size = kButtonSize;
 	
@@ -246,9 +246,9 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	i.title = "TESTWindowControls";
 	i.event_hook = std::bind(&oWindowUITest::EventHook, this, std::placeholders::_1);
 	i.action_hook = std::bind(&oWindowUITest::ActionHook, this, std::placeholders::_1);
-	i.shape.State = ouro::window_state::restored;
-	i.shape.Style = ouro::window_style::sizable_with_menu_and_statusbar;
-	i.shape.ClientSize = int2(640,480);
+	i.shape.state = ouro::window_state::restored;
+	i.shape.style = ouro::window_style::sizable_with_menu_and_statusbar;
+	i.shape.client_size = int2(640,480);
 	Window = window::make(i);
 
 	int Widths[2] = { 100, oInvalid };
@@ -280,13 +280,13 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	*_pSuccess = true;
 }
 
-void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
+void oWindowUITest::OnCreate(HWND _hWnd, ouro::menu_handle _hMenu)
 {
 	InitMenu(_hMenu);
 	InitVCRControls(_hWnd, int2(150, 30));
 
 	oGUI_CONTROL_DESC ButtonDesc;
-	ButtonDesc.hParent = (oGUI_WINDOW)_hWnd;
+	ButtonDesc.hParent = (ouro::window_handle)_hWnd;
 	ButtonDesc.Type = ouro::control_type::button;
 	ButtonDesc.Text = "Push Me";
 	ButtonDesc.Position = int2(10,10);
@@ -295,7 +295,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	Controls[ID_PUSHME] = oWinControlCreate(ButtonDesc);
 
 	oGUI_CONTROL_DESC TextDesc;
-	TextDesc.hParent = (oGUI_WINDOW)_hWnd;
+	TextDesc.hParent = (ouro::window_handle)_hWnd;
 	TextDesc.Type = ouro::control_type::floatbox;
 	TextDesc.Text = "1.00";
 	TextDesc.Position = int2(50,50);
@@ -324,7 +324,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	oWinControlCreate(ButtonDesc);
 
 	oGUI_CONTROL_DESC SliderDesc;
-	SliderDesc.hParent = (oGUI_WINDOW)_hWnd;
+	SliderDesc.hParent = (ouro::window_handle)_hWnd;
 	SliderDesc.Type = ouro::control_type::slider;
 	SliderDesc.Text = "Slider";
 	SliderDesc.Position = int2(150,60);
@@ -346,7 +346,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	oCHECK0(oWinControlSetRangePosition(Controls[ID_SLIDER_SELECTABLE], 30));
 
 	oGUI_CONTROL_DESC ProgressBarDesc;
-	ProgressBarDesc.hParent = (oGUI_WINDOW)_hWnd;
+	ProgressBarDesc.hParent = (ouro::window_handle)_hWnd;
 	ProgressBarDesc.Type = ouro::control_type::progressbar;
 	ProgressBarDesc.Text = "ProgressBar";
 	ProgressBarDesc.Position = int2(150,120);
@@ -371,7 +371,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	}
 
 	oGUI_CONTROL_DESC CB;
-	CB.hParent = (oGUI_WINDOW)_hWnd;
+	CB.hParent = (ouro::window_handle)_hWnd;
 	CB.Type = ouro::control_type::combobox;
 	CB.Text = "Init1|Init2|Init3";
 	CB.Position = int2(50,120);
@@ -480,8 +480,8 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 		{
 			bool NewState = !oGUIMenuIsChecked(hViewMenu, MENU_VIEW_SHOW_STATUSBAR);
 			oGUIMenuCheck(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, NewState);
-			oGUI_WINDOW_SHAPE_DESC s;
-			s.Style = NewState ? ouro::window_style::sizable_with_menu_and_statusbar : ouro::window_style::sizable_with_menu;
+			ouro::window_shape s;
+			s.style = NewState ? ouro::window_style::sizable_with_menu_and_statusbar : ouro::window_style::sizable_with_menu;
 			Window->shape(s);
 			break;
 		}

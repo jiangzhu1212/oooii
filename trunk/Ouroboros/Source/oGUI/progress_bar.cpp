@@ -31,12 +31,12 @@ namespace ouro {
 class progress_bar_impl : public progress_bar
 {
 public:
-	progress_bar_impl(const char* _Title, oGUI_ICON _hIcon
+	progress_bar_impl(const char* _Title, ouro::icon_handle _hIcon
 		, const std::function<void()>& _OnStop);
 
 
 	// basic_window API
-	oGUI_WINDOW native_handle() const override { return Window->native_handle(); }
+	ouro::window_handle native_handle() const override { return Window->native_handle(); }
 	display::id display_id() const override { return Window->display_id(); }
 	bool is_window_thread() const override { return Window->is_window_thread(); }
 	void flush_messages(bool _WaitForNext = false) override { Window->flush_messages(_WaitForNext); }
@@ -48,10 +48,10 @@ public:
 	void client_position(const int2& _ClientPosition) override { Window->client_position(_ClientPosition); }
 	int2 client_position() const override { return Window->client_position(); }
 	int2 client_size() const override { return Window->client_size(); }
-	void icon(oGUI_ICON _hIcon) override { Window->icon(_hIcon); }
-	oGUI_ICON icon() const override { return Window->icon(); }
-	void user_cursor(oGUI_CURSOR _hCursor) override { Window->user_cursor(_hCursor); }
-	oGUI_CURSOR user_cursor() const override { return Window->user_cursor(); }
+	void icon(ouro::icon_handle _hIcon) override { Window->icon(_hIcon); }
+	ouro::icon_handle icon() const override { return Window->icon(); }
+	void user_cursor(ouro::cursor_handle _hCursor) override { Window->user_cursor(_hCursor); }
+	ouro::cursor_handle user_cursor() const override { return Window->user_cursor(); }
 	void client_cursor_state(cursor_state::value _State) override { Window->client_cursor_state(_State); }
 	cursor_state::value client_cursor_state() const override { return Window->client_cursor_state(); }
 	void set_titlev(const char* _Format, va_list _Args) override { Window->set_titlev(_Format, _Args); }
@@ -93,7 +93,7 @@ private:
 		PB_CONTROL_COUNT,
 	};
 
-	std::array<oGUI_WINDOW, PB_CONTROL_COUNT> Controls;
+	std::array<ouro::window_handle, PB_CONTROL_COUNT> Controls;
 	int Percentage;
 
 private:
@@ -105,7 +105,7 @@ private:
 	void set_percentage_internal(int _Percentage) { set_percentage_internal(get(PB_PROGRESS), get(PB_MARQUEE), get(PB_PERCENT), _Percentage); }
 };
 
-progress_bar_impl::progress_bar_impl(const char* _Title, oGUI_ICON _hIcon, const std::function<void()>& _OnStop)
+progress_bar_impl::progress_bar_impl(const char* _Title, ouro::icon_handle _hIcon, const std::function<void()>& _OnStop)
 	: OnStop(_OnStop)
 	, Percentage(-1)
 {
@@ -115,14 +115,14 @@ progress_bar_impl::progress_bar_impl(const char* _Title, oGUI_ICON _hIcon, const
 	i.icon = _hIcon;
 	i.action_hook = std::bind(&progress_bar_impl::on_action, this, std::placeholders::_1);
 	i.event_hook = std::bind(&progress_bar_impl::on_event, this, std::placeholders::_1);
-	i.shape.ClientSize = int2(320, 106);
-	i.shape.State = window_state::hidden;
-	i.shape.Style = window_style::fixed;
+	i.shape.client_size = int2(320, 106);
+	i.shape.state = window_state::hidden;
+	i.shape.style = window_style::fixed;
 	Window = window::make(i);
 	set_percentage_internal(-1);
 }
 
-std::shared_ptr<progress_bar> progress_bar::make(const char* _Title, oGUI_ICON _hIcon, const std::function<void()>& _OnStop)
+std::shared_ptr<progress_bar> progress_bar::make(const char* _Title, ouro::icon_handle _hIcon, const std::function<void()>& _OnStop)
 {
 	return std::make_shared<progress_bar_impl>(_Title, _hIcon, _OnStop);
 }
@@ -133,7 +133,7 @@ void progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent
 	const int2 ButtonSize(75, 23);
 
 	const int2 Inset(10, 10);
-	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.Shape.ClientSize));
+	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.Shape.client_size));
 
 	oGUI_CONTROL_DESC Descs[PB_CONTROL_COUNT];
 
@@ -174,7 +174,7 @@ void progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent
 	{
 		Descs[PB_TEXT].Type = control_type::label_centered;
 		Descs[PB_TEXT].Position = Inset;
-		Descs[PB_TEXT].Size = int2(_CreateEvent.Shape.ClientSize.x - 2*Inset.x, 20);
+		Descs[PB_TEXT].Size = int2(_CreateEvent.Shape.client_size.x - 2*Inset.x, 20);
 
 		Descs[PB_SUBTEXT].Type = control_type::label;
 		Descs[PB_SUBTEXT].Position = int2(Inset.x, Descs[PB_PROGRESS].Position.y + Descs[PB_PROGRESS].Size.y + 5);
@@ -185,7 +185,7 @@ void progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent
 	{
 		Descs[i].hParent = _CreateEvent.hWindow;
 		Descs[i].ID = i;
-		Controls[i] = (oGUI_WINDOW)oWinControlCreate(Descs[i]);
+		Controls[i] = (ouro::window_handle)oWinControlCreate(Descs[i]);
 	}
 }
 

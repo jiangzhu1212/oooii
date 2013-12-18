@@ -251,9 +251,9 @@ oSystemProperties::oSystemProperties()
 	i.title = "TESTWindowSysDialog";
 	i.event_hook = std::bind(&oSystemProperties::EventHook, this, std::placeholders::_1);
 	i.action_hook = std::bind(&oSystemProperties::ActionHook, this, std::placeholders::_1);
-	i.shape.Style = ouro::window_style::dialog;
-	i.shape.State = ouro::window_state::restored;
-	i.shape.ClientSize = int2(410,436);
+	i.shape.style = ouro::window_style::dialog;
+	i.shape.state = ouro::window_state::restored;
+	i.shape.client_size = int2(410,436);
 	Window = window::make(i);
 
 	{
@@ -261,7 +261,7 @@ oSystemProperties::oSystemProperties()
 			HWND hWnd = (HWND)Window->native_handle();
 			RECT rClient;
 			GetClientRect(hWnd, &rClient);
-			oASSERT(all(oWinRectSize(rClient) == i.shape.ClientSize), "Client size mismatch");
+			oASSERT(all(oWinRectSize(rClient) == i.shape.client_size), "Client size mismatch");
 		#endif
 
 		// Disable anti-aliasing since on Windows ClearType seems to be non-deterministic
@@ -339,7 +339,7 @@ void oSystemProperties::EventHook(const oGUI_EVENT_DESC& _Event)
 	{
 		case ouro::gui_event::creating:
 		{
-			oCHECK0(Reload((HWND)_Event.hWindow, _Event.AsCreate().Shape.ClientSize));
+			oCHECK0(Reload((HWND)_Event.hWindow, _Event.AsCreate().Shape.client_size));
 			break;
 		}
 	}

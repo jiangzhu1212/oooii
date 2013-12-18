@@ -348,15 +348,15 @@ bool oD3D11Device::CreatePrimaryRenderTarget(ouro::window* _pWindow, ouro::surfa
 	if (SwapChain)
 		return oErrorSetLast(std::errc::protocol_error, "There already exists a primary render target, only one can exist for a given device at a time.");
 
-	oGUI_WINDOW_SHAPE_DESC s = _pWindow->shape();
-	if (ouro::has_statusbar(s.Style))
+	ouro::window_shape s = _pWindow->shape();
+	if (ouro::has_statusbar(s.style))
 		return oErrorSetLast(std::errc::invalid_argument, "A window used for rendering must not have a status bar");
 
 	try
 	{
 		SwapChain = dxgi::make_swap_chain(D3DDevice
 			, false
-			, max(int2(1,1), s.ClientSize)
+			, max(int2(1,1), s.client_size)
 			, false
 			, surface::b8g8r8a8_unorm
 			, 0
@@ -520,7 +520,7 @@ void oD3D11Device::EndFrame()
 	FrameMutex.unlock_shared();
 }
 
-oGUI_DRAW_CONTEXT oD3D11Device::BeginOSFrame()
+ouro::draw_context_handle oD3D11Device::BeginOSFrame()
 {
 	SwapChainMutex.lock_shared();
 	if (!SwapChain)
@@ -529,7 +529,7 @@ oGUI_DRAW_CONTEXT oD3D11Device::BeginOSFrame()
 		return nullptr;
 	}
 
-	return (oGUI_DRAW_CONTEXT)dxgi::get_dc(SwapChain);
+	return (ouro::draw_context_handle)dxgi::get_dc(SwapChain);
 }
 
 void oD3D11Device::EndOSFrame()

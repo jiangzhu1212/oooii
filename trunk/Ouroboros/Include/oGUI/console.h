@@ -65,7 +65,7 @@ struct info
 	bool show;
 };
   
-oGUI_WINDOW native_handle();
+ouro::window_handle native_handle();
   
 info get_info();
 void set_info(const info& _Info);
@@ -85,8 +85,8 @@ template<size_t capacity> char* get_title(fixed_string<char, capacity>& _StrDest
 void set_log(const path& _Path);
 path get_log();
 
-void icon(oGUI_ICON _hIcon);
-oGUI_ICON icon();
+void icon(ouro::icon_handle _hIcon);
+ouro::icon_handle icon();
   
 void focus(bool _Focus);
 bool has_focus();

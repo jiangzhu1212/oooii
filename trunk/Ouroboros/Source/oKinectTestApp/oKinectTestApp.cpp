@@ -196,7 +196,7 @@ private:
 
 	bool Ready;
 
-	void UpdateStatusBar(window* _pWindow, const oGUI_BONE_DESC& _Skeleton, const char* _GestureName);
+	void UpdateStatusBar(window* _pWindow, const ouro::tracking_skeleton& _Skeleton, const char* _GestureName);
 	void UpdateStatusBar(window* _pWindow, const char* _GestureName);
 
 	void MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index);
@@ -231,11 +231,11 @@ oKinectTestApp::oKinectTestApp()
 		window::init winit;
 
 		// hide while everything is initialized
-		winit.icon = (oGUI_ICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
+		winit.icon = (ouro::icon_handle)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
 		winit.client_drag_to_move = true;
-		winit.shape.State = ouro::window_state::hidden;
-		winit.shape.Style = ouro::window_style::sizable_with_statusbar;
-		winit.shape.ClientSize = int2(640, 480);
+		winit.shape.state = ouro::window_state::hidden;
+		winit.shape.style = ouro::window_style::sizable_with_statusbar;
+		winit.shape.client_size = int2(640, 480);
 
 		KinectWindows.resize(nKinects);
 		for (int i = 0; i < nKinects; i++)
@@ -251,7 +251,7 @@ oKinectTestApp::oKinectTestApp()
 			int SectionWidths[4] = { kCoordSpace, kCoordSpace, kCoordSpace, oInvalid };
 			w.Window->set_num_status_sections(SectionWidths);
 
-			oGUI_BONE_DESC s;
+			ouro::tracking_skeleton s;
 			UpdateStatusBar(w.Window.get(), s, "<Gesture>");
 		}
 
@@ -336,13 +336,13 @@ oKinectTestApp::oKinectTestApp()
 	Ready = true;
 }
 
-void oKinectTestApp::UpdateStatusBar(window* _pWindow, const oGUI_BONE_DESC& _Skeleton, const char* _GestureName)
+void oKinectTestApp::UpdateStatusBar(window* _pWindow, const ouro::tracking_skeleton& _Skeleton, const char* _GestureName)
 {
 	// this doesn't differentiate between multiple skeletons yet...
 	#define kCoordFormat "%c: %.02f %.02f %.02f"
-	const float4& H = _Skeleton.Positions[ouro::skeleton_bone::head];
-	const float4& L = _Skeleton.Positions[ouro::skeleton_bone::hand_left];
-	const float4& R = _Skeleton.Positions[ouro::skeleton_bone::hand_right];
+	const float4& H = _Skeleton.positions[ouro::skeleton_bone::head];
+	const float4& L = _Skeleton.positions[ouro::skeleton_bone::hand_left];
+	const float4& R = _Skeleton.positions[ouro::skeleton_bone::hand_right];
 	_pWindow->set_status_text(0, kCoordFormat, 'H', H.x, H.y, H.z);
 	_pWindow->set_status_text(1, kCoordFormat, 'L', L.x, L.y, L.z);
 	_pWindow->set_status_text(2, kCoordFormat, 'R', R.x, R.y, R.z);
@@ -373,7 +373,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 		oGUI_FONT_DESC fd;
 		oGDIGetFontDesc(_hFont, &fd);
 
-		oGUI_BONE_DESC Skeleton;
+		ouro::tracking_skeleton Skeleton;
 		int SkelIndex = 0;
 		float VerticalOffset = 0.0f;
 		while (_pKinect->GetSkeletonByIndex(SkelIndex, &Skeleton))
@@ -384,8 +384,8 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 			td.Position = float2(0.0f, VerticalOffset);
 			td.Size = _ClientSize;
 			td.Shadow = Black;
-			const float4& h = Skeleton.Positions[ouro::skeleton_bone::hip_center];
-			const float4& hr = Skeleton.Positions[ouro::skeleton_bone::ankle_right];
+			const float4& h = Skeleton.positions[ouro::skeleton_bone::hip_center];
+			const float4& hr = Skeleton.positions[ouro::skeleton_bone::ankle_right];
 			mstring text;
 			snprintf(text, "HIP: %.02f %.02f %.02f\nRANKLE: %.02f %.02f %.02f", h.x, h.y, h.z, hr.x, hr.y, hr.z);
 			oGDIDrawText(hDC, td, text);
@@ -394,7 +394,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 			VerticalOffset += oWinRectH(rText);
 
 			if (!_HeadMessages[SkelIndex].empty())
-				oGDIDrawBoneText(hDC, rTarget, Skeleton.Positions[ouro::skeleton_bone::head], ouro::alignment::bottom_center, int2(0, -75), ouro::alignment::bottom_center, _HeadMessages[SkelIndex]);
+				oGDIDrawBoneText(hDC, rTarget, Skeleton.positions[ouro::skeleton_bone::head], ouro::alignment::bottom_center, int2(0, -75), ouro::alignment::bottom_center, _HeadMessages[SkelIndex]);
 
 			SkelIndex++;
 		}
@@ -415,7 +415,7 @@ void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 		case ouro::gui_event::sized:
 		{
 			display::info di = display::get_info(kw.Window->display_id());
-			float2 Ratio = float2(_Event.AsShape().Shape.ClientSize) / float2(int2(di.mode.width, di.mode.height));
+			float2 Ratio = float2(_Event.AsShape().Shape.client_size) / float2(int2(di.mode.width, di.mode.height));
 			float R = max(Ratio);
 			oGUI_FONT_DESC fd;
 			fd.PointSize = oInt(round(R * 35.0f));
@@ -523,10 +523,10 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 			ouro::windows::skeleton::bone_info Skeleton;
 			ouro::windows::skeleton::get_info((ouro::windows::skeleton::handle)_Action.hSkeleton, &Skeleton);
 			
-			oGUI_BONE_DESC skel;
-			skel.SourceID = Skeleton.source_id;
-			skel.Clipping = *(oGUI_TRACKING_CLIPPING*)&Skeleton.clipping;
-			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.Positions.size(), skel.Positions.begin());
+			ouro::tracking_skeleton skel;
+			skel.source_id = Skeleton.source_id;
+			skel.clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
+			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.positions.size(), skel.positions.begin());
 			
 			AirKeyboard->Update(skel, _Action.TimestampMS);
 

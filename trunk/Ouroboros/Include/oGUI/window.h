@@ -42,7 +42,7 @@ class basic_window
 {
 public:
 	// environmental API
-	virtual oGUI_WINDOW native_handle() const = 0;
+	virtual ouro::window_handle native_handle() const = 0;
 	virtual display::id display_id() const = 0;
 	virtual bool is_window_thread() const = 0;
   
@@ -76,12 +76,12 @@ public:
 
 
 	// border/decoration API
-	virtual void icon(oGUI_ICON _hIcon) = 0;
-	virtual oGUI_ICON icon() const = 0;
+	virtual void icon(ouro::icon_handle _hIcon) = 0;
+	virtual ouro::icon_handle icon() const = 0;
 
 	// sets the cursor to use when cursor_state::user is specified in client_cursor_state
-	virtual void user_cursor(oGUI_CURSOR _hCursor) = 0;
-	virtual oGUI_CURSOR user_cursor() const = 0;
+	virtual void user_cursor(ouro::cursor_handle _hCursor) = 0;
+	virtual ouro::cursor_handle user_cursor() const = 0;
 
 	virtual void client_cursor_state(cursor_state::value _State) = 0;
 	virtual cursor_state::value client_cursor_state() const = 0;
@@ -135,9 +135,9 @@ public:
 	{}
   
 		const char* title;
-		oGUI_ICON icon;
+		ouro::icon_handle icon;
 		void* create_user_data; // user data accessible in the create event
-		oGUI_CURSOR cursor;
+		ouro::cursor_handle cursor;
 		cursor_state::value cursor_state;
 		window_sort_order::value sort_order;
 		bool debug;
@@ -150,24 +150,24 @@ public:
 		// construction.
 		oGUI_EVENT_HOOK event_hook;
 		oGUI_ACTION_HOOK action_hook;
-		oGUI_WINDOW_SHAPE_DESC shape;
+		window_shape shape;
 	};
   
 	static std::shared_ptr<window> make(const init& _Init);
 
 
 	// shape API
-	virtual void shape(const oGUI_WINDOW_SHAPE_DESC& _Shape) = 0;
-	virtual oGUI_WINDOW_SHAPE_DESC shape() const = 0;
-	void state(window_state::value _State) override { oGUI_WINDOW_SHAPE_DESC s; s.State = _State; shape(s); }
-	window_state::value state() const override { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.State; }
-	void style(window_style::value _Style) { oGUI_WINDOW_SHAPE_DESC s; s.Style = _Style; shape(s); }
-	window_style::value style() const { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.Style; }
+	virtual void shape(const window_shape& _Shape) = 0;
+	virtual window_shape shape() const = 0;
+	void state(window_state::value _State) override { window_shape s; s.state = _State; shape(s); }
+	window_state::value state() const override { window_shape s = shape(); return s.state; }
+	void style(window_style::value _Style) { window_shape s; s.style = _Style; shape(s); }
+	window_style::value style() const { window_shape s = shape(); return s.style; }
 
-	void client_position(const int2& _ClientPosition) override { oGUI_WINDOW_SHAPE_DESC s; s.ClientPosition = _ClientPosition; shape(s); }
-	int2 client_position() const override { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.ClientPosition; }
-	void client_size(const int2& _ClientSize) { oGUI_WINDOW_SHAPE_DESC s; s.ClientSize = _ClientSize; shape(s); }
-	int2 client_size() const override { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.ClientSize; }
+	void client_position(const int2& _ClientPosition) override { window_shape s; s.client_position = _ClientPosition; shape(s); }
+	int2 client_position() const override { window_shape s = shape(); return s.client_position; }
+	void client_size(const int2& _ClientSize) { window_shape s; s.client_size = _ClientSize; shape(s); }
+	int2 client_size() const override { window_shape s = shape(); return s.client_size; }
  
   
 	// border/decoration API
@@ -186,8 +186,8 @@ public:
 	template<size_t size> char* get_status_text(char (&_StrDestination)[size], int _StatusSectionIndex) const { return get_status_text(_StrDestination, size, _StatusSectionIndex); }
 	template<size_t capacity> char* get_status_text(fixed_string<char, capacity>& _StrDestination, int _StatusSectionIndex) const { return get_status_text(_StrDestination, _StrDestination.capacity(), _StatusSectionIndex); }
 
-	virtual void status_icon(int _StatusSectionIndex, oGUI_ICON _hIcon) = 0;
-	virtual oGUI_ICON status_icon(int _StatusSectionIndex) const = 0;
+	virtual void status_icon(int _StatusSectionIndex, ouro::icon_handle _hIcon) = 0;
+	virtual ouro::icon_handle status_icon(int _StatusSectionIndex) const = 0;
 
  
 	// extended input API

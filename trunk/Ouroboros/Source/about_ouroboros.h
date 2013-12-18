@@ -41,7 +41,7 @@ static const char* OUROBOROS_COMPONENT_COMMENTS = oOUROBOROS_EXTERNALS;
 
 #define oDECLARE_ABOUT_INFO(_AboutInfoVariable, _Icon) \
 	ouro::about::info _AboutInfoVariable; \
-	_AboutInfoVariable.icon = (oGUI_ICON)_Icon; \
+	_AboutInfoVariable.icon = (ouro::icon_handle)_Icon; \
 	_AboutInfoVariable.website = OUROBOROS_WEBSITE; \
 	_AboutInfoVariable.issue_site = OUROBOROS_SUPPORT; \
 	_AboutInfoVariable.components = OUROBOROS_COMPONENTS; \

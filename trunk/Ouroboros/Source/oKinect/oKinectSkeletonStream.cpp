@@ -155,7 +155,7 @@ void oKinectSkeletonStream::TrackClosestSkeletons(INuiSensor* _pSensor, const NU
 
 void oKinectSkeletonStream::CheckTrackingTimeouts() threadsafe
 {
-	oGUI_WINDOW hWnd = nullptr;
+	ouro::window_handle hWnd = nullptr;
 	if (oThreadsafe(this)->Window)
 	{
 		oFOR(auto& S, oThreadsafe(this)->Skeletons)

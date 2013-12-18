@@ -52,8 +52,8 @@ struct oKinectImpl : oKinect
 	bool MapRead(oKINECT_FRAME_TYPE _Type, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pDestination) const threadsafe override;
 	void UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe override;
 
-	bool GetSkeletonByIndex(int _PlayerIndex, oGUI_BONE_DESC* _pSkeleton) const threadsafe override;
-	bool GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _pSkeleton) const threadsafe override;
+	bool GetSkeletonByIndex(int _PlayerIndex, ouro::tracking_skeleton* _pSkeleton) const threadsafe override;
+	bool GetSkeletonByID(unsigned int _ID, ouro::tracking_skeleton* _pSkeleton) const threadsafe override;
 
 	// @tony: These should become threadsafe...
 

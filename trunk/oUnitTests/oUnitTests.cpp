@@ -86,7 +86,7 @@ void InitEnv()
 
 #if defined(WIN64) || defined(WIN32)
 	oGDIScopedObject<HICON> hIcon = oGDILoadIcon(IDI_APPICON);
-	console::icon((oGUI_ICON)(HICON)hIcon);
+	console::icon((ouro::icon_handle)(HICON)hIcon);
 #endif
 }
 

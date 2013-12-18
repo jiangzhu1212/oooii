@@ -265,7 +265,7 @@ int2 oKinectSkeletonToScreen(
 }
 
 int oKinectCalcScreenSpacePositions(
-	const oGUI_BONE_DESC& _Skeleton
+	const ouro::tracking_skeleton& _Skeleton
 	, const int2& _TargetPosition
 	, const int2& _TargetDimensions
 	, const int2& _DepthBufferResolution
@@ -274,7 +274,7 @@ int oKinectCalcScreenSpacePositions(
 	int NumValid = 0;
 	for (size_t i = 0; i < ouro::skeleton_bone::count; i++)
 	{
-		_ScreenSpacePositions[i] = oKinectSkeletonToScreen(_Skeleton.Positions[i], _TargetPosition, _TargetDimensions, _DepthBufferResolution);
+		_ScreenSpacePositions[i] = oKinectSkeletonToScreen(_Skeleton.positions[i], _TargetPosition, _TargetDimensions, _DepthBufferResolution);
 		if (_ScreenSpacePositions[i].x != oDEFAULT)
 			NumValid++;
 	}
@@ -284,10 +284,10 @@ int oKinectCalcScreenSpacePositions(
 
 #endif // oHAS_KINECT_SDK
 
-void oKinectCalcBoneSpacePositions(ouro::skeleton_bone::value _OriginBone, oGUI_BONE_DESC& _Skeleton)
+void oKinectCalcBoneSpacePositions(ouro::skeleton_bone::value _OriginBone, ouro::tracking_skeleton& _Skeleton)
 {
-	const float3 Offset = _Skeleton.Positions[_OriginBone].xyz();
-	oFOR(auto& P, _Skeleton.Positions)
+	const float3 Offset = _Skeleton.positions[_OriginBone].xyz();
+	oFOR(auto& P, _Skeleton.positions)
 	{
 		float3 NewPos = P.xyz() - Offset;
 		P.x = NewPos.x;

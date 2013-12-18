@@ -114,7 +114,7 @@ public:
 private:
 	std::shared_ptr<window> Window;
 	std::shared_ptr<ouro::about> About;
-	oGUI_MENU Menus[oWMENU_COUNT];
+	ouro::menu_handle Menus[oWMENU_COUNT];
 	oWindowTestAppPulseContext PulseContext;
 	oGUIMenuEnumRadioListHandler MERL; 
 	ouro::window_state::value PreFullscreenState;
@@ -156,12 +156,12 @@ oWindowTestApp::oWindowTestApp()
 	{
 		window::init i;
 		i.title = "oWindowTestApp";
-		i.icon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
+		i.icon = (ouro::icon_handle)oGDILoadIcon(IDI_APPICON);
 		i.action_hook = std::bind(&oWindowTestApp::ActionHook, this, oBIND1);
 		i.event_hook = std::bind(&oWindowTestApp::EventHook, this, oBIND1);
-		i.shape.ClientSize = int2(320, 240);
-		i.shape.State = ouro::window_state::hidden;
-		i.shape.Style = ouro::window_style::sizable_with_menu_and_statusbar;
+		i.shape.client_size = int2(320, 240);
+		i.shape.state = ouro::window_state::hidden;
+		i.shape.style = ouro::window_style::sizable_with_menu_and_statusbar;
 		i.alt_f4_closes = true;
 		i.cursor_state = ouro::cursor_state::hand;
 		i.debug = true;
@@ -196,13 +196,13 @@ bool oWindowTestApp::CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 
 	oGUIMenuAppendItem(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
 
-	oGUIMenuAppendEnumItems(ouro::window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.Shape.Style);
+	oGUIMenuAppendEnumItems(ouro::window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.Shape.style);
 	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle)
 	{
 		Window->style((ouro::window_style::value)_BorderStyle);
 	});
 
-	oGUIMenuAppendEnumItems(ouro::window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.Shape.State);
+	oGUIMenuAppendEnumItems(ouro::window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.Shape.state);
 	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State)
 	{
 		Window->show((ouro::window_state::value)_State);
@@ -296,16 +296,16 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 			oTRACE("ouro::gui_event::moving");
 			break;
 		case ouro::gui_event::moved:
-			oTRACE("ouro::gui_event::moved %dx%d", _Event.AsShape().Shape.ClientPosition.x, _Event.AsShape().Shape.ClientPosition.y);
+			oTRACE("ouro::gui_event::moved %dx%d", _Event.AsShape().Shape.client_position.x, _Event.AsShape().Shape.client_position.y);
 			break;
 		case ouro::gui_event::sizing:
-			oTRACE("ouro::gui_event::sizing %s %dx%d", as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			oTRACE("ouro::gui_event::sizing %s %dx%d", as_string(_Event.AsShape().Shape.state), _Event.AsShape().Shape.client_size.x, _Event.AsShape().Shape.client_size.y);
 			break;
 		case ouro::gui_event::sized:
 		{
-			oTRACE("ouro::gui_event::sized %s %dx%d", as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
-			CheckState(_Event.AsShape().Shape.State);
-			CheckStyle(_Event.AsShape().Shape.Style);
+			oTRACE("ouro::gui_event::sized %s %dx%d", as_string(_Event.AsShape().Shape.state), _Event.AsShape().Shape.client_size.x, _Event.AsShape().Shape.client_size.y);
+			CheckState(_Event.AsShape().Shape.state);
+			CheckStyle(_Event.AsShape().Shape.style);
 
 			// center the button
 			{
@@ -405,11 +405,11 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			{
 				case oWHK_DEFAULT_STYLE:
 				{
-					oGUI_WINDOW_SHAPE_DESC s;
-					s.State = Window->state();
-					if (s.State == ouro::window_state::fullscreen)
-						s.State = ouro::window_state::restored;
-					s.Style = ouro::window_style::sizable_with_menu_and_statusbar;
+					ouro::window_shape s;
+					s.state = Window->state();
+					if (s.state == ouro::window_state::fullscreen)
+						s.state = ouro::window_state::restored;
+					s.style = ouro::window_style::sizable_with_menu_and_statusbar;
 					Window->shape(s);
 					break;
 				}

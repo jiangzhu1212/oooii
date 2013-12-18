@@ -422,7 +422,7 @@ interface oGPUDevice : oInterface
 	// rendering. All OS calls should occur in between BeginOSFrame and EndOSFrame
 	// and this should be called after EndFrame, but before Present to ensure no 
 	// tearing.
-	virtual oGUI_DRAW_CONTEXT BeginOSFrame() = 0;
+	virtual ouro::draw_context_handle BeginOSFrame() = 0;
 	virtual void EndOSFrame() = 0;
 
 	// This should only be called on same thread as the window passed to 

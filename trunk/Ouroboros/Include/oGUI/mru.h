@@ -52,7 +52,7 @@ public:
 		sstring prefix;
 
 		// The MRU menu that will be populated with a call to RefreshMenu
-		oGUI_MENU menu;
+		ouro::menu_handle menu;
 
 		// The menu ID to use for the first MRU file.
 		int first_id;

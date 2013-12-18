@@ -44,7 +44,7 @@ class progress_bar : public basic_window
 {
 public:
 	static std::shared_ptr<progress_bar> make(const char* _Title
-		, oGUI_ICON _hIcon, const std::function<void()>& _OnStop);
+		, ouro::icon_handle _hIcon, const std::function<void()>& _OnStop);
 
 	virtual void stop_button(bool _Show) = 0;
 	virtual bool stop_button() const = 0;

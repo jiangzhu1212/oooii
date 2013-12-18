@@ -102,7 +102,7 @@ public:
 
 	static context& singleton();
 
-	oGUI_WINDOW native_handle() const { return (oGUI_WINDOW)GetConsoleWindow(); }
+	ouro::window_handle native_handle() const { return (ouro::window_handle)GetConsoleWindow(); }
   info get_info() const;
   void set_info(const info& _Info);
 	void set_title(const char* _Title) { oVB(SetConsoleTitle(_Title)); }
@@ -116,8 +116,8 @@ public:
 	void set_log(const path& _Path);
 	path get_log() const;
 
-	void icon(oGUI_ICON _hIcon) { oWinSetIcon(GetConsoleWindow(), (HICON)_hIcon); }
-	oGUI_ICON icon() const { return (oGUI_ICON)oWinGetIcon(GetConsoleWindow()); }
+	void icon(ouro::icon_handle _hIcon) { oWinSetIcon(GetConsoleWindow(), (HICON)_hIcon); }
+	ouro::icon_handle icon() const { return (ouro::icon_handle)oWinGetIcon(GetConsoleWindow()); }
 	void focus(bool _Focus) { oWinSetFocus(GetConsoleWindow()); }
 	bool has_focus() const { return oWinHasFocus(GetConsoleWindow()); }
   int2 size_pixels() const { RECT r; GetWindowRect(GetConsoleWindow(), &r); return int2(r.right - r.left, r.bottom - r.top); }
@@ -324,7 +324,7 @@ void context::set_handler(signal _Signal, const std::function<bool()>& _Handler)
 	}
 }
 
-oGUI_WINDOW native_handle()
+ouro::window_handle native_handle()
 {
 	return context::singleton().native_handle();
 }
@@ -359,12 +359,12 @@ path get_log()
 	return context::singleton().get_log();
 }
 
-void icon(oGUI_ICON _hIcon)
+void icon(ouro::icon_handle _hIcon)
 {
 	context::singleton().icon(_hIcon);
 }
 
-oGUI_ICON icon()
+ouro::icon_handle icon()
 {
 	return context::singleton().icon();
 }

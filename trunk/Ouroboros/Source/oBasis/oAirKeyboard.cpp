@@ -131,7 +131,7 @@ struct oAirKeyboardImpl : oAirKeyboard
 	void RemoveSkeleton(int _ID) threadsafe override;
 	int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe override;
 	void UnhookActions(int _HookID) threadsafe override;
-	void Update(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS) threadsafe override;
+	void Update(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe override;
 	void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe override;
 
 private:
@@ -140,14 +140,14 @@ private:
 	std::vector<ouro::gui_action::value> KeyAction;
 
 	oConcurrency::shared_mutex SkeletonsMutex;
-	std::map<int, oGUI_BONE_DESC> Skeletons;
+	std::map<int, ouro::tracking_skeleton> Skeletons;
 
 	oConcurrency::shared_mutex HooksMutex;
 	std::vector<oGUI_ACTION_HOOK> Hooks;
 
 	oRefCount RefCount;
 
-	void UpdateInternal(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS);
+	void UpdateInternal(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS);
 	void TriggerInternal(const oGUI_ACTION_DESC& _Action);
 };
 
@@ -192,7 +192,7 @@ void oAirKeyboardImpl::VisitKeys(const oAIR_KEY_VISITOR& _Visitor) threadsafe
 bool oAirKeyboardImpl::AddSkeleton(int _ID) threadsafe
 {
 	lock_guard<shared_mutex> lock(SkeletonsMutex);
-	return unique_set(oThreadsafe(Skeletons), _ID, oGUI_BONE_DESC());
+	return unique_set(oThreadsafe(Skeletons), _ID, ouro::tracking_skeleton());
 }
 
 void oAirKeyboardImpl::RemoveSkeleton(int _ID) threadsafe
@@ -213,26 +213,26 @@ void oAirKeyboardImpl::UnhookActions(int _HookID) threadsafe
 	ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 }
 
-void oAirKeyboardImpl::Update(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS) threadsafe
+void oAirKeyboardImpl::Update(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe
 {
 	lock_guard<shared_mutex> lockB(KeySetMutex);
 	lock_guard<shared_mutex> lockS(SkeletonsMutex);
 	oThreadsafe(this)->UpdateInternal(_Skeleton, _TimestampMS);
 }
 
-void oAirKeyboardImpl::UpdateInternal(const oGUI_BONE_DESC& _Skeleton, unsigned int _TimestampMS)
+void oAirKeyboardImpl::UpdateInternal(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS)
 {
 	if (!KeySet)
 		return;
 
-	auto it = Skeletons.find(_Skeleton.SourceID);
+	auto it = Skeletons.find(_Skeleton.source_id);
 	if (it == Skeletons.end())
 		return;
-	oGUI_BONE_DESC& OldSkeleton = it->second;
+	ouro::tracking_skeleton& OldSkeleton = it->second;
 
 	oGUI_ACTION_DESC a;
 	a.DeviceType = ouro::input_device_type::skeleton;
-	a.DeviceID = _Skeleton.SourceID;
+	a.DeviceID = _Skeleton.source_id;
 	a.TimestampMS = _TimestampMS;
 	//a.hSource = ?;
 	
@@ -244,16 +244,16 @@ void oAirKeyboardImpl::UpdateInternal(const oGUI_BONE_DESC& _Skeleton, unsigned 
 		oAABoxf NewBounds(Key.Bounds), OldBounds(Key.Bounds);
 		if (Key.Origin != ouro::skeleton_bone::invalid)
 		{
-			oTranslate(NewBounds, _Skeleton.Positions[Key.Origin].xyz());
-			oTranslate(OldBounds, OldSkeleton.Positions[Key.Origin].xyz());
+			oTranslate(NewBounds, _Skeleton.positions[Key.Origin].xyz());
+			oTranslate(OldBounds, OldSkeleton.positions[Key.Origin].xyz());
 		}
 
-		for (int i = 0; i < oCOUNTOF(_Skeleton.Positions); i++)
+		for (int i = 0; i < oCOUNTOF(_Skeleton.positions); i++)
 		{
 			if (Key.Trigger == i)
 			{
-				const float4& New = _Skeleton.Positions[i];
-				const float4& Old = OldSkeleton.Positions[i];
+				const float4& New = _Skeleton.positions[i];
+				const float4& Old = OldSkeleton.positions[i];
 
 				if (New.w >= 0.0f && Old.w >= 0.0f)
 				{

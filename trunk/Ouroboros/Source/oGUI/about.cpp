@@ -43,7 +43,7 @@ public:
 	about_impl(const info& _Info);
 
 	// basic_window API
-	oGUI_WINDOW native_handle() const override { return Window->native_handle(); }
+	ouro::window_handle native_handle() const override { return Window->native_handle(); }
 	display::id display_id() const override { return Window->display_id(); }
 	bool is_window_thread() const override { return Window->is_window_thread(); }
 	void flush_messages(bool _WaitForNext = false) override { Window->flush_messages(_WaitForNext); }
@@ -55,10 +55,10 @@ public:
 	void client_position(const int2& _ClientPosition) override { Window->client_position(_ClientPosition); }
 	int2 client_position() const override { return Window->client_position(); }
 	int2 client_size() const override { return Window->client_size(); }
-	void icon(oGUI_ICON _hIcon) override { Window->icon(_hIcon); }
-	oGUI_ICON icon() const override { return Window->icon(); }
-	void user_cursor(oGUI_CURSOR _hCursor) override { Window->user_cursor(_hCursor); }
-	oGUI_CURSOR user_cursor() const override { return Window->user_cursor(); }
+	void icon(ouro::icon_handle _hIcon) override { Window->icon(_hIcon); }
+	ouro::icon_handle icon() const override { return Window->icon(); }
+	void user_cursor(ouro::cursor_handle _hCursor) override { Window->user_cursor(_hCursor); }
+	ouro::cursor_handle user_cursor() const override { return Window->user_cursor(); }
 	void client_cursor_state(cursor_state::value _State) override { Window->client_cursor_state(_State); }
 	cursor_state::value client_cursor_state() const override { return Window->client_cursor_state(); }
 	void set_titlev(const char* _Format, va_list _Args) override { Window->set_titlev(_Format, _Args); }
@@ -94,7 +94,7 @@ private:
 		AB_CONTROL_COUNT,
 	};
 
-	std::array<oGUI_WINDOW, AB_CONTROL_COUNT> Controls;
+	std::array<ouro::window_handle, AB_CONTROL_COUNT> Controls;
 
 private:
 	
@@ -133,12 +133,12 @@ about_impl::about_impl(const info& _Info)
 	i.create_user_data = &Init;
 	i.action_hook = std::bind(&about_impl::on_action, this, std::placeholders::_1);
 	i.event_hook = std::bind(&about_impl::on_event, this, std::placeholders::_1);
-	i.shape.State = window_state::hidden;
-	i.shape.Style = window_style::dialog;
-	i.shape.ClientSize = int2(320, 140);
+	i.shape.state = window_state::hidden;
+	i.shape.style = window_style::dialog;
+	i.shape.client_size = int2(320, 140);
 
 	if (oSTRVALID(_Info.components))
-		i.shape.ClientSize.y += kComponentHeight;
+		i.shape.client_size.y += kComponentHeight;
 	
 	Window = window::make(i);
 }
@@ -159,7 +159,7 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	const int2 kIconSize(75, 75);
 	const int2 kIconPos(0, 0);
 
-	const int2 kModulePathSize(_CreateEvent.Shape.ClientSize.x - kInset.x * 2, 23);
+	const int2 kModulePathSize(_CreateEvent.Shape.client_size.x - kInset.x * 2, 23);
 	const int2 kModulePathPos(kInset.x, kIconPos.y + kIconSize.y);
 	
 	const int2 kModuleInfoSize(220, 40);
@@ -169,9 +169,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	const int2 kWebsitePos(kModuleInfoPos.x, kModuleInfoPos.y + kModuleInfoSize.y);
 
 	const int2 kIssueSiteSize(75, 23);
-	const int2 kIssueSitePos(_CreateEvent.Shape.ClientSize.x - kIssueSiteSize.x - kInset.x, kWebsitePos.y);
+	const int2 kIssueSitePos(_CreateEvent.Shape.client_size.x - kIssueSiteSize.x - kInset.x, kWebsitePos.y);
 
-	const int2 kComponentGroupSize(_CreateEvent.Shape.ClientSize.x - kInset.x * 2, kComponentHeight);
+	const int2 kComponentGroupSize(_CreateEvent.Shape.client_size.x - kInset.x * 2, kComponentHeight);
 	const int2 kComponentGroupPos(kInset.x, kIconPos.y + kIconSize.y + 20);
 
 	const int2 kComponentListSize(90, kComponentGroupSize.y - 21);
@@ -182,7 +182,7 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 
 	const int2 kButtonSize(75, 23);
 
-	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.Shape.ClientSize));
+	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.Shape.client_size));
 	
 	oGUI_CONTROL_DESC Descs[AB_CONTROL_COUNT];
 
@@ -342,7 +342,7 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 		{
 			Descs[i].hParent = _CreateEvent.hWindow;
 			Descs[i].ID = i;
-			Controls[i] = (oGUI_WINDOW)oWinControlCreate(Descs[i]);
+			Controls[i] = (ouro::window_handle)oWinControlCreate(Descs[i]);
 		}
 		else
 			Controls[i] = nullptr;

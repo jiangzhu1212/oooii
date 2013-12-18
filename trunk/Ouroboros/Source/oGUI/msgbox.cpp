@@ -465,7 +465,7 @@ void set_next_MessageBox_WndProc(HWND _hParent)
 		WFNWCV::Hook = SetWindowsHookEx(WH_CALLWNDPROC, (HOOKPROC)WFNWCV::install, nullptr, GetWindowThreadProcessId(_hParent, nullptr));
 }
 
-msg_result::value msgboxv(msg_type::value _Type, oGUI_WINDOW _hParent, const char* _Title, const char* _Format, va_list _Args)
+msg_result::value msgboxv(msg_type::value _Type, ouro::window_handle _hParent, const char* _Title, const char* _Format, va_list _Args)
 {
 	static const unsigned int _TimeoutMS = INFINITE;
 
@@ -494,7 +494,7 @@ msg_result::value msgboxv(msg_type::value _Type, oGUI_WINDOW _hParent, const cha
 			// pass thru
 
 		case msg_type::notify:
-			notification_area::show_message((oGUI_WINDOW)hWnd, 0, (oGUI_ICON)hIcon, __max(2000, _TimeoutMS), _Title, msg.data());
+			notification_area::show_message((ouro::window_handle)hWnd, 0, (ouro::icon_handle)hIcon, __max(2000, _TimeoutMS), _Title, msg.data());
 			result = msg_result::ignore;
 			break;
 

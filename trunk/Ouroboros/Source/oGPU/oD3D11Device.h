@@ -82,7 +82,7 @@ struct oD3D11Device : oGPUDevice
 	bool ReadQuery(oGPUQuery* _pQuery, void* _pData, uint _SizeofData) override;
 	bool BeginFrame() override;
 	void EndFrame() override;
-	oGUI_DRAW_CONTEXT BeginOSFrame() override;
+	ouro::draw_context_handle BeginOSFrame() override;
 	void EndOSFrame() override;
 	bool IsFullscreenExclusive() const override;
 	bool SetFullscreenExclusive(bool _Fullscreen) override;

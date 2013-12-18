@@ -86,15 +86,15 @@ public:
 	}
 
 	// oWindow forwarding
-	oGUI_WINDOW native_handle() const override { return Window->native_handle(); }
+	ouro::window_handle native_handle() const override { return Window->native_handle(); }
 	ouro::display::id display_id() const override { return Window->display_id(); }
 	bool is_window_thread() const override { return Window->is_window_thread(); }
-	void shape(const oGUI_WINDOW_SHAPE_DESC& _Shape) override { Window->shape(_Shape); }
-	oGUI_WINDOW_SHAPE_DESC shape() const override { return Window->shape(); }
-	void icon(oGUI_ICON _hIcon) override { Window->icon(_hIcon); }
-	oGUI_ICON icon() const override { return Window->icon(); }
-	void user_cursor(oGUI_CURSOR _hCursor) override { Window->user_cursor(_hCursor); }
-	oGUI_CURSOR user_cursor() const override { return Window->user_cursor(); }
+	void shape(const ouro::window_shape& _Shape) override { Window->shape(_Shape); }
+	ouro::window_shape shape() const override { return Window->shape(); }
+	void icon(ouro::icon_handle _hIcon) override { Window->icon(_hIcon); }
+	ouro::icon_handle icon() const override { return Window->icon(); }
+	void user_cursor(ouro::cursor_handle _hCursor) override { Window->user_cursor(_hCursor); }
+	ouro::cursor_handle user_cursor() const override { return Window->user_cursor(); }
 	void client_cursor_state(ouro::cursor_state::value _State) override { Window->client_cursor_state(_State); }
 	ouro::cursor_state::value client_cursor_state() const override { return Window->client_cursor_state(); }
 	void set_titlev(const char* _Format, va_list _Args) override { return Window->set_titlev(_Format, _Args); }
@@ -103,8 +103,8 @@ public:
 	int get_num_status_sections(int* _pStatusSectionWidths = nullptr, size_t _MaxNumStatusSectionWidths = 0) const override { return Window->get_num_status_sections(_pStatusSectionWidths, _MaxNumStatusSectionWidths); }
 	void set_status_textv(int _StatusSectionIndex, const char* _Format, va_list _Args) override { Window->set_status_textv(_StatusSectionIndex, _Format, _Args); }
 	char* get_status_text(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const override { return Window->get_status_text(_StrDestination, _SizeofStrDestination, _StatusSectionIndex); }
-	void status_icon(int _StatusSectionIndex, oGUI_ICON _hIcon) override { Window->status_icon(_StatusSectionIndex, _hIcon); }
-	oGUI_ICON status_icon(int _StatusSectionIndex) const override { return Window->status_icon(_StatusSectionIndex); }
+	void status_icon(int _StatusSectionIndex, ouro::icon_handle _hIcon) override { Window->status_icon(_StatusSectionIndex, _hIcon); }
+	ouro::icon_handle status_icon(int _StatusSectionIndex) const override { return Window->status_icon(_StatusSectionIndex); }
 	void parent(const std::shared_ptr<basic_window>& _Parent) override { Window->parent(_Parent); }
 	std::shared_ptr<basic_window> parent() const override { return Window->parent(); }
 	void owner(const std::shared_ptr<basic_window>& _Owner) override { Window->owner(_Owner); }
@@ -172,9 +172,8 @@ oWebAppWindowImpl::oWebAppWindowImpl( const char* _pTitle, unsigned short _Serve
 	init.title = _pTitle;
 	init.event_hook = std::bind(&oWebAppWindowImpl::OnEvent, this, oBIND1);
 	init.action_hook = nullptr;
-	init.shape.Style = ouro::window_style::fixed;
-	init.shape.ClientSize = int2(250,90);
-	//init.shape.EnableMainLoopEvent = true;
+	init.shape.style = ouro::window_style::fixed;
+	init.shape.client_size = int2(250,90);
 
 	try { Window = window::make(init); }
 	catch (std::exception& e)
@@ -209,7 +208,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 		case ouro::gui_event::creating:
 		{
 			oGUI_CONTROL_DESC ControlDesc;
-			ControlDesc.hParent = (oGUI_WINDOW)_Event.hWindow;
+			ControlDesc.hParent = (ouro::window_handle)_Event.hWindow;
 
 			// Make the link
 			{
