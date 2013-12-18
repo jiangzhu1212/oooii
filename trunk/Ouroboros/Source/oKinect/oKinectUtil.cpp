@@ -29,7 +29,7 @@
 
 using namespace ouro;
 
-static_assert(NUI_SKELETON_POSITION_COUNT == oGUI_BONE_COUNT, "bone count mismatch");
+static_assert(NUI_SKELETON_POSITION_COUNT == ouro::skeleton_bone::count, "bone count mismatch");
 
 DWORD oKinectGetInitFlags(oKINECT_FEATURES _Features)
 {
@@ -48,22 +48,22 @@ DWORD oKinectGetInitFlags(oKINECT_FEATURES _Features)
 	return 0;
 }
 
-oGUI_INPUT_DEVICE_STATUS oKinectStatusFromHR(HRESULT _hrNuiStatus)
+ouro::input_device_status::value oKinectStatusFromHR(HRESULT _hrNuiStatus)
 {
 	switch (_hrNuiStatus)
 	{
-		case S_OK: return oGUI_INPUT_DEVICE_READY;
-		case S_NUI_INITIALIZING: return oGUI_INPUT_DEVICE_INITIALIZING;
-		case E_NUI_NOTCONNECTED: return oGUI_INPUT_DEVICE_NOT_CONNECTED;
-		case E_NUI_NOTGENUINE: return oGUI_INPUT_DEVICE_IS_CLONE;
-		case E_NUI_NOTSUPPORTED: return oGUI_INPUT_DEVICE_NOT_SUPPORTED;
-		case E_NUI_INSUFFICIENTBANDWIDTH: return oGUI_INPUT_DEVICE_INSUFFICIENT_BANDWIDTH;
-		case E_NUI_NOTPOWERED: return oGUI_INPUT_DEVICE_NOT_POWERED;
-		//case ???: return oGUI_INPUT_DEVICE_LOW_POWER;
-		case E_NUI_NOTREADY: return oGUI_INPUT_DEVICE_NOT_READY;
+		case S_OK: return ouro::input_device_status::ready;
+		case S_NUI_INITIALIZING: return ouro::input_device_status::initializing;
+		case E_NUI_NOTCONNECTED: return ouro::input_device_status::not_connected;
+		case E_NUI_NOTGENUINE: return ouro::input_device_status::is_clone;
+		case E_NUI_NOTSUPPORTED: return ouro::input_device_status::not_supported;
+		case E_NUI_INSUFFICIENTBANDWIDTH: return ouro::input_device_status::insufficient_bandwidth;
+		case E_NUI_NOTPOWERED: return ouro::input_device_status::not_powered;
+		//case ???: return ouro::input_device_status::low_power;
+		case E_NUI_NOTREADY: return ouro::input_device_status::not_ready;
 		default: break;
 	}
-	return oGUI_INPUT_DEVICE_NOT_READY;
+	return ouro::input_device_status::not_ready;
 }
 
 #define oKERR(err, msg) { std::errc::err, msg }
@@ -79,26 +79,26 @@ static const struct { std::errc::errc err; const char* msg; } sStatusErrc[] =
 	oKERR(no_such_device, "Kinect not powered"),
 	oKERR(resource_unavailable_try_again, "Kinect not ready"),
 };
-static_assert(oCOUNTOF(sStatusErrc) == oGUI_INPUT_DEVICE_STATUS_COUNT, "array mismatch");
+static_assert(oCOUNTOF(sStatusErrc) == ouro::input_device_status::count, "array mismatch");
 
-std::errc::errc oKinectGetErrcFromStatus(oGUI_INPUT_DEVICE_STATUS _Status)
+std::errc::errc oKinectGetErrcFromStatus(ouro::input_device_status::value _Status)
 {
 	return sStatusErrc[_Status].err;
 }
 
-const char* oKinectGetErrcStringFromStatus(oGUI_INPUT_DEVICE_STATUS _Status)
+const char* oKinectGetErrcStringFromStatus(ouro::input_device_status::value _Status)
 {
 	return sStatusErrc[_Status].msg;
 }
 
-NUI_SKELETON_POSITION_INDEX oKinectFromBone(oGUI_BONE _Bone)
+NUI_SKELETON_POSITION_INDEX oKinectFromBone(ouro::skeleton_bone::value _Bone)
 {
 	return (NUI_SKELETON_POSITION_INDEX)_Bone;
 }
 
-oGUI_BONE oKinectToBone(NUI_SKELETON_POSITION_INDEX _BoneIndex)
+ouro::skeleton_bone::value oKinectToBone(NUI_SKELETON_POSITION_INDEX _BoneIndex)
 {
-	return (oGUI_BONE)_BoneIndex;
+	return (ouro::skeleton_bone::value)_BoneIndex;
 }
 
 // Once done, this will need NuiImageStreamReleaseFrame called on the hStream 
@@ -269,10 +269,10 @@ int oKinectCalcScreenSpacePositions(
 	, const int2& _TargetPosition
 	, const int2& _TargetDimensions
 	, const int2& _DepthBufferResolution
-	, int2 _ScreenSpacePositions[oGUI_BONE_COUNT])
+	, int2 _ScreenSpacePositions[ouro::skeleton_bone::count])
 {
 	int NumValid = 0;
-	for (size_t i = 0; i < oGUI_BONE_COUNT; i++)
+	for (size_t i = 0; i < ouro::skeleton_bone::count; i++)
 	{
 		_ScreenSpacePositions[i] = oKinectSkeletonToScreen(_Skeleton.Positions[i], _TargetPosition, _TargetDimensions, _DepthBufferResolution);
 		if (_ScreenSpacePositions[i].x != oDEFAULT)
@@ -284,7 +284,7 @@ int oKinectCalcScreenSpacePositions(
 
 #endif // oHAS_KINECT_SDK
 
-void oKinectCalcBoneSpacePositions(oGUI_BONE _OriginBone, oGUI_BONE_DESC& _Skeleton)
+void oKinectCalcBoneSpacePositions(ouro::skeleton_bone::value _OriginBone, oGUI_BONE_DESC& _Skeleton)
 {
 	const float3 Offset = _Skeleton.Positions[_OriginBone].xyz();
 	oFOR(auto& P, _Skeleton.Positions)

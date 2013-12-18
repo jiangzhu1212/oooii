@@ -228,7 +228,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		return SUCCESS;
 	}
 
-	void RunServer(oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> _ServerRoutine)
+	void RunServer(std::function<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> _ServerRoutine)
 	{
 		ServerResult = _ServerRoutine(ServerResultString.c_str(), ServerResultString.capacity());
 	}
@@ -269,8 +269,8 @@ struct PLATFORM_oSocketAsync : public oTest
 			{
 				// Issue server command
 				ServerResult = FAILURE;
-				oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = oBIND(&PLATFORM_oSocketAsync::TestUDPServerASYNC, this, oBIND1, oBIND2, TestPort);
-				g->run(oBIND(&PLATFORM_oSocketAsync::RunServer, this, Func));
+				std::function<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = std::bind(&PLATFORM_oSocketAsync::TestUDPServerASYNC, this, oBIND1, oBIND2, TestPort);
+				g->run(std::bind(&PLATFORM_oSocketAsync::RunServer, this, Func));
 
 				oSocket::DESC SocketDesc;
 				SocketDesc.Protocol = oSocket::UDP;
@@ -313,8 +313,8 @@ struct PLATFORM_oSocketAsync : public oTest
 		{
 			// Issue server command	
 			ServerResult = FAILURE;
-			oFUNCTION<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = oBIND(&PLATFORM_oSocketAsync::TestTCPServerASYNC, this, oBIND1, oBIND2);
-			g->run(oBIND(&PLATFORM_oSocketAsync::RunServer, this, Func));
+			std::function<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = std::bind(&PLATFORM_oSocketAsync::TestTCPServerASYNC, this, oBIND1, oBIND2);
+			g->run(std::bind(&PLATFORM_oSocketAsync::RunServer, this, Func));
 
 			oSocket::DESC SocketDesc;
 			SocketDesc.Protocol = Protocols[i];

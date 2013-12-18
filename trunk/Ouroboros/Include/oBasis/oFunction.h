@@ -34,7 +34,7 @@ template<typename T> std::reference_wrapper<T> oBINDREF__(T& _Value) { return st
 
 #define oFUNCTION std::function
 #define oBIND std::bind
-#define oBINDREF oBINDREF__ // #defined so it's the same color as other oBIND elements for Visual Assist, et al.
+#define oBINDREF oBINDREF__ // #defined so it's the same color as other std::bind elements for Visual Assist, et al.
 #define oBIND1 std::placeholders::_1
 #define oBIND2 std::placeholders::_2
 #define oBIND3 std::placeholders::_3

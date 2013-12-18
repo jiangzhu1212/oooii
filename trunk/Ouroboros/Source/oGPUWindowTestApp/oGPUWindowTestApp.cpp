@@ -85,10 +85,10 @@ enum oWMI // menuitems
 	oWMI_FILE_EXIT,
 
 	oWMI_VIEW_STYLE_FIRST,
-	oWMI_VIEW_STYLE_LAST = oWMI_VIEW_STYLE_FIRST + oGUI_WINDOW_STYLE_COUNT - 1,
+	oWMI_VIEW_STYLE_LAST = oWMI_VIEW_STYLE_FIRST + ouro::window_style::count - 1,
 
 	oWMI_VIEW_STATE_FIRST,
-	oWMI_VIEW_STATE_LAST = oWMI_VIEW_STATE_FIRST + oGUI_WINDOW_STATE_COUNT - 1,
+	oWMI_VIEW_STATE_LAST = oWMI_VIEW_STATE_FIRST + ouro::window_state::count - 1,
 
 	oWMI_VIEW_EXCLUSIVE,
 
@@ -109,9 +109,9 @@ struct oGPUWindowClearToggle
 oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] =
 {
 	// reset style
-	{ oGUI_KEY_F2, oWHK_TOGGLE_UI_MODE, false, false, false },
-	{ oGUI_KEY_F3, oWHK_DEFAULT_STYLE, false, false, false },
-	{ oGUI_KEY_ENTER, oWHK_TOGGLE_FULLSCREEN, true, false, false },
+	{ ouro::input_key::f2, oWHK_TOGGLE_UI_MODE, false, false, false },
+	{ ouro::input_key::f3, oWHK_DEFAULT_STYLE, false, false, false },
+	{ ouro::input_key::enter, oWHK_TOGGLE_FULLSCREEN, true, false, false },
 };
 
 class oGPUWindowThread
@@ -201,14 +201,14 @@ void oGPUWindowThread::OnEvent(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_SIZED:
+		case ouro::gui_event::sized:
 		{
 			if (WindowRenderTarget)
 				WindowRenderTarget->Resize(int3(_Event.AsShape().Shape.ClientSize, 1));
 			break;
 		}
 
-		case oGUI_CLOSING:
+		case ouro::gui_event::closing:
 			Running = false;
 			break;
 
@@ -231,12 +231,12 @@ void oGPUWindowThread::Run()
 			i.title = "Render Target Window";
 			i.icon = (oGUI_ICON)oGDILoadIcon(IDI_APPICON);
 			i.action_hook = OnAction;
-			i.event_hook = oBIND(&oGPUWindowThread::OnEvent, this, oBIND1);
+			i.event_hook = std::bind(&oGPUWindowThread::OnEvent, this, oBIND1);
 			i.shape.ClientPosition = int2(0, 0); // important to think client-relative for this
 			i.shape.ClientSize = int2(256, 256); // @tony: Try making this 1,1 and see if a resize takes over
-			i.shape.State = oGUI_WINDOW_HIDDEN; // don't show the window before it is child-ized
-			i.shape.Style = oGUI_WINDOW_BORDERLESS;
-			i.cursor_state = oGUI_CURSOR_HAND;
+			i.shape.State = ouro::window_state::hidden; // don't show the window before it is child-ized
+			i.shape.Style = ouro::window_style::borderless;
+			i.cursor_state = ouro::cursor_state::hand;
 			i.alt_f4_closes = true;
 			GPUWindow = window::make(i);
 			GPUWindow->set_hotkeys(HotKeys);
@@ -301,7 +301,7 @@ private:
 	oGUI_MENU Menus[oWMENU_COUNT];
 	oGPUWindowClearToggle ClearToggle;
 	oGUIMenuEnumRadioListHandler MERL;
-	oGUI_WINDOW_STATE PreFullscreenState;
+	ouro::window_state::value PreFullscreenState;
 	bool Running;
 	bool UIMode;
 	bool AllowUIModeChange;
@@ -309,8 +309,8 @@ private:
 	void ActionHook(const oGUI_ACTION_DESC& _Action);
 	void AppEventHook(const oGUI_EVENT_DESC& _Event);
 	bool CreateMenus(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
-	void CheckState(oGUI_WINDOW_STATE _State);
-	void CheckStyle(oGUI_WINDOW_STYLE _Style);
+	void CheckState(ouro::window_state::value _State);
+	void CheckStyle(ouro::window_style::value _Style);
 	void EnableStatusBarStyles(bool _Enabled);
 	void SetUIModeInternal(bool _UIMode, const oGUI_WINDOW_SHAPE_DESC& _CurrentAppShape, const oGUI_WINDOW_SHAPE_DESC& _CurrentGPUShape);
 	void SetUIMode(bool _UIMode);
@@ -323,7 +323,7 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 	, Running(true)
 	, UIMode(true)
 	, AllowUIModeChange(true)
-	, PreFullscreenState(oGUI_WINDOW_HIDDEN)
+	, PreFullscreenState(ouro::window_state::hidden)
 	, ClearToggle(Green, Red)
 {
 	// Set up application window
@@ -334,10 +334,10 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 		i.action_hook = std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1);
 		i.event_hook = std::bind(&oGPUWindowTestApp::AppEventHook, this, std::placeholders::_1);
 		i.shape.ClientSize = int2(256, 256);
-		i.shape.State = oGUI_WINDOW_HIDDEN;
-		i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+		i.shape.State = ouro::window_state::hidden;
+		i.shape.Style = ouro::window_style::sizable_with_menu_and_statusbar;
 		i.alt_f4_closes = true;
-		i.cursor_state = oGUI_CURSOR_ARROW;
+		i.cursor_state = ouro::cursor_state::arrow;
 		AppWindow = window::make(i);
 		AppWindow->set_hotkeys(HotKeys);
 		AppWindow->start_timer((uintptr_t)&ClearToggle, 1000);
@@ -350,18 +350,18 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 
 	// Now set up separate child thread for rendering. This allows UI to be 
 	// detached from potentially slow rendering.
-	pGPUWindow = GPUWindow.Start(AppWindow, oBIND(&oGPUWindowTestApp::ActionHook, this, oBIND1), [&] { Running = false; });
+	pGPUWindow = GPUWindow.Start(AppWindow, std::bind(&oGPUWindowTestApp::ActionHook, this, oBIND1), [&] { Running = false; });
 	GPUWindow.GetRenderTarget()->SetClearColor(ClearToggle.Color[0]);
 	AppWindow->show();
 }
 
-void oGPUWindowTestApp::CheckState(oGUI_WINDOW_STATE _State)
+void oGPUWindowTestApp::CheckState(ouro::window_state::value _State)
 {
 	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STATE]
 	, oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oWMI_VIEW_STATE_FIRST + _State);
 }
 
-void oGPUWindowTestApp::CheckStyle(oGUI_WINDOW_STYLE _Style)
+void oGPUWindowTestApp::CheckStyle(ouro::window_style::value _Style)
 {
 	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STYLE]
 	, oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oWMI_VIEW_STYLE_FIRST + _Style);
@@ -370,10 +370,10 @@ void oGPUWindowTestApp::CheckStyle(oGUI_WINDOW_STYLE _Style)
 void oGPUWindowTestApp::EnableStatusBarStyles(bool _Enabled)
 {
 	// Enable styles not allowed for render target windows
-	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + oGUI_WINDOW_FIXED_WITH_STATUSBAR, _Enabled);
-	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + oGUI_WINDOW_FIXED_WITH_MENU_AND_STATUSBAR, _Enabled);
-	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + oGUI_WINDOW_SIZABLE_WITH_STATUSBAR, _Enabled);
-	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR, _Enabled);
+	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + ouro::window_style::fixed_with_statusbar, _Enabled);
+	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + ouro::window_style::fixed_with_menu_and_statusbar, _Enabled);
+	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + ouro::window_style::sizable_with_statusbar, _Enabled);
+	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + ouro::window_style::sizable_with_menu_and_statusbar, _Enabled);
 }
 
 void oGPUWindowTestApp::SetUIModeInternal(bool _UIMode, const oGUI_WINDOW_SHAPE_DESC& _CurrentAppShape, const oGUI_WINDOW_SHAPE_DESC& _CurrentGPUShape)
@@ -389,8 +389,8 @@ void oGPUWindowTestApp::SetUIModeInternal(bool _UIMode, const oGUI_WINDOW_SHAPE_
 	if (_UIMode)
 	{
 		oGUI_WINDOW_SHAPE_DESC GPUShape;
-		GPUShape.State = oGUI_WINDOW_HIDDEN;
-		GPUShape.Style = oGUI_WINDOW_BORDERLESS;
+		GPUShape.State = ouro::window_state::hidden;
+		GPUShape.Style = ouro::window_style::borderless;
 		GPUShape.ClientPosition = int2(0, 0);
 		GPUShape.ClientSize = CurAppShape.ClientSize;
 		pGPUWindow->shape(GPUShape);
@@ -404,8 +404,8 @@ void oGPUWindowTestApp::SetUIModeInternal(bool _UIMode, const oGUI_WINDOW_SHAPE_
 	{
 		AppWindow->hide();
 		oGUI_WINDOW_SHAPE_DESC GPUShape(CurAppShape);
-		if (oGUIStyleHasStatusBar(GPUShape.Style))
-			GPUShape.Style = oGUI_WINDOW_STYLE(GPUShape.Style - 2);
+		if (ouro::has_statusbar(GPUShape.Style))
+			GPUShape.Style = ouro::window_style::value(GPUShape.Style - 2);
 		pGPUWindow->parent(nullptr);
 		pGPUWindow->shape(GPUShape);
 	}
@@ -437,10 +437,10 @@ void oGPUWindowTestApp::SetUIMode(bool _UIMode)
 
 void oGPUWindowTestApp::ToggleFullscreenCooperative(window* _pWindow)
 {
-	if (_pWindow->state() != oGUI_WINDOW_FULLSCREEN)
+	if (_pWindow->state() != ouro::window_state::fullscreen)
 	{
 		PreFullscreenState = _pWindow->state();
-		_pWindow->state(oGUI_WINDOW_FULLSCREEN);
+		_pWindow->state(ouro::window_state::fullscreen);
 		AllowUIModeChange = false;
 	}
 	else
@@ -469,15 +469,15 @@ bool oGPUWindowTestApp::CreateMenus(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	// (nothing yet)
 
 	// View menu
-	oVERIFY_R(oGUIMenuAppendEnumItems(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oRTTI_OF(oGUI_WINDOW_STYLE), _CreateEvent.Shape.Style));
+	oGUIMenuAppendEnumItems(ouro::window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.Shape.Style);
 	EnableStatusBarStyles(true);
 
-	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle) { AppWindow->style((oGUI_WINDOW_STYLE)_BorderStyle); });
+	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle) { AppWindow->style((ouro::window_style::value)_BorderStyle); });
 	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST
-		, oWMI_VIEW_STYLE_FIRST + oGUI_WINDOW_SIZABLE_WITH_MENU);
+		, oWMI_VIEW_STYLE_FIRST + ouro::window_style::sizable_with_menu);
 
-	oVERIFY_R(oGUIMenuAppendEnumItems(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oRTTI_OF(oGUI_WINDOW_STATE), _CreateEvent.Shape.State));
-	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State) { AppWindow->show((oGUI_WINDOW_STATE)_State); });
+	oGUIMenuAppendEnumItems(ouro::window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.Shape.State);
+	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State) { AppWindow->show((ouro::window_state::value)_State); });
 
 	oGUIMenuAppendItem(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE, "Fullscreen E&xclusive");
 
@@ -490,7 +490,7 @@ void oGPUWindowTestApp::AppEventHook(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_TIMER:
+		case ouro::gui_event::timer:
 			if (_Event.AsTimer().Context == (uintptr_t)&ClearToggle)
 			{
 				oGPURenderTarget* pRT = GPUWindow.GetRenderTarget();
@@ -505,32 +505,32 @@ void oGPUWindowTestApp::AppEventHook(const oGUI_EVENT_DESC& _Event)
 			}
 
 			else
-				oTRACE("oGUI_TIMER");
+				oTRACE("ouro::gui_event::timer");
 			break;
-		case oGUI_ACTIVATED:
-			oTRACE("oGUI_ACTIVATED");
+		case ouro::gui_event::activated:
+			oTRACE("ouro::gui_event::activated");
 			break;
-		case oGUI_DEACTIVATED:
-			oTRACE("oGUI_DEACTIVATED");
+		case ouro::gui_event::deactivated:
+			oTRACE("ouro::gui_event::deactivated");
 			break;
-		case oGUI_CREATING:
+		case ouro::gui_event::creating:
 		{
-			oTRACE("oGUI_CREATING");
+			oTRACE("ouro::gui_event::creating");
 			if (!CreateMenus(_Event.AsCreate()))
 				oThrowLastError();
 			break;
 		}
 
-		case oGUI_SIZED:
+		case ouro::gui_event::sized:
 		{
-			oTRACE("oGUI_SIZED %s %dx%d", ouro::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
+			oTRACE("ouro::gui_event::sized %s %dx%d", ouro::as_string(_Event.AsShape().Shape.State), _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y);
 			if (pGPUWindow)
 				pGPUWindow->client_size(_Event.AsShape().Shape.ClientSize);
 			CheckState(_Event.AsShape().Shape.State);
 			CheckStyle(_Event.AsShape().Shape.Style);
 			break;
 		}
-		case oGUI_CLOSING:
+		case ouro::gui_event::closing:
 			GPUWindow.Stop();
 			break;
 
@@ -543,7 +543,7 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 {
 	switch (_Action.Action)
 	{
-		case oGUI_ACTION_MENU:
+		case ouro::gui_action::menu:
 		{
 			switch (_Action.DeviceID)
 			{
@@ -575,7 +575,7 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			break;
 		}
 
-		case oGUI_ACTION_HOTKEY:
+		case ouro::gui_action::hotkey:
 		{
 			switch (_Action.DeviceID)
 			{
@@ -589,9 +589,9 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 					{
 						oGUI_WINDOW_SHAPE_DESC s;
 						s.State = AppWindow->state();
-						if (s.State == oGUI_WINDOW_FULLSCREEN)
-							s.State = oGUI_WINDOW_RESTORED;
-						s.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+						if (s.State == ouro::window_state::fullscreen)
+							s.State = ouro::window_state::restored;
+						s.Style = ouro::window_style::sizable_with_menu_and_statusbar;
 						AppWindow->shape(s);
 					}
 					break;
@@ -616,7 +616,7 @@ void oGPUWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 					break;
 				}
 				default:
-					oTRACE("oGUI_ACTION_HOTKEY");
+					oTRACE("ouro::gui_action::hotkey");
 					break;
 			}
 			

@@ -47,8 +47,8 @@ interface oHTTPServer : oInterface
 		unsigned int ConnectionTimeoutMS;
 		unsigned int SupportedMethods;
 
-		oFUNCTION<void(const oHTTP_REQUEST& _Request, const oNetHost& _Client, oHTTP_RESPONSE* _pResponse)> StartResponse;
-		oFUNCTION<void(const void* _pContentBody)> FinishResponse;
+		std::function<void(const oHTTP_REQUEST& _Request, const oNetHost& _Client, oHTTP_RESPONSE* _pResponse)> StartResponse;
+		std::function<void(const void* _pContentBody)> FinishResponse;
 	};
 
 	virtual void GetDesc(DESC* _pDesc) = 0;

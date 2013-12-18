@@ -34,11 +34,11 @@
 
 struct oBasisTestServices
 {
-	oFUNCTION<bool(ouro::path& _AbsolutePath, const ouro::path& _RelativePath, bool _PathMustExist)> ResolvePath;
-	oFUNCTION<bool(void** _ppBuffer, size_t* _pSize, const char* _FullPath, bool _AsText)> AllocateAndLoadBuffer;
-	oFUNCTION<void(void* _pBuffer)> DeallocateLoadedBuffer;
-	oFUNCTION<int()> Rand;
-	oFUNCTION<size_t()> GetTotalPhysicalMemory;
+	std::function<bool(ouro::path& _AbsolutePath, const ouro::path& _RelativePath, bool _PathMustExist)> ResolvePath;
+	std::function<bool(void** _ppBuffer, size_t* _pSize, const char* _FullPath, bool _AsText)> AllocateAndLoadBuffer;
+	std::function<void(void* _pBuffer)> DeallocateLoadedBuffer;
+	std::function<int()> Rand;
+	std::function<size_t()> GetTotalPhysicalMemory;
 };
 
 // oBasisTests follows a pattern: all functions return true if successful, false

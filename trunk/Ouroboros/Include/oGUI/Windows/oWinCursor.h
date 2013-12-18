@@ -37,15 +37,15 @@ HCURSOR oWinGetCursor(HWND _hWnd);
 bool oWinSetCursor(HWND _hWnd, HCURSOR _hCursor);
 
 // Returns a preloaded windows HCURSOR. There is not need to free the returned
-// value. This returns nullptr for oGUI_CURSOR_NONE. The value specified
-// in _hUserCursor is returned of oGUI_CURSOR_USER is specified.
-HCURSOR oWinGetCursor(oGUI_CURSOR_STATE _State, HCURSOR _hUserCursor = nullptr);
+// value. This returns nullptr for ouro::cursor_state::none. The value specified
+// in _hUserCursor is returned of ouro::cursor_state::user is specified.
+HCURSOR oWinGetCursor(ouro::cursor_state::value _State, HCURSOR _hUserCursor = nullptr);
 
 // Sets/hides/shows a cursor over the specified HWND according to the state.
-void oWinCursorSetState(HWND _hWnd, oGUI_CURSOR_STATE _CursorState, HCURSOR _hUserCursor = nullptr);
+void oWinCursorSetState(HWND _hWnd, ouro::cursor_state::value _CursorState, HCURSOR _hUserCursor = nullptr);
 
 // Returns the state based on which cursor is set.
-oGUI_CURSOR_STATE oWinCursorGetState(HWND _hWnd);
+ouro::cursor_state::value oWinCursorGetState(HWND _hWnd);
 
 bool oWinCursorGetClipped(HWND _hWnd);
 bool oWinCursorSetClipped(HWND _hWnd, bool _Clipped = true);

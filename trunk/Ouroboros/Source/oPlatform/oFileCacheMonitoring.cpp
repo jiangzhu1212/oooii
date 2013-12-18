@@ -68,7 +68,7 @@ oFileCacheMonitoringImpl::oFileCacheMonitoringImpl(const oFileCacheMonitoring::D
 	md.TraceEvents = true;
 	md.WatchSubtree = true;
 
-	if(!oStreamMonitorCreate(md, oBIND(&oFileCacheMonitoringImpl::FolderUpdate, this, oBIND1, oBIND2), &FolderMonitor))
+	if(!oStreamMonitorCreate(md, std::bind(&oFileCacheMonitoringImpl::FolderUpdate, this, oBIND1, oBIND2), &FolderMonitor))
 		return;
 
 	*_pSuccess = true;

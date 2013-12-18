@@ -67,7 +67,7 @@ static const char* oStrStr( const char* _pStr, const char* _pSubStr, size_t _Max
 static const char* oMSBUILD_ERROR_PATTERNS[2] = {": error ", ": fatal error"};
 static const char* oMSBUILD_WARNING_PATTERN = ": warning ";
 
-static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, oFUNCTION<bool(const uri_string& _CommandName, const char* _pLog)> _CommandLogger)
+static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, std::function<bool(const uri_string& _CommandName, const char* _pLog)> _CommandLogger)
 {
 	lstring ToolName;
 	snprintf(ToolName, "%s /nodereuse:false /maxcpucount", _Settings.ToolPath);
@@ -238,7 +238,7 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 	return true;
 }
 
-bool oMSBuildParseLogfile(path_string _Logfile, bool _IncludeWarnings, oFUNCTION<bool(o_msbuild_stdout_t _WarningOrError)> _Output)
+bool oMSBuildParseLogfile(path_string _Logfile, bool _IncludeWarnings, std::function<bool(o_msbuild_stdout_t _WarningOrError)> _Output)
 {
 	intrusive_ptr<oBuffer> Buffer;
 	if (!oBufferLoad(_Logfile, &Buffer, true))

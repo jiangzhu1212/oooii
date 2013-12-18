@@ -46,7 +46,7 @@ static void FillArray(int* _Array, size_t _Start, size_t _End, thread::id* _pExe
 	if (*_pExecutionThreadID != this_thread::get_id())
 		*_pWrongThreadError = true;
 
-	oConcurrency::parallel_for(_Start, _End, oBIND(&SetLocation, oBIND1, _Start, _Array));
+	oConcurrency::parallel_for(_Start, _End, std::bind(&SetLocation, oBIND1, _Start, _Array));
 }
 
 static void CheckTest(int* _Array, size_t _Size, bool* _pResult, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)

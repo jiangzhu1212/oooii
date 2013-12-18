@@ -451,7 +451,7 @@ bool from_string(oURIParts* _pURIParts, const char* _StrSource)
 } // namespace ouro
 
 static std::regex QueryRegex("(.+?)=(.+?)&", std::tr1::regex_constants::optimize); // @tony: ok static (duplication in DLLs won't affect correctness)
-void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char* _Key, const char* _Value)> _Enumerator)
+void oURIQueryEnumKeyValuePairs(const char* _URIQuery, std::function<void(const char* _Key, const char* _Value)> _Enumerator)
 {
 	const std::cregex_token_iterator end;
 	int ArgsToCollect[] = {1,2};

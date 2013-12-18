@@ -811,7 +811,7 @@ void oTestManager_Impl::PrintDesc()
 	auto scc = make_scc(scc_protocol::svn, std::bind(system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
 
 	bool oSystemExecute(const char* _CommandLine
-		, const oFUNCTION<void(char* _Line)>& _GetLine = nullptr
+		, const std::function<void(char* _Line)>& _GetLine = nullptr
 		, int* _pExitCode = nullptr
 		, bool _ShowWindow = false
 		, unsigned int _ExecutionTimeout = oInfiniteWait);

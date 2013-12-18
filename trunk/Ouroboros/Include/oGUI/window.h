@@ -62,13 +62,13 @@ public:
 
 
 	// shape API
-	virtual void state(oGUI_WINDOW_STATE _State) = 0;
-	virtual oGUI_WINDOW_STATE state() const = 0;
-	inline void show(oGUI_WINDOW_STATE _State = oGUI_WINDOW_RESTORED) { state(_State); }
-	inline void hide() { state(oGUI_WINDOW_HIDDEN); }
-	inline void minimize() { state(oGUI_WINDOW_MINIMIZED); }
-	inline void maximize() { state(oGUI_WINDOW_MAXIMIZED); }
-	inline void restore() { state(oGUI_WINDOW_RESTORED); }
+	virtual void state(window_state::value _State) = 0;
+	virtual window_state::value state() const = 0;
+	inline void show(window_state::value _State = window_state::restored) { state(_State); }
+	inline void hide() { state(window_state::hidden); }
+	inline void minimize() { state(window_state::minimized); }
+	inline void maximize() { state(window_state::maximized); }
+	inline void restore() { state(window_state::restored); }
 
 	virtual void client_position(const int2& _ClientPosition) = 0;
 	virtual int2 client_position() const = 0;
@@ -79,19 +79,19 @@ public:
 	virtual void icon(oGUI_ICON _hIcon) = 0;
 	virtual oGUI_ICON icon() const = 0;
 
-	// sets the cursor to use when oGUI_CURSOR_USER is specified in client_cursor_state
+	// sets the cursor to use when cursor_state::user is specified in client_cursor_state
 	virtual void user_cursor(oGUI_CURSOR _hCursor) = 0;
 	virtual oGUI_CURSOR user_cursor() const = 0;
 
-	virtual void client_cursor_state(oGUI_CURSOR_STATE _State) = 0;
-	virtual oGUI_CURSOR_STATE client_cursor_state() const = 0;
+	virtual void client_cursor_state(cursor_state::value _State) = 0;
+	virtual cursor_state::value client_cursor_state() const = 0;
 
 	virtual void set_titlev(const char* _Format, va_list _Args) = 0;
 	virtual char* get_title(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 
 	inline void set_title(const char* _Format, ...) { va_list args; va_start(args, _Format); set_titlev(_Format, args); va_end(args); }
 	template<size_t size> char* get_title(char (&_StrDestination)[size]) const { return get_title(_StrDestination, size); }
-	template<size_t capacity> char* get_title(ouro::fixed_string<char, capacity>& _StrDestination) const { return get_title(_StrDestination, _StrDestination.capacity()); }
+	template<size_t capacity> char* get_title(fixed_string<char, capacity>& _StrDestination) const { return get_title(_StrDestination, _StrDestination.capacity()); }
 
 	// draw order/dependency API
 
@@ -108,8 +108,8 @@ public:
 	virtual void owner(const std::shared_ptr<basic_window>& _Owner) = 0;
 	virtual std::shared_ptr<basic_window> owner() const = 0;
 
-	virtual void sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder) = 0;
-	virtual oGUI_WINDOW_SORT_ORDER sort_order() const = 0;
+	virtual void sort_order(window_sort_order::value _SortOrder) = 0;
+	virtual window_sort_order::value sort_order() const = 0;
 
 	virtual void focus(bool _Focus) = 0;
 	virtual bool has_focus() const = 0;
@@ -126,8 +126,8 @@ public:
 		, icon(nullptr)
 		, create_user_data(nullptr)
 		, cursor(nullptr)
-		, cursor_state(oGUI_CURSOR_ARROW)
-		, sort_order(oGUI_WINDOW_SORTED)
+		, cursor_state(cursor_state::arrow)
+		, sort_order(window_sort_order::sorted)
 		, debug(false)
 		, allow_touch(false)
 		, client_drag_to_move(false)
@@ -138,14 +138,14 @@ public:
 		oGUI_ICON icon;
 		void* create_user_data; // user data accessible in the create event
 		oGUI_CURSOR cursor;
-		oGUI_CURSOR_STATE cursor_state;
-		oGUI_WINDOW_SORT_ORDER sort_order;
+		cursor_state::value cursor_state;
+		window_sort_order::value sort_order;
 		bool debug;
 		bool allow_touch;
 		bool client_drag_to_move;
 		bool alt_f4_closes;
 
-		// NOTE: The oGUI_CREATING event gets fired during construction, so if that 
+		// NOTE: The gui_event::creating event gets fired during construction, so if that 
 		// event is to be hooked it needs to be passed and hooked up during 
 		// construction.
 		oGUI_EVENT_HOOK event_hook;
@@ -159,10 +159,10 @@ public:
 	// shape API
 	virtual void shape(const oGUI_WINDOW_SHAPE_DESC& _Shape) = 0;
 	virtual oGUI_WINDOW_SHAPE_DESC shape() const = 0;
-	void state(oGUI_WINDOW_STATE _State) override { oGUI_WINDOW_SHAPE_DESC s; s.State = _State; shape(s); }
-	oGUI_WINDOW_STATE state() const override { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.State; }
-	void style(oGUI_WINDOW_STYLE _Style) { oGUI_WINDOW_SHAPE_DESC s; s.Style = _Style; shape(s); }
-	oGUI_WINDOW_STYLE style() const { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.Style; }
+	void state(window_state::value _State) override { oGUI_WINDOW_SHAPE_DESC s; s.State = _State; shape(s); }
+	window_state::value state() const override { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.State; }
+	void style(window_style::value _Style) { oGUI_WINDOW_SHAPE_DESC s; s.Style = _Style; shape(s); }
+	window_style::value style() const { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.Style; }
 
 	void client_position(const int2& _ClientPosition) override { oGUI_WINDOW_SHAPE_DESC s; s.ClientPosition = _ClientPosition; shape(s); }
 	int2 client_position() const override { oGUI_WINDOW_SHAPE_DESC s = shape(); return s.ClientPosition; }
@@ -184,7 +184,7 @@ public:
 
 	inline void set_status_text(int _StatusSectionIndex, const char* _Format, ...) { va_list args; va_start(args, _Format); set_status_textv(_StatusSectionIndex, _Format, args); va_end(args); }
 	template<size_t size> char* get_status_text(char (&_StrDestination)[size], int _StatusSectionIndex) const { return get_status_text(_StrDestination, size, _StatusSectionIndex); }
-	template<size_t capacity> char* get_status_text(ouro::fixed_string<char, capacity>& _StrDestination, int _StatusSectionIndex) const { return get_status_text(_StrDestination, _StrDestination.capacity(), _StatusSectionIndex); }
+	template<size_t capacity> char* get_status_text(fixed_string<char, capacity>& _StrDestination, int _StatusSectionIndex) const { return get_status_text(_StrDestination, _StrDestination.capacity(), _StatusSectionIndex); }
 
 	virtual void status_icon(int _StatusSectionIndex, oGUI_ICON _hIcon) = 0;
 	virtual oGUI_ICON status_icon(int _StatusSectionIndex) const = 0;
@@ -209,7 +209,7 @@ public:
 	virtual void client_drag_to_move(bool _DragMoves) = 0;
 	virtual bool client_drag_to_move() const = 0;
 
-	// If set to true, Alt-F4 will trigger an oGUI_CLOSING event. This is true by 
+	// If set to true, Alt-F4 will trigger an gui_event::closing event. This is true by 
 	// default.
 	virtual void alt_f4_closes(bool _AltF4Closes) = 0;
 	virtual bool alt_f4_closes() const = 0;
@@ -255,9 +255,9 @@ public:
 	// Schedules an oImage to be generated from the window. In the simple case,
 	// _Frame is not used and the front buffer is captured. Due to platform rules
 	// this may involve bringing the specified window to focus.
-	virtual oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const = 0;
+	virtual oStd::future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = -1, bool _IncludeBorder = false) const = 0;
 
-	// Causes an oGUI_TIMER event to occur with the specified context after the 
+	// Causes an gui_event::timer event to occur with the specified context after the 
 	// specified time. This will be called every specified milliseconds until 
 	// stop_timer is called with the same context.
 	virtual void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) = 0;

@@ -170,8 +170,8 @@ struct GPU_Traits : public oTest
 	{
 		RESULT Result = SUCCESS;
 
-		oFUNCTION<bool(oGPU_TEXTURE_TYPE _Type)> TestTextureTypeFn = 
-			oBIND(&GPU_Traits::TestTextureEnum, this, &Result, _StrStatus, _SizeofStrStatus, oBIND1);
+		std::function<bool(oGPU_TEXTURE_TYPE _Type)> TestTextureTypeFn = 
+			std::bind(&GPU_Traits::TestTextureEnum, this, &Result, _StrStatus, _SizeofStrStatus, oBIND1);
 		
 #define TEST_TEXTURE(_TextureType) \
 	if(!TestTextureTypeFn(_TextureType)) \

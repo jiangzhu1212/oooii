@@ -46,8 +46,8 @@ namespace oConcurrency {
 class block_allocator
 {
 public:
-	typedef oFUNCTION<void*(size_t _Size)> allocate_t;
-	typedef oFUNCTION<void(void* _Pointer)> deallocate_t;
+	typedef std::function<void*(size_t _Size)> allocate_t;
+	typedef std::function<void(void* _Pointer)> deallocate_t;
 
 	static const size_t max_blocks_per_chunk = fixed_block_allocator::max_num_blocks;
 

@@ -40,8 +40,8 @@
 #include <oConcurrency/thread_safe.h>
 #include <system_error>
 
-typedef oFUNCTION<void()> oTASK;
-typedef oFUNCTION<void(size_t _Index)> oINDEXED_TASK;
+typedef std::function<void()> oTASK;
+typedef std::function<void(size_t _Index)> oINDEXED_TASK;
 
 namespace oConcurrency {
 

@@ -200,7 +200,7 @@ static char* svn_parse_status_line(char* _StatusBuffer, unsigned int _UpToRevisi
 	s += strcspn(s, oWHITESPACE);
 	*s++ = 0;
 	_File.revision = 0;
-	from_string(&_File.revision, rev);
+	ouro::from_string(&_File.revision, rev);
 	if (_UpToRevision != 0 && _File.revision > _UpToRevision) _File.status = scc_status::out_of_date;
 	s += strspn(s, oWHITESPACE);
 	char* p = s;
@@ -313,7 +313,7 @@ scc_revision scc_svn::change(const char* _Path, unsigned int _Revision) const
 	*strEnd = 0;
 
 	scc_revision r;
-	from_string(&r.revision, rev);
+	ouro::from_string(&r.revision, rev);
 	r.who = strWho;
 	svn_from_string(&r.when, strWhen);
 	r.what = strWhat;

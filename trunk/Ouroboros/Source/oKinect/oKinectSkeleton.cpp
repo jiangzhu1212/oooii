@@ -44,7 +44,7 @@ oKinectSkeleton::oKinectSkeleton()
 	: LastTrackedTimestamp(0.0)
 {
 	Invalidate();
-	register_source((handle)this, oBIND(&oKinectSkeleton::GetSkeleton, this, oBIND1));
+	register_source((handle)this, std::bind(&oKinectSkeleton::GetSkeleton, this, std::placeholders::_1));
 }
 
 bool oKinectSkeletonCreate(threadsafe oKinectSkeleton** _ppSkeleton)

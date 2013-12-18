@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oGUI/Windows/win_as_string.h>
 #include <oGUI/Windows/oWinWindowing.h>
+#include <oCore/windows/win_error.h>
 
 #undef interface
 #include <Windowsx.h>
@@ -657,8 +658,9 @@ char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWIN
 		case WM_DROPFILES:
 		{
 			path_string p;
-			UINT nFiles = DragQueryFile((HDROP)_wParam, ~0u, p, oUInt(p.capacity()));
-			DragQueryFile((HDROP)_wParam, 0, p, oUInt(p.capacity()));
+			oCHECK_SIZE(UINT, p.capacity());
+			UINT nFiles = DragQueryFile((HDROP)_wParam, ~0u, p, static_cast<UINT>(p.capacity()));
+			DragQueryFile((HDROP)_wParam, 0, p, static_cast<UINT>(p.capacity()));
 			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DROPFILES hDrop=0x%x %u files starting with \"%s\"", _hWnd, _wParam, nFiles, p.c_str());
 			break;
 		}
@@ -667,24 +669,25 @@ char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWIN
 			const char* type = _wParam == GIDC_ARRIVAL ? "arrival" : "removal";
 
 			mstring Name;
-			UINT Size = oUInt(Name.capacity() * sizeof(mstring::char_type));
+			oCHECK_SIZE(UINT, Name.capacity() * sizeof(mstring::char_type));
+			UINT Size = static_cast<UINT>(Name.capacity() * sizeof(mstring::char_type));
 			GetRawInputDeviceInfo((HANDLE)_lParam, RIDI_DEVICENAME, Name.c_str(), &Size);
 
 			RID_DEVICE_INFO RIDDI;
 			Size = sizeof(RIDDI);
 			GetRawInputDeviceInfo((HANDLE)_lParam, RIDI_DEVICEINFO, &RIDDI, &Size);
-			oGUI_INPUT_DEVICE_TYPE InpType = oGUI_INPUT_DEVICE_UNKNOWN;
+			ouro::input_device_type::value InpType = ouro::input_device_type::unknown;
 			switch (RIDDI.dwType)
 			{
 				case RIM_TYPEKEYBOARD:
-					InpType = oGUI_INPUT_DEVICE_KEYBOARD;
+					InpType = ouro::input_device_type::keyboard;
 					break;
 				case RIM_TYPEMOUSE:
-					InpType = oGUI_INPUT_DEVICE_MOUSE;
+					InpType = ouro::input_device_type::mouse;
 					break;
 				default:
 				case RIM_TYPEHID:
-					InpType = oGUI_INPUT_DEVICE_UNKNOWN;
+					InpType = ouro::input_device_type::unknown;
 					break;
 			}
 
@@ -747,7 +750,8 @@ char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWIN
 			}
 
 			sstring StrGUID;
-			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, as_string::DBT(oInt(_wParam)), devtype, to_string(StrGUID, *pGUID), name);
+			oCHECK_SIZE(int, _wParam);
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, as_string::DBT(static_cast<int>(_wParam)), devtype, to_string(StrGUID, *pGUID), name);
 			break;
 		}
 		default:

@@ -106,7 +106,7 @@ private:
 	};
 
 	HWND Controls[NUM_CONTROLS];
-	oGUI_BORDER_STYLE BorderStyle;
+	ouro::border_style::value BorderStyle;
 
 	void EventHook(const oGUI_EVENT_DESC& _Event);
 	void ActionHook(const oGUI_ACTION_DESC& _Action);
@@ -116,10 +116,10 @@ void oWindowUITest::EventHook(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_SIZED:
-			oTRACE("NewClientSize = %dx%d%s", _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y, _Event.AsShape().Shape.State == oGUI_WINDOW_MINIMIZED ? " (minimized)" : "");
+		case ouro::gui_event::sized:
+			oTRACE("NewClientSize = %dx%d%s", _Event.AsShape().Shape.ClientSize.x, _Event.AsShape().Shape.ClientSize.y, _Event.AsShape().Shape.State == ouro::window_state::minimized ? " (minimized)" : "");
 			break;
-		case oGUI_CREATING:
+		case ouro::gui_event::creating:
 		{
 			OnCreate((HWND)_Event.AsCreate().hWindow, _Event.AsCreate().hMenu);
 			break;
@@ -134,21 +134,21 @@ void oWindowUITest::ActionHook(const oGUI_ACTION_DESC& _Action)
 {
 	switch (_Action.Action)
 	{
-		case oGUI_ACTION_MENU:
-		case oGUI_ACTION_HOTKEY:
+		case ouro::gui_action::menu:
+		case ouro::gui_action::hotkey:
 			OnMenuCommand((HWND)_Action.hWindow, _Action.DeviceID);
 			// pass through
-		case oGUI_ACTION_CONTROL_ACTIVATED:
+		case ouro::gui_action::control_activated:
 		{
 			ouro::lstring text;
 			oWinControlGetText(text, (HWND)_Action.hWindow);
 			oTRACE("Action %s \"%s\" code=%d", ouro::as_string(oWinControlGetType((HWND)_Action.hWindow)), text.c_str(), _Action.ActionCode);
 			break;
 		}
-		case oGUI_ACTION_KEY_DOWN:
-		case oGUI_ACTION_KEY_UP:
+		case ouro::gui_action::key_down:
+		case ouro::gui_action::key_up:
 			break;
-		case oGUI_ACTION_POINTER_MOVE:
+		case ouro::gui_action::pointer_move:
 			if (kInteractiveMode)
 				Window->set_status_text(0, "Cursor: %dx%d", (int)_Action.Position.x, (int)_Action.Position.y);
 			break;
@@ -202,7 +202,7 @@ void oWindowUITest::InitVCRControls(HWND _hParent, const int2& _Position)
 
 	oGUI_CONTROL_DESC b;
 	b.hParent = (oGUI_WINDOW)_hParent;
-	b.Type = oGUI_CONTROL_BUTTON;
+	b.Type = ouro::control_type::button;
 	b.Size = kButtonSize;
 	
 	b.Text = "9";
@@ -237,7 +237,7 @@ void oWindowUITest::InitVCRControls(HWND _hParent, const int2& _Position)
 }
 
 oWindowUITest::oWindowUITest(bool* _pSuccess)
-	: BorderStyle(oGUI_BORDER_SUNKEN)
+	: BorderStyle(ouro::border_style::sunken)
 	, Running(true)
 {
 	*_pSuccess = false;
@@ -246,8 +246,8 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	i.title = "TESTWindowControls";
 	i.event_hook = std::bind(&oWindowUITest::EventHook, this, std::placeholders::_1);
 	i.action_hook = std::bind(&oWindowUITest::ActionHook, this, std::placeholders::_1);
-	i.shape.State = oGUI_WINDOW_RESTORED;
-	i.shape.Style = oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR;
+	i.shape.State = ouro::window_state::restored;
+	i.shape.Style = ouro::window_style::sizable_with_menu_and_statusbar;
 	i.shape.ClientSize = int2(640,480);
 	Window = window::make(i);
 
@@ -271,8 +271,8 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 
 	oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] = 
 	{
-		{ oGUI_KEY_W, MENU_VIEW_WIREFRAME, false, true, false },
-		{ oGUI_KEY_S, MENU_VIEW_SOLID, false, true, false },
+		{ ouro::input_key::w, MENU_VIEW_WIREFRAME, false, true, false },
+		{ ouro::input_key::s, MENU_VIEW_SOLID, false, true, false },
 	};
 
 	Window->set_hotkeys(HotKeys);
@@ -287,7 +287,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 
 	oGUI_CONTROL_DESC ButtonDesc;
 	ButtonDesc.hParent = (oGUI_WINDOW)_hWnd;
-	ButtonDesc.Type = oGUI_CONTROL_BUTTON;
+	ButtonDesc.Type = ouro::control_type::button;
 	ButtonDesc.Text = "Push Me";
 	ButtonDesc.Position = int2(10,10);
 	ButtonDesc.Size = int2(100,20);
@@ -296,7 +296,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 
 	oGUI_CONTROL_DESC TextDesc;
 	TextDesc.hParent = (oGUI_WINDOW)_hWnd;
-	TextDesc.Type = oGUI_CONTROL_FLOATBOX;
+	TextDesc.Type = ouro::control_type::floatbox;
 	TextDesc.Text = "1.00";
 	TextDesc.Position = int2(50,50);
 	TextDesc.Size = int2(75,20);
@@ -311,7 +311,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	}
 	catch (std::exception&) {}
 
-	TextDesc.Type = oGUI_CONTROL_FLOATBOX_SPINNER;
+	TextDesc.Type = ouro::control_type::floatbox_spinner;
 	TextDesc.Position.y += 40;
 	TextDesc.ID = ID_FLOATBOX_SPINNER;
 	Controls[ID_FLOATBOX_SPINNER] = oWinControlCreate(TextDesc);
@@ -325,7 +325,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 
 	oGUI_CONTROL_DESC SliderDesc;
 	SliderDesc.hParent = (oGUI_WINDOW)_hWnd;
-	SliderDesc.Type = oGUI_CONTROL_SLIDER;
+	SliderDesc.Type = ouro::control_type::slider;
 	SliderDesc.Text = "Slider";
 	SliderDesc.Position = int2(150,60);
 	SliderDesc.Size = int2(140,25);
@@ -335,7 +335,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	oCHECK0(oWinControlSetRange(Controls[ID_SLIDER], 20, 120));
 	oCHECK0(oWinControlSetRangePosition(Controls[ID_SLIDER], 70));
 
-	SliderDesc.Type = oGUI_CONTROL_SLIDER_SELECTABLE;
+	SliderDesc.Type = ouro::control_type::slider_selectable;
 	SliderDesc.Text = "SliderSelectable";
 	SliderDesc.Position = int2(150,90);
 	SliderDesc.ID = ID_SLIDER_SELECTABLE;
@@ -347,7 +347,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 
 	oGUI_CONTROL_DESC ProgressBarDesc;
 	ProgressBarDesc.hParent = (oGUI_WINDOW)_hWnd;
-	ProgressBarDesc.Type = oGUI_CONTROL_PROGRESSBAR;
+	ProgressBarDesc.Type = ouro::control_type::progressbar;
 	ProgressBarDesc.Text = "ProgressBar";
 	ProgressBarDesc.Position = int2(150,120);
 	ProgressBarDesc.Size = int2(150,30);
@@ -363,7 +363,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	// interactive mode
 	if (kInteractiveMode)
 	{
-		ProgressBarDesc.Type = oGUI_CONTROL_PROGRESSBAR_UNKNOWN;
+		ProgressBarDesc.Type = ouro::control_type::progressbar_unknown;
 		ProgressBarDesc.Text = "Marquee";
 		ProgressBarDesc.Position = int2(150,160);
 		ProgressBarDesc.ID = ID_MARQUEE;
@@ -372,7 +372,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 
 	oGUI_CONTROL_DESC CB;
 	CB.hParent = (oGUI_WINDOW)_hWnd;
-	CB.Type = oGUI_CONTROL_COMBOBOX;
+	CB.Type = ouro::control_type::combobox;
 	CB.Text = "Init1|Init2|Init3";
 	CB.Position = int2(50,120);
 	CB.Size = int2(80,30);
@@ -382,7 +382,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, oGUI_MENU _hMenu)
 	oWinControlInsertSubItem(Controls[ID_COMBOBOX], "After3", oInvalid);
 	oWinControlInsertSubItem(Controls[ID_COMBOBOX], "Btwn2And3", 2);
 
-	CB.Type = oGUI_CONTROL_COMBOTEXTBOX;
+	CB.Type = ouro::control_type::combotextbox;
 	CB.Position = int2(50,160);
 	CB.ID = ID_COMBOTEXTBOX;
 	Controls[ID_COMBOTEXTBOX] = oWinControlCreate(CB);
@@ -481,7 +481,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			bool NewState = !oGUIMenuIsChecked(hViewMenu, MENU_VIEW_SHOW_STATUSBAR);
 			oGUIMenuCheck(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, NewState);
 			oGUI_WINDOW_SHAPE_DESC s;
-			s.Style = NewState ? oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR : oGUI_WINDOW_SIZABLE_WITH_MENU;
+			s.Style = NewState ? ouro::window_style::sizable_with_menu_and_statusbar : ouro::window_style::sizable_with_menu;
 			Window->shape(s);
 			break;
 		}

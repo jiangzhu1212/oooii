@@ -55,8 +55,8 @@ bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapsho
 		i.title = _Title;
 		i.alt_f4_closes = true;
 		i.event_hook = std::bind(&oGPUTestApp::OnEvent, this, std::placeholders::_1);
-		i.shape.State = DevMode ? oGUI_WINDOW_RESTORED : oGUI_WINDOW_HIDDEN;
-		i.shape.Style = oGUI_WINDOW_SIZABLE;
+		i.shape.State = DevMode ? ouro::window_state::restored : ouro::window_state::hidden;
+		i.shape.Style = ouro::window_style::sizable;
 		i.shape.ClientSize = _Size;
 		Window = ouro::window::make(i);
 	}
@@ -72,7 +72,7 @@ void oGPUTestApp::OnEvent(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_CLOSING:
+		case ouro::gui_event::closing:
 			Running = false;
 			break;
 		default:

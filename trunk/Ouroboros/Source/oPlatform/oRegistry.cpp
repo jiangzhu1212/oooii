@@ -50,7 +50,7 @@ struct oRegistryTBB : oRegistry
 	bool Remove(const oURI& _URIReference) threadsafe override;
 	bool Get(const oURI& _URIReference, oInterface** _ppInterface, oREGISTRY_DESC* _pDesc = nullptr) const threadsafe override;
 	bool Set(const oURI& _URIReference, oInterface* _pInterface, int _Status = oInvalid) threadsafe override;
-	void Enum(oFUNCTION<bool(const oURI& _URIReference, oInterface* _pInterface, const oREGISTRY_DESC& _Desc)> _Visitor) threadsafe override;
+	void Enum(std::function<bool(const oURI& _URIReference, oInterface* _pInterface, const oREGISTRY_DESC& _Desc)> _Visitor) threadsafe override;
 private:
 	struct RECORD
 	{
@@ -146,7 +146,7 @@ bool oRegistryTBB::Set(const oURI& _URIReference, oInterface* _pInterface, int _
 	return found;
 }
 
-void oRegistryTBB::Enum(oFUNCTION<bool(const oURI& _URIReference, oInterface* _pInterface, const oREGISTRY_DESC& _Desc)> _Visitor) threadsafe
+void oRegistryTBB::Enum(std::function<bool(const oURI& _URIReference, oInterface* _pInterface, const oREGISTRY_DESC& _Desc)> _Visitor) threadsafe
 {
 	lock_guard<shared_mutex> lock(TopologyMutex); // exclusive because iterators are not threadsafe
 	oFOR(auto& pair, hash())

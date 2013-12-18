@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oGUI/Windows/oWinRect.h>
 
-RECT oWinRectResolve(const int2& _Anchor, const int2& _Size, oGUI_ALIGNMENT _Alignment)
+RECT oWinRectResolve(const int2& _Anchor, const int2& _Size, ouro::alignment::value _Alignment)
 {
 	int2 offset(0,0);
 	int2 code = int2(_Alignment % 3, _Alignment / 3);

@@ -54,7 +54,7 @@ private:
 	bool WasRotating;
 
 private:
-	bool GetControl(oGUI_KEY _Key, oCAMERA_CONTROLLER_MMO_DESC::CONTROL* _pControl);
+	bool GetControl(ouro::input_key::value _Key, oCAMERA_CONTROLLER_MMO_DESC::CONTROL* _pControl);
 	void UpdateRotation(float _DeltaTime);
 	void UpdateTranslation(float _DeltaTime);
 };

@@ -80,7 +80,6 @@
     <ClInclude Include="..\..\Include\oBasis\oRTTITypedefs.h" />
     <ClInclude Include="..\..\Include\oBasis\oScopedPartialTimeout.h" />
     <ClInclude Include="..\..\Include\oBasis\oSnappy.h" />
-    <ClInclude Include="..\..\Include\oBasis\oStddef.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h" />
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h" />

@@ -32,7 +32,7 @@ static void show_modal(const std::shared_ptr<ouro::window>& _Parent, const std::
 {
 	_Parent->enabled(!_Show);
 	_Child->owner(_Show ? _Parent : nullptr);
-	_Child->show(_Show ? oGUI_WINDOW_RESTORED : oGUI_WINDOW_HIDDEN);
+	_Child->show(_Show ? ouro::window_state::restored : ouro::window_state::hidden);
 }
 
 namespace ouro {
@@ -50,8 +50,8 @@ public:
 	void quit() override { Window->quit(); }
 	void debug(bool _Debug) override { Window->debug(_Debug); }
 	bool debug() const override { return Window->debug(); }
-	void state(oGUI_WINDOW_STATE _State) override { Window->state(_State); }
-	oGUI_WINDOW_STATE state() const override { return Window->state(); }
+	void state(window_state::value _State) override { Window->state(_State); }
+	window_state::value state() const override { return Window->state(); }
 	void client_position(const int2& _ClientPosition) override { Window->client_position(_ClientPosition); }
 	int2 client_position() const override { return Window->client_position(); }
 	int2 client_size() const override { return Window->client_size(); }
@@ -59,16 +59,16 @@ public:
 	oGUI_ICON icon() const override { return Window->icon(); }
 	void user_cursor(oGUI_CURSOR _hCursor) override { Window->user_cursor(_hCursor); }
 	oGUI_CURSOR user_cursor() const override { return Window->user_cursor(); }
-	void client_cursor_state(oGUI_CURSOR_STATE _State) override { Window->client_cursor_state(_State); }
-	oGUI_CURSOR_STATE client_cursor_state() const override { return Window->client_cursor_state(); }
+	void client_cursor_state(cursor_state::value _State) override { Window->client_cursor_state(_State); }
+	cursor_state::value client_cursor_state() const override { return Window->client_cursor_state(); }
 	void set_titlev(const char* _Format, va_list _Args) override { Window->set_titlev(_Format, _Args); }
 	char* get_title(char* _StrDestination, size_t _SizeofStrDestination) const override { return Window->get_title(_StrDestination, _SizeofStrDestination); }
 	void parent(const std::shared_ptr<basic_window>& _Parent) override { Window->parent(_Parent); }
 	std::shared_ptr<basic_window> parent() const override { return Window->parent(); }
 	void owner(const std::shared_ptr<basic_window>& _Owner) override { Window->owner(_Owner); }
 	std::shared_ptr<basic_window> owner() const override { return Window->owner(); }
-	void sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder) override { Window->sort_order(_SortOrder); }
-	oGUI_WINDOW_SORT_ORDER sort_order() const override { return Window->sort_order(); }
+	void sort_order(window_sort_order::value _SortOrder) override { Window->sort_order(_SortOrder); }
+	window_sort_order::value sort_order() const override { return Window->sort_order(); }
 	void focus(bool _Focus) override { Window->focus(_Focus); }
 	bool has_focus() const override { return Window->has_focus(); }
 
@@ -133,8 +133,8 @@ about_impl::about_impl(const info& _Info)
 	i.create_user_data = &Init;
 	i.action_hook = std::bind(&about_impl::on_action, this, std::placeholders::_1);
 	i.event_hook = std::bind(&about_impl::on_event, this, std::placeholders::_1);
-	i.shape.State = oGUI_WINDOW_HIDDEN;
-	i.shape.Style = oGUI_WINDOW_DIALOG;
+	i.shape.State = window_state::hidden;
+	i.shape.Style = window_style::dialog;
 	i.shape.ClientSize = int2(320, 140);
 
 	if (oSTRVALID(_Info.components))
@@ -189,9 +189,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	// Icon
 	{
 		oRECT rChild = oRect(oWinRectWH(int2(0,0), kIconSize));
-		oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_TOP_LEFT, true);
+		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-		Descs[AB_ICON].Type = oGUI_CONTROL_ICON;
+		Descs[AB_ICON].Type = control_type::icon;
 		Descs[AB_ICON].Icon = Info.icon;
 		Descs[AB_ICON].Position = oWinRectPosition(oWinRect(r));
 		Descs[AB_ICON].Size = oWinRectSize(oWinRect(r));
@@ -205,9 +205,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 		snprintf(StrModulePath, "Install Path: <a href=\"file://%s\">%s</a>", ModulePath.parent_path().c_str(), ModulePath.c_str());
 
 		oRECT rChild = oRect(oWinRectWH(kModulePathPos, kModulePathSize));
-		oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_TOP_LEFT, true);
+		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-		Descs[AB_INSTALL_PATH].Type = oGUI_CONTROL_HYPERLABEL;
+		Descs[AB_INSTALL_PATH].Type = control_type::hyperlabel;
 		Descs[AB_INSTALL_PATH].Text = StrModulePath;
 		Descs[AB_INSTALL_PATH].Position = oWinRectPosition(oWinRect(r));
 		Descs[AB_INSTALL_PATH].Size = oWinRectSize(oWinRect(r));
@@ -229,9 +229,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 			, mi.copyright.c_str());
 
 		oRECT rChild = oRect(oWinRectWH(kModuleInfoPos, kModuleInfoSize));
-		oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_TOP_LEFT, true);
+		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-		Descs[AB_MODULE_INFO].Type = oGUI_CONTROL_LABEL;
+		Descs[AB_MODULE_INFO].Type = control_type::label;
 		Descs[AB_MODULE_INFO].Text = StrModuleInfo;
 		Descs[AB_MODULE_INFO].Position = oWinRectPosition(oWinRect(r));
 		Descs[AB_MODULE_INFO].Size = oWinRectSize(oWinRect(r));
@@ -255,9 +255,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 			snprintf(StrWebsite, "<a href=\"%s\">visit our website</a>", Info.website);
 
 			oRECT rChild = oRect(oWinRectWH(kWebsitePos, kWebsiteSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_TOP_LEFT, true);
+			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_WEBSITE].Type = oGUI_CONTROL_HYPERLABEL;
+			Descs[AB_WEBSITE].Type = control_type::hyperlabel;
 			Descs[AB_WEBSITE].Text = StrWebsite;
 			Descs[AB_WEBSITE].Position = oWinRectPosition(oWinRect(r));
 			Descs[AB_WEBSITE].Size = oWinRectSize(oWinRect(r));
@@ -272,9 +272,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 			snprintf(StrIssueSite, "<a href=\"%s\">report an issue</a>", Info.issue_site);
 
 			oRECT rChild = oRect(oWinRectWH(kIssueSitePos, kIssueSiteSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_TOP_LEFT, true);
+			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_ISSUE_SITE].Type = oGUI_CONTROL_HYPERLABEL;
+			Descs[AB_ISSUE_SITE].Type = control_type::hyperlabel;
 			Descs[AB_ISSUE_SITE].Text = StrIssueSite;
 			Descs[AB_ISSUE_SITE].Position = oWinRectPosition(oWinRect(r));
 			Descs[AB_ISSUE_SITE].Size = oWinRectSize(oWinRect(r));
@@ -284,9 +284,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	// OK Button
 	{
 		oRECT rChild = oRect(oWinRectWH(-kInset, kButtonSize));
-		oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_BOTTOM_RIGHT, true);
+		oRECT r = oGUIResolveRect(rParent, rChild, alignment::bottom_right, true);
 
-		Descs[AB_OK].Type = oGUI_CONTROL_BUTTON;
+		Descs[AB_OK].Type = control_type::button;
 		Descs[AB_OK].Text = "&OK";
 		Descs[AB_OK].Position = oWinRectPosition(oWinRect(r));
 		Descs[AB_OK].Size = oWinRectSize(oWinRect(r));
@@ -297,9 +297,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 		if (oSTRVALID(Info.components))
 		{
 			oRECT rChild = oRect(oWinRectWH(kComponentGroupPos, kComponentGroupSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_TOP_LEFT, true);
+			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_COMPONENT_GROUP].Type = oGUI_CONTROL_GROUPBOX;
+			Descs[AB_COMPONENT_GROUP].Type = control_type::groupbox;
 			Descs[AB_COMPONENT_GROUP].Text = "3rd-Party Components";
 			Descs[AB_COMPONENT_GROUP].Position = oWinRectPosition(oWinRect(r));
 			Descs[AB_COMPONENT_GROUP].Size = oWinRectSize(oWinRect(r));
@@ -311,9 +311,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 		if (oSTRVALID(Info.components))
 		{
 			oRECT rChild = oRect(oWinRectWH(kComponentListPos, kComponentListSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_TOP_LEFT, true);
+			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_COMPONENT_LIST].Type = oGUI_CONTROL_LISTBOX;
+			Descs[AB_COMPONENT_LIST].Type = control_type::listbox;
 			Descs[AB_COMPONENT_LIST].Text = Info.components;
 			Descs[AB_COMPONENT_LIST].Position = oWinRectPosition(oWinRect(r));
 			Descs[AB_COMPONENT_LIST].Size = oWinRectSize(oWinRect(r));
@@ -327,9 +327,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 		if (oSTRVALID(Info.components))
 		{
 			oRECT rChild = oRect(oWinRectWH(kComponentCommentPos, kComponentCommentSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_TOP_LEFT, true);
+			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_COMPONENT_COMMENT].Type = oGUI_CONTROL_HYPERLABEL;
+			Descs[AB_COMPONENT_COMMENT].Type = control_type::hyperlabel;
 			Descs[AB_COMPONENT_COMMENT].Text = ComponentComments[0].c_str();
 			Descs[AB_COMPONENT_COMMENT].Position = oWinRectPosition(oWinRect(r));
 			Descs[AB_COMPONENT_COMMENT].Size = oWinRectSize(oWinRect(r));
@@ -338,7 +338,7 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 
 	for (short i = 0; i < AB_CONTROL_COUNT; i++)
 	{
-		if (Descs[i].Type != oGUI_CONTROL_UNKNOWN)
+		if (Descs[i].Type != control_type::unknown)
 		{
 			Descs[i].hParent = _CreateEvent.hWindow;
 			Descs[i].ID = i;
@@ -353,7 +353,7 @@ void about_impl::on_event(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_CREATING:
+		case gui_event::creating:
 		{
 			make_controls(_Event.AsCreate());
 			break;
@@ -368,7 +368,7 @@ void about_impl::on_action(const oGUI_ACTION_DESC& _Action)
 {
 	switch (_Action.Action)
 	{
-		case oGUI_ACTION_CONTROL_ACTIVATED:
+		case gui_action::control_activated:
 			switch (_Action.DeviceID)
 			{
 				case AB_OK:

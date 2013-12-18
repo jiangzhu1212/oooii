@@ -33,6 +33,7 @@
 #include <oBasis/oGUI.h>
 #include <oBasis/oRTTI.h>
 #include <oBase/fixed_string.h>
+#include <oBase/throw.h>
 #include <vector>
 
 // If _IsTopLevelMenu is true, the returned oGUI_MENU can be associated with an
@@ -104,8 +105,15 @@ template<size_t capacity> char* oGUIMenuGetText(ouro::fixed_string<char, capacit
 // This is useful to pair with oGUIMenuEnumRadioListHandler below for quick
 // menu construction for radio selection groups. _InitialItem will evaluate to
 // _FirstMenuItem by default.
-bool oGUIMenuAppendEnumItems(oGUI_MENU _hMenu, int _FirstMenuItem, int _LastMenuItem, const oRTTI& _Enum, int _InitialItem = oInvalid);
-template<typename enumT> bool oGUIMenuAppendEnumItems(oGUI_MENU _hMenu, int _FirstMenuItem, int _LastMenuItem, const oRTTI& _Enum, const enumT& _InitialEnumValue) { return oGUIMenuAppendEnumItems(_hMenu, _FirstMenuItem, _LastMenuItem, _Enum, int(_FirstMenuItem + _InitialEnumValue)); }
+template<typename enumT> void oGUIMenuAppendEnumItems(const enumT& _NumEnumValues, oGUI_MENU _hMenu, int _FirstMenuItem, int _LastMenuItem, int _InitialValue = -1)
+{
+	const int nItems = _LastMenuItem - _FirstMenuItem + 1;
+	if (nItems != _NumEnumValues)
+		oTHROW(no_buffer_space, "Enum count and first/last menu item indices mismatch");
+	for (int i = 0; i < nItems; i++)
+		oGUIMenuAppendItem(_hMenu, _FirstMenuItem + i, ouro::as_string((enumT)i));
+	oGUIMenuCheckRadio(_hMenu, _FirstMenuItem, _LastMenuItem, _InitialValue == -1 ? _FirstMenuItem : _FirstMenuItem + _InitialValue);
+}
 
 // A utility class to help handle enums that manifest as radio selection groups
 // in menus. Basically this allows a range of IDs to be associated with a 
@@ -115,7 +123,7 @@ class oGUIMenuEnumRadioListHandler
 public:
 	// _RebasedMenuItem is inputvalue - _FirstMenuItem, so the first menuitem will
 	// have a rebased value of 0.
-	typedef oFUNCTION<void(int _RebasedMenuItem)> callback_t;
+	typedef std::function<void(int _RebasedMenuItem)> callback_t;
 
 	inline void Register(oGUI_MENU _hMenu, int _FirstMenuItem, int _LastMenuItem, const callback_t& _Callback)
 	{
@@ -140,7 +148,7 @@ public:
 
 	inline void OnAction(const oGUI_ACTION_DESC& _Action)
 	{
-		if (_Action.Action == oGUI_ACTION_MENU)
+		if (_Action.Action == ouro::gui_action::menu)
 		{
 			auto it = std::find_if(Callbacks.begin(), Callbacks.end(), [&](const ENTRY& _Entry)
 			{

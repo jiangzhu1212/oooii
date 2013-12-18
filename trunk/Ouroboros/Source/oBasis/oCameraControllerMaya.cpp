@@ -87,7 +87,7 @@ int oCameraControllerModelerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 	oGUIRecordInputState(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
 	float2 PointerPositionDelta = PointerPosition.xy() - LastPointerPosition;
 
-	const bool kActive = Desc.Controls[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION] == oGUI_KEY_NONE || KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION];
+	const bool kActive = Desc.Controls[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION] == ouro::input_key::none || KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION];
 
 	if (kActive && KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::TUMBLER])
 	{

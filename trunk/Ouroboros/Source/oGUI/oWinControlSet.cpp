@@ -28,6 +28,7 @@
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oBasis/oError.h> // @tony fixme
+#include <oBasis/oInt.h> // @tony fixme
 
 using namespace ouro;
 
@@ -163,7 +164,7 @@ bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONT
 	_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Size", &ControlSize); // allow oDEFAULT to fall through if not specified
 	ControlSize = oWinControlGetInitialSize(_pDesc->Type, ControlSize);
 
-	oGUI_ALIGNMENT alignment = oGUI_ALIGNMENT_TOP_LEFT;
+	ouro::alignment::value alignment = ouro::alignment::top_left;
 	_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Align", &alignment); // allow TopLeft as default value
 
 	RECT rParentClient;

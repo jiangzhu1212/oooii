@@ -42,6 +42,7 @@
 #include <oCore/display.h>
 #include <oCore/process.h>
 #include <oBasis/oGUI.h>
+#include <oBasis/oInvalid.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -141,9 +142,9 @@ enum oWM
 	/**
 		Received when a skeleton device is plugged in or otherwise reinitialized.
 		wParam
-			The low-order word of wParam specifies an oGUI_INPUT_DEVICE_TYPE.
-			The high-order word of wParam specifies an oGUI_INPUT_DEVICE_STATUS.
-			oGUI_INPUT_DEVICE_TYPE. The type of the device.
+			The low-order word of wParam specifies an ouro::input_device_status::TYPE.
+			The high-order word of wParam specifies an ouro::input_device_status.
+			ouro::input_device_status::TYPE. The type of the device.
 		lParam
 			A pointer to a null-terminated string that is the device's instance name.
 			No memory management is done to the string memory.
@@ -215,7 +216,7 @@ struct oWIN_CREATESTRUCT
 // message processing.
 HWND oWinCreate(HWND _hParent
 	, const char* _Title
-	, oGUI_WINDOW_STYLE _Style
+	, ouro::window_style::value _Style
 	, const int2& _ClientPosition
 	, const int2& _ClientSize
 	, WNDPROC _Wndproc
@@ -559,7 +560,7 @@ HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc);
 // function, passing that through can avoid the recalculation.
 // FloatboxSpinner: handles incrementing/decrementing values
 // Hyperlabel: handles chasing web links
-bool oWinControlDefaultOnNotify(HWND _hWnd, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult = nullptr, oGUI_CONTROL_TYPE _Type = oGUI_CONTROL_UNKNOWN);
+bool oWinControlDefaultOnNotify(HWND _hWnd, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult = nullptr, ouro::control_type::value _Type = ouro::control_type::unknown);
 
 // Converts a Windows control message to an action. This calls 
 // oWinControlDefaultOnNotify if there is no other appropriate handling. This
@@ -646,12 +647,12 @@ int oWinControlGetSelectedSubItem(HWND _hControl);
 // This will probably return oWINDOW_CONTROL_UNKNOWN for any control not created
 // with oWinControlCreate().
 // Valid for: All
-oGUI_CONTROL_TYPE oWinControlGetType(HWND _hControl);
+ouro::control_type::value oWinControlGetType(HWND _hControl);
 
 // Returns the size returned if int2(oDEFAULT, oDEFAULT) were passed as the size
 // value to oWinControlCreate().
 // Valid for: All
-int2 oWinControlGetInitialSize(oGUI_CONTROL_TYPE _Type, const int2& _Size);
+int2 oWinControlGetInitialSize(ouro::control_type::value _Type, const int2& _Size);
 
 // Returns true if the specified _hWnd has the WS_TABSTOP style and is also 
 // enabled and visible, so all criteria from tabbing and using the control must 

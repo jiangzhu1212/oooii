@@ -349,7 +349,7 @@ bool oD3D11Device::CreatePrimaryRenderTarget(ouro::window* _pWindow, ouro::surfa
 		return oErrorSetLast(std::errc::protocol_error, "There already exists a primary render target, only one can exist for a given device at a time.");
 
 	oGUI_WINDOW_SHAPE_DESC s = _pWindow->shape();
-	if (oGUIStyleHasStatusBar(s.Style))
+	if (ouro::has_statusbar(s.Style))
 		return oErrorSetLast(std::errc::invalid_argument, "A window used for rendering must not have a status bar");
 
 	try

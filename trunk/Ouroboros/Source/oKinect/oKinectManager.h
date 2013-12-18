@@ -57,8 +57,8 @@ private:
 	std::array<ouro::mstring, 3> DeviceInstanceNames;
 	unsigned int CurrentDeviceInstanceName;
 
-	void OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _InstanceName, const char* _UniqueDeviceName);
-	void NotifyStatus(const char* _InstanceName, oGUI_INPUT_DEVICE_STATUS _Status);
+	void OnStatus(ouro::input_device_status::value _Status, const char* _InstanceName, const char* _UniqueDeviceName);
+	void NotifyStatus(const char* _InstanceName, ouro::input_device_status::value _Status);
 	static void CALLBACK StatusProc(HRESULT _hrStatus, const OLECHAR* _InstanceName, const OLECHAR* _UniqueDeviceName, void* _pThis);
 
 };

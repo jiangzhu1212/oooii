@@ -122,7 +122,7 @@ bool oWinSetCursor(HWND _hWnd, HCURSOR _hCursor)
 	return true;
 }
 
-HCURSOR oWinGetCursor(oGUI_CURSOR_STATE _State, HCURSOR _hUserCursor)
+HCURSOR oWinGetCursor(ouro::cursor_state::value _State, HCURSOR _hUserCursor)
 {
 	LPSTR cursors[] =
 	{
@@ -136,27 +136,27 @@ HCURSOR oWinGetCursor(oGUI_CURSOR_STATE _State, HCURSOR _hUserCursor)
 		nullptr,
 	};
 
-	return _State == oGUI_CURSOR_USER ? _hUserCursor : LoadCursor(nullptr, cursors[_State]);
+	return _State == ouro::cursor_state::user ? _hUserCursor : LoadCursor(nullptr, cursors[_State]);
 }
 
-void oWinCursorSetState(HWND _hWnd, oGUI_CURSOR_STATE _CursorState, HCURSOR _hUserCursor)
+void oWinCursorSetState(HWND _hWnd, ouro::cursor_state::value _CursorState, HCURSOR _hUserCursor)
 {
 	HCURSOR hCursor = oWinGetCursor(_CursorState, _hUserCursor);
 	oVB(oWinSetCursor(_hWnd, hCursor));
-	oWinCursorSetVisible(_CursorState != oGUI_CURSOR_NONE);
+	oWinCursorSetVisible(_CursorState != ouro::cursor_state::none);
 }
 
-oGUI_CURSOR_STATE oWinCursorGetState(HWND _hWnd)
+ouro::cursor_state::value oWinCursorGetState(HWND _hWnd)
 {
 	oASSERT(oWinExists(_hWnd), "Invalid _hWnd specified");
 	if (!oWinCursorIsVisible())
-		return oGUI_CURSOR_NONE;
+		return ouro::cursor_state::none;
 	HCURSOR hCursor = (HCURSOR)GetClassLongPtr(_hWnd, GCLP_HCURSOR);
-	for (int i = oGUI_CURSOR_ARROW; i < oGUI_CURSOR_USER; i++)
+	for (int i = ouro::cursor_state::arrow; i < ouro::cursor_state::user; i++)
 	{
-		HCURSOR hStateCursor = oWinGetCursor((oGUI_CURSOR_STATE)i);
+		HCURSOR hStateCursor = oWinGetCursor((ouro::cursor_state::value)i);
 		if (hCursor == hStateCursor)
-			return (oGUI_CURSOR_STATE)i;
+			return (ouro::cursor_state::value)i;
 	}
-	return oGUI_CURSOR_USER;
+	return ouro::cursor_state::user;
 }

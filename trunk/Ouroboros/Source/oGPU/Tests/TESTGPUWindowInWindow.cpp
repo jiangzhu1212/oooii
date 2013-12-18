@@ -46,9 +46,9 @@ public:
 		{
 			window::init i;
 			i.title = "Window-In-Window Test";
-			i.event_hook = oBIND(&WindowInWindow::ParentEventHook, this, oBIND1);
-			i.shape.State = oGUI_WINDOW_HIDDEN;
-			i.shape.Style = oGUI_WINDOW_SIZABLE;
+			i.event_hook = std::bind(&WindowInWindow::ParentEventHook, this, oBIND1);
+			i.shape.State = ouro::window_state::hidden;
+			i.shape.Style = ouro::window_style::sizable;
 			i.shape.ClientSize = int2(640, 480);
 			try { ParentWindow = window::make(i); }
 			catch (std::exception& e) { oErrorSetLast(e); return; }
@@ -69,8 +69,8 @@ public:
 
 		{
 			window::init i;
-			i.shape.State = oGUI_WINDOW_RESTORED;
-			i.shape.Style = oGUI_WINDOW_BORDERLESS;
+			i.shape.State = ouro::window_state::restored;
+			i.shape.Style = ouro::window_style::borderless;
 			i.shape.ClientPosition = int2(20,20);
 			i.shape.ClientSize = int2(600,480-65);
 			i.event_hook = std::bind(&WindowInWindow::GPUWindowEventHook, this, std::placeholders::_1);
@@ -113,11 +113,11 @@ public:
 	{
 		switch (_Event.Type)
 		{
-			case oGUI_CREATING:
+			case ouro::gui_event::creating:
 			{
 				oGUI_CONTROL_DESC ButtonDesc;
 				ButtonDesc.hParent = _Event.hWindow;
-				ButtonDesc.Type = oGUI_CONTROL_BUTTON;
+				ButtonDesc.Type = ouro::control_type::button;
 				ButtonDesc.Text = "Push Me";
 				ButtonDesc.Size = int2(100,25);
 				ButtonDesc.Position = int2(10,480-10-ButtonDesc.Size.y);
@@ -127,11 +127,11 @@ public:
 				break;
 			}
 
-			case oGUI_CLOSING:
+			case ouro::gui_event::closing:
 				Running = false;
 				break;
 
-			case oGUI_SIZED:
+			case ouro::gui_event::sized:
 			{
 				if (GPUWindow)
 					GPUWindow->client_size(_Event.AsShape().Shape.ClientSize - int2(40,65));

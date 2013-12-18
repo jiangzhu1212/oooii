@@ -98,7 +98,7 @@ template<typename ThreadpoolT> static void test_parallel_for(ThreadpoolT& _Threa
 	size_t Results[kFullRange];
 	memset(Results, 0, kFullRange * sizeof(size_t));
 
-	oConcurrency::detail::parallel_for<16>(_Threadpool, 10, kFullRange - 10, oBIND(set_value, oBIND1, Results));
+	oConcurrency::detail::parallel_for<16>(_Threadpool, 10, kFullRange - 10, std::bind(set_value, oBIND1, Results));
 	for (size_t i = 0; i < 10; i++)
 		oCHECK(Results[i] == 0, "wrote out of range at beginning");
 
@@ -234,7 +234,7 @@ void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool&
 	timer t;
 	for (unsigned int y=0; y<TILE_SIZE; y++)
 		for (unsigned int x=0; x<TILE_SIZE; x++)
-			_Threadpool.dispatch(oBIND(RatcliffJobSwarm::MandelbrotTask
+			_Threadpool.dispatch(std::bind(RatcliffJobSwarm::MandelbrotTask
 			, y*TILE_SIZE + x, fractal.data(), x1, y1, xscale, yscale));
 
 	double scheduling_time = t.seconds();
@@ -245,7 +245,7 @@ void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool&
 	oTRACEA("%s::parallel_for()...", n);
 	t.reset();
 	bool DidParallelFor = _Threadpool.parallel_for(0, taskCount
-		, oBIND(RatcliffJobSwarm::MandelbrotTask, oBIND1, fractal.data(), x1, y1, xscale, yscale));
+		, std::bind(RatcliffJobSwarm::MandelbrotTask, oBIND1, fractal.data(), x1, y1, xscale, yscale));
 
 	double parallel_for_time = t.seconds();
 	const char* DebuggerDisclaimer = _Services.is_debugger_attached() ? "(DEBUGGER ATTACHED: Non-authoritive) " : "";

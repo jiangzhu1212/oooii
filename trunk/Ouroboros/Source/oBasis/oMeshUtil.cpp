@@ -133,7 +133,7 @@ template<typename T> bool oCalcFaceNormalsT(TVEC3<T>* _pFaceNormals, const unsig
 
 	bool success = true;
 	const T s = _CCW ? T(-1.0) : T(1.0);
-	oConcurrency::parallel_for( 0, _NumberOfIndices / 3, oBIND( &CalculateFace<T>, oBIND1, _pFaceNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfPositions, s, &success ));
+	oConcurrency::parallel_for( 0, _NumberOfIndices / 3, std::bind( &CalculateFace<T>, oBIND1, _pFaceNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfPositions, s, &success ));
 	if( !success )
 		oErrorSetLast(std::errc::invalid_argument, "an index value indexes outside the range of vertices specified");
 

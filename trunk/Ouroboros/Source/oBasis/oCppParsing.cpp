@@ -118,7 +118,7 @@ bool oGetNextInclude(char* _StrDestination, size_t _SizeofStrDestination, const 
 	return result;
 }
 
-bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const char* _SourceFullPath, const oFUNCTION<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& _Load)
+bool oMergeIncludes(char* _StrSourceCode, size_t _SizeofStrSourceCode, const char* _SourceFullPath, const std::function<bool(void* _pDestination, size_t _SizeofDestination, const char* _Path)>& _Load)
 {
 	map<string, string> includes;
 	char includePath[_MAX_PATH];

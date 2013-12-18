@@ -49,12 +49,12 @@ struct oCAMERA_CONTROLLER_ARCBALL_DESC
 		, PanSpeed(0.05f)
 		, DollySpeed(0.04f)
 	{
-		Controls[ORBIT] = oGUI_KEY_MOUSE_LEFT;
-		Controls[PAN] = oGUI_KEY_MOUSE_MIDDLE;
-		Controls[DOLLY] = oGUI_KEY_MOUSE_RIGHT;
+		Controls[ORBIT] = ouro::input_key::mouse_left;
+		Controls[PAN] = ouro::input_key::mouse_middle;
+		Controls[DOLLY] = ouro::input_key::mouse_right;
 	}
 
-	std::array<oGUI_KEY, NUM_CONTROLS> Controls;
+	std::array<ouro::input_key::value, NUM_CONTROLS> Controls;
 	float2 RotationSpeed;
 	float2 PanSpeed;
 	float DollySpeed;

@@ -64,7 +64,7 @@ private:
 oDEFINE_GUID_I(oIOCP, 0x5574c1b0, 0x7f26, 0x4a32, 0x9a, 0x9a, 0x93, 0xc1, 0x72, 0x1, 0x6, 0xd);
 interface oIOCP : oInterface
 {
-	typedef oFUNCTION<void(oIOCPOp* _pSocketOp)> io_completion_routine_t;
+	typedef std::function<void(oIOCPOp* _pSocketOp)> io_completion_routine_t;
 	typedef oTASK io_shutdown_t;
 
 	struct DESC

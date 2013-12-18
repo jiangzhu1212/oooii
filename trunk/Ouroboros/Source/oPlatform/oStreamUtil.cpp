@@ -28,7 +28,7 @@
 
 using namespace ouro;
 
-bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(size_t _NumBytes)>& _Allocate, const oFUNCTION<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString)
+bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const std::function<void*(size_t _NumBytes)>& _Allocate, const std::function<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString)
 {
 	intrusive_ptr<threadsafe oStreamReader> Reader;
 	if (!oStreamReaderCreate(_URIReference, &Reader))

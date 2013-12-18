@@ -121,7 +121,7 @@ char* oURIResolve(char* _URIReference, size_t _SizeofURIReference, const char* _
 char* oURIEnsureFileExtension(char* _URIReferenceWithExtension, size_t _SizeofURIReferenceWithExtension, const char* _SourceURIReference, const char* _Extension);
 
 // Assumes a pattern of key=val&key=val&key=val&... and iterates through each key value pair
-void oURIQueryEnumKeyValuePairs(const char* _URIQuery, oFUNCTION<void(const char* _Key, const char* _Value)> _Enumerator);
+void oURIQueryEnumKeyValuePairs(const char* _URIQuery, std::function<void(const char* _Key, const char* _Value)> _Enumerator);
 
 // Templated-on-size versions of the above functions
 template<size_t schemeSize, size_t authoritySize, size_t pathSize, size_t querySize, size_t fragmentSize> bool oURIDecompose(const char* _URIReference, char (&_Scheme)[schemeSize], char (&_Authority)[authoritySize], char (&_Path)[pathSize], char (&_Query)[querySize], char (&_Fragment)[fragmentSize]) { return oURIDecompose(_URIReference, _Scheme, schemeSize, _Authority, authoritySize, _Path, pathSize, _Query, querySize, _Fragment, fragmentSize); }

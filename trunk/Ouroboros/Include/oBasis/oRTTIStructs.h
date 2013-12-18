@@ -77,7 +77,7 @@ public:
 	int GetBaseOffset(int _Index) const;
 	int GetNumAttrs() const;
 	const oRTTI_ATTR* GetAttr(int _Index) const;
-	void EnumAttrs(bool _IncludeBases, oFUNCTION<bool(const oRTTI_ATTR& _Attr)> _Callback) const;
+	void EnumAttrs(bool _IncludeBases, std::function<bool(const oRTTI_ATTR& _Attr)> _Callback) const;
 
 	// Containers
 	const oRTTI* GetItemRTTI() const;

@@ -25,331 +25,480 @@
 #include <oBasis/oGUI.h>
 #include <oCompute/linear_algebra.h>
 #include <oBasis/oInterface.h>
+#include <oBasis/oRTTI.h>
 
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_INPUT_DEVICE_TYPE)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_INPUT_DEVICE_TYPE)
-		oRTTI_VALUE_CUSTOM(oGUI_INPUT_DEVICE_UNKNOWN, "unknown")
-		oRTTI_VALUE_CUSTOM(oGUI_INPUT_DEVICE_KEYBOARD, "keyboard")
-		oRTTI_VALUE_CUSTOM(oGUI_INPUT_DEVICE_MOUSE, "mouse")
-		oRTTI_VALUE_CUSTOM(oGUI_INPUT_DEVICE_JOYSTICK, "joystick")
-		oRTTI_VALUE_CUSTOM(oGUI_INPUT_DEVICE_CONTROL, "control")
-		oRTTI_VALUE_CUSTOM(oGUI_INPUT_DEVICE_SKELETON, "skeleton")
-		oRTTI_VALUE_CUSTOM(oGUI_INPUT_DEVICE_VOICE, "voice")
-		oRTTI_VALUE_CUSTOM(oGUI_INPUT_DEVICE_TOUCH, "touch")
-	oRTTI_ENUM_END_VALUES(oGUI_INPUT_DEVICE_TYPE)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_INPUT_DEVICE_TYPE, oGUI_INPUT_DEVICE_TYPE_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_INPUT_DEVICE_TYPE)
+namespace ouro {
 
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_INPUT_DEVICE_STATUS)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_INPUT_DEVICE_STATUS)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_READY)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_INITIALIZING)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_NOT_CONNECTED)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_IS_CLONE)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_NOT_SUPPORTED)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_INSUFFICIENT_BANDWIDTH)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_LOW_POWER)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_NOT_POWERED)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_NOT_READY)
-	oRTTI_ENUM_END_VALUES(oGUI_INPUT_DEVICE_STATUS)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_INPUT_DEVICE_STATUS, oGUI_INPUT_DEVICE_STATUS_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_INPUT_DEVICE_STATUS)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_KEY)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_KEY)
-		oRTTI_VALUE(oGUI_KEY_NONE)
-
-		// Mouse keys
-		oRTTI_VALUE(oGUI_KEY_MOUSE_LEFT)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_RIGHT)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_MIDDLE)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_SIDE1)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_SIDE2)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_LEFT_DOUBLE)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_RIGHT_DOUBLE)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_MIDDLE_DOUBLE)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_SIDE1_DOUBLE)
-		oRTTI_VALUE(oGUI_KEY_MOUSE_SIDE2_DOUBLE)
-
-		// Joystick keys
-		oRTTI_VALUE(oGUI_KEY_JOY_LLEFT) oRTTI_VALUE(oGUI_KEY_JOY_LUP) oRTTI_VALUE(oGUI_KEY_JOY_LRIGHT) oRTTI_VALUE(oGUI_KEY_JOY_LDOWN)
-		oRTTI_VALUE(oGUI_KEY_JOY_RLEFT) oRTTI_VALUE(oGUI_KEY_JOY_RUP) oRTTI_VALUE(oGUI_KEY_JOY_RRIGHT) oRTTI_VALUE(oGUI_KEY_JOY_RDOWN)
-		oRTTI_VALUE(oGUI_KEY_JOY_LSHOULDER1) oRTTI_VALUE(oGUI_KEY_JOY_LSHOULDER2) oRTTI_VALUE(oGUI_KEY_JOY_RSHOULDER1) oRTTI_VALUE(oGUI_KEY_JOY_RSHOULDER2)
-		oRTTI_VALUE(oGUI_KEY_JOY_LTHUMB) oRTTI_VALUE(oGUI_KEY_JOY_RTHUMB) oRTTI_VALUE(oGUI_KEY_JOY_SYSTEM) oRTTI_VALUE(oGUI_KEY_JOY_START) oRTTI_VALUE(oGUI_KEY_JOY_SELECT)
-
-		// Control keys
-		oRTTI_VALUE(oGUI_KEY_LCTRL) oRTTI_VALUE(oGUI_KEY_RCTRL)
-		oRTTI_VALUE(oGUI_KEY_LALT) oRTTI_VALUE(oGUI_KEY_RALT)
-		oRTTI_VALUE(oGUI_KEY_LSHIFT) oRTTI_VALUE(oGUI_KEY_RSHIFT)
-		oRTTI_VALUE(oGUI_KEY_LWIN) oRTTI_VALUE(oGUI_KEY_RWIN)
-		oRTTI_VALUE(oGUI_KEY_APP_CYCLE) oRTTI_VALUE(oGUI_KEY_APP_CONTEXT)
-
-		// Toggle keys
-		oRTTI_VALUE(oGUI_KEY_CAPSLOCK)
-		oRTTI_VALUE(oGUI_KEY_SCROLLLOCK)
-		oRTTI_VALUE(oGUI_KEY_NUMLOCK)
-
-		// Typing keys
-		oRTTI_VALUE(oGUI_KEY_SPACE) oRTTI_VALUE(oGUI_KEY_BACKTICK) oRTTI_VALUE(oGUI_KEY_DASH) oRTTI_VALUE(oGUI_KEY_EQUAL) oRTTI_VALUE(oGUI_KEY_LBRACKET) oRTTI_VALUE(oGUI_KEY_RBRACKET) oRTTI_VALUE(oGUI_KEY_BACKSLASH) oRTTI_VALUE(oGUI_KEY_SEMICOLON) oRTTI_VALUE(oGUI_KEY_APOSTROPHE) oRTTI_VALUE(oGUI_KEY_COMMA) oRTTI_VALUE(oGUI_KEY_PERIOD) oRTTI_VALUE(oGUI_KEY_SLASH) 
-		oRTTI_VALUE(oGUI_KEY_0) oRTTI_VALUE(oGUI_KEY_1) oRTTI_VALUE(oGUI_KEY_2) oRTTI_VALUE(oGUI_KEY_3) oRTTI_VALUE(oGUI_KEY_4) oRTTI_VALUE(oGUI_KEY_5) oRTTI_VALUE(oGUI_KEY_6) oRTTI_VALUE(oGUI_KEY_7) oRTTI_VALUE(oGUI_KEY_8) oRTTI_VALUE(oGUI_KEY_9)
-		oRTTI_VALUE(oGUI_KEY_A) oRTTI_VALUE(oGUI_KEY_B) oRTTI_VALUE(oGUI_KEY_C) oRTTI_VALUE(oGUI_KEY_D) oRTTI_VALUE(oGUI_KEY_E) oRTTI_VALUE(oGUI_KEY_F) oRTTI_VALUE(oGUI_KEY_G) oRTTI_VALUE(oGUI_KEY_H) oRTTI_VALUE(oGUI_KEY_I) oRTTI_VALUE(oGUI_KEY_J) oRTTI_VALUE(oGUI_KEY_K) oRTTI_VALUE(oGUI_KEY_L) oRTTI_VALUE(oGUI_KEY_M) oRTTI_VALUE(oGUI_KEY_N) oRTTI_VALUE(oGUI_KEY_O) oRTTI_VALUE(oGUI_KEY_P) oRTTI_VALUE(oGUI_KEY_Q) oRTTI_VALUE(oGUI_KEY_R) oRTTI_VALUE(oGUI_KEY_S) oRTTI_VALUE(oGUI_KEY_T) oRTTI_VALUE(oGUI_KEY_U) oRTTI_VALUE(oGUI_KEY_V) oRTTI_VALUE(oGUI_KEY_W) oRTTI_VALUE(oGUI_KEY_X) oRTTI_VALUE(oGUI_KEY_Y) oRTTI_VALUE(oGUI_KEY_Z)
-
-		// Numpad keys
-		oRTTI_VALUE(oGUI_KEY_NUM0) oRTTI_VALUE(oGUI_KEY_NUM1) oRTTI_VALUE(oGUI_KEY_NUM2) oRTTI_VALUE(oGUI_KEY_NUM3) oRTTI_VALUE(oGUI_KEY_NUM4) oRTTI_VALUE(oGUI_KEY_NUM5) oRTTI_VALUE(oGUI_KEY_NUM6) oRTTI_VALUE(oGUI_KEY_NUM7) oRTTI_VALUE(oGUI_KEY_NUM8) oRTTI_VALUE(oGUI_KEY_NUM9) 
-		oRTTI_VALUE(oGUI_KEY_NUMMUL) oRTTI_VALUE(oGUI_KEY_NUMADD) oRTTI_VALUE(oGUI_KEY_NUMSUB) oRTTI_VALUE(oGUI_KEY_NUMDECIMAL) oRTTI_VALUE(oGUI_KEY_NUMDIV) 
-
-		// Typing control keys
-		oRTTI_VALUE(oGUI_KEY_ESC)
-		oRTTI_VALUE(oGUI_KEY_BACKSPACE)
-		oRTTI_VALUE(oGUI_KEY_TAB)
-		oRTTI_VALUE(oGUI_KEY_ENTER)
-		oRTTI_VALUE(oGUI_KEY_INS) oRTTI_VALUE(oGUI_KEY_DEL)
-		oRTTI_VALUE(oGUI_KEY_HOME) oRTTI_VALUE(oGUI_KEY_END)
-		oRTTI_VALUE(oGUI_KEY_PGUP) oRTTI_VALUE(oGUI_KEY_PGDN)
-
-		// System control keys
-		oRTTI_VALUE(oGUI_KEY_F1) oRTTI_VALUE(oGUI_KEY_F2) oRTTI_VALUE(oGUI_KEY_F3) oRTTI_VALUE(oGUI_KEY_F4) oRTTI_VALUE(oGUI_KEY_F5) oRTTI_VALUE(oGUI_KEY_F6) oRTTI_VALUE(oGUI_KEY_F7) oRTTI_VALUE(oGUI_KEY_F8) oRTTI_VALUE(oGUI_KEY_F9) oRTTI_VALUE(oGUI_KEY_F10) oRTTI_VALUE(oGUI_KEY_F11) oRTTI_VALUE(oGUI_KEY_F12) oRTTI_VALUE(oGUI_KEY_F13) oRTTI_VALUE(oGUI_KEY_F14) oRTTI_VALUE(oGUI_KEY_F15) oRTTI_VALUE(oGUI_KEY_F16) oRTTI_VALUE(oGUI_KEY_F17) oRTTI_VALUE(oGUI_KEY_F18) oRTTI_VALUE(oGUI_KEY_F19) oRTTI_VALUE(oGUI_KEY_F20) oRTTI_VALUE(oGUI_KEY_F21) oRTTI_VALUE(oGUI_KEY_F22) oRTTI_VALUE(oGUI_KEY_F23) oRTTI_VALUE(oGUI_KEY_F24)
-		oRTTI_VALUE(oGUI_KEY_PAUSE)
-		oRTTI_VALUE(oGUI_KEY_SLEEP)
-		oRTTI_VALUE(oGUI_KEY_PRINTSCREEN)
-
-		// Directional keys
-		oRTTI_VALUE(oGUI_KEY_LEFT) oRTTI_VALUE(oGUI_KEY_UP) oRTTI_VALUE(oGUI_KEY_RIGHT) oRTTI_VALUE(oGUI_KEY_DOWN)
-
-		// Browser keys
-		oRTTI_VALUE(oGUI_KEY_MAIL) oRTTI_VALUE(oGUI_KEY_BACK) oRTTI_VALUE(oGUI_KEY_FORWARD) oRTTI_VALUE(oGUI_KEY_REFRESH) oRTTI_VALUE(oGUI_KEY_STOP) oRTTI_VALUE(oGUI_KEY_SEARCH) oRTTI_VALUE(oGUI_KEY_FAVS)
-
-		// Media keys
-		oRTTI_VALUE(oGUI_KEY_MEDIA)
-		oRTTI_VALUE(oGUI_KEY_MUTE)
-		oRTTI_VALUE(oGUI_KEY_VOLUP)
-		oRTTI_VALUE(oGUI_KEY_VOLDN)
-		oRTTI_VALUE(oGUI_KEY_PREV_TRACK)
-		oRTTI_VALUE(oGUI_KEY_NEXT_TRACK)
-		oRTTI_VALUE(oGUI_KEY_STOP_TRACK)
-		oRTTI_VALUE(oGUI_KEY_PLAY_PAUSE_TRACK)
-
-		// Misc keys
-		oRTTI_VALUE(oGUI_KEY_APP1) oRTTI_VALUE(oGUI_KEY_APP2)
-
-		// Touch
-		oRTTI_VALUE(oGUI_KEY_TOUCH1) oRTTI_VALUE(oGUI_KEY_TOUCH2) oRTTI_VALUE(oGUI_KEY_TOUCH3) oRTTI_VALUE(oGUI_KEY_TOUCH4) oRTTI_VALUE(oGUI_KEY_TOUCH5) oRTTI_VALUE(oGUI_KEY_TOUCH6) oRTTI_VALUE(oGUI_KEY_TOUCH7) oRTTI_VALUE(oGUI_KEY_TOUCH8) oRTTI_VALUE(oGUI_KEY_TOUCH9) oRTTI_VALUE(oGUI_KEY_TOUCH10)
-
-	oRTTI_ENUM_END_VALUES(oGUI_KEY)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_KEY, oGUI_KEY_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_KEY)
-
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_BONE)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_BONE)
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_HIP_CENTER, "hip")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_SPINE, "spine")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_SHOULDER_CENTER, "shoulder")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_HEAD, "head")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_SHOULDER_LEFT, "lshoulder")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_ELBOW_LEFT, "lelbow")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_WRIST_LEFT, "lwrist")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_HAND_LEFT, "lhand")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_SHOULDER_RIGHT, "rshoulder")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_ELBOW_RIGHT, "relbow")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_WRIST_RIGHT, "rwrist")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_HAND_RIGHT, "rhand")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_HIP_LEFT, "lhip")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_KNEE_LEFT, "lknee")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_ANKLE_LEFT, "lankle")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_FOOT_LEFT, "lfoot")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_HIP_RIGHT, "rhip")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_KNEE_RIGHT, "rknee")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_ANKLE_RIGHT, "rankle")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_FOOT_RIGHT, "rfoot")
-		oRTTI_VALUE_CUSTOM(oGUI_BONE_INVALID, "invalid")
-	oRTTI_ENUM_END_VALUES(oGUI_BONE)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_BONE, oGUI_BONE_COUNT+1) // need one more for INVALID, which is same value as count
-oRTTI_ENUM_END_DESCRIPTION(oGUI_BONE)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STATE)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_WINDOW_STATE)
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_INVALID, "invalid")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_HIDDEN, "hidden")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_MINIMIZED, "minimized")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_RESTORED, "restored")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_MAXIMIZED, "maximized")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FULLSCREEN, "fullscreen")
-	oRTTI_ENUM_END_VALUES(oGUI_WINDOW_STATE)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_WINDOW_STATE, oGUI_WINDOW_STATE_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_WINDOW_STATE)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_WINDOW_STYLE)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_WINDOW_STYLE)
-	oRTTI_VALUE_CUSTOM(oGUI_WINDOW_DEFAULT, "default")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_BORDERLESS, "borderless")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_DIALOG, "dialog")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED, "fixed")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED_WITH_MENU, "fixed with menu")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED_WITH_STATUSBAR, "fixed with statusbar")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_FIXED_WITH_MENU_AND_STATUSBAR, "fixed with menu and statusbar")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZABLE, "sizeable")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZABLE_WITH_MENU, "sizeable with menu")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZABLE_WITH_STATUSBAR, "sizeable with statusbar")
-		oRTTI_VALUE_CUSTOM(oGUI_WINDOW_SIZABLE_WITH_MENU_AND_STATUSBAR, "sizeable with menu and statusbar")
-	oRTTI_ENUM_END_VALUES(oGUI_WINDOW_STYLE)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_WINDOW_STYLE, oGUI_WINDOW_STYLE_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_WINDOW_STYLE)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_EVENT)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_EVENT)
-		oRTTI_VALUE(oGUI_TIMER)
-		oRTTI_VALUE(oGUI_ACTIVATED)
-		oRTTI_VALUE(oGUI_DEACTIVATED)
-		oRTTI_VALUE(oGUI_CREATING)
-		oRTTI_VALUE(oGUI_PAINT)
-		oRTTI_VALUE(oGUI_DISPLAY_CHANGED)
-		oRTTI_VALUE(oGUI_MOVING)
-		oRTTI_VALUE(oGUI_MOVED)
-		oRTTI_VALUE(oGUI_SIZING)
-		oRTTI_VALUE(oGUI_SIZED)
-		oRTTI_VALUE(oGUI_CLOSING)
-		oRTTI_VALUE(oGUI_CLOSED)
-		oRTTI_VALUE(oGUI_TO_FULLSCREEN)
-		oRTTI_VALUE(oGUI_FROM_FULLSCREEN)
-		oRTTI_VALUE(oGUI_LOST_CAPTURE)
-		oRTTI_VALUE(oGUI_DROP_FILES)
-		oRTTI_VALUE(oGUI_INPUT_DEVICE_CHANGED)
-		oRTTI_VALUE(oGUI_CUSTOM_EVENT)
-	oRTTI_ENUM_END_VALUES(oGUI_EVENT)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_EVENT, oGUI_EVENT_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_EVENT)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_ACTION)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_ACTION)
-		oRTTI_VALUE(oGUI_ACTION_UNKNOWN)
-		oRTTI_VALUE(oGUI_ACTION_MENU)
-		oRTTI_VALUE(oGUI_ACTION_CONTROL_ACTIVATED)
-		oRTTI_VALUE(oGUI_ACTION_CONTROL_DEACTIVATED)
-		oRTTI_VALUE(oGUI_ACTION_CONTROL_SELECTION_CHANGING)
-		oRTTI_VALUE(oGUI_ACTION_CONTROL_SELECTION_CHANGED)
-		oRTTI_VALUE(oGUI_ACTION_HOTKEY)
-		oRTTI_VALUE(oGUI_ACTION_KEY_DOWN)
-		oRTTI_VALUE(oGUI_ACTION_KEY_UP)
-		oRTTI_VALUE(oGUI_ACTION_POINTER_MOVE)
-		oRTTI_VALUE(oGUI_ACTION_SKELETON)
-		oRTTI_VALUE(oGUI_ACTION_SKELETON_ACQUIRED)
-		oRTTI_VALUE(oGUI_ACTION_SKELETON_LOST)
-	oRTTI_ENUM_END_VALUES(oGUI_ACTION)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_ACTION, oGUI_ACTION_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_ACTION)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_CURSOR_STATE)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_CURSOR_STATE)
-		oRTTI_VALUE(oGUI_CURSOR_NONE)
-		oRTTI_VALUE(oGUI_CURSOR_ARROW)
-		oRTTI_VALUE(oGUI_CURSOR_HAND)
-		oRTTI_VALUE(oGUI_CURSOR_HELP)
-		oRTTI_VALUE(oGUI_CURSOR_NOTALLOWED)
-		oRTTI_VALUE(oGUI_CURSOR_WAIT_FOREGROUND)
-		oRTTI_VALUE(oGUI_CURSOR_WAIT_BACKGROUND)
-		oRTTI_VALUE(oGUI_CURSOR_USER)
-	oRTTI_ENUM_END_VALUES(oGUI_CURSOR_STATE)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_CURSOR_STATE, oGUI_CURSOR_STATE_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_CURSOR_STATE)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_ALIGNMENT)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_ALIGNMENT)
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_TOP_LEFT, "TopLeft")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_TOP_CENTER, "TopCenter")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_TOP_RIGHT, "TopRight")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_MIDDLE_LEFT, "MiddleLeft")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_MIDDLE_CENTER, "MiddleCenter")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_MIDDLE_RIGHT, "MiddleRight")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_BOTTOM_LEFT, "BottomLeft")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_BOTTOM_CENTER, "BottomCenter")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_BOTTOM_RIGHT, "BottomRight")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_FIT_PARENT, "FitParent")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_FIT_LARGEST_AXIS, "FitLargestAxis")
-		oRTTI_VALUE_CUSTOM(oGUI_ALIGNMENT_FIT_SMALLEST_AXIS, "FitSmallestAxis")
-	oRTTI_ENUM_END_VALUES(oGUI_ALIGNMENT)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_ALIGNMENT, oGUI_ALIGNMENT_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_ALIGNMENT)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_CONTROL_TYPE)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_CONTROL_TYPE)
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_UNKNOWN, "Unknown")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_GROUPBOX, "Group")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_BUTTON, "Button")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_CHECKBOX, "Checkbox")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_RADIOBUTTON, "Radio")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_LABEL, "Label")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_LABEL_CENTERED, "LabelCentered")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_HYPERLABEL, "Hyperlabel")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_LABEL_SELECTABLE, "SelectableLabel")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_ICON, "Icon")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_TEXTBOX, "Textbox")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_TEXTBOX_SCROLLABLE, "TextboxScrollable")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_FLOATBOX, "Floatbox")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_FLOATBOX_SPINNER, "FloatboxSpinner")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_COMBOBOX, "Combobox")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_COMBOTEXTBOX, "ComboTextbox")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_PROGRESSBAR, "ProgressBar")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_PROGRESSBAR_UNKNOWN, "ProgressBarUnknown")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_TAB, "Tab")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_SLIDER, "Slider")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_SLIDER_SELECTABLE, "SelectableSlider")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_SLIDER_WITH_TICKS, "SliderWithTicks")
-		oRTTI_VALUE_CUSTOM(oGUI_CONTROL_LISTBOX, "ListBox")
-	oRTTI_ENUM_END_VALUES(oGUI_CONTROL_TYPE)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_CONTROL_TYPE, oGUI_CONTROL_TYPE_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_CONTROL_TYPE)
-
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGUI_BORDER_STYLE)
-	oRTTI_ENUM_BEGIN_VALUES(oGUI_BORDER_STYLE)
-		oRTTI_VALUE_CUSTOM(oGUI_BORDER_SUNKEN, "sunken")
-		oRTTI_VALUE_CUSTOM(oGUI_BORDER_FLAT, "flat")
-		oRTTI_VALUE_CUSTOM(oGUI_BORDER_RAISED, "raised")
-	oRTTI_ENUM_END_VALUES(oGUI_BORDER_STYLE)
-	oRTTI_ENUM_VALIDATE_COUNT(oGUI_BORDER_STYLE, oGUI_BORDER_STYLE_COUNT)
-oRTTI_ENUM_END_DESCRIPTION(oGUI_BORDER_STYLE)
-
-const oGUID& oGetGUID(const threadsafe oGUI_WINDOW* const threadsafe*)
+const char* as_string(const input_device_type::value& _InputDeviceType)
 {
-	// {A68BBF18-4781-4FA1-87FD-5B6E2250441D}
-	static const oGUID guid = { 0xa68bbf18, 0x4781, 0x4fa1, { 0x87, 0xfd, 0x5b, 0x6e, 0x22, 0x50, 0x44, 0x1d } };
-	return guid;
+	switch (_InputDeviceType)
+	{
+		case input_device_type::unknown: return "unknown";
+		case input_device_type::keyboard: return "keyboard";
+		case input_device_type::mouse: return "mouse";
+		case input_device_type::joystick: return "joystick";
+		case input_device_type::control: return "control";
+		case input_device_type::skeleton: return "skeleton";
+		case input_device_type::voice: return "voice";
+		case input_device_type::touch: return "touch";
+		default: break;
+	}
+	return "?";
 }
 
-const oGUID& oGetGUID(const threadsafe oGUI_MENU* const threadsafe*)
+oDEFINE_TO_STRING(input_device_type::value);
+oDEFINE_FROM_STRING(input_device_type::value, input_device_type::count);
+
+const char* as_string(const input_device_status::value& _InputDeviceStatus)
 {
-	// {913C9CA3-BF07-41DF-931A-57E974497FD5}
-	static const oGUID guid = { 0x913c9ca3, 0xbf07, 0x41df, { 0x93, 0x1a, 0x57, 0xe9, 0x74, 0x49, 0x7f, 0xd5 } };
-	return guid;
+	switch (_InputDeviceStatus)
+	{
+		case input_device_status::ready: return "ready";
+		case input_device_status::initializing: return "initializing";
+		case input_device_status::not_connected: return "not_connected";
+		case input_device_status::is_clone: return "is_clone";
+		case input_device_status::not_supported: return "not_supported";
+		case input_device_status::insufficient_bandwidth: return "insufficient_bandwidth";
+		case input_device_status::low_power: return "low_power";
+		case input_device_status::not_powered: return "not_powered";
+		case input_device_status::not_ready: return "not_ready";
+		default: break;
+	}
+	return "?";
+}
+	
+oDEFINE_TO_STRING(input_device_status::value);
+oDEFINE_FROM_STRING(input_device_status::value, input_device_status::count);
+
+const char* as_string(const input_key::value& _InputKey)
+{
+	switch (_InputKey)
+	{
+		case input_key::none: return "none";
+		case input_key::mouse_left: return "mouse_left";
+		case input_key::mouse_right: return "mouse_right";
+		case input_key::mouse_middle: return "mouse_middle";
+		case input_key::mouse_side1: return "mouse_side1";
+		case input_key::mouse_side2: return "mouse_side2";
+		case input_key::mouse_left_double: return "mouse_left_double";
+		case input_key::mouse_right_double: return "mouse_right_double";
+		case input_key::mouse_middle_double: return "mouse_middle_double";
+		case input_key::mouse_side1_double: return "mouse_side1_double";
+		case input_key::mouse_side2_double: return "mouse_side2_double";
+		case input_key::joy_lleft: return "joy_lleft";
+		case input_key::joy_lup: return "joy_lup";
+		case input_key::joy_lright: return "joy_lright";
+		case input_key::joy_ldown: return "joy_ldown";
+		case input_key::joy_rleft: return "joy_rleft";
+		case input_key::joy_rup: return "joy_rup";
+		case input_key::joy_rright: return "joy_rright";
+		case input_key::joy_rdown: return "joy_rdown";
+		case input_key::joy_lshoulder1: return "joy_lshoulder1";
+		case input_key::joy_lshoulder2: return "joy_lshoulder2";
+		case input_key::joy_rshoulder1: return "joy_rshoulder1";
+		case input_key::joy_rshoulder2: return "joy_rshoulder2";
+		case input_key::joy_lthumb: return "joy_lthumb";
+		case input_key::joy_rthumb: return "joy_rthumb";
+		case input_key::joy_system: return "joy_system";
+		case input_key::joy_start: return "joy_start";
+		case input_key::joy_select: return "joy_select";
+		case input_key::lctrl: return "lctrl";
+		case input_key::rctrl: return "rctrl";
+		case input_key::lalt: return "lalt";
+		case input_key::ralt: return "ralt";
+		case input_key::lshift: return "lshift";
+		case input_key::rshift: return "rshift";
+		case input_key::lwin: return "lwin";
+		case input_key::rwin: return "rwin";
+		case input_key::app_cycle: return "app_cycle";
+		case input_key::app_context: return "app_context";
+		case input_key::capslock: return "capslock";
+		case input_key::scrolllock: return "scrolllock";
+		case input_key::numlock: return "numlock";
+		case input_key::space: return "space";
+		case input_key::backtick: return "backtick";
+		case input_key::dash: return "dash";
+		case input_key::equal_: return "equal";
+		case input_key::lbracket: return "lbracket";
+		case input_key::rbracket: return "rbracket";
+		case input_key::backslash: return "backslash";
+		case input_key::semicolon: return "semicolon";
+		case input_key::apostrophe: return "apostrophe";
+		case input_key::comma: return "comma";
+		case input_key::period: return "period";
+		case input_key::slash: return "slash";
+		case input_key::_0: return "0";
+		case input_key::_1: return "1";
+		case input_key::_2: return "2";
+		case input_key::_3: return "3";
+		case input_key::_4: return "4";
+		case input_key::_5: return "5";
+		case input_key::_6: return "6";
+		case input_key::_7: return "7";
+		case input_key::_8: return "8";
+		case input_key::_9: return "9";
+		case input_key::a: return "a";
+		case input_key::b: return "b";
+		case input_key::c: return "c";
+		case input_key::d: return "d";
+		case input_key::e: return "e";
+		case input_key::f: return "f";
+		case input_key::g: return "g";
+		case input_key::h: return "h";
+		case input_key::i: return "i";
+		case input_key::j: return "j";
+		case input_key::k: return "k";
+		case input_key::l: return "l";
+		case input_key::m: return "m";
+		case input_key::n: return "n";
+		case input_key::o: return "o";
+		case input_key::p: return "p";
+		case input_key::q: return "q";
+		case input_key::r: return "r";
+		case input_key::s: return "s";
+		case input_key::t: return "t";
+		case input_key::u: return "u";
+		case input_key::v: return "v";
+		case input_key::w: return "w";
+		case input_key::x: return "x";
+		case input_key::y: return "y";
+		case input_key::z: return "z";
+		case input_key::num0: return "num0";
+		case input_key::num1: return "num1";
+		case input_key::num2: return "num2";
+		case input_key::num3: return "num3";
+		case input_key::num4: return "num4";
+		case input_key::num5: return "num5";
+		case input_key::num6: return "num6";
+		case input_key::num7: return "num7";
+		case input_key::num8: return "num8";
+		case input_key::num9: return "num9";
+		case input_key::nummul: return "nummul";
+		case input_key::numadd: return "numadd";
+		case input_key::numsub: return "numsub";
+		case input_key::numdecimal: return "numdecimal";
+		case input_key::numdiv: return "numdiv";
+		case input_key::esc: return "esc";
+		case input_key::backspace: return "backspace";
+		case input_key::tab: return "tab";
+		case input_key::enter: return "enter";
+		case input_key::ins: return "ins";
+		case input_key::del: return "del";
+		case input_key::home: return "home";
+		case input_key::end: return "end";
+		case input_key::pgup: return "pgup";
+		case input_key::pgdn: return "pgdn";
+		case input_key::f1: return "f1";
+		case input_key::f2: return "f2";
+		case input_key::f3: return "f3";
+		case input_key::f4: return "f4";
+		case input_key::f5: return "f5";
+		case input_key::f6: return "f6";
+		case input_key::f7: return "f7";
+		case input_key::f8: return "f8";
+		case input_key::f9: return "f9";
+		case input_key::f10: return "f10";
+		case input_key::f11: return "f11";
+		case input_key::f12: return "f12";
+		case input_key::f13: return "f13";
+		case input_key::f14: return "f14";
+		case input_key::f15: return "f15";
+		case input_key::f16: return "f16";
+		case input_key::f17: return "f17";
+		case input_key::f18: return "f18";
+		case input_key::f19: return "f19";
+		case input_key::f20: return "f20";
+		case input_key::f21: return "f21";
+		case input_key::f22: return "f22";
+		case input_key::f23: return "f23";
+		case input_key::f24: return "f24";
+		case input_key::pause: return "pause";
+		case input_key::sleep: return "sleep";
+		case input_key::printscreen: return "printscreen";
+		case input_key::left: return "left";
+		case input_key::up: return "up";
+		case input_key::right: return "right";
+		case input_key::down: return "down";
+		case input_key::mail: return "mail";
+		case input_key::back: return "back";
+		case input_key::forward: return "forward";
+		case input_key::refresh: return "refresh";
+		case input_key::stop: return "stop";
+		case input_key::search: return "search";
+		case input_key::favs: return "favs";
+		case input_key::media: return "media";
+		case input_key::mute: return "mute";
+		case input_key::volup: return "volup";
+		case input_key::voldn: return "voldn";
+		case input_key::prev_track: return "prev_track";
+		case input_key::next_track: return "next_track";
+		case input_key::stop_track: return "stop_track";
+		case input_key::play_pause_track: return "play_pause_track";
+		case input_key::app1: return "app1";
+		case input_key::app2: return "app2";
+		case input_key::touch1: return "touch1";
+		case input_key::touch2: return "touch2";
+		case input_key::touch3: return "touch3";
+		case input_key::touch4: return "touch4";
+		case input_key::touch5: return "touch5";
+		case input_key::touch6: return "touch6";
+		case input_key::touch7: return "touch7";
+		case input_key::touch8: return "touch8";
+		case input_key::touch9: return "touch9";
+		case input_key::touch10: return "touch10";
+		default: break;
+	}
+	return "?";
 }
 
-const oGUID& oGetGUID(const threadsafe oGUI_STATUSBAR* const threadsafe*)
+oDEFINE_TO_STRING(input_key::value);
+oDEFINE_FROM_STRING(input_key::value, input_key::count);
+
+const char* as_string(const skeleton_bone::value& _Bone)
 {
-	// {6D169E76-5A6F-4A03-B7CB-232B2AE92D2C}
-	static const oGUID guid = { 0x6d169e76, 0x5a6f, 0x4a03, { 0xb7, 0xcb, 0x23, 0x2b, 0x2a, 0xe9, 0x2d, 0x2c } };
-	return guid;
+	switch (_Bone)
+	{
+		case skeleton_bone::hip_center: return "hip_center";
+		case skeleton_bone::spine: return "spine";
+		case skeleton_bone::shoulder_center: return "shoulder_center";
+		case skeleton_bone::head: return "head";
+		case skeleton_bone::shoulder_left: return "shoulder_left";
+		case skeleton_bone::elbow_left: return "elbow_left";
+		case skeleton_bone::wrist_left: return "wrist_left";
+		case skeleton_bone::hand_left: return "hand_left";
+		case skeleton_bone::shoulder_right: return "shoulder_right";
+		case skeleton_bone::elbow_right: return "elbow_right";
+		case skeleton_bone::wrist_right: return "wrist_right";
+		case skeleton_bone::hand_right: return "hand_right";
+		case skeleton_bone::hip_left: return "hip_left";
+		case skeleton_bone::knee_left: return "knee_left";
+		case skeleton_bone::ankle_left: return "ankle_left";
+		case skeleton_bone::foot_left: return "foot_left";
+		case skeleton_bone::hip_right: return "hip_right";
+		case skeleton_bone::knee_right: return "knee_right";
+		case skeleton_bone::ankle_right: return "ankle_right";
+		case skeleton_bone::foot_right: return "foot_right";
+		case skeleton_bone::invalid: return "invalid";
+		default: break;
+	}
+	return "?";
 }
 
-void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oGUI_KEY* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition)
+oDEFINE_TO_STRING(skeleton_bone::value);
+oDEFINE_FROM_STRING2(skeleton_bone::value, skeleton_bone::count, skeleton_bone::invalid);
+
+const char* as_string(const alignment::value& _Alignment)
+{
+	switch (_Alignment)
+	{
+		case alignment::top_left: return "top_left";
+		case alignment::top_center: return "top_center";
+		case alignment::top_right: return "top_right";
+		case alignment::middle_left: return "middle_left";
+		case alignment::middle_center: return "middle_center";
+		case alignment::middle_right: return "middle_right";
+		case alignment::bottom_left: return "bottom_left";
+		case alignment::bottom_center: return "bottom_center";
+		case alignment::bottom_right: return "bottom_right";
+		case alignment::fit_parent: return "fit_parent";
+		case alignment::fit_largest_axis: return "fit_largest_axis";
+		case alignment::fit_smallest_axis: return "fit_smallest_axis";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(alignment::value);
+oDEFINE_FROM_STRING(alignment::value, alignment::count);
+
+const char* as_string(const window_state::value& _State)
+{
+	switch (_State)
+	{
+		case window_state::invalid: return "invalid";
+		case window_state::hidden: return "hidden";
+		case window_state::minimized: return "minimized";
+		case window_state::restored: return "restored";
+		case window_state::maximized: return "maximized"; 
+		case window_state::fullscreen: return "fullscreen";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(window_state::value);
+oDEFINE_FROM_STRING(window_state::value, window_state::count);
+
+const char* as_string(const window_style::value& _Style)
+{
+	switch (_Style)
+	{
+		case window_style::default_style: return "default_style";
+		case window_style::borderless: return "borderless";
+		case window_style::dialog: return "dialog";
+		case window_style::fixed: return "fixed";
+		case window_style::fixed_with_menu: return "fixed_with_menu";
+		case window_style::fixed_with_statusbar: return "fixed_with_statusbar";
+		case window_style::fixed_with_menu_and_statusbar: return "fixed_with_menu_and_statusbar";
+		case window_style::sizable: return "sizable";
+		case window_style::sizable_with_menu: return "sizable_with_menu";
+		case window_style::sizable_with_statusbar: return "sizable_with_statusbar";
+		case window_style::sizable_with_menu_and_statusbar: return "sizable_with_menu_and_statusbar";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(window_style::value);
+oDEFINE_FROM_STRING(window_style::value, window_style::count);
+
+const char* as_string(const window_sort_order::value& _SortOrder)
+{
+	switch (_SortOrder)
+	{
+		case window_sort_order::sorted: return "sorted";
+		case window_sort_order::always_on_top: return "always_on_top";
+		case window_sort_order::always_on_top_with_focus: return "always_on_top_with_focus";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(window_sort_order::value);
+oDEFINE_FROM_STRING(window_sort_order::value, window_sort_order::count);
+
+const char* as_string(const cursor_state::value& _CursorState)
+{
+	switch (_CursorState)
+	{
+		case cursor_state::none: return "none";
+		case cursor_state::arrow: return "arrow";
+		case cursor_state::hand: return "hand";
+		case cursor_state::help: return "help";
+		case cursor_state::not_allowed: return "not_allowed";
+		case cursor_state::wait_foreground: return "wait_foreground";
+		case cursor_state::wait_background: return "wait_background";
+		case cursor_state::user: return "user";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(cursor_state::value);
+oDEFINE_FROM_STRING(cursor_state::value, cursor_state::count);
+
+const char* as_string(const control_type::value& _Control)
+{
+	switch (_Control)
+	{
+		case control_type::unknown: return "unknown";
+		case control_type::groupbox: return "groupbox";
+		case control_type::button: return "button";
+		case control_type::checkbox: return "checkbox";
+		case control_type::radiobutton: return "radiobutton";
+		case control_type::label: return "label";
+		case control_type::label_centered: return "label_centered";
+		case control_type::hyperlabel: return "hyperlabel"; 
+		case control_type::label_selectable: return "label_selectable";
+		case control_type::icon: return "icon";
+		case control_type::textbox: return "textbox";
+		case control_type::textbox_scrollable: return "textbox_scrollable";
+		case control_type::floatbox: return "floatbox"; 
+		case control_type::floatbox_spinner: return "floatbox_spinner";
+		case control_type::combobox: return "combobox"; 
+		case control_type::combotextbox: return "combotextbox"; 
+		case control_type::progressbar: return "progressbar";
+		case control_type::progressbar_unknown: return "progressbar_unknown"; 
+		case control_type::tab: return "tab"; 
+		case control_type::slider: return "slider";
+		case control_type::slider_selectable: return "slider_selectable"; 
+		case control_type::slider_with_ticks: return "slider_with_ticks"; 
+		case control_type::listbox: return "listbox"; 
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(control_type::value);
+oDEFINE_FROM_STRING(control_type::value, control_type::count);
+
+const char* as_string(const gui_event::value& _Event)
+{
+	switch (_Event)
+	{
+		case gui_event::timer: return "timer";
+		case gui_event::activated: return "activated";
+		case gui_event::deactivated: return "deactivated";
+		case gui_event::creating: return "creating";
+		case gui_event::paint: return "paint";
+		case gui_event::display_changed: return "display_changed";
+		case gui_event::moving: return "moving";
+		case gui_event::moved: return "moved";
+		case gui_event::sizing: return "sizing";
+		case gui_event::sized: return "sized";
+		case gui_event::closing: return "closing";
+		case gui_event::closed: return "closed";
+		case gui_event::to_fullscreen: return "to_fullscreen";
+		case gui_event::from_fullscreen: return "from_fullscreen";
+		case gui_event::lost_capture: return "lost_capture";
+		case gui_event::drop_files: return "drop_files";
+		case gui_event::input_device_changed: return "input_device_changed";
+		case gui_event::custom_event: return "custom_event";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(gui_event::value);
+oDEFINE_FROM_STRING(gui_event::value, gui_event::count);
+
+const char* as_string(const gui_action::value& _Action)
+{
+	switch (_Action)
+	{
+		case gui_action::unknown: return "unknown";
+		case gui_action::menu: return "menu";
+		case gui_action::control_activated: return "control_activated";
+		case gui_action::control_deactivated: return "control_deactivated";
+		case gui_action::control_selection_changing: return "control_selection_changing";
+		case gui_action::control_selection_changed: return "control_selection_changed";
+		case gui_action::hotkey: return "hotkey";
+		case gui_action::key_down: return "key_down";
+		case gui_action::key_up: return "key_up";
+		case gui_action::pointer_move: return "pointer_move";
+		case gui_action::skeleton: return "skeleton";
+		case gui_action::skeleton_acquired: return "skeleton_acquired";
+		case gui_action::skeleton_lost: return "skeleton_lost";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(gui_action::value);
+oDEFINE_FROM_STRING(gui_action::value, gui_action::count);
+
+} // namespace ouro
+
+void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const ouro::input_key::value* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition)
 {
 	oASSERT((_NumKeys % _NumKeyStates) == 0, "NumKeyStates must be a multiple of num keys");
 
 	bool KeyDown = false;
 	switch (_Action.Action)
 	{
-		case oGUI_ACTION_KEY_DOWN:
+		case ouro::gui_action::key_down:
 		{
 			KeyDown = true;
 			break;
 		}
 
-		case oGUI_ACTION_KEY_UP:
+		case ouro::gui_action::key_up:
 		{
 			KeyDown = false;
 			break;
 		}
 
-		case oGUI_ACTION_POINTER_MOVE:
+		case ouro::gui_action::pointer_move:
 			*_pPointerPosition = _Action.Position.xyz();
 			return;
 
@@ -357,7 +506,7 @@ void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oGUI_KEY* _pKey
 			return;
 	}
 
-	oGUI_KEY TestKey = _Action.Key;
+	ouro::input_key::value TestKey = _Action.Key;
 	for (size_t i = 0; i < _NumKeys; i++)
 	{
 		if (TestKey == _pKeys[i])
@@ -368,7 +517,7 @@ void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const oGUI_KEY* _pKey
 	}
 }
 
-oRECT oGUIResolveRect(const oRECT& _Parent, const oRECT& _UnadjustedChild, oGUI_ALIGNMENT _Alignment, bool _Clip)
+oRECT oGUIResolveRect(const oRECT& _Parent, const oRECT& _UnadjustedChild, ouro::alignment::value _Alignment, bool _Clip)
 {
 	int2 cpos = oGUIResolveRectPosition(_UnadjustedChild.Min);
 
@@ -377,31 +526,31 @@ oRECT oGUIResolveRect(const oRECT& _Parent, const oRECT& _UnadjustedChild, oGUI_
 
 	float2 ResizeRatios = (float2)psz / max((float2)csz, float2(0.0001f, 0.0001f));
 
-	oGUI_ALIGNMENT internalAlignment = _Alignment;
+	ouro::alignment::value internalAlignment = _Alignment;
 
 	int2 offset(0, 0);
 
 	switch (_Alignment)
 	{
-		case oGUI_ALIGNMENT_FIT_LARGEST_AXIS:
+		case ouro::alignment::fit_largest_axis:
 		{
 			const float ResizeRatio = min(ResizeRatios);
 			csz = round((float2)csz * ResizeRatio);
 			cpos = 0;
-			internalAlignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
+			internalAlignment = ouro::alignment::middle_center;
 			break;
 		}
 
-		case oGUI_ALIGNMENT_FIT_SMALLEST_AXIS:
+		case ouro::alignment::fit_smallest_axis:
 		{
 			const float ResizeRatio = max(ResizeRatios);
 			csz = round((float2)csz * ResizeRatio);
 			cpos = 0;
-			internalAlignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
+			internalAlignment = ouro::alignment::middle_center;
 			break;
 		}
 
-		case oGUI_ALIGNMENT_FIT_PARENT:
+		case ouro::alignment::fit_parent:
 			return _Parent;
 
 		default:

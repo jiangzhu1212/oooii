@@ -76,18 +76,18 @@ public:
 	{
 		StateValidMask = State = 0;
 		oFOR(auto& k, Keys)
-			k.fill(oGUI_KEY_NONE);
+			k.fill(ouro::input_key::none);
 	}
 
 	// Returns true if InputIsDown should be respected. Several keys can make up
 	// an input result, so it could take several key events to get the state of 
 	// the input. It can either be down or up based on the value of InputIsDown.
-	bool OnKey(oGUI_KEY _Key, bool _IsDown, bool* _pInputIsDown);
+	bool OnKey(ouro::input_key::value _Key, bool _IsDown, bool* _pInputIsDown);
 
 private:
 	// Up to 4 keys can be pressed at the same time to trigger a Input.
 	// Up to 7 different combinations can trigger a Input.
-	std::array<std::array<oGUI_KEY, 4>, 4> Keys;
+	std::array<std::array<ouro::input_key::value, 4>, 4> Keys;
 	short StateValidMask;
 	short State;
 
@@ -124,9 +124,9 @@ void oInput::Parse(const char* _InputMapping)
 				if (KeyIndex >= oInt(Keys[KeySetIndex].size()))
 					oTHROW(no_buffer_space, "Only up to %u simultaneous keys supported", Keys[KeySetIndex].size());
 
-				oGUI_KEY Key = oGUI_KEY_NONE;
-				if (!oRTTI_OF(oGUI_KEY).FromString(tok, &Key, sizeof(Key)))
-					oTHROW(protocol_error, "unrecognized oGUI_KEY \"%s\"", tok);
+				ouro::input_key::value Key = ouro::input_key::none;
+				if (!oRTTI_OF(ouro_input_key_value).FromString(tok, &Key, sizeof(Key)))
+					oTHROW(protocol_error, "unrecognized ouro::input_key::value \"%s\"", tok);
 
 				Keys[KeySetIndex][KeyIndex] = Key;
 
@@ -141,7 +141,7 @@ void oInput::Parse(const char* _InputMapping)
 	}
 }
 
-bool oInput::OnKey(oGUI_KEY _Key, bool _IsDown, bool* _pInputIsDown)
+bool oInput::OnKey(ouro::input_key::value _Key, bool _IsDown, bool* _pInputIsDown)
 {
 	const bool WasDown = IsDown();
 	int StateMask = 1;
@@ -149,7 +149,7 @@ bool oInput::OnKey(oGUI_KEY _Key, bool _IsDown, bool* _pInputIsDown)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			if (K[i] != oGUI_KEY_NONE && K[i] == _Key)
+			if (K[i] != ouro::input_key::none && K[i] == _Key)
 			{
 				if (_IsDown)
 					State |= StateMask;
@@ -486,8 +486,8 @@ void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
 {
 	switch (_Action.Action)
 	{
-		case oGUI_ACTION_KEY_DOWN:
-		case oGUI_ACTION_KEY_UP:
+		case ouro::gui_action::key_down:
+		case ouro::gui_action::key_up:
 		{
 			shared_lock<shared_mutex> lock(Mutex);
 			if (InputSet)
@@ -496,7 +496,7 @@ void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
 				for (int i = 0; i < oInt(pInputSet->Inputs.size()); i++)
 				{
 					bool InputDown = false;
-					if (pInputSet->Inputs[i].OnKey(_Action.Key, _Action.Action == oGUI_ACTION_KEY_DOWN, &InputDown))
+					if (pInputSet->Inputs[i].OnKey(_Action.Key, _Action.Action == ouro::gui_action::key_down, &InputDown))
 					{
 						// this is not really safe. It is only safe if OnAction is only ever 
 						// called from one thread for one instance, which tends to be the
@@ -507,7 +507,7 @@ void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
 						thread_cast<oInputHistory&>(InputHistory).Add(_Action.TimestampMS, i, InputDown);
 
 						oGUI_ACTION_DESC a(_Action);
-						a.Action = oGUI_ACTION_CONTROL_ACTIVATED;
+						a.Action = ouro::gui_action::control_activated;
 						a.ActionCode = i; // at least trigger this input
 						
 						// Check to see if it gets overridden by a sequence
@@ -520,7 +520,7 @@ void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
 							}
 						}
 
-						oTRACE("Input %d %s", a.ActionCode, (_Action.Action == oGUI_ACTION_KEY_DOWN) ? "down" : "up");
+						oTRACE("Input %d %s", a.ActionCode, (_Action.Action == ouro::gui_action::key_down) ? "down" : "up");
 						Hooks.Call(a);
 					}
 				}

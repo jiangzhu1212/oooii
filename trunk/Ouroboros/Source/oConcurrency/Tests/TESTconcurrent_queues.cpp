@@ -421,7 +421,7 @@ static void try_steal(worklist_t& _Work, int* _Results, bool* _pDone)
 	end_thread();
 }
 
-static void test_stealing(const oFUNCTION<void(worklist_t& _WorkParam, int* _Results, bool* _pDone)>& _Function
+static void test_stealing(const std::function<void(worklist_t& _WorkParam, int* _Results, bool* _pDone)>& _Function
 	, worklist_t& _Work
 	, bool* _pWorkIsEmpty
 	, int* _pNumStolen

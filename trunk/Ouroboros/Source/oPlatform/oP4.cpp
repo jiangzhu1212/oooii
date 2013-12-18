@@ -245,7 +245,7 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 	return true;
 }
 
-bool oP4GetChangelistShared(const char* _pSearch, int _ChangeList, oFUNCTION<void(char* _Result)> _Result)
+bool oP4GetChangelistShared(const char* _pSearch, int _ChangeList, std::function<void(char* _Result)> _Result)
 {
 	xlstring cmdline, response;
 	snprintf(cmdline, "p4 change -o %d",_ChangeList);

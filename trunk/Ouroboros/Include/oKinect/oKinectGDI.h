@@ -41,9 +41,9 @@ void oGDIDrawBoneText(
 	HDC _hDC
 	, const RECT& _rTarget
 	, const float4& _BonePosition
-	, oGUI_ALIGNMENT _Anchor
+	, ouro::alignment::value _Anchor
 	, const int2& _Offset
-	, oGUI_ALIGNMENT _Alignment
+	, ouro::alignment::value _Alignment
 	, const char* _Text
 	);
 
@@ -57,6 +57,6 @@ static const int oGDI_AIR_KEY_DRAW_KEY = 2;
 static const int oGDI_AIR_KEY_DRAW_MIN = 4;
 static const int oGDI_AIR_KEY_DRAW_MAX = 8;
 
-void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, oGUI_ACTION _LastAction, const oGUI_BONE_DESC& _Skeleton);
+void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::gui_action::value _LastAction, const oGUI_BONE_DESC& _Skeleton);
 
 #endif

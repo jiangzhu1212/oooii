@@ -44,8 +44,8 @@
 // _AsString is true, a null-terminator will be added. Both an allocation and
 // deallocation function must be specified. Deallocation is only done if there 
 // is a read error.
-bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(size_t _NumBytes)>& _Allocate, const oFUNCTION<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString);
-template<typename T> bool oStreamLoad(T** _ppOutBuffer, size_t* _pOutSize, const oFUNCTION<void*(size_t _NumBytes)>& _Allocate, const oFUNCTION<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString = false) { return oStreamLoad((void**)_ppOutBuffer, _pOutSize, _Allocate, _Deallocate, _URIReference, _AsString); }
+bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const std::function<void*(size_t _NumBytes)>& _Allocate, const std::function<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString);
+template<typename T> bool oStreamLoad(T** _ppOutBuffer, size_t* _pOutSize, const std::function<void*(size_t _NumBytes)>& _Allocate, const std::function<void(void* _Pointer)>& _Deallocate, const char* _URIReference, bool _AsString = false) { return oStreamLoad((void**)_ppOutBuffer, _pOutSize, _Allocate, _Deallocate, _URIReference, _AsString); }
 
 bool oStreamLoadPartial(void* _pBuffer, size_t _SizeofBuffer, const char* _URIReference);
 template<typename T> bool oStreamLoadPartial(T* _pBuffer, const char* _URIReference) { return oStreamLoadPartial()}

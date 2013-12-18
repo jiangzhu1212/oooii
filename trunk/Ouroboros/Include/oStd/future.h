@@ -499,7 +499,7 @@ namespace future_detail {
 
 		template <typename U> void set_value_at_thread_exit(const U& _Value)
 		{
-			set_value_at_thread_exit_intrusive_ptr<T>(&Value, _Value, oBIND(&oCommitment<T&>::notify_value_set_and_release, this));
+			set_value_at_thread_exit_intrusive_ptr<T>(&Value, _Value, std::bind(&oCommitment<T&>::notify_value_set_and_release, this));
 		}
 
 	private:

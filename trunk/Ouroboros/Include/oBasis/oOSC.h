@@ -53,8 +53,8 @@ static const int oOSC_MAX_FIXED_STRING_LENGTH = 9*64;
 // For blobs, this is the size of the blob. For char, the size is sizeof(char).
 // No OSC padding requirements are considered in data preparation, only use of
 // OSC type tags to describe traversal of a C++ struct.
-typedef oFUNCTION<void(int _Type, void* _pField, size_t _SizeofField)> oOSCVisitorFn;
-typedef oFUNCTION<void(int _Type, const void* _pField, size_t _SizeofField)> oOSCVisitorConstFn;
+typedef std::function<void(int _Type, void* _pField, size_t _SizeofField)> oOSCVisitorFn;
+typedef std::function<void(int _Type, const void* _pField, size_t _SizeofField)> oOSCVisitorConstFn;
 
 // This function correctly traverses fields in a specified struct that is 
 // trivial, meaning:

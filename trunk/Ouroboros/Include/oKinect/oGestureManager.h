@@ -62,7 +62,7 @@ struct oGESTURE_DEVICE_VISUALIZATION_DESC
 	oGESTURE_DEVICE_VISUALIZATION_DESC()
 		: hGestureDevice(nullptr)
 		, hNotOverlay(nullptr)
-		, Alignment(oGUI_ALIGNMENT_TOP_RIGHT)
+		, Alignment(ouro::alignment::top_right)
 		, Position(oDEFAULT, oDEFAULT)
 		, ShowTimeoutMS(5000)
 		, BlinkTimeoutMS(1000)
@@ -75,7 +75,7 @@ struct oGESTURE_DEVICE_VISUALIZATION_DESC
 	oGUI_ICON hNotOverlay;
 
 	// Where on the screen the icon shows
-	oGUI_ALIGNMENT Alignment;
+	ouro::alignment::value Alignment;
 	int2 Position;
 
 	// Time before icon disappears
@@ -89,7 +89,7 @@ struct oGESTURE_VISUALIZATION_DESC
 {
 	oGESTURE_VISUALIZATION_DESC()
 		: Visualization(oGESTURE_VIZ_TRACKING_AND_AIRKEYS)
-		, Alignment(oGUI_ALIGNMENT_BOTTOM_RIGHT)
+		, Alignment(ouro::alignment::bottom_right)
 		, Position(oDEFAULT, oDEFAULT)
 		, Size(640, 480)
 	{}
@@ -97,7 +97,7 @@ struct oGESTURE_VISUALIZATION_DESC
 	oGESTURE_VISUALIZATION Visualization;
 
 	// Where on the screen the icon shows
-	oGUI_ALIGNMENT Alignment;
+	ouro::alignment::value Alignment;
 	int2 Position;
 	int2 Size;
 };
@@ -151,7 +151,7 @@ interface oGestureManager : oInterface
 	// written on top of an air keyboard. So a keyset for the air keyboard must
 	// first be specified along with the combo set as currently described by the 
 	// RTTI of the combo enum that will be listened for in an application's 
-	// action handler as the ActionCode and an oGUI_ACTION_CONTROL_ACTIVATED 
+	// action handler as the ActionCode and an ouro::gui_action::control_activated 
 	// action. More will come on what a "dynamic enum" means, but for now this API
 	// specifies a gesture set.
 	virtual bool SetCurrentGestureSet(const char* _KeySetName, const oRTTI* _pInputDynEnumType) = 0;

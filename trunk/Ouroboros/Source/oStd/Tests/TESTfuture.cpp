@@ -54,7 +54,7 @@ static bool exercise_all_threads()
 	int* results = (int*)_alloca(nTasks * sizeof(int));
 	memset(results, -1, nTasks * sizeof(int));
 
-	oConcurrency::parallel_for(0, size_t(nTasks), oBIND(exercise_thread, oBIND1, results, 1500));
+	oConcurrency::parallel_for(0, size_t(nTasks), std::bind(exercise_thread, oBIND1, results, 1500));
 	for (int i = 0; i < nTasks; i++)
 		oCHECK(results[i] != -1, "Invalid results from parallel_for");
 	return true;
@@ -149,7 +149,7 @@ void TESTfuture(ouro::test_services& _Services)
 	// Test a packaged_task through async with maximum number of arguments
 	// (std::bind is apparently limited to 10)
 	{
-		oStd::future<bool> Result2 = oStd::async((oFUNCTION<bool(int,int,int,int,int,int,int,int,int,int)>)[&](int _Param1,int _Param2,int _Param3,int _Param4,int _Param5,int _Param6,int _Param7,int _Param8,int _Param9,int _Param10)->bool
+		oStd::future<bool> Result2 = oStd::async((std::function<bool(int,int,int,int,int,int,int,int,int,int)>)[&](int _Param1,int _Param2,int _Param3,int _Param4,int _Param5,int _Param6,int _Param7,int _Param8,int _Param9,int _Param10)->bool
 		{ 
 			if (_Param10 == 10)
 				return true; 

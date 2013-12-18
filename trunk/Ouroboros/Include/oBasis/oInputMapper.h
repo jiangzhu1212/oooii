@@ -24,7 +24,7 @@
  **************************************************************************/
 // The input mapper maps simple key combinations to an enum of inputs to be used 
 // by the greater system. Basically this supports the idea of mapping 
-// oGUI_KEY symbols to some logical action, and that mapping can be changed 
+// ouro::input_key::value symbols to some logical action, and that mapping can be changed 
 // without changing how the logical actions behave in the application. Also 
 // several combinations can be mapped to a single logical action.
 #pragma once
@@ -59,9 +59,9 @@ interface oInputMapper : oInterface
 /*
 	<oInputSetList>
 		<oInputSet id="oMEDIA_INPUT" version="1.0">
-			<oInput id="oMEDIA_INPUT_PLAY_PAUSE" Keys="oGUI_KEY_SPACE OR oGUI_KEY_P" />
-			<oInput id="oMEDIA_INPUT_TRACK_NEXT_1" Keys="oGUI_KEY_1" />
-			<oInput id="oMEDIA_INPUT_TRACK_NEXT_2" Keys="oGUI_KEY_2" />
+			<oInput id="oMEDIA_INPUT_PLAY_PAUSE" Keys="ouro::input_key::SPACE OR ouro::input_key::P" />
+			<oInput id="oMEDIA_INPUT_TRACK_NEXT_1" Keys="ouro::input_key::1" />
+			<oInput id="oMEDIA_INPUT_TRACK_NEXT_2" Keys="ouro::input_key::2" />
 
 			<oInputSequence
 				id="oMEDIA_INPUT_TRACK_NEXT"
@@ -78,9 +78,9 @@ bool oParseInputSetList(const ouro::xml& _XML, ouro::xml::node _hInputSetList, c
 // of the node is:
 /*
 	<oInputSet id="oMEDIA_INPUT" version="1.0">
-		<oInput id="oMEDIA_INPUT_PLAY_PAUSE" Keys="oGUI_KEY_SPACE OR oGUI_KEY_P" />
-		<oInput id="oMEDIA_INPUT_TRACK_NEXT_1" Keys="oGUI_KEY_1" />
-		<oInput id="oMEDIA_INPUT_TRACK_NEXT_2" Keys="oGUI_KEY_2" />
+		<oInput id="oMEDIA_INPUT_PLAY_PAUSE" Keys="ouro::input_key::SPACE OR ouro::input_key::P" />
+		<oInput id="oMEDIA_INPUT_TRACK_NEXT_1" Keys="ouro::input_key::1" />
+		<oInput id="oMEDIA_INPUT_TRACK_NEXT_2" Keys="ouro::input_key::2" />
 
 		<oInputSequence
 		id="oMEDIA_INPUT_TRACK_NEXT"
@@ -98,14 +98,14 @@ bool oParseInputSetList(const ouro::xml& _XML, ouro::xml::node _hInputSetList, c
 // oInput Attributes
 //  id: A string name of an enum value from the id specified in oInputSet.
 //  Keys: a string of multiple oGUI_KEYs arranged in the following way:
-//        < oGUI_KEY [oGUI_KEY...] [OR oGUI_KEY [oGUI_KEY...] ...] >
+//        < ouro::input_key::value [ouro::input_key::value...] [OR ouro::input_key::value [ouro::input_key::value...] ...] >
 //        Up to 4 oGUI_KEYs specified as space-delimited means "must all be down
 //        at same time" to trigger the input. There is no rule restriction so
 //        defining Ctrl-S and S-Ctrl would be the same. Up to 4 sets of these
 //        can be specified with OR connectors for multiple input sources. For
 //        example to support 1 and 2 at the same time or both mouse buttons or
 //        two joystick buttons, specify: 
-//        "oGUI_KEY1 oGUI_KEY2 OR oGUI_KEY_MOUSE_LEFT oGUI_KEY_MOUSE_RIGHT OR oGUI_KEY_JOYSTICK_RDOWN oGUI_KEY_JOYSTICK_RRIGHT"
+//        "oGUI_KEY1 oGUI_KEY2 OR ouro::input_key::MOUSE_LEFT ouro::input_key::MOUSE_RIGHT OR ouro::input_key::JOYSTICK_RDOWN ouro::input_key::JOYSTICK_RRIGHT"
 //
 // oInputSequence Attributes
 //  id: A string name of an enum value from the id specified in oInputSet.

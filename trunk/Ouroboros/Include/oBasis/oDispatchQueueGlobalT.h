@@ -125,7 +125,7 @@ bool oDispatchQueueGlobalT<T>::Dispatch(const oTASK& _Task) threadsafe
 
 		// If this command is the only one in the queue kick off the execution
 		if (1 == TaskCount)
-			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, ouro::intrusive_ptr<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
+			Issue(std::bind(&oDispatchQueueGlobalT::ExecuteNext, this, ouro::intrusive_ptr<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
 
 		FlushLock.unlock_shared();
 	}
@@ -202,7 +202,7 @@ void oDispatchQueueGlobalT<T>::ExecuteNext(ouro::intrusive_ptr<threadsafe oDispa
 			
 		// If there are remaining Tasks execute the next
 		if (TaskCount > 0)
-			Issue(oBIND(&oDispatchQueueGlobalT::ExecuteNext, this, ouro::intrusive_ptr<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
+			Issue(std::bind(&oDispatchQueueGlobalT::ExecuteNext, this, ouro::intrusive_ptr<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
 
 		FlushLock.unlock_shared();
 	}

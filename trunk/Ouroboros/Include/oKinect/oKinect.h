@@ -30,6 +30,7 @@
 
 #include <oGUI/window.h>
 #include <oBasis/oInterface.h>
+#include <oBasis/oRTTI.h>
 
 #ifdef oHAS_KINECT_SDK
 	#define oKINECT_SDK_MAJOR 1
@@ -98,7 +99,7 @@ interface oKinect : oInterface
 {
 	virtual void GetDesc(oKINECT_DESC* _pDesc) const threadsafe = 0;
 
-	virtual oGUI_INPUT_DEVICE_STATUS GetStatus() const threadsafe = 0;
+	virtual ouro::input_device_status::value GetStatus() const threadsafe = 0;
 
 	virtual int2 GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe = 0;
 

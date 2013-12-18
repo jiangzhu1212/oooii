@@ -555,7 +555,7 @@ int main(int argc, const char* argv[])
 	md.WatchSubtree = false;
 
 	intrusive_ptr<threadsafe oStreamMonitor> NewVersionMonitor;
-	if (!oStreamMonitorCreate(md, oBIND(OnNewVersion, oBIND1, oBIND2, Window), &NewVersionMonitor))
+	if (!oStreamMonitorCreate(md, std::bind(OnNewVersion, oBIND1, oBIND2, Window), &NewVersionMonitor))
 		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Error starting OnNewVersion monitor.\n%s", oErrorGetLastString());
 
 	int WorkCountUILast = -1;

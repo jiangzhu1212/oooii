@@ -27,6 +27,7 @@
 #include <oBasis/oXMLSerialize.h>
 #include <oConcurrency/mutex.h>
 #include <oConcurrency/thread_safe.h>
+#include <oBasis/oGUI.h>
 
 using namespace ouro;
 using namespace oConcurrency;
@@ -36,9 +37,9 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oAIR_KEY)
 	oRTTI_COMPOUND_VERSION(oAIR_KEY, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oAIR_KEY)
 	oRTTI_COMPOUND_ATTR(oAIR_KEY, Bounds, oRTTI_OF(oAABoxf), "Bounds", oRTTI_COMPOUND_ATTR_REGULAR)
-	oRTTI_COMPOUND_ATTR(oAIR_KEY, Origin, oRTTI_OF(oGUI_BONE), "Origin", oRTTI_COMPOUND_ATTR_REGULAR)
-	oRTTI_COMPOUND_ATTR(oAIR_KEY, Trigger, oRTTI_OF(oGUI_BONE), "Trigger", oRTTI_COMPOUND_ATTR_REGULAR)
-	oRTTI_COMPOUND_ATTR(oAIR_KEY, Key, oRTTI_OF(oGUI_KEY), "Key", oRTTI_COMPOUND_ATTR_REGULAR)
+	oRTTI_COMPOUND_ATTR(oAIR_KEY, Origin, oRTTI_OF(ouro_skeleton_bone_value), "Origin", oRTTI_COMPOUND_ATTR_REGULAR)
+	oRTTI_COMPOUND_ATTR(oAIR_KEY, Trigger, oRTTI_OF(ouro_skeleton_bone_value), "Trigger", oRTTI_COMPOUND_ATTR_REGULAR)
+	oRTTI_COMPOUND_ATTR(oAIR_KEY, Key, oRTTI_OF(ouro_input_key_value), "Key", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oAIR_KEY)
 oRTTI_COMPOUND_END_DESCRIPTION(oAIR_KEY)
 
@@ -136,7 +137,7 @@ struct oAirKeyboardImpl : oAirKeyboard
 private:
 	oConcurrency::shared_mutex KeySetMutex;
 	intrusive_ptr<threadsafe oAirKeySet> KeySet;
-	std::vector<oGUI_ACTION> KeyAction;
+	std::vector<ouro::gui_action::value> KeyAction;
 
 	oConcurrency::shared_mutex SkeletonsMutex;
 	std::map<int, oGUI_BONE_DESC> Skeletons;
@@ -172,7 +173,7 @@ void oAirKeyboardImpl::SetKeySet(threadsafe oAirKeySet* _pKeySet) threadsafe
 		const auto& Keys = thread_cast<oAirKeySetImpl*>(static_cast<threadsafe oAirKeySetImpl*>(KeySet.c_ptr()))->Keys;
 		auto& Actions = oThreadsafe(this)->KeyAction;
 		Actions.resize(Keys.size());
-		fill(Actions, oGUI_ACTION_KEY_UP);
+		fill(Actions, ouro::gui_action::key_up);
 	}
 }
 
@@ -230,7 +231,7 @@ void oAirKeyboardImpl::UpdateInternal(const oGUI_BONE_DESC& _Skeleton, unsigned 
 	oGUI_BONE_DESC& OldSkeleton = it->second;
 
 	oGUI_ACTION_DESC a;
-	a.DeviceType = oGUI_INPUT_DEVICE_SKELETON;
+	a.DeviceType = ouro::input_device_type::skeleton;
 	a.DeviceID = _Skeleton.SourceID;
 	a.TimestampMS = _TimestampMS;
 	//a.hSource = ?;
@@ -241,7 +242,7 @@ void oAirKeyboardImpl::UpdateInternal(const oGUI_BONE_DESC& _Skeleton, unsigned 
 		const auto& Key = Keys[k];
 		a.Key = Key.Key;
 		oAABoxf NewBounds(Key.Bounds), OldBounds(Key.Bounds);
-		if (Key.Origin != oGUI_BONE_INVALID)
+		if (Key.Origin != ouro::skeleton_bone::invalid)
 		{
 			oTranslate(NewBounds, _Skeleton.Positions[Key.Origin].xyz());
 			oTranslate(OldBounds, OldSkeleton.Positions[Key.Origin].xyz());
@@ -261,7 +262,7 @@ void oAirKeyboardImpl::UpdateInternal(const oGUI_BONE_DESC& _Skeleton, unsigned 
 
 					if (NewInside != OldInside)
 					{
-						a.Action = KeyAction[k] = NewInside ? oGUI_ACTION_KEY_DOWN : oGUI_ACTION_KEY_UP; 
+						a.Action = KeyAction[k] = NewInside ? ouro::gui_action::key_down : ouro::gui_action::key_up; 
 						a.ActionCode = i;
 						a.Position = New;
 						TriggerInternal(a);

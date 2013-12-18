@@ -242,10 +242,10 @@ void oGestureManagerImpl::HookWindow(bool _Hooked)
 {
 	if (_Hooked)
 	{
-		hookAirKeys = AirKeyboard->HookActions(oBIND(&ouro::window::trigger, Window.get(), oBIND1));
-		hookInputMaps = InputMapper->HookActions(oBIND(&ouro::window::trigger, Window.get(), oBIND1));
-		hookEvents = Window->hook_events(oBIND(&oGestureManagerImpl::OnEvent, this, oBIND1));
-		hookActions = Window->hook_actions(oBIND(&oGestureManagerImpl::OnAction, this, oBIND1));
+		hookAirKeys = AirKeyboard->HookActions(std::bind(&ouro::window::trigger, Window.get(), oBIND1));
+		hookInputMaps = InputMapper->HookActions(std::bind(&ouro::window::trigger, Window.get(), oBIND1));
+		hookEvents = Window->hook_events(std::bind(&oGestureManagerImpl::OnEvent, this, oBIND1));
+		hookActions = Window->hook_actions(std::bind(&oGestureManagerImpl::OnAction, this, oBIND1));
 	}
 
 	else
@@ -482,13 +482,13 @@ bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _Cli
 			while (Kinect->GetSkeletonByIndex(SkelIndex, &Skeleton))
 			{
 				if (AirKeyboard)
-					AirKeyboard->VisitKeys(oBIND(oGDIDrawAirKey, hDC, oBINDREF(rTarget), oGDI_AIR_KEY_DRAW_BOX|oGDI_AIR_KEY_DRAW_KEY, oBIND1, oBIND2, oBINDREF(Skeleton)));
+					AirKeyboard->VisitKeys(std::bind(oGDIDrawAirKey, hDC, oBINDREF(rTarget), oGDI_AIR_KEY_DRAW_BOX|oGDI_AIR_KEY_DRAW_KEY, oBIND1, oBIND2, oBINDREF(Skeleton)));
 
 				oGUI_TEXT_DESC td;
 				td.Position = float2((float)rTarget.left, VerticalOffset);
 				td.Size = oWinRectSize(rTarget);
 				td.Shadow = Black;
-				const float4& h = Skeleton.Positions[oGUI_BONE_HIP_CENTER];
+				const float4& h = Skeleton.Positions[ouro::skeleton_bone::hip_center];
 				mstring text;
 				snprintf(text, "HIP: %.02f %.02f %.02f\n", h.x, h.y, h.z);
 				oGDIDrawText(hDC, td, text);
@@ -497,7 +497,7 @@ bool oGestureManagerImpl::GDIDrawKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _Cli
 				VerticalOffset += oWinRectH(rText);
 
 				if (!ComboMessage[SkelIndex].empty())
-					oGDIDrawBoneText(hDC, rTarget, Skeleton.Positions[oGUI_BONE_HEAD], oGUI_ALIGNMENT_BOTTOM_CENTER, int2(0, -75), oGUI_ALIGNMENT_BOTTOM_CENTER, ComboMessage[SkelIndex]);
+					oGDIDrawBoneText(hDC, rTarget, Skeleton.Positions[ouro::skeleton_bone::head], ouro::alignment::bottom_center, int2(0, -75), ouro::alignment::bottom_center, ComboMessage[SkelIndex]);
 
 				SkelIndex++;
 			}
@@ -527,7 +527,7 @@ void oGestureManagerImpl::GDIDrawNoKinect(oGUI_DRAW_CONTEXT _hDC, const int2& _C
 	td.Position = float2(oWinRectPosition(rTarget));
 	td.Size = oWinRectSize(rTarget);
 	td.Shadow = Gray;
-	td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
+	td.Alignment = ouro::alignment::middle_center;
 	oGDIDrawText(hDC, td, NoKinectMessage);
 }
 
@@ -688,7 +688,7 @@ void oGestureManagerImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_SIZED:
+		case ouro::gui_event::sized:
 		{
 			// Keep the font proportional to the size of the rectangle.
 			ouro::display::info di = ouro::display::get_info(oWinGetDisplayId((HWND)_Event.hWindow));
@@ -700,7 +700,7 @@ void oGestureManagerImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 			break;
 		}
 
-		case oGUI_TIMER:
+		case ouro::gui_event::timer:
 		{
 			int TimerVersion = oInvalid;
 			oGESTURE_TIMER_EVENT GTE = oGESTURE_TIMER_HEAD_MESSAGE;
@@ -735,7 +735,7 @@ void oGestureManagerImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 			break;
 		}
 
-		case oGUI_INPUT_DEVICE_CHANGED:
+		case ouro::gui_event::input_device_changed:
 		{
 			OnDeviceChange(_Event);
 			break;
@@ -750,7 +750,7 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 {
 	switch (_Action.Action)
 	{
-		case oGUI_ACTION_SKELETON_ACQUIRED:
+		case ouro::gui_action::skeleton_acquired:
 		{
 			sstring text;
 			snprintf(text, "GMGR: Skeleton[%d] activated", _Action.DeviceID);
@@ -758,7 +758,7 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 			break;
 		}
 
-		case oGUI_ACTION_SKELETON_LOST:
+		case ouro::gui_action::skeleton_lost:
 		{
 			sstring text;
 			snprintf(text, "GMGR: Skeleton[%d] deactivated", _Action.DeviceID);
@@ -766,7 +766,7 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 			break;
 		}
 
-		case oGUI_ACTION_SKELETON:
+		case ouro::gui_action::skeleton:
 		{
 			windows::skeleton::bone_info Skeleton;
 			windows::skeleton::get_info((windows::skeleton::handle)_Action.hSkeleton, &Skeleton);
@@ -780,8 +780,8 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 			break;
 		}
 
-		case oGUI_ACTION_KEY_DOWN:
-		case oGUI_ACTION_KEY_UP:
+		case ouro::gui_action::key_down:
+		case ouro::gui_action::key_up:
 		{
 			InputMapper->OnAction(_Action);
 			break;
@@ -794,7 +794,7 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 
 void oGestureManagerImpl::OnDeviceChange(const oGUI_EVENT_DESC& _Event)
 {
-	if (_Event.Type == oGUI_INPUT_DEVICE_SKELETON)
+	if (_Event.Type == ouro::input_device_type::skeleton)
 	{
 		if (!Desc.GestureEnabled)
 		{
@@ -805,13 +805,13 @@ void oGestureManagerImpl::OnDeviceChange(const oGUI_EVENT_DESC& _Event)
 		//KinectIcon(_Event.AsInputDevice().Status);
 		switch (_Event.AsInputDevice().Status)
 		{
-			case oGUI_INPUT_DEVICE_READY:
+			case ouro::input_device_status::ready:
 				AttachKinect(true, _Event.AsInputDevice().InstanceName);
 				break;
-			case oGUI_INPUT_DEVICE_NOT_CONNECTED:
+			case ouro::input_device_status::not_connected:
 				AttachKinect(false, _Event.AsInputDevice().InstanceName);
 				break;
-			case oGUI_INPUT_DEVICE_INITIALIZING:
+			case ouro::input_device_status::initializing:
 				NoKinectMessage = "Kinect initializing...";
 				KinectDrawState = oKINECT_STATUS_DRAW_INITIALIZING_1;
 				break;

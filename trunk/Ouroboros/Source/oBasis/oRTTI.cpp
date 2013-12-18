@@ -131,6 +131,10 @@ oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_path_string, ouro_path_str
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_uri_string, ouro_uri_string, -1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_path, ouro_path, -1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_uri, ouro_uri, -1)
+static ouro_input_key_value init_input_key() { return ouro::input_key::none; }
+static ouro_skeleton_bone_value init_skeleton_bone_value() { return ouro::skeleton_bone::invalid; }
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, ouro_input_key_value, ouro_input_key_value, 4, init_input_key())
+	oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, ouro_skeleton_bone_value, ouro_skeleton_bone_value, 4, init_skeleton_bone_value())
 
 namespace ouro {
 
@@ -463,7 +467,7 @@ const oRTTI_ATTR* oRTTI::GetAttr(int _Index) const
 	return (const oRTTI_ATTR*)&((oRTTI_DATA_COMPOUND_BASE*)this)->Attrs[_Index];
 }
 
-void oRTTI::EnumAttrs(bool _IncludeBases, oFUNCTION<bool(const oRTTI_ATTR& _Attr)> _Callback) const
+void oRTTI::EnumAttrs(bool _IncludeBases, std::function<bool(const oRTTI_ATTR& _Attr)> _Callback) const
 {
 	if (Type != oRTTI_TYPE_COMPOUND) return;
 	if (_IncludeBases)

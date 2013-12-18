@@ -46,7 +46,7 @@ struct oKinectImpl : oKinect
 
 	void GetDesc(oKINECT_DESC* _pDesc) const threadsafe override;
 	int2 GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe override;
-	oGUI_INPUT_DEVICE_STATUS GetStatus() const threadsafe override;
+	ouro::input_device_status::value GetStatus() const threadsafe override;
 	void SetPitch(int _Degrees) threadsafe override;
 
 	bool MapRead(oKINECT_FRAME_TYPE _Type, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pDestination) const threadsafe override;

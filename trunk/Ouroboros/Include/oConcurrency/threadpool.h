@@ -106,7 +106,7 @@ threadpool<Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
 {
 	LocalQueues.resize(calc_num_workers(_NumWorkers));
 	WorkerIDs.resize(LocalQueues.size());
-	construct_workers(std::move(oBIND(&threadpool::worker_proc, this)), _NumWorkers);
+	construct_workers(std::move(std::bind(&threadpool::worker_proc, this)), _NumWorkers);
 }
 
 template<typename Alloc>
@@ -355,7 +355,7 @@ template<typename Alloc>
 inline void thread_local_parallel_for(task_group<Alloc>& _TaskGroup, size_t _Begin, size_t _End, oINDEXED_TASK _Task)
 {
 	for (; _Begin < _End; _Begin++)
-		_TaskGroup.run(oBIND(_Task, _Begin));
+		_TaskGroup.run(std::bind(_Task, _Begin));
 }
 
 template<size_t WorkChunkSize /* = 16*/, typename Alloc>
@@ -364,10 +364,10 @@ inline void parallel_for(threadpool<Alloc>& _Threadpool, size_t _Begin, size_t _
 	task_group<Alloc> g(_Threadpool);
 	const size_t kNumSteps = (_End - _Begin) / WorkChunkSize;
 	for (size_t i = 0; i < kNumSteps; i++, _Begin += WorkChunkSize)
-		g.run(oBIND(thread_local_parallel_for<Alloc>, oBINDREF(g), _Begin, _Begin + WorkChunkSize, _Task));
+		g.run(std::bind(thread_local_parallel_for<Alloc>, oBINDREF(g), _Begin, _Begin + WorkChunkSize, _Task));
 
 	if (_Begin < _End)
-		g.run(oBIND(thread_local_parallel_for<Alloc>, oBINDREF(g), _Begin, _End, _Task));
+		g.run(std::bind(thread_local_parallel_for<Alloc>, oBINDREF(g), _Begin, _End, _Task));
 
 	g.wait();
 }

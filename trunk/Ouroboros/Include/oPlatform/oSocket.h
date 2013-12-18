@@ -263,7 +263,7 @@ interface oSocketServer2 : oInterface
 
 		unsigned short ListenPort; // The port that the server listens for incoming connections on 
 		oSocket::BLOCKING_SETTINGS BlockingSettings; // All new connections will have these settings
-		oFUNCTION< void(threadsafe oSocket* _pNewlyConnectedClient)> NewConnectionCallback;
+		std::function< void(threadsafe oSocket* _pNewlyConnectedClient)> NewConnectionCallback;
 	};
 
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
@@ -278,7 +278,7 @@ interface oSocketServer2 : oInterface
 oAPI bool oSocketServer2Create(const char* _DebugName, const oSocketServer2::DESC& _Desc, threadsafe oSocketServer2** _ppSocketServer);
 
 // Enumerate the addresses of all cmd
-oAPI void oSocketEnumerateAllAddress(oFUNCTION<void(oNetAddr _Addr)> _Enumerator);
+oAPI void oSocketEnumerateAllAddress(std::function<void(oNetAddr _Addr)> _Enumerator);
 
 // Helper function to call _pSocket->Recv in a loop until _SizeofData has been
 // received (returns true) or until the timeout has been reached (false).

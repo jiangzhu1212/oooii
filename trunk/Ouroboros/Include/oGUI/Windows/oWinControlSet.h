@@ -120,7 +120,7 @@ An example XML:
 class oWinControlSet
 {
 public:
-	typedef oFUNCTION<bool(int* _pID, const char* _StrSource)> IDFROMSTRING;
+	typedef std::function<bool(int* _pID, const char* _StrSource)> IDFROMSTRING;
 
 	// Respect ParentClientSize since Initialize might be called from a WM_CREATE 
 	// message before the window is actually properly sized.

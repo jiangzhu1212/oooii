@@ -76,7 +76,7 @@ void TESTcamera(test_services& _Services)
 		{
 			switch (_Event.Type)
 			{
-				case oGUI_CLOSING:
+				case ouro::gui_event::closing:
 					Running = false;
 					break;
 				default:
@@ -151,7 +151,7 @@ void TESTcamera(test_services& _Services)
 		init.shape.ClientSize = cd.Mode.Dimensions;
 		init.shape.ClientPosition = int2(30, 30) * int2(oUInt(i + 1), oUInt(i + 1));
 		init.title = Title;
-		init.event_hook = oBIND(&CONTEXT::OnEvent, &Contexts[i], oBIND1);
+		init.event_hook = std::bind(&CONTEXT::OnEvent, &Contexts[i], oBIND1);
 		Contexts[i].Window = window::make(init);
 	}
 
@@ -192,7 +192,7 @@ void TESTcamera(test_services& _Services)
 					td.Size = oWinRectSize(rClient);
 					td.Shadow = ouro::Black;
 					td.ShadowOffset = int2(1,1);
-					td.Alignment = oGUI_ALIGNMENT_MIDDLE_LEFT;
+					td.Alignment = ouro::alignment::middle_left;
 
 					oGDIScopedGetDC hDC(hWnd);
 					oGDIDrawText(hDC, td, sFPS);

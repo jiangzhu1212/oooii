@@ -64,12 +64,12 @@ struct oWINKEY_CONTROL_STATE
 DWORD oWinKeyTranslate(DWORD _vkCode, oWINKEY_CONTROL_STATE* _pState);
 inline WPARAM oWinKeyTranslate(WPARAM _wParam, oWINKEY_CONTROL_STATE* _pState) { return (WPARAM)oWinKeyTranslate((DWORD)_wParam, _pState); }
 
-// Convert between oGUI_KEY and VK codes.
-oGUI_KEY oWinKeyToKey(DWORD _vkCode);
-DWORD oWinKeyFromKey(oGUI_KEY _Key);
+// Convert between ouro::input_key::value and VK codes.
+ouro::input_key::value oWinKeyToKey(DWORD _vkCode);
+DWORD oWinKeyFromKey(ouro::input_key::value _Key);
 
 // Call this from a WndProc to handle key-based events and translate them into
-// an oGUI_ACTION. This requires an oWINKEY_CONTROL_STATE to stick around. It
+// an ouro::gui_action::value. This requires an oWINKEY_CONTROL_STATE to stick around. It
 // should be default-constructed before first call, then this function will 
 // update it. If this returns true, then _pAction is well-formatted and should
 // be dispatched. If this is false, then it means that further processing is 
@@ -80,7 +80,7 @@ bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 // This may not be wholly accurate because the actual definition is Keyboard 
 // vendor-specific.
 // http://msdn.microsoft.com/en-us/library/windows/desktop/ms646281(v=vs.85).aspx
-bool oWinKeyIsExtended(oGUI_KEY _Key);
+bool oWinKeyIsExtended(ouro::input_key::value _Key);
 
 // Returns true if the operating system reinterprets the specified VK key into
 // something else without ever passing through WM_KEYDOWN/WM_KEYUP or 
@@ -96,7 +96,7 @@ LPARAM oWinKeyToLParam(const KBDLLHOOKSTRUCT& _KB, unsigned short _RepeatCount, 
 // Sends the specified key as up or down to the specified Window. This uses 
 // PostMessage directly, so this can be sent to windows not in focus. 
 // _MousePosition is respected only for mouse keys.
-void oWinKeySend(HWND _hWnd, oGUI_KEY _Key, bool _IsDown, const int2& _MousePosition = int2(oDEFAULT, oDEFAULT));
+void oWinKeySend(HWND _hWnd, ouro::input_key::value _Key, bool _IsDown, const int2& _MousePosition = int2(oDEFAULT, oDEFAULT));
 
 void oWinSendKeys(HWND _Hwnd, unsigned int _ThreadID, short int* _pVKeys, int _NumberOfKeys);
 void oWinSendASCIIMessage(HWND _Hwnd, unsigned int _ThreadID, const char* _pMessage);

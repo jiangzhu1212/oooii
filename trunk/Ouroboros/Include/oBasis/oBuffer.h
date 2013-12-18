@@ -41,7 +41,7 @@
 oDEFINE_GUID_I(oBuffer, 0x714c9432, 0xebf6, 0x4232, 0x9e, 0x2e, 0x90, 0x69, 0x2c, 0x29, 0x4b, 0x8b);
 interface oBuffer : oLockableInterface
 {
-	typedef oFUNCTION<void(void*)> DeallocateFn;
+	typedef std::function<void(void*)> DeallocateFn;
 
 	// Convenience implementations of common allocation functions
 	static inline void* New(size_t _Size) { return new unsigned char[_Size]; }

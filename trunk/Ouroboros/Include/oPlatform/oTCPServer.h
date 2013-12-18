@@ -48,7 +48,7 @@ public:
 		ServerDesc.ListenPort = Desc->Port;
 		ServerDesc.BlockingSettings.RecvTimeout = Desc->ConnectionTimeoutMS;
 		ServerDesc.BlockingSettings.SendTimeout = Desc->ConnectionTimeoutMS;
-		ServerDesc.NewConnectionCallback = oBIND(&oTCPServer::AcceptConnection, this, oBIND1);
+		ServerDesc.NewConnectionCallback = std::bind(&oTCPServer::AcceptConnection, this, oBIND1);
 
 		if(!oSocketServer2Create("oHTTPServerSeocket", ServerDesc, &SocketServer))
 			return;

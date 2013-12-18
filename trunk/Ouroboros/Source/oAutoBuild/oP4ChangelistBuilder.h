@@ -56,9 +56,9 @@ interface oP4ChangelistBuilder : oInterface
 	virtual int GetCount() const = 0;
 
 	// Various reporting calls to determine the status of the builds
-	virtual void ReportWorking(oFUNCTION<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const = 0;
-	virtual void ReportBuilt(oFUNCTION<void(const std::list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const = 0;
-	virtual void ReportLastSpecialBuild(oFUNCTION<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const  = 0;
+	virtual void ReportWorking(std::function<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const = 0;
+	virtual void ReportBuilt(std::function<void(const std::list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const = 0;
+	virtual void ReportLastSpecialBuild(std::function<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const  = 0;
 
 	// This should be called at a regular interval when the process is doing nothing else.  This allows the
 	// builder to forcibly terminate any child processes

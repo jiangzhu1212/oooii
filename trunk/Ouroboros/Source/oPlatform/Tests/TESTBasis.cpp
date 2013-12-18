@@ -45,8 +45,8 @@ static bool ResolvePath(path& _Path, const char* _RelativePath, bool _PathMustEx
 
 static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 {
-	_pServices->ResolvePath = oBIND(ResolvePath, oBIND1, oBIND2, oBIND3, _pTest);
-	_pServices->AllocateAndLoadBuffer = oBIND(oStreamLoad, oBIND1, oBIND2, malloc, free, oBIND3, oBIND4);
+	_pServices->ResolvePath = std::bind(ResolvePath, oBIND1, oBIND2, oBIND3, _pTest);
+	_pServices->AllocateAndLoadBuffer = std::bind(oStreamLoad, oBIND1, oBIND2, malloc, free, oBIND3, oBIND4);
 	_pServices->DeallocateLoadedBuffer = free;
 	_pServices->Rand = rand;
 	_pServices->GetTotalPhysicalMemory = GetTotalPhysicalMemory;

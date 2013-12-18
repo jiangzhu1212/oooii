@@ -179,7 +179,7 @@ template<typename Alloc>
 inline basic_threadpool<Alloc>::basic_threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
 	: basic_threadpool_base(_Alloc)
 {
-	construct_workers(std::move(oBIND(&basic_threadpool::work, this)), _NumWorkers);
+	construct_workers(std::move(std::bind(&basic_threadpool::work, this)), _NumWorkers);
 }
 
 template<typename Alloc>

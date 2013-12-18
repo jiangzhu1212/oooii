@@ -214,7 +214,7 @@ public:
 		FileRoot.replace_filename();
 
 		// Patch everything else relative to this
-		oFUNCTION<void(path_string& _PatchPath)> RootPatcher = 
+		std::function<void(path_string& _PatchPath)> RootPatcher = 
 			[&](path_string& _PatchPath)
 		{
 			Temp = _PatchPath;
@@ -243,9 +243,9 @@ public:
 	
 	int GetCount() const override;
 
-	void ReportWorking(oFUNCTION<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const override;
-	void ReportBuilt(oFUNCTION<void(const std::list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const override;
-	void ReportLastSpecialBuild(oFUNCTION<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const override;
+	void ReportWorking(std::function<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const override;
+	void ReportBuilt(std::function<void(const std::list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const override;
+	void ReportLastSpecialBuild(std::function<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const override;
 
 	void MainThreadYield(uint _Milleseconds) override
 	{
@@ -542,7 +542,7 @@ void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 
 	if (!CurrentBuildActive && NextBuildInfos.size() > 0)
 	{
-		CurrentBuild = oStd::async(oBIND(&oP4ChangelistBuilderImpl::BuildNextBuild, this));
+		CurrentBuild = oStd::async(std::bind(&oP4ChangelistBuilderImpl::BuildNextBuild, this));
 		CurrentBuildActive = true;
 	}
 }
@@ -682,7 +682,7 @@ int oP4ChangelistBuilderImpl::GetCount() const
 	return oInt(NextBuildInfos.size() + (uint)CurrentBuildActive);
 }
 
-void oP4ChangelistBuilderImpl::ReportWorking(oFUNCTION<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const
+void oP4ChangelistBuilderImpl::ReportWorking(std::function<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const
 {
 	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
 
@@ -718,14 +718,14 @@ void oP4ChangelistBuilderImpl::ReportWorking(oFUNCTION<void(const oP4ChangelistB
 	}
 }
 
-void oP4ChangelistBuilderImpl::ReportBuilt(oFUNCTION<void(const std::list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const
+void oP4ChangelistBuilderImpl::ReportBuilt(std::function<void(const std::list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const
 {
 	// TODO: Take ownership over the iteration like in ReportWorking, then FinishedBuildInfos doesn't need to be in reversed order anymore
 	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
 	_Reporter(FinishedBuildInfos);
 }
 
-void oP4ChangelistBuilderImpl::ReportLastSpecialBuild(oFUNCTION<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const
+void oP4ChangelistBuilderImpl::ReportLastSpecialBuild(std::function<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const
 {
 	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
 	if (FinishedDailyBuildInfos.size())

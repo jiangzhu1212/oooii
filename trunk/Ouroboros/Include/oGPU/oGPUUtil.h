@@ -63,7 +63,7 @@ oAPI void oGPUCommitIndexBuffer(oGPUCommandList* _pCommandList
 // This is to support copying from array-of-structures (AoS) sources. DepthPitch
 // is ignored.
 oAPI bool oGPUCommitVertexBuffer(oGPUCommandList* _pCommandList
-	, const oFUNCTION<void(const oGPU_VERTEX_ELEMENT& _Element, ouro::surface::const_mapped_subresource* _pElementData)>& _GetElementData
+	, const std::function<void(const oGPU_VERTEX_ELEMENT& _Element, ouro::surface::const_mapped_subresource* _pElementData)>& _GetElementData
 	, const oGPU_VERTEX_ELEMENT* _pElements
 	, uint _NumElements
 	, uint _InputSlot
@@ -96,7 +96,7 @@ oAPI bool oGPUCreateIndexBuffer(oGPUDevice* _pDevice
 oAPI bool oGPUCreateVertexBuffer(oGPUDevice* _pDevice
 	, const char* _Name	
 	, uint _NumVertices
-	, const oFUNCTION<void(const oGPU_VERTEX_ELEMENT& _Element, ouro::surface::const_mapped_subresource* _pElementData)>& _GetElementData
+	, const std::function<void(const oGPU_VERTEX_ELEMENT& _Element, ouro::surface::const_mapped_subresource* _pElementData)>& _GetElementData
 	, uint _NumElements
 	, const oGPU_VERTEX_ELEMENT* _pElements
 	, uint _InputSlot

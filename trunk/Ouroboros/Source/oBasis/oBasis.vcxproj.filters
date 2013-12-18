@@ -132,9 +132,6 @@
     <ClInclude Include="..\..\Include\oBasis\oMIME.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStddef.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oGUI.h">
       <Filter>oBasis</Filter>
     </ClInclude>

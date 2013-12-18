@@ -50,7 +50,7 @@ static void oGDIDrawKinectJoint(HDC _hDC, const int2& _SSBonePos, int _Radius)
 	}
 }
 
-static void oGDIDrawKinectSkeleton(HDC _hDC, int _BoneRadius, int2 _ScreenSpaceBonePositions[oGUI_BONE_COUNT])
+static void oGDIDrawKinectSkeleton(HDC _hDC, int _BoneRadius, int2 _ScreenSpaceBonePositions[ouro::skeleton_bone::count])
 {
 	// Render Torso
 	oGDIDrawKinectBone(_hDC, _ScreenSpaceBonePositions[NUI_SKELETON_POSITION_HEAD], _ScreenSpaceBonePositions[NUI_SKELETON_POSITION_SHOULDER_CENTER]);
@@ -81,7 +81,7 @@ static void oGDIDrawKinectSkeleton(HDC _hDC, int _BoneRadius, int2 _ScreenSpaceB
 	oGDIDrawKinectBone(_hDC, _ScreenSpaceBonePositions[NUI_SKELETON_POSITION_KNEE_RIGHT], _ScreenSpaceBonePositions[NUI_SKELETON_POSITION_ANKLE_RIGHT]);
 	oGDIDrawKinectBone(_hDC, _ScreenSpaceBonePositions[NUI_SKELETON_POSITION_ANKLE_RIGHT], _ScreenSpaceBonePositions[NUI_SKELETON_POSITION_FOOT_RIGHT]);
 
-	for (int i = 0; i < oGUI_BONE_COUNT; i++)
+	for (int i = 0; i < ouro::skeleton_bone::count; i++)
 		oGDIDrawKinectJoint(_hDC, _ScreenSpaceBonePositions[i], _BoneRadius);
 }
 
@@ -121,17 +121,17 @@ static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const oGUI_TRACKING
 	}
 }
 
-static void oGDIDrawKinectBoneNames(HDC _hDC, const RECT& _rTarget, int2 _ScreenSpaceBonePositions[oGUI_BONE_COUNT])
+static void oGDIDrawKinectBoneNames(HDC _hDC, const RECT& _rTarget, int2 _ScreenSpaceBonePositions[ouro::skeleton_bone::count])
 {
 	oGUI_TEXT_DESC td;
 	td.Size = int2(300, 50);
-	td.Alignment = oGUI_ALIGNMENT_TOP_LEFT;
+	td.Alignment = ouro::alignment::top_left;
 	COLORREF rgb = oGDIGetBrushColor(oGDIGetBrush(_hDC));
 	td.Foreground = 0xff000000 | rgb;
 	td.Shadow = Black;
-	for (int i = 0; i < oGUI_BONE_COUNT; i++)
+	for (int i = 0; i < ouro::skeleton_bone::count; i++)
 	{
-		const char* Name = ouro::as_string(oGUI_BONE(i)) + 14; // skip "oGUI_BONE_"
+		const char* Name = ouro::as_string(ouro::skeleton_bone::value(i)) + 14; // skip "oGUI_BONE_"
 		td.Position = _ScreenSpaceBonePositions[i] + int2(5,5);
 		oGDIDrawText(_hDC, td, Name);
 	}
@@ -141,9 +141,9 @@ void oGDIDrawBoneText(
 	HDC _hDC
 	, const RECT& _rTarget
 	, const float4& _BonePosition
-	, oGUI_ALIGNMENT _Anchor
+	, ouro::alignment::value _Anchor
 	, const int2& _Offset
-	, oGUI_ALIGNMENT _Alignment
+	, ouro::alignment::value _Alignment
 	, const char* _Text
 	)
 {
@@ -191,7 +191,7 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 	if (_Flags & (oGDI_KINECT_DRAW_SKELETON|oGDI_KINECT_DRAW_CLIPPING|oGDI_KINECT_DRAW_BONE_NAMES))
 	{
 		const int2 DepthDimensions = _pKinect->GetDimensions(oKINECT_FRAME_DEPTH);
-		int2 ScreenSpaceBonePositions[oGUI_BONE_COUNT];
+		int2 ScreenSpaceBonePositions[ouro::skeleton_bone::count];
 
 		oGUI_BONE_DESC Skeleton;
 		for (int i = 0; i < NUI_SKELETON_MAX_TRACKED_COUNT; i++)
@@ -219,10 +219,10 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 	}
 }
 
-void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, oGUI_ACTION _LastAction, const oGUI_BONE_DESC& _Skeleton)
+void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::gui_action::value _LastAction, const oGUI_BONE_DESC& _Skeleton)
 {
 	oAABoxf Bounds = _Key.Bounds;
-	if (_Key.Origin != oGUI_BONE_INVALID)
+	if (_Key.Origin != ouro::skeleton_bone::invalid)
 		oTranslate(Bounds, _Skeleton.Positions[_Key.Origin].xyz());
 
 	float3 Min = Bounds.Min;
@@ -244,22 +244,22 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	if (_Flags & oGDI_AIR_KEY_DRAW_MIN)
 	{
 		snprintf(text, "%.02f %.02f %.02f", Min.x, Min.y, Min.z);
-		td.Alignment = oGUI_ALIGNMENT_TOP_LEFT;
+		td.Alignment = ouro::alignment::top_left;
 		oGDIDrawText(_hDC, td, text.c_str());
 	}
 
 	if (_Flags & oGDI_AIR_KEY_DRAW_MAX)
 	{
 		snprintf(text, "%.02f %.02f %.02f", Max.x, Max.y, Max.z);
-		td.Alignment = oGUI_ALIGNMENT_BOTTOM_RIGHT;
+		td.Alignment = ouro::alignment::bottom_right;
 		oGDIDrawText(_hDC, td, text.c_str());
 	}
 
 	if (_Flags & oGDI_AIR_KEY_DRAW_KEY)
 	{
-		if (_LastAction == oGUI_ACTION_KEY_DOWN)
+		if (_LastAction == ouro::gui_action::key_down)
 			td.Foreground = Lime;
-		td.Alignment = oGUI_ALIGNMENT_MIDDLE_CENTER;
+		td.Alignment = ouro::alignment::middle_center;
 		oGDIDrawText(_hDC, td, ouro::as_string(_Key.Key));
 	}
 
@@ -308,9 +308,9 @@ void oGDIDrawBoneText(
 	HDC _hDC
 	, const RECT& _rTarget
 	, const float4& _BonePosition
-	, oGUI_ALIGNMENT _Anchor
+	, ouro::alignment::value _Anchor
 	, const int2& _Offset
-	, oGUI_ALIGNMENT _Alignment
+	, ouro::alignment::value _Alignment
 	, const char* _Text
 	)
 {
@@ -320,7 +320,7 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 {
 }
 
-void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, oGUI_ACTION _LastAction, const oGUI_BONE_DESC& _Skeleton)
+void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::gui_action::value _LastAction, const oGUI_BONE_DESC& _Skeleton)
 {
 }
 

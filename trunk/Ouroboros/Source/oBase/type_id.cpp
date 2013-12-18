@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/type_id.h>
-#include <oBase/string.h>
+#include <oBase/stringize.h>
 
 namespace ouro {
 
@@ -61,24 +61,7 @@ const char* as_string(const type::value& _TypeID)
 	}
 }
 
-bool from_string(type::value* _pTypeID, const char* _StrSource)
-{
-	*_pTypeID = type::unknown;
-	for (int i = 0; i < type::count; i++)
-	{
-		if (!strcmp(_StrSource, as_string(type::value(i))))
-		{
-			*_pTypeID = type::value(i);
-			return true;
-		}
-	}
-
-	return false;
-}
-
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const type::value& _Value)
-{
-	return strlcpy(_StrDestination, as_string(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
-}
+oDEFINE_TO_STRING(type::value);
+oDEFINE_FROM_STRING(type::value, type::count);
 
 } // namespace ouro

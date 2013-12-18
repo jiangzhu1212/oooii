@@ -61,9 +61,9 @@ struct oGfxManipulatorImpl : public oGfxManipulator
 	void GetTransform(float4x4 *_pTransform) const override;
 	void SetTransform(const float4x4& _Transform) override;
 	
-	void GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, uint _ObjectID)> _Callback) override;
-	void GetManipulatorVisualLines(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback) override;
-	void GetManipulatorMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback) override;
+	void GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, std::function<void(oGPUUtilMesh* _pMesh, uint _ObjectID)> _Callback) override;
+	void GetManipulatorVisualLines(oGPUCommandList* _pCommandList, std::function<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback) override;
+	void GetManipulatorMeshes(oGPUCommandList* _pCommandList, std::function<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback) override;
 
 	oGfxManipulatorImpl(const char* _Name, const oGfxManipulator::DESC& _Desc, oGPUDevice* _pDevice, bool* _pSuccess);
 
@@ -324,7 +324,7 @@ void oGfxManipulatorImpl::Update()
 	Manipulator->Update(CurrentMousePosition, Transform, CurrentViewLH, CurrentProjectionLH);
 }
 
-void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, uint _ObjectID)> _Callback)
+void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, std::function<void(oGPUUtilMesh* _pMesh, uint _ObjectID)> _Callback)
 {
 	size_t MaxNumLines, MaxNumPickVerts;
 	Manipulator->GetMaxSizes(MaxNumLines, MaxNumPickVerts);
@@ -356,7 +356,7 @@ void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(oGPUCommandList* _pComman
 
 }
 
-void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback)
+void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandList, std::function<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback)
 {
 	size_t MaxNumLines, MaxNumPickVerts;
 	Manipulator->GetMaxSizes(MaxNumLines, MaxNumPickVerts);
@@ -393,7 +393,7 @@ void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandLi
 	}
 }
 
-void oGfxManipulatorImpl::GetManipulatorMeshes(oGPUCommandList* _pCommandList, oFUNCTION<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback)
+void oGfxManipulatorImpl::GetManipulatorMeshes(oGPUCommandList* _pCommandList, std::function<void(oGPUUtilMesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback)
 {
 	for(size_t i = 0; i < oManipulator::NUM_AXES; ++i)
 	{

@@ -174,7 +174,7 @@ protected:
 	typedef std::unordered_map<oStd::thread::id, thread_singletons_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, std_user_allocator<std::pair<const oStd::thread::id, thread_singletons_t>>> singletons_t;
 	singletons_t Singletons;
 
-	typedef fixed_vector<oFUNCTION<void()>, 32> atexitlist_t;
+	typedef fixed_vector<std::function<void()>, 32> atexitlist_t;
 	typedef std::unordered_map<oStd::thread::id, atexitlist_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, std_user_allocator<std::pair<const oStd::thread::id, atexitlist_t>>> atexits_t;
 	atexits_t AtExits;
 };

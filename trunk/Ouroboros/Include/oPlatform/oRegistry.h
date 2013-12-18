@@ -85,7 +85,7 @@ interface oRegistry : oInterface
 	// Exclusive-locks the registry and traverses each entry. Operations that 
 	// would affect stats such as AccessCount are not performed. The visitor 
 	// should return true to continue enummeration, or false to exit early.
-	virtual void Enum(oFUNCTION<bool(const oURI& _URIReference, oInterface* _pInterface, const oREGISTRY_DESC& _Desc)> _Visitor) threadsafe = 0;
+	virtual void Enum(std::function<bool(const oURI& _URIReference, oInterface* _pInterface, const oREGISTRY_DESC& _Desc)> _Visitor) threadsafe = 0;
 };
 
 bool oRegistryCreate(threadsafe oRegistry** _ppRegistry);

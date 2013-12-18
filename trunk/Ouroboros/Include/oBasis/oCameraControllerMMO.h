@@ -68,34 +68,34 @@ struct oCAMERA_CONTROLLER_MMO_DESC
 		, RunSpeedMax(2e5f)
 		, AllowMouseWheelAcceleration(false)
 	{
-		Controls[STRAFE_RIGHT] = oGUI_KEY_D;
-		Controls[STRAFE_LEFT] = oGUI_KEY_A;
-		Controls[SWIM_UP] = oGUI_KEY_SPACE;
-		Controls[SWIM_DOWN] = oGUI_KEY_Z;
-		Controls[FORWARD] = oGUI_KEY_W;
-		Controls[BACKWARD] = oGUI_KEY_S;
-		Controls[ROLL_LEFT] = oGUI_KEY_Q;
-		Controls[ROLL_RIGHT] = oGUI_KEY_E;
-		Controls[RUN] = oGUI_KEY_LSHIFT;
-		Controls[ROTATE_VIEW] = oGUI_KEY_MOUSE_RIGHT;
-		Controls[ROTATE_VIEW_AND_FORWARD] = oGUI_KEY_MOUSE_LEFT;
+		Controls[STRAFE_RIGHT] = ouro::input_key::d;
+		Controls[STRAFE_LEFT] = ouro::input_key::a;
+		Controls[SWIM_UP] = ouro::input_key::space;
+		Controls[SWIM_DOWN] = ouro::input_key::z;
+		Controls[FORWARD] = ouro::input_key::w;
+		Controls[BACKWARD] = ouro::input_key::s;
+		Controls[ROLL_LEFT] = ouro::input_key::q;
+		Controls[ROLL_RIGHT] = ouro::input_key::e;
+		Controls[RUN] = ouro::input_key::lshift;
+		Controls[ROTATE_VIEW] = ouro::input_key::mouse_right;
+		Controls[ROTATE_VIEW_AND_FORWARD] = ouro::input_key::mouse_left;
 
-		oGUI_KEY* Secondary = &Controls[NUM_CONTROLS];
-		Secondary[STRAFE_RIGHT] = oGUI_KEY_RIGHT;
-		Secondary[STRAFE_LEFT] = oGUI_KEY_LEFT;
-		Secondary[SWIM_UP] = oGUI_KEY_PGUP;
-		Secondary[SWIM_DOWN] = oGUI_KEY_PGDN;
-		Secondary[FORWARD] = oGUI_KEY_UP;
-		Secondary[BACKWARD] = oGUI_KEY_DOWN;
-		Secondary[ROLL_LEFT] = oGUI_KEY_HOME;
-		Secondary[ROLL_RIGHT] = oGUI_KEY_END;
-		Secondary[RUN] = oGUI_KEY_RSHIFT;
-		Secondary[ROTATE_VIEW] = oGUI_KEY_NONE;
-		Secondary[ROTATE_VIEW_AND_FORWARD] = oGUI_KEY_NONE;
+		ouro::input_key::value* Secondary = &Controls[NUM_CONTROLS];
+		Secondary[STRAFE_RIGHT] = ouro::input_key::right;
+		Secondary[STRAFE_LEFT] = ouro::input_key::left;
+		Secondary[SWIM_UP] = ouro::input_key::pgup;
+		Secondary[SWIM_DOWN] = ouro::input_key::pgdn;
+		Secondary[FORWARD] = ouro::input_key::up;
+		Secondary[BACKWARD] = ouro::input_key::down;
+		Secondary[ROLL_LEFT] = ouro::input_key::home;
+		Secondary[ROLL_RIGHT] = ouro::input_key::end;
+		Secondary[RUN] = ouro::input_key::rshift;
+		Secondary[ROTATE_VIEW] = ouro::input_key::none;
+		Secondary[ROTATE_VIEW_AND_FORWARD] = ouro::input_key::none;
 	}
 
 	// Define controls for each key, plus another set for 2nd-ary assignment.
-	std::array<oGUI_KEY, NUM_CONTROLS * 2> Controls;
+	std::array<ouro::input_key::value, NUM_CONTROLS * 2> Controls;
 	float WalkSpeed;
 	float RunSpeed;
 	float3 RotationSpeed;

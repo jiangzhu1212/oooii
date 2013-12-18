@@ -27,6 +27,7 @@
 #include <Commdlg.h>
 #include <CdErr.h>
 #include <oBasis/oError.h> // @tony fixme
+#include <oCore/Windows/win_error.h>
 
 using namespace ouro;
 
@@ -117,7 +118,8 @@ static bool oWinDialogGetOpenOrSavePath(path& _Path, const char* _DialogTitle, c
 	o.nMaxCustFilter = 0;
 	o.nFilterIndex = 1;
 	o.lpstrFile = StrPath;
-	o.nMaxFile = oInt(StrPath.capacity());
+	oCHECK_SIZE(DWORD, StrPath.capacity());
+	o.nMaxFile = static_cast<DWORD>(StrPath.capacity());
 	o.lpstrFileTitle = nullptr;
 	o.nMaxFileTitle = 0;
 	o.lpstrInitialDir = nullptr;

@@ -34,7 +34,15 @@
 #include <oBase/string.h>
 #include <vector>
 
+#define oDEFINE_TO_STRING(_T) char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const _T& _Value) { return detail::to_string(_StrDestination, _SizeofStrDestination, _Value); }
+#define oDEFINE_FROM_STRING(_T, _NumTs) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string<_T, _NumTs>(_pValue, _StrSource); }
+#define oDEFINE_FROM_STRING2(_T, _NumTs, _InvalidValue) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string<_T, _NumTs>(_pValue, _StrSource, _InvalidValue); }
+
 namespace ouro {
+
+// Returns a const string representation of the specified value. This is most
+// useful for enums when the object's value never changes.
+template<typename T> const char* as_string(const T& _Value);
 
 // Returns _StrDestination, or nullptr if there is a failure.
 template<typename T> char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const T& _Value);
@@ -48,14 +56,26 @@ template<typename T> bool from_string(T* _pValue, const char* _StrSource);
 bool from_string(char* _StrDestination, size_t _SizeofStrDestination, const char* _StrSource);
 template<size_t size> bool from_string(char (&_StrDestination)[size], const char* _StrSource) { return from_string(_StrDestination, size, _StrSource); }
 
-// Returns a const string representation of the specified value. This is most
-// useful for enums when the object's value never changes.
-template<typename T> const char* as_string(const T& _Value);
-
-
-// Container/array support
-
 namespace detail {
+
+	// A default implementation that copies the as_string to the destination
+	template<typename T> char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const T& _Value) { return strlcpy(_StrDestination, as_string(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr; }
+
+	// A default implementation that assumes the enum is by-index and iterates  
+	// each into as_string to compare against.
+	template<typename T, int NumTs> bool from_string(T* _pValue, const char* _StrSource, const T& _InvalidValue = T(0))
+	{	
+		*_pValue = _InvalidValue;
+		for (int i = 0; i < NumTs; i++)
+		{
+			if (!strcmp(_StrSource, as_string(T(i))))
+			{
+				*_pValue = T(i);
+				return true;
+			}
+		}
+		return false;
+	}
 
 	template<typename ContainerT> char* to_string_container(char* _StrDestination, size_t _SizeofStrDestination, const ContainerT& _Container)
 	{
@@ -95,6 +115,9 @@ namespace detail {
 	}
 
 } // namespace detail
+
+
+// Container/array support
 
 template <typename T, typename AllocatorT> char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const std::vector<T, AllocatorT>& _Vector) { return detail::to_string_container(_StrDestination, _SizeofStrDestination, _Vector); }
 template <typename T, typename AllocatorT> bool from_string(std::vector<T, AllocatorT>* _pValue, const char* _StrSource) { return detail::from_string_container(_pValue, _StrSource); }

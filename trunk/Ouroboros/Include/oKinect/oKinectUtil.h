@@ -46,15 +46,15 @@ static const int oKINECT_MAX_CACHED_FRAMES = 2;
 DWORD oKinectGetInitFlags(oKINECT_FEATURES _Features);
 
 // Converts a status-specific HR code to an oKINECT_STATUS enum
-oGUI_INPUT_DEVICE_STATUS oKinectStatusFromHR(HRESULT _hrNuiStatus);
+ouro::input_device_status::value oKinectStatusFromHR(HRESULT _hrNuiStatus);
 
 // Convert between NUI and oGUI enums for bones
-NUI_SKELETON_POSITION_INDEX oKinectFromBone(oGUI_BONE _Bone);
-oGUI_BONE oKinectToBone(NUI_SKELETON_POSITION_INDEX _BoneIndex);
+NUI_SKELETON_POSITION_INDEX oKinectFromBone(ouro::skeleton_bone::value _Bone);
+ouro::skeleton_bone::value oKinectToBone(NUI_SKELETON_POSITION_INDEX _BoneIndex);
 
 // Returns a std::errc fit for using oErrorSetLast() from a status.
-std::errc::errc oKinectGetErrcFromStatus(oGUI_INPUT_DEVICE_STATUS _Status);
-const char* oKinectGetErrcStringFromStatus(oGUI_INPUT_DEVICE_STATUS _Status);
+std::errc::errc oKinectGetErrcFromStatus(ouro::input_device_status::value _Status);
+const char* oKinectGetErrcStringFromStatus(ouro::input_device_status::value _Status);
 
 // Gets the latest (rather than just the next) frame from the specified sensor.
 // Once done with the contents of _pLatest, call 
@@ -100,11 +100,11 @@ int oKinectCalcScreenSpacePositions(
 	, const int2& _TargetPosition
 	, const int2& _TargetDimensions
 	, const int2& _DepthBufferResolution
-	, int2 _ScreenSpacePositions[oGUI_BONE_COUNT]);
+	, int2 _ScreenSpacePositions[ouro::skeleton_bone::count]);
 
 #endif // oHAS_KINECT_SDK
 
 // Converts the _OriginBone to 0,0,0 and makes all positions relative to that.
-void oKinectCalcBoneSpacePositions(oGUI_BONE _OriginBone, oGUI_BONE_DESC& _Skeleton);
+void oKinectCalcBoneSpacePositions(ouro::skeleton_bone::value _OriginBone, oGUI_BONE_DESC& _Skeleton);
 
 #endif

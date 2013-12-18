@@ -24,7 +24,7 @@
  **************************************************************************/
 // This uses oGUI_BONE_DESC input to collide specific bones against 
 // specific skeleton-space (often camera-space) boxes to broadcast 
-// oGUI_ACTION_KEY_DOWN/oGUI_ACTION_KEY_UP events for an oGUI_KEY. The 
+// ouro::gui_action::key_down/ouro::gui_action::key_up events for an ouro::input_key::value. The 
 // pathological case would be a full reproduction of a typical keyboard using 
 // space and gesture but more often a very few keys are used similar to the 
 // keyboard mapping for a joystick in modern and classic video games. This way 
@@ -36,6 +36,7 @@
 #define oAirKeyboard_h
 
 #include <oBasis/oGUI.h>
+#include <oBasis/oRTTI.h>
 #include <oBasis/oInterface.h>
 #include <oBase/types.h>
 #include <oBase/xml.h>
@@ -54,19 +55,19 @@ struct oAIR_KEY
 	// from the camera.
 
 	oAIR_KEY()
-		: Origin(oGUI_BONE_INVALID)
-		, Trigger(oGUI_BONE_HAND_RIGHT)
-		, Key(oGUI_KEY_NONE)
+		: Origin(ouro::skeleton_bone::invalid)
+		, Trigger(ouro::skeleton_bone::hand_right)
+		, Key(ouro::input_key::none)
 	{}
 
 	oAABoxf Bounds;
-	oGUI_BONE Origin; // bounds coords are relative to this
-	oGUI_BONE Trigger; // only this bone can trigger events for this box
-	oGUI_KEY Key;
+	ouro::skeleton_bone::value Origin; // bounds coords are relative to this
+	ouro::skeleton_bone::value Trigger; // only this bone can trigger events for this box
+	ouro::input_key::value Key;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_ARRAY, oAIR_KEY)
 
-typedef oFUNCTION<void(const oAIR_KEY& _Key, oGUI_ACTION _LastAction)> oAIR_KEY_VISITOR;
+typedef std::function<void(const oAIR_KEY& _Key, ouro::gui_action::value _LastAction)> oAIR_KEY_VISITOR;
 
 interface oAirKeySet : oInterface
 {
@@ -108,7 +109,7 @@ interface oAirKeyboard : oInterface
 {
 	// This does the logic that maps a skeleton and a keyset to actions. Create
 	// one of these, set a keyset (only one at a time) and add/remove skeletons
-	// and observers to be used. Call update from an oGUI_ACTION_SKELETON action 
+	// and observers to be used. Call update from an ouro::gui_action::skeleton action 
 	// to analyze updated data as it comes in.
 
 public:

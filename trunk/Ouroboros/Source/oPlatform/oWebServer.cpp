@@ -54,14 +54,14 @@ namespace
 		oHandlerEntry(oHandlerEntry&& _other);
 		oHandlerEntry& operator=(oHandlerEntry&& _other);
 		void AddKey(const char* _key, oHTTPHandler* _handler);
-		const oHTTPHandler* MatchURIPath(const char* _uriPath, oFUNCTION<void (const char* _capture)> _CaptureVar, oFUNCTION<void (const char* _OSC)> _OSCCapture, oFUNCTION<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const;
+		const oHTTPHandler* MatchURIPath(const char* _uriPath, std::function<void (const char* _capture)> _CaptureVar, std::function<void (const char* _OSC)> _OSCCapture, std::function<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const;
 
 	private:
 		oHandlerEntry(const oHandlerEntry& _other);
 		oHandlerEntry& operator=(const oHandlerEntry& _other);
 
 		void AddKey(std::vector<std::pair<bool, sstring>>& _key, int _keyIndex, oHTTPHandler* _handler);
-		const oHTTPHandler* MatchURIPath(std::vector<oStringCapture>& _parsedURI, int _keyIndex, oFUNCTION<void (const char* _capture)> _CaptureVar, oFUNCTION<void (const char* _OSC)> _OSCCapture, oFUNCTION<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const;
+		const oHTTPHandler* MatchURIPath(std::vector<oStringCapture>& _parsedURI, int _keyIndex, std::function<void (const char* _capture)> _CaptureVar, std::function<void (const char* _OSC)> _OSCCapture, std::function<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const;
 
 		sstring Value;
 		intrusive_ptr<oHTTPHandler> Handler;
@@ -151,7 +151,7 @@ namespace
 		}
 	}
 
-	const oHTTPHandler* oHandlerEntry::MatchURIPath(const char* _uriPath, oFUNCTION<void (const char* _capture)> _CaptureVar, oFUNCTION<void (const char* _OSC)> _OSCCapture, oFUNCTION<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const
+	const oHTTPHandler* oHandlerEntry::MatchURIPath(const char* _uriPath, std::function<void (const char* _capture)> _CaptureVar, std::function<void (const char* _OSC)> _OSCCapture, std::function<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const
 	{
 		std::vector<oStringCapture> parsedURI;
 
@@ -169,7 +169,7 @@ namespace
 		return result;
 	}
 
-	const oHTTPHandler* oHandlerEntry::MatchURIPath(std::vector<oStringCapture>& _parsedURI, int _keyIndex, oFUNCTION<void (const char* _capture)> _CaptureVar, oFUNCTION<void (const char* _OSC)> _OSCCapture, oFUNCTION<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const
+	const oHTTPHandler* oHandlerEntry::MatchURIPath(std::vector<oStringCapture>& _parsedURI, int _keyIndex, std::function<void (const char* _capture)> _CaptureVar, std::function<void (const char* _OSC)> _OSCCapture, std::function<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const
 	{
 		if(_keyIndex == oInt(_parsedURI.size()))
 		{

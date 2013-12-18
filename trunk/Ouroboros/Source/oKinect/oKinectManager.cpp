@@ -75,22 +75,22 @@ void oKinectManager::Unregister(threadsafe oKinect* _pKinect)
 
 void oKinectManager::StatusProc(HRESULT _hrStatus, const OLECHAR* _InstanceName, const OLECHAR* _UniqueDeviceName, void* _pThis)
 {
-	oGUI_INPUT_DEVICE_STATUS hrStatus = oKinectStatusFromHR(_hrStatus);
+	ouro::input_device_status::value hrStatus = oKinectStatusFromHR(_hrStatus);
 	sstring InstanceName(_InstanceName);
 	sstring UniqueDeviceName(_UniqueDeviceName);
 	static_cast<oKinectManager*>(_pThis)->OnStatus(hrStatus, InstanceName, UniqueDeviceName);
 }
 
-void oKinectManager::NotifyStatus(const char* _InstanceName, oGUI_INPUT_DEVICE_STATUS _Status)
+void oKinectManager::NotifyStatus(const char* _InstanceName, ouro::input_device_status::value _Status)
 {
 	// Hope we don't overwrite ourselves. Hope.
 	DeviceInstanceNames[CurrentDeviceInstanceName] = _InstanceName;
-	::PostMessage(HWND_BROADCAST, WMInputDeviceChange, MAKEWPARAM(oGUI_INPUT_DEVICE_SKELETON, _Status), (LPARAM)DeviceInstanceNames[CurrentDeviceInstanceName].c_str());
-	::PostMessage(HWND_BROADCAST, WMInputDeviceChange, MAKEWPARAM(oGUI_INPUT_DEVICE_VOICE, _Status), (LPARAM)DeviceInstanceNames[CurrentDeviceInstanceName].c_str());
+	::PostMessage(HWND_BROADCAST, WMInputDeviceChange, MAKEWPARAM(ouro::input_device_type::skeleton, _Status), (LPARAM)DeviceInstanceNames[CurrentDeviceInstanceName].c_str());
+	::PostMessage(HWND_BROADCAST, WMInputDeviceChange, MAKEWPARAM(ouro::input_device_type::voice, _Status), (LPARAM)DeviceInstanceNames[CurrentDeviceInstanceName].c_str());
 	CurrentDeviceInstanceName = (CurrentDeviceInstanceName + 1) % DeviceInstanceNames.size();
 }
 
-void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _InstanceName, const char* _UniqueDeviceName)
+void oKinectManager::OnStatus(ouro::input_device_status::value _Status, const char* _InstanceName, const char* _UniqueDeviceName)
 {
 	intrusive_ptr<threadsafe oKinect> StatusChanger;
 	oKINECT_DESC kd;
@@ -116,7 +116,7 @@ void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _Ins
 		
 	switch (_Status)
 	{
-		case oGUI_INPUT_DEVICE_READY:
+		case ouro::input_device_status::ready:
 		{
 			if (pUnsafeImpl)
 				oVB(pUnsafeImpl->Reinitialize());
@@ -125,7 +125,7 @@ void oKinectManager::OnStatus(oGUI_INPUT_DEVICE_STATUS _Status, const char* _Ins
 			break;
 		}
 
-		case oGUI_INPUT_DEVICE_NOT_CONNECTED:
+		case ouro::input_device_status::not_connected:
 		{
 			NotifyStatus(_InstanceName, _Status);
 	

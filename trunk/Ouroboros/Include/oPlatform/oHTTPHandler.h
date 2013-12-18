@@ -54,9 +54,9 @@ interface oHTTPHandler : oInterface
 		//will assert if called more than once in an "OnX" function. 
 		// sets pResponse->Content.pData to the newly allocated memory. pResponse->Content.Length will also be set
 		// Buffer will be freed automatically.
-		oFUNCTION<void (size_t _RequiredBufferSize)> AllocateResponse;
+		std::function<void (size_t _RequiredBufferSize)> AllocateResponse;
 
-		oFUNCTION<bool (void* _Struct, int _SizeOfStruct)> GetCapturedImpl; //generally don't use this directly, use the below template
+		std::function<bool (void* _Struct, int _SizeOfStruct)> GetCapturedImpl; //generally don't use this directly, use the below template
 		//the struct passed must match the layout of the osc portions of your HandlesPath string. struct members of the optional 
 		//	trailing osc tags could get unmodified by this call, but still succeed.
 		template<typename StructType>

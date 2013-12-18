@@ -56,6 +56,6 @@ inline bool oWinRectContains(const RECT& _rContainer, const int2& _Point) { retu
 // Returns a RECT that is position to accommodate _Size and _Alignment relative 
 // to _Anchor according to _Alignment. For example, a middle center alignment
 // would have a rect whose center was at _Anchor.
-RECT oWinRectResolve(const int2& _Anchor, const int2& _Size, oGUI_ALIGNMENT _Alignment);
+RECT oWinRectResolve(const int2& _Anchor, const int2& _Size, ouro::alignment::value _Alignment);
 
 #endif

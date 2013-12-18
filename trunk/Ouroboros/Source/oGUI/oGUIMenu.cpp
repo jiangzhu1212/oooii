@@ -250,21 +250,3 @@ char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, oGUI_
 		return nullptr;
 	return oGUIMenuGetTextByPosition(_StrDestination, _SizeofStrDestination, _hParentMenu, pos);
 }
-
-bool oGUIMenuAppendEnumItems(oGUI_MENU _hMenu, int _FirstMenuItem, int _LastMenuItem, const oRTTI& _Enum, int _InitialValue)
-{
-	if (_Enum.GetType() != oRTTI_TYPE_ENUM)
-		return oErrorSetLast(std::errc::protocol_error, "oRTTI must be an enum type");
-
-	const int nItems = _LastMenuItem - _FirstMenuItem + 1;
-	if (nItems != _Enum.GetNumValues())
-		return oErrorSetLast(std::errc::protocol_error, "Enum count and first/last menu item indices mismatch");
-
-	sstring en;
-	for (int i = 0; i < nItems; i++)
-		oGUIMenuAppendItem(_hMenu, _FirstMenuItem + i, _Enum.ToString(en, &i));
-
-	oGUIMenuCheckRadio(_hMenu, _FirstMenuItem, _LastMenuItem, _InitialValue == oInvalid ? _FirstMenuItem : _InitialValue);
-
-	return true;
-}

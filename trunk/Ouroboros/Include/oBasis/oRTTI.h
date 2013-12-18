@@ -37,6 +37,8 @@
 #include <typeinfo>
 #include <vector>
 
+#include <oBasis/oGUI.h> // @tony fixme: needed to convert namespace::enum -> namespace_enum. Maybe there's a more generic way to support namespaces?
+
 // _____________________________________________________________________________
 // oRTTI_TYPE - RTTI atomic building block types
 
@@ -144,5 +146,10 @@ oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::path_string, ouro_p
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::uri_string, ouro_uri_string)
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::path, ouro_path)
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::uri, ouro_uri)
+
+// @tony fixme: find a way to make namespace support more generic or reduce 
+// usage of reflection in these cases.
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::input_key::value, ouro_input_key_value)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::skeleton_bone::value, ouro_skeleton_bone_value)
 
 #endif oRTTI_h

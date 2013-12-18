@@ -118,8 +118,8 @@ bool oKinectImpl::Reinitialize()
 		Desc.Index = NUISensor->NuiInstanceIndex();
 	}
 
-	oGUI_INPUT_DEVICE_STATUS s = oKinectImpl::GetStatus();
-	if (oGUI_INPUT_DEVICE_READY != s)
+	ouro::input_device_status::value s = oKinectImpl::GetStatus();
+	if (ouro::input_device_status::ready != s)
 		return oErrorSetLast(oKinectGetErrcFromStatus(s), oKinectGetErrcStringFromStatus(s));
 
 	const DWORD InitFlags = oKinectGetInitFlags(Desc.Features);
@@ -283,7 +283,7 @@ bool oKinectImpl::GetSkeletonByID(unsigned int _ID, oGUI_BONE_DESC* _pSkeleton) 
 	return false;
 }
 
-oGUI_INPUT_DEVICE_STATUS oKinectImpl::GetStatus() const threadsafe
+ouro::input_device_status::value oKinectImpl::GetStatus() const threadsafe
 {
 	return oKinectStatusFromHR(thread_cast<INuiSensor*>(NUISensor.c_ptr())->NuiStatus());
 }

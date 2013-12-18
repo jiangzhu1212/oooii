@@ -106,8 +106,8 @@ struct window_impl : window
 	oGUI_ICON icon() const override;
 	void user_cursor(oGUI_CURSOR _hCursor) override;
 	oGUI_CURSOR user_cursor() const override;
-	void client_cursor_state(oGUI_CURSOR_STATE _State) override;
-	oGUI_CURSOR_STATE client_cursor_state() const override;
+	void client_cursor_state(cursor_state::value _State) override;
+	cursor_state::value client_cursor_state() const override;
 	void set_titlev(const char* _Format, va_list _Args) override;
 	char* get_title(char* _StrDestination, size_t _SizeofStrDestination) const override;
 	void set_num_status_sections(const int* _pStatusSectionWidths, size_t _NumStatusSections) override;
@@ -122,8 +122,8 @@ struct window_impl : window
 	std::shared_ptr<basic_window> parent() const override;
 	void owner(const std::shared_ptr<basic_window>& _Owner) override;
 	std::shared_ptr<basic_window> owner() const override;
-	void sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder) override;
-	oGUI_WINDOW_SORT_ORDER sort_order() const override;
+	void sort_order(window_sort_order::value _SortOrder) override;
+	window_sort_order::value sort_order() const override;
 	void focus(bool _Focus = true) override;
 	bool has_focus() const override;
 
@@ -165,8 +165,8 @@ private:
 	oGUI_CURSOR hUserCursor;
 	oWINKEY_CONTROL_STATE ControlKeyState;
 
-	oGUI_CURSOR_STATE ClientCursorState;
-	oGUI_WINDOW_SORT_ORDER SortOrder;
+	cursor_state::value ClientCursorState;
+	window_sort_order::value SortOrder;
 	bool Captured;
 	bool ClientDragToMove;
 	bool Debug;
@@ -242,13 +242,13 @@ private:
 			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, kStartLength);
 		}
 
-		int len = ouro::vsnprintf(s, kStartLength, _Format, _Args);
+		int len = vsnprintf(s, kStartLength, _Format, _Args);
 		if (len >= kStartLength)
 		{
 			oScopedHeapLock lock(hHeap);
 			delete_object(s);
 			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, len + 1);
-			ouro::vsnprintf(s, len + 1, _Format, _Args);
+			vsnprintf(s, len + 1, _Format, _Args);
 		}
 
 		return s;
@@ -261,7 +261,7 @@ private:
 	}
 
 	void init_window(const init& _Init);
-	void trigger_generic_event(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* _pShape = nullptr);
+	void trigger_generic_event(gui_event::value _Event, oGUI_WINDOW_SHAPE_DESC* _pShape = nullptr);
 	void set_cursor();
 	bool handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
 	bool handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
@@ -340,11 +340,11 @@ oGUI_WINDOW window_impl::native_handle() const
 	return (oGUI_WINDOW)hWnd;
 }
 
-ouro::display::id window_impl::display_id() const
+display::id window_impl::display_id() const
 {
 	oGUI_WINDOW_SHAPE_DESC s = shape();
 	int2 center = s.ClientPosition + s.ClientSize / 2;
-	return ouro::display::find(center.x, center.y);
+	return display::find(center.x, center.y);
 }
 
 bool window_impl::is_window_thread() const
@@ -392,12 +392,12 @@ oGUI_CURSOR window_impl::user_cursor() const
 	return (oGUI_CURSOR)hUserCursor;
 }
 
-void window_impl::client_cursor_state(oGUI_CURSOR_STATE _State)
+void window_impl::client_cursor_state(cursor_state::value _State)
 {
 	DISPATCH(ClientCursorState = _State);
 }
 
-oGUI_CURSOR_STATE window_impl::client_cursor_state() const
+cursor_state::value window_impl::client_cursor_state() const
 {
 	return ClientCursorState;
 }
@@ -441,7 +441,7 @@ void window_impl::set_status_textv(int _StatusSectionIndex, const char* _Format,
 	char* pString = new_string(_Format, _Args);
 	dispatch_internal(std::move([=]
 	{
-		oWinStatusBarSetText(oWinGetStatusBar(hWnd), _StatusSectionIndex, oGUI_BORDER_FLAT, pString);
+		oWinStatusBarSetText(oWinGetStatusBar(hWnd), _StatusSectionIndex, border_style::flat, pString);
 		if (pString)
 			delete_string(pString);
 	}));
@@ -501,20 +501,20 @@ std::shared_ptr<basic_window> window_impl::owner() const
 	return const_cast<window_impl*>(this)->Owner;
 }
 
-void window_impl::sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder)
+void window_impl::sort_order(window_sort_order::value _SortOrder)
 {
 	dispatch_internal(std::move([=]
 	{
 		this->SortOrder = _SortOrder;
-		oVERIFY(oWinSetAlwaysOnTop(hWnd, _SortOrder != oGUI_WINDOW_SORTED));
-		if (_SortOrder == oGUI_WINDOW_ALWAYS_ON_TOP_WITH_FOCUS)
+		oVERIFY(oWinSetAlwaysOnTop(hWnd, _SortOrder != window_sort_order::sorted));
+		if (_SortOrder == window_sort_order::always_on_top_with_focus)
 			::SetTimer(hWnd, (UINT_PTR)&SortOrder, 500, nullptr);
 		else
 			::KillTimer(hWnd, (UINT_PTR)&SortOrder);
 	}));
 }
 
-oGUI_WINDOW_SORT_ORDER window_impl::sort_order() const
+window_sort_order::value window_impl::sort_order() const
 {
 	return SortOrder;
 }
@@ -673,13 +673,13 @@ void window_impl::unhook_events(int _EventHookID)
 
 void window_impl::trigger(const oGUI_ACTION_DESC& _Action)
 {
-	dispatch_internal(std::move(oBIND(&ActionManager_t::Visit, &ActionHooks, _Action))); // bind by copy
+	dispatch_internal(std::move(std::bind(&ActionManager_t::Visit, &ActionHooks, _Action))); // bind by copy
 }
 
 void window_impl::post(int _CustomEventCode, uintptr_t _Context)
 {
 	oGUI_EVENT_CUSTOM_DESC e((oGUI_WINDOW)hWnd, _CustomEventCode, _Context);
-	dispatch_internal(oBIND(&EventManager_t::Visit, &EventHooks, e)); // bind by copy
+	dispatch_internal(std::bind(&EventManager_t::Visit, &EventHooks, e)); // bind by copy
 }
 
 void window_impl::dispatch(const oTASK& _Task)
@@ -691,12 +691,12 @@ void window_impl::dispatch(const oTASK& _Task)
 static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 {
 	backoff bo;
-	unsigned int Now = ouro::timer::now_ms();
+	unsigned int Now = timer::now_ms();
 	unsigned int Then = Now + _TimeoutMS;
 	while (!oWinIsOpaque(_hWnd))
 	{
 		bo.pause();
-		Now = ouro::timer::now_ms();
+		Now = timer::now_ms();
 		if (_TimeoutMS != oInfiniteWait && Now > Then)
 			return oErrorSetLast(std::errc::timed_out);
 	}
@@ -715,7 +715,7 @@ oStd::future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame,
 		if (!success)
 		{
 			oGUI_WINDOW_SHAPE_DESC s = oWinGetShape(hWnd);
-			if (oGUIIsVisible(s.State))
+			if (is_visible(s.State))
 				oVERIFY(false); // pass through verification of Wait
 			else
 				oASSERT(false, "A non-hidden window timed out waiting to become opaque");
@@ -778,7 +778,7 @@ void window_impl::quit()
 	//dispatch_internal([=] { PostQuitMessage(0); });
 };
 
-void window_impl::trigger_generic_event(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DESC* _pShape)
+void window_impl::trigger_generic_event(gui_event::value _Event, oGUI_WINDOW_SHAPE_DESC* _pShape)
 {
 	oGUI_EVENT_SHAPE_DESC e((oGUI_WINDOW)hWnd, _Event, oWinGetShape(hWnd));
 	EventHooks.Visit(e);
@@ -788,10 +788,10 @@ void window_impl::trigger_generic_event(oGUI_EVENT _Event, oGUI_WINDOW_SHAPE_DES
 
 void window_impl::set_cursor()
 {
-	oGUI_CURSOR_STATE NewState = ClientCursorState;
+	cursor_state::value NewState = ClientCursorState;
 	HCURSOR hCursor = oWinGetCursor(NewState, (HCURSOR)hUserCursor);
 	::SetCursor(hCursor);
-	oWinCursorSetVisible(NewState != oGUI_CURSOR_NONE);
+	oWinCursorSetVisible(NewState != cursor_state::none);
 }
 
 bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult)
@@ -808,7 +808,7 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 			// this is a bit dangerous because it's not really true this hWnd is 
 			// ready for use, but we need to expose it consistently as a valid 
 			// return value from native_handle() so it can be accessed from 
-			// oGUI_CREATING, where it's known to be only semi-ready.
+			// gui_event::creating, where it's known to be only semi-ready.
 			hWnd = _hWnd;
 
 			oGUI_EVENT_CREATE_DESC e((oGUI_WINDOW)_hWnd
@@ -823,7 +823,7 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 		{
 			// Don't allow DefWindowProc to destroy the window, put it all on client 
 			// code.
-			oGUI_EVENT_SHAPE_DESC e((oGUI_WINDOW)hWnd, oGUI_CLOSING, oWinGetShape(hWnd));
+			oGUI_EVENT_SHAPE_DESC e((oGUI_WINDOW)hWnd, gui_event::closing, oWinGetShape(hWnd));
 			EventHooks.Visit(e);
 			*_pLResult = 0;
 			return true;
@@ -835,7 +835,7 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 
 		case WM_DESTROY:
 		{
-			trigger_generic_event(oGUI_CLOSED);
+			trigger_generic_event(gui_event::closed);
 			hWnd = nullptr;
 
 			if (hAccel)
@@ -873,17 +873,17 @@ bool window_impl::handle_misc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 			return true;
 
 		case WM_ACTIVATE:
-			trigger_generic_event((_wParam == WA_INACTIVE) ? oGUI_DEACTIVATED : oGUI_ACTIVATED);
+			trigger_generic_event((_wParam == WA_INACTIVE) ? gui_event::deactivated : gui_event::activated);
 			break;
 
 		// All these should be treated the same if there's any reason to override 
 		// painting.
 		case WM_PAINT: case WM_PRINT: case WM_PRINTCLIENT:
-			trigger_generic_event(oGUI_PAINT);
+			trigger_generic_event(gui_event::paint);
 			break;
 
 		case WM_DISPLAYCHANGE:
-			trigger_generic_event(oGUI_DISPLAY_CHANGED);
+			trigger_generic_event(gui_event::display_changed);
 			break;
 
 		case oWM_DISPATCH:
@@ -922,7 +922,7 @@ bool window_impl::handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 	switch (_uMsg)
 	{
 		case WM_ENTERSIZEMOVE:
-			trigger_generic_event((_wParam == SC_MOVE) ? oGUI_MOVING : oGUI_SIZING);
+			trigger_generic_event((_wParam == SC_MOVE) ? gui_event::moving : gui_event::sizing);
 			return true;
 
 		case WM_MOVE:
@@ -930,7 +930,7 @@ bool window_impl::handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 			//oTRACE("HWND 0x%x WM_MOVE: %dx%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam));
 
 			oGUI_WINDOW_SHAPE_DESC s;
-			trigger_generic_event(oGUI_MOVED, &s);
+			trigger_generic_event(gui_event::moved, &s);
 			PriorShape.ClientPosition = s.ClientPosition;
 			return true;
 		}
@@ -941,10 +941,10 @@ bool window_impl::handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 
 			if (!oWinIsTempChange(_hWnd))
 			{
-				oGUI_EVENT_SHAPE_DESC e((oGUI_WINDOW)hWnd, oGUI_SIZING, PriorShape);
+				oGUI_EVENT_SHAPE_DESC e((oGUI_WINDOW)hWnd, gui_event::sizing, PriorShape);
 				EventHooks.Visit(e);
 
-				e.Type = oGUI_SIZED;
+				e.Type = gui_event::sized;
 				e.Shape = oWinGetShape(_hWnd);
 				EventHooks.Visit(e);
 				PriorShape = e.Shape;
@@ -969,17 +969,17 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 	{
 		if (ClientDragToMove)
 		{
-			const oGUI_KEY CheckKey = GetSystemMetrics(SM_SWAPBUTTON) ? oGUI_KEY_MOUSE_RIGHT : oGUI_KEY_MOUSE_LEFT;
+			const input_key::value CheckKey = GetSystemMetrics(SM_SWAPBUTTON) ? input_key::mouse_right : input_key::mouse_left;
 
 			if (Action.Key == CheckKey)
 			{
-				if (Action.Action == oGUI_ACTION_KEY_DOWN)
+				if (Action.Action == gui_action::key_down)
 				{
 					CursorClientPosAtMouseDown = oWinCursorGetPosition(_hWnd);
 					::SetCapture(_hWnd);
 				}
 
-				else if (Action.Action == oGUI_ACTION_KEY_UP)
+				else if (Action.Action == gui_action::key_up)
 				{
 					ReleaseCapture();
 					CursorClientPosAtMouseDown = int2(oDEFAULT, oDEFAULT);
@@ -1031,7 +1031,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 			if (GetCapture() == hWnd)
 			{
 				ReleaseCapture();
-				trigger_generic_event(oGUI_LOST_CAPTURE);
+				trigger_generic_event(gui_event::lost_capture);
 			}
 			break;
 		}
@@ -1042,7 +1042,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 			{
 				if (GetCapture() == hWnd)
 					ReleaseCapture();
-				trigger_generic_event(oGUI_LOST_CAPTURE);
+				trigger_generic_event(gui_event::lost_capture);
 			}
 			break;
 		}
@@ -1052,8 +1052,8 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 		case oWM_INPUT_DEVICE_CHANGE:
 		{
 			oGUI_EVENT_INPUT_DEVICE_DESC e((oGUI_WINDOW)_hWnd
-				, oGUI_INPUT_DEVICE_TYPE(LOWORD(_wParam))
-				, oGUI_INPUT_DEVICE_STATUS(HIWORD(_wParam))
+				, input_device_type::value(LOWORD(_wParam))
+				, input_device_status::value(HIWORD(_wParam))
 				, (const char*)_lParam);
 			EventHooks.Visit(e);
 			return true;
@@ -1061,37 +1061,37 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 
 		case oWM_SKELETON:
 		{
-			oGUI_ACTION_DESC a((oGUI_WINDOW)_hWnd, Timestamp, oGUI_ACTION_SKELETON, oGUI_INPUT_DEVICE_SKELETON, LOWORD(_wParam));
+			oGUI_ACTION_DESC a((oGUI_WINDOW)_hWnd, Timestamp, gui_action::skeleton, input_device_type::skeleton, LOWORD(_wParam));
 			a.hSkeleton = (oGUI_SKELETON)_lParam;
 			ActionHooks.Visit(a);
 			return 0;
 		}
 
 		case oWM_USER_CAPTURED:
-			ActionHooks.Visit(oGUI_ACTION_DESC((oGUI_WINDOW)_hWnd, Timestamp, oGUI_ACTION_SKELETON_ACQUIRED, oGUI_INPUT_DEVICE_SKELETON, oInt(_wParam)));
+			ActionHooks.Visit(oGUI_ACTION_DESC((oGUI_WINDOW)_hWnd, Timestamp, gui_action::skeleton_acquired, input_device_type::skeleton, oInt(_wParam)));
 			return 0;
 
 		case oWM_USER_LOST:
-			ActionHooks.Visit(oGUI_ACTION_DESC((oGUI_WINDOW)_hWnd, Timestamp, oGUI_ACTION_SKELETON_LOST, oGUI_INPUT_DEVICE_SKELETON, oInt(_wParam)));
+			ActionHooks.Visit(oGUI_ACTION_DESC((oGUI_WINDOW)_hWnd, Timestamp, gui_action::skeleton_lost, input_device_type::skeleton, oInt(_wParam)));
 			return 0;
 
 		#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
 			case WM_TOUCH:
 			{
-				TOUCHINPUT inputs[oGUI_KEY_TOUCH_LAST - oGUI_KEY_TOUCH_FIRST];
+				TOUCHINPUT inputs[input_key::touch_last - input_key::touch_first];
 				const UINT nTouches = __min(LOWORD(_wParam), oCOUNTOF(inputs));
 				if (nTouches)
 				{
 					if (GetTouchInputInfo((HTOUCHINPUT)_lParam, nTouches, inputs, sizeof(TOUCHINPUT)))
 					{
-						oGUI_ACTION_DESC a((oGUI_WINDOW)_hWnd, Timestamp, oGUI_ACTION_KEY_DOWN, oGUI_INPUT_DEVICE_TOUCH, 0);
+						oGUI_ACTION_DESC a((oGUI_WINDOW)_hWnd, Timestamp, gui_action::key_down, input_device_type::touch, 0);
 						for (UINT i = 0; i < nTouches; i++)
 						{
 							// @tony: Maybe touch doesn't need to pollute X11? The idea one 
 							// day is to support wacky interface devices through RFB protocol 
 							// which forces all boolean things down X11... should this comply?
 							a.DeviceID = i;
-							a.Key = (oGUI_KEY)(oGUI_KEY_TOUCH1 + i);
+							a.Key = (input_key::value)(input_key::touch1 + i);
 							a.Position = float4(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f, 0.0f);
 							ActionHooks.Visit(a);
 						}

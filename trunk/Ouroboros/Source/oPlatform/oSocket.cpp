@@ -195,7 +195,7 @@ oAPI bool oSocketHostIsLocal( oNetHost _Host )
 	return 16777343 == pHost->IP;
 }
 
-oAPI void oSocketEnumerateAllAddress( oFUNCTION<void(oNetAddr _Addr)> _Enumerator )
+oAPI void oSocketEnumerateAllAddress( std::function<void(oNetAddr _Addr)> _Enumerator )
 {
 	winsock::enumerate_addresses(
 		[&](sockaddr_in _SockAddr)
@@ -226,7 +226,7 @@ struct oSocketImpl
 {
 	//This class handles the ref counting but its the proxy that needs to be deleted. this class may be deleted in response to that,
 	//	or it could be returned to a pool.
-	typedef oFUNCTION<void ()> ProxyDeleterFn;
+	typedef std::function<void ()> ProxyDeleterFn;
 
 	oSocketImpl(const char* _DebugName, SOCKET _hTarget, bool* _pSuccess);
 	~oSocketImpl();
@@ -418,7 +418,7 @@ void oSocketImpl::RunProxyDeleter() threadsafe
 bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threadsafe
 {
 	// @tony: can't replace this lock-and-cast with oLockThis because it
-	// causes type problems with calling the member oFUNCTION RunProxyDeleter().
+	// causes type problems with calling the member std::function RunProxyDeleter().
 	// Someone with more meta-magic fingers should take another look at this.
 	#if 1
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(DescMutex);
@@ -444,7 +444,7 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 	{
 		oIOCP::DESC IOCPDesc;
 		IOCPDesc.Handle = reinterpret_cast<oHandle>(lockedThis->hSocket);
-		IOCPDesc.IOCompletionRoutine = oBIND(&oSocketImpl::IOCPCallback, lockedThis, oBIND1);
+		IOCPDesc.IOCompletionRoutine = std::bind(&oSocketImpl::IOCPCallback, lockedThis, oBIND1);
 		IOCPDesc.MaxOperations = _Settings.MaxSimultaneousMessages;
 		IOCPDesc.PrivateDataSize = sizeof(Operation);
 
@@ -1030,7 +1030,7 @@ static bool UNIFIED_WaitForConnection(
 	, unsigned int _TimeoutMS
 	, SOCKET _hServerSocket
 	, oSocket::DESC _Desc
-	, oFUNCTION<oSocket*(const char* _DebugName, SOCKET _hTarget, oSocket::DESC SocketDesc, bool* _pSuccess)> _CreateClientSocket
+	, std::function<oSocket*(const char* _DebugName, SOCKET _hTarget, oSocket::DESC SocketDesc, bool* _pSuccess)> _CreateClientSocket
 	, threadsafe oConcurrency::mutex& _AcceptedSocketsMutex
 	, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets)
 {
@@ -1161,7 +1161,7 @@ struct SocketServerPool : public oInterface
 	oDEFINE_NOOP_QUERYINTERFACE();
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	
-	typedef oFUNCTION<void (oSocketImpl* _Socket)> ServerDisconnect;
+	typedef std::function<void (oSocketImpl* _Socket)> ServerDisconnect;
 
 	SocketServerPool( ServerDisconnect _ServerDisconnectFn, bool* _pSuccess );
 	~SocketServerPool();
@@ -1338,7 +1338,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	if (INVALID_SOCKET == hListenSocket)
 		return; // leave last error from inside oWinsockCreate
 	
-	SocketPool = intrusive_ptr<SocketServerPool>(new SocketServerPool(oBIND(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
+	SocketPool = intrusive_ptr<SocketServerPool>(new SocketServerPool(std::bind(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
 	if (!(*_pSuccess))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "Failed to create the socket pool.");
@@ -1351,7 +1351,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 
 	oIOCP::DESC IOCPDesc;
 	IOCPDesc.Handle = reinterpret_cast<oHandle>(hListenSocket);
-	IOCPDesc.IOCompletionRoutine = oBIND(&SocketServer2_Impl::IOCPCallback, this, oBIND1);
+	IOCPDesc.IOCompletionRoutine = std::bind(&SocketServer2_Impl::IOCPCallback, this, oBIND1);
 	IOCPDesc.MaxOperations = DesiredAccepts*ExtraSocketOpsMultiplier;
 	IOCPDesc.PrivateDataSize = sizeof(Operation);
 

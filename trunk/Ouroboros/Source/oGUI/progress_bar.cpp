@@ -43,8 +43,8 @@ public:
 	void quit() override { Window->quit(); }
 	void debug(bool _Debug) override { Window->debug(_Debug); }
 	bool debug() const override { return Window->debug(); }
-	void state(oGUI_WINDOW_STATE _State) override { Window->state(_State); }
-	oGUI_WINDOW_STATE state() const override { return Window->state(); }
+	void state(window_state::value _State) override { Window->state(_State); }
+	window_state::value state() const override { return Window->state(); }
 	void client_position(const int2& _ClientPosition) override { Window->client_position(_ClientPosition); }
 	int2 client_position() const override { return Window->client_position(); }
 	int2 client_size() const override { return Window->client_size(); }
@@ -52,16 +52,16 @@ public:
 	oGUI_ICON icon() const override { return Window->icon(); }
 	void user_cursor(oGUI_CURSOR _hCursor) override { Window->user_cursor(_hCursor); }
 	oGUI_CURSOR user_cursor() const override { return Window->user_cursor(); }
-	void client_cursor_state(oGUI_CURSOR_STATE _State) override { Window->client_cursor_state(_State); }
-	oGUI_CURSOR_STATE client_cursor_state() const override { return Window->client_cursor_state(); }
+	void client_cursor_state(cursor_state::value _State) override { Window->client_cursor_state(_State); }
+	cursor_state::value client_cursor_state() const override { return Window->client_cursor_state(); }
 	void set_titlev(const char* _Format, va_list _Args) override { Window->set_titlev(_Format, _Args); }
 	char* get_title(char* _StrDestination, size_t _SizeofStrDestination) const override { return Window->get_title(_StrDestination, _SizeofStrDestination); }
 	void parent(const std::shared_ptr<basic_window>& _Parent) override { Window->parent(_Parent); }
 	std::shared_ptr<basic_window> parent() const override { return Window->parent(); }
 	void owner(const std::shared_ptr<basic_window>& _Owner) override { Window->owner(_Owner); }
 	std::shared_ptr<basic_window> owner() const override { return Window->owner(); }
-	void sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder) override { Window->sort_order(_SortOrder); }
-	oGUI_WINDOW_SORT_ORDER sort_order() const override { return Window->sort_order(); }
+	void sort_order(window_sort_order::value _SortOrder) override { Window->sort_order(_SortOrder); }
+	window_sort_order::value sort_order() const override { return Window->sort_order(); }
 	void focus(bool _Focus) override { Window->focus(_Focus); }
 	bool has_focus() const override { return Window->has_focus(); }
 
@@ -116,8 +116,8 @@ progress_bar_impl::progress_bar_impl(const char* _Title, oGUI_ICON _hIcon, const
 	i.action_hook = std::bind(&progress_bar_impl::on_action, this, std::placeholders::_1);
 	i.event_hook = std::bind(&progress_bar_impl::on_event, this, std::placeholders::_1);
 	i.shape.ClientSize = int2(320, 106);
-	i.shape.State = oGUI_WINDOW_HIDDEN;
-	i.shape.Style = oGUI_WINDOW_FIXED;
+	i.shape.State = window_state::hidden;
+	i.shape.Style = window_style::fixed;
 	Window = window::make(i);
 	set_percentage_internal(-1);
 }
@@ -140,12 +140,12 @@ void progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent
 	// progress/marquee bars
 	{
 		oRECT rChild = oRect(oWinRectWH(int2(Inset.x, 0), ProgressBarSize));
-		oRECT rText = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_MIDDLE_LEFT, true);
-		Descs[PB_MARQUEE].Type = oGUI_CONTROL_PROGRESSBAR_UNKNOWN;
+		oRECT rText = oGUIResolveRect(rParent, rChild, alignment::middle_left, true);
+		Descs[PB_MARQUEE].Type = control_type::progressbar_unknown;
 		Descs[PB_MARQUEE].Position = oWinRectPosition(oWinRect(rText));
 		Descs[PB_MARQUEE].Size = ProgressBarSize;
 
-		Descs[PB_PROGRESS].Type = oGUI_CONTROL_PROGRESSBAR;
+		Descs[PB_PROGRESS].Type = control_type::progressbar;
 		Descs[PB_PROGRESS].Position = oWinRectPosition(oWinRect(rText));
 		Descs[PB_PROGRESS].Size = ProgressBarSize;
 	}
@@ -153,7 +153,7 @@ void progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent
 	// percentage text
 	{
 		const auto& cpb = Descs[PB_PROGRESS];
-		Descs[PB_PERCENT].Type = oGUI_CONTROL_LABEL;
+		Descs[PB_PERCENT].Type = control_type::label;
 		Descs[PB_PERCENT].Text = "0%";
 		Descs[PB_PERCENT].Position = int2(cpb.Position.x + cpb.Size.x + 10, cpb.Position.y + 3);
 		Descs[PB_PERCENT].Size = int2(35, cpb.Size.y);
@@ -162,9 +162,9 @@ void progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent
 	// Stop button
 	{
 		oRECT rChild = oRect(oWinRectWH(-Inset, ButtonSize));
-		oRECT rButton = oGUIResolveRect(rParent, rChild, oGUI_ALIGNMENT_BOTTOM_RIGHT, true);
+		oRECT rButton = oGUIResolveRect(rParent, rChild, alignment::bottom_right, true);
 
-		Descs[PB_BUTTON].Type = oGUI_CONTROL_BUTTON;
+		Descs[PB_BUTTON].Type = control_type::button;
 		Descs[PB_BUTTON].Text = "&Stop";
 		Descs[PB_BUTTON].Position = oWinRectPosition(oWinRect(rButton));
 		Descs[PB_BUTTON].Size = oWinRectSize(oWinRect(rButton));
@@ -172,11 +172,11 @@ void progress_bar_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent
 
 	// text/subtext
 	{
-		Descs[PB_TEXT].Type = oGUI_CONTROL_LABEL_CENTERED;
+		Descs[PB_TEXT].Type = control_type::label_centered;
 		Descs[PB_TEXT].Position = Inset;
 		Descs[PB_TEXT].Size = int2(_CreateEvent.Shape.ClientSize.x - 2*Inset.x, 20);
 
-		Descs[PB_SUBTEXT].Type = oGUI_CONTROL_LABEL;
+		Descs[PB_SUBTEXT].Type = control_type::label;
 		Descs[PB_SUBTEXT].Position = int2(Inset.x, Descs[PB_PROGRESS].Position.y + Descs[PB_PROGRESS].Size.y + 5);
 		Descs[PB_SUBTEXT].Size = int2((Descs[PB_PROGRESS].Size.x * 3) / 4, 20);
 	}
@@ -193,7 +193,7 @@ void progress_bar_impl::on_event(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_CREATING:
+		case gui_event::creating:
 		{
 			make_controls(_Event.AsCreate());
 			break;
@@ -206,7 +206,7 @@ void progress_bar_impl::on_event(const oGUI_EVENT_DESC& _Event)
 
 void progress_bar_impl::on_action(const oGUI_ACTION_DESC& _Action)
 {
-	if (_Action.Action == oGUI_ACTION_CONTROL_ACTIVATED && _Action.DeviceID == PB_BUTTON && OnStop)
+	if (_Action.Action == gui_action::control_activated && _Action.DeviceID == PB_BUTTON && OnStop)
 	{
 		stopped(true);
 		OnStop();

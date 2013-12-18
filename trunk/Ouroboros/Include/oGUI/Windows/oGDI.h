@@ -438,7 +438,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 // there is still a chance of failure, so whether this succeeds or fails, check
 // *_ppBuffer and if not nullptr, then ensure it is freed to prevent a memory 
 // leak.
-bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, oFUNCTION<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow);
+bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow);
 
 // Use DeleteObject when finished with the returned handle
 HBITMAP oGDIIconToBitmap(HICON _hIcon);

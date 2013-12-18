@@ -95,8 +95,8 @@ public:
 	oGUI_ICON icon() const override { return Window->icon(); }
 	void user_cursor(oGUI_CURSOR _hCursor) override { Window->user_cursor(_hCursor); }
 	oGUI_CURSOR user_cursor() const override { return Window->user_cursor(); }
-	void client_cursor_state(oGUI_CURSOR_STATE _State) override { Window->client_cursor_state(_State); }
-	oGUI_CURSOR_STATE client_cursor_state() const override { return Window->client_cursor_state(); }
+	void client_cursor_state(ouro::cursor_state::value _State) override { Window->client_cursor_state(_State); }
+	ouro::cursor_state::value client_cursor_state() const override { return Window->client_cursor_state(); }
 	void set_titlev(const char* _Format, va_list _Args) override { return Window->set_titlev(_Format, _Args); }
 	char* get_title(char* _StrDestination, size_t _SizeofStrDestination) const override { return Window->get_title(_StrDestination, _SizeofStrDestination); }
 	void set_num_status_sections(const int* _pStatusSectionWidths, size_t _NumStatusSections) override { return Window->set_num_status_sections(_pStatusSectionWidths, _NumStatusSections); }
@@ -109,8 +109,8 @@ public:
 	std::shared_ptr<basic_window> parent() const override { return Window->parent(); }
 	void owner(const std::shared_ptr<basic_window>& _Owner) override { Window->owner(_Owner); }
 	std::shared_ptr<basic_window> owner() const override { return Window->owner(); }
-	void sort_order(oGUI_WINDOW_SORT_ORDER _SortOrder) override { Window->sort_order(_SortOrder); }
-	oGUI_WINDOW_SORT_ORDER sort_order() const override { return Window->sort_order(); }
+	void sort_order(ouro::window_sort_order::value _SortOrder) override { Window->sort_order(_SortOrder); }
+	ouro::window_sort_order::value sort_order() const override { return Window->sort_order(); }
 	void focus(bool _Focus = true) override { Window->focus(_Focus); }
 	bool has_focus() const override { return Window->has_focus(); }
 	void debug(bool _Debug = true) override { Window->debug(_Debug); }
@@ -170,9 +170,9 @@ oWebAppWindowImpl::oWebAppWindowImpl( const char* _pTitle, unsigned short _Serve
 
 	window::init init;
 	init.title = _pTitle;
-	init.event_hook = oBIND(&oWebAppWindowImpl::OnEvent, this, oBIND1);
+	init.event_hook = std::bind(&oWebAppWindowImpl::OnEvent, this, oBIND1);
 	init.action_hook = nullptr;
-	init.shape.Style = oGUI_WINDOW_FIXED;
+	init.shape.Style = ouro::window_style::fixed;
 	init.shape.ClientSize = int2(250,90);
 	//init.shape.EnableMainLoopEvent = true;
 
@@ -206,7 +206,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_CREATING:
+		case ouro::gui_event::creating:
 		{
 			oGUI_CONTROL_DESC ControlDesc;
 			ControlDesc.hParent = (oGUI_WINDOW)_Event.hWindow;
@@ -219,12 +219,12 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 				ControlDesc.Position = int2(45, 50);
 				ControlDesc.Size = int2(200, 30);
 				ControlDesc.ID = ID_WEB_LINK;
-				ControlDesc.Type = oGUI_CONTROL_HYPERLABEL;
+				ControlDesc.Type = ouro::control_type::hyperlabel;
 				ControlDesc.Text = localHostString.c_str();
 				LinkHandle = oWinControlCreate(ControlDesc);
 			}
 			
-			ControlDesc.Type = oGUI_CONTROL_LABEL;
+			ControlDesc.Type = ouro::control_type::label;
 
 			// Add CPU time
 			{
@@ -248,7 +248,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 			break;
 		}
 
-		case oGUI_TIMER:
+		case ouro::gui_event::timer:
 		{
 			if (_Event.AsTimer().Context == (uintptr_t)&CPUUsageStats)
 			{
@@ -261,7 +261,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 			break;
 		}
 
-		case oGUI_CLOSING:
+		case ouro::gui_event::closing:
 			Running = false;
 			break;
 	}

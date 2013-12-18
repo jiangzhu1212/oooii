@@ -251,8 +251,8 @@ oSystemProperties::oSystemProperties()
 	i.title = "TESTWindowSysDialog";
 	i.event_hook = std::bind(&oSystemProperties::EventHook, this, std::placeholders::_1);
 	i.action_hook = std::bind(&oSystemProperties::ActionHook, this, std::placeholders::_1);
-	i.shape.Style = oGUI_WINDOW_DIALOG;
-	i.shape.State = oGUI_WINDOW_RESTORED;
+	i.shape.Style = ouro::window_style::dialog;
+	i.shape.State = ouro::window_state::restored;
 	i.shape.ClientSize = int2(410,436);
 	Window = window::make(i);
 
@@ -282,7 +282,7 @@ oSystemProperties::oSystemProperties()
 	{
 		oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] = 
 		{
-			{ oGUI_KEY_F3, ID_RELOAD_UI, false, false, false },
+			{ ouro::input_key::f3, ID_RELOAD_UI, false, false, false },
 		};
 
 		Window->set_hotkeys(HotKeys);
@@ -337,7 +337,7 @@ void oSystemProperties::EventHook(const oGUI_EVENT_DESC& _Event)
 {
 	switch (_Event.Type)
 	{
-		case oGUI_CREATING:
+		case ouro::gui_event::creating:
 		{
 			oCHECK0(Reload((HWND)_Event.hWindow, _Event.AsCreate().Shape.ClientSize));
 			break;
@@ -349,7 +349,7 @@ void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
 {
 	switch (_Action.Action)
 	{
-		case oGUI_ACTION_CONTROL_ACTIVATED:
+		case ouro::gui_action::control_activated:
 		{
 			switch (_Action.DeviceID)
 			{
@@ -364,21 +364,21 @@ void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
 			break;
 		}
 
-		case oGUI_ACTION_CONTROL_SELECTION_CHANGING:
+		case ouro::gui_action::control_selection_changing:
 		{
 			int index = oWinControlGetSelectedSubItem((HWND)_Action.hWindow);
 			Show(index, false);
 			break;
 		}
 
-		case oGUI_ACTION_CONTROL_SELECTION_CHANGED:
+		case ouro::gui_action::control_selection_changed:
 		{
 			int index = oWinControlGetSelectedSubItem((HWND)_Action.hWindow);
 			Show(index, true);
 			break;
 		}
 
-		case oGUI_ACTION_HOTKEY:
+		case ouro::gui_action::hotkey:
 		{
 			if (_Action.DeviceID == ID_RELOAD_UI)
 				oCHECK0(Reload((HWND)Window->native_handle(), Window->client_size()));
