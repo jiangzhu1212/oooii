@@ -72,7 +72,7 @@ void TESTcamera(test_services& _Services)
 		unsigned int LastFrame;
 		bool Running;
 
-		void OnEvent(const oGUI_EVENT_DESC& _Event)
+		void OnEvent(const window::basic_event& _Event)
 		{
 			switch (_Event.Type)
 			{
@@ -151,7 +151,7 @@ void TESTcamera(test_services& _Services)
 		init.shape.ClientSize = cd.Mode.Dimensions;
 		init.shape.ClientPosition = int2(30, 30) * int2(oUInt(i + 1), oUInt(i + 1));
 		init.title = Title;
-		init.event_hook = std::bind(&CONTEXT::OnEvent, &Contexts[i], oBIND1);
+		init.on_event = std::bind(&CONTEXT::OnEvent, &Contexts[i], oBIND1);
 		Contexts[i].Window = window::make(init);
 	}
 

@@ -199,11 +199,11 @@ private:
 	void UpdateStatusBar(window* _pWindow, const ouro::tracking_skeleton& _Skeleton, const char* _GestureName);
 	void UpdateStatusBar(window* _pWindow, const char* _GestureName);
 
-	void MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index);
-	void MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index);
+	void MainEventHook(const window::basic_event& _Event, int _Index);
+	void MainActionHook(const ouro::action_info& _Action, int _Index);
 
 	// @tony: Maybe each window should get its own air keyboard / input?
-	void BroadcastActions(const oGUI_ACTION_DESC& _Action)
+	void BroadcastActions(const ouro::action_info& _Action)
 	{
 		// pass through to oWindows.
 		oFOR(auto& w, KinectWindows)
@@ -243,8 +243,8 @@ oKinectTestApp::oKinectTestApp()
 			auto& w = KinectWindows[i];
 			winit.title = "New Window";
 
-			winit.event_hook = std::bind(&oKinectTestApp::MainEventHook, this, std::placeholders::_1, i);
-			winit.action_hook = std::bind(&oKinectTestApp::MainActionHook, this, std::placeholders::_1, i);
+			winit.on_event = std::bind(&oKinectTestApp::MainEventHook, this, std::placeholders::_1, i);
+			winit.on_action = std::bind(&oKinectTestApp::MainActionHook, this, std::placeholders::_1, i);
 
 			w.Window = window::make(winit);
 
@@ -401,7 +401,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 	}
 }
 
-void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
+void oKinectTestApp::MainEventHook(const window::basic_event& _Event, int _Index)
 {
 	if (!Ready)
 		return;
@@ -410,12 +410,12 @@ void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 	if (!kw.Window)
 		return;
 
-	switch (_Event.Type)
+	switch (_Event.type)
 	{
 		case ouro::gui_event::sized:
 		{
 			display::info di = display::get_info(kw.Window->display_id());
-			float2 Ratio = float2(_Event.AsShape().Shape.client_size) / float2(int2(di.mode.width, di.mode.height));
+			float2 Ratio = float2(_Event.as_shape().shape.client_size) / float2(int2(di.mode.width, di.mode.height));
 			float R = max(Ratio);
 			oGUI_FONT_DESC fd;
 			fd.PointSize = oInt(round(R * 35.0f));
@@ -425,13 +425,13 @@ void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 
 		case ouro::gui_event::input_device_changed:
 		{
-			oTRACE("%s %s status change, now: %s", ouro::as_string(_Event.Type), _Event.AsInputDevice().InstanceName, ouro::as_string(_Event.AsInputDevice().Status));
+			oTRACE("%s %s status change, now: %s", ouro::as_string(_Event.type), _Event.as_input_device().instance_name, ouro::as_string(_Event.as_input_device().status));
 			break;
 		}
 
 		case ouro::gui_event::timer:
 		{
-			kw.ComboMessage[_Event.AsTimer().Context].clear();
+			kw.ComboMessage[_Event.as_timer().context].clear();
 			break;
 		}
 
@@ -444,7 +444,7 @@ void oKinectTestApp::MainEventHook(const oGUI_EVENT_DESC& _Event, int _Index)
 	}
 }
 
-void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
+void oKinectTestApp::MainActionHook(const ouro::action_info& _Action, int _Index)
 {
 	if (!Ready)
 		return;
@@ -453,30 +453,30 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 	if (!kw.Window)
 		return;
 
-	switch (_Action.Action)
+	switch (_Action.action)
 	{
 		case ouro::gui_action::skeleton_acquired:
 		{
 			sstring text;
-			snprintf(text, "Skeleton[%d] activated", _Action.DeviceID);
+			snprintf(text, "Skeleton[%d] activated", _Action.device_id);
 			UpdateStatusBar(kw.Window.get(), text);
-			AirKeyboard->AddSkeleton(_Action.DeviceID);
+			AirKeyboard->AddSkeleton(_Action.device_id);
 			break;
 		}
 
 		case ouro::gui_action::skeleton_lost:
 		{
 			sstring text;
-			snprintf(text, "Skeleton[%d] deactivated", _Action.DeviceID);
+			snprintf(text, "Skeleton[%d] deactivated", _Action.device_id);
 			UpdateStatusBar(kw.Window.get(), text);
-			AirKeyboard->RemoveSkeleton(_Action.DeviceID);
+			AirKeyboard->RemoveSkeleton(_Action.device_id);
 			break;
 		}
 
 		case ouro::gui_action::control_activated:
 		{
 			#ifdef oUSE_MEDIA_INPUT
-				switch (_Action.ActionCode)
+				switch (_Action.action_code)
 				{
 					case oMEDIA_INPUT_PLAY_PAUSE:
 						kw.Playing = !kw.Playing;
@@ -496,7 +496,7 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 						break;
 				}
 			#else
-				switch (_Action.ActionCode)
+				switch (_Action.action_code)
 				{
 					case oSIMPLE_INPUT_WAVE:
 						kw.ComboMessage[0] = "Wave";
@@ -514,21 +514,21 @@ void oKinectTestApp::MainActionHook(const oGUI_ACTION_DESC& _Action, int _Index)
 		case ouro::gui_action::key_up:
 		{
  			kw.InputMapper->OnAction(_Action);
-			oTRACE("%s: %s", ouro::as_string(_Action.Action), ouro::as_string(_Action.Key));
+			oTRACE("%s: %s", ouro::as_string(_Action.action), ouro::as_string(_Action.key));
 			break;
 		}
 
 		case ouro::gui_action::skeleton:
 		{
 			ouro::windows::skeleton::bone_info Skeleton;
-			ouro::windows::skeleton::get_info((ouro::windows::skeleton::handle)_Action.hSkeleton, &Skeleton);
+			ouro::windows::skeleton::get_info((ouro::windows::skeleton::handle)_Action.skeleton, &Skeleton);
 			
 			ouro::tracking_skeleton skel;
 			skel.source_id = Skeleton.source_id;
 			skel.clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
 			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.positions.size(), skel.positions.begin());
 			
-			AirKeyboard->Update(skel, _Action.TimestampMS);
+			AirKeyboard->Update(skel, _Action.timestamp_ms);
 
 			// this doesn't differentiate between multiple skeletons yet...
 			UpdateStatusBar(kw.Window.get(), skel, nullptr);

@@ -108,20 +108,20 @@ private:
 	HWND Controls[NUM_CONTROLS];
 	ouro::border_style::value BorderStyle;
 
-	void EventHook(const oGUI_EVENT_DESC& _Event);
-	void ActionHook(const oGUI_ACTION_DESC& _Action);
+	void EventHook(const window::basic_event& _Event);
+	void ActionHook(const ouro::action_info& _Action);
 };
 
-void oWindowUITest::EventHook(const oGUI_EVENT_DESC& _Event)
+void oWindowUITest::EventHook(const window::basic_event& _Event)
 {
-	switch (_Event.Type)
+	switch (_Event.type)
 	{
 		case ouro::gui_event::sized:
-			oTRACE("NewClientSize = %dx%d%s", _Event.AsShape().Shape.client_size.x, _Event.AsShape().Shape.client_size.y, _Event.AsShape().Shape.state == ouro::window_state::minimized ? " (minimized)" : "");
+			oTRACE("NewClientSize = %dx%d%s", _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y, _Event.as_shape().shape.state == ouro::window_state::minimized ? " (minimized)" : "");
 			break;
 		case ouro::gui_event::creating:
 		{
-			OnCreate((HWND)_Event.AsCreate().hWindow, _Event.AsCreate().hMenu);
+			OnCreate((HWND)_Event.as_create().window, _Event.as_create().menu);
 			break;
 		}
 
@@ -130,19 +130,19 @@ void oWindowUITest::EventHook(const oGUI_EVENT_DESC& _Event)
 	}
 }
 
-void oWindowUITest::ActionHook(const oGUI_ACTION_DESC& _Action)
+void oWindowUITest::ActionHook(const ouro::action_info& _Action)
 {
-	switch (_Action.Action)
+	switch (_Action.action)
 	{
 		case ouro::gui_action::menu:
 		case ouro::gui_action::hotkey:
-			OnMenuCommand((HWND)_Action.hWindow, _Action.DeviceID);
+			OnMenuCommand((HWND)_Action.window, _Action.device_id);
 			// pass through
 		case ouro::gui_action::control_activated:
 		{
 			ouro::lstring text;
-			oWinControlGetText(text, (HWND)_Action.hWindow);
-			oTRACE("Action %s \"%s\" code=%d", ouro::as_string(oWinControlGetType((HWND)_Action.hWindow)), text.c_str(), _Action.ActionCode);
+			oWinControlGetText(text, (HWND)_Action.window);
+			oTRACE("Action %s \"%s\" code=%d", ouro::as_string(oWinControlGetType((HWND)_Action.window)), text.c_str(), _Action.action_code);
 			break;
 		}
 		case ouro::gui_action::key_down:
@@ -150,7 +150,7 @@ void oWindowUITest::ActionHook(const oGUI_ACTION_DESC& _Action)
 			break;
 		case ouro::gui_action::pointer_move:
 			if (kInteractiveMode)
-				Window->set_status_text(0, "Cursor: %dx%d", (int)_Action.Position.x, (int)_Action.Position.y);
+				Window->set_status_text(0, "Cursor: %dx%d", (int)_Action.position.x, (int)_Action.position.y);
 			break;
 		default:
 			break;
@@ -244,8 +244,8 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 
 	window::init i;
 	i.title = "TESTWindowControls";
-	i.event_hook = std::bind(&oWindowUITest::EventHook, this, std::placeholders::_1);
-	i.action_hook = std::bind(&oWindowUITest::ActionHook, this, std::placeholders::_1);
+	i.on_event = std::bind(&oWindowUITest::EventHook, this, std::placeholders::_1);
+	i.on_action = std::bind(&oWindowUITest::ActionHook, this, std::placeholders::_1);
 	i.shape.state = ouro::window_state::restored;
 	i.shape.style = ouro::window_style::sizable_with_menu_and_statusbar;
 	i.shape.client_size = int2(640,480);
@@ -480,9 +480,9 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 		{
 			bool NewState = !oGUIMenuIsChecked(hViewMenu, MENU_VIEW_SHOW_STATUSBAR);
 			oGUIMenuCheck(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, NewState);
-			ouro::window_shape s;
-			s.style = NewState ? ouro::window_style::sizable_with_menu_and_statusbar : ouro::window_style::sizable_with_menu;
-			Window->shape(s);
+			ouro::window_style::value s;
+			s = NewState ? ouro::window_style::sizable_with_menu_and_statusbar : ouro::window_style::sizable_with_menu;
+			Window->style(s);
 			break;
 		}
 		case MENU_HELP_ABOUT:

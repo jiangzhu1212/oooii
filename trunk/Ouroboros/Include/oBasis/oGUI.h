@@ -566,23 +566,19 @@ struct window_shape
 		, client_size(oDEFAULT, oDEFAULT)
 	{}
 
-	// The desired Shape of the window. Minimize and maximize will override/ignore 
-	// client_position and client_size values. Use window_state::invalid to 
-	// indicate the state should remain untouched (only respect client_position 
-	// and client_size values).
+	// Minimize and maximize will override/ignore client_position and client_size 
+	// values. Use window_state::invalid to indicate the state should remain 
+	// untouched (only respect client_position and client_size values).
 	window_state::value state;
 
-	// The desired style of the non-client area of the window (the OS decoration) 
-	// Use window_style::default_style to indicate that the state should remain 
+	// Use window_style::default_style to indicate that the style should remain 
 	// untouched. Changing style will not affect client size/position.
 	window_style::value style;
 
-	// This always refers to non-minimized, non-maximized Shapes. oDEFAULT values 
-	// imply "use whatever was there before". For example, if the state is set to 
-	// maximized, and some non-default value is applied to ClientSize, then the 
-	// next time the state is set to restored. Changing the style while maximized 
-	// can also change the dimensions, but since the state's goal is to maximize 
-	// client area, these values will be ignored.
+	// This always refers to non-minimized, non-maximized states. oDEFAULT values 
+	// imply "use whatever was there before". For example if the state is set to 
+	// maximized and some non-default value is applied to client_size then the 
+	// next time the state is set to restored the window will have that new size. 
 	int2 client_position;
 	int2 client_size;
 };
@@ -608,6 +604,82 @@ struct window_cursor_shape
 	// window. Setting this to true will also bring the window to the foreground.
 	bool has_capture;
 };
+
+struct action_info
+{
+	// All actions use this desc. This can be filled out manually and submitted
+	// to an action handler to spoof hardware events, for example from a network
+	// stream thus enabling remote access.
+
+	action_info()
+		: window(nullptr)
+		, action(gui_action::unknown)
+		, device_type(input_device_type::unknown)
+		, device_id(-1)
+		, position(0.0f)
+		//, Key(NONE)
+		//, ActionCode(0)
+	{ skeleton = nullptr; }
+
+	action_info(
+		window_handle _hWindow
+		, unsigned int _TimestampMS
+		, gui_action::value _Action
+		, input_device_type::value _DeviceType
+		, int _DeviceID)
+			: window(_hWindow)
+			, timestamp_ms(_TimestampMS)
+			, action(_Action)
+			, device_type(_DeviceType)
+			, device_id(_DeviceID)
+			, position(0.0f)
+			//, Key(NONE)
+			//, ActionCode(0)
+	{ skeleton = nullptr; }
+
+	// Control devices have their own handle and sometimes their own sub-action.
+	window_handle window;
+
+	// Time at which the message was sent in milliseconds.
+	unsigned int timestamp_ms;
+
+	gui_action::value action;
+	input_device_type::value device_type;
+
+	// When there are multiple devices of the same type, this differentiates. For
+	// example if this is a gesture, then this would be the tracking/skeleton ID.
+	// A mouse or keyboard usually only have one associated, so this is typically
+	// not used there. Joysticks would be the ID of each individual one, and for 
+	// controls it is the ID associated with the control.
+	int device_id;
+
+	// For touch and mouse XY are typical coords and Z is the mouse wheel.
+	// For gesture it is the 3D position whose W can typically be ignored, but 
+	// might be indicative of validity.
+	// For joysticks xy is the left-most axis and zw is the right-most axis.
+	float4 position;
+	
+	union
+	{
+		struct 
+		{
+			// Any binary key is described by this, from a keyboard key to a touch event 
+			// to a mouse button to a gesture volume activation (air-key).
+			input_key::value key;
+
+			// For some specific types of controls, this is an additional action 
+			// value.
+			int action_code;
+		};
+
+		// if Action is an gui_action::skeleton, the hSkeleton is  a handle fit for 
+		// use with a platform-specific accessor to the actual skeleton data.
+		skeleton_handle skeleton;
+	};
+};
+
+typedef std::function<void(const action_info& _Action)> action_hook;
+
 
 inline input_device_type::value get_type(const input_key::value& _Key)
 {
@@ -684,222 +756,6 @@ struct oGUI_MENU_ITEM_DESC : oGUI_MENU_ITEM_DESC_NO_CTOR
 		Checked = false;
 	}
 };
-
-
-
-// _____________________________________________________________________________
-// ouro::window_handle events
-
-struct oGUI_EVENT_CREATE_DESC;
-struct oGUI_EVENT_SHAPE_DESC;
-struct oGUI_EVENT_TIMER_DESC;
-struct oGUI_EVENT_DROP_DESC;
-struct oGUI_EVENT_INPUT_DEVICE_DESC;
-struct oGUI_EVENT_CUSTOM_DESC;
-
-struct oGUI_EVENT_DESC
-{
-	oGUI_EVENT_DESC(ouro::window_handle _hWindow, ouro::gui_event::value _Type)
-		: hWindow(_hWindow)
-		, Type(_Type)
-	{}
-
-	// Native window handle
-	ouro::window_handle hWindow;
-
-	// Type of event. This is the base class; use the downcasting accessors below
-	// based on this type value.
-	ouro::gui_event::value Type;
-
-	// union doesn't work because of int2's copy ctor, so use downcasting 
-	// accessors.
-	inline const oGUI_EVENT_CREATE_DESC& AsCreate() const;
-	inline const oGUI_EVENT_SHAPE_DESC& AsShape() const;
-	inline const oGUI_EVENT_TIMER_DESC& AsTimer() const;
-	inline const oGUI_EVENT_DROP_DESC& AsDrop() const;
-	inline const oGUI_EVENT_INPUT_DEVICE_DESC& AsInputDevice() const;
-	inline const oGUI_EVENT_CUSTOM_DESC& AsCustom() const;
-};
-
-struct oGUI_EVENT_CREATE_DESC : oGUI_EVENT_DESC
-{
-	oGUI_EVENT_CREATE_DESC(ouro::window_handle _hWindow
-		, ouro::statusbar_handle _hStatusBar
-		, ouro::menu_handle _hMenu
-		, const ouro::window_shape& _Shape
-		, void* _pUser)
-		: oGUI_EVENT_DESC(_hWindow, ouro::gui_event::creating)
-		, hStatusBar(_hStatusBar)
-		, hMenu(_hMenu)
-		, Shape(_Shape)
-		, pUser(_pUser)
-	{}
-
-	// Native handle of the window's status bar.
-	ouro::statusbar_handle hStatusBar;
-
-	// Native handle of the top-level window's menu.
-	ouro::menu_handle hMenu;
-	ouro::window_shape Shape;
-
-	// The user can pass a value to this for usage.
-	void* pUser;
-};
-
-struct oGUI_EVENT_SHAPE_DESC : oGUI_EVENT_DESC
-{
-	oGUI_EVENT_SHAPE_DESC(ouro::window_handle _hWindow
-		, ouro::gui_event::value _Type
-		, const ouro::window_shape& _Shape)
-		: oGUI_EVENT_DESC(_hWindow, _Type)
-		, Shape(_Shape)
-	{}
-
-	ouro::window_shape Shape;
-};
-
-struct oGUI_EVENT_TIMER_DESC : oGUI_EVENT_DESC
-{
-	oGUI_EVENT_TIMER_DESC(ouro::window_handle _hWindow, uintptr_t _Context)
-		: oGUI_EVENT_DESC(_hWindow, ouro::gui_event::timer)
-		, Context(_Context)
-	{}
-
-	// Any pointer-sized value. It is recommended this be the address of a field
-	// in the App's class that is the struct context for the timer event.
-	uintptr_t Context;
-};
-
-struct oGUI_EVENT_DROP_DESC : oGUI_EVENT_DESC
-{
-	oGUI_EVENT_DROP_DESC(ouro::window_handle _hWindow
-		, const ouro::path_string* _pPaths
-		, int _NumPaths
-		, const int2& _ClientDropPosition)
-		: oGUI_EVENT_DESC(_hWindow, ouro::gui_event::drop_files)
-		, pPaths(_pPaths)
-		, NumPaths(_NumPaths)
-		, ClientDropPosition(_ClientDropPosition)
-	{}
-	const ouro::path_string* pPaths;
-	int NumPaths;
-	int2 ClientDropPosition;
-};
-
-struct oGUI_EVENT_INPUT_DEVICE_DESC : oGUI_EVENT_DESC
-{
-	oGUI_EVENT_INPUT_DEVICE_DESC(ouro::window_handle _hWindow
-		, ouro::input_device_type::value _Type
-		, ouro::input_device_status::value _Status
-		, const char* _InstanceName)
-		: oGUI_EVENT_DESC(_hWindow, ouro::gui_event::input_device_changed)
-		, Type(_Type)
-		, Status(_Status)
-		, InstanceName(_InstanceName)
-	{}
-
-	ouro::input_device_type::value Type;
-	ouro::input_device_status::value Status;
-	const char* InstanceName;
-};
-
-struct oGUI_EVENT_CUSTOM_DESC : oGUI_EVENT_DESC
-{
-	oGUI_EVENT_CUSTOM_DESC(ouro::window_handle _hWindow, int _EventCode, uintptr_t _Context)
-		: oGUI_EVENT_DESC(_hWindow, ouro::gui_event::custom_event)
-		, EventCode(_EventCode)
-		, Context(_Context)
-	{}
-
-	int EventCode;
-	uintptr_t Context;
-};
-
-const oGUI_EVENT_CREATE_DESC& oGUI_EVENT_DESC::AsCreate() const { oASSERT(Type == ouro::gui_event::creating, "wrong type"); return *static_cast<const oGUI_EVENT_CREATE_DESC*>(this); }
-const oGUI_EVENT_SHAPE_DESC& oGUI_EVENT_DESC::AsShape() const { oASSERT(ouro::is_shape_event(Type), "wrong type"); return *static_cast<const oGUI_EVENT_SHAPE_DESC*>(this); }
-const oGUI_EVENT_TIMER_DESC& oGUI_EVENT_DESC::AsTimer() const { oASSERT(Type == ouro::gui_event::timer, "wrong type"); return *static_cast<const oGUI_EVENT_TIMER_DESC*>(this); }
-const oGUI_EVENT_DROP_DESC& oGUI_EVENT_DESC::AsDrop() const { oASSERT(Type == ouro::gui_event::drop_files, "wrong type"); return *static_cast<const oGUI_EVENT_DROP_DESC*>(this); }
-const oGUI_EVENT_INPUT_DEVICE_DESC& oGUI_EVENT_DESC::AsInputDevice() const { oASSERT(Type == ouro::gui_event::input_device_changed, "wrong type"); return *static_cast<const oGUI_EVENT_INPUT_DEVICE_DESC*>(this); }
-const oGUI_EVENT_CUSTOM_DESC& oGUI_EVENT_DESC::AsCustom() const { oASSERT(Type == ouro::gui_event::custom_event, "wrong type"); return *static_cast<const oGUI_EVENT_CUSTOM_DESC*>(this); }
-
-typedef std::function<void(const oGUI_EVENT_DESC& _Event)> oGUI_EVENT_HOOK;
-
-struct oGUI_ACTION_DESC
-{
-	// All actions use this desc. This can be filled out manually and submitted
-	// to an action handler to spoof hardware events, for example from a network
-	// stream thus enabling remote access.
-
-	oGUI_ACTION_DESC()
-		: hWindow(nullptr)
-		, Action(ouro::gui_action::unknown)
-		, DeviceType(ouro::input_device_type::unknown)
-		, DeviceID(-1)
-		, Position(0.0f)
-		//, Key(NONE)
-		//, ActionCode(0)
-	{ hSkeleton = nullptr; }
-
-	oGUI_ACTION_DESC(
-		ouro::window_handle _hWindow
-		, unsigned int _TimestampMS
-		, ouro::gui_action::value _Action
-		, ouro::input_device_type::value _DeviceType
-		, int _DeviceID)
-			: hWindow(_hWindow)
-			, TimestampMS(_TimestampMS)
-			, Action(_Action)
-			, DeviceType(_DeviceType)
-			, DeviceID(_DeviceID)
-			, Position(0.0f)
-			//, Key(NONE)
-			//, ActionCode(0)
-	{ hSkeleton = nullptr; }
-
-	// _____________________________________________________________________________
-	// Common across all actions
-
-	// Control devices have their own handle and sometimes their own sub-action.
-	ouro::window_handle hWindow;
-
-	// Time at which the message was sent in milliseconds.
-	unsigned int TimestampMS;
-
-	ouro::gui_action::value Action;
-	ouro::input_device_type::value DeviceType;
-
-	// When there are multiple devices of the same type, this differentiates. For
-	// example if this is a gesture, then this would be the tracking/skeleton ID.
-	// A mouse or keyboard usually only have one associated, so this is typically
-	// not used there. Joysticks would be the ID of each individual one, and for 
-	// controls it is the ID associated with the control.
-	int DeviceID;
-
-	// For touch and mouse XY are typical coords and Z is the mouse wheel.
-	// For gesture it is the 3D position whose W can typically be ignored, but 
-	// might be indicative of validity.
-	// For joysticks xy is the left-most axis and zw is the right-most axis.
-	float4 Position;
-	
-	union
-	{
-		struct 
-		{
-			// Any binary key is described by this, from a keyboard key to a touch event 
-			// to a mouse button to a gesture volume activation (air-key).
-			ouro::input_key::value Key;
-
-			// For some specific types of controls, this is an additional action value.
-			int ActionCode;
-		};
-
-		// if Action is an ouro::gui_action::skeleton, the hSkeleton is  a handle fit for 
-		// use with a platform-specific accessor to the actual skeleton data.
-		ouro::skeleton_handle hSkeleton;
-	};
-};
-
-typedef std::function<void(const oGUI_ACTION_DESC& _Action)> oGUI_ACTION_HOOK;
 
 // So that hotkeys can be statically defined without a "non-aggregates cannot be 
 // initialized" warning
@@ -1026,8 +882,8 @@ struct oGUI_TEXT_DESC
 // with an array of [A,D,left,right] and the Keystates will be written correctly
 // for LEFT and RIGHT. If the action is a pointer move, then the position is 
 // recorded to _pPointerPosition.
-void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const ouro::input_key::value* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition);
-template<size_t NumKeys, size_t NumKeyStates> void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const ouro::input_key::value (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { oGUIRecordInputState(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
+void oGUIRecordInputState(const ouro::action_info& _Action, const ouro::input_key::value* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition);
+template<size_t NumKeys, size_t NumKeyStates> void oGUIRecordInputState(const ouro::action_info& _Action, const ouro::input_key::value (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { oGUIRecordInputState(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
 
 // _____________________________________________________________________________
 // Rectangle utils

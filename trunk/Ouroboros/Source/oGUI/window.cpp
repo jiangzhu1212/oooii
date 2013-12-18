@@ -31,9 +31,11 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinStatusBar.h>
 #include <oGUI/Windows/oWinWindowing.h>
+#include <oCore/windows/win_error.h>
 #include <oSurface/codec.h>
 #include <oBase/backoff.h>
 #include <vector>
+#include <commctrl.h>
 #include <windowsx.h>
 #include <Shellapi.h>
 #include <oBasis/oError.h> // @tony fixme
@@ -43,6 +45,114 @@ namespace ouro {
 static bool kForceDebug = false;
 
 #define DISPATCH(_SimpleFunction) do { dispatch_internal(std::move([=] { _SimpleFunction; })); } while(false)
+
+// Converts a Windows control message to an action. This calls 
+// oWinControlDefaultOnNotify if there is no other appropriate handling. This
+// returns true if the output action and lresults are valid and should be 
+// respected or false if this was not a control message.
+bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, ouro::action_info* _pAction, LRESULT* _pLResult)
+{
+	*_pLResult = 0;
+	bool Handled = true;
+
+	switch (_uMsg)
+	{
+		case WM_COMMAND:
+		{
+			_pAction->device_type = ouro::input_device_type::control;
+			_pAction->device_id = LOWORD(_wParam);
+			_pAction->window = (ouro::window_handle)_hWnd;
+			_pAction->key = ouro::input_key::none;
+			_pAction->position = 0.0f;
+
+			if (!_lParam)
+			{
+				_pAction->action = (HIWORD(_wParam) == 1) ? ouro::gui_action::hotkey : ouro::gui_action::menu;
+				_pAction->action_code = oInvalid;
+			}
+			else
+			{
+				_pAction->window = (ouro::window_handle)_lParam;
+				_pAction->action = ouro::gui_action::control_activated;
+				_pAction->action_code = HIWORD(_wParam);
+			}
+
+			break;
+		}
+
+		case WM_HSCROLL:
+		{
+			if (_lParam != 0)
+			{
+				_pAction->window = (ouro::window_handle)(_lParam);
+				_pAction->device_type = ouro::input_device_type::control;
+				_pAction->device_id = oInvalid;
+				_pAction->key = ouro::input_key::none;
+				_pAction->position = 0.0f;
+				oCHECK_SIZE(int, _wParam);
+				_pAction->action_code = static_cast<int>(_wParam);
+				switch (LOWORD(_wParam))
+				{
+					case TB_ENDTRACK: _pAction->action = ouro::gui_action::control_deactivated; break;
+					default: _pAction->action = ouro::gui_action::control_activated; break;
+				}
+				break;
+			}
+
+			Handled = false;
+			break;
+		}
+
+		case WM_NOTIFY:
+		{
+			LRESULT lResult = FALSE;
+			const NMHDR& nmhdr = *(const NMHDR*)_lParam;
+			*_pAction = ouro::action_info();
+			_pAction->device_type = ouro::input_device_type::control;
+			oCHECK_SIZE(int, nmhdr.idFrom);
+			_pAction->device_id = static_cast<int>(nmhdr.idFrom);
+			_pAction->window = (ouro::window_handle)nmhdr.hwndFrom;
+			_pAction->position = 0.0f;
+			_pAction->action_code = nmhdr.code;
+
+			ouro::control_type::value type = oWinControlGetType(nmhdr.hwndFrom);
+			switch (type)
+			{
+				case ouro::control_type::tab:
+				{
+					switch (_pAction->action_code)
+					{
+						case TCN_SELCHANGING: _pAction->action = ouro::gui_action::control_selection_changing; break;
+						case TCN_SELCHANGE: _pAction->action = ouro::gui_action::control_selection_changed; break;
+						default: break;
+					}
+
+					break;
+				}
+
+				case ouro::control_type::button:
+				{
+					switch (_pAction->action_code)
+					{
+						case BN_CLICKED: _pAction->action = ouro::gui_action::control_activated; break;
+						default: break;
+					}
+
+					break;
+				}
+
+				default: break;
+			}
+
+			Handled = !oWinControlDefaultOnNotify(_hWnd, nmhdr, _pLResult, type);
+			break;
+		}
+
+		default: Handled = false; break;
+	}
+
+	return Handled;
+}
 
 template<typename HookT, typename ParamT>
 class HookManager
@@ -88,7 +198,7 @@ struct window_impl : window
 	~window_impl();
 	
 	// environmental API
-	ouro::window_handle native_handle() const override;
+	window_handle native_handle() const override;
 	display::id display_id() const override;
 	bool is_window_thread() const override;
 	void debug(bool _Debug = true) override;
@@ -102,10 +212,10 @@ struct window_impl : window
 	window_shape shape() const override;
 
 	// border/decoration API
-	void icon(ouro::icon_handle _hIcon) override;
-	ouro::icon_handle icon() const override;
-	void user_cursor(ouro::cursor_handle _hCursor) override;
-	ouro::cursor_handle user_cursor() const override;
+	void icon(icon_handle _hIcon) override;
+	icon_handle icon() const override;
+	void user_cursor(cursor_handle _hCursor) override;
+	cursor_handle user_cursor() const override;
 	void client_cursor_state(cursor_state::value _State) override;
 	cursor_state::value client_cursor_state() const override;
 	void set_titlev(const char* _Format, va_list _Args) override;
@@ -114,8 +224,8 @@ struct window_impl : window
 	int get_num_status_sections(int* _pStatusSectionWidths = nullptr, size_t _MaxNumStatusSectionWidths = 0) const override;
 	void set_status_textv(int _StatusSectionIndex, const char* _Format, va_list _Args) override;
 	char* get_status_text(char* _StrDestination, size_t _SizeofStrDestination, int _StatusSectionIndex) const override;
-	void status_icon(int _StatusSectionIndex, ouro::icon_handle _hIcon) override;
-	ouro::icon_handle status_icon(int _StatusSectionIndex) const override;
+	void status_icon(int _StatusSectionIndex, icon_handle _hIcon) override;
+	icon_handle status_icon(int _StatusSectionIndex) const override;
 
 	// Draw Order/Dependency API
 	void parent(const std::shared_ptr<basic_window>& _Parent) override;
@@ -144,13 +254,13 @@ struct window_impl : window
 	int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override;
 
 	// Observer API
-	int hook_actions(const oGUI_ACTION_HOOK& _Hook) override;
+	int hook_actions(const action_hook& _Hook) override;
 	void unhook_actions(int _ActionHookID) override;
-	int hook_events(const oGUI_EVENT_HOOK& _Hook) override;
+	int hook_events(const event_hook& _Hook) override;
 	void unhook_events(int _EventHookID) override;
 
 	// Execution API
-	void trigger(const oGUI_ACTION_DESC& _Action) override;
+	void trigger(const ouro::action_info& _Action) override;
 	void post(int _CustomEventCode, uintptr_t _Context) override;
 	void dispatch(const oTASK& _Task) override;
 	oStd::future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const override;
@@ -162,7 +272,7 @@ private:
 	HWND hWnd;
 	HACCEL hAccel;
 	HANDLE hHeap;
-	ouro::cursor_handle hUserCursor;
+	cursor_handle hUserCursor;
 	oWINKEY_CONTROL_STATE ControlKeyState;
 
 	cursor_state::value ClientCursorState;
@@ -175,8 +285,8 @@ private:
 
 	window_shape PriorShape;
 
-	typedef HookManager<oGUI_ACTION_HOOK, oGUI_ACTION_DESC> ActionManager_t;
-	typedef HookManager<oGUI_EVENT_HOOK, oGUI_EVENT_DESC> EventManager_t;
+	typedef HookManager<action_hook, ouro::action_info> ActionManager_t;
+	typedef HookManager<event_hook, basic_event> EventManager_t;
 
 	ActionManager_t ActionHooks;
 	EventManager_t EventHooks;
@@ -304,11 +414,11 @@ window_impl::window_impl(const init& _Init)
 	, AllowTouch(false)
 	, CursorClientPosAtMouseDown(oDEFAULT, oDEFAULT)
 {
-	if (_Init.action_hook)
-		ActionHooks.Hook(_Init.action_hook);
+	if (_Init.on_action)
+		ActionHooks.Hook(_Init.on_action);
 
-	if (_Init.event_hook)
-		EventHooks.Hook(_Init.event_hook);
+	if (_Init.on_event)
+		EventHooks.Hook(_Init.on_event);
 
 	init_window(_Init);
 	window_impl::sort_order(SortOrder);
@@ -335,9 +445,9 @@ std::shared_ptr<window> window::make(const init& _Init)
 	return std::make_shared<window_impl>(_Init);
 }
 
-ouro::window_handle window_impl::native_handle() const
+window_handle window_impl::native_handle() const
 {
-	return (ouro::window_handle)hWnd;
+	return (window_handle)hWnd;
 }
 
 display::id window_impl::display_id() const
@@ -366,18 +476,18 @@ window_shape window_impl::shape() const
 	return oWinGetShape(hWnd);
 }
 
-void window_impl::icon(ouro::icon_handle _hIcon)
+void window_impl::icon(icon_handle _hIcon)
 {
 	DISPATCH(oWinSetIcon(hWnd, (HICON)_hIcon, true));
 	DISPATCH(oWinSetIcon(hWnd, (HICON)_hIcon, false));
 }
 
-ouro::icon_handle window_impl::icon() const
+icon_handle window_impl::icon() const
 {
-	return (ouro::icon_handle)oWinGetIcon(hWnd);
+	return (icon_handle)oWinGetIcon(hWnd);
 }
 
-void window_impl::user_cursor(ouro::cursor_handle _hCursor)
+void window_impl::user_cursor(cursor_handle _hCursor)
 {
 	dispatch_internal(std::move([=]
 	{
@@ -387,9 +497,9 @@ void window_impl::user_cursor(ouro::cursor_handle _hCursor)
 	}));
 }
 
-ouro::cursor_handle window_impl::user_cursor() const
+cursor_handle window_impl::user_cursor() const
 {
-	return (ouro::cursor_handle)hUserCursor;
+	return (cursor_handle)hUserCursor;
 }
 
 void window_impl::client_cursor_state(cursor_state::value _State)
@@ -461,14 +571,14 @@ char* window_impl::get_status_text(char* _StrDestination, size_t _SizeofStrDesti
 	return (len && len <= _SizeofStrDestination) ? _StrDestination : nullptr;
 }
 
-void window_impl::status_icon(int _StatusSectionIndex, ouro::icon_handle _hIcon)
+void window_impl::status_icon(int _StatusSectionIndex, icon_handle _hIcon)
 {
 	DISPATCH(oWinStatusBarSetIcon(oWinGetStatusBar(hWnd), _StatusSectionIndex, (HICON)_hIcon));
 }
 
-ouro::icon_handle window_impl::status_icon(int _StatusSectionIndex) const
+icon_handle window_impl::status_icon(int _StatusSectionIndex) const
 {
-	return (ouro::icon_handle)oWinStatusBarGetIcon(oWinGetStatusBar(hWnd), _StatusSectionIndex);
+	return (icon_handle)oWinStatusBarGetIcon(oWinGetStatusBar(hWnd), _StatusSectionIndex);
 }
 
 void window_impl::parent(const std::shared_ptr<basic_window>& _Parent)
@@ -651,7 +761,7 @@ int window_impl::get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNum
 	return N;
 }
 
-int window_impl::hook_actions(const oGUI_ACTION_HOOK& _Hook)
+int window_impl::hook_actions(const action_hook& _Hook)
 {
 	return ActionHooks.Hook(_Hook);
 }
@@ -661,7 +771,7 @@ void window_impl::unhook_actions(int _ActionHookID)
 	ActionHooks.Unhook(_ActionHookID);
 }
 
-int window_impl::hook_events(const oGUI_EVENT_HOOK& _Hook)
+int window_impl::hook_events(const event_hook& _Hook)
 {
 	return EventHooks.Hook(_Hook);
 }
@@ -671,14 +781,14 @@ void window_impl::unhook_events(int _EventHookID)
 	EventHooks.Unhook(_EventHookID);
 }
 
-void window_impl::trigger(const oGUI_ACTION_DESC& _Action)
+void window_impl::trigger(const ouro::action_info& _Action)
 {
 	dispatch_internal(std::move(std::bind(&ActionManager_t::Visit, &ActionHooks, _Action))); // bind by copy
 }
 
 void window_impl::post(int _CustomEventCode, uintptr_t _Context)
 {
-	oGUI_EVENT_CUSTOM_DESC e((ouro::window_handle)hWnd, _CustomEventCode, _Context);
+	custom_event e((window_handle)hWnd, _CustomEventCode, _Context);
 	dispatch_internal(std::bind(&EventManager_t::Visit, &EventHooks, e)); // bind by copy
 }
 
@@ -780,10 +890,10 @@ void window_impl::quit()
 
 void window_impl::trigger_generic_event(gui_event::value _Event, window_shape* _pShape)
 {
-	oGUI_EVENT_SHAPE_DESC e((ouro::window_handle)hWnd, _Event, oWinGetShape(hWnd));
+	shape_event e((window_handle)hWnd, _Event, oWinGetShape(hWnd));
 	EventHooks.Visit(e);
 	if (_pShape)
-		*_pShape = e.Shape;
+		*_pShape = e.shape;
 }
 
 void window_impl::set_cursor()
@@ -811,9 +921,9 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 			// gui_event::creating, where it's known to be only semi-ready.
 			hWnd = _hWnd;
 
-			oGUI_EVENT_CREATE_DESC e((ouro::window_handle)_hWnd
-				, (ouro::statusbar_handle)oWinGetStatusBar(_hWnd)
-				, (ouro::menu_handle)oWinGetMenu(_hWnd)
+			create_event e((window_handle)_hWnd
+				, (statusbar_handle)oWinGetStatusBar(_hWnd)
+				, (menu_handle)oWinGetMenu(_hWnd)
 				, wcs->Shape, pInit->create_user_data);
 			EventHooks.Visit(e);
 			break;
@@ -823,7 +933,7 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 		{
 			// Don't allow DefWindowProc to destroy the window, put it all on client 
 			// code.
-			oGUI_EVENT_SHAPE_DESC e((ouro::window_handle)hWnd, gui_event::closing, oWinGetShape(hWnd));
+			shape_event e((window_handle)hWnd, gui_event::closing, oWinGetShape(hWnd));
 			EventHooks.Visit(e);
 			*_pLResult = 0;
 			return true;
@@ -901,7 +1011,7 @@ bool window_impl::handle_misc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 				oWinSetFocus(_hWnd);
 			else
 			{
-				oGUI_EVENT_TIMER_DESC e((ouro::window_handle)_hWnd, (uintptr_t)_wParam);
+				timer_event e((window_handle)_hWnd, (uintptr_t)_wParam);
 				EventHooks.Visit(e);
 			}
 			*_pLResult = 1;
@@ -941,13 +1051,13 @@ bool window_impl::handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 
 			if (!oWinIsTempChange(_hWnd))
 			{
-				oGUI_EVENT_SHAPE_DESC e((ouro::window_handle)hWnd, gui_event::sizing, PriorShape);
+				shape_event e((window_handle)hWnd, gui_event::sizing, PriorShape);
 				EventHooks.Visit(e);
 
-				e.Type = gui_event::sized;
-				e.Shape = oWinGetShape(_hWnd);
+				e.type = gui_event::sized;
+				e.shape = oWinGetShape(_hWnd);
 				EventHooks.Visit(e);
-				PriorShape = e.Shape;
+				PriorShape = e.shape;
 			}
 			return true;
 		}
@@ -964,22 +1074,22 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 	*_pLResult = 0;
 	unsigned int Timestamp = (unsigned int)GetMessageTime();
 
-	oGUI_ACTION_DESC Action;
+	ouro::action_info Action;
 	if (oWinKeyDispatchMessage(_hWnd, _uMsg, _wParam, _lParam, Timestamp, &ControlKeyState, &Action))
 	{
 		if (ClientDragToMove)
 		{
 			const input_key::value CheckKey = GetSystemMetrics(SM_SWAPBUTTON) ? input_key::mouse_right : input_key::mouse_left;
 
-			if (Action.Key == CheckKey)
+			if (Action.key == CheckKey)
 			{
-				if (Action.Action == gui_action::key_down)
+				if (Action.action == gui_action::key_down)
 				{
 					CursorClientPosAtMouseDown = oWinCursorGetPosition(_hWnd);
 					::SetCapture(_hWnd);
 				}
 
-				else if (Action.Action == gui_action::key_up)
+				else if (Action.action == gui_action::key_up)
 				{
 					ReleaseCapture();
 					CursorClientPosAtMouseDown = int2(oDEFAULT, oDEFAULT);
@@ -992,7 +1102,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 			return false;
 	}
 
-	if (oWinControlToAction(_hWnd, _uMsg, _wParam, _lParam, &Action, _pLResult))
+	if (control_to_action(_hWnd, _uMsg, _wParam, _lParam, &Action, _pLResult))
 	{
 		ActionHooks.Visit(Action);
 		return true;
@@ -1051,7 +1161,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 		// so use oWM_INPUT_DEVICE_CHANGE as its proxy.
 		case oWM_INPUT_DEVICE_CHANGE:
 		{
-			oGUI_EVENT_INPUT_DEVICE_DESC e((ouro::window_handle)_hWnd
+			input_device_event e((window_handle)_hWnd
 				, input_device_type::value(LOWORD(_wParam))
 				, input_device_status::value(HIWORD(_wParam))
 				, (const char*)_lParam);
@@ -1061,18 +1171,18 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 
 		case oWM_SKELETON:
 		{
-			oGUI_ACTION_DESC a((ouro::window_handle)_hWnd, Timestamp, gui_action::skeleton, input_device_type::skeleton, LOWORD(_wParam));
-			a.hSkeleton = (ouro::skeleton_handle)_lParam;
+			ouro::action_info a((window_handle)_hWnd, Timestamp, gui_action::skeleton, input_device_type::skeleton, LOWORD(_wParam));
+			a.skeleton = (skeleton_handle)_lParam;
 			ActionHooks.Visit(a);
 			return 0;
 		}
 
 		case oWM_USER_CAPTURED:
-			ActionHooks.Visit(oGUI_ACTION_DESC((ouro::window_handle)_hWnd, Timestamp, gui_action::skeleton_acquired, input_device_type::skeleton, oInt(_wParam)));
+			ActionHooks.Visit(ouro::action_info((window_handle)_hWnd, Timestamp, gui_action::skeleton_acquired, input_device_type::skeleton, oInt(_wParam)));
 			return 0;
 
 		case oWM_USER_LOST:
-			ActionHooks.Visit(oGUI_ACTION_DESC((ouro::window_handle)_hWnd, Timestamp, gui_action::skeleton_lost, input_device_type::skeleton, oInt(_wParam)));
+			ActionHooks.Visit(ouro::action_info((window_handle)_hWnd, Timestamp, gui_action::skeleton_lost, input_device_type::skeleton, oInt(_wParam)));
 			return 0;
 
 		#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
@@ -1084,15 +1194,15 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 				{
 					if (GetTouchInputInfo((HTOUCHINPUT)_lParam, nTouches, inputs, sizeof(TOUCHINPUT)))
 					{
-						oGUI_ACTION_DESC a((ouro::window_handle)_hWnd, Timestamp, gui_action::key_down, input_device_type::touch, 0);
+						ouro::action_info a((window_handle)_hWnd, Timestamp, gui_action::key_down, input_device_type::touch, 0);
 						for (UINT i = 0; i < nTouches; i++)
 						{
 							// @tony: Maybe touch doesn't need to pollute X11? The idea one 
 							// day is to support wacky interface devices through RFB protocol 
 							// which forces all boolean things down X11... should this comply?
-							a.DeviceID = i;
-							a.Key = (input_key::value)(input_key::touch1 + i);
-							a.Position = float4(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f, 0.0f);
+							a.device_id = i;
+							a.key = (input_key::value)(input_key::touch1 + i);
+							a.position = float4(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f, 0.0f);
 							ActionHooks.Visit(a);
 						}
 						CloseTouchInputHandle((HTOUCHINPUT)_lParam);
@@ -1112,7 +1222,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 				DragQueryFile((HDROP)_wParam, i, const_cast<char*>(pPaths[i].c_str()), oUInt(pPaths[i].capacity()));
 			DragFinish((HDROP)_wParam);
 
-			oGUI_EVENT_DROP_DESC e((ouro::window_handle)_hWnd, pPaths, NumPaths, p);
+			drop_event e((window_handle)_hWnd, pPaths, NumPaths, p);
 			EventHooks.Visit(e);
 			delete [] pPaths;
 			return true;

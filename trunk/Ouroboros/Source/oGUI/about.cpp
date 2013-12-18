@@ -109,9 +109,9 @@ private:
 		const module::info& module_info;
 	};
 
-	void on_event(const oGUI_EVENT_DESC& _Event);
-	void on_action(const oGUI_ACTION_DESC& _Action);
-	void make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
+	void on_event(const window::basic_event& _Event);
+	void on_action(const ouro::action_info& _Action);
+	void make_controls(const window::create_event& _CreateEvent);
 };
 
 static const int kComponentHeight = 100;
@@ -131,8 +131,8 @@ about_impl::about_impl(const info& _Info)
 	i.title = Title;
 	i.icon = nullptr;
 	i.create_user_data = &Init;
-	i.action_hook = std::bind(&about_impl::on_action, this, std::placeholders::_1);
-	i.event_hook = std::bind(&about_impl::on_event, this, std::placeholders::_1);
+	i.on_action = std::bind(&about_impl::on_action, this, std::placeholders::_1);
+	i.on_event = std::bind(&about_impl::on_event, this, std::placeholders::_1);
 	i.shape.state = window_state::hidden;
 	i.shape.style = window_style::dialog;
 	i.shape.client_size = int2(320, 140);
@@ -148,9 +148,9 @@ std::shared_ptr<about> about::make(const info& _Info)
 	return std::make_shared<about_impl>(_Info);
 }
 
-void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
+void about_impl::make_controls(const window::create_event& _CreateEvent)
 {
-	const init& Init = *(const init*)_CreateEvent.pUser;
+	const init& Init = *(const init*)_CreateEvent.user;
 	const info& Info = Init.info;
 	const module::info& mi = Init.module_info;
 
@@ -159,7 +159,7 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	const int2 kIconSize(75, 75);
 	const int2 kIconPos(0, 0);
 
-	const int2 kModulePathSize(_CreateEvent.Shape.client_size.x - kInset.x * 2, 23);
+	const int2 kModulePathSize(_CreateEvent.shape.client_size.x - kInset.x * 2, 23);
 	const int2 kModulePathPos(kInset.x, kIconPos.y + kIconSize.y);
 	
 	const int2 kModuleInfoSize(220, 40);
@@ -169,9 +169,9 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	const int2 kWebsitePos(kModuleInfoPos.x, kModuleInfoPos.y + kModuleInfoSize.y);
 
 	const int2 kIssueSiteSize(75, 23);
-	const int2 kIssueSitePos(_CreateEvent.Shape.client_size.x - kIssueSiteSize.x - kInset.x, kWebsitePos.y);
+	const int2 kIssueSitePos(_CreateEvent.shape.client_size.x - kIssueSiteSize.x - kInset.x, kWebsitePos.y);
 
-	const int2 kComponentGroupSize(_CreateEvent.Shape.client_size.x - kInset.x * 2, kComponentHeight);
+	const int2 kComponentGroupSize(_CreateEvent.shape.client_size.x - kInset.x * 2, kComponentHeight);
 	const int2 kComponentGroupPos(kInset.x, kIconPos.y + kIconSize.y + 20);
 
 	const int2 kComponentListSize(90, kComponentGroupSize.y - 21);
@@ -182,7 +182,7 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 
 	const int2 kButtonSize(75, 23);
 
-	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.Shape.client_size));
+	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.shape.client_size));
 	
 	oGUI_CONTROL_DESC Descs[AB_CONTROL_COUNT];
 
@@ -340,7 +340,7 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	{
 		if (Descs[i].Type != control_type::unknown)
 		{
-			Descs[i].hParent = _CreateEvent.hWindow;
+			Descs[i].hParent = _CreateEvent.window;
 			Descs[i].ID = i;
 			Controls[i] = (ouro::window_handle)oWinControlCreate(Descs[i]);
 		}
@@ -349,13 +349,13 @@ void about_impl::make_controls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	}
 }
 
-void about_impl::on_event(const oGUI_EVENT_DESC& _Event)
+void about_impl::on_event(const window::basic_event& _Event)
 {
-	switch (_Event.Type)
+	switch (_Event.type)
 	{
 		case gui_event::creating:
 		{
-			make_controls(_Event.AsCreate());
+			make_controls(_Event.as_create());
 			break;
 		}
 
@@ -364,12 +364,12 @@ void about_impl::on_event(const oGUI_EVENT_DESC& _Event)
 	}
 }
 
-void about_impl::on_action(const oGUI_ACTION_DESC& _Action)
+void about_impl::on_action(const ouro::action_info& _Action)
 {
-	switch (_Action.Action)
+	switch (_Action.action)
 	{
 		case gui_action::control_activated:
-			switch (_Action.DeviceID)
+			switch (_Action.device_id)
 			{
 				case AB_OK:
 				{
@@ -381,7 +381,7 @@ void about_impl::on_action(const oGUI_ACTION_DESC& _Action)
 
 				case AB_COMPONENT_LIST:
 				{
-					int index = oWinControlGetSelectedSubItem((HWND)_Action.hWindow);
+					int index = oWinControlGetSelectedSubItem((HWND)_Action.window);
 					if (index >= 0)
 					{
 						const char* comment = "";

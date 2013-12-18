@@ -562,12 +562,6 @@ HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc);
 // Hyperlabel: handles chasing web links
 bool oWinControlDefaultOnNotify(HWND _hWnd, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult = nullptr, ouro::control_type::value _Type = ouro::control_type::unknown);
 
-// Converts a Windows control message to an action. This calls 
-// oWinControlDefaultOnNotify if there is no other appropriate handling. This
-// returns true if the output action and lresults are valid and should be 
-// respected or false if this was not a control message.
-bool oWinControlToAction(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, oGUI_ACTION_DESC* _pAction, LRESULT* _pLResult);
-
 // _____________________________________________________________________________
 // UI Control State
 

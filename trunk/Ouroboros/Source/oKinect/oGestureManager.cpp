@@ -156,9 +156,9 @@ private:
 	void GDIDrawKinectStatusIcon(ouro::draw_context_handle _hDC, const int2& _ClientSize);
 	void GDIDrawNotStatusIcon(ouro::draw_context_handle _hDC, const int2& _ClientSize);
 
-	void OnEvent(const oGUI_EVENT_DESC& _Event);
-	void OnAction(const oGUI_ACTION_DESC& _Action);
-	void OnDeviceChange(const oGUI_EVENT_DESC& _Event);
+	void OnEvent(const window::basic_event& _Event);
+	void OnAction(const ouro::action_info& _Action);
+	void OnDeviceChange(const window::basic_event& _Event);
 
 	bool ReloadAirKeySets(const uri_string& _AirKeySets_xml);
 	bool ReloadInputs(const uri_string& _Inputs_xml);
@@ -684,14 +684,14 @@ int oGestureManagerImpl::SetHeadMessageV(int _SkeletonIndex, const char* _Format
 	return l;
 }
 
-void oGestureManagerImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
+void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 {
-	switch (_Event.Type)
+	switch (_Event.type)
 	{
 		case ouro::gui_event::sized:
 		{
 			// Keep the font proportional to the size of the rectangle.
-			ouro::display::info di = ouro::display::get_info(oWinGetDisplayId((HWND)_Event.hWindow));
+			ouro::display::info di = ouro::display::get_info(oWinGetDisplayId((HWND)_Event.window));
 			float2 Ratio = float2(VizDesc.Size) / float2(int2(di.mode.width, di.mode.height));
 			float R = min(Ratio);
 			oGUI_FONT_DESC fd;
@@ -705,7 +705,7 @@ void oGestureManagerImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 			int TimerVersion = oInvalid;
 			oGESTURE_TIMER_EVENT GTE = oGESTURE_TIMER_HEAD_MESSAGE;
 			int SkeletonIndex = oInvalid;
-			DECODE_TIMER_MSG(_Event.AsTimer().Context, &TimerVersion, &GTE, &SkeletonIndex);
+			DECODE_TIMER_MSG(_Event.as_timer().context, &TimerVersion, &GTE, &SkeletonIndex);
 			
 			switch (GTE)
 			{
@@ -746,37 +746,37 @@ void oGestureManagerImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 	}
 }
 
-void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
+void oGestureManagerImpl::OnAction(const ouro::action_info& _Action)
 {
-	switch (_Action.Action)
+	switch (_Action.action)
 	{
 		case ouro::gui_action::skeleton_acquired:
 		{
 			sstring text;
-			snprintf(text, "GMGR: Skeleton[%d] activated", _Action.DeviceID);
-			AirKeyboard->AddSkeleton(_Action.DeviceID);
+			snprintf(text, "GMGR: Skeleton[%d] activated", _Action.device_id);
+			AirKeyboard->AddSkeleton(_Action.device_id);
 			break;
 		}
 
 		case ouro::gui_action::skeleton_lost:
 		{
 			sstring text;
-			snprintf(text, "GMGR: Skeleton[%d] deactivated", _Action.DeviceID);
-			AirKeyboard->RemoveSkeleton(_Action.DeviceID);
+			snprintf(text, "GMGR: Skeleton[%d] deactivated", _Action.device_id);
+			AirKeyboard->RemoveSkeleton(_Action.device_id);
 			break;
 		}
 
 		case ouro::gui_action::skeleton:
 		{
 			windows::skeleton::bone_info Skeleton;
-			windows::skeleton::get_info((windows::skeleton::handle)_Action.hSkeleton, &Skeleton);
+			windows::skeleton::get_info((windows::skeleton::handle)_Action.skeleton, &Skeleton);
 
 			ouro::tracking_skeleton skel;
 			skel.source_id = Skeleton.source_id;
 			skel.clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
 			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.positions.size(), skel.positions.begin());
 
-			AirKeyboard->Update(skel, _Action.TimestampMS);
+			AirKeyboard->Update(skel, _Action.timestamp_ms);
 			break;
 		}
 
@@ -792,24 +792,24 @@ void oGestureManagerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
 	}
 }
 
-void oGestureManagerImpl::OnDeviceChange(const oGUI_EVENT_DESC& _Event)
+void oGestureManagerImpl::OnDeviceChange(const window::basic_event& _Event)
 {
-	if (_Event.Type == ouro::input_device_type::skeleton)
+	if (_Event.type == ouro::input_device_type::skeleton)
 	{
 		if (!Desc.GestureEnabled)
 		{
-			oTRACE("GMGR: ignoring (gesture sys disabled): Kinect %s", _Event.AsInputDevice().InstanceName);
+			oTRACE("GMGR: ignoring (gesture sys disabled): Kinect %s", _Event.as_input_device().instance_name);
 			return;
 		}
 
 		//KinectIcon(_Event.AsInputDevice().Status);
-		switch (_Event.AsInputDevice().Status)
+		switch (_Event.as_input_device().status)
 		{
 			case ouro::input_device_status::ready:
-				AttachKinect(true, _Event.AsInputDevice().InstanceName);
+				AttachKinect(true, _Event.as_input_device().instance_name);
 				break;
 			case ouro::input_device_status::not_connected:
-				AttachKinect(false, _Event.AsInputDevice().InstanceName);
+				AttachKinect(false, _Event.as_input_device().instance_name);
 				break;
 			case ouro::input_device_status::initializing:
 				NoKinectMessage = "Kinect initializing...";

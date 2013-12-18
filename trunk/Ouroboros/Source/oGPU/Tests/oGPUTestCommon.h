@@ -75,7 +75,7 @@ public:
 	oGPURenderTarget* GetPrimaryRenderTarget() { return PrimaryRenderTarget; }
 
 private:
-	void OnEvent(const oGUI_EVENT_DESC& _Event);
+	void OnEvent(const ouro::window::basic_event& _Event);
 	bool Create(const char* _Title, bool _DevMode, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size);
 
 	// Call this after each Device::EndFrame() and before Device::Present to 

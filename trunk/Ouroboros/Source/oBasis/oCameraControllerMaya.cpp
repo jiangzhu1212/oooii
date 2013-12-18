@@ -33,7 +33,7 @@ struct oCameraControllerModelerImpl : oCameraControllerModeler
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE2(oCameraController, oCameraControllerModeler);
 
-	int OnAction(const oGUI_ACTION_DESC& _Action) override;
+	int OnAction(const ouro::action_info& _Action) override;
 	void Tick() override {}
 	void OnLostCapture() override;
 	void SetView(const float4x4& _View) override { Arcball.view(_View); }
@@ -72,7 +72,7 @@ bool oCameraControllerModelerCreate(const oCAMERA_CONTROLLER_MODELER_DESC& _Desc
 	return success;
 }
 
-int oCameraControllerModelerImpl::OnAction(const oGUI_ACTION_DESC& _Action)
+int oCameraControllerModelerImpl::OnAction(const ouro::action_info& _Action)
 {
 	bool WasTumbling = KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::TUMBLER];
 	bool WasTracking = !WasTumbling && KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::TRACK];

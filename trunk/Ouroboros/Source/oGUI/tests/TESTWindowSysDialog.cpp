@@ -154,8 +154,8 @@ private:
 		}
 	}
 
-	void EventHook(const oGUI_EVENT_DESC& _Event);
-	void ActionHook(const oGUI_ACTION_DESC& _Action);
+	void EventHook(const window::basic_event& _Event);
+	void ActionHook(const ouro::action_info& _Action);
 };
 
 } // namespace tests
@@ -249,8 +249,8 @@ oSystemProperties::oSystemProperties()
 {
 	window::init i;
 	i.title = "TESTWindowSysDialog";
-	i.event_hook = std::bind(&oSystemProperties::EventHook, this, std::placeholders::_1);
-	i.action_hook = std::bind(&oSystemProperties::ActionHook, this, std::placeholders::_1);
+	i.on_event = std::bind(&oSystemProperties::EventHook, this, std::placeholders::_1);
+	i.on_action = std::bind(&oSystemProperties::ActionHook, this, std::placeholders::_1);
 	i.shape.style = ouro::window_style::dialog;
 	i.shape.state = ouro::window_state::restored;
 	i.shape.client_size = int2(410,436);
@@ -333,54 +333,54 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 	return true;
 }
 
-void oSystemProperties::EventHook(const oGUI_EVENT_DESC& _Event)
+void oSystemProperties::EventHook(const window::basic_event& _Event)
 {
-	switch (_Event.Type)
+	switch (_Event.type)
 	{
 		case ouro::gui_event::creating:
 		{
-			oCHECK0(Reload((HWND)_Event.hWindow, _Event.AsCreate().Shape.client_size));
+			oCHECK0(Reload((HWND)_Event.window, _Event.as_create().shape.client_size));
 			break;
 		}
 	}
 }
 
-void oSystemProperties::ActionHook(const oGUI_ACTION_DESC& _Action)
+void oSystemProperties::ActionHook(const ouro::action_info& _Action)
 {
-	switch (_Action.Action)
+	switch (_Action.action)
 	{
 		case ouro::gui_action::control_activated:
 		{
-			switch (_Action.DeviceID)
+			switch (_Action.device_id)
 			{
 				case ID_OK: Running = false; break;
 				case ID_CANCEL: Running = false; break;
-				case ID_APPLY: oWinEnable((HWND)_Action.hWindow, false); break;
+				case ID_APPLY: oWinEnable((HWND)_Action.window, false); break;
 				default: break;
 			}
 
-			if (_Action.DeviceID != ID_APPLY)
+			if (_Action.device_id != ID_APPLY)
 				oWinEnable((HWND)ControlSet[ID_APPLY], true);
 			break;
 		}
 
 		case ouro::gui_action::control_selection_changing:
 		{
-			int index = oWinControlGetSelectedSubItem((HWND)_Action.hWindow);
+			int index = oWinControlGetSelectedSubItem((HWND)_Action.window);
 			Show(index, false);
 			break;
 		}
 
 		case ouro::gui_action::control_selection_changed:
 		{
-			int index = oWinControlGetSelectedSubItem((HWND)_Action.hWindow);
+			int index = oWinControlGetSelectedSubItem((HWND)_Action.window);
 			Show(index, true);
 			break;
 		}
 
 		case ouro::gui_action::hotkey:
 		{
-			if (_Action.DeviceID == ID_RELOAD_UI)
+			if (_Action.device_id == ID_RELOAD_UI)
 				oCHECK0(Reload((HWND)Window->native_handle(), Window->client_size()));
 			
 			break;

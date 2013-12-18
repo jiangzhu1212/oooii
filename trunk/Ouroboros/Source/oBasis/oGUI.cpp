@@ -479,12 +479,12 @@ oDEFINE_FROM_STRING(gui_action::value, gui_action::count);
 
 } // namespace ouro
 
-void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const ouro::input_key::value* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition)
+void oGUIRecordInputState(const ouro::action_info& _Action, const ouro::input_key::value* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition)
 {
 	oASSERT((_NumKeys % _NumKeyStates) == 0, "NumKeyStates must be a multiple of num keys");
 
 	bool KeyDown = false;
-	switch (_Action.Action)
+	switch (_Action.action)
 	{
 		case ouro::gui_action::key_down:
 		{
@@ -499,14 +499,14 @@ void oGUIRecordInputState(const oGUI_ACTION_DESC& _Action, const ouro::input_key
 		}
 
 		case ouro::gui_action::pointer_move:
-			*_pPointerPosition = _Action.Position.xyz();
+			*_pPointerPosition = _Action.position.xyz();
 			return;
 
 		default:
 			return;
 	}
 
-	ouro::input_key::value TestKey = _Action.Key;
+	ouro::input_key::value TestKey = _Action.key;
 	for (size_t i = 0; i < _NumKeys; i++)
 	{
 		if (TestKey == _pKeys[i])

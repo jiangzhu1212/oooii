@@ -39,7 +39,7 @@ public:
 		Hooks.reserve(8);
 	}
 
-	inline int Hook(const oGUI_ACTION_HOOK& _Hook) threadsafe
+	inline int Hook(const action_hook& _Hook) threadsafe
 	{
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> lockB(Mutex);
 		return oInt(sparse_set(oThreadsafe(Hooks), _Hook));
@@ -51,7 +51,7 @@ public:
 		ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 	}
 
-	void Call(const oGUI_ACTION_DESC& _Action) threadsafe
+	void Call(const ouro::action_info& _Action) threadsafe
 	{
 		oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
 		oFOR(const auto& h, oThreadsafe(Hooks))
@@ -60,7 +60,7 @@ public:
 
 private:
 	oConcurrency::shared_mutex Mutex;
-	std::vector<oGUI_ACTION_HOOK> Hooks;
+	std::vector<action_hook> Hooks;
 };
 
 class oInput
@@ -449,11 +449,11 @@ struct oInputMapperImpl : oInputMapper
 
 	void SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe override;
 
-	int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe override { return Hooks.Hook(_Hook); }
+	int HookActions(const ouro::action_hook& _Hook) threadsafe override { return Hooks.Hook(_Hook); }
 	void UnhookActions(int _HookID) threadsafe override { Hooks.Unhook(_HookID); }
 
 	// Call this from the key event handler to record the event.
-	void OnAction(const oGUI_ACTION_DESC& _Action) threadsafe override;
+	void OnAction(const ouro::action_info& _Action) threadsafe override;
 	void OnLostCapture() threadsafe override;
 
 	intrusive_ptr<threadsafe oInputSet> InputSet;
@@ -482,9 +482,9 @@ void oInputMapperImpl::SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe
 	InputSet = _pInputSet;
 };
 
-void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
+void oInputMapperImpl::OnAction(const ouro::action_info& _Action) threadsafe
 {
-	switch (_Action.Action)
+	switch (_Action.action)
 	{
 		case ouro::gui_action::key_down:
 		case ouro::gui_action::key_up:
@@ -496,7 +496,7 @@ void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
 				for (int i = 0; i < oInt(pInputSet->Inputs.size()); i++)
 				{
 					bool InputDown = false;
-					if (pInputSet->Inputs[i].OnKey(_Action.Key, _Action.Action == ouro::gui_action::key_down, &InputDown))
+					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action == ouro::gui_action::key_down, &InputDown))
 					{
 						// this is not really safe. It is only safe if OnAction is only ever 
 						// called from one thread for one instance, which tends to be the
@@ -504,23 +504,23 @@ void oInputMapperImpl::OnAction(const oGUI_ACTION_DESC& _Action) threadsafe
 						// threadsafe marker of this API refers more to the idea that 
 						// changing the input set is safe in one thread while updating it in 
 						// another.
-						thread_cast<oInputHistory&>(InputHistory).Add(_Action.TimestampMS, i, InputDown);
+						thread_cast<oInputHistory&>(InputHistory).Add(_Action.timestamp_ms, i, InputDown);
 
-						oGUI_ACTION_DESC a(_Action);
-						a.Action = ouro::gui_action::control_activated;
-						a.ActionCode = i; // at least trigger this input
+						ouro::action_info a(_Action);
+						a.action = ouro::gui_action::control_activated;
+						a.action_code = i; // at least trigger this input
 						
 						// Check to see if it gets overridden by a sequence
 						for (int s = 0; s < oInt(pInputSet->InputSequences.size()); s++)
 						{
-							if (thread_cast<oInputHistory&>(InputHistory).SequenceTriggered(pInputSet->InputSequences[s], _Action.TimestampMS))
+							if (thread_cast<oInputHistory&>(InputHistory).SequenceTriggered(pInputSet->InputSequences[s], _Action.timestamp_ms))
 							{
-								a.ActionCode = pInputSet->InputSequences[s].InputID;
+								a.action_code = pInputSet->InputSequences[s].InputID;
 								break;
 							}
 						}
 
-						oTRACE("Input %d %s", a.ActionCode, (_Action.Action == ouro::gui_action::key_down) ? "down" : "up");
+						oTRACE("Input %d %s", a.action_code, (_Action.action == ouro::gui_action::key_down) ? "down" : "up");
 						Hooks.Call(a);
 					}
 				}

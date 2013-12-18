@@ -146,19 +146,19 @@ public:
 		Callbacks.push_back(e);
 	}
 
-	inline void OnAction(const oGUI_ACTION_DESC& _Action)
+	inline void OnAction(const ouro::action_info& _Action)
 	{
-		if (_Action.Action == ouro::gui_action::menu)
+		if (_Action.action == ouro::gui_action::menu)
 		{
 			auto it = std::find_if(Callbacks.begin(), Callbacks.end(), [&](const ENTRY& _Entry)
 			{
-				return _Action.DeviceID >= _Entry.First && _Action.DeviceID <= _Entry.Last;
+				return _Action.device_id >= _Entry.First && _Action.device_id <= _Entry.Last;
 			});
 
 			if (it != Callbacks.end())
 			{
-				oGUIMenuCheckRadio(it->hMenu, it->First, it->Last, _Action.DeviceID);
-				it->Callback(_Action.DeviceID - it->First);
+				oGUIMenuCheckRadio(it->hMenu, it->First, it->Last, _Action.device_id);
+				it->Callback(_Action.device_id - it->First);
 			}
 		}
 	}

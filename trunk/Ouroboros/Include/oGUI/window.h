@@ -42,7 +42,7 @@ class basic_window
 {
 public:
 	// environmental API
-	virtual ouro::window_handle native_handle() const = 0;
+	virtual window_handle native_handle() const = 0;
 	virtual display::id display_id() const = 0;
 	virtual bool is_window_thread() const = 0;
   
@@ -76,12 +76,12 @@ public:
 
 
 	// border/decoration API
-	virtual void icon(ouro::icon_handle _hIcon) = 0;
-	virtual ouro::icon_handle icon() const = 0;
+	virtual void icon(icon_handle _hIcon) = 0;
+	virtual icon_handle icon() const = 0;
 
 	// sets the cursor to use when cursor_state::user is specified in client_cursor_state
-	virtual void user_cursor(ouro::cursor_handle _hCursor) = 0;
-	virtual ouro::cursor_handle user_cursor() const = 0;
+	virtual void user_cursor(cursor_handle _hCursor) = 0;
+	virtual cursor_handle user_cursor() const = 0;
 
 	virtual void client_cursor_state(cursor_state::value _State) = 0;
 	virtual cursor_state::value client_cursor_state() const = 0;
@@ -119,6 +119,134 @@ class window : public basic_window
 {
 public:
 
+	// events
+	struct create_event;
+	struct shape_event;
+	struct timer_event;
+	struct drop_event;
+	struct input_device_event;
+	struct custom_event;
+
+	struct basic_event
+	{
+		basic_event(window_handle _hWindow, gui_event::value _Type)
+			: window(_hWindow)
+			, type(_Type)
+		{}
+
+		// Native window handle
+		window_handle window;
+
+		// Event type. Use this to choose a downcaster below.
+		gui_event::value type;
+
+		// union doesn't work because of int2's copy ctor so use downcasting instead
+		inline const create_event& as_create() const;
+		inline const shape_event& as_shape() const;
+		inline const timer_event& as_timer() const;
+		inline const drop_event& as_drop() const;
+		inline const input_device_event& as_input_device() const;
+		inline const custom_event& as_custom() const;
+	};
+
+	struct create_event : basic_event
+	{
+		create_event(window_handle _hWindow
+			, statusbar_handle _hStatusBar
+			, menu_handle _hMenu
+			, const window_shape& _Shape
+			, void* _pUser)
+			: basic_event(_hWindow, gui_event::creating)
+			, statusbar(_hStatusBar)
+			, menu(_hMenu)
+			, shape(_Shape)
+			, user(_pUser)
+		{}
+
+		// Native handle of the window's status bar.
+		statusbar_handle statusbar;
+
+		// Native handle of the top-level window's menu.
+		menu_handle menu;
+		window_shape shape;
+
+		// The user can pass a value to this for usage during window creation.
+		void* user;
+	};
+
+	struct shape_event : basic_event
+	{
+		shape_event(window_handle _hWindow
+			, gui_event::value _Type
+			, const window_shape& _Shape)
+			: basic_event(_hWindow, _Type)
+			, shape(_Shape)
+		{}
+
+		window_shape shape;
+	};
+
+	struct timer_event : basic_event
+	{
+		timer_event(window_handle _hWindow, uintptr_t _Context)
+			: basic_event(_hWindow, gui_event::timer)
+			, context(_Context)
+		{}
+
+		// Any pointer-sized value. It is recommended this be the address of a field
+		// in the App's class that is the struct context for the timer event.
+		uintptr_t context;
+	};
+
+	struct drop_event : basic_event
+	{
+		drop_event(window_handle _hWindow
+			, const path_string* _pPaths
+			, int _NumPaths
+			, const int2& _ClientDropPosition)
+			: basic_event(_hWindow, gui_event::drop_files)
+			, paths(_pPaths)
+			, num_paths(_NumPaths)
+			, client_drop_position(_ClientDropPosition)
+		{}
+		const path_string* paths;
+		int num_paths;
+		int2 client_drop_position;
+	};
+
+	struct input_device_event : basic_event
+	{
+		input_device_event(window_handle _hWindow
+			, input_device_type::value _Type
+			, input_device_status::value _Status
+			, const char* _InstanceName)
+			: basic_event(_hWindow, gui_event::input_device_changed)
+			, type(_Type)
+			, status(_Status)
+			, instance_name(_InstanceName)
+		{}
+
+		input_device_type::value type;
+		input_device_status::value status;
+		const char* instance_name;
+	};
+
+	struct custom_event : basic_event
+	{
+		custom_event(window_handle _hWindow, int _EventCode, uintptr_t _Context)
+			: basic_event(_hWindow, gui_event::custom_event)
+			, code(_EventCode)
+			, context(_Context)
+		{}
+
+		int code;
+		uintptr_t context;
+	};
+
+	typedef std::function<void(const basic_event& _Event)> event_hook;
+
+	
+	// lifetime API
 	struct init
 	{
 		init()
@@ -135,9 +263,9 @@ public:
 	{}
   
 		const char* title;
-		ouro::icon_handle icon;
+		icon_handle icon;
 		void* create_user_data; // user data accessible in the create event
-		ouro::cursor_handle cursor;
+		cursor_handle cursor;
 		cursor_state::value cursor_state;
 		window_sort_order::value sort_order;
 		bool debug;
@@ -148,11 +276,11 @@ public:
 		// NOTE: The gui_event::creating event gets fired during construction, so if that 
 		// event is to be hooked it needs to be passed and hooked up during 
 		// construction.
-		oGUI_EVENT_HOOK event_hook;
-		oGUI_ACTION_HOOK action_hook;
+		event_hook on_event;
+		action_hook on_action;
 		window_shape shape;
 	};
-  
+
 	static std::shared_ptr<window> make(const init& _Init);
 
 
@@ -186,8 +314,8 @@ public:
 	template<size_t size> char* get_status_text(char (&_StrDestination)[size], int _StatusSectionIndex) const { return get_status_text(_StrDestination, size, _StatusSectionIndex); }
 	template<size_t capacity> char* get_status_text(fixed_string<char, capacity>& _StrDestination, int _StatusSectionIndex) const { return get_status_text(_StrDestination, _StrDestination.capacity(), _StatusSectionIndex); }
 
-	virtual void status_icon(int _StatusSectionIndex, ouro::icon_handle _hIcon) = 0;
-	virtual ouro::icon_handle status_icon(int _StatusSectionIndex) const = 0;
+	virtual void status_icon(int _StatusSectionIndex, icon_handle _hIcon) = 0;
+	virtual icon_handle status_icon(int _StatusSectionIndex) const = 0;
 
  
 	// extended input API
@@ -231,17 +359,17 @@ public:
 
 	// observer API
 
-	virtual int hook_actions(const oGUI_ACTION_HOOK& _Hook) = 0;
+	virtual int hook_actions(const action_hook& _Hook) = 0;
 	virtual void unhook_actions(int _ActionHookID) = 0;
 
-	virtual int hook_events(const oGUI_EVENT_HOOK& _Hook) = 0;
+	virtual int hook_events(const event_hook& _Hook) = 0;
 	virtual void unhook_events(int _EventHookID) = 0;
 
 
 	// execution API
 
 	// Appends a broadcast of an action as if it came from user input.
-	virtual void trigger(const oGUI_ACTION_DESC& _Action) = 0;
+	virtual void trigger(const ouro::action_info& _Action) = 0;
 
 	// Post an event that is specified by the user here.
 	virtual void post(int _CustomEventCode, uintptr_t _Context) = 0;
@@ -263,6 +391,13 @@ public:
 	virtual void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) = 0;
 	virtual void stop_timer(uintptr_t _Context) = 0;
 };
+
+const window::create_event& window::basic_event::as_create() const { oASSERT(type == gui_event::creating, "wrong type"); return *static_cast<const create_event*>(this); }
+const window::shape_event& window::basic_event::as_shape() const { oASSERT(is_shape_event(type), "wrong type"); return *static_cast<const shape_event*>(this); }
+const window::timer_event& window::basic_event::as_timer() const { oASSERT(type == gui_event::timer, "wrong type"); return *static_cast<const timer_event*>(this); }
+const window::drop_event& window::basic_event::as_drop() const { oASSERT(type == gui_event::drop_files, "wrong type"); return *static_cast<const drop_event*>(this); }
+const window::input_device_event& window::basic_event::as_input_device() const { oASSERT(type == gui_event::input_device_changed, "wrong type"); return *static_cast<const input_device_event*>(this); }
+const window::custom_event& window::basic_event::as_custom() const { oASSERT(type == gui_event::custom_event, "wrong type"); return *static_cast<const custom_event*>(this); }
 
 } // namespace ouro
 

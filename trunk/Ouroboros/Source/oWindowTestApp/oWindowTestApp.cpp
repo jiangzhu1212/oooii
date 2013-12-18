@@ -126,10 +126,10 @@ private:
 	std::shared_ptr<filesystem::monitor> DirWatcher;
 
 private:
-	void ActionHook(const oGUI_ACTION_DESC& _Action);
-	void EventHook(const oGUI_EVENT_DESC& _Event);
-	bool CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
-	bool CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent);
+	void ActionHook(const ouro::action_info& _Action);
+	void EventHook(const window::basic_event& _Event);
+	bool CreateMenu(const window::create_event& _CreateEvent);
+	bool CreateControls(const window::create_event& _CreateEvent);
 	void CheckState(ouro::window_state::value _State);
 	void CheckStyle(ouro::window_style::value _Style);
 	void OnDirectoryEvent(filesystem::file_event::value _Event, const path& _Path);
@@ -157,8 +157,8 @@ oWindowTestApp::oWindowTestApp()
 		window::init i;
 		i.title = "oWindowTestApp";
 		i.icon = (ouro::icon_handle)oGDILoadIcon(IDI_APPICON);
-		i.action_hook = std::bind(&oWindowTestApp::ActionHook, this, oBIND1);
-		i.event_hook = std::bind(&oWindowTestApp::EventHook, this, oBIND1);
+		i.on_action = std::bind(&oWindowTestApp::ActionHook, this, oBIND1);
+		i.on_event = std::bind(&oWindowTestApp::EventHook, this, oBIND1);
 		i.shape.client_size = int2(320, 240);
 		i.shape.state = ouro::window_state::hidden;
 		i.shape.style = ouro::window_style::sizable_with_menu_and_statusbar;
@@ -182,7 +182,7 @@ oWindowTestApp::oWindowTestApp()
 	Window->show();
 }
 
-bool oWindowTestApp::CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
+bool oWindowTestApp::CreateMenu(const window::create_event& _CreateEvent)
 {
 	oFOR(auto& m, Menus)
 		m = oGUIMenuCreate();
@@ -190,19 +190,19 @@ bool oWindowTestApp::CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	oFOR(const auto& h, sMenuHier)
 	{
 		oGUIMenuAppendSubmenu(
-			h.Parent == oWMENU_TOPLEVEL ? _CreateEvent.hMenu : Menus[h.Parent]
+			h.Parent == oWMENU_TOPLEVEL ? _CreateEvent.menu : Menus[h.Parent]
 		, Menus[h.Menu], h.Name);
 	}
 
 	oGUIMenuAppendItem(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
 
-	oGUIMenuAppendEnumItems(ouro::window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.Shape.style);
+	oGUIMenuAppendEnumItems(ouro::window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.shape.style);
 	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle)
 	{
 		Window->style((ouro::window_style::value)_BorderStyle);
 	});
 
-	oGUIMenuAppendEnumItems(ouro::window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.Shape.state);
+	oGUIMenuAppendEnumItems(ouro::window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.shape.state);
 	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State)
 	{
 		Window->show((ouro::window_state::value)_State);
@@ -213,11 +213,11 @@ bool oWindowTestApp::CreateMenu(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
 	return true;
 }
 
-bool oWindowTestApp::CreateControls(const oGUI_EVENT_CREATE_DESC& _CreateEvent)
+bool oWindowTestApp::CreateControls(const window::create_event& _CreateEvent)
 {
 	{
 		oGUI_CONTROL_DESC d;
-		d.hParent = _CreateEvent.hWindow;
+		d.hParent = _CreateEvent.window;
 		d.Type = ouro::control_type::button;
 		d.Text = "&Easy";
 		d.Position = int2(20, 20);
@@ -258,12 +258,12 @@ void oWindowTestApp::OnDirectoryEvent(filesystem::file_event::value _Event, cons
 	}
 }
 
-void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
+void oWindowTestApp::EventHook(const window::basic_event& _Event)
 {
-	switch (_Event.Type)
+	switch (_Event.type)
 	{
 		case ouro::gui_event::timer:
-			if (_Event.AsTimer().Context == (uintptr_t)&PulseContext)
+			if (_Event.as_timer().context == (uintptr_t)&PulseContext)
 			{
 				PulseContext.Count++;
 				Window->set_status_text(0, "Timer: %d", PulseContext.Count);
@@ -280,9 +280,9 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 		case ouro::gui_event::creating:
 		{
 			oTRACE("ouro::gui_event::creating");
-			if (!CreateMenu(_Event.AsCreate()))
+			if (!CreateMenu(_Event.as_create()))
 				oThrowLastError();
-			if (!CreateControls(_Event.AsCreate()))
+			if (!CreateControls(_Event.as_create()))
 				oThrowLastError();
 			break;
 		}
@@ -296,21 +296,21 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 			oTRACE("ouro::gui_event::moving");
 			break;
 		case ouro::gui_event::moved:
-			oTRACE("ouro::gui_event::moved %dx%d", _Event.AsShape().Shape.client_position.x, _Event.AsShape().Shape.client_position.y);
+			oTRACE("ouro::gui_event::moved %dx%d", _Event.as_shape().shape.client_position.x, _Event.as_shape().shape.client_position.y);
 			break;
 		case ouro::gui_event::sizing:
-			oTRACE("ouro::gui_event::sizing %s %dx%d", as_string(_Event.AsShape().Shape.state), _Event.AsShape().Shape.client_size.x, _Event.AsShape().Shape.client_size.y);
+			oTRACE("ouro::gui_event::sizing %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
 			break;
 		case ouro::gui_event::sized:
 		{
-			oTRACE("ouro::gui_event::sized %s %dx%d", as_string(_Event.AsShape().Shape.state), _Event.AsShape().Shape.client_size.x, _Event.AsShape().Shape.client_size.y);
-			CheckState(_Event.AsShape().Shape.state);
-			CheckStyle(_Event.AsShape().Shape.style);
+			oTRACE("ouro::gui_event::sized %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
+			CheckState(_Event.as_shape().shape.state);
+			CheckStyle(_Event.as_shape().shape.style);
 
 			// center the button
 			{
 				RECT rParent, rButton;
-				GetClientRect((HWND)_Event.hWindow, &rParent);
+				GetClientRect((HWND)_Event.window, &rParent);
 				GetClientRect(hButton, &rButton);
 				RECT Centered = oWinRect(oGUIResolveRect(oRect(rParent), oRect(rButton), ouro::alignment::middle_center, false));
 				SetWindowPos(hButton, nullptr, Centered.left, Centered.top, oWinRectW(Centered), oWinRectH(Centered), SWP_SHOWWINDOW);
@@ -334,24 +334,24 @@ void oWindowTestApp::EventHook(const oGUI_EVENT_DESC& _Event)
 			oTRACE("ouro::gui_event::lost_capture");
 			break;
 		case ouro::gui_event::drop_files:
-			oTRACE("ouro::gui_event::drop_files (at %d,%d starting with %s)", _Event.AsDrop().ClientDropPosition.x, _Event.AsDrop().ClientDropPosition.y, _Event.AsDrop().pPaths[0]);
+			oTRACE("ouro::gui_event::drop_files (at %d,%d starting with %s)", _Event.as_drop().client_drop_position.x, _Event.as_drop().client_drop_position.y, _Event.as_drop().paths[0]);
 			break;
 		case ouro::gui_event::input_device_changed:
-			oTRACE("ouro::gui_event::input_device_changed %s %s %s", as_string(_Event.AsInputDevice().Type), as_string(_Event.AsInputDevice().Status), _Event.AsInputDevice().InstanceName);
+			oTRACE("ouro::gui_event::input_device_changed %s %s %s", as_string(_Event.as_input_device().type), as_string(_Event.as_input_device().status), _Event.as_input_device().instance_name);
 			break;
 		oNODEFAULT;
 	}
 }
 
-void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
+void oWindowTestApp::ActionHook(const ouro::action_info& _Action)
 {
-	switch (_Action.Action)
+	switch (_Action.action)
 	{
 		case ouro::gui_action::unknown:
 			oTRACE("ouro::gui_action::unknown");
 			break;
 		case ouro::gui_action::menu:
-			switch (_Action.DeviceID)
+			switch (_Action.device_id)
 			{
 				case oWMI_FILE_EXIT:
 					Window->quit();
@@ -364,7 +364,7 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 							About = ouro::about::make(i);
 						About->show_modal(Window);
 					#else
-						ouro::msgbox(ouro::msg_type::info, _Action.hWindow, "About", "oWindowTestApp: a small program to show a basic window and its events and actions");
+						ouro::msgbox(ouro::msg_type::info, _Action.window, "About", "oWindowTestApp: a small program to show a basic window and its events and actions");
 					#endif
 					break;
 				}
@@ -374,7 +374,7 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			break;
 
 		case ouro::gui_action::control_activated:
-			switch (_Action.DeviceID)
+			switch (_Action.device_id)
 			{
 				case oWCTL_EASY_BUTTON:
 				{
@@ -401,16 +401,13 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			oTRACE("ouro::gui_action::control_selection_changed");
 			break;
 		case ouro::gui_action::hotkey:
-			switch (_Action.DeviceID)
+			switch (_Action.device_id)
 			{
 				case oWHK_DEFAULT_STYLE:
 				{
-					ouro::window_shape s;
-					s.state = Window->state();
-					if (s.state == ouro::window_state::fullscreen)
-						s.state = ouro::window_state::restored;
-					s.style = ouro::window_style::sizable_with_menu_and_statusbar;
-					Window->shape(s);
+					if (Window->state() == ouro::window_state::fullscreen)
+						Window->state(ouro::window_state::restored);
+					Window->style(ouro::window_style::sizable_with_menu_and_statusbar);
 					break;
 				}
 				case oWHK_TOGGLE_FULLSCREEN:
@@ -431,10 +428,10 @@ void oWindowTestApp::ActionHook(const oGUI_ACTION_DESC& _Action)
 			
 			break;
 		case ouro::gui_action::key_down:
-			oTRACE("ouro::gui_action::key_down %s", as_string(_Action.Key));
+			oTRACE("ouro::gui_action::key_down %s", as_string(_Action.key));
 			break;
 		case ouro::gui_action::key_up:
-			oTRACE("ouro::gui_action::key_up %s", as_string(_Action.Key));
+			oTRACE("ouro::gui_action::key_up %s", as_string(_Action.key));
 			break;
 		case ouro::gui_action::pointer_move:
 			//oTRACE("ouro::gui_action::pointer_move");

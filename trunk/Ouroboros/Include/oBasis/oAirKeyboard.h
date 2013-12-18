@@ -123,7 +123,7 @@ public:
 	virtual bool AddSkeleton(int _ID) threadsafe;
 	virtual void RemoveSkeleton(int _ID) threadsafe;
 
-	virtual int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe;
+	virtual int HookActions(const ouro::action_hook& _Hook) threadsafe;
 	virtual void UnhookActions(int _HookID) threadsafe;
 
 	// Analyze the specified skeleton for interaction with an oAirKeySet and 
@@ -132,7 +132,7 @@ public:
 	virtual void Update(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe;
 
 	// Manually trigger an action
-	virtual void Trigger(const oGUI_ACTION_DESC& _Action) threadsafe;
+	virtual void Trigger(const ouro::action_info& _Action) threadsafe;
 };
 
 bool oAirKeyboardCreate(threadsafe oAirKeyboard** _ppAirKeyboard);

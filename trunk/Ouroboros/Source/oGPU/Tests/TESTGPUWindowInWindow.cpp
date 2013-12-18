@@ -46,7 +46,7 @@ public:
 		{
 			window::init i;
 			i.title = "Window-In-Window Test";
-			i.event_hook = std::bind(&WindowInWindow::ParentEventHook, this, oBIND1);
+			i.on_event = std::bind(&WindowInWindow::ParentEventHook, this, oBIND1);
 			i.shape.state = ouro::window_state::hidden;
 			i.shape.style = ouro::window_style::sizable;
 			i.shape.client_size = int2(640, 480);
@@ -73,7 +73,7 @@ public:
 			i.shape.style = ouro::window_style::borderless;
 			i.shape.client_position = int2(20,20);
 			i.shape.client_size = int2(600,480-65);
-			i.event_hook = std::bind(&WindowInWindow::GPUWindowEventHook, this, std::placeholders::_1);
+			i.on_event = std::bind(&WindowInWindow::GPUWindowEventHook, this, std::placeholders::_1);
 
 			try { GPUWindow = window::make(i); }
 			catch (std::exception& e) { oErrorSetLast(e); return; }
@@ -109,14 +109,14 @@ public:
 		}
 	}
 
-	void ParentEventHook(const oGUI_EVENT_DESC& _Event)
+	void ParentEventHook(const window::basic_event& _Event)
 	{
-		switch (_Event.Type)
+		switch (_Event.type)
 		{
 			case ouro::gui_event::creating:
 			{
 				oGUI_CONTROL_DESC ButtonDesc;
-				ButtonDesc.hParent = _Event.hWindow;
+				ButtonDesc.hParent = _Event.window;
 				ButtonDesc.Type = ouro::control_type::button;
 				ButtonDesc.Text = "Push Me";
 				ButtonDesc.Size = int2(100,25);
@@ -134,12 +134,12 @@ public:
 			case ouro::gui_event::sized:
 			{
 				if (GPUWindow)
-					GPUWindow->client_size(_Event.AsShape().Shape.client_size - int2(40,65));
+					GPUWindow->client_size(_Event.as_shape().shape.client_size - int2(40,65));
 
 				if (PrimaryRenderTarget)
-					PrimaryRenderTarget->Resize(int3(_Event.AsShape().Shape.client_size - int2(40,65), 1));
+					PrimaryRenderTarget->Resize(int3(_Event.as_shape().shape.client_size - int2(40,65), 1));
 
-				SetWindowPos(hButton, 0, 10, _Event.AsShape().Shape.client_size.y-10-25, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
+				SetWindowPos(hButton, 0, 10, _Event.as_shape().shape.client_size.y-10-25, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 				break;
 			}
 
@@ -148,7 +148,7 @@ public:
 		}
 	}
 
-	void GPUWindowEventHook(const oGUI_EVENT_DESC& _Event)
+	void GPUWindowEventHook(const window::basic_event& _Event)
 	{
 	}
 

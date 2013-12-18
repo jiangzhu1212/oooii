@@ -69,7 +69,7 @@ interface oCameraController : oInterface
 	// Respond to user input. Attach this to the message pump of an oWindow's
 	// action handler. This returns several of the above bit masks to indicate how 
 	// the controller has responded to the input.
-	virtual int OnAction(const oGUI_ACTION_DESC& _Action) = 0;
+	virtual int OnAction(const ouro::action_info& _Action) = 0;
 
 	// Call this every update
 	virtual void Tick() = 0;

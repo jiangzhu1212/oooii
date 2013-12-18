@@ -446,7 +446,7 @@ static ouro::input_key::value oWinKeyMouseMoveGetTopPriorityKey(WPARAM _wParam)
 	return ouro::input_key::none;
 }
 
-bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, unsigned int _TimestampMS, oWINKEY_CONTROL_STATE* _pState, oGUI_ACTION_DESC* _pAction)
+bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, unsigned int _TimestampMS, oWINKEY_CONTROL_STATE* _pState, ouro::action_info* _pAction)
 {
 	// NOTE: Only keep simple down/up functionality here. Anything more advanced
 	// should not be handled here and handled explicitly in a place where there's
@@ -454,42 +454,42 @@ bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 
 	bool handled = true;
 
-	#define GETPOS _pAction->Position = float4(oWinGetMousePosition(_lParam, 0), 0.0f);
-	#define ISKEYUP _pAction->Action = ouro::gui_action::key_up
+	#define GETPOS _pAction->position = float4(oWinGetMousePosition(_lParam, 0), 0.0f);
+	#define ISKEYUP _pAction->action = ouro::gui_action::key_up
 
-	_pAction->Action = ouro::gui_action::key_down;
-	_pAction->DeviceID = 0;
-	_pAction->Key = ouro::input_key::none;
-	_pAction->Position = 0.0f;
-	_pAction->hWindow = (ouro::window_handle)_hWnd;
-	_pAction->TimestampMS = _TimestampMS;
-	_pAction->ActionCode = -1;
+	_pAction->action = ouro::gui_action::key_down;
+	_pAction->device_id = 0;
+	_pAction->key = ouro::input_key::none;
+	_pAction->position = 0.0f;
+	_pAction->window = (ouro::window_handle)_hWnd;
+	_pAction->timestamp_ms = _TimestampMS;
+	_pAction->action_code = -1;
 
 	switch (_uMsg)
 	{
-		case WM_LBUTTONUP: ISKEYUP; case WM_LBUTTONDOWN: GETPOS; _pAction->Key = ouro::input_key::mouse_left; break;
-		case WM_RBUTTONUP: ISKEYUP; case WM_RBUTTONDOWN: GETPOS; _pAction->Key = ouro::input_key::mouse_right; break;
-		case WM_MBUTTONUP: ISKEYUP; case WM_MBUTTONDOWN: GETPOS; _pAction->Key = ouro::input_key::mouse_middle; break;
-		case WM_XBUTTONUP: ISKEYUP; case WM_XBUTTONDOWN: GETPOS; _pAction->Key = GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? ouro::input_key::mouse_side1 : ouro::input_key::mouse_side2; break;
+		case WM_LBUTTONUP: ISKEYUP; case WM_LBUTTONDOWN: GETPOS; _pAction->key = ouro::input_key::mouse_left; break;
+		case WM_RBUTTONUP: ISKEYUP; case WM_RBUTTONDOWN: GETPOS; _pAction->key = ouro::input_key::mouse_right; break;
+		case WM_MBUTTONUP: ISKEYUP; case WM_MBUTTONDOWN: GETPOS; _pAction->key = ouro::input_key::mouse_middle; break;
+		case WM_XBUTTONUP: ISKEYUP; case WM_XBUTTONDOWN: GETPOS; _pAction->key = GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? ouro::input_key::mouse_side1 : ouro::input_key::mouse_side2; break;
 
-		case WM_LBUTTONDBLCLK: GETPOS; _pAction->Key = ouro::input_key::mouse_left_double; break;
-		case WM_RBUTTONDBLCLK: GETPOS; _pAction->Key = ouro::input_key::mouse_right_double; break;
-		case WM_MBUTTONDBLCLK: GETPOS; _pAction->Key = ouro::input_key::mouse_middle_double; break;
-		case WM_XBUTTONDBLCLK: GETPOS; _pAction->Key = GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? ouro::input_key::mouse_side1_double : ouro::input_key::mouse_side2_double; break;
+		case WM_LBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input_key::mouse_left_double; break;
+		case WM_RBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input_key::mouse_right_double; break;
+		case WM_MBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input_key::mouse_middle_double; break;
+		case WM_XBUTTONDBLCLK: GETPOS; _pAction->key = GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? ouro::input_key::mouse_side1_double : ouro::input_key::mouse_side2_double; break;
 
-		case WM_KEYUP: ISKEYUP; case WM_KEYDOWN: _pAction->Key = oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)); break;
+		case WM_KEYUP: ISKEYUP; case WM_KEYDOWN: _pAction->key = oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)); break;
 
 		// Pass ALT buttons through to regular key handling
-		case WM_SYSKEYUP: ISKEYUP; case WM_SYSKEYDOWN: { switch (_wParam) { case VK_LMENU: case VK_MENU: case VK_RMENU: _pAction->Key = oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)); break; default: handled = false; break; } break; }
+		case WM_SYSKEYUP: ISKEYUP; case WM_SYSKEYDOWN: { switch (_wParam) { case VK_LMENU: case VK_MENU: case VK_RMENU: _pAction->key = oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)); break; default: handled = false; break; } break; }
 
-		case WM_MOUSEMOVE: _pAction->Action = ouro::gui_action::pointer_move; _pAction->Key = oWinKeyMouseMoveGetTopPriorityKey(_wParam); GETPOS; break;
-		case WM_MOUSEWHEEL: _pAction->Action = ouro::gui_action::pointer_move; _pAction->Key = oWinKeyMouseMoveGetTopPriorityKey(_wParam); _pAction->Position = float4(oWinGetMousePosition(_lParam, _wParam), 0.0f); break;
+		case WM_MOUSEMOVE: _pAction->action = ouro::gui_action::pointer_move; _pAction->key = oWinKeyMouseMoveGetTopPriorityKey(_wParam); GETPOS; break;
+		case WM_MOUSEWHEEL: _pAction->action = ouro::gui_action::pointer_move; _pAction->key = oWinKeyMouseMoveGetTopPriorityKey(_wParam); _pAction->position = float4(oWinGetMousePosition(_lParam, _wParam), 0.0f); break;
 
 		default: handled = false; break;
 	}
 
 	if (handled)
-		_pAction->DeviceType = ouro::get_type(_pAction->Key);
+		_pAction->device_type = ouro::get_type(_pAction->key);
 
 	return handled;
 }

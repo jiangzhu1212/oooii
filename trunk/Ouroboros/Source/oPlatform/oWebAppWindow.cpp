@@ -127,11 +127,11 @@ public:
 	bool has_capture() const override { return Window->has_capture(); }
 	void set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) override { Window->set_hotkeys(_pHotKeys, _NumHotKeys); }
 	int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override { return Window->get_hotkeys(_pHotKeys, _MaxNumHotKeys); }
-	int hook_actions(const oGUI_ACTION_HOOK& _Hook) override { return Window->hook_actions(_Hook); }
+	int hook_actions(const ouro::action_hook& _Hook) override { return Window->hook_actions(_Hook); }
 	void unhook_actions(int _ActionHookID) override { return Window->unhook_actions(_ActionHookID); }
-	int hook_events(const oGUI_EVENT_HOOK& _Hook) override { return Window->hook_events(_Hook); }
+	int hook_events(const event_hook& _Hook) override { return Window->hook_events(_Hook); }
 	void unhook_events(int _EventHookID) override { return Window->unhook_events(_EventHookID); }
-	void trigger(const oGUI_ACTION_DESC& _Action) override { return Window->trigger(_Action); }
+	void trigger(const ouro::action_info& _Action) override { return Window->trigger(_Action); }
 	void post(int _CustomEventCode, uintptr_t _Context) override { return Window->post(_CustomEventCode, _Context); }
 	void dispatch(const oTASK& _Task) override { return Window->dispatch(_Task); }
 	oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const override { return Window->snapshot(_Frame, _IncludeBorder); }
@@ -140,7 +140,7 @@ public:
 	void flush_messages(bool _WaitForNext = false) override { return Window->flush_messages(_WaitForNext); }
 	void quit() override { Window->quit(); }
 
-	void OnEvent(const oGUI_EVENT_DESC& _Event);
+	void OnEvent(const window::basic_event& _Event);
 private:
 	oRefCount RefCount;
 	std::shared_ptr<window> Window;
@@ -170,8 +170,8 @@ oWebAppWindowImpl::oWebAppWindowImpl( const char* _pTitle, unsigned short _Serve
 
 	window::init init;
 	init.title = _pTitle;
-	init.event_hook = std::bind(&oWebAppWindowImpl::OnEvent, this, oBIND1);
-	init.action_hook = nullptr;
+	init.on_event = std::bind(&oWebAppWindowImpl::OnEvent, this, oBIND1);
+	init.on_action = nullptr;
 	init.shape.style = ouro::window_style::fixed;
 	init.shape.client_size = int2(250,90);
 
@@ -201,14 +201,14 @@ void oWebAppWindowImpl::SetCurrentJobCount(uint _JobCount)
 	});
 };
 
-void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
+void oWebAppWindowImpl::OnEvent(const window::basic_event& _Event)
 {
-	switch (_Event.Type)
+	switch (_Event.type)
 	{
 		case ouro::gui_event::creating:
 		{
 			oGUI_CONTROL_DESC ControlDesc;
-			ControlDesc.hParent = (ouro::window_handle)_Event.hWindow;
+			ControlDesc.hParent = (ouro::window_handle)_Event.window;
 
 			// Make the link
 			{
@@ -249,7 +249,7 @@ void oWebAppWindowImpl::OnEvent(const oGUI_EVENT_DESC& _Event)
 
 		case ouro::gui_event::timer:
 		{
-			if (_Event.AsTimer().Context == (uintptr_t)&CPUUsageStats)
+			if (_Event.as_timer().context == (uintptr_t)&CPUUsageStats)
 			{
 				double usage = ouro::this_process::cpu_usage(&CPUUsageStats.previousSystemTime, &CPUUsageStats.previousProcessTime);
 				ouro::sstring usageString;

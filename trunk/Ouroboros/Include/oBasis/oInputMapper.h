@@ -46,11 +46,11 @@ interface oInputMapper : oInterface
 {
 	virtual void SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe = 0;
 
-	virtual int HookActions(const oGUI_ACTION_HOOK& _Hook) threadsafe = 0;
+	virtual int HookActions(const ouro::action_hook& _Hook) threadsafe = 0;
 	virtual void UnhookActions(int _HookID) threadsafe = 0;
 
 	// Call this from the key event handler to record the event.
-	virtual void OnAction(const oGUI_ACTION_DESC& _Action) threadsafe = 0;
+	virtual void OnAction(const ouro::action_info& _Action) threadsafe = 0;
 	virtual void OnLostCapture() threadsafe = 0;
 };
 
