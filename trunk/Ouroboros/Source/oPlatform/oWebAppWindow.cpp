@@ -127,11 +127,11 @@ public:
 	bool has_capture() const override { return Window->has_capture(); }
 	void set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) override { Window->set_hotkeys(_pHotKeys, _NumHotKeys); }
 	int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override { return Window->get_hotkeys(_pHotKeys, _MaxNumHotKeys); }
-	int hook_actions(const ouro::action_hook& _Hook) override { return Window->hook_actions(_Hook); }
+	int hook_actions(const ouro::input::action_hook& _Hook) override { return Window->hook_actions(_Hook); }
 	void unhook_actions(int _ActionHookID) override { return Window->unhook_actions(_ActionHookID); }
 	int hook_events(const event_hook& _Hook) override { return Window->hook_events(_Hook); }
 	void unhook_events(int _EventHookID) override { return Window->unhook_events(_EventHookID); }
-	void trigger(const ouro::action_info& _Action) override { return Window->trigger(_Action); }
+	void trigger(const ouro::input::action& _Action) override { return Window->trigger(_Action); }
 	void post(int _CustomEventCode, uintptr_t _Context) override { return Window->post(_CustomEventCode, _Context); }
 	void dispatch(const oTASK& _Task) override { return Window->dispatch(_Task); }
 	oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const override { return Window->snapshot(_Frame, _IncludeBorder); }
@@ -205,7 +205,7 @@ void oWebAppWindowImpl::OnEvent(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::gui_event::creating:
+		case ouro::event_type::creating:
 		{
 			oGUI_CONTROL_DESC ControlDesc;
 			ControlDesc.hParent = (ouro::window_handle)_Event.window;
@@ -247,7 +247,7 @@ void oWebAppWindowImpl::OnEvent(const window::basic_event& _Event)
 			break;
 		}
 
-		case ouro::gui_event::timer:
+		case ouro::event_type::timer:
 		{
 			if (_Event.as_timer().context == (uintptr_t)&CPUUsageStats)
 			{
@@ -260,7 +260,7 @@ void oWebAppWindowImpl::OnEvent(const window::basic_event& _Event)
 			break;
 		}
 
-		case ouro::gui_event::closing:
+		case ouro::event_type::closing:
 			Running = false;
 			break;
 	}

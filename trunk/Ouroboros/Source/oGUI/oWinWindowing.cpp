@@ -153,9 +153,9 @@ template<size_t size> char* oWinPnPEnumeratorToSetupClass(char (&_StrDestination
 template<typename charT, size_t capacity> char* oWinPnPEnumeratorToSetupClass(ouro::fixed_string<charT, capacity>& _StrDestination, const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, _StrDestination.capacity(), _PnPEnumerator); }
 #endif
 
-ouro::input_device_type::value oWinGetDeviceTypeFromClass(const char* _Class)
+ouro::input::type oWinGetDeviceTypeFromClass(const char* _Class)
 {
-	static const char* DeviceClass[ouro::input_device_type::count] = 
+	static const char* DeviceClass[ouro::input::type_count] = 
 	{
 		"Unknown",
 		"Keyboard",
@@ -166,11 +166,11 @@ ouro::input_device_type::value oWinGetDeviceTypeFromClass(const char* _Class)
 		"Voice",
 		"Touch", // not sure what this is called generically
 	};
-	static_assert(oCOUNTOF(DeviceClass) == ouro::input_device_type::count, "array mismatch");
+	static_assert(oCOUNTOF(DeviceClass) == ouro::input::type_count, "array mismatch");
 	for (int i = 0; i < oCOUNTOF(DeviceClass); i++)
 		if (!strcmp(DeviceClass[i], _Class))
-			return (ouro::input_device_type::value)i;
-	return ouro::input_device_type::unknown;
+			return (ouro::input::type)i;
+	return ouro::input::unknown;
 }
 
 static bool oWinSetupGetString(ouro::mstring& _StrDestination, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
@@ -238,11 +238,11 @@ static bool oWinSetupGetStringList(ouro::mstring* _StrDestination, size_t& _NumS
 struct oWINDOWS_HID_DESC
 {
 	oWINDOWS_HID_DESC()
-		: Type(ouro::input_device_type::unknown)
+		: Type(ouro::input::unknown)
 		, DevInst(0)
 	{}
 
-	ouro::input_device_type::value Type;
+	ouro::input::type Type;
 	DWORD DevInst;
 	ouro::mstring ParentDeviceInstancePath;
 	ouro::mstring DeviceInstancePath;
@@ -358,7 +358,7 @@ struct oWIN_DEVICE_CHANGE_CONTEXT
 
 	std::vector<RAWINPUTDEVICELIST> RawInputs;
 	std::vector<mstring> RawInputInstanceNames;
-	std::array<unsigned int, ouro::input_device_status::count> LastChangeTimestamp;
+	std::array<unsigned int, ouro::input::status_count> LastChangeTimestamp;
 };
 
 // Register the specified window to receive WM_INPUT_DEVICE_CHANGE events. This
@@ -379,8 +379,8 @@ static bool oWinRegisterDeviceChangeEvents(HWND _hWnd)
 	{
 		switch(_HIDDesc.Type)
 		{
-			case ouro::input_device_type::keyboard: case ouro::input_device_type::mouse: case ouro::input_device_type::unknown: break;
-			default: SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(_HIDDesc.Type, ouro::input_device_status::ready), (LPARAM)_HIDDesc.DeviceInstancePath.c_str());
+			case ouro::input::keyboard: case ouro::input::mouse: case ouro::input::unknown: break;
+			default: SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(_HIDDesc.Type, ouro::input::ready), (LPARAM)_HIDDesc.DeviceInstancePath.c_str());
 		}
 	}));
 
@@ -408,22 +408,22 @@ static void oWinDeviceChangeDestroy(HDEVICECHANGE _hDeviceChance)
 	delete ctx;
 }
 
-static ouro::input_device_type::value oWinGetTypeFromRIM(DWORD _dwRIMType)
+static ouro::input::type oWinGetTypeFromRIM(DWORD _dwRIMType)
 {
 	switch (_dwRIMType)
 	{
-		case RIM_TYPEKEYBOARD: return ouro::input_device_type::keyboard;
-		case RIM_TYPEMOUSE: return ouro::input_device_type::mouse;
+		case RIM_TYPEKEYBOARD: return ouro::input::keyboard;
+		case RIM_TYPEMOUSE: return ouro::input::mouse;
 		default: break;
 	}
-	return ouro::input_device_type::unknown;
+	return ouro::input::unknown;
 }
 
 static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam, HDEVICECHANGE _hDeviceChance)
 {
 	oWIN_DEVICE_CHANGE_CONTEXT* ctx = (oWIN_DEVICE_CHANGE_CONTEXT*)_hDeviceChance;
-	ouro::input_device_type::value Type = ouro::input_device_type::unknown;
-	ouro::input_device_status::value Status = _wParam == GIDC_ARRIVAL ? ouro::input_device_status::ready : ouro::input_device_status::not_ready;
+	ouro::input::type Type = ouro::input::unknown;
+	ouro::input::status Status = _wParam == GIDC_ARRIVAL ? ouro::input::ready : ouro::input::not_ready;
 	mstring InstanceName;
 
 	switch (_wParam)
@@ -1655,7 +1655,7 @@ bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
 		}
 
 		// This will send a temp WM_SIZE event. Another will be sent below, so 
-		// squelch this one from making it all the way through to an ouro::gui_event::value.
+		// squelch this one from making it all the way through to an ouro::event_type::value.
 		// However, during a style change to a maximized window, that affects the 
 		// menu other calls won't be made, so let this be the authority in that case.
 		oWinSetTempChange(_hWnd, !(Old.state == ouro::window_state::maximized && New.state == ouro::window_state::maximized));
@@ -2608,11 +2608,11 @@ ouro::control_type::value oWinControlGetType(HWND _hControl)
 		LONG dwStyle = 0xff & GetWindowLong(_hControl, GWL_STYLE);
 		switch (dwStyle)
 		{
-			case BS_GROUPBOX: return ouro::control_type::groupbox;
+			case BS_GROUPBOX: return ouro::control_type::group;
 			case BS_PUSHBUTTON: 
 			case BS_DEFPUSHBUTTON: return ouro::control_type::button;
 			case BS_AUTOCHECKBOX: return ouro::control_type::checkbox;
-			case BS_AUTORADIOBUTTON: return ouro::control_type::radiobutton;
+			case BS_AUTORADIOBUTTON: return ouro::control_type::radio;
 			default: return ouro::control_type::unknown;
 		}
 	}
@@ -2900,7 +2900,7 @@ bool oWinControlIsChecked(HWND _hControl)
 	switch (type)
 	{
 		case ouro::control_type::checkbox:
-		case ouro::control_type::radiobutton:
+		case ouro::control_type::radio:
 	{
 			oErrorSetLast(0);
 			LRESULT State = Button_GetState(_hControl);
@@ -2918,7 +2918,7 @@ bool oWinControlSetChecked(HWND _hControl, bool _Checked)
 	switch (type)
 	{
 		case ouro::control_type::checkbox:
-		case ouro::control_type::radiobutton:
+		case ouro::control_type::radio:
 			Button_SetCheck(_hControl, _Checked ? BST_CHECKED : BST_UNCHECKED);
 	return true;
 		default:

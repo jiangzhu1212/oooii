@@ -57,6 +57,6 @@ static const int oGDI_AIR_KEY_DRAW_KEY = 2;
 static const int oGDI_AIR_KEY_DRAW_MIN = 4;
 static const int oGDI_AIR_KEY_DRAW_MAX = 8;
 
-void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::gui_action::value _LastAction, const ouro::tracking_skeleton& _Skeleton);
+void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::input::action_type _LastAction, const ouro::input::tracking_skeleton& _Skeleton);
 
 #endif

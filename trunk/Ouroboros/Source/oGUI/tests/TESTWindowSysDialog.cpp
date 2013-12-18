@@ -26,6 +26,7 @@
 #include <oGUI/window.h>
 #include <oGUI/Windows/oWinControlSet.h>
 #include <oGUI/Windows/oGDI.h>
+#include <oCore/filesystem.h>
 #include <oCore/system.h>
 #include <oStd/for.h>
 
@@ -155,7 +156,7 @@ private:
 	}
 
 	void EventHook(const window::basic_event& _Event);
-	void ActionHook(const ouro::action_info& _Action);
+	void ActionHook(const ouro::input::action& _Action);
 };
 
 } // namespace tests
@@ -282,7 +283,7 @@ oSystemProperties::oSystemProperties()
 	{
 		oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] = 
 		{
-			{ ouro::input_key::f3, ID_RELOAD_UI, false, false, false },
+			{ ouro::input::f3, ID_RELOAD_UI, false, false, false },
 		};
 
 		Window->set_hotkeys(HotKeys);
@@ -294,8 +295,10 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 	std::shared_ptr<ouro::xml> XML;
 
 	#if 0
+		ouro::path p = ouro::filesystem::dev_path() / "Ouroboros/Source/oGUI/tests/SystemProperties.xml";
 		// Load from files for fast iteration, then compile the xml using oFile2cpp
-		XML = oXMLLoad("../../SDK/oPlatform/Tests/SystemProperties.xml");
+		std::shared_ptr<char> buffer = ouro::filesystem::load(p, ouro::filesystem::load_option::text_read);
+		XML = std::make_shared<ouro::xml>(p, buffer.get(), nullptr);
 	#else
 		void GetDescSystemProperties_xml(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
 		const char* pBufferName = nullptr;
@@ -337,7 +340,7 @@ void oSystemProperties::EventHook(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::gui_event::creating:
+		case ouro::event_type::creating:
 		{
 			oCHECK0(Reload((HWND)_Event.window, _Event.as_create().shape.client_size));
 			break;
@@ -345,11 +348,11 @@ void oSystemProperties::EventHook(const window::basic_event& _Event)
 	}
 }
 
-void oSystemProperties::ActionHook(const ouro::action_info& _Action)
+void oSystemProperties::ActionHook(const ouro::input::action& _Action)
 {
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case ouro::gui_action::control_activated:
+		case ouro::input::control_activated:
 		{
 			switch (_Action.device_id)
 			{
@@ -364,21 +367,21 @@ void oSystemProperties::ActionHook(const ouro::action_info& _Action)
 			break;
 		}
 
-		case ouro::gui_action::control_selection_changing:
+		case ouro::input::control_selection_changing:
 		{
 			int index = oWinControlGetSelectedSubItem((HWND)_Action.window);
 			Show(index, false);
 			break;
 		}
 
-		case ouro::gui_action::control_selection_changed:
+		case ouro::input::control_selection_changed:
 		{
 			int index = oWinControlGetSelectedSubItem((HWND)_Action.window);
 			Show(index, true);
 			break;
 		}
 
-		case ouro::gui_action::hotkey:
+		case ouro::input::hotkey:
 		{
 			if (_Action.device_id == ID_RELOAD_UI)
 				oCHECK0(Reload((HWND)Window->native_handle(), Window->client_size()));

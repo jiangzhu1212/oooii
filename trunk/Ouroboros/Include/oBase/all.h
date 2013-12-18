@@ -50,6 +50,7 @@
 #include <oBase/index_allocator.h>
 #include <oBase/index_allocator_base.h>
 #include <oBase/ini.h>
+#include <oBase/input.h>
 #include <oBase/intrusive_ptr.h>
 #include <oBase/leak_tracker.h>
 #include <oBase/linear_allocator.h>

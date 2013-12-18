@@ -196,14 +196,14 @@ private:
 
 	bool Ready;
 
-	void UpdateStatusBar(window* _pWindow, const ouro::tracking_skeleton& _Skeleton, const char* _GestureName);
+	void UpdateStatusBar(window* _pWindow, const input::tracking_skeleton& _Skeleton, const char* _GestureName);
 	void UpdateStatusBar(window* _pWindow, const char* _GestureName);
 
 	void MainEventHook(const window::basic_event& _Event, int _Index);
-	void MainActionHook(const ouro::action_info& _Action, int _Index);
+	void MainActionHook(const input::action& _Action, int _Index);
 
 	// @tony: Maybe each window should get its own air keyboard / input?
-	void BroadcastActions(const ouro::action_info& _Action)
+	void BroadcastActions(const input::action& _Action)
 	{
 		// pass through to oWindows.
 		oFOR(auto& w, KinectWindows)
@@ -231,10 +231,10 @@ oKinectTestApp::oKinectTestApp()
 		window::init winit;
 
 		// hide while everything is initialized
-		winit.icon = (ouro::icon_handle)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
+		winit.icon = (icon_handle)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_APPICON), IMAGE_ICON, 0, 0, 0);
 		winit.client_drag_to_move = true;
-		winit.shape.state = ouro::window_state::hidden;
-		winit.shape.style = ouro::window_style::sizable_with_statusbar;
+		winit.shape.state = window_state::hidden;
+		winit.shape.style = window_style::sizable_with_statusbar;
 		winit.shape.client_size = int2(640, 480);
 
 		KinectWindows.resize(nKinects);
@@ -251,7 +251,7 @@ oKinectTestApp::oKinectTestApp()
 			int SectionWidths[4] = { kCoordSpace, kCoordSpace, kCoordSpace, oInvalid };
 			w.Window->set_num_status_sections(SectionWidths);
 
-			ouro::tracking_skeleton s;
+			input::tracking_skeleton s;
 			UpdateStatusBar(w.Window.get(), s, "<Gesture>");
 		}
 
@@ -294,15 +294,15 @@ oKinectTestApp::oKinectTestApp()
 	}
 	
 	else if (nKinects == 0)
-		ouro::msgbox(ouro::msg_type::info, nullptr, "oKinect Test App", "No Kinects attached.");
+		msgbox(msg_type::info, nullptr, "oKinect Test App", "No Kinects attached.");
 
 	else if (nKinects == oInvalid)
-		ouro::msgbox(ouro::msg_type::error, nullptr, "oKinect Test App"
+		msgbox(msg_type::error, nullptr, "oKinect Test App"
 			, "This application was not built with Kinect support. It will need to be recompiled against the Kinect SDK to support Kinect features.");
 
 	// Register input handlers
 
-	uri_string dev_uri(ouro::filesystem::dev_path());
+	uri_string dev_uri(filesystem::dev_path());
 	
 	{
 		oVERIFY(oAirKeyboardCreate(&AirKeyboard));
@@ -336,13 +336,13 @@ oKinectTestApp::oKinectTestApp()
 	Ready = true;
 }
 
-void oKinectTestApp::UpdateStatusBar(window* _pWindow, const ouro::tracking_skeleton& _Skeleton, const char* _GestureName)
+void oKinectTestApp::UpdateStatusBar(window* _pWindow, const input::tracking_skeleton& _Skeleton, const char* _GestureName)
 {
 	// this doesn't differentiate between multiple skeletons yet...
 	#define kCoordFormat "%c: %.02f %.02f %.02f"
-	const float4& H = _Skeleton.positions[ouro::skeleton_bone::head];
-	const float4& L = _Skeleton.positions[ouro::skeleton_bone::hand_left];
-	const float4& R = _Skeleton.positions[ouro::skeleton_bone::hand_right];
+	const float4& H = _Skeleton.positions[input::head];
+	const float4& L = _Skeleton.positions[input::hand_left];
+	const float4& R = _Skeleton.positions[input::hand_right];
 	_pWindow->set_status_text(0, kCoordFormat, 'H', H.x, H.y, H.z);
 	_pWindow->set_status_text(1, kCoordFormat, 'L', L.x, L.y, L.z);
 	_pWindow->set_status_text(2, kCoordFormat, 'R', R.x, R.y, R.z);
@@ -373,7 +373,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 		oGUI_FONT_DESC fd;
 		oGDIGetFontDesc(_hFont, &fd);
 
-		ouro::tracking_skeleton Skeleton;
+		input::tracking_skeleton Skeleton;
 		int SkelIndex = 0;
 		float VerticalOffset = 0.0f;
 		while (_pKinect->GetSkeletonByIndex(SkelIndex, &Skeleton))
@@ -384,8 +384,8 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 			td.Position = float2(0.0f, VerticalOffset);
 			td.Size = _ClientSize;
 			td.Shadow = Black;
-			const float4& h = Skeleton.positions[ouro::skeleton_bone::hip_center];
-			const float4& hr = Skeleton.positions[ouro::skeleton_bone::ankle_right];
+			const float4& h = Skeleton.positions[input::hip_center];
+			const float4& hr = Skeleton.positions[input::ankle_right];
 			mstring text;
 			snprintf(text, "HIP: %.02f %.02f %.02f\nRANKLE: %.02f %.02f %.02f", h.x, h.y, h.z, hr.x, hr.y, hr.z);
 			oGDIDrawText(hDC, td, text);
@@ -394,7 +394,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 			VerticalOffset += oWinRectH(rText);
 
 			if (!_HeadMessages[SkelIndex].empty())
-				oGDIDrawBoneText(hDC, rTarget, Skeleton.positions[ouro::skeleton_bone::head], ouro::alignment::bottom_center, int2(0, -75), ouro::alignment::bottom_center, _HeadMessages[SkelIndex]);
+				oGDIDrawBoneText(hDC, rTarget, Skeleton.positions[input::head], alignment::bottom_center, int2(0, -75), alignment::bottom_center, _HeadMessages[SkelIndex]);
 
 			SkelIndex++;
 		}
@@ -412,7 +412,7 @@ void oKinectTestApp::MainEventHook(const window::basic_event& _Event, int _Index
 
 	switch (_Event.type)
 	{
-		case ouro::gui_event::sized:
+		case event_type::sized:
 		{
 			display::info di = display::get_info(kw.Window->display_id());
 			float2 Ratio = float2(_Event.as_shape().shape.client_size) / float2(int2(di.mode.width, di.mode.height));
@@ -423,19 +423,19 @@ void oKinectTestApp::MainEventHook(const window::basic_event& _Event, int _Index
 			break;
 		}
 
-		case ouro::gui_event::input_device_changed:
+		case event_type::input_device_changed:
 		{
-			oTRACE("%s %s status change, now: %s", ouro::as_string(_Event.type), _Event.as_input_device().instance_name, ouro::as_string(_Event.as_input_device().status));
+			oTRACE("%s %s status change, now: %s", as_string(_Event.type), _Event.as_input_device().instance_name, as_string(_Event.as_input_device().status));
 			break;
 		}
 
-		case ouro::gui_event::timer:
+		case event_type::timer:
 		{
 			kw.ComboMessage[_Event.as_timer().context].clear();
 			break;
 		}
 
-		case ouro::gui_event::closing:
+		case event_type::closing:
 			kw.Running = false;
 			break;
 
@@ -444,7 +444,7 @@ void oKinectTestApp::MainEventHook(const window::basic_event& _Event, int _Index
 	}
 }
 
-void oKinectTestApp::MainActionHook(const ouro::action_info& _Action, int _Index)
+void oKinectTestApp::MainActionHook(const input::action& _Action, int _Index)
 {
 	if (!Ready)
 		return;
@@ -453,9 +453,9 @@ void oKinectTestApp::MainActionHook(const ouro::action_info& _Action, int _Index
 	if (!kw.Window)
 		return;
 
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case ouro::gui_action::skeleton_acquired:
+		case input::skeleton_acquired:
 		{
 			sstring text;
 			snprintf(text, "Skeleton[%d] activated", _Action.device_id);
@@ -464,7 +464,7 @@ void oKinectTestApp::MainActionHook(const ouro::action_info& _Action, int _Index
 			break;
 		}
 
-		case ouro::gui_action::skeleton_lost:
+		case input::skeleton_lost:
 		{
 			sstring text;
 			snprintf(text, "Skeleton[%d] deactivated", _Action.device_id);
@@ -473,7 +473,7 @@ void oKinectTestApp::MainActionHook(const ouro::action_info& _Action, int _Index
 			break;
 		}
 
-		case ouro::gui_action::control_activated:
+		case input::control_activated:
 		{
 			#ifdef oUSE_MEDIA_INPUT
 				switch (_Action.action_code)
@@ -510,22 +510,22 @@ void oKinectTestApp::MainActionHook(const ouro::action_info& _Action, int _Index
 			break;
 		}
 
-		case ouro::gui_action::key_down:
-		case ouro::gui_action::key_up:
+		case input::key_down:
+		case input::key_up:
 		{
  			kw.InputMapper->OnAction(_Action);
-			oTRACE("%s: %s", ouro::as_string(_Action.action), ouro::as_string(_Action.key));
+			oTRACE("%s: %s", as_string(_Action.action_type), as_string(_Action.key));
 			break;
 		}
 
-		case ouro::gui_action::skeleton:
+		case input::skeleton:
 		{
-			ouro::windows::skeleton::bone_info Skeleton;
-			ouro::windows::skeleton::get_info((ouro::windows::skeleton::handle)_Action.skeleton, &Skeleton);
+			windows::skeleton::bone_info Skeleton;
+			windows::skeleton::get_info((windows::skeleton::handle)_Action.skeleton, &Skeleton);
 			
-			ouro::tracking_skeleton skel;
+			input::tracking_skeleton skel;
 			skel.source_id = Skeleton.source_id;
-			skel.clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
+			skel.clipping = *(input::tracking_clipping*)&Skeleton.clipping;
 			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.positions.size(), skel.positions.begin());
 			
 			AirKeyboard->Update(skel, _Action.timestamp_ms);
@@ -565,12 +565,12 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 				}
 
 				else
-					ouro::msgbox(ouro::msg_type::error, nullptr, "oKinect Test App", "Failed to parse input set list file %s.\n%s", _ChangedURI.c_str(), oErrorGetLastString());
+					msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to parse input set list file %s.\n%s", _ChangedURI.c_str(), oErrorGetLastString());
 			}
 
 			catch (std::exception& e)
 			{
-				ouro::msgbox(ouro::msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
+				msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
 			}
 		}
 
@@ -598,7 +598,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 			}
 			catch (std::exception& e)
 			{
-				ouro::msgbox(ouro::msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
+				msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
 			}
 		}
 	}

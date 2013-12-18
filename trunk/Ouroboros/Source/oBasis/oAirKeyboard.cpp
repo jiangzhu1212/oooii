@@ -37,9 +37,9 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oAIR_KEY)
 	oRTTI_COMPOUND_VERSION(oAIR_KEY, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oAIR_KEY)
 	oRTTI_COMPOUND_ATTR(oAIR_KEY, Bounds, oRTTI_OF(oAABoxf), "Bounds", oRTTI_COMPOUND_ATTR_REGULAR)
-	oRTTI_COMPOUND_ATTR(oAIR_KEY, Origin, oRTTI_OF(ouro_skeleton_bone_value), "Origin", oRTTI_COMPOUND_ATTR_REGULAR)
-	oRTTI_COMPOUND_ATTR(oAIR_KEY, Trigger, oRTTI_OF(ouro_skeleton_bone_value), "Trigger", oRTTI_COMPOUND_ATTR_REGULAR)
-	oRTTI_COMPOUND_ATTR(oAIR_KEY, Key, oRTTI_OF(ouro_input_key_value), "Key", oRTTI_COMPOUND_ATTR_REGULAR)
+	oRTTI_COMPOUND_ATTR(oAIR_KEY, Origin, oRTTI_OF(ouro_input_skeleton_bone), "Origin", oRTTI_COMPOUND_ATTR_REGULAR)
+	oRTTI_COMPOUND_ATTR(oAIR_KEY, Trigger, oRTTI_OF(ouro_input_skeleton_bone), "Trigger", oRTTI_COMPOUND_ATTR_REGULAR)
+	oRTTI_COMPOUND_ATTR(oAIR_KEY, Key, oRTTI_OF(ouro_input_key), "Key", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oAIR_KEY)
 oRTTI_COMPOUND_END_DESCRIPTION(oAIR_KEY)
 
@@ -129,26 +129,26 @@ struct oAirKeyboardImpl : oAirKeyboard
 	void VisitKeys(const oAIR_KEY_VISITOR& _Visitor) threadsafe override;
 	bool AddSkeleton(int _ID) threadsafe override;
 	void RemoveSkeleton(int _ID) threadsafe override;
-	int HookActions(const action_hook& _Hook) threadsafe override;
+	int HookActions(const ouro::input::action_hook& _Hook) threadsafe override;
 	void UnhookActions(int _HookID) threadsafe override;
-	void Update(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe override;
-	void Trigger(const ouro::action_info& _Action) threadsafe override;
+	void Update(const ouro::input::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe override;
+	void Trigger(const ouro::input::action& _Action) threadsafe override;
 
 private:
 	oConcurrency::shared_mutex KeySetMutex;
 	intrusive_ptr<threadsafe oAirKeySet> KeySet;
-	std::vector<ouro::gui_action::value> KeyAction;
+	std::vector<ouro::input::action_type> KeyAction;
 
 	oConcurrency::shared_mutex SkeletonsMutex;
-	std::map<int, ouro::tracking_skeleton> Skeletons;
+	std::map<int, ouro::input::tracking_skeleton> Skeletons;
 
 	oConcurrency::shared_mutex HooksMutex;
-	std::vector<action_hook> Hooks;
+	std::vector<ouro::input::action_hook> Hooks;
 
 	oRefCount RefCount;
 
-	void UpdateInternal(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS);
-	void TriggerInternal(const ouro::action_info& _Action);
+	void UpdateInternal(const ouro::input::tracking_skeleton& _Skeleton, unsigned int _TimestampMS);
+	void TriggerInternal(const ouro::input::action& _Action);
 };
 
 oAirKeyboardImpl::oAirKeyboardImpl(bool* _pSuccess)
@@ -173,7 +173,7 @@ void oAirKeyboardImpl::SetKeySet(threadsafe oAirKeySet* _pKeySet) threadsafe
 		const auto& Keys = thread_cast<oAirKeySetImpl*>(static_cast<threadsafe oAirKeySetImpl*>(KeySet.c_ptr()))->Keys;
 		auto& Actions = oThreadsafe(this)->KeyAction;
 		Actions.resize(Keys.size());
-		fill(Actions, ouro::gui_action::key_up);
+		fill(Actions, ouro::input::key_up);
 	}
 }
 
@@ -192,7 +192,7 @@ void oAirKeyboardImpl::VisitKeys(const oAIR_KEY_VISITOR& _Visitor) threadsafe
 bool oAirKeyboardImpl::AddSkeleton(int _ID) threadsafe
 {
 	lock_guard<shared_mutex> lock(SkeletonsMutex);
-	return unique_set(oThreadsafe(Skeletons), _ID, ouro::tracking_skeleton());
+	return unique_set(oThreadsafe(Skeletons), _ID, ouro::input::tracking_skeleton());
 }
 
 void oAirKeyboardImpl::RemoveSkeleton(int _ID) threadsafe
@@ -201,7 +201,7 @@ void oAirKeyboardImpl::RemoveSkeleton(int _ID) threadsafe
 	find_and_erase(oThreadsafe(Skeletons), _ID);
 }
 
-int oAirKeyboardImpl::HookActions(const action_hook& _Hook) threadsafe
+int oAirKeyboardImpl::HookActions(const ouro::input::action_hook& _Hook) threadsafe
 {
 	lock_guard<shared_mutex> lockB(HooksMutex);
 	return oInt(sparse_set(oThreadsafe(Hooks), _Hook));
@@ -213,14 +213,14 @@ void oAirKeyboardImpl::UnhookActions(int _HookID) threadsafe
 	ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 }
 
-void oAirKeyboardImpl::Update(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe
+void oAirKeyboardImpl::Update(const ouro::input::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe
 {
 	lock_guard<shared_mutex> lockB(KeySetMutex);
 	lock_guard<shared_mutex> lockS(SkeletonsMutex);
 	oThreadsafe(this)->UpdateInternal(_Skeleton, _TimestampMS);
 }
 
-void oAirKeyboardImpl::UpdateInternal(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS)
+void oAirKeyboardImpl::UpdateInternal(const ouro::input::tracking_skeleton& _Skeleton, unsigned int _TimestampMS)
 {
 	if (!KeySet)
 		return;
@@ -228,10 +228,10 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::tracking_skeleton& _Skeleton, 
 	auto it = Skeletons.find(_Skeleton.source_id);
 	if (it == Skeletons.end())
 		return;
-	ouro::tracking_skeleton& OldSkeleton = it->second;
+	ouro::input::tracking_skeleton& OldSkeleton = it->second;
 
-	ouro::action_info a;
-	a.device_type = ouro::input_device_type::skeleton;
+	ouro::input::action a;
+	a.device_type = ouro::input::skeleton;
 	a.device_id = _Skeleton.source_id;
 	a.timestamp_ms = _TimestampMS;
 	
@@ -241,7 +241,7 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::tracking_skeleton& _Skeleton, 
 		const auto& Key = Keys[k];
 		a.key = Key.Key;
 		oAABoxf NewBounds(Key.Bounds), OldBounds(Key.Bounds);
-		if (Key.Origin != ouro::skeleton_bone::invalid)
+		if (Key.Origin != ouro::input::invalid_bone)
 		{
 			oTranslate(NewBounds, _Skeleton.positions[Key.Origin].xyz());
 			oTranslate(OldBounds, OldSkeleton.positions[Key.Origin].xyz());
@@ -261,9 +261,9 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::tracking_skeleton& _Skeleton, 
 
 					if (NewInside != OldInside)
 					{
-						a.action = KeyAction[k] = NewInside ? ouro::gui_action::key_down : ouro::gui_action::key_up; 
+						a.action_type = KeyAction[k] = NewInside ? ouro::input::key_down : ouro::input::key_up; 
 						a.action_code = i;
-						a.position = New;
+						a.position(New);
 						TriggerInternal(a);
 					}
 				}
@@ -274,13 +274,13 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::tracking_skeleton& _Skeleton, 
 	it->second = _Skeleton;
 }
 
-void oAirKeyboardImpl::TriggerInternal(const ouro::action_info& _Action)
+void oAirKeyboardImpl::TriggerInternal(const ouro::input::action& _Action)
 {
 	oFOR(const auto& Hook, Hooks)
 		Hook(_Action);
 }
 
-void oAirKeyboardImpl::Trigger(const ouro::action_info& _Action) threadsafe
+void oAirKeyboardImpl::Trigger(const ouro::input::action& _Action) threadsafe
 {
 	lock_guard<shared_mutex> lock(HooksMutex);
 	oThreadsafe(this)->TriggerInternal(_Action);

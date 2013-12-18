@@ -33,7 +33,7 @@ struct oCameraControllerModelerImpl : oCameraControllerModeler
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE2(oCameraController, oCameraControllerModeler);
 
-	int OnAction(const ouro::action_info& _Action) override;
+	int OnAction(const ouro::input::action& _Action) override;
 	void Tick() override {}
 	void OnLostCapture() override;
 	void SetView(const float4x4& _View) override { Arcball.view(_View); }
@@ -72,7 +72,7 @@ bool oCameraControllerModelerCreate(const oCAMERA_CONTROLLER_MODELER_DESC& _Desc
 	return success;
 }
 
-int oCameraControllerModelerImpl::OnAction(const ouro::action_info& _Action)
+int oCameraControllerModelerImpl::OnAction(const ouro::input::action& _Action)
 {
 	bool WasTumbling = KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::TUMBLER];
 	bool WasTracking = !WasTumbling && KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::TRACK];
@@ -87,7 +87,7 @@ int oCameraControllerModelerImpl::OnAction(const ouro::action_info& _Action)
 	oGUIRecordInputState(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
 	float2 PointerPositionDelta = PointerPosition.xy() - LastPointerPosition;
 
-	const bool kActive = Desc.Controls[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION] == ouro::input_key::none || KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION];
+	const bool kActive = Desc.Controls[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION] == ouro::input::none || KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION];
 
 	if (kActive && KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::TUMBLER])
 	{

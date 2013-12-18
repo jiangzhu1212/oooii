@@ -39,8 +39,9 @@ public:
 	typedef StorageT storage_type;
 
 	inline resized_type() {}
-	inline resized_type(const T& _X) { operator=(_X); }
+	inline resized_type(const T& _That) { operator=(_That); }
 	inline resized_type(const resized_type& _That) { operator=(_That); }
+	template<typename U> resized_type(const U& _That) { T t = (T)_That; operator=(t); }
 	inline const resized_type& operator=(const resized_type& _That) { X = _That.X; return *this; }
 	inline const resized_type& operator=(const T& _That) { X = static_cast<StorageT>(_That); return *this; }
 	inline operator T() const { return T(X); }

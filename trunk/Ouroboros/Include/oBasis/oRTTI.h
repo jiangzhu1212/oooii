@@ -149,7 +149,7 @@ oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::uri, ouro_uri)
 
 // @tony fixme: find a way to make namespace support more generic or reduce 
 // usage of reflection in these cases.
-oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::input_key::value, ouro_input_key_value)
-oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::skeleton_bone::value, ouro_skeleton_bone_value)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::input::key, ouro_input_key)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::input::skeleton_bone, ouro_input_skeleton_bone)
 
 #endif oRTTI_h

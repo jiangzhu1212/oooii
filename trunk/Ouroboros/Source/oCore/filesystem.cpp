@@ -785,7 +785,7 @@ std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, si
 	{
 		file_handle f = open(_Path, _LoadOption == load_option::text_read ? open_option::text_read : open_option::binary_read);
 		finally CloseFile([&] { close(f); });
-		if (FileSize != read(f, p, AllocSize, FileSize))
+		if (FileSize != read(f, p, AllocSize, FileSize) && _LoadOption == load_option::binary_read)
 			oTHROW(io_error, "read failed: %s", _Path.c_str());
 	}
 

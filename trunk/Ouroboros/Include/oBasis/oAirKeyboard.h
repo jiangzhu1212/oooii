@@ -22,15 +22,14 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This uses ouro::tracking_skeleton input to collide specific bones against 
-// specific skeleton-space (often camera-space) boxes to broadcast 
-// ouro::gui_action::key_down/ouro::gui_action::key_up events for an ouro::input_key::value. The 
-// pathological case would be a full reproduction of a typical keyboard using 
-// space and gesture but more often a very few keys are used similar to the 
-// keyboard mapping for a joystick in modern and classic video games. This way 
-// gesture-based input can be authored in a uniform way that can be confirmed 
-// without custom hardware/playspace requirements - just enter the same keyboard 
-// commands to get the same results.
+// This uses tracking_skeleton input to collide specific bones against specific 
+// skeleton-space (often camera-space) boxes to broadcast input::key_down/
+// input::key_up events for an input::key. The pathological case would be a full 
+// reproduction of a typical keyboard using space and gesture but more often a 
+// very few keys are used similar to the keyboard mapping for a joystick in 
+// modern and classic video games. This way gesture-based input can be authored 
+// in a uniform way that can be confirmed without custom hardware/playspace 
+// requirements - just enter the same keyboard commands to get the same results.
 #pragma once
 #ifndef oAirKeyboard_h
 #define oAirKeyboard_h
@@ -55,19 +54,19 @@ struct oAIR_KEY
 	// from the camera.
 
 	oAIR_KEY()
-		: Origin(ouro::skeleton_bone::invalid)
-		, Trigger(ouro::skeleton_bone::hand_right)
-		, Key(ouro::input_key::none)
+		: Origin(ouro::input::invalid_bone)
+		, Trigger(ouro::input::hand_right)
+		, Key(ouro::input::none)
 	{}
 
 	oAABoxf Bounds;
-	ouro::skeleton_bone::value Origin; // bounds coords are relative to this
-	ouro::skeleton_bone::value Trigger; // only this bone can trigger events for this box
-	ouro::input_key::value Key;
+	ouro::input::skeleton_bone Origin; // bounds coords are relative to this
+	ouro::input::skeleton_bone Trigger; // only this bone can trigger events for this box
+	ouro::input::key Key;
 };
 oRTTI_COMPOUND_DECLARATION(oRTTI_CAPS_ARRAY, oAIR_KEY)
 
-typedef std::function<void(const oAIR_KEY& _Key, ouro::gui_action::value _LastAction)> oAIR_KEY_VISITOR;
+typedef std::function<void(const oAIR_KEY& _Key, ouro::input::action_type _LastAction)> oAIR_KEY_VISITOR;
 
 interface oAirKeySet : oInterface
 {
@@ -109,8 +108,8 @@ interface oAirKeyboard : oInterface
 {
 	// This does the logic that maps a skeleton and a keyset to actions. Create
 	// one of these, set a keyset (only one at a time) and add/remove skeletons
-	// and observers to be used. Call update from an ouro::gui_action::skeleton action 
-	// to analyze updated data as it comes in.
+	// and observers to be used. Call update from an input::skeleton action to 
+	// analyze updated data as it comes in.
 
 public:
 
@@ -123,16 +122,16 @@ public:
 	virtual bool AddSkeleton(int _ID) threadsafe;
 	virtual void RemoveSkeleton(int _ID) threadsafe;
 
-	virtual int HookActions(const ouro::action_hook& _Hook) threadsafe;
+	virtual int HookActions(const ouro::input::action_hook& _Hook) threadsafe;
 	virtual void UnhookActions(int _HookID) threadsafe;
 
 	// Analyze the specified skeleton for interaction with an oAirKeySet and 
-	// trigger oGUI_ACTION_DESCs appropriately. The specified timestamp will be
+	// trigger input::action appropriately. The specified timestamp will be
 	// passed through to any triggered actions.
-	virtual void Update(const ouro::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe;
+	virtual void Update(const ouro::input::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe;
 
 	// Manually trigger an action
-	virtual void Trigger(const ouro::action_info& _Action) threadsafe;
+	virtual void Trigger(const ouro::input::action& _Action) threadsafe;
 };
 
 bool oAirKeyboardCreate(threadsafe oAirKeyboard** _ppAirKeyboard);

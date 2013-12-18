@@ -730,12 +730,12 @@ HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex = oInvalid);
 // false for any other tri-state state or if the specified _hControl is not a 
 // type that can be checked. If legitimately not checked, oErrorGetLast will 
 // return 0.
-// Valid for: CheckBox, RadioButton
+// Valid for: CheckBox, radio
 bool oWinControlIsChecked(HWND _hControl);
 
 // Sets the specified _hControl as checked or not. If not a valid type, this 
 // will return false.
-// Valid for: CheckBox, RadioButton
+// Valid for: CheckBox, radio
 bool oWinControlSetChecked(HWND _hControl, bool _Checked = true);
 
 // Sets the specified _hControl's min and max range. If not a valid type, this 

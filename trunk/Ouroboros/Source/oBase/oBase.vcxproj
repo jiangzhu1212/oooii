@@ -48,6 +48,7 @@
     <ClCompile Include="color.cpp" />
     <ClCompile Include="date.cpp" />
     <ClCompile Include="index_allocator_base.cpp" />
+    <ClCompile Include="input.cpp" />
     <ClCompile Include="leak_tracker.cpp" />
     <ClCompile Include="memory\dtoull.cpp" />
     <ClCompile Include="memory\is_ascii.cpp" />
@@ -146,6 +147,7 @@
     <ClInclude Include="..\..\Include\oBase\index_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\index_allocator_base.h" />
     <ClInclude Include="..\..\Include\oBase\ini.h" />
+    <ClInclude Include="..\..\Include\oBase\input.h" />
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
     <ClInclude Include="..\..\Include\oBase\json.h" />
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h" />

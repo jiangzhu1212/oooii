@@ -129,7 +129,7 @@ public:
 
 	struct basic_event
 	{
-		basic_event(window_handle _hWindow, gui_event::value _Type)
+		basic_event(window_handle _hWindow, event_type::value _Type)
 			: window(_hWindow)
 			, type(_Type)
 		{}
@@ -138,7 +138,7 @@ public:
 		window_handle window;
 
 		// Event type. Use this to choose a downcaster below.
-		gui_event::value type;
+		event_type::value type;
 
 		// union doesn't work because of int2's copy ctor so use downcasting instead
 		inline const create_event& as_create() const;
@@ -156,7 +156,7 @@ public:
 			, menu_handle _hMenu
 			, const window_shape& _Shape
 			, void* _pUser)
-			: basic_event(_hWindow, gui_event::creating)
+			: basic_event(_hWindow, event_type::creating)
 			, statusbar(_hStatusBar)
 			, menu(_hMenu)
 			, shape(_Shape)
@@ -177,7 +177,7 @@ public:
 	struct shape_event : basic_event
 	{
 		shape_event(window_handle _hWindow
-			, gui_event::value _Type
+			, event_type::value _Type
 			, const window_shape& _Shape)
 			: basic_event(_hWindow, _Type)
 			, shape(_Shape)
@@ -189,7 +189,7 @@ public:
 	struct timer_event : basic_event
 	{
 		timer_event(window_handle _hWindow, uintptr_t _Context)
-			: basic_event(_hWindow, gui_event::timer)
+			: basic_event(_hWindow, event_type::timer)
 			, context(_Context)
 		{}
 
@@ -204,7 +204,7 @@ public:
 			, const path_string* _pPaths
 			, int _NumPaths
 			, const int2& _ClientDropPosition)
-			: basic_event(_hWindow, gui_event::drop_files)
+			: basic_event(_hWindow, event_type::drop_files)
 			, paths(_pPaths)
 			, num_paths(_NumPaths)
 			, client_drop_position(_ClientDropPosition)
@@ -217,24 +217,24 @@ public:
 	struct input_device_event : basic_event
 	{
 		input_device_event(window_handle _hWindow
-			, input_device_type::value _Type
-			, input_device_status::value _Status
+			, input::type _Type
+			, input::status _Status
 			, const char* _InstanceName)
-			: basic_event(_hWindow, gui_event::input_device_changed)
+			: basic_event(_hWindow, event_type::input_device_changed)
 			, type(_Type)
 			, status(_Status)
 			, instance_name(_InstanceName)
 		{}
 
-		input_device_type::value type;
-		input_device_status::value status;
+		input::type type;
+		input::status status;
 		const char* instance_name;
 	};
 
 	struct custom_event : basic_event
 	{
 		custom_event(window_handle _hWindow, int _EventCode, uintptr_t _Context)
-			: basic_event(_hWindow, gui_event::custom_event)
+			: basic_event(_hWindow, event_type::custom_event)
 			, code(_EventCode)
 			, context(_Context)
 		{}
@@ -273,11 +273,11 @@ public:
 		bool client_drag_to_move;
 		bool alt_f4_closes;
 
-		// NOTE: The gui_event::creating event gets fired during construction, so if that 
+		// NOTE: The event_type::creating event gets fired during construction, so if that 
 		// event is to be hooked it needs to be passed and hooked up during 
 		// construction.
 		event_hook on_event;
-		action_hook on_action;
+		input::action_hook on_action;
 		window_shape shape;
 	};
 
@@ -337,7 +337,7 @@ public:
 	virtual void client_drag_to_move(bool _DragMoves) = 0;
 	virtual bool client_drag_to_move() const = 0;
 
-	// If set to true, Alt-F4 will trigger an gui_event::closing event. This is true by 
+	// If set to true, Alt-F4 will trigger an event_type::closing event. This is true by 
 	// default.
 	virtual void alt_f4_closes(bool _AltF4Closes) = 0;
 	virtual bool alt_f4_closes() const = 0;
@@ -359,7 +359,7 @@ public:
 
 	// observer API
 
-	virtual int hook_actions(const action_hook& _Hook) = 0;
+	virtual int hook_actions(const input::action_hook& _Hook) = 0;
 	virtual void unhook_actions(int _ActionHookID) = 0;
 
 	virtual int hook_events(const event_hook& _Hook) = 0;
@@ -369,7 +369,7 @@ public:
 	// execution API
 
 	// Appends a broadcast of an action as if it came from user input.
-	virtual void trigger(const ouro::action_info& _Action) = 0;
+	virtual void trigger(const ouro::input::action& _Action) = 0;
 
 	// Post an event that is specified by the user here.
 	virtual void post(int _CustomEventCode, uintptr_t _Context) = 0;
@@ -385,19 +385,19 @@ public:
 	// this may involve bringing the specified window to focus.
 	virtual oStd::future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = -1, bool _IncludeBorder = false) const = 0;
 
-	// Causes an gui_event::timer event to occur with the specified context after the 
+	// Causes an event_type::timer event to occur with the specified context after the 
 	// specified time. This will be called every specified milliseconds until 
 	// stop_timer is called with the same context.
 	virtual void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) = 0;
 	virtual void stop_timer(uintptr_t _Context) = 0;
 };
 
-const window::create_event& window::basic_event::as_create() const { oASSERT(type == gui_event::creating, "wrong type"); return *static_cast<const create_event*>(this); }
+const window::create_event& window::basic_event::as_create() const { oASSERT(type == event_type::creating, "wrong type"); return *static_cast<const create_event*>(this); }
 const window::shape_event& window::basic_event::as_shape() const { oASSERT(is_shape_event(type), "wrong type"); return *static_cast<const shape_event*>(this); }
-const window::timer_event& window::basic_event::as_timer() const { oASSERT(type == gui_event::timer, "wrong type"); return *static_cast<const timer_event*>(this); }
-const window::drop_event& window::basic_event::as_drop() const { oASSERT(type == gui_event::drop_files, "wrong type"); return *static_cast<const drop_event*>(this); }
-const window::input_device_event& window::basic_event::as_input_device() const { oASSERT(type == gui_event::input_device_changed, "wrong type"); return *static_cast<const input_device_event*>(this); }
-const window::custom_event& window::basic_event::as_custom() const { oASSERT(type == gui_event::custom_event, "wrong type"); return *static_cast<const custom_event*>(this); }
+const window::timer_event& window::basic_event::as_timer() const { oASSERT(type == event_type::timer, "wrong type"); return *static_cast<const timer_event*>(this); }
+const window::drop_event& window::basic_event::as_drop() const { oASSERT(type == event_type::drop_files, "wrong type"); return *static_cast<const drop_event*>(this); }
+const window::input_device_event& window::basic_event::as_input_device() const { oASSERT(type == event_type::input_device_changed, "wrong type"); return *static_cast<const input_device_event*>(this); }
+const window::custom_event& window::basic_event::as_custom() const { oASSERT(type == event_type::custom_event, "wrong type"); return *static_cast<const custom_event*>(this); }
 
 } // namespace ouro
 

@@ -46,14 +46,14 @@ struct oKinectImpl : oKinect
 
 	void GetDesc(oKINECT_DESC* _pDesc) const threadsafe override;
 	int2 GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe override;
-	ouro::input_device_status::value GetStatus() const threadsafe override;
+	ouro::input::status GetStatus() const threadsafe override;
 	void SetPitch(int _Degrees) threadsafe override;
 
 	bool MapRead(oKINECT_FRAME_TYPE _Type, ouro::surface::info* _pInfo, ouro::surface::const_mapped_subresource* _pDestination) const threadsafe override;
 	void UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe override;
 
-	bool GetSkeletonByIndex(int _PlayerIndex, ouro::tracking_skeleton* _pSkeleton) const threadsafe override;
-	bool GetSkeletonByID(unsigned int _ID, ouro::tracking_skeleton* _pSkeleton) const threadsafe override;
+	bool GetSkeletonByIndex(int _PlayerIndex, ouro::input::tracking_skeleton* _pSkeleton) const threadsafe override;
+	bool GetSkeletonByID(unsigned int _ID, ouro::input::tracking_skeleton* _pSkeleton) const threadsafe override;
 
 	// @tony: These should become threadsafe...
 

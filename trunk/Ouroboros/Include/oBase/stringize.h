@@ -68,7 +68,7 @@ namespace detail {
 		*_pValue = _InvalidValue;
 		for (int i = 0; i < NumTs; i++)
 		{
-			if (!strcmp(_StrSource, as_string(T(i))))
+			if (!_stricmp(_StrSource, as_string(T(i))))
 			{
 				*_pValue = T(i);
 				return true;

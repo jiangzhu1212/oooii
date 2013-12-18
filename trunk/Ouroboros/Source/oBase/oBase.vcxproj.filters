@@ -211,6 +211,9 @@
     <ClCompile Include="opttok.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
+    <ClCompile Include="input.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -407,6 +410,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\opttok.h">
       <Filter>oBase\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\input.h">
+      <Filter>oBase</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

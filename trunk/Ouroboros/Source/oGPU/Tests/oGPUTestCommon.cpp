@@ -72,7 +72,7 @@ void oGPUTestApp::OnEvent(const ouro::window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::gui_event::closing:
+		case ouro::event_type::closing:
 			Running = false;
 			break;
 		default:

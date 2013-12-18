@@ -113,7 +113,7 @@ public:
 	{
 		switch (_Event.type)
 		{
-			case ouro::gui_event::creating:
+			case ouro::event_type::creating:
 			{
 				oGUI_CONTROL_DESC ButtonDesc;
 				ButtonDesc.hParent = _Event.window;
@@ -127,11 +127,11 @@ public:
 				break;
 			}
 
-			case ouro::gui_event::closing:
+			case ouro::event_type::closing:
 				Running = false;
 				break;
 
-			case ouro::gui_event::sized:
+			case ouro::event_type::sized:
 			{
 				if (GPUWindow)
 					GPUWindow->client_size(_Event.as_shape().shape.client_size - int2(40,65));

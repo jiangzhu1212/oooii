@@ -109,17 +109,17 @@ private:
 	ouro::border_style::value BorderStyle;
 
 	void EventHook(const window::basic_event& _Event);
-	void ActionHook(const ouro::action_info& _Action);
+	void ActionHook(const ouro::input::action& _Action);
 };
 
 void oWindowUITest::EventHook(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::gui_event::sized:
+		case ouro::event_type::sized:
 			oTRACE("NewClientSize = %dx%d%s", _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y, _Event.as_shape().shape.state == ouro::window_state::minimized ? " (minimized)" : "");
 			break;
-		case ouro::gui_event::creating:
+		case ouro::event_type::creating:
 		{
 			OnCreate((HWND)_Event.as_create().window, _Event.as_create().menu);
 			break;
@@ -130,27 +130,27 @@ void oWindowUITest::EventHook(const window::basic_event& _Event)
 	}
 }
 
-void oWindowUITest::ActionHook(const ouro::action_info& _Action)
+void oWindowUITest::ActionHook(const ouro::input::action& _Action)
 {
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case ouro::gui_action::menu:
-		case ouro::gui_action::hotkey:
+		case ouro::input::menu:
+		case ouro::input::hotkey:
 			OnMenuCommand((HWND)_Action.window, _Action.device_id);
 			// pass through
-		case ouro::gui_action::control_activated:
+		case ouro::input::control_activated:
 		{
 			ouro::lstring text;
 			oWinControlGetText(text, (HWND)_Action.window);
 			oTRACE("Action %s \"%s\" code=%d", ouro::as_string(oWinControlGetType((HWND)_Action.window)), text.c_str(), _Action.action_code);
 			break;
 		}
-		case ouro::gui_action::key_down:
-		case ouro::gui_action::key_up:
+		case ouro::input::key_down:
+		case ouro::input::key_up:
 			break;
-		case ouro::gui_action::pointer_move:
+		case ouro::input::pointer_move:
 			if (kInteractiveMode)
-				Window->set_status_text(0, "Cursor: %dx%d", (int)_Action.position.x, (int)_Action.position.y);
+				Window->set_status_text(0, "Cursor: %dx%d", (int)_Action.position().x, (int)_Action.position().y);
 			break;
 		default:
 			break;
@@ -271,8 +271,8 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 
 	oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] = 
 	{
-		{ ouro::input_key::w, MENU_VIEW_WIREFRAME, false, true, false },
-		{ ouro::input_key::s, MENU_VIEW_SOLID, false, true, false },
+		{ ouro::input::w, MENU_VIEW_WIREFRAME, false, true, false },
+		{ ouro::input::s, MENU_VIEW_SOLID, false, true, false },
 	};
 
 	Window->set_hotkeys(HotKeys);

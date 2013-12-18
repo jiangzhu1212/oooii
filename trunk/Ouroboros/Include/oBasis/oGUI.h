@@ -32,181 +32,13 @@
 #include <oBase/assert.h>
 #include <oBase/color.h>
 #include <oBase/fixed_string.h>
+#include <oBase/input.h>
 #include <oBase/macros.h>
 #include <oCompute/oAABox.h>
 #include <array>
 #include <functional>
 
 namespace ouro {
-
-namespace input_device_type
-{	enum value {
-
-	unknown,
-	keyboard,
-	mouse,
-	joystick,
-	control, // i.e. a button or scrollbar
-	skeleton,
-	voice,
-	touch,
-
-	count,
-
-};}
-
-namespace input_device_status
-{	enum value {
-
-	ready,
-	initializing,
-	not_connected,
-	is_clone,
-	not_supported,
-	insufficient_bandwidth,
-	low_power,
-	not_powered,
-	not_ready,
-
-	count,
-
-};}
-
-namespace input_key
-{	enum value {
-
-	none,
-
-	// Mouse keys
-	mouse_left,
-	mouse_first = mouse_left,
-
-	standard_first = mouse_first, 
-	mouse_right,
-	mouse_middle,
-	mouse_side1,
-	mouse_side2,
-	// Double-click seems to be ubiquitous. In X11 and thus RFB it's its own
-	// button and in Windows the button events get eaten and transformed into 
-	// different events for double-click. So here favor the X11 model.
-	mouse_left_double,
-	mouse_right_double,
-	mouse_middle_double,
-	mouse_side1_double,
-	mouse_side2_double,
-	mouse_last = mouse_side2_double,
-
-	// Joystick keys
-	joy_lleft,
-	joystick_first = joy_lleft, joy_lup, joy_lright, joy_ldown,
-	joy_rleft, joy_rup, joy_rright, joy_rdown,
-	joy_lshoulder1, joy_lshoulder2, joy_rshoulder1, joy_rshoulder2,
-	joy_lthumb, joy_rthumb, joy_system, joy_start, joy_select,
-	joystick_last = joy_select,
-
-	// Control keys
-	lctrl,
-	keyboard_first = lctrl, rctrl,
-	lalt, ralt,
-	lshift, rshift,
-	lwin, rwin,
-	app_cycle, app_context,
-
-	// Toggle keys
-	capslock,
-	scrolllock,
-	numlock,
-
-	// Typing keys
-	space, backtick, dash, equal_, lbracket, rbracket, backslash, semicolon, apostrophe, comma, period, slash,
-	_0, _1, _2, _3, _4, _5, _6, _7, _8, _9,
-	a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z,
-
-	// Numpad keys
-	num0, num1, num2, num3, num4, num5, num6, num7, num8, num9, 
-	nummul, numadd, numsub, numdecimal, numdiv, 
-
-	// Typing control keys
-	esc,
-	backspace,
-	tab,
-	enter,
-	ins, del,
-	home, end,
-	pgup, pgdn,
-
-	// System control keys
-	f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15, f16, f17, f18, f19, f20, f21, f22, f23, f24,
-	pause,
-	sleep,
-	printscreen,
-
-	// Directional keys
-	left, up, right, down,
-
-	standard_last = down,
-
-	// Browser keys
-	mail, 
-	back, 
-	forward, 
-	refresh, 
-	stop, 
-	search, 
-	favs,
-
-	// Media keys
-	media,
-	mute,
-	volup,
-	voldn,
-	prev_track,
-	next_track,
-	stop_track,
-	play_pause_track,
-
-	// Misc keys
-	app1, app2,
-
-	keyboard_last = app2,
-
-	// Touch
-	touch1,
-	touch_first = touch1, touch2, touch3, touch4, touch5, touch6, touch7, touch8, touch9, touch10,
-	touch_last = touch10,
-
-	count,
-
-};}
-
-namespace skeleton_bone
-{	enum value {
-	
-	hip_center,
-	spine,
-	shoulder_center,
-	head,
-	shoulder_left,
-	elbow_left,
-	wrist_left,
-	hand_left,
-	shoulder_right,
-	elbow_right,
-	wrist_right,
-	hand_right,
-	hip_left,
-	knee_left,
-	ankle_left,
-	foot_left,
-	hip_right,
-	knee_right,
-	ankle_right,
-	foot_right,
-	
-	count,
-	invalid = count,
-
-};}
 
 namespace alignment
 { enum value {
@@ -387,10 +219,10 @@ namespace control_type
 {	enum value {
 
 	unknown,
-	groupbox,
+	group,
 	button,
 	checkbox,
-	radiobutton,
+	radio,
 	label,
 	label_centered,
 	hyperlabel, // supports multiple markups of <a href="<somelink>">MyLink</a> or <a id="someID">MyID</a>. There can be multiple in one string.
@@ -424,7 +256,7 @@ namespace border_style
 
 };}
 
-namespace gui_event
+namespace event_type
 {	enum value {
 
 	// An event is something that the window issues to client code. Events can be
@@ -458,9 +290,9 @@ namespace gui_event
 	sized, // called just after a window's client area changes size
 	
 	// called before the window is closed. Really this is where client code should 
-	// decide whether or not to exit the window's message loop. ouro::gui_event::closed is 
+	// decide whether or not to exit the window's message loop. ouro::event_type::closed is 
 	// too late. All control of the message loop is in client code, so if there
-	// is nothing done in ouro::gui_event::closing, then the default behavior is to leave the 
+	// is nothing done in ouro::event_type::closing, then the default behavior is to leave the 
 	// window as-is, no closing is actually done.
 	closing, 
 	
@@ -493,69 +325,14 @@ namespace gui_event
 
 };}
 
-namespace gui_action
-{	enum value {
-
-	// Actions are similar to events, except client code or the user can trigger 
-	// them explicitly and not as the artifact of some other system activity.
-
-	unknown,
-	menu,
-	control_activated,
-	control_deactivated,
-	control_selection_changing,
-	control_selection_changed,
-	hotkey,
-	key_down,
-	key_up,
-	pointer_move,
-	skeleton,
-	skeleton_acquired,
-	skeleton_lost,
-
-	count,
-
-};}
-
 oDECLARE_HANDLE(draw_context_handle);
 oDECLARE_HANDLE(window_handle);
-oDECLARE_HANDLE(skeleton_handle);
 oDECLARE_HANDLE(menu_handle);
 oDECLARE_DERIVED_HANDLE(window_handle, statusbar_handle);
 oDECLARE_DERIVED_HANDLE(window_handle, control_handle);
 oDECLARE_HANDLE(font_handle);
 oDECLARE_HANDLE(icon_handle);
 oDECLARE_HANDLE(cursor_handle);
-
-struct tracking_clipping
-{
-	tracking_clipping()
-		: left(false)
-		, right(false)
-		, top(false)
-		, bottom(false)
-		, front(false)
-		, back(false)
-	{}
-
-	bool left : 1;
-	bool right : 1;
-	bool top : 1;
-	bool bottom : 1;
-	bool front : 1;
-	bool back : 1;
-};
-
-struct tracking_skeleton
-{
-	tracking_skeleton(unsigned int _SourceID = 0)
-		: source_id(_SourceID)
-	{ positions.fill(float4(0.0f, 0.0f, 0.0f, -1.0f)); }
-
-	unsigned int source_id;
-	tracking_clipping clipping;
-	std::array<float4, skeleton_bone::count> positions;
-};
 
 struct window_shape
 {
@@ -605,99 +382,6 @@ struct window_cursor_shape
 	bool has_capture;
 };
 
-struct action_info
-{
-	// All actions use this desc. This can be filled out manually and submitted
-	// to an action handler to spoof hardware events, for example from a network
-	// stream thus enabling remote access.
-
-	action_info()
-		: window(nullptr)
-		, action(gui_action::unknown)
-		, device_type(input_device_type::unknown)
-		, device_id(-1)
-		, position(0.0f)
-		//, Key(NONE)
-		//, ActionCode(0)
-	{ skeleton = nullptr; }
-
-	action_info(
-		window_handle _hWindow
-		, unsigned int _TimestampMS
-		, gui_action::value _Action
-		, input_device_type::value _DeviceType
-		, int _DeviceID)
-			: window(_hWindow)
-			, timestamp_ms(_TimestampMS)
-			, action(_Action)
-			, device_type(_DeviceType)
-			, device_id(_DeviceID)
-			, position(0.0f)
-			//, Key(NONE)
-			//, ActionCode(0)
-	{ skeleton = nullptr; }
-
-	// Control devices have their own handle and sometimes their own sub-action.
-	window_handle window;
-
-	// Time at which the message was sent in milliseconds.
-	unsigned int timestamp_ms;
-
-	gui_action::value action;
-	input_device_type::value device_type;
-
-	// When there are multiple devices of the same type, this differentiates. For
-	// example if this is a gesture, then this would be the tracking/skeleton ID.
-	// A mouse or keyboard usually only have one associated, so this is typically
-	// not used there. Joysticks would be the ID of each individual one, and for 
-	// controls it is the ID associated with the control.
-	int device_id;
-
-	// For touch and mouse XY are typical coords and Z is the mouse wheel.
-	// For gesture it is the 3D position whose W can typically be ignored, but 
-	// might be indicative of validity.
-	// For joysticks xy is the left-most axis and zw is the right-most axis.
-	float4 position;
-	
-	union
-	{
-		struct 
-		{
-			// Any binary key is described by this, from a keyboard key to a touch event 
-			// to a mouse button to a gesture volume activation (air-key).
-			input_key::value key;
-
-			// For some specific types of controls, this is an additional action 
-			// value.
-			int action_code;
-		};
-
-		// if Action is an gui_action::skeleton, the hSkeleton is  a handle fit for 
-		// use with a platform-specific accessor to the actual skeleton data.
-		skeleton_handle skeleton;
-	};
-};
-
-typedef std::function<void(const action_info& _Action)> action_hook;
-
-
-inline input_device_type::value get_type(const input_key::value& _Key)
-{
-	#define IF_IS(_DeviceType) do { if (_Key >= input_key::_DeviceType##_first && _Key <= input_key::_DeviceType##_last) return input_device_type::_DeviceType; } while(false)
-	IF_IS(keyboard); IF_IS(mouse); IF_IS(joystick); IF_IS(touch);
-	return input_device_type::unknown;
-	#undef IF_IS
-}
-
-// A standard key issues both an keydown and keyup without special handling.
-// Non-standard keys can behave poorly. For example on Windows they are hooked
-// by the OS/driver to do something OS-specific and thus do not come through
-// as key events, but rather as an app event that is singular, not a down/up.
-inline bool is_standard_key(const input_key::value& _Key)
-{
-	return _Key >= input_key::standard_first && _Key <= input_key::standard_last;
-}
-
 // Invalid, hidden and minimized windows are not visible
 inline bool is_visible(const window_state::value& _State) { return _State >= window_state::restored; }
 
@@ -727,12 +411,12 @@ inline bool has_menu(const window_style::value& _Style)
 	return false;
 }
 
-inline bool is_shape_event(const gui_event::value& _Event)
+inline bool is_shape_event(const event_type::value& _Event)
 {
 	switch (_Event)
 	{
-		case gui_event::creating: case gui_event::timer: case gui_event::drop_files: 
-		case gui_event::input_device_changed: case gui_event::custom_event: return false;
+		case event_type::creating: case event_type::timer: case event_type::drop_files: 
+		case event_type::input_device_changed: case event_type::custom_event: return false;
 		default: break;
 	}
 	return true;
@@ -761,7 +445,7 @@ struct oGUI_MENU_ITEM_DESC : oGUI_MENU_ITEM_DESC_NO_CTOR
 // initialized" warning
 struct oGUI_HOTKEY_DESC_NO_CTOR
 {
-	ouro::input_key::value HotKey;
+	ouro::input::key HotKey;
 	unsigned short ID;
 	bool AltDown;
 	bool CtrlDown;
@@ -772,7 +456,7 @@ struct oGUI_HOTKEY_DESC : oGUI_HOTKEY_DESC_NO_CTOR
 {
 	oGUI_HOTKEY_DESC()
 	{
-		HotKey = ouro::input_key::none;
+		HotKey = ouro::input::none;
 		ID = 0;
 		AltDown = false;
 		CtrlDown = false;
@@ -882,8 +566,8 @@ struct oGUI_TEXT_DESC
 // with an array of [A,D,left,right] and the Keystates will be written correctly
 // for LEFT and RIGHT. If the action is a pointer move, then the position is 
 // recorded to _pPointerPosition.
-void oGUIRecordInputState(const ouro::action_info& _Action, const ouro::input_key::value* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition);
-template<size_t NumKeys, size_t NumKeyStates> void oGUIRecordInputState(const ouro::action_info& _Action, const ouro::input_key::value (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { oGUIRecordInputState(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
+void oGUIRecordInputState(const ouro::input::action& _Action, const ouro::input::key* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition);
+template<size_t NumKeys, size_t NumKeyStates> void oGUIRecordInputState(const ouro::input::action& _Action, const ouro::input::key (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { oGUIRecordInputState(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
 
 // _____________________________________________________________________________
 // Rectangle utils

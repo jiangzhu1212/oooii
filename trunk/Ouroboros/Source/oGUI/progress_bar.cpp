@@ -98,7 +98,7 @@ private:
 
 private:
 	void on_event(const window::basic_event& _Event);
-	void on_action(const ouro::action_info& _Action);
+	void on_action(const ouro::input::action& _Action);
 	void make_controls(const window::create_event& _CreateEvent);
 	HWND get(PB_CONTROL _Control) const { return (HWND)oThreadsafe(this)->Controls[_Control]; }
 	void set_percentage_internal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage);
@@ -193,7 +193,7 @@ void progress_bar_impl::on_event(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case gui_event::creating:
+		case event_type::creating:
 		{
 			make_controls(_Event.as_create());
 			break;
@@ -204,9 +204,9 @@ void progress_bar_impl::on_event(const window::basic_event& _Event)
 	}
 }
 
-void progress_bar_impl::on_action(const ouro::action_info& _Action)
+void progress_bar_impl::on_action(const ouro::input::action& _Action)
 {
-	if (_Action.action == gui_action::control_activated && _Action.device_id == PB_BUTTON && OnStop)
+	if (_Action.action_type == input::control_activated && _Action.device_id == PB_BUTTON && OnStop)
 	{
 		stopped(true);
 		OnStop();

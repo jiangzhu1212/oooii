@@ -151,7 +151,7 @@ interface oGestureManager : oInterface
 	// written on top of an air keyboard. So a keyset for the air keyboard must
 	// first be specified along with the combo set as currently described by the 
 	// RTTI of the combo enum that will be listened for in an application's 
-	// action handler as the ActionCode and an ouro::gui_action::control_activated 
+	// action handler as the ActionCode and an ouro::input::control_activated 
 	// action. More will come on what a "dynamic enum" means, but for now this API
 	// specifies a gesture set.
 	virtual bool SetCurrentGestureSet(const char* _KeySetName, const oRTTI* _pInputDynEnumType) = 0;

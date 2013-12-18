@@ -39,7 +39,7 @@ public:
 		Hooks.reserve(8);
 	}
 
-	inline int Hook(const action_hook& _Hook) threadsafe
+	inline int Hook(const input::action_hook& _Hook) threadsafe
 	{
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> lockB(Mutex);
 		return oInt(sparse_set(oThreadsafe(Hooks), _Hook));
@@ -51,7 +51,7 @@ public:
 		ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 	}
 
-	void Call(const ouro::action_info& _Action) threadsafe
+	void Call(const ouro::input::action& _Action) threadsafe
 	{
 		oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
 		oFOR(const auto& h, oThreadsafe(Hooks))
@@ -60,7 +60,7 @@ public:
 
 private:
 	oConcurrency::shared_mutex Mutex;
-	std::vector<action_hook> Hooks;
+	std::vector<ouro::input::action_hook> Hooks;
 };
 
 class oInput
@@ -76,18 +76,18 @@ public:
 	{
 		StateValidMask = State = 0;
 		oFOR(auto& k, Keys)
-			k.fill(ouro::input_key::none);
+			k.fill(ouro::input::none);
 	}
 
 	// Returns true if InputIsDown should be respected. Several keys can make up
 	// an input result, so it could take several key events to get the state of 
 	// the input. It can either be down or up based on the value of InputIsDown.
-	bool OnKey(ouro::input_key::value _Key, bool _IsDown, bool* _pInputIsDown);
+	bool OnKey(ouro::input::key _Key, bool _IsDown, bool* _pInputIsDown);
 
 private:
 	// Up to 4 keys can be pressed at the same time to trigger a Input.
 	// Up to 7 different combinations can trigger a Input.
-	std::array<std::array<ouro::input_key::value, 4>, 4> Keys;
+	std::array<std::array<ouro::input::key, 4>, 4> Keys;
 	short StateValidMask;
 	short State;
 
@@ -124,9 +124,9 @@ void oInput::Parse(const char* _InputMapping)
 				if (KeyIndex >= oInt(Keys[KeySetIndex].size()))
 					oTHROW(no_buffer_space, "Only up to %u simultaneous keys supported", Keys[KeySetIndex].size());
 
-				ouro::input_key::value Key = ouro::input_key::none;
-				if (!oRTTI_OF(ouro_input_key_value).FromString(tok, &Key, sizeof(Key)))
-					oTHROW(protocol_error, "unrecognized ouro::input_key::value \"%s\"", tok);
+				ouro::input::key Key = ouro::input::none;
+				if (!oRTTI_OF(ouro_input_key).FromString(tok, &Key, sizeof(Key)))
+					oTHROW(protocol_error, "unrecognized ouro::input::key \"%s\"", tok);
 
 				Keys[KeySetIndex][KeyIndex] = Key;
 
@@ -141,7 +141,7 @@ void oInput::Parse(const char* _InputMapping)
 	}
 }
 
-bool oInput::OnKey(ouro::input_key::value _Key, bool _IsDown, bool* _pInputIsDown)
+bool oInput::OnKey(ouro::input::key _Key, bool _IsDown, bool* _pInputIsDown)
 {
 	const bool WasDown = IsDown();
 	int StateMask = 1;
@@ -149,7 +149,7 @@ bool oInput::OnKey(ouro::input_key::value _Key, bool _IsDown, bool* _pInputIsDow
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			if (K[i] != ouro::input_key::none && K[i] == _Key)
+			if (K[i] != ouro::input::none && K[i] == _Key)
 			{
 				if (_IsDown)
 					State |= StateMask;
@@ -449,11 +449,11 @@ struct oInputMapperImpl : oInputMapper
 
 	void SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe override;
 
-	int HookActions(const ouro::action_hook& _Hook) threadsafe override { return Hooks.Hook(_Hook); }
+	int HookActions(const ouro::input::action_hook& _Hook) threadsafe override { return Hooks.Hook(_Hook); }
 	void UnhookActions(int _HookID) threadsafe override { Hooks.Unhook(_HookID); }
 
 	// Call this from the key event handler to record the event.
-	void OnAction(const ouro::action_info& _Action) threadsafe override;
+	void OnAction(const ouro::input::action& _Action) threadsafe override;
 	void OnLostCapture() threadsafe override;
 
 	intrusive_ptr<threadsafe oInputSet> InputSet;
@@ -482,12 +482,12 @@ void oInputMapperImpl::SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe
 	InputSet = _pInputSet;
 };
 
-void oInputMapperImpl::OnAction(const ouro::action_info& _Action) threadsafe
+void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
 {
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case ouro::gui_action::key_down:
-		case ouro::gui_action::key_up:
+		case ouro::input::key_down:
+		case ouro::input::key_up:
 		{
 			shared_lock<shared_mutex> lock(Mutex);
 			if (InputSet)
@@ -496,7 +496,7 @@ void oInputMapperImpl::OnAction(const ouro::action_info& _Action) threadsafe
 				for (int i = 0; i < oInt(pInputSet->Inputs.size()); i++)
 				{
 					bool InputDown = false;
-					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action == ouro::gui_action::key_down, &InputDown))
+					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action_type == ouro::input::key_down, &InputDown))
 					{
 						// this is not really safe. It is only safe if OnAction is only ever 
 						// called from one thread for one instance, which tends to be the
@@ -506,8 +506,8 @@ void oInputMapperImpl::OnAction(const ouro::action_info& _Action) threadsafe
 						// another.
 						thread_cast<oInputHistory&>(InputHistory).Add(_Action.timestamp_ms, i, InputDown);
 
-						ouro::action_info a(_Action);
-						a.action = ouro::gui_action::control_activated;
+						ouro::input::action a(_Action);
+						a.action_type = ouro::input::control_activated;
 						a.action_code = i; // at least trigger this input
 						
 						// Check to see if it gets overridden by a sequence
@@ -520,7 +520,7 @@ void oInputMapperImpl::OnAction(const ouro::action_info& _Action) threadsafe
 							}
 						}
 
-						oTRACE("Input %d %s", a.action_code, (_Action.action == ouro::gui_action::key_down) ? "down" : "up");
+						oTRACE("Input %d %s", a.action_code, (_Action.action_type == ouro::input::key_down) ? "down" : "up");
 						Hooks.Call(a);
 					}
 				}

@@ -89,8 +89,8 @@ enum oWHK // hotkeys
 oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] =
 {
 	// reset style
-	{ ouro::input_key::f3, oWHK_DEFAULT_STYLE, false, false, false },
-	{ ouro::input_key::f11, oWHK_TOGGLE_FULLSCREEN, false, false, false },
+	{ ouro::input::f3, oWHK_DEFAULT_STYLE, false, false, false },
+	{ ouro::input::f11, oWHK_TOGGLE_FULLSCREEN, false, false, false },
 };
 
 struct oWindowTestAppPulseContext
@@ -126,7 +126,7 @@ private:
 	std::shared_ptr<filesystem::monitor> DirWatcher;
 
 private:
-	void ActionHook(const ouro::action_info& _Action);
+	void ActionHook(const ouro::input::action& _Action);
 	void EventHook(const window::basic_event& _Event);
 	bool CreateMenu(const window::create_event& _CreateEvent);
 	bool CreateControls(const window::create_event& _CreateEvent);
@@ -262,48 +262,48 @@ void oWindowTestApp::EventHook(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::gui_event::timer:
+		case ouro::event_type::timer:
 			if (_Event.as_timer().context == (uintptr_t)&PulseContext)
 			{
 				PulseContext.Count++;
 				Window->set_status_text(0, "Timer: %d", PulseContext.Count);
 			}
 			else
-				oTRACE("ouro::gui_event::timer");
+				oTRACE("ouro::event_type::timer");
 			break;
-		case ouro::gui_event::activated:
-			oTRACE("ouro::gui_event::activated");
+		case ouro::event_type::activated:
+			oTRACE("ouro::event_type::activated");
 			break;
-		case ouro::gui_event::deactivated:
-			oTRACE("ouro::gui_event::deactivated");
+		case ouro::event_type::deactivated:
+			oTRACE("ouro::event_type::deactivated");
 			break;
-		case ouro::gui_event::creating:
+		case ouro::event_type::creating:
 		{
-			oTRACE("ouro::gui_event::creating");
+			oTRACE("ouro::event_type::creating");
 			if (!CreateMenu(_Event.as_create()))
 				oThrowLastError();
 			if (!CreateControls(_Event.as_create()))
 				oThrowLastError();
 			break;
 		}
-		case ouro::gui_event::paint:
-			//oTRACE("ouro::gui_event::paint");
+		case ouro::event_type::paint:
+			//oTRACE("ouro::event_type::paint");
 			break;
-		case ouro::gui_event::display_changed:
-			oTRACE("ouro::gui_event::display_changed");
+		case ouro::event_type::display_changed:
+			oTRACE("ouro::event_type::display_changed");
 			break;
-		case ouro::gui_event::moving:
-			oTRACE("ouro::gui_event::moving");
+		case ouro::event_type::moving:
+			oTRACE("ouro::event_type::moving");
 			break;
-		case ouro::gui_event::moved:
-			oTRACE("ouro::gui_event::moved %dx%d", _Event.as_shape().shape.client_position.x, _Event.as_shape().shape.client_position.y);
+		case ouro::event_type::moved:
+			oTRACE("ouro::event_type::moved %dx%d", _Event.as_shape().shape.client_position.x, _Event.as_shape().shape.client_position.y);
 			break;
-		case ouro::gui_event::sizing:
-			oTRACE("ouro::gui_event::sizing %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
+		case ouro::event_type::sizing:
+			oTRACE("ouro::event_type::sizing %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
 			break;
-		case ouro::gui_event::sized:
+		case ouro::event_type::sized:
 		{
-			oTRACE("ouro::gui_event::sized %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
+			oTRACE("ouro::event_type::sized %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
 			CheckState(_Event.as_shape().shape.state);
 			CheckStyle(_Event.as_shape().shape.style);
 
@@ -317,40 +317,40 @@ void oWindowTestApp::EventHook(const window::basic_event& _Event)
 			}
 			break;
 		}
-		case ouro::gui_event::closing:
-			oTRACE("ouro::gui_event::closing");
+		case ouro::event_type::closing:
+			oTRACE("ouro::event_type::closing");
 			Window->quit();
 			break;
-		case ouro::gui_event::closed:
-			oTRACE("ouro::gui_event::closed");
+		case ouro::event_type::closed:
+			oTRACE("ouro::event_type::closed");
 			break;
-		case ouro::gui_event::to_fullscreen:
-			oTRACE("ouro::gui_event::to_fullscreen");
+		case ouro::event_type::to_fullscreen:
+			oTRACE("ouro::event_type::to_fullscreen");
 			break;
-		case ouro::gui_event::from_fullscreen:
-			oTRACE("ouro::gui_event::from_fullscreen");
+		case ouro::event_type::from_fullscreen:
+			oTRACE("ouro::event_type::from_fullscreen");
 			break;
-		case ouro::gui_event::lost_capture:
-			oTRACE("ouro::gui_event::lost_capture");
+		case ouro::event_type::lost_capture:
+			oTRACE("ouro::event_type::lost_capture");
 			break;
-		case ouro::gui_event::drop_files:
-			oTRACE("ouro::gui_event::drop_files (at %d,%d starting with %s)", _Event.as_drop().client_drop_position.x, _Event.as_drop().client_drop_position.y, _Event.as_drop().paths[0]);
+		case ouro::event_type::drop_files:
+			oTRACE("ouro::event_type::drop_files (at %d,%d starting with %s)", _Event.as_drop().client_drop_position.x, _Event.as_drop().client_drop_position.y, _Event.as_drop().paths[0]);
 			break;
-		case ouro::gui_event::input_device_changed:
-			oTRACE("ouro::gui_event::input_device_changed %s %s %s", as_string(_Event.as_input_device().type), as_string(_Event.as_input_device().status), _Event.as_input_device().instance_name);
+		case ouro::event_type::input_device_changed:
+			oTRACE("ouro::event_type::input_device_changed %s %s %s", as_string(_Event.as_input_device().type), as_string(_Event.as_input_device().status), _Event.as_input_device().instance_name);
 			break;
 		oNODEFAULT;
 	}
 }
 
-void oWindowTestApp::ActionHook(const ouro::action_info& _Action)
+void oWindowTestApp::ActionHook(const ouro::input::action& _Action)
 {
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case ouro::gui_action::unknown:
-			oTRACE("ouro::gui_action::unknown");
+		case ouro::input::unknown:
+			oTRACE("ouro::input::unknown");
 			break;
-		case ouro::gui_action::menu:
+		case ouro::input::menu:
 			switch (_Action.device_id)
 			{
 				case oWMI_FILE_EXIT:
@@ -373,7 +373,7 @@ void oWindowTestApp::ActionHook(const ouro::action_info& _Action)
 			}
 			break;
 
-		case ouro::gui_action::control_activated:
+		case ouro::input::control_activated:
 			switch (_Action.device_id)
 			{
 				case oWCTL_EASY_BUTTON:
@@ -387,20 +387,20 @@ void oWindowTestApp::ActionHook(const ouro::action_info& _Action)
 					break;
 				}
 				default:
-					oTRACE("ouro::gui_action::control_activated");
+					oTRACE("ouro::input::control_activated");
 					break;
 			}
 			break;
-		case ouro::gui_action::control_deactivated:
-			oTRACE("ouro::gui_action::control_deactivated");
+		case ouro::input::control_deactivated:
+			oTRACE("ouro::input::control_deactivated");
 			break;
-		case ouro::gui_action::control_selection_changing:
-			oTRACE("ouro::gui_action::control_selection_changing");
+		case ouro::input::control_selection_changing:
+			oTRACE("ouro::input::control_selection_changing");
 			break;
-		case ouro::gui_action::control_selection_changed:
-			oTRACE("ouro::gui_action::control_selection_changed");
+		case ouro::input::control_selection_changed:
+			oTRACE("ouro::input::control_selection_changed");
 			break;
-		case ouro::gui_action::hotkey:
+		case ouro::input::hotkey:
 			switch (_Action.device_id)
 			{
 				case oWHK_DEFAULT_STYLE:
@@ -422,28 +422,28 @@ void oWindowTestApp::ActionHook(const ouro::action_info& _Action)
 					}
 					break;
 				default:
-					oTRACE("ouro::gui_action::hotkey");
+					oTRACE("ouro::input::hotkey");
 					break;
 			}
 			
 			break;
-		case ouro::gui_action::key_down:
-			oTRACE("ouro::gui_action::key_down %s", as_string(_Action.key));
+		case ouro::input::key_down:
+			oTRACE("ouro::input::key_down %s", as_string(_Action.key));
 			break;
-		case ouro::gui_action::key_up:
-			oTRACE("ouro::gui_action::key_up %s", as_string(_Action.key));
+		case ouro::input::key_up:
+			oTRACE("ouro::input::key_up %s", as_string(_Action.key));
 			break;
-		case ouro::gui_action::pointer_move:
-			//oTRACE("ouro::gui_action::pointer_move");
+		case ouro::input::pointer_move:
+			//oTRACE("ouro::input::pointer_move");
 			break;
-		case ouro::gui_action::skeleton:
-			oTRACE("ouro::gui_action::skeleton");
+		case ouro::input::skeleton_update:
+			oTRACE("ouro::input::skeleton");
 			break;
-		case ouro::gui_action::skeleton_acquired:
-			oTRACE("ouro::gui_action::skeleton_acquired");
+		case ouro::input::skeleton_acquired:
+			oTRACE("ouro::input::skeleton_acquired");
 			break;
-		case ouro::gui_action::skeleton_lost:
-			oTRACE("ouro::gui_action::skeleton_lost");
+		case ouro::input::skeleton_lost:
+			oTRACE("ouro::input::skeleton_lost");
 			break;
 		oNODEFAULT;
 	}

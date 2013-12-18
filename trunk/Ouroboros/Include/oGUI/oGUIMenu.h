@@ -146,13 +146,13 @@ public:
 		Callbacks.push_back(e);
 	}
 
-	inline void OnAction(const ouro::action_info& _Action)
+	inline void OnAction(const ouro::input::action& _Action)
 	{
-		if (_Action.action == ouro::gui_action::menu)
+		if (_Action.action_type == ouro::input::menu)
 		{
 			auto it = std::find_if(Callbacks.begin(), Callbacks.end(), [&](const ENTRY& _Entry)
 			{
-				return _Action.device_id >= _Entry.First && _Action.device_id <= _Entry.Last;
+				return (int)_Action.device_id >= _Entry.First && (int)_Action.device_id <= _Entry.Last;
 			});
 
 			if (it != Callbacks.end())

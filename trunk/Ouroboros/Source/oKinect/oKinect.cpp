@@ -118,8 +118,8 @@ bool oKinectImpl::Reinitialize()
 		Desc.Index = NUISensor->NuiInstanceIndex();
 	}
 
-	ouro::input_device_status::value s = oKinectImpl::GetStatus();
-	if (ouro::input_device_status::ready != s)
+	ouro::input::status s = oKinectImpl::GetStatus();
+	if (ouro::input::ready != s)
 		return oErrorSetLast(oKinectGetErrcFromStatus(s), oKinectGetErrcStringFromStatus(s));
 
 	const DWORD InitFlags = oKinectGetInitFlags(Desc.Features);
@@ -257,33 +257,33 @@ int2 oKinectImpl::GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe
 	return inf.dimensions.xy();
 }
 
-bool oKinectImpl::GetSkeletonByIndex(int _PlayerIndex, ouro::tracking_skeleton* _pSkeleton) const threadsafe
+bool oKinectImpl::GetSkeletonByIndex(int _PlayerIndex, ouro::input::tracking_skeleton* _pSkeleton) const threadsafe
 {
 	windows::skeleton::bone_info Skeleton;
 	if (Skeletons.GetSkeletonByIndex(_PlayerIndex, &Skeleton))
 	{
 		_pSkeleton->source_id = Skeleton.source_id;
-		_pSkeleton->clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
+		_pSkeleton->clipping = *(ouro::input::tracking_clipping*)&Skeleton.clipping;
 		std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->positions.size(), _pSkeleton->positions.begin());
 	}
 
 	return false;
 }
 
-bool oKinectImpl::GetSkeletonByID(unsigned int _ID, ouro::tracking_skeleton* _pSkeleton) const threadsafe
+bool oKinectImpl::GetSkeletonByID(unsigned int _ID, ouro::input::tracking_skeleton* _pSkeleton) const threadsafe
 {
 	windows::skeleton::bone_info Skeleton;
 	if (Skeletons.GetSkeletonByID(_ID, &Skeleton))
 	{
 		_pSkeleton->source_id = Skeleton.source_id;
-		_pSkeleton->clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
+		_pSkeleton->clipping = *(ouro::input::tracking_clipping*)&Skeleton.clipping;
 		std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->positions.size(), _pSkeleton->positions.begin());
 	}
 
 	return false;
 }
 
-ouro::input_device_status::value oKinectImpl::GetStatus() const threadsafe
+ouro::input::status oKinectImpl::GetStatus() const threadsafe
 {
 	return oKinectStatusFromHR(thread_cast<INuiSensor*>(NUISensor.c_ptr())->NuiStatus());
 }

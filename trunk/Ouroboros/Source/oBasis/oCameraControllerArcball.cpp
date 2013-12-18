@@ -33,7 +33,7 @@ struct oCameraControllerArcballImpl : oCameraControllerArcball
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE2(oCameraController, oCameraControllerArcball);
 
-	int OnAction(const ouro::action_info& _Action) override;
+	int OnAction(const ouro::input::action& _Action) override;
 	void Tick() override {} 
 	void OnLostCapture() override;
 	void SetView(const float4x4& _View) override { Arcball.view(_View); }
@@ -73,7 +73,7 @@ bool oCameraControllerArcballCreate(const oCAMERA_CONTROLLER_ARCBALL_DESC& _Desc
 	return success;
 }
 
-int oCameraControllerArcballImpl::OnAction(const ouro::action_info& _Action)
+int oCameraControllerArcballImpl::OnAction(const ouro::input::action& _Action)
 {
 	bool WasOrbiting = KeyStates[oCAMERA_CONTROLLER_ARCBALL_DESC::ORBIT];
 	bool WasPanning = !WasOrbiting && KeyStates[oCAMERA_CONTROLLER_ARCBALL_DESC::PAN];

@@ -24,7 +24,7 @@
  **************************************************************************/
 // A controller intended to be able to control either 3DSMax-style or Maya-style
 // tools. For Maya, use the activation key. For Max, set activation and any 
-// control type not active to ouro::input_key::none. Maya constraints to XY, Max to XZ
+// control type not active to ouro::input::none. Maya constraints to XY, Max to XZ
 #pragma once
 #ifndef oCameraControllerModeler_h
 #define oCameraControllerModeler_h
@@ -53,14 +53,14 @@ struct oCAMERA_CONTROLLER_MODELER_DESC
 		, DollySpeed(0.04f)
 		, Constraint(ouro::arcball::y_up)
 	{
-		// if activation is ouro::input_key::none, then control is always-on.
-		Controls[ACTIVATION] = ouro::input_key::lalt;
-		Controls[TUMBLER] = ouro::input_key::mouse_left;
-		Controls[TRACK] = ouro::input_key::mouse_middle;
-		Controls[DOLLY] = ouro::input_key::mouse_right;
+		// if activation is ouro::input::none, then control is always-on.
+		Controls[ACTIVATION] = ouro::input::lalt;
+		Controls[TUMBLER] = ouro::input::mouse_left;
+		Controls[TRACK] = ouro::input::mouse_middle;
+		Controls[DOLLY] = ouro::input::mouse_right;
 	}
 
-	std::array<ouro::input_key::value, NUM_CONTROLS> Controls;
+	std::array<ouro::input::key, NUM_CONTROLS> Controls;
 	float2 RotationSpeed;
 	float2 PanSpeed;
 	float DollySpeed;

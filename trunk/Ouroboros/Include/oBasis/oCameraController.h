@@ -27,7 +27,6 @@
 #ifndef oCameraController_h
 #define oCameraController_h
 
-#include <oBasis/oGUI.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oBase/types.h>
@@ -69,7 +68,7 @@ interface oCameraController : oInterface
 	// Respond to user input. Attach this to the message pump of an oWindow's
 	// action handler. This returns several of the above bit masks to indicate how 
 	// the controller has responded to the input.
-	virtual int OnAction(const ouro::action_info& _Action) = 0;
+	virtual int OnAction(const ouro::input::action& _Action) = 0;
 
 	// Call this every update
 	virtual void Tick() = 0;

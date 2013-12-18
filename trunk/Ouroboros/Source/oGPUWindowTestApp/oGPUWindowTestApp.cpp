@@ -109,9 +109,9 @@ struct oGPUWindowClearToggle
 oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] =
 {
 	// reset style
-	{ ouro::input_key::f2, oWHK_TOGGLE_UI_MODE, false, false, false },
-	{ ouro::input_key::f3, oWHK_DEFAULT_STYLE, false, false, false },
-	{ ouro::input_key::enter, oWHK_TOGGLE_FULLSCREEN, true, false, false },
+	{ ouro::input::f2, oWHK_TOGGLE_UI_MODE, false, false, false },
+	{ ouro::input::f3, oWHK_DEFAULT_STYLE, false, false, false },
+	{ ouro::input::enter, oWHK_TOGGLE_FULLSCREEN, true, false, false },
 };
 
 class oGPUWindowThread
@@ -125,7 +125,7 @@ public:
 	// owning/parent application windows since it is pretty much as child thread 
 	// and thus is created after the main thread (app window) and must be joined 
 	// before the app/thread exits.
-	window* Start(const std::shared_ptr<window>& _Parent, const action_hook& _OnAction, const oTASK& _OnThreadExit);
+	window* Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const oTASK& _OnThreadExit);
 	void Stop();
 
 	oGPUDevice* GetDevice() { return Device; }
@@ -149,7 +149,7 @@ private:
 	bool Running;
 
 	oTASK OnThreadExit;
-	action_hook OnAction;
+	input::action_hook OnAction;
 };
 
 oGPUWindowThread::oGPUWindowThread()
@@ -179,7 +179,7 @@ oGPUWindowThread::~oGPUWindowThread()
 	Thread.join();
 }
 
-window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const action_hook& _OnAction, const oTASK& _OnThreadExit)
+window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const oTASK& _OnThreadExit)
 {
 	Parent = _Parent;
 	OnAction = _OnAction;
@@ -201,14 +201,14 @@ void oGPUWindowThread::OnEvent(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::gui_event::sized:
+		case ouro::event_type::sized:
 		{
 			if (WindowRenderTarget)
 				WindowRenderTarget->Resize(int3(_Event.as_shape().shape.client_size, 1));
 			break;
 		}
 
-		case ouro::gui_event::closing:
+		case ouro::event_type::closing:
 			Running = false;
 			break;
 
@@ -306,7 +306,7 @@ private:
 	bool UIMode;
 	bool AllowUIModeChange;
 private:
-	void ActionHook(const ouro::action_info& _Action);
+	void ActionHook(const ouro::input::action& _Action);
 	void AppEventHook(const window::basic_event& _Event);
 	bool CreateMenus(const window::create_event& _CreateEvent);
 	void CheckState(ouro::window_state::value _State);
@@ -490,7 +490,7 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::gui_event::timer:
+		case ouro::event_type::timer:
 			if (_Event.as_timer().context == (uintptr_t)&ClearToggle)
 			{
 				oGPURenderTarget* pRT = GPUWindow.GetRenderTarget();
@@ -505,32 +505,32 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 			}
 
 			else
-				oTRACE("ouro::gui_event::timer");
+				oTRACE("ouro::event_type::timer");
 			break;
-		case ouro::gui_event::activated:
-			oTRACE("ouro::gui_event::activated");
+		case ouro::event_type::activated:
+			oTRACE("ouro::event_type::activated");
 			break;
-		case ouro::gui_event::deactivated:
-			oTRACE("ouro::gui_event::deactivated");
+		case ouro::event_type::deactivated:
+			oTRACE("ouro::event_type::deactivated");
 			break;
-		case ouro::gui_event::creating:
+		case ouro::event_type::creating:
 		{
-			oTRACE("ouro::gui_event::creating");
+			oTRACE("ouro::event_type::creating");
 			if (!CreateMenus(_Event.as_create()))
 				oThrowLastError();
 			break;
 		}
 
-		case ouro::gui_event::sized:
+		case ouro::event_type::sized:
 		{
-			oTRACE("ouro::gui_event::sized %s %dx%d", ouro::as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
+			oTRACE("ouro::event_type::sized %s %dx%d", ouro::as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
 			if (pGPUWindow)
 				pGPUWindow->client_size(_Event.as_shape().shape.client_size);
 			CheckState(_Event.as_shape().shape.state);
 			CheckStyle(_Event.as_shape().shape.style);
 			break;
 		}
-		case ouro::gui_event::closing:
+		case ouro::event_type::closing:
 			GPUWindow.Stop();
 			break;
 
@@ -539,11 +539,11 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 	}
 }
 
-void oGPUWindowTestApp::ActionHook(const ouro::action_info& _Action)
+void oGPUWindowTestApp::ActionHook(const ouro::input::action& _Action)
 {
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case ouro::gui_action::menu:
+		case ouro::input::menu:
 		{
 			switch (_Action.device_id)
 			{
@@ -575,7 +575,7 @@ void oGPUWindowTestApp::ActionHook(const ouro::action_info& _Action)
 			break;
 		}
 
-		case ouro::gui_action::hotkey:
+		case ouro::input::hotkey:
 		{
 			switch (_Action.device_id)
 			{
@@ -613,7 +613,7 @@ void oGPUWindowTestApp::ActionHook(const ouro::action_info& _Action)
 					break;
 				}
 				default:
-					oTRACE("ouro::gui_action::hotkey");
+					oTRACE("ouro::input::hotkey");
 					break;
 			}
 			

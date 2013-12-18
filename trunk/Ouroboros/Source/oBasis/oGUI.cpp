@@ -29,264 +29,6 @@
 
 namespace ouro {
 
-const char* as_string(const input_device_type::value& _InputDeviceType)
-{
-	switch (_InputDeviceType)
-	{
-		case input_device_type::unknown: return "unknown";
-		case input_device_type::keyboard: return "keyboard";
-		case input_device_type::mouse: return "mouse";
-		case input_device_type::joystick: return "joystick";
-		case input_device_type::control: return "control";
-		case input_device_type::skeleton: return "skeleton";
-		case input_device_type::voice: return "voice";
-		case input_device_type::touch: return "touch";
-		default: break;
-	}
-	return "?";
-}
-
-oDEFINE_TO_STRING(input_device_type::value);
-oDEFINE_FROM_STRING(input_device_type::value, input_device_type::count);
-
-const char* as_string(const input_device_status::value& _InputDeviceStatus)
-{
-	switch (_InputDeviceStatus)
-	{
-		case input_device_status::ready: return "ready";
-		case input_device_status::initializing: return "initializing";
-		case input_device_status::not_connected: return "not_connected";
-		case input_device_status::is_clone: return "is_clone";
-		case input_device_status::not_supported: return "not_supported";
-		case input_device_status::insufficient_bandwidth: return "insufficient_bandwidth";
-		case input_device_status::low_power: return "low_power";
-		case input_device_status::not_powered: return "not_powered";
-		case input_device_status::not_ready: return "not_ready";
-		default: break;
-	}
-	return "?";
-}
-	
-oDEFINE_TO_STRING(input_device_status::value);
-oDEFINE_FROM_STRING(input_device_status::value, input_device_status::count);
-
-const char* as_string(const input_key::value& _InputKey)
-{
-	switch (_InputKey)
-	{
-		case input_key::none: return "none";
-		case input_key::mouse_left: return "mouse_left";
-		case input_key::mouse_right: return "mouse_right";
-		case input_key::mouse_middle: return "mouse_middle";
-		case input_key::mouse_side1: return "mouse_side1";
-		case input_key::mouse_side2: return "mouse_side2";
-		case input_key::mouse_left_double: return "mouse_left_double";
-		case input_key::mouse_right_double: return "mouse_right_double";
-		case input_key::mouse_middle_double: return "mouse_middle_double";
-		case input_key::mouse_side1_double: return "mouse_side1_double";
-		case input_key::mouse_side2_double: return "mouse_side2_double";
-		case input_key::joy_lleft: return "joy_lleft";
-		case input_key::joy_lup: return "joy_lup";
-		case input_key::joy_lright: return "joy_lright";
-		case input_key::joy_ldown: return "joy_ldown";
-		case input_key::joy_rleft: return "joy_rleft";
-		case input_key::joy_rup: return "joy_rup";
-		case input_key::joy_rright: return "joy_rright";
-		case input_key::joy_rdown: return "joy_rdown";
-		case input_key::joy_lshoulder1: return "joy_lshoulder1";
-		case input_key::joy_lshoulder2: return "joy_lshoulder2";
-		case input_key::joy_rshoulder1: return "joy_rshoulder1";
-		case input_key::joy_rshoulder2: return "joy_rshoulder2";
-		case input_key::joy_lthumb: return "joy_lthumb";
-		case input_key::joy_rthumb: return "joy_rthumb";
-		case input_key::joy_system: return "joy_system";
-		case input_key::joy_start: return "joy_start";
-		case input_key::joy_select: return "joy_select";
-		case input_key::lctrl: return "lctrl";
-		case input_key::rctrl: return "rctrl";
-		case input_key::lalt: return "lalt";
-		case input_key::ralt: return "ralt";
-		case input_key::lshift: return "lshift";
-		case input_key::rshift: return "rshift";
-		case input_key::lwin: return "lwin";
-		case input_key::rwin: return "rwin";
-		case input_key::app_cycle: return "app_cycle";
-		case input_key::app_context: return "app_context";
-		case input_key::capslock: return "capslock";
-		case input_key::scrolllock: return "scrolllock";
-		case input_key::numlock: return "numlock";
-		case input_key::space: return "space";
-		case input_key::backtick: return "backtick";
-		case input_key::dash: return "dash";
-		case input_key::equal_: return "equal";
-		case input_key::lbracket: return "lbracket";
-		case input_key::rbracket: return "rbracket";
-		case input_key::backslash: return "backslash";
-		case input_key::semicolon: return "semicolon";
-		case input_key::apostrophe: return "apostrophe";
-		case input_key::comma: return "comma";
-		case input_key::period: return "period";
-		case input_key::slash: return "slash";
-		case input_key::_0: return "0";
-		case input_key::_1: return "1";
-		case input_key::_2: return "2";
-		case input_key::_3: return "3";
-		case input_key::_4: return "4";
-		case input_key::_5: return "5";
-		case input_key::_6: return "6";
-		case input_key::_7: return "7";
-		case input_key::_8: return "8";
-		case input_key::_9: return "9";
-		case input_key::a: return "a";
-		case input_key::b: return "b";
-		case input_key::c: return "c";
-		case input_key::d: return "d";
-		case input_key::e: return "e";
-		case input_key::f: return "f";
-		case input_key::g: return "g";
-		case input_key::h: return "h";
-		case input_key::i: return "i";
-		case input_key::j: return "j";
-		case input_key::k: return "k";
-		case input_key::l: return "l";
-		case input_key::m: return "m";
-		case input_key::n: return "n";
-		case input_key::o: return "o";
-		case input_key::p: return "p";
-		case input_key::q: return "q";
-		case input_key::r: return "r";
-		case input_key::s: return "s";
-		case input_key::t: return "t";
-		case input_key::u: return "u";
-		case input_key::v: return "v";
-		case input_key::w: return "w";
-		case input_key::x: return "x";
-		case input_key::y: return "y";
-		case input_key::z: return "z";
-		case input_key::num0: return "num0";
-		case input_key::num1: return "num1";
-		case input_key::num2: return "num2";
-		case input_key::num3: return "num3";
-		case input_key::num4: return "num4";
-		case input_key::num5: return "num5";
-		case input_key::num6: return "num6";
-		case input_key::num7: return "num7";
-		case input_key::num8: return "num8";
-		case input_key::num9: return "num9";
-		case input_key::nummul: return "nummul";
-		case input_key::numadd: return "numadd";
-		case input_key::numsub: return "numsub";
-		case input_key::numdecimal: return "numdecimal";
-		case input_key::numdiv: return "numdiv";
-		case input_key::esc: return "esc";
-		case input_key::backspace: return "backspace";
-		case input_key::tab: return "tab";
-		case input_key::enter: return "enter";
-		case input_key::ins: return "ins";
-		case input_key::del: return "del";
-		case input_key::home: return "home";
-		case input_key::end: return "end";
-		case input_key::pgup: return "pgup";
-		case input_key::pgdn: return "pgdn";
-		case input_key::f1: return "f1";
-		case input_key::f2: return "f2";
-		case input_key::f3: return "f3";
-		case input_key::f4: return "f4";
-		case input_key::f5: return "f5";
-		case input_key::f6: return "f6";
-		case input_key::f7: return "f7";
-		case input_key::f8: return "f8";
-		case input_key::f9: return "f9";
-		case input_key::f10: return "f10";
-		case input_key::f11: return "f11";
-		case input_key::f12: return "f12";
-		case input_key::f13: return "f13";
-		case input_key::f14: return "f14";
-		case input_key::f15: return "f15";
-		case input_key::f16: return "f16";
-		case input_key::f17: return "f17";
-		case input_key::f18: return "f18";
-		case input_key::f19: return "f19";
-		case input_key::f20: return "f20";
-		case input_key::f21: return "f21";
-		case input_key::f22: return "f22";
-		case input_key::f23: return "f23";
-		case input_key::f24: return "f24";
-		case input_key::pause: return "pause";
-		case input_key::sleep: return "sleep";
-		case input_key::printscreen: return "printscreen";
-		case input_key::left: return "left";
-		case input_key::up: return "up";
-		case input_key::right: return "right";
-		case input_key::down: return "down";
-		case input_key::mail: return "mail";
-		case input_key::back: return "back";
-		case input_key::forward: return "forward";
-		case input_key::refresh: return "refresh";
-		case input_key::stop: return "stop";
-		case input_key::search: return "search";
-		case input_key::favs: return "favs";
-		case input_key::media: return "media";
-		case input_key::mute: return "mute";
-		case input_key::volup: return "volup";
-		case input_key::voldn: return "voldn";
-		case input_key::prev_track: return "prev_track";
-		case input_key::next_track: return "next_track";
-		case input_key::stop_track: return "stop_track";
-		case input_key::play_pause_track: return "play_pause_track";
-		case input_key::app1: return "app1";
-		case input_key::app2: return "app2";
-		case input_key::touch1: return "touch1";
-		case input_key::touch2: return "touch2";
-		case input_key::touch3: return "touch3";
-		case input_key::touch4: return "touch4";
-		case input_key::touch5: return "touch5";
-		case input_key::touch6: return "touch6";
-		case input_key::touch7: return "touch7";
-		case input_key::touch8: return "touch8";
-		case input_key::touch9: return "touch9";
-		case input_key::touch10: return "touch10";
-		default: break;
-	}
-	return "?";
-}
-
-oDEFINE_TO_STRING(input_key::value);
-oDEFINE_FROM_STRING(input_key::value, input_key::count);
-
-const char* as_string(const skeleton_bone::value& _Bone)
-{
-	switch (_Bone)
-	{
-		case skeleton_bone::hip_center: return "hip_center";
-		case skeleton_bone::spine: return "spine";
-		case skeleton_bone::shoulder_center: return "shoulder_center";
-		case skeleton_bone::head: return "head";
-		case skeleton_bone::shoulder_left: return "shoulder_left";
-		case skeleton_bone::elbow_left: return "elbow_left";
-		case skeleton_bone::wrist_left: return "wrist_left";
-		case skeleton_bone::hand_left: return "hand_left";
-		case skeleton_bone::shoulder_right: return "shoulder_right";
-		case skeleton_bone::elbow_right: return "elbow_right";
-		case skeleton_bone::wrist_right: return "wrist_right";
-		case skeleton_bone::hand_right: return "hand_right";
-		case skeleton_bone::hip_left: return "hip_left";
-		case skeleton_bone::knee_left: return "knee_left";
-		case skeleton_bone::ankle_left: return "ankle_left";
-		case skeleton_bone::foot_left: return "foot_left";
-		case skeleton_bone::hip_right: return "hip_right";
-		case skeleton_bone::knee_right: return "knee_right";
-		case skeleton_bone::ankle_right: return "ankle_right";
-		case skeleton_bone::foot_right: return "foot_right";
-		case skeleton_bone::invalid: return "invalid";
-		default: break;
-	}
-	return "?";
-}
-
-oDEFINE_TO_STRING(skeleton_bone::value);
-oDEFINE_FROM_STRING2(skeleton_bone::value, skeleton_bone::count, skeleton_bone::invalid);
-
 const char* as_string(const alignment::value& _Alignment)
 {
 	switch (_Alignment)
@@ -392,10 +134,10 @@ const char* as_string(const control_type::value& _Control)
 	switch (_Control)
 	{
 		case control_type::unknown: return "unknown";
-		case control_type::groupbox: return "groupbox";
+		case control_type::group: return "group";
 		case control_type::button: return "button";
 		case control_type::checkbox: return "checkbox";
-		case control_type::radiobutton: return "radiobutton";
+		case control_type::radio: return "radio";
 		case control_type::label: return "label";
 		case control_type::label_centered: return "label_centered";
 		case control_type::hyperlabel: return "hyperlabel"; 
@@ -422,91 +164,66 @@ const char* as_string(const control_type::value& _Control)
 oDEFINE_TO_STRING(control_type::value);
 oDEFINE_FROM_STRING(control_type::value, control_type::count);
 
-const char* as_string(const gui_event::value& _Event)
+const char* as_string(const event_type::value& _Event)
 {
 	switch (_Event)
 	{
-		case gui_event::timer: return "timer";
-		case gui_event::activated: return "activated";
-		case gui_event::deactivated: return "deactivated";
-		case gui_event::creating: return "creating";
-		case gui_event::paint: return "paint";
-		case gui_event::display_changed: return "display_changed";
-		case gui_event::moving: return "moving";
-		case gui_event::moved: return "moved";
-		case gui_event::sizing: return "sizing";
-		case gui_event::sized: return "sized";
-		case gui_event::closing: return "closing";
-		case gui_event::closed: return "closed";
-		case gui_event::to_fullscreen: return "to_fullscreen";
-		case gui_event::from_fullscreen: return "from_fullscreen";
-		case gui_event::lost_capture: return "lost_capture";
-		case gui_event::drop_files: return "drop_files";
-		case gui_event::input_device_changed: return "input_device_changed";
-		case gui_event::custom_event: return "custom_event";
+		case event_type::timer: return "timer";
+		case event_type::activated: return "activated";
+		case event_type::deactivated: return "deactivated";
+		case event_type::creating: return "creating";
+		case event_type::paint: return "paint";
+		case event_type::display_changed: return "display_changed";
+		case event_type::moving: return "moving";
+		case event_type::moved: return "moved";
+		case event_type::sizing: return "sizing";
+		case event_type::sized: return "sized";
+		case event_type::closing: return "closing";
+		case event_type::closed: return "closed";
+		case event_type::to_fullscreen: return "to_fullscreen";
+		case event_type::from_fullscreen: return "from_fullscreen";
+		case event_type::lost_capture: return "lost_capture";
+		case event_type::drop_files: return "drop_files";
+		case event_type::input_device_changed: return "input_device_changed";
+		case event_type::custom_event: return "custom_event";
 		default: break;
 	}
 	return "?";
 }
 
-oDEFINE_TO_STRING(gui_event::value);
-oDEFINE_FROM_STRING(gui_event::value, gui_event::count);
-
-const char* as_string(const gui_action::value& _Action)
-{
-	switch (_Action)
-	{
-		case gui_action::unknown: return "unknown";
-		case gui_action::menu: return "menu";
-		case gui_action::control_activated: return "control_activated";
-		case gui_action::control_deactivated: return "control_deactivated";
-		case gui_action::control_selection_changing: return "control_selection_changing";
-		case gui_action::control_selection_changed: return "control_selection_changed";
-		case gui_action::hotkey: return "hotkey";
-		case gui_action::key_down: return "key_down";
-		case gui_action::key_up: return "key_up";
-		case gui_action::pointer_move: return "pointer_move";
-		case gui_action::skeleton: return "skeleton";
-		case gui_action::skeleton_acquired: return "skeleton_acquired";
-		case gui_action::skeleton_lost: return "skeleton_lost";
-		default: break;
-	}
-	return "?";
-}
-
-oDEFINE_TO_STRING(gui_action::value);
-oDEFINE_FROM_STRING(gui_action::value, gui_action::count);
+oDEFINE_TO_STRING(event_type::value);
+oDEFINE_FROM_STRING(event_type::value, event_type::count);
 
 } // namespace ouro
 
-void oGUIRecordInputState(const ouro::action_info& _Action, const ouro::input_key::value* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition)
+void oGUIRecordInputState(const ouro::input::action& _Action, const ouro::input::key* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition)
 {
 	oASSERT((_NumKeys % _NumKeyStates) == 0, "NumKeyStates must be a multiple of num keys");
 
 	bool KeyDown = false;
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case ouro::gui_action::key_down:
+		case ouro::input::key_down:
 		{
 			KeyDown = true;
 			break;
 		}
 
-		case ouro::gui_action::key_up:
+		case ouro::input::key_up:
 		{
 			KeyDown = false;
 			break;
 		}
 
-		case ouro::gui_action::pointer_move:
-			*_pPointerPosition = _Action.position.xyz();
+		case ouro::input::pointer_move:
+			*_pPointerPosition = _Action.position().xyz();
 			return;
 
 		default:
 			return;
 	}
 
-	ouro::input_key::value TestKey = _Action.key;
+	ouro::input::key TestKey = _Action.key;
 	for (size_t i = 0; i < _NumKeys; i++)
 	{
 		if (TestKey == _pKeys[i])

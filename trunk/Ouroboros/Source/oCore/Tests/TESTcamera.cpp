@@ -76,7 +76,7 @@ void TESTcamera(test_services& _Services)
 		{
 			switch (_Event.Type)
 			{
-				case ouro::gui_event::closing:
+				case ouro::event_type::closing:
 					Running = false;
 					break;
 				default:

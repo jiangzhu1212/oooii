@@ -46,15 +46,15 @@ static const int oKINECT_MAX_CACHED_FRAMES = 2;
 DWORD oKinectGetInitFlags(oKINECT_FEATURES _Features);
 
 // Converts a status-specific HR code to an oKINECT_STATUS enum
-ouro::input_device_status::value oKinectStatusFromHR(HRESULT _hrNuiStatus);
+ouro::input::status oKinectStatusFromHR(HRESULT _hrNuiStatus);
 
 // Convert between NUI and oGUI enums for bones
-NUI_SKELETON_POSITION_INDEX oKinectFromBone(ouro::skeleton_bone::value _Bone);
-ouro::skeleton_bone::value oKinectToBone(NUI_SKELETON_POSITION_INDEX _BoneIndex);
+NUI_SKELETON_POSITION_INDEX oKinectFromBone(ouro::input::skeleton_bone _Bone);
+ouro::input::skeleton_bone oKinectToBone(NUI_SKELETON_POSITION_INDEX _BoneIndex);
 
 // Returns a std::errc fit for using oErrorSetLast() from a status.
-std::errc::errc oKinectGetErrcFromStatus(ouro::input_device_status::value _Status);
-const char* oKinectGetErrcStringFromStatus(ouro::input_device_status::value _Status);
+std::errc::errc oKinectGetErrcFromStatus(ouro::input::status _Status);
+const char* oKinectGetErrcStringFromStatus(ouro::input::status _Status);
 
 // Gets the latest (rather than just the next) frame from the specified sensor.
 // Once done with the contents of _pLatest, call 
@@ -96,15 +96,15 @@ int2 oKinectSkeletonToScreen(
 // Returns number of valid bones. The value int2(oDEFAULT, oDEFAULT) is set to
 // any invalid bone.
 int oKinectCalcScreenSpacePositions(
-	const ouro::tracking_skeleton& _Skeleton
+	const ouro::input::tracking_skeleton& _Skeleton
 	, const int2& _TargetPosition
 	, const int2& _TargetDimensions
 	, const int2& _DepthBufferResolution
-	, int2 _ScreenSpacePositions[ouro::skeleton_bone::count]);
+	, int2 _ScreenSpacePositions[ouro::input::bone_count]);
 
 #endif // oHAS_KINECT_SDK
 
 // Converts the _OriginBone to 0,0,0 and makes all positions relative to that.
-void oKinectCalcBoneSpacePositions(ouro::skeleton_bone::value _OriginBone, ouro::tracking_skeleton& _Skeleton);
+void oKinectCalcBoneSpacePositions(ouro::input::skeleton_bone _OriginBone, ouro::input::tracking_skeleton& _Skeleton);
 
 #endif

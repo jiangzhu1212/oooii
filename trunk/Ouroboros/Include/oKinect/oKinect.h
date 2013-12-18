@@ -31,6 +31,7 @@
 #include <oGUI/window.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oRTTI.h>
+#include <oBase/input.h>
 
 #ifdef oHAS_KINECT_SDK
 	#define oKINECT_SDK_MAJOR 1
@@ -99,7 +100,7 @@ interface oKinect : oInterface
 {
 	virtual void GetDesc(oKINECT_DESC* _pDesc) const threadsafe = 0;
 
-	virtual ouro::input_device_status::value GetStatus() const threadsafe = 0;
+	virtual ouro::input::status GetStatus() const threadsafe = 0;
 
 	virtual int2 GetDimensions(oKINECT_FRAME_TYPE _Type) const threadsafe = 0;
 
@@ -109,8 +110,8 @@ interface oKinect : oInterface
 	virtual void UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe = 0;
 
 	// Returns the number of valid bones.
-	virtual bool GetSkeletonByIndex(int _PlayerIndex, ouro::tracking_skeleton* _pSkeleton) const threadsafe = 0;
-	virtual bool GetSkeletonByID(unsigned int _ID, ouro::tracking_skeleton* _pSkeleton) const threadsafe = 0;
+	virtual bool GetSkeletonByIndex(int _PlayerIndex, ouro::input::tracking_skeleton* _pSkeleton) const threadsafe = 0;
+	virtual bool GetSkeletonByID(unsigned int _ID, ouro::input::tracking_skeleton* _pSkeleton) const threadsafe = 0;
 };
 
 // Returns number of Kinects on the system. This can include disconnected 

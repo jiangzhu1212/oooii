@@ -50,7 +50,7 @@ static bool kForceDebug = false;
 // oWinControlDefaultOnNotify if there is no other appropriate handling. This
 // returns true if the output action and lresults are valid and should be 
 // respected or false if this was not a control message.
-bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, ouro::action_info* _pAction, LRESULT* _pLResult)
+bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, input::action* _pAction, LRESULT* _pLResult)
 {
 	*_pLResult = 0;
 	bool Handled = true;
@@ -59,21 +59,21 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, o
 	{
 		case WM_COMMAND:
 		{
-			_pAction->device_type = ouro::input_device_type::control;
+			_pAction->device_type = input::control;
 			_pAction->device_id = LOWORD(_wParam);
-			_pAction->window = (ouro::window_handle)_hWnd;
-			_pAction->key = ouro::input_key::none;
-			_pAction->position = 0.0f;
+			_pAction->window = (window_handle)_hWnd;
+			_pAction->key = input::none;
+			_pAction->position(0.0f);
 
 			if (!_lParam)
 			{
-				_pAction->action = (HIWORD(_wParam) == 1) ? ouro::gui_action::hotkey : ouro::gui_action::menu;
-				_pAction->action_code = oInvalid;
+				_pAction->action_type = (HIWORD(_wParam) == 1) ? input::hotkey : input::menu;
+				_pAction->action_code = input::action::invalid;
 			}
 			else
 			{
-				_pAction->window = (ouro::window_handle)_lParam;
-				_pAction->action = ouro::gui_action::control_activated;
+				_pAction->window = (window_handle)_lParam;
+				_pAction->action_type = input::control_activated;
 				_pAction->action_code = HIWORD(_wParam);
 			}
 
@@ -84,17 +84,17 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, o
 		{
 			if (_lParam != 0)
 			{
-				_pAction->window = (ouro::window_handle)(_lParam);
-				_pAction->device_type = ouro::input_device_type::control;
-				_pAction->device_id = oInvalid;
-				_pAction->key = ouro::input_key::none;
-				_pAction->position = 0.0f;
+				_pAction->window = (window_handle)(_lParam);
+				_pAction->device_type = input::control;
+				_pAction->device_id = input::action::invalid;
+				_pAction->key = input::none;
+				_pAction->position(0.0f);
 				oCHECK_SIZE(int, _wParam);
 				_pAction->action_code = static_cast<int>(_wParam);
 				switch (LOWORD(_wParam))
 				{
-					case TB_ENDTRACK: _pAction->action = ouro::gui_action::control_deactivated; break;
-					default: _pAction->action = ouro::gui_action::control_activated; break;
+					case TB_ENDTRACK: _pAction->action_type = input::control_deactivated; break;
+					default: _pAction->action_type = input::control_activated; break;
 				}
 				break;
 			}
@@ -107,34 +107,34 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, o
 		{
 			LRESULT lResult = FALSE;
 			const NMHDR& nmhdr = *(const NMHDR*)_lParam;
-			*_pAction = ouro::action_info();
-			_pAction->device_type = ouro::input_device_type::control;
+			*_pAction = input::action();
+			_pAction->device_type = input::control;
 			oCHECK_SIZE(int, nmhdr.idFrom);
 			_pAction->device_id = static_cast<int>(nmhdr.idFrom);
-			_pAction->window = (ouro::window_handle)nmhdr.hwndFrom;
-			_pAction->position = 0.0f;
+			_pAction->window = nmhdr.hwndFrom;
+			_pAction->position(0.0f);
 			_pAction->action_code = nmhdr.code;
 
-			ouro::control_type::value type = oWinControlGetType(nmhdr.hwndFrom);
+			control_type::value type = oWinControlGetType(nmhdr.hwndFrom);
 			switch (type)
 			{
-				case ouro::control_type::tab:
+				case control_type::tab:
 				{
 					switch (_pAction->action_code)
 					{
-						case TCN_SELCHANGING: _pAction->action = ouro::gui_action::control_selection_changing; break;
-						case TCN_SELCHANGE: _pAction->action = ouro::gui_action::control_selection_changed; break;
+						case TCN_SELCHANGING: _pAction->action_type = input::control_selection_changing; break;
+						case TCN_SELCHANGE: _pAction->action_type = input::control_selection_changed; break;
 						default: break;
 					}
 
 					break;
 				}
 
-				case ouro::control_type::button:
+				case control_type::button:
 				{
 					switch (_pAction->action_code)
 					{
-						case BN_CLICKED: _pAction->action = ouro::gui_action::control_activated; break;
+						case BN_CLICKED: _pAction->action_type = input::control_activated; break;
 						default: break;
 					}
 
@@ -254,13 +254,13 @@ struct window_impl : window
 	int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override;
 
 	// Observer API
-	int hook_actions(const action_hook& _Hook) override;
+	int hook_actions(const input::action_hook& _Hook) override;
 	void unhook_actions(int _ActionHookID) override;
 	int hook_events(const event_hook& _Hook) override;
 	void unhook_events(int _EventHookID) override;
 
 	// Execution API
-	void trigger(const ouro::action_info& _Action) override;
+	void trigger(const input::action& _Action) override;
 	void post(int _CustomEventCode, uintptr_t _Context) override;
 	void dispatch(const oTASK& _Task) override;
 	oStd::future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const override;
@@ -285,7 +285,7 @@ private:
 
 	window_shape PriorShape;
 
-	typedef HookManager<action_hook, ouro::action_info> ActionManager_t;
+	typedef HookManager<input::action_hook, input::action> ActionManager_t;
 	typedef HookManager<event_hook, basic_event> EventManager_t;
 
 	ActionManager_t ActionHooks;
@@ -371,7 +371,7 @@ private:
 	}
 
 	void init_window(const init& _Init);
-	void trigger_generic_event(gui_event::value _Event, window_shape* _pShape = nullptr);
+	void trigger_generic_event(event_type::value _Event, window_shape* _pShape = nullptr);
 	void set_cursor();
 	bool handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
 	bool handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, LRESULT* _pLResult);
@@ -761,7 +761,7 @@ int window_impl::get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNum
 	return N;
 }
 
-int window_impl::hook_actions(const action_hook& _Hook)
+int window_impl::hook_actions(const input::action_hook& _Hook)
 {
 	return ActionHooks.Hook(_Hook);
 }
@@ -781,7 +781,7 @@ void window_impl::unhook_events(int _EventHookID)
 	EventHooks.Unhook(_EventHookID);
 }
 
-void window_impl::trigger(const ouro::action_info& _Action)
+void window_impl::trigger(const input::action& _Action)
 {
 	dispatch_internal(std::move(std::bind(&ActionManager_t::Visit, &ActionHooks, _Action))); // bind by copy
 }
@@ -888,7 +888,7 @@ void window_impl::quit()
 	//dispatch_internal([=] { PostQuitMessage(0); });
 };
 
-void window_impl::trigger_generic_event(gui_event::value _Event, window_shape* _pShape)
+void window_impl::trigger_generic_event(event_type::value _Event, window_shape* _pShape)
 {
 	shape_event e((window_handle)hWnd, _Event, oWinGetShape(hWnd));
 	EventHooks.Visit(e);
@@ -918,7 +918,7 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 			// this is a bit dangerous because it's not really true this hWnd is 
 			// ready for use, but we need to expose it consistently as a valid 
 			// return value from native_handle() so it can be accessed from 
-			// gui_event::creating, where it's known to be only semi-ready.
+			// event_type::creating, where it's known to be only semi-ready.
 			hWnd = _hWnd;
 
 			create_event e((window_handle)_hWnd
@@ -933,7 +933,7 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 		{
 			// Don't allow DefWindowProc to destroy the window, put it all on client 
 			// code.
-			shape_event e((window_handle)hWnd, gui_event::closing, oWinGetShape(hWnd));
+			shape_event e((window_handle)hWnd, event_type::closing, oWinGetShape(hWnd));
 			EventHooks.Visit(e);
 			*_pLResult = 0;
 			return true;
@@ -945,7 +945,7 @@ bool window_impl::handle_lifetime(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM
 
 		case WM_DESTROY:
 		{
-			trigger_generic_event(gui_event::closed);
+			trigger_generic_event(event_type::closed);
 			hWnd = nullptr;
 
 			if (hAccel)
@@ -983,17 +983,17 @@ bool window_impl::handle_misc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 			return true;
 
 		case WM_ACTIVATE:
-			trigger_generic_event((_wParam == WA_INACTIVE) ? gui_event::deactivated : gui_event::activated);
+			trigger_generic_event((_wParam == WA_INACTIVE) ? event_type::deactivated : event_type::activated);
 			break;
 
 		// All these should be treated the same if there's any reason to override 
 		// painting.
 		case WM_PAINT: case WM_PRINT: case WM_PRINTCLIENT:
-			trigger_generic_event(gui_event::paint);
+			trigger_generic_event(event_type::paint);
 			break;
 
 		case WM_DISPLAYCHANGE:
-			trigger_generic_event(gui_event::display_changed);
+			trigger_generic_event(event_type::display_changed);
 			break;
 
 		case oWM_DISPATCH:
@@ -1032,7 +1032,7 @@ bool window_impl::handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 	switch (_uMsg)
 	{
 		case WM_ENTERSIZEMOVE:
-			trigger_generic_event((_wParam == SC_MOVE) ? gui_event::moving : gui_event::sizing);
+			trigger_generic_event((_wParam == SC_MOVE) ? event_type::moving : event_type::sizing);
 			return true;
 
 		case WM_MOVE:
@@ -1040,7 +1040,7 @@ bool window_impl::handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 			//oTRACE("HWND 0x%x WM_MOVE: %dx%d", _hWnd, GET_X_LPARAM(_lParam), GET_Y_LPARAM(_lParam));
 
 			window_shape s;
-			trigger_generic_event(gui_event::moved, &s);
+			trigger_generic_event(event_type::moved, &s);
 			PriorShape.client_position = s.client_position;
 			return true;
 		}
@@ -1051,10 +1051,10 @@ bool window_impl::handle_sizing(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 
 			if (!oWinIsTempChange(_hWnd))
 			{
-				shape_event e((window_handle)hWnd, gui_event::sizing, PriorShape);
+				shape_event e((window_handle)hWnd, event_type::sizing, PriorShape);
 				EventHooks.Visit(e);
 
-				e.type = gui_event::sized;
+				e.type = event_type::sized;
 				e.shape = oWinGetShape(_hWnd);
 				EventHooks.Visit(e);
 				PriorShape = e.shape;
@@ -1074,22 +1074,22 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 	*_pLResult = 0;
 	unsigned int Timestamp = (unsigned int)GetMessageTime();
 
-	ouro::action_info Action;
+	input::action Action;
 	if (oWinKeyDispatchMessage(_hWnd, _uMsg, _wParam, _lParam, Timestamp, &ControlKeyState, &Action))
 	{
 		if (ClientDragToMove)
 		{
-			const input_key::value CheckKey = GetSystemMetrics(SM_SWAPBUTTON) ? input_key::mouse_right : input_key::mouse_left;
+			const input::key CheckKey = GetSystemMetrics(SM_SWAPBUTTON) ? input::mouse_right : input::mouse_left;
 
 			if (Action.key == CheckKey)
 			{
-				if (Action.action == gui_action::key_down)
+				if (Action.action_type == input::key_down)
 				{
 					CursorClientPosAtMouseDown = oWinCursorGetPosition(_hWnd);
 					::SetCapture(_hWnd);
 				}
 
-				else if (Action.action == gui_action::key_up)
+				else if (Action.action_type == input::key_up)
 				{
 					ReleaseCapture();
 					CursorClientPosAtMouseDown = int2(oDEFAULT, oDEFAULT);
@@ -1141,7 +1141,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 			if (GetCapture() == hWnd)
 			{
 				ReleaseCapture();
-				trigger_generic_event(gui_event::lost_capture);
+				trigger_generic_event(event_type::lost_capture);
 			}
 			break;
 		}
@@ -1152,7 +1152,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 			{
 				if (GetCapture() == hWnd)
 					ReleaseCapture();
-				trigger_generic_event(gui_event::lost_capture);
+				trigger_generic_event(event_type::lost_capture);
 			}
 			break;
 		}
@@ -1162,8 +1162,8 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 		case oWM_INPUT_DEVICE_CHANGE:
 		{
 			input_device_event e((window_handle)_hWnd
-				, input_device_type::value(LOWORD(_wParam))
-				, input_device_status::value(HIWORD(_wParam))
+				, input::type(LOWORD(_wParam))
+				, input::status(HIWORD(_wParam))
 				, (const char*)_lParam);
 			EventHooks.Visit(e);
 			return true;
@@ -1171,38 +1171,35 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 
 		case oWM_SKELETON:
 		{
-			ouro::action_info a((window_handle)_hWnd, Timestamp, gui_action::skeleton, input_device_type::skeleton, LOWORD(_wParam));
-			a.skeleton = (skeleton_handle)_lParam;
+			input::action a(_hWnd, Timestamp, LOWORD(_wParam), input::skeleton, input::skeleton_update, input::none, input::action::invalid);
+			a.skeleton = (void*)_lParam;
 			ActionHooks.Visit(a);
 			return 0;
 		}
 
 		case oWM_USER_CAPTURED:
-			ActionHooks.Visit(ouro::action_info((window_handle)_hWnd, Timestamp, gui_action::skeleton_acquired, input_device_type::skeleton, oInt(_wParam)));
+			ActionHooks.Visit(input::action(_hWnd, Timestamp, static_cast<unsigned int>(_wParam), input::skeleton, input::skeleton_acquired));
 			return 0;
 
 		case oWM_USER_LOST:
-			ActionHooks.Visit(ouro::action_info((window_handle)_hWnd, Timestamp, gui_action::skeleton_lost, input_device_type::skeleton, oInt(_wParam)));
+			ActionHooks.Visit(input::action(_hWnd, Timestamp, static_cast<unsigned int>(_wParam), input::skeleton, input::skeleton_lost));
 			return 0;
 
 		#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
 			case WM_TOUCH:
 			{
-				TOUCHINPUT inputs[input_key::touch_last - input_key::touch_first];
+				TOUCHINPUT inputs[input::touch_last - input::touch_first];
 				const UINT nTouches = __min(LOWORD(_wParam), oCOUNTOF(inputs));
 				if (nTouches)
 				{
 					if (GetTouchInputInfo((HTOUCHINPUT)_lParam, nTouches, inputs, sizeof(TOUCHINPUT)))
 					{
-						ouro::action_info a((window_handle)_hWnd, Timestamp, gui_action::key_down, input_device_type::touch, 0);
+						input::action a(_hWnd, Timestamp, 0, input::touch, input::key_down);
 						for (UINT i = 0; i < nTouches; i++)
 						{
-							// @tony: Maybe touch doesn't need to pollute X11? The idea one 
-							// day is to support wacky interface devices through RFB protocol 
-							// which forces all boolean things down X11... should this comply?
 							a.device_id = i;
-							a.key = (input_key::value)(input_key::touch1 + i);
-							a.position = float4(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f, 0.0f);
+							a.key = (input::key)(input::touch1 + i);
+							a.position(float4(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f, 0.0f));
 							ActionHooks.Visit(a);
 						}
 						CloseTouchInputHandle((HTOUCHINPUT)_lParam);

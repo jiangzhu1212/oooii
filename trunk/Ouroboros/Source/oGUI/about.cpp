@@ -110,7 +110,7 @@ private:
 	};
 
 	void on_event(const window::basic_event& _Event);
-	void on_action(const ouro::action_info& _Action);
+	void on_action(const ouro::input::action& _Action);
 	void make_controls(const window::create_event& _CreateEvent);
 };
 
@@ -299,7 +299,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			oRECT rChild = oRect(oWinRectWH(kComponentGroupPos, kComponentGroupSize));
 			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_COMPONENT_GROUP].Type = control_type::groupbox;
+			Descs[AB_COMPONENT_GROUP].Type = control_type::group;
 			Descs[AB_COMPONENT_GROUP].Text = "3rd-Party Components";
 			Descs[AB_COMPONENT_GROUP].Position = oWinRectPosition(oWinRect(r));
 			Descs[AB_COMPONENT_GROUP].Size = oWinRectSize(oWinRect(r));
@@ -353,7 +353,7 @@ void about_impl::on_event(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case gui_event::creating:
+		case event_type::creating:
 		{
 			make_controls(_Event.as_create());
 			break;
@@ -364,11 +364,11 @@ void about_impl::on_event(const window::basic_event& _Event)
 	}
 }
 
-void about_impl::on_action(const ouro::action_info& _Action)
+void about_impl::on_action(const ouro::input::action& _Action)
 {
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case gui_action::control_activated:
+		case input::control_activated:
 			switch (_Action.device_id)
 			{
 				case AB_OK:

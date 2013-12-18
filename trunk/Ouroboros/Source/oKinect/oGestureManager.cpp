@@ -157,7 +157,7 @@ private:
 	void GDIDrawNotStatusIcon(ouro::draw_context_handle _hDC, const int2& _ClientSize);
 
 	void OnEvent(const window::basic_event& _Event);
-	void OnAction(const ouro::action_info& _Action);
+	void OnAction(const ouro::input::action& _Action);
 	void OnDeviceChange(const window::basic_event& _Event);
 
 	bool ReloadAirKeySets(const uri_string& _AirKeySets_xml);
@@ -476,7 +476,7 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 			oGUI_FONT_DESC fd;
 			oGDIGetFontDesc(hFont, &fd);
 
-			ouro::tracking_skeleton Skeleton;
+			ouro::input::tracking_skeleton Skeleton;
 			int SkelIndex = 0;
 			float VerticalOffset = (float)rTarget.top;
 			while (Kinect->GetSkeletonByIndex(SkelIndex, &Skeleton))
@@ -488,7 +488,7 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 				td.Position = float2((float)rTarget.left, VerticalOffset);
 				td.Size = oWinRectSize(rTarget);
 				td.Shadow = Black;
-				const float4& h = Skeleton.positions[ouro::skeleton_bone::hip_center];
+				const float4& h = Skeleton.positions[ouro::input::hip_center];
 				mstring text;
 				snprintf(text, "HIP: %.02f %.02f %.02f\n", h.x, h.y, h.z);
 				oGDIDrawText(hDC, td, text);
@@ -497,7 +497,7 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 				VerticalOffset += oWinRectH(rText);
 
 				if (!ComboMessage[SkelIndex].empty())
-					oGDIDrawBoneText(hDC, rTarget, Skeleton.positions[ouro::skeleton_bone::head], ouro::alignment::bottom_center, int2(0, -75), ouro::alignment::bottom_center, ComboMessage[SkelIndex]);
+					oGDIDrawBoneText(hDC, rTarget, Skeleton.positions[ouro::input::head], ouro::alignment::bottom_center, int2(0, -75), ouro::alignment::bottom_center, ComboMessage[SkelIndex]);
 
 				SkelIndex++;
 			}
@@ -688,7 +688,7 @@ void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::gui_event::sized:
+		case ouro::event_type::sized:
 		{
 			// Keep the font proportional to the size of the rectangle.
 			ouro::display::info di = ouro::display::get_info(oWinGetDisplayId((HWND)_Event.window));
@@ -700,7 +700,7 @@ void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 			break;
 		}
 
-		case ouro::gui_event::timer:
+		case ouro::event_type::timer:
 		{
 			int TimerVersion = oInvalid;
 			oGESTURE_TIMER_EVENT GTE = oGESTURE_TIMER_HEAD_MESSAGE;
@@ -735,7 +735,7 @@ void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 			break;
 		}
 
-		case ouro::gui_event::input_device_changed:
+		case ouro::event_type::input_device_changed:
 		{
 			OnDeviceChange(_Event);
 			break;
@@ -746,11 +746,11 @@ void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 	}
 }
 
-void oGestureManagerImpl::OnAction(const ouro::action_info& _Action)
+void oGestureManagerImpl::OnAction(const ouro::input::action& _Action)
 {
-	switch (_Action.action)
+	switch (_Action.action_type)
 	{
-		case ouro::gui_action::skeleton_acquired:
+		case ouro::input::skeleton_acquired:
 		{
 			sstring text;
 			snprintf(text, "GMGR: Skeleton[%d] activated", _Action.device_id);
@@ -758,7 +758,7 @@ void oGestureManagerImpl::OnAction(const ouro::action_info& _Action)
 			break;
 		}
 
-		case ouro::gui_action::skeleton_lost:
+		case ouro::input::skeleton_lost:
 		{
 			sstring text;
 			snprintf(text, "GMGR: Skeleton[%d] deactivated", _Action.device_id);
@@ -766,22 +766,22 @@ void oGestureManagerImpl::OnAction(const ouro::action_info& _Action)
 			break;
 		}
 
-		case ouro::gui_action::skeleton:
+		case ouro::input::skeleton:
 		{
 			windows::skeleton::bone_info Skeleton;
 			windows::skeleton::get_info((windows::skeleton::handle)_Action.skeleton, &Skeleton);
 
-			ouro::tracking_skeleton skel;
+			ouro::input::tracking_skeleton skel;
 			skel.source_id = Skeleton.source_id;
-			skel.clipping = *(ouro::tracking_clipping*)&Skeleton.clipping;
+			skel.clipping = *(ouro::input::tracking_clipping*)&Skeleton.clipping;
 			std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + skel.positions.size(), skel.positions.begin());
 
 			AirKeyboard->Update(skel, _Action.timestamp_ms);
 			break;
 		}
 
-		case ouro::gui_action::key_down:
-		case ouro::gui_action::key_up:
+		case ouro::input::key_down:
+		case ouro::input::key_up:
 		{
 			InputMapper->OnAction(_Action);
 			break;
@@ -794,7 +794,7 @@ void oGestureManagerImpl::OnAction(const ouro::action_info& _Action)
 
 void oGestureManagerImpl::OnDeviceChange(const window::basic_event& _Event)
 {
-	if (_Event.type == ouro::input_device_type::skeleton)
+	if (_Event.type == ouro::input::skeleton)
 	{
 		if (!Desc.GestureEnabled)
 		{
@@ -805,13 +805,13 @@ void oGestureManagerImpl::OnDeviceChange(const window::basic_event& _Event)
 		//KinectIcon(_Event.AsInputDevice().Status);
 		switch (_Event.as_input_device().status)
 		{
-			case ouro::input_device_status::ready:
+			case ouro::input::ready:
 				AttachKinect(true, _Event.as_input_device().instance_name);
 				break;
-			case ouro::input_device_status::not_connected:
+			case ouro::input::not_connected:
 				AttachKinect(false, _Event.as_input_device().instance_name);
 				break;
-			case ouro::input_device_status::initializing:
+			case ouro::input::initializing:
 				NoKinectMessage = "Kinect initializing...";
 				KinectDrawState = oKINECT_STATUS_DRAW_INITIALIZING_1;
 				break;

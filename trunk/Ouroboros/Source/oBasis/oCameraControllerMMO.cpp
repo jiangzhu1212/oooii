@@ -33,7 +33,7 @@ struct oCameraControllerMMOImpl : oCameraControllerMMO
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE2(oCameraController, oCameraControllerMMO);
 
-	int OnAction(const ouro::action_info& _Action) override;
+	int OnAction(const ouro::input::action& _Action) override;
 	void Tick() override { }
 	void OnLostCapture() override;
 	void SetView(const float4x4& _View) override { Eye.view(_View); }
@@ -54,7 +54,7 @@ private:
 	bool WasRotating;
 
 private:
-	bool GetControl(ouro::input_key::value _Key, oCAMERA_CONTROLLER_MMO_DESC::CONTROL* _pControl);
+	bool GetControl(ouro::input::key _Key, oCAMERA_CONTROLLER_MMO_DESC::CONTROL* _pControl);
 	void UpdateRotation(float _DeltaTime);
 	void UpdateTranslation(float _DeltaTime);
 };
@@ -77,7 +77,7 @@ bool oCameraControllerMMOCreate(const oCAMERA_CONTROLLER_MMO_DESC& _Desc, oCamer
 	return success;
 }
 
-int oCameraControllerMMOImpl::OnAction(const ouro::action_info& _Action)
+int oCameraControllerMMOImpl::OnAction(const ouro::input::action& _Action)
 {
 	oGUIRecordInputState(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
 	int Response = 0;
