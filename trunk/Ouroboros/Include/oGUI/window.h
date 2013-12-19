@@ -348,13 +348,13 @@ public:
 	virtual void capture(bool _Capture) = 0;
 	virtual bool has_capture() const = 0;
 
-	virtual void set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) = 0;
-	template<size_t size> void set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR (&_pHotKeys)[size]) { set_hotkeys(_pHotKeys, size); }
-	template<size_t size> void set_hotkeys(const oGUI_HOTKEY_DESC (&_pHotKeys)[size]) { set_hotkeys(_pHotKeys, size); }
+	virtual void set_hotkeys(const basic_hotkey_info* _pHotKeys, size_t _NumHotKeys) = 0;
+	template<size_t size> void set_hotkeys(const basic_hotkey_info (&_pHotKeys)[size]) { set_hotkeys(_pHotKeys, size); }
+	template<size_t size> void set_hotkeys(const hotkey_info (&_pHotKeys)[size]) { set_hotkeys(_pHotKeys, size); }
 
-	virtual int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const = 0;
-	template<size_t size> int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR (&_pHotKeys)[size]) { return get_hotkeys(_pHotKeys, size); }
-	template<size_t size> int get_hotkeys(oGUI_HOTKEY_DESC (&_pHotKeys)[size]) { return get_hotkeys(_pHotKeys, size); }
+	virtual int get_hotkeys(basic_hotkey_info* _pHotKeys, size_t _MaxNumHotKeys) const = 0;
+	template<size_t size> int get_hotkeys(basic_hotkey_info (&_pHotKeys)[size]) { return get_hotkeys(_pHotKeys, size); }
+	template<size_t size> int get_hotkeys(hotkey_info (&_pHotKeys)[size]) { return get_hotkeys(_pHotKeys, size); }
 
 
 	// observer API
@@ -369,7 +369,7 @@ public:
 	// execution API
 
 	// Appends a broadcast of an action as if it came from user input.
-	virtual void trigger(const ouro::input::action& _Action) = 0;
+	virtual void trigger(const input::action& _Action) = 0;
 
 	// Post an event that is specified by the user here.
 	virtual void post(int _CustomEventCode, uintptr_t _Context) = 0;

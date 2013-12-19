@@ -106,7 +106,7 @@ struct oGPUWindowClearToggle
 	color Color[2];
 };
 
-oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] =
+ouro::basic_hotkey_info HotKeys[] =
 {
 	// reset style
 	{ ouro::input::f2, oWHK_TOGGLE_UI_MODE, false, false, false },

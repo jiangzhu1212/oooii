@@ -489,7 +489,7 @@ bool oGDIDrawEllipse(HDC _hDC, const RECT& _rBox);
 RECT oGDICalcTextRect(HDC _hDC, const char* _Text);
 
 // Draws text using GDI.
-bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text);
+bool oGDIDrawText(HDC _hDC, const ouro::text_info& _Desc, const char* _Text);
 
 // If color alpha is true 0, then a null/empty objects is returned. Use 
 // DeleteObject on the value returned from these functions when finish with the
@@ -509,8 +509,8 @@ COLORREF oGDIGetBrushColor(HBRUSH _hBrush);
 
 int2 oGDIGetIconSize(HICON _hIcon);
 
-HFONT oGDICreateFont(const oGUI_FONT_DESC& _Desc);
-void oGDIGetFontDesc(HFONT _hFont, oGUI_FONT_DESC* _pDesc);
+HFONT oGDICreateFont(const ouro::font_info& _Desc);
+void oGDIGetFontDesc(HFONT _hFont, ouro::font_info* _pDesc);
 
 const char* oGDIGetFontFamily(BYTE _tmPitchAndFamily);
 const char* oGDIGetCharSet(BYTE _tmCharSet);

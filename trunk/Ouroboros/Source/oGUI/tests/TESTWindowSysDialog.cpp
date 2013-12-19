@@ -270,10 +270,10 @@ oSystemProperties::oSystemProperties()
 		{
 			HWND hWnd = (HWND)Window->native_handle();
 
-			oGUI_FONT_DESC fd;
+			ouro::font_info fd;
 			HFONT hCurrent = oWinGetFont(hWnd);
 			oGDIGetFontDesc(hCurrent, &fd);
-			fd.AntiAliased = false;
+			fd.antialiased = false;
 			HFONT hNew = oGDICreateFont(fd);
 			oWinSetFont(hWnd, hNew);
 		});
@@ -281,7 +281,7 @@ oSystemProperties::oSystemProperties()
 
 	if (kInteractiveMode)
 	{
-		oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] = 
+		ouro::basic_hotkey_info HotKeys[] = 
 		{
 			{ ouro::input::f3, ID_RELOAD_UI, false, false, false },
 		};

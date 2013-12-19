@@ -115,14 +115,14 @@ public:
 		{
 			case ouro::event_type::creating:
 			{
-				oGUI_CONTROL_DESC ButtonDesc;
-				ButtonDesc.hParent = _Event.window;
-				ButtonDesc.Type = ouro::control_type::button;
-				ButtonDesc.Text = "Push Me";
-				ButtonDesc.Size = int2(100,25);
-				ButtonDesc.Position = int2(10,480-10-ButtonDesc.Size.y);
-				ButtonDesc.ID = 0;
-				ButtonDesc.StartsNewGroup = false;
+				ouro::control_info ButtonDesc;
+				ButtonDesc.parent = _Event.window;
+				ButtonDesc.type = ouro::control_type::button;
+				ButtonDesc.text = "Push Me";
+				ButtonDesc.size = int2(100,25);
+				ButtonDesc.position = int2(10,480-10-ButtonDesc.size.y);
+				ButtonDesc.id = 0;
+				ButtonDesc.starts_new_group = false;
 				hButton = oWinControlCreate(ButtonDesc);
 				break;
 			}

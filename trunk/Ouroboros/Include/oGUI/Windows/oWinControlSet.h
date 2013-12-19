@@ -35,7 +35,7 @@ There are three node types: Control, RefPoint, Font
 === Font === 
 Font defines a font and identifies it by name to be used in Control and 
 RefPoint nodes, so it makes sense to define all Fonts up front. It is based 
-on oGUI_FONT_DESC: the field names are the same plus one more as the name of 
+on ouro::font_info: the field names are the same plus one more as the name of 
 the font definition.
 * FontName: (i.e. Tahoma) is the string name of the typeface as it appears in 
   the operating system. 
@@ -61,7 +61,7 @@ in a RefPoint will apply to its children RefPoints and Controls:
 
 === Control ===
 This is the actual object being created. A Control node populates an 
-oGUI_CONTROL_DESC, with a few additional initial-state fields. If a field isn't 
+ouro::control_info, with a few additional initial-state fields. If a field isn't 
 explicitly assigned a value, either a system default or inherited value will be 
 used. Both RefPoints and other Controls can be parents. A Control's underlying 
 system parent will be the last Control up the hierarchy or the top-level window.
@@ -169,9 +169,9 @@ private:
 	typedef std::vector<HWND> controls_t;
 	controls_t Controls;
 
-	bool ParseFontDesc(const ouro::xml& _XML, ouro::xml::node _hNode, oGUI_FONT_DESC* _pDesc);
+	bool ParseFontDesc(const ouro::xml& _XML, ouro::xml::node _hNode, ouro::font_info* _pDesc);
 	bool CreateFontsSibling(const ouro::xml& _XML, fonts_t* _pFonts);
-	bool ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, const controls_t& _Controls, oGUI_CONTROL_DESC* _pDesc);
+	bool ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, const controls_t& _Controls, ouro::control_info* _pDesc);
 	HWND CreateControl(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls, int2 _ParentOffset);
 	bool CreateControlsRecursive(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls);
 	bool CreateControlsSibling(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls);

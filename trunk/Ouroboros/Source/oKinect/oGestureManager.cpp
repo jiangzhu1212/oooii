@@ -473,7 +473,7 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 		// Draw boxes and some HUD info
 		{
 			oGDIScopedSelect SelFont(hDC, hFont);
-			oGUI_FONT_DESC fd;
+			ouro::font_info fd;
 			oGDIGetFontDesc(hFont, &fd);
 
 			ouro::input::tracking_skeleton Skeleton;
@@ -484,10 +484,10 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 				if (AirKeyboard)
 					AirKeyboard->VisitKeys(std::bind(oGDIDrawAirKey, hDC, oBINDREF(rTarget), oGDI_AIR_KEY_DRAW_BOX|oGDI_AIR_KEY_DRAW_KEY, oBIND1, oBIND2, oBINDREF(Skeleton)));
 
-				oGUI_TEXT_DESC td;
-				td.Position = float2((float)rTarget.left, VerticalOffset);
-				td.Size = oWinRectSize(rTarget);
-				td.Shadow = Black;
+				ouro::text_info td;
+				td.position = float2((float)rTarget.left, VerticalOffset);
+				td.size = oWinRectSize(rTarget);
+				td.shadow = Black;
 				const float4& h = Skeleton.positions[ouro::input::hip_center];
 				mstring text;
 				snprintf(text, "HIP: %.02f %.02f %.02f\n", h.x, h.y, h.z);
@@ -523,11 +523,11 @@ void oGestureManagerImpl::GDIDrawNoKinect(ouro::draw_context_handle _hDC, const 
 	oGDIScopedSelect ScopedSelectPen(hDC, hBonePen);
 	oGDIScopedSelect ScopedSelFont(hDC, hFont);
 
-	oGUI_TEXT_DESC td;
-	td.Position = float2(oWinRectPosition(rTarget));
-	td.Size = oWinRectSize(rTarget);
-	td.Shadow = Gray;
-	td.Alignment = ouro::alignment::middle_center;
+	ouro::text_info td;
+	td.position = float2(oWinRectPosition(rTarget));
+	td.size = oWinRectSize(rTarget);
+	td.shadow = Gray;
+	td.alignment = ouro::alignment::middle_center;
 	oGDIDrawText(hDC, td, NoKinectMessage);
 }
 
@@ -694,8 +694,8 @@ void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 			ouro::display::info di = ouro::display::get_info(oWinGetDisplayId((HWND)_Event.window));
 			float2 Ratio = float2(VizDesc.Size) / float2(int2(di.mode.width, di.mode.height));
 			float R = min(Ratio);
-			oGUI_FONT_DESC fd;
-			fd.PointSize = oInt(round(R * 50.0f));
+			ouro::font_info fd;
+			fd.point_size = oInt(round(R * 50.0f));
 			hFont = oGDICreateFont(fd);
 			break;
 		}

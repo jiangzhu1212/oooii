@@ -135,28 +135,28 @@ void progress_bar_impl::make_controls(const window::create_event& _CreateEvent)
 	const int2 Inset(10, 10);
 	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.shape.client_size));
 
-	oGUI_CONTROL_DESC Descs[PB_CONTROL_COUNT];
+	ouro::control_info Descs[PB_CONTROL_COUNT];
 
 	// progress/marquee bars
 	{
 		oRECT rChild = oRect(oWinRectWH(int2(Inset.x, 0), ProgressBarSize));
 		oRECT rText = oGUIResolveRect(rParent, rChild, alignment::middle_left, true);
-		Descs[PB_MARQUEE].Type = control_type::progressbar_unknown;
-		Descs[PB_MARQUEE].Position = oWinRectPosition(oWinRect(rText));
-		Descs[PB_MARQUEE].Size = ProgressBarSize;
+		Descs[PB_MARQUEE].type = control_type::progressbar_unknown;
+		Descs[PB_MARQUEE].position = oWinRectPosition(oWinRect(rText));
+		Descs[PB_MARQUEE].size = ProgressBarSize;
 
-		Descs[PB_PROGRESS].Type = control_type::progressbar;
-		Descs[PB_PROGRESS].Position = oWinRectPosition(oWinRect(rText));
-		Descs[PB_PROGRESS].Size = ProgressBarSize;
+		Descs[PB_PROGRESS].type = control_type::progressbar;
+		Descs[PB_PROGRESS].position = oWinRectPosition(oWinRect(rText));
+		Descs[PB_PROGRESS].size = ProgressBarSize;
 	}
 
 	// percentage text
 	{
 		const auto& cpb = Descs[PB_PROGRESS];
-		Descs[PB_PERCENT].Type = control_type::label;
-		Descs[PB_PERCENT].Text = "0%";
-		Descs[PB_PERCENT].Position = int2(cpb.Position.x + cpb.Size.x + 10, cpb.Position.y + 3);
-		Descs[PB_PERCENT].Size = int2(35, cpb.Size.y);
+		Descs[PB_PERCENT].type = control_type::label;
+		Descs[PB_PERCENT].text = "0%";
+		Descs[PB_PERCENT].position = int2(cpb.position.x + cpb.size.x + 10, cpb.position.y + 3);
+		Descs[PB_PERCENT].size = int2(35, cpb.size.y);
 	}
 
 	// Stop button
@@ -164,27 +164,27 @@ void progress_bar_impl::make_controls(const window::create_event& _CreateEvent)
 		oRECT rChild = oRect(oWinRectWH(-Inset, ButtonSize));
 		oRECT rButton = oGUIResolveRect(rParent, rChild, alignment::bottom_right, true);
 
-		Descs[PB_BUTTON].Type = control_type::button;
-		Descs[PB_BUTTON].Text = "&Stop";
-		Descs[PB_BUTTON].Position = oWinRectPosition(oWinRect(rButton));
-		Descs[PB_BUTTON].Size = oWinRectSize(oWinRect(rButton));
+		Descs[PB_BUTTON].type = control_type::button;
+		Descs[PB_BUTTON].text = "&Stop";
+		Descs[PB_BUTTON].position = oWinRectPosition(oWinRect(rButton));
+		Descs[PB_BUTTON].size = oWinRectSize(oWinRect(rButton));
 	}
 
 	// text/subtext
 	{
-		Descs[PB_TEXT].Type = control_type::label_centered;
-		Descs[PB_TEXT].Position = Inset;
-		Descs[PB_TEXT].Size = int2(_CreateEvent.shape.client_size.x - 2*Inset.x, 20);
+		Descs[PB_TEXT].type = control_type::label_centered;
+		Descs[PB_TEXT].position = Inset;
+		Descs[PB_TEXT].size = int2(_CreateEvent.shape.client_size.x - 2*Inset.x, 20);
 
-		Descs[PB_SUBTEXT].Type = control_type::label;
-		Descs[PB_SUBTEXT].Position = int2(Inset.x, Descs[PB_PROGRESS].Position.y + Descs[PB_PROGRESS].Size.y + 5);
-		Descs[PB_SUBTEXT].Size = int2((Descs[PB_PROGRESS].Size.x * 3) / 4, 20);
+		Descs[PB_SUBTEXT].type = control_type::label;
+		Descs[PB_SUBTEXT].position = int2(Inset.x, Descs[PB_PROGRESS].position.y + Descs[PB_PROGRESS].size.y + 5);
+		Descs[PB_SUBTEXT].size = int2((Descs[PB_PROGRESS].size.x * 3) / 4, 20);
 	}
 
 	for (short i = 0; i < PB_CONTROL_COUNT; i++)
 	{
-		Descs[i].hParent = _CreateEvent.window;
-		Descs[i].ID = i;
+		Descs[i].parent = _CreateEvent.window;
+		Descs[i].id = i;
 		Controls[i] = (ouro::window_handle)oWinControlCreate(Descs[i]);
 	}
 }

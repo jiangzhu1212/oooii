@@ -125,8 +125,8 @@ public:
 	bool enabled() const override { return Window->enabled(); }
 	void capture(bool _Capture) override { Window->capture(_Capture); }
 	bool has_capture() const override { return Window->has_capture(); }
-	void set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) override { Window->set_hotkeys(_pHotKeys, _NumHotKeys); }
-	int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override { return Window->get_hotkeys(_pHotKeys, _MaxNumHotKeys); }
+	void set_hotkeys(const ouro::basic_hotkey_info* _pHotKeys, size_t _NumHotKeys) override { Window->set_hotkeys(_pHotKeys, _NumHotKeys); }
+	int get_hotkeys(ouro::basic_hotkey_info* _pHotKeys, size_t _MaxNumHotKeys) const override { return Window->get_hotkeys(_pHotKeys, _MaxNumHotKeys); }
 	int hook_actions(const ouro::input::action_hook& _Hook) override { return Window->hook_actions(_Hook); }
 	void unhook_actions(int _ActionHookID) override { return Window->unhook_actions(_ActionHookID); }
 	int hook_events(const event_hook& _Hook) override { return Window->hook_events(_Hook); }
@@ -207,41 +207,41 @@ void oWebAppWindowImpl::OnEvent(const window::basic_event& _Event)
 	{
 		case ouro::event_type::creating:
 		{
-			oGUI_CONTROL_DESC ControlDesc;
-			ControlDesc.hParent = (ouro::window_handle)_Event.window;
+			ouro::control_info ControlDesc;
+			ControlDesc.parent = (ouro::window_handle)_Event.window;
 
 			// Make the link
 			{
 				ouro::mstring localHostString;
 				snprintf(localHostString, "<a href=\"http://localhost:%d/\">Launch %s App</a>", *ServerPort, Title);
 
-				ControlDesc.Position = int2(45, 50);
-				ControlDesc.Size = int2(200, 30);
-				ControlDesc.ID = ID_WEB_LINK;
-				ControlDesc.Type = ouro::control_type::hyperlabel;
-				ControlDesc.Text = localHostString.c_str();
+				ControlDesc.position = int2(45, 50);
+				ControlDesc.size = int2(200, 30);
+				ControlDesc.id = ID_WEB_LINK;
+				ControlDesc.type = ouro::control_type::hyperlabel;
+				ControlDesc.text = localHostString.c_str();
 				LinkHandle = oWinControlCreate(ControlDesc);
 			}
 			
-			ControlDesc.Type = ouro::control_type::label;
+			ControlDesc.type = ouro::control_type::label;
 
 			// Add CPU time
 			{
-				ControlDesc.Position = int2(130, 20);
-				ControlDesc.Size = int2(150, 20);
-				ControlDesc.ID = ID_WEB_LINK;
+				ControlDesc.position = int2(130, 20);
+				ControlDesc.size = int2(150, 20);
+				ControlDesc.id = ID_WEB_LINK;
 				
-				ControlDesc.Text = "CPU Utilization";
+				ControlDesc.text = "CPU Utilization";
 				CPUUtilization = oWinControlCreate(ControlDesc);
 			}
 
 			// Number of Jobs
 			{
-				ControlDesc.Position = int2(30, 20);
-				ControlDesc.Size = int2(100, 20);
-				ControlDesc.ID = ID_WEB_LINK;
+				ControlDesc.position = int2(30, 20);
+				ControlDesc.size = int2(100, 20);
+				ControlDesc.id = ID_WEB_LINK;
 
-				ControlDesc.Text = "Number of Jobs";
+				ControlDesc.text = "Number of Jobs";
 				NumberOfJobs = oWinControlCreate(ControlDesc);
 			}
 			break;

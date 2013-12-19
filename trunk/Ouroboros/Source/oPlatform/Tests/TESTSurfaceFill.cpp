@@ -40,27 +40,27 @@ void PlatformFillGridNumbers(ouro::surface::buffer* _pBuffer
 	oGDIScopedGetDC hScreenDC(0);
 	oGDIScopedDC hDC(CreateCompatibleDC(hScreenDC));
 
-	oGUI_FONT_DESC fd;
-	fd.FontName = "Tahoma";
-	fd.PointSize = (oGDILogicalHeightToPoint(hDC, _GridDimensions.y) * 0.33f);
-	fd.Bold = fd.PointSize < 15;
+	ouro::font_info fd;
+	fd.name = "Tahoma";
+	fd.point_size = (oGDILogicalHeightToPoint(hDC, _GridDimensions.y) * 0.33f);
+	fd.bold = fd.point_size < 15;
 
 	oGDIScopedObject<HFONT> hFont(oGDICreateFont(fd));
 
 	oGDIScopedSelect ScopedSelectBmp(hDC, hBmp);
 	oGDIScopedSelect ScopedSelectFont(hDC, hFont);
 
-	oGUI_TEXT_DESC td;
-	td.Alignment = ouro::alignment::middle_center;
-	td.Shadow = ouro::color(0);
-	td.SingleLine = true;
+	ouro::text_info td;
+	td.alignment = ouro::alignment::middle_center;
+	td.shadow = ouro::color(0);
+	td.single_line = true;
 
 	ouro::surface::fill_grid_numbers(si.dimensions.xy(), _GridDimensions,
 		[&](const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)->bool
 	{
-		td.Position = _DrawBoxPosition;
-		td.Size = _DrawBoxSize;
-		td.Foreground = _NumberColor;
+		td.position = _DrawBoxPosition;
+		td.size = _DrawBoxSize;
+		td.foreground = _NumberColor;
 		return oGDIDrawText(hDC, td, _Text);
 	});
 

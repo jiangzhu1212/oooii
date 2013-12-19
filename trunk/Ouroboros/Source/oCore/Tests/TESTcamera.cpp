@@ -186,7 +186,7 @@ void TESTcamera(test_services& _Services)
 					RECT rClient;
 					GetClientRect(hWnd, &rClient);
 
-					oGUI_TEXT_DESC td;
+					ouro::text_info td;
 					td.Foreground = ouro::CadetBlue;
 					td.Position = int2(0, 0);
 					td.Size = oWinRectSize(rClient);

@@ -184,17 +184,17 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 
 	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.shape.client_size));
 	
-	oGUI_CONTROL_DESC Descs[AB_CONTROL_COUNT];
+	ouro::control_info Descs[AB_CONTROL_COUNT];
 
 	// Icon
 	{
 		oRECT rChild = oRect(oWinRectWH(int2(0,0), kIconSize));
 		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-		Descs[AB_ICON].Type = control_type::icon;
-		Descs[AB_ICON].Icon = Info.icon;
-		Descs[AB_ICON].Position = oWinRectPosition(oWinRect(r));
-		Descs[AB_ICON].Size = oWinRectSize(oWinRect(r));
+		Descs[AB_ICON].type = control_type::icon;
+		Descs[AB_ICON].icon = Info.icon;
+		Descs[AB_ICON].position = oWinRectPosition(oWinRect(r));
+		Descs[AB_ICON].size = oWinRectSize(oWinRect(r));
 	}
 
 	// Install Path
@@ -207,10 +207,10 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		oRECT rChild = oRect(oWinRectWH(kModulePathPos, kModulePathSize));
 		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-		Descs[AB_INSTALL_PATH].Type = control_type::hyperlabel;
-		Descs[AB_INSTALL_PATH].Text = StrModulePath;
-		Descs[AB_INSTALL_PATH].Position = oWinRectPosition(oWinRect(r));
-		Descs[AB_INSTALL_PATH].Size = oWinRectSize(oWinRect(r));
+		Descs[AB_INSTALL_PATH].type = control_type::hyperlabel;
+		Descs[AB_INSTALL_PATH].text = StrModulePath;
+		Descs[AB_INSTALL_PATH].position = oWinRectPosition(oWinRect(r));
+		Descs[AB_INSTALL_PATH].size = oWinRectSize(oWinRect(r));
 	}
 
 	// Module Info
@@ -231,10 +231,10 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		oRECT rChild = oRect(oWinRectWH(kModuleInfoPos, kModuleInfoSize));
 		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-		Descs[AB_MODULE_INFO].Type = control_type::label;
-		Descs[AB_MODULE_INFO].Text = StrModuleInfo;
-		Descs[AB_MODULE_INFO].Position = oWinRectPosition(oWinRect(r));
-		Descs[AB_MODULE_INFO].Size = oWinRectSize(oWinRect(r));
+		Descs[AB_MODULE_INFO].type = control_type::label;
+		Descs[AB_MODULE_INFO].text = StrModuleInfo;
+		Descs[AB_MODULE_INFO].position = oWinRectPosition(oWinRect(r));
+		Descs[AB_MODULE_INFO].size = oWinRectSize(oWinRect(r));
 
 		//struct version version;
 		//mstring company;
@@ -257,10 +257,10 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			oRECT rChild = oRect(oWinRectWH(kWebsitePos, kWebsiteSize));
 			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_WEBSITE].Type = control_type::hyperlabel;
-			Descs[AB_WEBSITE].Text = StrWebsite;
-			Descs[AB_WEBSITE].Position = oWinRectPosition(oWinRect(r));
-			Descs[AB_WEBSITE].Size = oWinRectSize(oWinRect(r));
+			Descs[AB_WEBSITE].type = control_type::hyperlabel;
+			Descs[AB_WEBSITE].text = StrWebsite;
+			Descs[AB_WEBSITE].position = oWinRectPosition(oWinRect(r));
+			Descs[AB_WEBSITE].size = oWinRectSize(oWinRect(r));
 		}
 	}
 
@@ -274,10 +274,10 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			oRECT rChild = oRect(oWinRectWH(kIssueSitePos, kIssueSiteSize));
 			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_ISSUE_SITE].Type = control_type::hyperlabel;
-			Descs[AB_ISSUE_SITE].Text = StrIssueSite;
-			Descs[AB_ISSUE_SITE].Position = oWinRectPosition(oWinRect(r));
-			Descs[AB_ISSUE_SITE].Size = oWinRectSize(oWinRect(r));
+			Descs[AB_ISSUE_SITE].type = control_type::hyperlabel;
+			Descs[AB_ISSUE_SITE].text = StrIssueSite;
+			Descs[AB_ISSUE_SITE].position = oWinRectPosition(oWinRect(r));
+			Descs[AB_ISSUE_SITE].size = oWinRectSize(oWinRect(r));
 		}
 	}
 
@@ -286,10 +286,10 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		oRECT rChild = oRect(oWinRectWH(-kInset, kButtonSize));
 		oRECT r = oGUIResolveRect(rParent, rChild, alignment::bottom_right, true);
 
-		Descs[AB_OK].Type = control_type::button;
-		Descs[AB_OK].Text = "&OK";
-		Descs[AB_OK].Position = oWinRectPosition(oWinRect(r));
-		Descs[AB_OK].Size = oWinRectSize(oWinRect(r));
+		Descs[AB_OK].type = control_type::button;
+		Descs[AB_OK].text = "&OK";
+		Descs[AB_OK].position = oWinRectPosition(oWinRect(r));
+		Descs[AB_OK].size = oWinRectSize(oWinRect(r));
 	}
 
 	// Component Group
@@ -299,10 +299,10 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			oRECT rChild = oRect(oWinRectWH(kComponentGroupPos, kComponentGroupSize));
 			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_COMPONENT_GROUP].Type = control_type::group;
-			Descs[AB_COMPONENT_GROUP].Text = "3rd-Party Components";
-			Descs[AB_COMPONENT_GROUP].Position = oWinRectPosition(oWinRect(r));
-			Descs[AB_COMPONENT_GROUP].Size = oWinRectSize(oWinRect(r));
+			Descs[AB_COMPONENT_GROUP].type = control_type::group;
+			Descs[AB_COMPONENT_GROUP].text = "3rd-Party Components";
+			Descs[AB_COMPONENT_GROUP].position = oWinRectPosition(oWinRect(r));
+			Descs[AB_COMPONENT_GROUP].size = oWinRectSize(oWinRect(r));
 		}
 	}
 	
@@ -313,10 +313,10 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			oRECT rChild = oRect(oWinRectWH(kComponentListPos, kComponentListSize));
 			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_COMPONENT_LIST].Type = control_type::listbox;
-			Descs[AB_COMPONENT_LIST].Text = Info.components;
-			Descs[AB_COMPONENT_LIST].Position = oWinRectPosition(oWinRect(r));
-			Descs[AB_COMPONENT_LIST].Size = oWinRectSize(oWinRect(r));
+			Descs[AB_COMPONENT_LIST].type = control_type::listbox;
+			Descs[AB_COMPONENT_LIST].text = Info.components;
+			Descs[AB_COMPONENT_LIST].position = oWinRectPosition(oWinRect(r));
+			Descs[AB_COMPONENT_LIST].size = oWinRectSize(oWinRect(r));
 
 			tokenize(ComponentComments, Info.component_comments, "|");
 		}
@@ -329,19 +329,19 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			oRECT rChild = oRect(oWinRectWH(kComponentCommentPos, kComponentCommentSize));
 			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
 
-			Descs[AB_COMPONENT_COMMENT].Type = control_type::hyperlabel;
-			Descs[AB_COMPONENT_COMMENT].Text = ComponentComments[0].c_str();
-			Descs[AB_COMPONENT_COMMENT].Position = oWinRectPosition(oWinRect(r));
-			Descs[AB_COMPONENT_COMMENT].Size = oWinRectSize(oWinRect(r));
+			Descs[AB_COMPONENT_COMMENT].type = control_type::hyperlabel;
+			Descs[AB_COMPONENT_COMMENT].text = ComponentComments[0].c_str();
+			Descs[AB_COMPONENT_COMMENT].position = oWinRectPosition(oWinRect(r));
+			Descs[AB_COMPONENT_COMMENT].size = oWinRectSize(oWinRect(r));
 		}
 	}
 
 	for (short i = 0; i < AB_CONTROL_COUNT; i++)
 	{
-		if (Descs[i].Type != control_type::unknown)
+		if (Descs[i].type != control_type::unknown)
 		{
-			Descs[i].hParent = _CreateEvent.window;
-			Descs[i].ID = i;
+			Descs[i].parent = _CreateEvent.window;
+			Descs[i].id = i;
 			Controls[i] = (ouro::window_handle)oWinControlCreate(Descs[i]);
 		}
 		else

@@ -314,11 +314,11 @@ bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered);
 
 // Converts the specified oGUI_HOTKEY_DESCs into an ACCEL array. _pAccels must
 // be least the same number of items as _HotKeys.
-void oWinAccelFromHotKeys(ACCEL* _pAccels, const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys);
+void oWinAccelFromHotKeys(ACCEL* _pAccels, const ouro::basic_hotkey_info* _pHotKeys, size_t _NumHotKeys);
 
 // Converts the specified ACCELs into an oGUI_HOTKEY_DESC array. _pHotKeys must
 // be least the same number of items as _pAccels.
-void oWinAccelToHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys);
+void oWinAccelToHotKeys(ouro::basic_hotkey_info* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys);
 
 // _____________________________________________________________________________
 // Basic Window Components.
@@ -549,7 +549,7 @@ template<size_t capacity> char* oWinTruncatePath(ouro::fixed_string<char, capaci
 // all controls must have a parent and on Windows the parent deletes all its
 // children, in many cases the lifetime of the HWND need not be managed, or even
 // retained.
-HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc);
+HWND oWinControlCreate(const ouro::control_info& _Desc);
 
 // Several controls have very typical behavior that occurs on a WM_NOTIFY 
 // message, so encapsulate that functionality here. Returns true if the message

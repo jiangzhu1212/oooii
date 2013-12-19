@@ -250,8 +250,8 @@ struct window_impl : window
 	bool enabled() const override;
 	void capture(bool _Capture) override;
 	bool has_capture() const override;
-	void set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys) override;
-	int get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const override;
+	void set_hotkeys(const ouro::basic_hotkey_info* _pHotKeys, size_t _NumHotKeys) override;
+	int get_hotkeys(ouro::basic_hotkey_info* _pHotKeys, size_t _MaxNumHotKeys) const override;
 
 	// Observer API
 	int hook_actions(const input::action_hook& _Hook) override;
@@ -709,13 +709,13 @@ bool window_impl::has_capture() const
 	return hWnd == GetCapture();
 }
 
-void window_impl::set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys)
+void window_impl::set_hotkeys(const ouro::basic_hotkey_info* _pHotKeys, size_t _NumHotKeys)
 {
-	oGUI_HOTKEY_DESC_NO_CTOR* pCopy = nullptr;
+	ouro::basic_hotkey_info* pCopy = nullptr;
 	if (_pHotKeys && _NumHotKeys)
 	{
-		pCopy = new_array<oGUI_HOTKEY_DESC_NO_CTOR>(_NumHotKeys);
-		memcpy(pCopy, _pHotKeys, sizeof(oGUI_HOTKEY_DESC_NO_CTOR) * _NumHotKeys);
+		pCopy = new_array<ouro::basic_hotkey_info>(_NumHotKeys);
+		memcpy(pCopy, _pHotKeys, sizeof(ouro::basic_hotkey_info) * _NumHotKeys);
 	}
 
 	dispatch_internal(std::move([=]
@@ -739,7 +739,7 @@ void window_impl::set_hotkeys(const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t 
 	}));
 }
 
-int window_impl::get_hotkeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _MaxNumHotKeys) const
+int window_impl::get_hotkeys(ouro::basic_hotkey_info* _pHotKeys, size_t _MaxNumHotKeys) const
 {
 	int N = 0;
 	window_impl* w = const_cast<window_impl*>(this);

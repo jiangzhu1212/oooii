@@ -973,34 +973,34 @@ bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered)
 		return oErrorSetLast(std::errc::not_supported, "Windows 7 is the minimum required version for touch support");
 }
 
-void oWinAccelFromHotKeys(ACCEL* _pAccels, const oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, size_t _NumHotKeys)
+void oWinAccelFromHotKeys(ACCEL* _pAccels, const ouro::basic_hotkey_info* _pHotKeys, size_t _NumHotKeys)
 {
 	for (size_t i = 0; i < _NumHotKeys; i++)
 	{
 		ACCEL& a = _pAccels[i];
-		const oGUI_HOTKEY_DESC_NO_CTOR& h = _pHotKeys[i];
+		const ouro::basic_hotkey_info& h = _pHotKeys[i];
 		a.fVirt = FVIRTKEY;
-		if (h.AltDown) a.fVirt |= FALT;
-		if (h.CtrlDown) a.fVirt |= FCONTROL;
-		if (h.ShiftDown) a.fVirt |= FSHIFT;
-		a.key = oWinKeyFromKey(h.HotKey) & 0xffff;
-		a.cmd = h.ID;
+		if (h.alt_down) a.fVirt |= FALT;
+		if (h.ctrl_down) a.fVirt |= FCONTROL;
+		if (h.shift_down) a.fVirt |= FSHIFT;
+		a.key = oWinKeyFromKey(h.hotkey) & 0xffff;
+		a.cmd = h.id;
 	}
 }
 
-void oWinAccelToHotKeys(oGUI_HOTKEY_DESC_NO_CTOR* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys)
+void oWinAccelToHotKeys(ouro::basic_hotkey_info* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys)
 {
 	for (size_t i = 0; i < _NumHotKeys; i++)
 	{
 		const ACCEL& a = _pAccels[i];
-		oGUI_HOTKEY_DESC_NO_CTOR& h = _pHotKeys[i];
+		ouro::basic_hotkey_info& h = _pHotKeys[i];
 		oASSERT(a.fVirt & FVIRTKEY, "");
 		oWINKEY_CONTROL_STATE dummy;
-		h.HotKey = oWinKeyToKey(a.key);
-		h.AltDown = !!(a.fVirt & FALT);
-		h.CtrlDown = !!(a.fVirt & FCONTROL);
-		h.ShiftDown = !!(a.fVirt & FSHIFT);
-		h.ID = a.cmd;
+		h.hotkey = oWinKeyToKey(a.key);
+		h.alt_down = !!(a.fVirt & FALT);
+		h.ctrl_down = !!(a.fVirt & FCONTROL);
+		h.shift_down = !!(a.fVirt & FSHIFT);
+		h.id = a.cmd;
 	}
 }
 
@@ -2097,45 +2097,45 @@ static LRESULT CALLBACK oSubclassProcGroup(HWND _hControl, UINT _uMsg, WPARAM _w
 	return DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
 }
 
-static bool OnCreateAddSubItems(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+static bool OnCreateAddSubItems(HWND _hControl, const ouro::control_info& _Desc)
 {
-	if (strchr(_Desc.Text, '|'))
+	if (strchr(_Desc.text, '|'))
 	{
-		oVERIFY_R(oWinControlAddSubItems(_hControl, _Desc.Text));
+		oVERIFY_R(oWinControlAddSubItems(_hControl, _Desc.text));
 		oVERIFY_R(oWinControlSelectSubItem(_hControl, 0));
 	}
 
 	return true;
 }
 
-static bool OnCreateTab(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+static bool OnCreateTab(HWND _hControl, const ouro::control_info& _Desc)
 {
 	oVERIFY_R(SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr));
 	return OnCreateAddSubItems(_hControl, _Desc);
 }
 
-static bool OnCreateGroup(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+static bool OnCreateGroup(HWND _hControl, const ouro::control_info& _Desc)
 {
 	return !!SetWindowSubclass(_hControl, oSubclassProcGroup, oSubclassGroupID, (DWORD_PTR)nullptr);
 }
 
-static bool OnCreateFloatBox(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+static bool OnCreateFloatBox(HWND _hControl, const ouro::control_info& _Desc)
 {
 	oVERIFY_R(SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr));
-	SetWindowText(_hControl, _Desc.Text);
+	SetWindowText(_hControl, _Desc.text);
 	return true;
 }
 
-static bool OnCreateIcon(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+static bool OnCreateIcon(HWND _hControl, const ouro::control_info& _Desc)
 {
-	oWinControlSetIcon(_hControl, (HICON)_Desc.Text);
+	oWinControlSetIcon(_hControl, (HICON)_Desc.text);
 	return true;
 }
 
-static bool OnCreateFloatBoxSpinner(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+static bool OnCreateFloatBoxSpinner(HWND _hControl, const ouro::control_info& _Desc)
 {
-	oGUI_CONTROL_DESC ActualFloatBoxDesc = _Desc;
-	ActualFloatBoxDesc.Type = ouro::control_type::floatbox;
+	ouro::control_info ActualFloatBoxDesc = _Desc;
+	ActualFloatBoxDesc.type = ouro::control_type::floatbox;
 	HWND hActualFloatBox = oWinControlCreate(ActualFloatBoxDesc);
 	oVB(hActualFloatBox);
 	SendMessage(_hControl, UDM_SETBUDDY, (WPARAM)hActualFloatBox, 0);
@@ -2143,26 +2143,26 @@ static bool OnCreateFloatBoxSpinner(HWND _hControl, const oGUI_CONTROL_DESC& _De
 	return true;
 }
 
-static bool OnCreateMarquee(HWND _hControl, const oGUI_CONTROL_DESC& _Desc)
+static bool OnCreateMarquee(HWND _hControl, const ouro::control_info& _Desc)
 {
 	SendMessage(_hControl, PBM_SETMARQUEE, 1, 0);
 	return true;
 }
 
-static int2 GetSizeExplicit(const oGUI_CONTROL_DESC& _Desc)
+static int2 GetSizeExplicit(const ouro::control_info& _Desc)
 {
-	return _Desc.Size;
+	return _Desc.size;
 }
 
-static int2 GetSizeButtonDefault(const oGUI_CONTROL_DESC& _Desc)
+static int2 GetSizeButtonDefault(const ouro::control_info& _Desc)
 {
-	return oGUIResolveRectSize(_Desc.Size, int2(75, 23));
+	return oGUIResolveRectSize(_Desc.size, int2(75, 23));
 }
 
-static int2 GetSizeIcon(const oGUI_CONTROL_DESC& _Desc)
+static int2 GetSizeIcon(const ouro::control_info& _Desc)
 {
-	int2 iconSize = oGDIGetIconSize((HICON)_Desc.Text);
-	return oGUIResolveRectSize(_Desc.Size, iconSize);
+	int2 iconSize = oGDIGetIconSize((HICON)_Desc.text);
+	return oGUIResolveRectSize(_Desc.size, iconSize);
 }
 
 struct CONTROL_CREATION_DESC
@@ -2171,8 +2171,8 @@ struct CONTROL_CREATION_DESC
 	DWORD dwStyle;
 	DWORD dwExStyle;
 	bool SetText;
-	bool (*FinishCreation)(HWND _hControl, const oGUI_CONTROL_DESC& _Desc);
-	int2 (*GetSize)(const oGUI_CONTROL_DESC& _Desc);
+	bool (*FinishCreation)(HWND _hControl, const ouro::control_info& _Desc);
+	int2 (*GetSize)(const ouro::control_info& _Desc);
 };
 
 static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(ouro::control_type::value _Type)
@@ -2209,32 +2209,32 @@ static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(ouro::control_typ
 	return sDescs[_Type];
 }
 
-HWND oWinControlCreate(const oGUI_CONTROL_DESC& _Desc)
+HWND oWinControlCreate(const ouro::control_info& _Desc)
 {
-	if (!_Desc.hParent || _Desc.Type == ouro::control_type::unknown)
+	if (!_Desc.parent || _Desc.type == ouro::control_type::unknown)
 		return (HWND)oErrorSetLast(std::errc::invalid_argument);
-	oWINVP((HWND)_Desc.hParent);
+	oWINVP((HWND)_Desc.parent);
 
-	const CONTROL_CREATION_DESC& CCDesc = oWinControlGetCreationDesc(_Desc.Type);
+	const CONTROL_CREATION_DESC& CCDesc = oWinControlGetCreationDesc(_Desc.type);
 	int2 size = CCDesc.GetSize(_Desc);
 
 	HWND hWnd = CreateWindowEx(
 		CCDesc.dwExStyle
 		, CCDesc.ClassName
-		, (CCDesc.SetText && _Desc.Text) ? _Desc.Text : ""
-		, CCDesc.dwStyle | (_Desc.StartsNewGroup ? WS_GROUP : 0)
-		, _Desc.Position.x
-		, _Desc.Position.y
+		, (CCDesc.SetText && _Desc.text) ? _Desc.text : ""
+		, CCDesc.dwStyle | (_Desc.starts_new_group ? WS_GROUP : 0)
+		, _Desc.position.x
+		, _Desc.position.y
 		, size.x
 		, size.y
-		, (HWND)_Desc.hParent
-		, (HMENU)_Desc.ID
+		, (HWND)_Desc.parent
+		, (HMENU)_Desc.id
 		, nullptr
 		, nullptr);
 
 	oVB(hWnd);
 
-	oWinControlSetFont(hWnd, (HFONT)_Desc.hFont);
+	oWinControlSetFont(hWnd, (HFONT)_Desc.font);
 	if (CCDesc.FinishCreation)
 	{
 		if (!CCDesc.FinishCreation(hWnd, _Desc))
@@ -2699,9 +2699,9 @@ ouro::control_type::value oWinControlGetType(HWND _hControl)
 
 int2 oWinControlGetInitialSize(ouro::control_type::value _Type, const int2& _Size)
 {
-	oGUI_CONTROL_DESC d;
-	d.Type = _Type;
-	d.Size = _Size;
+	ouro::control_info d;
+	d.type = _Type;
+	d.size = _Size;
 	return oWinControlGetCreationDesc(_Type).GetSize(d);
 }
 

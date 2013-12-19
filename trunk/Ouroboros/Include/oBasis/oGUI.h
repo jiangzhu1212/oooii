@@ -382,6 +382,125 @@ struct window_cursor_shape
 	bool has_capture;
 };
 
+struct control_info
+{
+	control_info()
+		: parent(nullptr)
+		, font(nullptr)
+		, type(control_type::unknown)
+		, text(nullptr)
+		, position(oDEFAULT, oDEFAULT)
+		, size(oDEFAULT, oDEFAULT)
+		, id(0xffff)
+		, starts_new_group(false)
+	{}
+
+	// All controls must have a parent. It can be the top-level window or other
+	// controls.
+	window_handle parent;
+
+	// If nullptr is specified then the system default font will be used.
+	font_handle font;
+
+	// Type of control to create
+	control_type::value type;
+	
+	// Any item that contains a list of strings can set this to be a '|'-delimited 
+	// set of strings to immediately populate all items. ("Item1|Item2|Item3").
+	union
+	{
+		const char* text;
+		icon_handle icon;
+	};
+
+	int2 position;
+	int2 size;
+	unsigned short id;
+	bool starts_new_group;
+};
+
+struct font_info
+{
+	font_info()
+		: name("Tahoma")
+		, point_size(10.0f)
+		, bold(false)
+		, italic(false)
+		, underline(false)
+		, strikeout(false)
+		, antialiased(true)
+	{}
+
+	sstring name;
+	float point_size;
+	bool bold;
+	bool italic;
+	bool underline;
+	bool strikeout;
+	bool antialiased;
+};
+
+struct text_info
+{
+	text_info()
+		: position(int2(oDEFAULT, oDEFAULT))
+		, size(int2(oDEFAULT, oDEFAULT))
+		, alignment(alignment::top_left)
+		, foreground(White)
+		, background(0)
+		, shadow(0)
+		, shadow_offset(int2(2,2))
+		, single_line(false)
+	{}
+
+	// Position and size define a rectangle in which text is drawn. Alignment 
+	// provides addition offsetting within that rectangle. So to center text on
+	// the screen the position would be 0,0 and size would be the resolution of 
+	// the screen and alignment would be middle-center.
+	int2 position;
+	int2 size;
+	alignment::value alignment;
+	// Any non-1.0 (non-0xff) alpha will be not-drawn
+	color foreground;
+	color background;
+	color shadow;
+	int2 shadow_offset;
+	bool single_line;
+};
+
+// no ctor so static init works
+struct basic_menu_item_info
+{
+	const char* text;
+	bool enabled;
+	bool checked;
+};
+
+struct menu_item_info : basic_menu_item_info
+{
+	menu_item_info() { text = ""; enabled = true; checked = false; }
+};
+
+// So that hotkeys can be statically defined without a "non-aggregates cannot be 
+// initialized" warning
+struct basic_hotkey_info
+{
+	input::key hotkey;
+	unsigned short id;
+	bool alt_down;
+	bool ctrl_down;
+	bool shift_down;
+};
+
+struct hotkey_info : basic_hotkey_info
+{
+	hotkey_info() { hotkey = input::none; id = 0; alt_down = ctrl_down = shift_down = false; }
+	hotkey_info(const basic_hotkey_info& _That) { operator=(_That); }
+	hotkey_info(const hotkey_info& _That) { operator=(_That); }
+	const hotkey_info& operator=(const basic_hotkey_info& _That) { *(basic_hotkey_info*)this = _That; }
+	const hotkey_info& operator=(const hotkey_info& _That) { *this = _That; }
+};
+
 // Invalid, hidden and minimized windows are not visible
 inline bool is_visible(const window_state::value& _State) { return _State >= window_state::restored; }
 
@@ -423,138 +542,6 @@ inline bool is_shape_event(const event_type::value& _Event)
 }
 
 } // namespace ouro
-
-struct oGUI_MENU_ITEM_DESC_NO_CTOR
-{
-	const char* Text;
-	bool Enabled;
-	bool Checked;
-};
-
-struct oGUI_MENU_ITEM_DESC : oGUI_MENU_ITEM_DESC_NO_CTOR
-{
-	oGUI_MENU_ITEM_DESC()
-	{
-		Text = "";
-		Enabled = true;
-		Checked = false;
-	}
-};
-
-// So that hotkeys can be statically defined without a "non-aggregates cannot be 
-// initialized" warning
-struct oGUI_HOTKEY_DESC_NO_CTOR
-{
-	ouro::input::key HotKey;
-	unsigned short ID;
-	bool AltDown;
-	bool CtrlDown;
-	bool ShiftDown;
-};
-
-struct oGUI_HOTKEY_DESC : oGUI_HOTKEY_DESC_NO_CTOR
-{
-	oGUI_HOTKEY_DESC()
-	{
-		HotKey = ouro::input::none;
-		ID = 0;
-		AltDown = false;
-		CtrlDown = false;
-		ShiftDown = false;
-	}
-
-	oGUI_HOTKEY_DESC(const oGUI_HOTKEY_DESC_NO_CTOR& _That) { operator=(_That); }
-	oGUI_HOTKEY_DESC(const oGUI_HOTKEY_DESC& _That) { operator=(_That); }
-	const oGUI_HOTKEY_DESC& operator=(const oGUI_HOTKEY_DESC_NO_CTOR& _That) { *(oGUI_HOTKEY_DESC_NO_CTOR*)this = _That; }
-	const oGUI_HOTKEY_DESC& operator=(const oGUI_HOTKEY_DESC& _That) { *this = _That; }
-};
-
-struct oGUI_CONTROL_DESC
-{
-	oGUI_CONTROL_DESC()
-		: hParent(nullptr)
-		, hFont(nullptr)
-		, Type(ouro::control_type::unknown)
-		, Text("")
-		, Position(-1, -1)
-		, Size(oDEFAULT, oDEFAULT)
-		, ID(0xffff)
-		, StartsNewGroup(false)
-	{}
-
-	// All controls must have a parent
-	ouro::window_handle hParent;
-
-	// If nullptr is specified, then the system default font will be used.
-	ouro::font_handle hFont;
-
-	// Type of control to create
-	ouro::control_type::value Type;
-	
-	// Any item that contains a list of strings can set this to be
-	// a '|'-terminated set of strings to immediately populate all
-	// items. ("Item1|Item2|Item3"). This is valid for:
-	// COMBOBOX, COMBOTEXTBOX, TAB
-	union
-	{
-		const char* Text;
-		ouro::icon_handle Icon;
-	};
-
-	int2 Position;
-	int2 Size;
-	unsigned short ID;
-	bool StartsNewGroup;
-};
-
-struct oGUI_FONT_DESC
-{
-	oGUI_FONT_DESC()
-		: FontName("Tahoma")
-		, PointSize(10.0f)
-		, Bold(false)
-		, Italic(false)
-		, Underline(false)
-		, StrikeOut(false)
-		, AntiAliased(true)
-	{}
-
-	ouro::sstring FontName;
-	float PointSize;
-	bool Bold;
-	bool Italic;
-	bool Underline;
-	bool StrikeOut;
-	bool AntiAliased;
-};
-
-struct oGUI_TEXT_DESC
-{
-	oGUI_TEXT_DESC()
-		: Position(int2(oDEFAULT, oDEFAULT))
-		, Size(int2(oDEFAULT, oDEFAULT))
-		, Alignment(ouro::alignment::top_left)
-		, Foreground(ouro::White)
-		, Background(0)
-		, Shadow(0)
-		, ShadowOffset(int2(2,2))
-		, SingleLine(false)
-	{}
-
-	// Position and Size define a rectangle in which text is drawn. Alignment 
-	// provides addition offsetting within that rectangle. So to center text on
-	// the screen, the position would be 0,0 and size would be the resolution of 
-	// the screen, and alignment would be middle-center.
-	int2 Position;
-	int2 Size;
-	ouro::alignment::value Alignment;
-	// Any non-1.0 (non-0xff) alpha will be not-drawn
-	ouro::color Foreground;
-	ouro::color Background;
-	ouro::color Shadow;
-	int2 ShadowOffset;
-	bool SingleLine;
-};
 
 // @tony: Can oInputMapper replace this?
 // A utility function to analyze the specified action and compare it for keydown

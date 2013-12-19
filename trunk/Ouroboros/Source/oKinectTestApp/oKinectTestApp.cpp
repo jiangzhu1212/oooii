@@ -370,7 +370,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 	// Draw boxes and some HUD info
 	{
 		oGDIScopedSelect SelFont(hDC, _hFont);
-		oGUI_FONT_DESC fd;
+		ouro::font_info fd;
 		oGDIGetFontDesc(_hFont, &fd);
 
 		input::tracking_skeleton Skeleton;
@@ -380,10 +380,10 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 		{
 			AirKeyboard->VisitKeys(std::bind(oGDIDrawAirKey, (HDC)hDC, oBINDREF(rTarget), oGDI_AIR_KEY_DRAW_BOX|oGDI_AIR_KEY_DRAW_KEY, oBIND1, oBIND2, oBINDREF(Skeleton)));
 
-			oGUI_TEXT_DESC td;
-			td.Position = float2(0.0f, VerticalOffset);
-			td.Size = _ClientSize;
-			td.Shadow = Black;
+			ouro::text_info td;
+			td.position = float2(0.0f, VerticalOffset);
+			td.size = _ClientSize;
+			td.shadow = Black;
 			const float4& h = Skeleton.positions[input::hip_center];
 			const float4& hr = Skeleton.positions[input::ankle_right];
 			mstring text;
@@ -417,8 +417,8 @@ void oKinectTestApp::MainEventHook(const window::basic_event& _Event, int _Index
 			display::info di = display::get_info(kw.Window->display_id());
 			float2 Ratio = float2(_Event.as_shape().shape.client_size) / float2(int2(di.mode.width, di.mode.height));
 			float R = max(Ratio);
-			oGUI_FONT_DESC fd;
-			fd.PointSize = oInt(round(R * 35.0f));
+			ouro::font_info fd;
+			fd.point_size = oInt(round(R * 35.0f));
 			kw.hFont = oGDICreateFont(fd);
 			break;
 		}

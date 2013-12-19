@@ -123,16 +123,16 @@ static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const ouro::input::
 
 static void oGDIDrawKinectBoneNames(HDC _hDC, const RECT& _rTarget, int2 _ScreenSpaceBonePositions[ouro::input::bone_count])
 {
-	oGUI_TEXT_DESC td;
-	td.Size = int2(300, 50);
-	td.Alignment = ouro::alignment::top_left;
+	ouro::text_info td;
+	td.size = int2(300, 50);
+	td.alignment = ouro::alignment::top_left;
 	COLORREF rgb = oGDIGetBrushColor(oGDIGetBrush(_hDC));
-	td.Foreground = 0xff000000 | rgb;
-	td.Shadow = Black;
+	td.foreground = 0xff000000 | rgb;
+	td.shadow = Black;
 	for (int i = 0; i < ouro::input::bone_count; i++)
 	{
 		const char* Name = ouro::as_string(ouro::input::skeleton_bone(i)) + 14; // skip "oGUI_BONE_"
-		td.Position = _ScreenSpaceBonePositions[i] + int2(5,5);
+		td.position = _ScreenSpaceBonePositions[i] + int2(5,5);
 		oGDIDrawText(_hDC, td, Name);
 	}
 }
@@ -158,13 +158,13 @@ void oGDIDrawBoneText(
 	RECT rText = oGDICalcTextRect(_hDC, _Text);
 	RECT r = oWinRectResolve(SSBone + int2(0, -2 * oWinRectH(rText)), oWinRectSize(rText), _Anchor);
 
-	oGUI_TEXT_DESC td;
-	td.Position = oWinRectPosition(r);
-	td.Size = oWinRectSize(r);
-	td.Alignment = _Alignment;
+	ouro::text_info td;
+	td.position = oWinRectPosition(r);
+	td.size = oWinRectSize(r);
+	td.alignment = _Alignment;
 	COLORREF rgb = oGDIGetBrushColor(oGDIGetBrush(_hDC));
-	td.Foreground = 0xff000000 | rgb;
-	td.Shadow = Black;
+	td.foreground = 0xff000000 | rgb;
+	td.shadow = Black;
 	oGDIDrawText(_hDC, td, _Text);
 }
 
@@ -236,30 +236,30 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	int2 SSCenter = oKinectSkeletonToScreen(float4(Bounds.center(), 1.0f), oWinRectPosition(_rTarget), oWinRectSize(_rTarget), int2(320,240));
 
 	sstring text;
-	oGUI_TEXT_DESC td;
-	td.Position = SSMin + int2(2,2);
-	td.Size = (SSMax - SSMin) - int2(4,4);
-	td.Shadow = Black;
+	ouro::text_info td;
+	td.position = SSMin + int2(2,2);
+	td.size = (SSMax - SSMin) - int2(4,4);
+	td.shadow = Black;
 	
 	if (_Flags & oGDI_AIR_KEY_DRAW_MIN)
 	{
 		snprintf(text, "%.02f %.02f %.02f", Min.x, Min.y, Min.z);
-		td.Alignment = ouro::alignment::top_left;
+		td.alignment = ouro::alignment::top_left;
 		oGDIDrawText(_hDC, td, text.c_str());
 	}
 
 	if (_Flags & oGDI_AIR_KEY_DRAW_MAX)
 	{
 		snprintf(text, "%.02f %.02f %.02f", Max.x, Max.y, Max.z);
-		td.Alignment = ouro::alignment::bottom_right;
+		td.alignment = ouro::alignment::bottom_right;
 		oGDIDrawText(_hDC, td, text.c_str());
 	}
 
 	if (_Flags & oGDI_AIR_KEY_DRAW_KEY)
 	{
 		if (_LastAction == ouro::input::key_down)
-			td.Foreground = Lime;
-		td.Alignment = ouro::alignment::middle_center;
+			td.foreground = Lime;
+		td.alignment = ouro::alignment::middle_center;
 		oGDIDrawText(_hDC, td, ouro::as_string(_Key.Key));
 	}
 

@@ -194,44 +194,44 @@ void oWindowUITest::InitVCRControls(HWND _hParent, const int2& _Position)
 	static const int2 kButtonSize = int2(25,25);
 	static const int2 kButtonSpacing = int2(27,0);
 
-	oGUI_FONT_DESC fd;
-	fd.FontName = "Webdings";
-	fd.PointSize = 12;
-	fd.AntiAliased = false; // ClearType is non-deterministic, so disable it for screen-compare purposes
+	ouro::font_info fd;
+	fd.name = "Webdings";
+	fd.point_size = 12;
+	fd.antialiased = false; // ClearType is non-deterministic, so disable it for screen-compare purposes
 	HFONT hWebdings = oGDICreateFont(fd);
 
-	oGUI_CONTROL_DESC b;
-	b.hParent = (ouro::window_handle)_hParent;
-	b.Type = ouro::control_type::button;
-	b.Size = kButtonSize;
+	ouro::control_info b;
+	b.parent = (ouro::window_handle)_hParent;
+	b.type = ouro::control_type::button;
+	b.size = kButtonSize;
 	
-	b.Text = "9";
-	b.Position = _Position;
-	b.ID = ID_BIG_BACK;
+	b.text = "9";
+	b.position = _Position;
+	b.id = ID_BIG_BACK;
 	HWND hWnd = oWinControlCreate(b);
 	oWinControlSetFont(hWnd, hWebdings);
 
-	b.Text = "7";
-	b.Position += kButtonSpacing;
-	b.ID = ID_BACK;
+	b.text = "7";
+	b.position += kButtonSpacing;
+	b.id = ID_BACK;
 	hWnd = oWinControlCreate(b);
 	oWinControlSetFont(hWnd, hWebdings);
 
-	b.Text = "4";
-	b.Position += kButtonSpacing;
-	b.ID = ID_PLAY_PAUSE;
+	b.text = "4";
+	b.position += kButtonSpacing;
+	b.id = ID_PLAY_PAUSE;
 	hWnd = oWinControlCreate(b);
 	oWinControlSetFont(hWnd, hWebdings);
 
-	b.Text = "8";
-	b.Position += kButtonSpacing;
-	b.ID = ID_FORWARD;
+	b.text = "8";
+	b.position += kButtonSpacing;
+	b.id = ID_FORWARD;
 	hWnd = oWinControlCreate(b);
 	oWinControlSetFont(hWnd, hWebdings);
 
-	b.Text = ":";
-	b.Position += kButtonSpacing;
-	b.ID = ID_BIG_FORWARD;
+	b.text = ":";
+	b.position += kButtonSpacing;
+	b.id = ID_BIG_FORWARD;
 	hWnd = oWinControlCreate(b);
 	oWinControlSetFont(hWnd, hWebdings);
 }
@@ -258,10 +258,10 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	Window->dispatch([&]
 	{
 		HWND hWnd = (HWND)Window->native_handle();
-		oGUI_FONT_DESC fd;
+		ouro::font_info fd;
 		HFONT hCurrent = oWinGetFont(hWnd);
 		oGDIGetFontDesc(hCurrent, &fd);
-		fd.AntiAliased = false;
+		fd.antialiased = false;
 		HFONT hNew = oGDICreateFont(fd);
 		oWinSetFont(hWnd, hNew);
 	});
@@ -269,7 +269,7 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	Window->set_status_text(0, "OK");
 	Window->set_status_text(1, "Solid");
 
-	oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] = 
+	ouro::basic_hotkey_info HotKeys[] = 
 	{
 		{ ouro::input::w, MENU_VIEW_WIREFRAME, false, true, false },
 		{ ouro::input::s, MENU_VIEW_SOLID, false, true, false },
@@ -285,22 +285,22 @@ void oWindowUITest::OnCreate(HWND _hWnd, ouro::menu_handle _hMenu)
 	InitMenu(_hMenu);
 	InitVCRControls(_hWnd, int2(150, 30));
 
-	oGUI_CONTROL_DESC ButtonDesc;
-	ButtonDesc.hParent = (ouro::window_handle)_hWnd;
-	ButtonDesc.Type = ouro::control_type::button;
-	ButtonDesc.Text = "Push Me";
-	ButtonDesc.Position = int2(10,10);
-	ButtonDesc.Size = int2(100,20);
-	ButtonDesc.ID = ID_PUSHME;
+	ouro::control_info ButtonDesc;
+	ButtonDesc.parent = (ouro::window_handle)_hWnd;
+	ButtonDesc.type = ouro::control_type::button;
+	ButtonDesc.text = "Push Me";
+	ButtonDesc.position = int2(10,10);
+	ButtonDesc.size = int2(100,20);
+	ButtonDesc.id = ID_PUSHME;
 	Controls[ID_PUSHME] = oWinControlCreate(ButtonDesc);
 
-	oGUI_CONTROL_DESC TextDesc;
-	TextDesc.hParent = (ouro::window_handle)_hWnd;
-	TextDesc.Type = ouro::control_type::floatbox;
-	TextDesc.Text = "1.00";
-	TextDesc.Position = int2(50,50);
-	TextDesc.Size = int2(75,20);
-	TextDesc.ID = ID_FLOATBOX;
+	ouro::control_info TextDesc;
+	TextDesc.parent = (ouro::window_handle)_hWnd;
+	TextDesc.type = ouro::control_type::floatbox;
+	TextDesc.text = "1.00";
+	TextDesc.position = int2(50,50);
+	TextDesc.size = int2(75,20);
+	TextDesc.id = ID_FLOATBOX;
 	Controls[ID_FLOATBOX] = oWinControlCreate(TextDesc);
 
 	oWinControlSetValue(Controls[ID_FLOATBOX], 1.234f);
@@ -311,47 +311,47 @@ void oWindowUITest::OnCreate(HWND _hWnd, ouro::menu_handle _hMenu)
 	}
 	catch (std::exception&) {}
 
-	TextDesc.Type = ouro::control_type::floatbox_spinner;
-	TextDesc.Position.y += 40;
-	TextDesc.ID = ID_FLOATBOX_SPINNER;
+	TextDesc.type = ouro::control_type::floatbox_spinner;
+	TextDesc.position.y += 40;
+	TextDesc.id = ID_FLOATBOX_SPINNER;
 	Controls[ID_FLOATBOX_SPINNER] = oWinControlCreate(TextDesc);
 	oVB(Controls[ID_FLOATBOX_SPINNER]);
 
-	ButtonDesc.Text = "Easy";
-	ButtonDesc.Position = int2(10,450);
-	ButtonDesc.Size = int2(100,20);
-	ButtonDesc.ID = ID_EASY;
+	ButtonDesc.text = "Easy";
+	ButtonDesc.position = int2(10,450);
+	ButtonDesc.size = int2(100,20);
+	ButtonDesc.id = ID_EASY;
 	oWinControlCreate(ButtonDesc);
 
-	oGUI_CONTROL_DESC SliderDesc;
-	SliderDesc.hParent = (ouro::window_handle)_hWnd;
-	SliderDesc.Type = ouro::control_type::slider;
-	SliderDesc.Text = "Slider";
-	SliderDesc.Position = int2(150,60);
-	SliderDesc.Size = int2(140,25);
-	SliderDesc.ID = ID_SLIDER;
+	ouro::control_info SliderDesc;
+	SliderDesc.parent = (ouro::window_handle)_hWnd;
+	SliderDesc.type = ouro::control_type::slider;
+	SliderDesc.text = "Slider";
+	SliderDesc.position = int2(150,60);
+	SliderDesc.size = int2(140,25);
+	SliderDesc.id = ID_SLIDER;
 	Controls[ID_SLIDER] = oWinControlCreate(SliderDesc);
 
 	oCHECK0(oWinControlSetRange(Controls[ID_SLIDER], 20, 120));
 	oCHECK0(oWinControlSetRangePosition(Controls[ID_SLIDER], 70));
 
-	SliderDesc.Type = ouro::control_type::slider_selectable;
-	SliderDesc.Text = "SliderSelectable";
-	SliderDesc.Position = int2(150,90);
-	SliderDesc.ID = ID_SLIDER_SELECTABLE;
+	SliderDesc.type = ouro::control_type::slider_selectable;
+	SliderDesc.text = "SliderSelectable";
+	SliderDesc.position = int2(150,90);
+	SliderDesc.id = ID_SLIDER_SELECTABLE;
 	Controls[ID_SLIDER_SELECTABLE] = oWinControlCreate(SliderDesc);
 
 	oCHECK0(oWinControlSetRange(Controls[ID_SLIDER_SELECTABLE], 0, 100));
 	oCHECK0(oWinControlSelect(Controls[ID_SLIDER_SELECTABLE], 10, 50));
 	oCHECK0(oWinControlSetRangePosition(Controls[ID_SLIDER_SELECTABLE], 30));
 
-	oGUI_CONTROL_DESC ProgressBarDesc;
-	ProgressBarDesc.hParent = (ouro::window_handle)_hWnd;
-	ProgressBarDesc.Type = ouro::control_type::progressbar;
-	ProgressBarDesc.Text = "ProgressBar";
-	ProgressBarDesc.Position = int2(150,120);
-	ProgressBarDesc.Size = int2(150,30);
-	ProgressBarDesc.ID = ID_PROGRESSBAR;
+	ouro::control_info ProgressBarDesc;
+	ProgressBarDesc.parent = (ouro::window_handle)_hWnd;
+	ProgressBarDesc.type = ouro::control_type::progressbar;
+	ProgressBarDesc.text = "ProgressBar";
+	ProgressBarDesc.position = int2(150,120);
+	ProgressBarDesc.size = int2(150,30);
+	ProgressBarDesc.id = ID_PROGRESSBAR;
 	Controls[ID_PROGRESSBAR] = oWinControlCreate(ProgressBarDesc);
 	
 	oCHECK0(oWinControlSetRange(Controls[ID_PROGRESSBAR], 20, 30));
@@ -363,28 +363,28 @@ void oWindowUITest::OnCreate(HWND _hWnd, ouro::menu_handle _hMenu)
 	// interactive mode
 	if (kInteractiveMode)
 	{
-		ProgressBarDesc.Type = ouro::control_type::progressbar_unknown;
-		ProgressBarDesc.Text = "Marquee";
-		ProgressBarDesc.Position = int2(150,160);
-		ProgressBarDesc.ID = ID_MARQUEE;
+		ProgressBarDesc.type = ouro::control_type::progressbar_unknown;
+		ProgressBarDesc.text = "Marquee";
+		ProgressBarDesc.position = int2(150,160);
+		ProgressBarDesc.id = ID_MARQUEE;
 		Controls[ID_MARQUEE] = oWinControlCreate(ProgressBarDesc);
 	}
 
-	oGUI_CONTROL_DESC CB;
-	CB.hParent = (ouro::window_handle)_hWnd;
-	CB.Type = ouro::control_type::combobox;
-	CB.Text = "Init1|Init2|Init3";
-	CB.Position = int2(50,120);
-	CB.Size = int2(80,30);
-	CB.ID = ID_COMBOBOX;
+	ouro::control_info CB;
+	CB.parent = (ouro::window_handle)_hWnd;
+	CB.type = ouro::control_type::combobox;
+	CB.text = "Init1|Init2|Init3";
+	CB.position = int2(50,120);
+	CB.size = int2(80,30);
+	CB.id = ID_COMBOBOX;
 	Controls[ID_COMBOBOX] = oWinControlCreate(CB);
 
 	oWinControlInsertSubItem(Controls[ID_COMBOBOX], "After3", oInvalid);
 	oWinControlInsertSubItem(Controls[ID_COMBOBOX], "Btwn2And3", 2);
 
-	CB.Type = ouro::control_type::combotextbox;
-	CB.Position = int2(50,160);
-	CB.ID = ID_COMBOTEXTBOX;
+	CB.type = ouro::control_type::combotextbox;
+	CB.position = int2(50,160);
+	CB.id = ID_COMBOTEXTBOX;
 	Controls[ID_COMBOTEXTBOX] = oWinControlCreate(CB);
 
 	oWinControlInsertSubItem(Controls[ID_COMBOTEXTBOX], "After3", oInvalid);

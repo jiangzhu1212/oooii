@@ -86,7 +86,7 @@ enum oWHK // hotkeys
 	oWHK_TOGGLE_FULLSCREEN,
 };
 
-oGUI_HOTKEY_DESC_NO_CTOR HotKeys[] =
+ouro::basic_hotkey_info HotKeys[] =
 {
 	// reset style
 	{ ouro::input::f3, oWHK_DEFAULT_STYLE, false, false, false },
@@ -216,14 +216,14 @@ bool oWindowTestApp::CreateMenu(const window::create_event& _CreateEvent)
 bool oWindowTestApp::CreateControls(const window::create_event& _CreateEvent)
 {
 	{
-		oGUI_CONTROL_DESC d;
-		d.hParent = _CreateEvent.window;
-		d.Type = ouro::control_type::button;
-		d.Text = "&Easy";
-		d.Position = int2(20, 20);
-		d.Size = int2(80, 20);
-		d.ID = oWCTL_EASY_BUTTON;
-		d.StartsNewGroup = true;
+		ouro::control_info d;
+		d.parent = _CreateEvent.window;
+		d.type = ouro::control_type::button;
+		d.text = "&Easy";
+		d.position = int2(20, 20);
+		d.size = int2(80, 20);
+		d.id = oWCTL_EASY_BUTTON;
+		d.starts_new_group = true;
 		hButton = oWinControlCreate(d);
 	}
 

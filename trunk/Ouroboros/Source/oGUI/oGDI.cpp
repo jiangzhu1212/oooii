@@ -462,16 +462,16 @@ RECT oGDICalcTextRect(HDC _hDC, const char* _Text)
 	return r;
 }
 
-static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text, RECT* _pActual)
+static bool oGDIDrawText(HDC _hDC, const ouro::text_info& _Desc, const char* _Text, RECT* _pActual)
 {
 	int r,g,b,a;
-	_Desc.Foreground.decompose(&r, &g, &b, &a);
+	_Desc.foreground.decompose(&r, &g, &b, &a);
 
 	int br,bg,bb,ba;
-	_Desc.Background.decompose(&br, &bg, &bb, &ba);
+	_Desc.background.decompose(&br, &bg, &bb, &ba);
 
 	int sr,sg,sb,sa;
-	_Desc.Shadow.decompose(&sr, &sg, &sb, &sa);
+	_Desc.shadow.decompose(&sr, &sg, &sb, &sa);
 
 	if (!a)
 	{
@@ -482,7 +482,7 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 	}
 
 	UINT uFormat = DT_WORDBREAK;
-	switch (_Desc.Alignment % 3)
+	switch (_Desc.alignment % 3)
 	{
 		case 0: uFormat |= DT_LEFT; break;
 		case 1: uFormat |= DT_CENTER; break;
@@ -490,7 +490,7 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 		oNODEFAULT;
 	}
 
-	switch (_Desc.Alignment / 3)
+	switch (_Desc.alignment / 3)
 	{
 		case 0: uFormat |= DT_TOP; break;
 		case 1: uFormat |= DT_VCENTER; break;
@@ -498,8 +498,8 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 		oNODEFAULT;
 	}
 
-	bool forcedSingleLine = !_Desc.SingleLine && ((uFormat & DT_BOTTOM) || (uFormat & DT_VCENTER));
-	if (forcedSingleLine || _Desc.SingleLine)
+	bool forcedSingleLine = !_Desc.single_line && ((uFormat & DT_BOTTOM) || (uFormat & DT_VCENTER));
+	if (forcedSingleLine || _Desc.single_line)
 	{
 		if (forcedSingleLine)
 			oTRACE_ONCE("GDI doesn't support multi-line, vertically aligned text. See DrawText docs for more details. http://msdn.microsoft.com/en-us/library/ms901121.aspx");
@@ -510,7 +510,7 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 	if (_pActual)
 		uFormat |= DT_CALCRECT;
 
-	RECT rect = oWinRectWH(_Desc.Position, _Desc.Size);
+	RECT rect = oWinRectWH(_Desc.position, _Desc.size);
 	if (!_pActual)
 		_pActual = &rect;
 	else
@@ -521,11 +521,11 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 		_pActual->bottom = 1;
 	}
 
-	if (sa && any(_Desc.ShadowOffset != int2(0,0)))
+	if (sa && any(_Desc.shadow_offset != int2(0,0)))
 	{
 		// If the background is opaque, cast an opaque shadow
 		oGDIScopedTextColor ShadowState(_hDC, RGB(sr,sg,sb), RGB(sr,sg,sb), ba);
-		RECT rShadow = oWinRectTranslate(*_pActual, _Desc.ShadowOffset);
+		RECT rShadow = oWinRectTranslate(*_pActual, _Desc.shadow_offset);
 		DrawText(_hDC, _Text, -1, &rShadow, uFormat);
 	}
 	
@@ -534,13 +534,13 @@ static bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Tex
 	return true;
 }
 
-bool oGDICalcTextBox(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text)
+bool oGDICalcTextBox(HDC _hDC, const ouro::text_info& _Desc, const char* _Text)
 {
-	RECT r = oWinRectWH(_Desc.Position, _Desc.Size);
+	RECT r = oWinRectWH(_Desc.position, _Desc.size);
 	return oGDIDrawText(_hDC, _Desc, _Text, &r);
 }
 
-bool oGDIDrawText(HDC _hDC, const oGUI_TEXT_DESC& _Desc, const char* _Text)
+bool oGDIDrawText(HDC _hDC, const ouro::text_info& _Desc, const char* _Text)
 {
 	return oGDIDrawText(_hDC, _Desc, _Text, nullptr);
 }
@@ -605,39 +605,39 @@ int2 oGDIGetIconSize(HICON _hIcon)
 	return int2(-1,-1);
 }
 
-HFONT oGDICreateFont(const oGUI_FONT_DESC& _Desc)
+HFONT oGDICreateFont(const ouro::font_info& _Desc)
 {
 	oGDIScopedGetDC hDC(GetDesktopWindow());
 	HFONT hFont = CreateFont(
-		oGDIPointToLogicalHeight(hDC, _Desc.PointSize)
+		oGDIPointToLogicalHeight(hDC, _Desc.point_size)
 		, 0
 		, 0
 		, 0
-		, _Desc.Bold ? FW_BOLD : FW_NORMAL
-		, _Desc.Italic
-		, _Desc.Underline
-		, _Desc.StrikeOut
+		, _Desc.bold ? FW_BOLD : FW_NORMAL
+		, _Desc.italic
+		, _Desc.underline
+		, _Desc.strikeout
 		, DEFAULT_CHARSET
 		, OUT_DEFAULT_PRECIS
 		, CLIP_DEFAULT_PRECIS
-		, _Desc.AntiAliased ? CLEARTYPE_QUALITY : NONANTIALIASED_QUALITY
+		, _Desc.antialiased ? CLEARTYPE_QUALITY : NONANTIALIASED_QUALITY
 		, DEFAULT_PITCH
-		, _Desc.FontName);
+		, _Desc.name);
 	return hFont;
 }
 
-void oGDIGetFontDesc(HFONT _hFont, oGUI_FONT_DESC* _pDesc)
+void oGDIGetFontDesc(HFONT _hFont, ouro::font_info* _pDesc)
 {
 	LOGFONT lf = {0};
 	::GetObject(_hFont, sizeof(lf), &lf);
-	_pDesc->FontName = lf.lfFaceName;
-	_pDesc->Bold = lf.lfWeight > FW_NORMAL;
-	_pDesc->Italic = !!lf.lfItalic;
-	_pDesc->Underline = !!lf.lfUnderline;
-	_pDesc->StrikeOut = !!lf.lfStrikeOut;
-	_pDesc->AntiAliased = lf.lfQuality != NONANTIALIASED_QUALITY;
+	_pDesc->name = lf.lfFaceName;
+	_pDesc->bold = lf.lfWeight > FW_NORMAL;
+	_pDesc->italic = !!lf.lfItalic;
+	_pDesc->underline = !!lf.lfUnderline;
+	_pDesc->strikeout = !!lf.lfStrikeOut;
+	_pDesc->antialiased = lf.lfQuality != NONANTIALIASED_QUALITY;
 	oGDIScopedGetDC hDC(GetDesktopWindow());
-	_pDesc->PointSize = oGDILogicalHeightToPointF(hDC, lf.lfHeight);
+	_pDesc->point_size = oGDILogicalHeightToPointF(hDC, lf.lfHeight);
 }
 
 const char* oGDIGetFontFamily(BYTE _tmPitchAndFamily)
