@@ -667,10 +667,10 @@ HWND oWinCreate(HWND _hParent
 		ouro::display::info di = ouro::display::get_info(ouro::display::primary_id());
 		const RECT rPrimaryWorkarea = oWinRectWH(int2(di.workarea_x, di.workarea_y), int2(di.workarea_width, di.workarea_height));
 		const int2 DefaultSize = oWinRectSize(rPrimaryWorkarea) / 4; // 25% of parent window by default
-		NewSize = oGUIResolveRectSize(NewSize, DefaultSize);
-		const RECT rCenteredClient = oWinRect(oGUIResolveRect(oRect(rPrimaryWorkarea), int2(0, 0), NewSize, ouro::alignment::middle_center, false));
+		NewSize = ouro::resolve_rect_size(NewSize, DefaultSize);
+		const RECT rCenteredClient = oWinRect(ouro::resolve_rect(oRect(rPrimaryWorkarea), int2(0, 0), NewSize, ouro::alignment::middle_center, false));
 		const int2 DefaultPosition = oWinRectPosition(rCenteredClient);
-		NewPosition = oGUIResolveRectPosition(NewPosition, DefaultPosition);
+		NewPosition = ouro::resolve_rect_position(NewPosition, DefaultPosition);
 	}
 
 	const DWORD dwInitialStyleEx = WS_EX_ACCEPTFILES|WS_EX_APPWINDOW;
@@ -1601,10 +1601,10 @@ bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
 	{
 		LONG_PTR lParam = GetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION);
 		const int2 RestoredClientPosition(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		New.client_position = oGUIResolveRectPosition(New.client_position, RestoredClientPosition);
+		New.client_position = ouro::resolve_rect_position(New.client_position, RestoredClientPosition);
 		lParam = GetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE);
 		const int2 RestoredClientSize(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		New.client_size = oGUIResolveRectPosition(New.client_size, RestoredClientSize);
+		New.client_size = ouro::resolve_rect_position(New.client_size, RestoredClientSize);
 	}
 
 	else if (New.state == ouro::window_state::fullscreen)
@@ -1616,8 +1616,8 @@ bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
 
 	else
 	{
-		New.client_position = oGUIResolveRectPosition(New.client_position, Old.client_position);
-		New.client_size = oGUIResolveRectPosition(New.client_size, Old.client_size);
+		New.client_position = ouro::resolve_rect_position(New.client_position, Old.client_position);
+		New.client_size = ouro::resolve_rect_position(New.client_size, Old.client_size);
 	}
 
 	int StatusBarHeight = 0;
@@ -2156,13 +2156,13 @@ static int2 GetSizeExplicit(const ouro::control_info& _Desc)
 
 static int2 GetSizeButtonDefault(const ouro::control_info& _Desc)
 {
-	return oGUIResolveRectSize(_Desc.size, int2(75, 23));
+	return ouro::resolve_rect_size(_Desc.size, int2(75, 23));
 }
 
 static int2 GetSizeIcon(const ouro::control_info& _Desc)
 {
 	int2 iconSize = oGDIGetIconSize((HICON)_Desc.text);
-	return oGUIResolveRectSize(_Desc.size, iconSize);
+	return ouro::resolve_rect_size(_Desc.size, iconSize);
 }
 
 struct CONTROL_CREATION_DESC

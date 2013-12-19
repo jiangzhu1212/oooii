@@ -312,7 +312,7 @@ void oWindowTestApp::EventHook(const window::basic_event& _Event)
 				RECT rParent, rButton;
 				GetClientRect((HWND)_Event.window, &rParent);
 				GetClientRect(hButton, &rButton);
-				RECT Centered = oWinRect(oGUIResolveRect(oRect(rParent), oRect(rButton), ouro::alignment::middle_center, false));
+				RECT Centered = oWinRect(ouro::resolve_rect(oRect(rParent), oRect(rButton), ouro::alignment::middle_center, false));
 				SetWindowPos(hButton, nullptr, Centered.left, Centered.top, oWinRectW(Centered), oWinRectH(Centered), SWP_SHOWWINDOW);
 			}
 			break;

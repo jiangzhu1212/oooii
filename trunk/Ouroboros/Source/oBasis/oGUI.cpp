@@ -194,6 +194,80 @@ const char* as_string(const event_type::value& _Event)
 oDEFINE_TO_STRING(event_type::value);
 oDEFINE_FROM_STRING(event_type::value, event_type::count);
 
+oRECT resolve_rect(const oRECT& _Parent, const oRECT& _UnadjustedChild, alignment::value _Alignment, bool _Clip)
+{
+	int2 cpos = resolve_rect_position(_UnadjustedChild.Min);
+
+	int2 psz = _Parent.size();
+	int2 csz = resolve_rect_size(_UnadjustedChild.Max - cpos, psz);
+
+	float2 ResizeRatios = (float2)psz / max((float2)csz, float2(0.0001f, 0.0001f));
+
+	alignment::value internalAlignment = _Alignment;
+
+	int2 offset(0, 0);
+
+	switch (_Alignment)
+	{
+		case alignment::fit_largest_axis:
+		{
+			const float ResizeRatio = min(ResizeRatios);
+			csz = round((float2)csz * ResizeRatio);
+			cpos = 0;
+			internalAlignment = alignment::middle_center;
+			break;
+		}
+
+		case alignment::fit_smallest_axis:
+		{
+			const float ResizeRatio = max(ResizeRatios);
+			csz = round((float2)csz * ResizeRatio);
+			cpos = 0;
+			internalAlignment = alignment::middle_center;
+			break;
+		}
+
+		case alignment::fit_parent:
+			return _Parent;
+
+		default:
+			// preserve user-specified offset if there was one separately from moving 
+			// around the child position according to internalAlignment
+			offset = _UnadjustedChild.Min;
+			break;
+	}
+
+	int2 code = int2(internalAlignment % 3, internalAlignment / 3);
+
+	if (offset.x == oDEFAULT || code.x == 0) offset.x = 0;
+	if (offset.y == oDEFAULT || code.y == 0) offset.y = 0;
+
+	// All this stuff is top-left by default, so adjust for center/middle and 
+	// right/bottom
+
+	// center/middle
+	if (code.x == 1) cpos.x = (psz.x - csz.x) / 2;
+	if (code.y == 1) cpos.y = (psz.y - csz.y) / 2;
+
+	// right/bottom
+	if (code.x == 2) cpos.x = _Parent.Max.x - csz.x;
+	if (code.y == 2) cpos.y = _Parent.Max.y - csz.y;
+
+	int2 FinalOffset = _Parent.Min + offset;
+
+	oRECT resolved;
+	resolved.Min = cpos;
+	resolved.Max = resolved.Min + csz;
+
+	resolved.Min += FinalOffset;
+	resolved.Max += FinalOffset;
+
+	if (_Clip)
+		resolved = clip_rect(_Parent, resolved);
+
+	return resolved;
+}
+
 } // namespace ouro
 
 void oGUIRecordInputState(const ouro::input::action& _Action, const ouro::input::key* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition)
@@ -232,78 +306,4 @@ void oGUIRecordInputState(const ouro::input::action& _Action, const ouro::input:
 			break;
 		}
 	}
-}
-
-oRECT oGUIResolveRect(const oRECT& _Parent, const oRECT& _UnadjustedChild, ouro::alignment::value _Alignment, bool _Clip)
-{
-	int2 cpos = oGUIResolveRectPosition(_UnadjustedChild.Min);
-
-	int2 psz = _Parent.size();
-	int2 csz = oGUIResolveRectSize(_UnadjustedChild.Max - cpos, psz);
-
-	float2 ResizeRatios = (float2)psz / max((float2)csz, float2(0.0001f, 0.0001f));
-
-	ouro::alignment::value internalAlignment = _Alignment;
-
-	int2 offset(0, 0);
-
-	switch (_Alignment)
-	{
-		case ouro::alignment::fit_largest_axis:
-		{
-			const float ResizeRatio = min(ResizeRatios);
-			csz = round((float2)csz * ResizeRatio);
-			cpos = 0;
-			internalAlignment = ouro::alignment::middle_center;
-			break;
-		}
-
-		case ouro::alignment::fit_smallest_axis:
-		{
-			const float ResizeRatio = max(ResizeRatios);
-			csz = round((float2)csz * ResizeRatio);
-			cpos = 0;
-			internalAlignment = ouro::alignment::middle_center;
-			break;
-		}
-
-		case ouro::alignment::fit_parent:
-			return _Parent;
-
-		default:
-			// preserve user-specified offset if there was one separately from moving 
-			// around the child position according to internalAlignment
-			offset = _UnadjustedChild.Min;
-			break;
-	}
-
-	int2 code = int2(internalAlignment % 3, internalAlignment / 3);
-
-	if (offset.x == oDEFAULT || code.x == 0) offset.x = 0;
-	if (offset.y == oDEFAULT || code.y == 0) offset.y = 0;
-
-	// All this stuff is top-left by default, so adjust for center/middle and 
-	// right/bottom
-
-	// center/middle
-	if (code.x == 1) cpos.x = (psz.x - csz.x) / 2;
-	if (code.y == 1) cpos.y = (psz.y - csz.y) / 2;
-
-	// right/bottom
-	if (code.x == 2) cpos.x = _Parent.Max.x - csz.x;
-	if (code.y == 2) cpos.y = _Parent.Max.y - csz.y;
-
-	int2 FinalOffset = _Parent.Min + offset;
-
-	oRECT resolved;
-	resolved.Min = cpos;
-	resolved.Max = resolved.Min + csz;
-
-	resolved.Min += FinalOffset;
-	resolved.Max += FinalOffset;
-
-	if (_Clip)
-		resolved = oGUIClipRect(_Parent, resolved);
-
-	return resolved;
 }

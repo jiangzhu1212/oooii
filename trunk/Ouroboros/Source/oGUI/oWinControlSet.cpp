@@ -168,10 +168,10 @@ bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONT
 	_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Align", &alignment); // allow TopLeft as default value
 
 	RECT rParentClient;
-	int2 ParentSize = oGUIResolveRectSize(_ControlContext.ParentSize, oWinRectSize(rParentClient));
+	int2 ParentSize = ouro::resolve_rect_size(_ControlContext.ParentSize, oWinRectSize(rParentClient));
 	RECT rParent = oWinRectWH(int2(0,0), ParentSize);
 
-	RECT rControl = oWinRect(oGUIResolveRect(oRect(rParent), ControlPos, ControlSize, alignment, false));
+	RECT rControl = oWinRect(ouro::resolve_rect(oRect(rParent), ControlPos, ControlSize, alignment, false));
 	_pDesc->position = oWinRectPosition(rControl);
 	_pDesc->size = oWinRectSize(rControl);
 

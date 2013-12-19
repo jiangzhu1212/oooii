@@ -140,7 +140,7 @@ void progress_bar_impl::make_controls(const window::create_event& _CreateEvent)
 	// progress/marquee bars
 	{
 		oRECT rChild = oRect(oWinRectWH(int2(Inset.x, 0), ProgressBarSize));
-		oRECT rText = oGUIResolveRect(rParent, rChild, alignment::middle_left, true);
+		oRECT rText = ouro::resolve_rect(rParent, rChild, alignment::middle_left, true);
 		Descs[PB_MARQUEE].type = control_type::progressbar_unknown;
 		Descs[PB_MARQUEE].position = oWinRectPosition(oWinRect(rText));
 		Descs[PB_MARQUEE].size = ProgressBarSize;
@@ -162,7 +162,7 @@ void progress_bar_impl::make_controls(const window::create_event& _CreateEvent)
 	// Stop button
 	{
 		oRECT rChild = oRect(oWinRectWH(-Inset, ButtonSize));
-		oRECT rButton = oGUIResolveRect(rParent, rChild, alignment::bottom_right, true);
+		oRECT rButton = ouro::resolve_rect(rParent, rChild, alignment::bottom_right, true);
 
 		Descs[PB_BUTTON].type = control_type::button;
 		Descs[PB_BUTTON].text = "&Stop";

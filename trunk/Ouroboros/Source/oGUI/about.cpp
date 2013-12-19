@@ -189,7 +189,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 	// Icon
 	{
 		oRECT rChild = oRect(oWinRectWH(int2(0,0), kIconSize));
-		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
+		oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 		Descs[AB_ICON].type = control_type::icon;
 		Descs[AB_ICON].icon = Info.icon;
@@ -205,7 +205,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		snprintf(StrModulePath, "Install Path: <a href=\"file://%s\">%s</a>", ModulePath.parent_path().c_str(), ModulePath.c_str());
 
 		oRECT rChild = oRect(oWinRectWH(kModulePathPos, kModulePathSize));
-		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
+		oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 		Descs[AB_INSTALL_PATH].type = control_type::hyperlabel;
 		Descs[AB_INSTALL_PATH].text = StrModulePath;
@@ -229,7 +229,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			, mi.copyright.c_str());
 
 		oRECT rChild = oRect(oWinRectWH(kModuleInfoPos, kModuleInfoSize));
-		oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
+		oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 		Descs[AB_MODULE_INFO].type = control_type::label;
 		Descs[AB_MODULE_INFO].text = StrModuleInfo;
@@ -255,7 +255,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			snprintf(StrWebsite, "<a href=\"%s\">visit our website</a>", Info.website);
 
 			oRECT rChild = oRect(oWinRectWH(kWebsitePos, kWebsiteSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
+			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_WEBSITE].type = control_type::hyperlabel;
 			Descs[AB_WEBSITE].text = StrWebsite;
@@ -272,7 +272,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			snprintf(StrIssueSite, "<a href=\"%s\">report an issue</a>", Info.issue_site);
 
 			oRECT rChild = oRect(oWinRectWH(kIssueSitePos, kIssueSiteSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
+			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_ISSUE_SITE].type = control_type::hyperlabel;
 			Descs[AB_ISSUE_SITE].text = StrIssueSite;
@@ -284,7 +284,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 	// OK Button
 	{
 		oRECT rChild = oRect(oWinRectWH(-kInset, kButtonSize));
-		oRECT r = oGUIResolveRect(rParent, rChild, alignment::bottom_right, true);
+		oRECT r = ouro::resolve_rect(rParent, rChild, alignment::bottom_right, true);
 
 		Descs[AB_OK].type = control_type::button;
 		Descs[AB_OK].text = "&OK";
@@ -297,7 +297,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		if (oSTRVALID(Info.components))
 		{
 			oRECT rChild = oRect(oWinRectWH(kComponentGroupPos, kComponentGroupSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
+			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_COMPONENT_GROUP].type = control_type::group;
 			Descs[AB_COMPONENT_GROUP].text = "3rd-Party Components";
@@ -311,7 +311,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		if (oSTRVALID(Info.components))
 		{
 			oRECT rChild = oRect(oWinRectWH(kComponentListPos, kComponentListSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
+			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_COMPONENT_LIST].type = control_type::listbox;
 			Descs[AB_COMPONENT_LIST].text = Info.components;
@@ -327,7 +327,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		if (oSTRVALID(Info.components))
 		{
 			oRECT rChild = oRect(oWinRectWH(kComponentCommentPos, kComponentCommentSize));
-			oRECT r = oGUIResolveRect(rParent, rChild, alignment::top_left, true);
+			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_COMPONENT_COMMENT].type = control_type::hyperlabel;
 			Descs[AB_COMPONENT_COMMENT].text = ComponentComments[0].c_str();

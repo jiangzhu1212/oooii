@@ -461,7 +461,7 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 		}
 
 		HDC hDC = (HDC)_hDC;
-		const RECT rTarget = oWinRect(oGUIResolveRect(oRECT(oRECT::pos_size, int2(0,0), _ClientSize), VizDesc.Position, VizDesc.Size, VizDesc.Alignment, true));
+		const RECT rTarget = oWinRect(ouro::resolve_rect(oRECT(oRECT::pos_size, int2(0,0), _ClientSize), VizDesc.Position, VizDesc.Size, VizDesc.Alignment, true));
 			
 		oGDIScopedSelect ScopedSelectBrush(hDC, hBoneBrush);
 		oGDIScopedSelect ScopedSelectPen(hDC, hBonePen);
@@ -511,7 +511,7 @@ void oGestureManagerImpl::GDIDrawNoKinect(ouro::draw_context_handle _hDC, const 
 {
 	HDC hDC = (HDC)_hDC;
 
-	const RECT rTarget = oWinRect(oGUIResolveRect(oRECT(oRECT::pos_size, int2(0,0), _ClientSize), VizDesc.Position, VizDesc.Size, VizDesc.Alignment, true));
+	const RECT rTarget = oWinRect(ouro::resolve_rect(oRECT(oRECT::pos_size, int2(0,0), _ClientSize), VizDesc.Position, VizDesc.Size, VizDesc.Alignment, true));
 
 	{
 		oGDIScopedSelect ScopedSelectBrush(hDC, hBlankBG);
@@ -536,7 +536,7 @@ void oGestureManagerImpl::GDIDrawKinectStatusIcon(ouro::draw_context_handle _hDC
 	if (DeviceVizDesc.hGestureDevice)
 	{
 		oRECT parent(oRECT::pos_size, int2(0,0), _ClientSize);
-		oRECT r = oGUIResolveRect(parent, DeviceVizDesc.Position
+		oRECT r = ouro::resolve_rect(parent, DeviceVizDesc.Position
 			, oGDIGetIconSize((HICON)DeviceVizDesc.hGestureDevice), DeviceVizDesc.Alignment, true);
 
 		HDC hDC = (HDC)_hDC;
@@ -549,7 +549,7 @@ void oGestureManagerImpl::GDIDrawNotStatusIcon(ouro::draw_context_handle _hDC, c
 	if (DeviceVizDesc.hNotOverlay)
 	{
 		oRECT parent(oRECT::pos_size, int2(0,0), _ClientSize);
-		oRECT r = oGUIResolveRect(parent, DeviceVizDesc.Position
+		oRECT r = ouro::resolve_rect(parent, DeviceVizDesc.Position
 			, oGDIGetIconSize((HICON)DeviceVizDesc.hNotOverlay), DeviceVizDesc.Alignment, true);
 
 		HDC hDC = (HDC)_hDC;
