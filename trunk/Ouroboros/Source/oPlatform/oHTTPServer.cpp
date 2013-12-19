@@ -75,7 +75,7 @@ namespace
 		auto pLockedThis = thread_cast<CallbackHandler*>(this); // Safe because we only get called again when we want it to (when doing another async request)
 
 		if (!pLockedThis->Protocol.Desc.StartResponse)
-			pLockedThis->Protocol.Desc.StartResponse = std::bind(pLockedThis->Desc.StartResponse, oBIND1, _Addr.Host, oBIND2);
+			pLockedThis->Protocol.Desc.StartResponse = std::bind(pLockedThis->Desc.StartResponse, std::placeholders::_1, _Addr.Host, std::placeholders::_2);
 
 		if (pLockedThis->Protocol.ProcessSocketReceive(_pData, _SizeData, _pSocket))
 		{

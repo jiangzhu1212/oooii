@@ -364,10 +364,10 @@ inline void parallel_for(threadpool<Alloc>& _Threadpool, size_t _Begin, size_t _
 	task_group<Alloc> g(_Threadpool);
 	const size_t kNumSteps = (_End - _Begin) / WorkChunkSize;
 	for (size_t i = 0; i < kNumSteps; i++, _Begin += WorkChunkSize)
-		g.run(std::bind(thread_local_parallel_for<Alloc>, oBINDREF(g), _Begin, _Begin + WorkChunkSize, _Task));
+		g.run(std::bind(thread_local_parallel_for<Alloc>, std::ref(g), _Begin, _Begin + WorkChunkSize, _Task));
 
 	if (_Begin < _End)
-		g.run(std::bind(thread_local_parallel_for<Alloc>, oBINDREF(g), _Begin, _End, _Task));
+		g.run(std::bind(thread_local_parallel_for<Alloc>, std::ref(g), _Begin, _End, _Task));
 
 	g.wait();
 }

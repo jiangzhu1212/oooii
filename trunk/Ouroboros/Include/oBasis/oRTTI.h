@@ -37,7 +37,7 @@
 #include <typeinfo>
 #include <vector>
 
-#include <oGUI/oGUI.h> // @tony fixme: needed to convert namespace::enum -> namespace_enum. Maybe there's a more generic way to support namespaces?
+#include <oBase/input.h> // @tony fixme: needed to convert namespace::enum -> namespace_enum. Maybe there's a more generic way to support namespaces?
 
 // _____________________________________________________________________________
 // oRTTI_TYPE - RTTI atomic building block types

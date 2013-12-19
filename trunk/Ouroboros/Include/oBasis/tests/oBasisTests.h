@@ -27,7 +27,6 @@
 #ifndef oBasisTests_h
 #define oBasisTests_h
 
-#include <oBasis/oFunction.h>
 #include <oBase/path.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oSurface/surface.h>

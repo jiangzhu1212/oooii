@@ -304,7 +304,7 @@ size_t oOSCCalculateNumFields(const char* _TypeTags)
 size_t oOSCCalculateArgumentsDataSize(const char* _TypeTags, const void* _pStruct, size_t _SizeofStruct)
 {
 	size_t size = 0;
-	oVERIFY(oOSCVisitStructFields(_TypeTags, _pStruct, _SizeofStruct, std::bind(oOSCSumFieldSizes, oBIND1, oBIND2, oBIND3, &size)));
+	oVERIFY(oOSCVisitStructFields(_TypeTags, _pStruct, _SizeofStruct, std::bind(oOSCSumFieldSizes, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, &size)));
 	return size;
 }
 
@@ -513,7 +513,7 @@ size_t oOSCSerializeStructToMessage(const char* _Address, const char* _TypeTags,
 
 	size_t szSerializedMessage = 0;
 	oASSERT((size_t)byte_diff(pend, p) >= oOSCCalculateArgumentsDataSize(_TypeTags, _pStruct, _SizeofStruct), "");
-	if( !oOSCVisitStructFieldsInternal(std::bind(oOSCSerializer, oBIND1, oBIND2, oBIND3, _pStruct, &p, pend), _TypeTags, _pStruct, _SizeofStruct, pPatchTag) )
+	if( !oOSCVisitStructFieldsInternal(std::bind(oOSCSerializer, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, _pStruct, &p, pend), _TypeTags, _pStruct, _SizeofStruct, pPatchTag) )
 		return 0;
 
 	return (char*)p - (char*)_pMessage;
@@ -533,7 +533,7 @@ bool oOSCDeserializeMessageToStruct(const void* _pMessage, void* _pStruct, size_
 	void* p = _pStruct;
 	void* pend = byte_add(_pStruct, _SizeofStruct);
 
-	return oOSCVisitMessageTypeTags(tags, args, std::bind(oOSCDeserializer, oBIND1, oBIND2, oBIND3, _pStruct, &p, pend));
+	return oOSCVisitMessageTypeTags(tags, args, std::bind(oOSCDeserializer, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, _pStruct, &p, pend));
 }
 
 static bool IsBoolTag(char _TypeTag)

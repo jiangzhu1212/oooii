@@ -267,9 +267,6 @@
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oFunction.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oScopedPartialTimeout.h">
       <Filter>oBasis</Filter>
     </ClInclude>

@@ -895,7 +895,7 @@ bool oTestManager_Impl::KillZombies(const char* _Name)
 	process::id pids[1024];
 	size_t npids = 0;
 
-	process::enumerate(std::bind(FindDuplicateProcessInstanceByName, oBIND1, oBIND2, oBIND3, ThisID, _Name, pids, oCOUNTOF(pids), &npids));
+	process::enumerate(std::bind(FindDuplicateProcessInstanceByName, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, ThisID, _Name, pids, oCOUNTOF(pids), &npids));
 
 	unsigned int retries = 3;
 	for (size_t i = 0; i < npids; i++)

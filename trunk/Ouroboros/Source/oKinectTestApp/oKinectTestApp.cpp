@@ -306,7 +306,7 @@ oKinectTestApp::oKinectTestApp()
 	
 	{
 		oVERIFY(oAirKeyboardCreate(&AirKeyboard));
-		AirKeyboard->HookActions(std::bind(&oKinectTestApp::BroadcastActions, this, oBIND1));
+		AirKeyboard->HookActions(std::bind(&oKinectTestApp::BroadcastActions, this, std::placeholders::_1));
 		uri_string AirKB = dev_uri;
 		sncatf(AirKB, "Ouroboros/Source/oKinectTestApp/AirKeyboards.xml");
 		OnFileChange(oSTREAM_ACCESSIBLE, AirKB);
@@ -316,7 +316,7 @@ oKinectTestApp::oKinectTestApp()
 		oFOR(auto& w, KinectWindows)
 		{
 			oVERIFY(oInputMapperCreate(&w.InputMapper));
-			w.InputMapper->HookActions(std::bind(&oKinectTestApp::BroadcastActions, this, oBIND1));
+			w.InputMapper->HookActions(std::bind(&oKinectTestApp::BroadcastActions, this, std::placeholders::_1));
 		}
 
 		uri_string Inputs = dev_uri;
@@ -330,7 +330,7 @@ oKinectTestApp::oKinectTestApp()
 		sncatf(smd.Monitor, "Ouroboros/Source/oKinectTestApp/*.xml");
 		smd.TraceEvents = false;
 		smd.WatchSubtree = false;
-		oVERIFY(oStreamMonitorCreate(smd, std::bind(&oKinectTestApp::OnFileChange, this, oBIND1, oBIND2), &StreamMonitor));
+		oVERIFY(oStreamMonitorCreate(smd, std::bind(&oKinectTestApp::OnFileChange, this, std::placeholders::_1, std::placeholders::_2), &StreamMonitor));
 	}
 	
 	Ready = true;
@@ -378,7 +378,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 		float VerticalOffset = 0.0f;
 		while (_pKinect->GetSkeletonByIndex(SkelIndex, &Skeleton))
 		{
-			AirKeyboard->VisitKeys(std::bind(oGDIDrawAirKey, (HDC)hDC, oBINDREF(rTarget), oGDI_AIR_KEY_DRAW_BOX|oGDI_AIR_KEY_DRAW_KEY, oBIND1, oBIND2, oBINDREF(Skeleton)));
+			AirKeyboard->VisitKeys(std::bind(oGDIDrawAirKey, (HDC)hDC, std::ref(rTarget), oGDI_AIR_KEY_DRAW_BOX|oGDI_AIR_KEY_DRAW_KEY, std::placeholders::_1, std::placeholders::_2, std::ref(Skeleton)));
 
 			ouro::text_info td;
 			td.position = float2(0.0f, VerticalOffset);

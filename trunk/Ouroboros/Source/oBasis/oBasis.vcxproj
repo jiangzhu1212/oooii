@@ -46,7 +46,6 @@
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h" />
     <ClInclude Include="..\..\Include\oBasis\oError.h" />
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h" />
-    <ClInclude Include="..\..\Include\oBasis\oFunction.h" />
     <ClInclude Include="..\..\Include\oBasis\oGeometry.h" />
     <ClInclude Include="..\..\Include\oBasis\oGPUConcepts.h" />
     <ClInclude Include="..\..\Include\oBasis\oGZip.h" />

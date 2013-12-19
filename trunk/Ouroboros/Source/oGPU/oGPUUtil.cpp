@@ -265,7 +265,7 @@ bool oGPUCreateVertexBuffer(oGPUDevice* _pDevice
 	return oGPUCreateVertexBuffer(_pDevice
 		, _Name
 		, _NumVertices
-		, std::bind(oGPUGetVertexSourceFromGeometry, _GeoDesc, _GeoMapped, oBIND1, oBIND2)
+		, std::bind(oGPUGetVertexSourceFromGeometry, _GeoDesc, _GeoMapped, std::placeholders::_1, std::placeholders::_2)
 		, _NumElements
 		, _pElements
 		, _InputSlot
@@ -673,13 +673,13 @@ static bool oGPUReadVertexSource(int _Slot, int _NumVertices, surface::mapped_su
 
 bool oGPUReadVertexSource(int _Slot, int _NumVertices, surface::mapped_subresource& _Mapped, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const oGeometry::DESC& _Desc, oGeometry::CONST_MAPPED& _GeoMapped)
 {
-	return oGPUReadVertexSource(_Slot, _NumVertices, _Mapped, _NumElements, _pElements, std::bind(oGPUGetVertexSourceFromGeometry, _Desc, _GeoMapped, oBIND1, oBIND2));
+	return oGPUReadVertexSource(_Slot, _NumVertices, _Mapped, _NumElements, _pElements, std::bind(oGPUGetVertexSourceFromGeometry, _Desc, _GeoMapped, std::placeholders::_1, std::placeholders::_2));
 }
 
 bool oGPUReadVertexSource(int _Slot, int _NumVertices, surface::mapped_subresource& _Mapped, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const threadsafe oOBJ* _pOBJ)
 {
 	oOBJExtraVertexData OBJExtra;
-	return oGPUReadVertexSource(_Slot, _NumVertices, _Mapped, _NumElements, _pElements, std::bind(oGPUGetVertexSourceFromOBJ, _pOBJ, &OBJExtra, oBIND1, oBIND2));
+	return oGPUReadVertexSource(_Slot, _NumVertices, _Mapped, _NumElements, _pElements, std::bind(oGPUGetVertexSourceFromOBJ, _pOBJ, &OBJExtra, std::placeholders::_1, std::placeholders::_2));
 }
 
 struct oGPUUtilMeshImpl : oGPUUtilMesh

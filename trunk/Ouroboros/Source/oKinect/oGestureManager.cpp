@@ -242,10 +242,10 @@ void oGestureManagerImpl::HookWindow(bool _Hooked)
 {
 	if (_Hooked)
 	{
-		hookAirKeys = AirKeyboard->HookActions(std::bind(&ouro::window::trigger, Window.get(), oBIND1));
-		hookInputMaps = InputMapper->HookActions(std::bind(&ouro::window::trigger, Window.get(), oBIND1));
-		hookEvents = Window->hook_events(std::bind(&oGestureManagerImpl::OnEvent, this, oBIND1));
-		hookActions = Window->hook_actions(std::bind(&oGestureManagerImpl::OnAction, this, oBIND1));
+		hookAirKeys = AirKeyboard->HookActions(std::bind(&ouro::window::trigger, Window.get(), std::placeholders::_1));
+		hookInputMaps = InputMapper->HookActions(std::bind(&ouro::window::trigger, Window.get(), std::placeholders::_1));
+		hookEvents = Window->hook_events(std::bind(&oGestureManagerImpl::OnEvent, this, std::placeholders::_1));
+		hookActions = Window->hook_actions(std::bind(&oGestureManagerImpl::OnAction, this, std::placeholders::_1));
 	}
 
 	else
@@ -482,7 +482,7 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 			while (Kinect->GetSkeletonByIndex(SkelIndex, &Skeleton))
 			{
 				if (AirKeyboard)
-					AirKeyboard->VisitKeys(std::bind(oGDIDrawAirKey, hDC, oBINDREF(rTarget), oGDI_AIR_KEY_DRAW_BOX|oGDI_AIR_KEY_DRAW_KEY, oBIND1, oBIND2, oBINDREF(Skeleton)));
+					AirKeyboard->VisitKeys(std::bind(oGDIDrawAirKey, hDC, std::ref(rTarget), oGDI_AIR_KEY_DRAW_BOX|oGDI_AIR_KEY_DRAW_KEY, std::placeholders::_1, std::placeholders::_2, std::ref(Skeleton)));
 
 				ouro::text_info td;
 				td.position = float2((float)rTarget.left, VerticalOffset);

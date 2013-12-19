@@ -151,7 +151,7 @@ void TESTcamera(test_services& _Services)
 		init.shape.ClientSize = cd.Mode.Dimensions;
 		init.shape.ClientPosition = int2(30, 30) * int2(oUInt(i + 1), oUInt(i + 1));
 		init.title = Title;
-		init.on_event = std::bind(&CONTEXT::OnEvent, &Contexts[i], oBIND1);
+		init.on_event = std::bind(&CONTEXT::OnEvent, &Contexts[i], std::placeholders::_1);
 		Contexts[i].Window = window::make(init);
 	}
 

@@ -60,7 +60,7 @@ void TESTparallel_for()
 	oFORI(i, mTestArrayA)
 		test_a(i, mTestArrayA);
 
-	oConcurrency::parallel_for(0, mArraySize, std::bind(test_a, oBIND1, mTestArrayB));
+	oConcurrency::parallel_for(0, mArraySize, std::bind(test_a, std::placeholders::_1, mTestArrayB));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0, 
 		"oConcurrency::parallel_for single param failed to compute singlethreaded result");
 
@@ -68,7 +68,7 @@ void TESTparallel_for()
 	oFORI(i, mTestArrayA)
 		test_ab(i, mTestArrayA, 2);
 
-	oConcurrency::parallel_for(0, mArraySize, std::bind(test_ab, oBIND1, &mTestArrayB[0], 2));
+	oConcurrency::parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
 		, "oConcurrency::parallel_for failed to compute singlethreaded result");
 
@@ -76,11 +76,11 @@ void TESTparallel_for()
 	oFORI(i, mTestArrayA)
 		test_abc(i, mTestArrayA, 2, 7);
 
-	oConcurrency::parallel_for(0, mArraySize, std::bind(test_abc, oBIND1, &mTestArrayB[0], 2, 7));
+	oConcurrency::parallel_for(0, mArraySize, std::bind(test_abc, std::placeholders::_1, &mTestArrayB[0], 2, 7));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
 		, "oConcurrency::parallel_for failed to compute singlethreaded result");
 
-	oConcurrency::parallel_for(0, mArraySize, std::bind(test_ab, oBIND1, &mTestArrayB[0], 2));
+	oConcurrency::parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
 };
 
 	} // namespace tests

@@ -46,7 +46,7 @@ public:
 		{
 			window::init i;
 			i.title = "Window-In-Window Test";
-			i.on_event = std::bind(&WindowInWindow::ParentEventHook, this, oBIND1);
+			i.on_event = std::bind(&WindowInWindow::ParentEventHook, this, std::placeholders::_1);
 			i.shape.state = ouro::window_state::hidden;
 			i.shape.style = ouro::window_style::sizable;
 			i.shape.client_size = int2(640, 480);

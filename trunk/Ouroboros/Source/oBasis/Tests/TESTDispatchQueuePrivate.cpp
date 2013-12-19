@@ -46,7 +46,7 @@ static void FillArray(int* _Array, size_t _Start, size_t _End, thread::id* _pExe
 	if (*_pExecutionThreadID != this_thread::get_id())
 		*_pWrongThreadError = true;
 
-	oConcurrency::parallel_for(_Start, _End, std::bind(&SetLocation, oBIND1, _Start, _Array));
+	oConcurrency::parallel_for(_Start, _End, std::bind(&SetLocation, std::placeholders::_1, _Start, _Array));
 }
 
 static void CheckTest(int* _Array, size_t _Size, bool* _pResult, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
@@ -102,7 +102,7 @@ bool oBasisTest_oDispatchQueuePrivate()
 		q->Dispatch(&CheckTest, TestArray, TestSize, &bResult, &ExecutionThreadID, &WrongThread);
 		
 		bool Notified = false;
-		q->Dispatch(&NotifyAll, oBINDREF(FinishedMutex), oBINDREF(Finished), &ExecutionThreadID, &Notified, &WrongThread);
+		q->Dispatch(&NotifyAll, std::ref(FinishedMutex), std::ref(Finished), &ExecutionThreadID, &Notified, &WrongThread);
 
 		// @tony: there's a race here because the notify can happen before we settle into the wait, so the notify never comes through.
 

@@ -133,8 +133,8 @@ struct PLATFORM_oHTTP : public oTest
 		ouro::intrusive_ptr<oHTTPServer> Server;
 		oHTTPServer::DESC desc;
 		desc.Port = 80;
-		desc.StartResponse = std::bind(&PLATFORM_oHTTP::StartResponse, this, oBIND1, oBIND2, oBIND3);
-		desc.FinishResponse = std::bind(&PLATFORM_oHTTP::FinishResponse, this, oBIND1);
+		desc.StartResponse = std::bind(&PLATFORM_oHTTP::StartResponse, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+		desc.FinishResponse = std::bind(&PLATFORM_oHTTP::FinishResponse, this, std::placeholders::_1);
 
 		ouro::intrusive_ptr<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;
@@ -269,8 +269,8 @@ struct PLATFORM_oHTTPLarge : public oTest
 		ouro::intrusive_ptr<oHTTPServer> Server;
 		oHTTPServer::DESC desc;
 		desc.Port = 80;
-		desc.StartResponse = std::bind(&PLATFORM_oHTTPLarge::StartResponse, this, oBIND1, oBIND2, oBIND3);
-		desc.FinishResponse = std::bind(&PLATFORM_oHTTPLarge::FinishResponse, this, oBIND1);
+		desc.StartResponse = std::bind(&PLATFORM_oHTTPLarge::StartResponse, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+		desc.FinishResponse = std::bind(&PLATFORM_oHTTPLarge::FinishResponse, this, std::placeholders::_1);
 
 		ouro::intrusive_ptr<oHTTPClient> Client;
 		oHTTPClient::DESC clientDesc;

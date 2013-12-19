@@ -48,8 +48,8 @@ public:
 		unsigned int SupportedMethods;
 		oHTTPProtocolMode Mode;
 
-		oFUNCTION<void(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pResponse)> StartResponse;
-		oFUNCTION<void(const void* _pContentBody)> FinishResponse;
+		std::function<void(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pResponse)> StartResponse;
+		std::function<void(const void* _pContentBody)> FinishResponse;
 	};
 
 	oHTTPProtocol(const DESC& _Desc)

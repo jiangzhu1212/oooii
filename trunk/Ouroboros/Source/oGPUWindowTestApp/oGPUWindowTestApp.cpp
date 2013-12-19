@@ -231,7 +231,7 @@ void oGPUWindowThread::Run()
 			i.title = "Render Target Window";
 			i.icon = (ouro::icon_handle)oGDILoadIcon(IDI_APPICON);
 			i.on_action = OnAction;
-			i.on_event = std::bind(&oGPUWindowThread::OnEvent, this, oBIND1);
+			i.on_event = std::bind(&oGPUWindowThread::OnEvent, this, std::placeholders::_1);
 			i.shape.client_position = int2(0, 0); // important to think client-relative for this
 			i.shape.client_size = int2(256, 256); // @tony: Try making this 1,1 and see if a resize takes over
 			i.shape.state = ouro::window_state::hidden; // don't show the window before it is child-ized
@@ -350,7 +350,7 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 
 	// Now set up separate child thread for rendering. This allows UI to be 
 	// detached from potentially slow rendering.
-	pGPUWindow = GPUWindow.Start(AppWindow, std::bind(&oGPUWindowTestApp::ActionHook, this, oBIND1), [&] { Running = false; });
+	pGPUWindow = GPUWindow.Start(AppWindow, std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1), [&] { Running = false; });
 	GPUWindow.GetRenderTarget()->SetClearColor(ClearToggle.Color[0]);
 	AppWindow->show();
 }

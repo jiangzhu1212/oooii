@@ -157,8 +157,8 @@ oWindowTestApp::oWindowTestApp()
 		window::init i;
 		i.title = "oWindowTestApp";
 		i.icon = (ouro::icon_handle)oGDILoadIcon(IDI_APPICON);
-		i.on_action = std::bind(&oWindowTestApp::ActionHook, this, oBIND1);
-		i.on_event = std::bind(&oWindowTestApp::EventHook, this, oBIND1);
+		i.on_action = std::bind(&oWindowTestApp::ActionHook, this, std::placeholders::_1);
+		i.on_event = std::bind(&oWindowTestApp::EventHook, this, std::placeholders::_1);
 		i.shape.client_size = int2(320, 240);
 		i.shape.state = ouro::window_state::hidden;
 		i.shape.style = ouro::window_style::sizable_with_menu_and_statusbar;

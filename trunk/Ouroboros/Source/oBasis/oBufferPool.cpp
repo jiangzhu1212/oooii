@@ -68,7 +68,7 @@ oBufferPoolImpl::oBufferPoolImpl(const char* _Name, void* _pAllocation, size_t _
 	{
 		intrusive_ptr<oBuffer> FreeBuffer;
 
-		if (!oBufferCreate(*BufferName, pNextAlloc, IndividualBufferSize, std::bind(&oBufferPoolImpl::DestroyBuffer, this, oBIND1), &FreeBuffer))
+		if (!oBufferCreate(*BufferName, pNextAlloc, IndividualBufferSize, std::bind(&oBufferPoolImpl::DestroyBuffer, this, std::placeholders::_1), &FreeBuffer))
 			return;
 
 		FreeBuffers.push( FreeBuffer );
@@ -124,7 +124,7 @@ void oBufferPoolImpl::DestroyBuffer(void* _pBufer) threadsafe
 		// Pool is still alive so recycle this memory back into the pool
 		intrusive_ptr<oBuffer> FreeBuffer;
 		// Threadcasts safe because size and name don't change
-		if (!oBufferCreate(*BufferName, _pBufer, thread_cast<size_t&>(IndividualBufferSize), std::bind(&oBufferPoolImpl::DestroyBuffer, this, oBIND1), &FreeBuffer))
+		if (!oBufferCreate(*BufferName, _pBufer, thread_cast<size_t&>(IndividualBufferSize), std::bind(&oBufferPoolImpl::DestroyBuffer, this, std::placeholders::_1), &FreeBuffer))
 			return;
 
 		FreeBuffers.push( FreeBuffer );

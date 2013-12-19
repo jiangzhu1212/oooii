@@ -54,7 +54,7 @@ static bool exercise_all_threads()
 	int* results = (int*)_alloca(nTasks * sizeof(int));
 	memset(results, -1, nTasks * sizeof(int));
 
-	oConcurrency::parallel_for(0, size_t(nTasks), std::bind(exercise_thread, oBIND1, results, 1500));
+	oConcurrency::parallel_for(0, size_t(nTasks), std::bind(exercise_thread, std::placeholders::_1, results, 1500));
 	for (int i = 0; i < nTasks; i++)
 		oCHECK(results[i] != -1, "Invalid results from parallel_for");
 	return true;

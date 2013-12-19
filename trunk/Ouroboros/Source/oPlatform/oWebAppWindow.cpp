@@ -170,7 +170,7 @@ oWebAppWindowImpl::oWebAppWindowImpl( const char* _pTitle, unsigned short _Serve
 
 	window::init init;
 	init.title = _pTitle;
-	init.on_event = std::bind(&oWebAppWindowImpl::OnEvent, this, oBIND1);
+	init.on_event = std::bind(&oWebAppWindowImpl::OnEvent, this, std::placeholders::_1);
 	init.on_action = nullptr;
 	init.shape.style = ouro::window_style::fixed;
 	init.shape.client_size = int2(250,90);

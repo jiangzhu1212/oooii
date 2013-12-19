@@ -29,7 +29,6 @@
 #include <oBase/finally.h>
 #include <oBase/assert.h>
 #include <oStd/for.h>
-#include <oBasis/oFunction.h>
 #include <oStd/atomic.h>
 #include <oStd/thread.h>
 #include <oBase/throw.h>
@@ -434,11 +433,11 @@ static void test_stealing(const std::function<void(worklist_t& _WorkParam, int* 
 	int Results[kNumTasks];
 	memset(Results, 0, sizeof(Results));
 	bool Done = false;
-	oStd::thread t(_Function, oBINDREF(_Work), Results, &Done);
+	oStd::thread t(_Function, std::ref(_Work), Results, &Done);
 
 	std::vector<oStd::thread> thieves;
 	for (unsigned int i = 0; i < oStd::thread::hardware_concurrency() + 5; i++)
-		thieves.push_back(std::move(oStd::thread(try_steal, oBINDREF(_Work), Results, &Done)));
+		thieves.push_back(std::move(oStd::thread(try_steal, std::ref(_Work), Results, &Done)));
 
 	t.join();
 

@@ -36,6 +36,7 @@
 
 #include <oBasis/oRTTI.h>
 #include <oBasis/oInterface.h>
+#include <oCompute/oAABox.h>
 #include <oBase/types.h>
 #include <oBase/xml.h>
 

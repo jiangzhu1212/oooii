@@ -444,7 +444,7 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 	{
 		oIOCP::DESC IOCPDesc;
 		IOCPDesc.Handle = reinterpret_cast<oHandle>(lockedThis->hSocket);
-		IOCPDesc.IOCompletionRoutine = std::bind(&oSocketImpl::IOCPCallback, lockedThis, oBIND1);
+		IOCPDesc.IOCompletionRoutine = std::bind(&oSocketImpl::IOCPCallback, lockedThis, std::placeholders::_1);
 		IOCPDesc.MaxOperations = _Settings.MaxSimultaneousMessages;
 		IOCPDesc.PrivateDataSize = sizeof(Operation);
 
@@ -1338,7 +1338,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	if (INVALID_SOCKET == hListenSocket)
 		return; // leave last error from inside oWinsockCreate
 	
-	SocketPool = intrusive_ptr<SocketServerPool>(new SocketServerPool(std::bind(&SocketServer2_Impl::Disconnect, this, oBIND1) , _pSuccess), false);
+	SocketPool = intrusive_ptr<SocketServerPool>(new SocketServerPool(std::bind(&SocketServer2_Impl::Disconnect, this, std::placeholders::_1) , _pSuccess), false);
 	if (!(*_pSuccess))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "Failed to create the socket pool.");
@@ -1351,7 +1351,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 
 	oIOCP::DESC IOCPDesc;
 	IOCPDesc.Handle = reinterpret_cast<oHandle>(hListenSocket);
-	IOCPDesc.IOCompletionRoutine = std::bind(&SocketServer2_Impl::IOCPCallback, this, oBIND1);
+	IOCPDesc.IOCompletionRoutine = std::bind(&SocketServer2_Impl::IOCPCallback, this, std::placeholders::_1);
 	IOCPDesc.MaxOperations = DesiredAccepts*ExtraSocketOpsMultiplier;
 	IOCPDesc.PrivateDataSize = sizeof(Operation);
 

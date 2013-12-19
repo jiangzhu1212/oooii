@@ -41,7 +41,7 @@ static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 static void FillArray(int* _Array, size_t _Start, size_t _End, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
 {
 	oTRACE("FillArray %u -> %u", _Start, _End);
-	oConcurrency::parallel_for(_Start, _End, std::bind(&SetLocation, oBIND1, _Start, _Array));
+	oConcurrency::parallel_for(_Start, _End, std::bind(&SetLocation, std::placeholders::_1, _Start, _Array));
 }
 
 static void CheckTest(int* _Array, size_t _Size, bool* _pResult, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
@@ -91,7 +91,7 @@ bool oBasisTest_oDispatchQueueGlobal()
 		q->Dispatch(&FillArray, TestArray, 1024, 2048, &ExecutionThreadID, &WrongThread);
 		q->Dispatch(&FillArray, TestArray, 2048, TestSize, &ExecutionThreadID, &WrongThread);
 		q->Dispatch(&CheckTest, TestArray, TestSize, &bResult, &ExecutionThreadID, &WrongThread);
-		q->Dispatch(&NotifyAll, oBINDREF(Finished), oBINDREF(FinishedMutex), &ExecutionThreadID, &Notify, &WrongThread);
+		q->Dispatch(&NotifyAll, std::ref(Finished), std::ref(FinishedMutex), &ExecutionThreadID, &Notify, &WrongThread);
 
 		unique_lock<mutex> FinishedLock(FinishedMutex);
 		while (!Notify)

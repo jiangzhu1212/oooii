@@ -269,7 +269,7 @@ struct PLATFORM_oSocketAsync : public oTest
 			{
 				// Issue server command
 				ServerResult = FAILURE;
-				std::function<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = std::bind(&PLATFORM_oSocketAsync::TestUDPServerASYNC, this, oBIND1, oBIND2, TestPort);
+				std::function<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = std::bind(&PLATFORM_oSocketAsync::TestUDPServerASYNC, this, std::placeholders::_1, std::placeholders::_2, TestPort);
 				g->run(std::bind(&PLATFORM_oSocketAsync::RunServer, this, Func));
 
 				oSocket::DESC SocketDesc;
@@ -313,7 +313,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		{
 			// Issue server command	
 			ServerResult = FAILURE;
-			std::function<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = std::bind(&PLATFORM_oSocketAsync::TestTCPServerASYNC, this, oBIND1, oBIND2);
+			std::function<RESULT(char* _StrStatus, size_t _SizeofStrStatus)> Func = std::bind(&PLATFORM_oSocketAsync::TestTCPServerASYNC, this, std::placeholders::_1, std::placeholders::_2);
 			g->run(std::bind(&PLATFORM_oSocketAsync::RunServer, this, Func));
 
 			oSocket::DESC SocketDesc;

@@ -34,8 +34,8 @@
 #ifndef oBuffer_h
 #define oBuffer_h
 
-#include <oBasis/oFunction.h>
 #include <oBasis/oInterface.h>
+#include <functional>
 
 // {714C9432-EBF6-4232-9E2E-90692C294B8B}
 oDEFINE_GUID_I(oBuffer, 0x714c9432, 0xebf6, 0x4232, 0x9e, 0x2e, 0x90, 0x69, 0x2c, 0x29, 0x4b, 0x8b);
