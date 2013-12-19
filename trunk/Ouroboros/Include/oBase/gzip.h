@@ -22,15 +22,22 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Wrapper for the LZMA compression library v9.2.
-// http://www.7-zip.org/sdk.html
+// Wrapper for the gzip RFC1952 library.
+//http://tools.ietf.org/html/rfc1952
 #pragma once
-#ifndef oLZMA_h
-#define oLZMA_h
+#ifndef oBase_gzip_h
+#define oBase_gzip_h
 
-#include <oBasis/oCompression.h>
+#include <oBase/compression.h>
 
-size_t oLZMACompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource);
-size_t oLZMADecompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource);
+namespace ouro {
+
+size_t gzip_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination
+	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+
+size_t gzip_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination
+	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+
+} // namespace ouro
 
 #endif

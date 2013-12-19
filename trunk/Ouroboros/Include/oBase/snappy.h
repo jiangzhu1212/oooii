@@ -22,15 +22,22 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Wrapper for the gzip RFC1952 library.
-//http://tools.ietf.org/html/rfc1952
+// Wrapper for the snappy compression library v1.0.
+// https://code.google.com/p/snappy/
 #pragma once
-#ifndef oGZip_h
-#define oGZip_h
+#ifndef oBase_snappy_h
+#define oBase_snappy_h
 
-#include <oBasis/oCompression.h>
+#include <oBase/compression.h>
 
-size_t oGZipCompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource);
-size_t oGZipDecompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource);
+namespace ouro {
+
+size_t snappy_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination
+	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+
+size_t snappy_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination
+	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+
+} // namespace ouro
 
 #endif

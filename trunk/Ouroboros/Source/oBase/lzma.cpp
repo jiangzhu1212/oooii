@@ -22,13 +22,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oLZMA.h>
-#include <oBasis/oError.h>
+#include <oBase/lzma.h>
 #include <oBase/byte.h>
-
+#include <oBase/throw.h>
 #include <Lzma/C/LzmaLib.h>
 
-using namespace ouro;
+namespace ouro {
 
 // From LzmaLib.h documentation:
 static const int LZMADEFAULT_level = 5;
@@ -47,14 +46,14 @@ struct HDR
 	size_t UncompressedSize;
 };
 
-static size_t LZMAEstimateCompressedSize(size_t _SizeofSource)
+static size_t lzma_estimate_compressed_size(size_t _SizeofSource)
 {
 	// http://sourceforge.net/projects/sevenzip/forums/forum/45797/topic/3420786
 	// a post by ipavlov...
 	return static_cast<size_t>(1.1f * _SizeofSource + 0.5f) + oKB(16);
 }
 
-static const char* oAsStringLZMA_ERROR(int _Error)
+static const char* as_string_lzma_error(int _Error)
 {
 	switch (_Error)
 	{
@@ -78,13 +77,14 @@ static const char* oAsStringLZMA_ERROR(int _Error)
 	return "Unrecognized LZMA error code";
 }
 
-size_t oLZMACompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
+size_t lzma_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
 {
 	size_t CompressedSize = 0;
 	if (_pDestination)
 	{
-		const size_t EstSize = oLZMACompress(nullptr, 0, nullptr, _SizeofSource);
-		oCOMPRESSION_CHECK_DEST(EstSize);
+		const size_t EstSize = lzma_compress(nullptr, 0, nullptr, _SizeofSource);
+		if (_pDestination && _SizeofDestination < EstSize)
+			oTHROW0(no_buffer_space);
 
 		((HDR*)_pDestination)->UncompressedSize = _SizeofSource;
 		CompressedSize = _SizeofDestination;
@@ -106,22 +106,20 @@ size_t oLZMACompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, c
 			, LZMADEFAULT_numThreads);
 
 		if (LZMAError)
-		{
-			oErrorSetLast(std::errc::protocol_error, "compression failed: %s", oAsStringLZMA_ERROR(LZMAError));
-			CompressedSize = 0;
-		}
+			oTHROW(protocol_error, "compression failed: %s", as_string_lzma_error(LZMAError));
 	}
 
 	else
-		CompressedSize = sizeof(HDR) + LZMAEstimateCompressedSize(_SizeofSource);
+		CompressedSize = sizeof(HDR) + lzma_estimate_compressed_size(_SizeofSource);
 
 	return CompressedSize;
 }
 
-size_t oLZMADecompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
+size_t lzma_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
 {
 	size_t UncompressedSize = ((const HDR*)_pSource)->UncompressedSize;
-	oCOMPRESSION_CHECK_DEST(UncompressedSize);
+		if (_pDestination && _SizeofDestination < UncompressedSize)
+			oTHROW0(no_buffer_space);
 
 	size_t destLen = _SizeofDestination;
 	size_t srcLen = _SizeofSource;
@@ -134,10 +132,9 @@ size_t oLZMADecompress(void* oRESTRICT _pDestination, size_t _SizeofDestination,
 		, LZMA_PROPS_SIZE);
 
 	if (LZMAError)
-	{
-		oErrorSetLast(std::errc::protocol_error, "decompression failed: %s", oAsStringLZMA_ERROR(LZMAError));
-		UncompressedSize = 0;
-	}
+		oTHROW(protocol_error, "decompression failed: %s", as_string_lzma_error(LZMAError));
 
 	return UncompressedSize;
 }
+
+} // namespace ouro

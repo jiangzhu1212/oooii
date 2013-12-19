@@ -47,9 +47,11 @@
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="date.cpp" />
+    <ClCompile Include="gzip.cpp" />
     <ClCompile Include="index_allocator_base.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="leak_tracker.cpp" />
+    <ClCompile Include="lzma.cpp" />
     <ClCompile Include="memory\dtoull.cpp" />
     <ClCompile Include="memory\is_ascii.cpp" />
     <ClCompile Include="memory\memcmp4.cpp" />
@@ -71,6 +73,7 @@
     </ClCompile>
     <ClCompile Include="scc.cpp" />
     <ClCompile Include="scc_svn.cpp" />
+    <ClCompile Include="snappy.cpp" />
     <ClCompile Include="string\ampersand_decode.cpp" />
     <ClCompile Include="string\ampersand_encode.cpp" />
     <ClCompile Include="string\argtok.cpp" />
@@ -127,6 +130,7 @@
     <ClInclude Include="..\..\Include\oBase\backoff.h" />
     <ClInclude Include="..\..\Include\oBase\byte.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
+    <ClInclude Include="..\..\Include\oBase\compression.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h" />
@@ -144,6 +148,7 @@
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
     <ClInclude Include="..\..\Include\oBase\fnv1a.h" />
     <ClInclude Include="..\..\Include\oBase\guid.h" />
+    <ClInclude Include="..\..\Include\oBase\gzip.h" />
     <ClInclude Include="..\..\Include\oBase\index_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\index_allocator_base.h" />
     <ClInclude Include="..\..\Include\oBase\ini.h" />
@@ -153,6 +158,7 @@
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator_base.h" />
+    <ClInclude Include="..\..\Include\oBase\lzma.h" />
     <ClInclude Include="..\..\Include\oBase\macros.h" />
     <ClInclude Include="..\..\Include\oBase\memory.h" />
     <ClInclude Include="..\..\Include\oBase\moving_average.h" />
@@ -163,6 +169,7 @@
     <ClInclude Include="..\..\Include\oBase\path_traits.h" />
     <ClInclude Include="..\..\Include\oBase\resized_type.h" />
     <ClInclude Include="..\..\Include\oBase\scc.h" />
+    <ClInclude Include="..\..\Include\oBase\snappy.h" />
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />
     <ClInclude Include="..\..\Include\oBase\string_traits.h" />

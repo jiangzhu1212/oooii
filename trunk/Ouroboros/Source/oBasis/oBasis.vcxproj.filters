@@ -55,12 +55,6 @@
     <Filter Include="Source\3D Math &amp; Graphics\Bullet-Vectormathlib">
       <UniqueIdentifier>{81bf6063-2edd-4914-95db-4552841bdc2f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="oBasis\Compression">
-      <UniqueIdentifier>{22d3db64-f2ad-43cd-b447-33c87b81719c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Compression">
-      <UniqueIdentifier>{20271ea3-a632-48ee-b38a-550d97c85239}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -255,15 +249,6 @@
     <ClInclude Include="..\..\Include\oBasis\oInputMapper.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oSnappy.h">
-      <Filter>oBasis\Compression</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oLZMA.h">
-      <Filter>oBasis\Compression</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oGZip.h">
-      <Filter>oBasis\Compression</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
@@ -272,9 +257,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h">
       <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oCompression.h">
-      <Filter>oBasis\Compression</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -367,15 +349,6 @@
     </ClCompile>
     <ClCompile Include="oInputMapper.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oSnappy.cpp">
-      <Filter>Source\Compression</Filter>
-    </ClCompile>
-    <ClCompile Include="oLZMA.cpp">
-      <Filter>Source\Compression</Filter>
-    </ClCompile>
-    <ClCompile Include="oGZip.cpp">
-      <Filter>Source\Compression</Filter>
     </ClCompile>
     <ClCompile Include="oStrTok.cpp">
       <Filter>Source\String Parsing</Filter>

@@ -214,6 +214,15 @@
     <ClCompile Include="input.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="lzma.cpp">
+      <Filter>Source\compression</Filter>
+    </ClCompile>
+    <ClCompile Include="snappy.cpp">
+      <Filter>Source\compression</Filter>
+    </ClCompile>
+    <ClCompile Include="gzip.cpp">
+      <Filter>Source\compression</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -414,6 +423,18 @@
     <ClInclude Include="..\..\Include\oBase\input.h">
       <Filter>oBase</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\compression.h">
+      <Filter>oBase\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\gzip.h">
+      <Filter>oBase\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\lzma.h">
+      <Filter>oBase\compression</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\snappy.h">
+      <Filter>oBase\compression</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -481,6 +502,12 @@
     </Filter>
     <Filter Include="Source\traits">
       <UniqueIdentifier>{e6234b8f-0d23-4f87-bacd-8e5839e35563}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\compression">
+      <UniqueIdentifier>{4cadab25-2191-4b1f-b487-e5a4a7ec3b20}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\compression">
+      <UniqueIdentifier>{cd00d521-6e43-4d90-ab21-c3e5eb16894e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

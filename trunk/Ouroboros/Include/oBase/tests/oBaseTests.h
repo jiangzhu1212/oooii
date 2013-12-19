@@ -34,6 +34,7 @@ namespace ouro {
 	namespace tests {
 
 		void TESTatof(test_services& _Services);
+		void TESTcompression(test_services& _Services);
 		void TESTconcurrent_index_allocator();
 		void TESTconcurrent_linear_allocator();
 		void TESTcountdown_latch();

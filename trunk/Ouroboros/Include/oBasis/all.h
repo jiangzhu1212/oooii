@@ -34,7 +34,6 @@
 #include <oBasis/oCameraControllerArcball.h>
 #include <oBasis/oCameraControllerMaya.h>
 #include <oBasis/oCameraControllerMMO.h>
-#include <oBasis/oCompression.h>
 #include <oBasis/oContainer.h>
 #include <oBasis/oCppParsing.h>
 #include <oBasis/oDispatchQueue.h>
@@ -44,13 +43,11 @@
 #include <oBasis/oError.h>
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oGeometry.h>
-#include <oBasis/oGZip.h>
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oInt.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oLockedPointer.h>
-#include <oBasis/oLZMA.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oMIME.h>
@@ -58,7 +55,6 @@
 #include <oBasis/oOSC.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oRefCount.h>
-#include <oBasis/oSnappy.h>
 #include <oBasis/oStdStringSupport.h>
 #include <oBasis/oStrTok.h>
 #include <oBasis/oURI.h>

@@ -45,7 +45,6 @@ struct oBasisTestServices
 // to what occurred. In success the last error is set to 0.
 
 oAPI bool oBasisTest_oBuffer(const oBasisTestServices& _Services);
-oAPI bool oBasisTest_oCompression(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oCoroutine();
 
 // This prints a benchmark string to oErrorGetLastString() even if this function

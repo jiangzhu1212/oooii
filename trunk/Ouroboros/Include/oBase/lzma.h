@@ -22,30 +22,22 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oSnappy.h>
-#include <oBasis/oError.h>
-#include <snappy/snappy.h>
+// Wrapper for the LZMA compression library v9.2.
+// http://www.7-zip.org/sdk.html
+#pragma once
+#ifndef oBase_lzma_h
+#define oBase_lzma_h
 
-size_t oSnappyCompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
-{
-	size_t CompressedSize = snappy::MaxCompressedLength(_SizeofSource);
-	if (_pDestination)
-	{
-		oCOMPRESSION_CHECK_DEST(CompressedSize);
-		snappy::RawCompress(static_cast<const char*>(_pSource), _SizeofSource, static_cast<char*>(_pDestination), &CompressedSize);
-	}
-	return CompressedSize;
-}
+#include <oBase/compression.h>
 
-size_t oSnappyDecompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
-{
-	size_t UncompressedSize = 0;
-	snappy::GetUncompressedLength(static_cast<const char*>(_pSource), _SizeofSource, &UncompressedSize);
-	oCOMPRESSION_CHECK_DEST(UncompressedSize);
-	if (_pDestination && !snappy::RawUncompress(static_cast<const char*>(_pSource), _SizeofSource, static_cast<char*>(_pDestination)))
-	{
-		oErrorSetLast(std::errc::protocol_error);
-		return 0;
-	}
-	return UncompressedSize;
-}
+namespace ouro {
+
+size_t lzma_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination
+	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+
+size_t lzma_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination
+	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+
+} // namespace ouro
+
+#endif

@@ -76,7 +76,4 @@ private:
 
 #define oVB_MSG(_BoolWinFn, _Format, ...) do { if (!(_BoolWinFn)) { char msg[1024]; _snprintf_s(msg, sizeof(msg), _Format, ## __VA_ARGS__); throw ouro::windows::error(msg); } } while(false)
 
-// Confirm a size_t doesn't overflow a Windows type.
-#define oCHECK_SIZE(_WinType, _SizeTValue) if (static_cast<size_t>(static_cast<_WinType>(_SizeTValue)) != static_cast<size_t>(_SizeTValue)) throw std::invalid_argument("out of range: size_t -> " #_WinType);
-
 #endif

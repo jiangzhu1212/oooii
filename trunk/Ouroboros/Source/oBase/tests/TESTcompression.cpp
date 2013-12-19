@@ -22,60 +22,58 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/tests/oBasisTests.h>
-#include <oBasis/oGZip.h>
-#include <oBasis/oLZMA.h>
-#include <oBasis/oSnappy.h>
+#include <oBase/gzip.h>
+#include <oBase/lzma.h>
+#include <oBase/snappy.h>
 #include <oBase/finally.h>
+#include <oBase/path.h>
+#include <oBase/throw.h>
 #include <oBase/timer.h>
-#include "oBasisTestCommon.h"
+#include <oCore/filesystem.h>
 
-using namespace ouro;
+#include "../../test_services.h"
 
-static bool TestCompress(const void* _pSourceBuffer, size_t _SizeofSourceBuffer, oCompressFn _Compress, oDecompressFn _Decompress, size_t* _pCompressedSize)
+namespace ouro {
+	namespace tests {
+
+static void TestCompress(const void* _pSourceBuffer, size_t _SizeofSourceBuffer, compress_fn _Compress, decompress_fn _Decompress, size_t* _pCompressedSize)
 {
 	size_t maxCompressedSize = _Compress(nullptr, 0, _pSourceBuffer, _SizeofSourceBuffer);
 	void* compressed = new char[maxCompressedSize];
 	finally OSEFreeCompressed([&] { if (compressed) delete [] compressed; });
 
 	*_pCompressedSize = _Compress(compressed, maxCompressedSize, _pSourceBuffer, _SizeofSourceBuffer);
-	oTESTB0(*_pCompressedSize != 0);
+	oCHECK0(*_pCompressedSize != 0);
 
 	size_t uncompressedSize = _Decompress(nullptr, 0, compressed, *_pCompressedSize);
 	if (_SizeofSourceBuffer != uncompressedSize)
-		return oErrorSetLast(std::errc::protocol_error, "loaded and uncompressed sizes don't match");
+		oTHROW(protocol_error, "loaded and uncompressed sizes don't match");
 
 	void* uncompressed = malloc(uncompressedSize);
 	finally OSEFreeUncompressed([&] { if (uncompressed) free(uncompressed); });
 
-	oTESTB0(0 != _Decompress(uncompressed, uncompressedSize, compressed, *_pCompressedSize));
-	oTESTB(!memcmp(_pSourceBuffer, uncompressed, uncompressedSize), "memcmp failed between uncompressed and loaded buffers");
-	return true;
+	oCHECK0(0 != _Decompress(uncompressed, uncompressedSize, compressed, *_pCompressedSize));
+	oCHECK(!memcmp(_pSourceBuffer, uncompressed, uncompressedSize), "memcmp failed between uncompressed and loaded buffers");
 }
 
-bool oBasisTest_oCompression(const oBasisTestServices& _Services)
+void TESTcompression(test_services& _Services)
 {
-	static const char* BenchmarkFilename = "Test/Geometry/buddha.obj";
+	static const char* TestPath = "Test/Geometry/buddha.obj";
 
-	path Path;
-	oTESTB(_Services.ResolvePath(Path, BenchmarkFilename, true), "not found: %s", BenchmarkFilename);
-
-	char* pOBJBuffer = nullptr;
 	size_t Size = 0;
-	oTESTB(_Services.AllocateAndLoadBuffer((void**)&pOBJBuffer, &Size, Path, true), "Failed to load file \"%s\"", Path.c_str());
-	finally FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pOBJBuffer); });
+	std::shared_ptr<char> pOBJBuffer = _Services.load_buffer(TestPath, &Size);
 
 	double timeSnappy, timeLZMA, timeGZip;
 	size_t CompressedSize0, CompressedSize1, CompressedSize2;
 
 	timer t;
-	oTESTB0(TestCompress(pOBJBuffer, Size, oSnappyCompress, oSnappyDecompress, &CompressedSize0));
+	TestCompress(pOBJBuffer.get(), Size, snappy_compress, snappy_decompress, &CompressedSize0);
 	timeSnappy = t.seconds();
 	t.reset();
-	oTESTB0(TestCompress(pOBJBuffer, Size, oLZMACompress, oLZMADecompress, &CompressedSize1));
+	TestCompress(pOBJBuffer.get(), Size, lzma_compress, lzma_decompress, &CompressedSize1);
 	timeLZMA = t.seconds();
 	t.reset();
-	oTESTB0(TestCompress(pOBJBuffer, Size, oGZipCompress, oGZipDecompress, &CompressedSize2));
+	TestCompress(pOBJBuffer.get(), Size, gzip_compress, gzip_decompress, &CompressedSize2);
 	timeGZip = t.seconds();
 	t.reset();
 
@@ -89,8 +87,8 @@ bool oBasisTest_oCompression(const oBasisTestServices& _Services)
 	format_duration(strLZMATime, timeLZMA, true);
 	format_duration(strGZipTime, timeGZip, true);
 
-	oErrorSetLast(0, "Compressed %s from %s to Snappy: %s in %s, LZMA: %s in %s, GZip: %s in %s"
-		, Path.c_str()
+	_Services.report("Compressed %s from %s to Snappy: %s in %s, LZMA: %s in %s, GZip: %s in %s"
+		, TestPath
 		, strUncompressed.c_str()
 		, strSnappy.c_str()
 		, strSnappyTime.c_str()
@@ -98,5 +96,7 @@ bool oBasisTest_oCompression(const oBasisTestServices& _Services)
 		, strLZMATime.c_str()
 		, strGZip.c_str()
 		, strGZipTime.c_str());
-	return true;
 }
+
+	} // namespace tests
+} // namespace ouro

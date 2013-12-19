@@ -10,9 +10,6 @@
     <ClCompile Include="Tests\TESTBuffer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTCompression.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTDispatchQueueGlobal.cpp">
       <Filter>Source</Filter>
     </ClCompile>

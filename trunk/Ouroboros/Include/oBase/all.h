@@ -32,6 +32,7 @@
 #include <oBase/atof.h>
 #include <oBase/byte.h>
 #include <oBase/color.h>
+#include <oBase/compression.h>
 #include <oBase/concurrent_index_allocator.h>
 #include <oBase/concurrent_linear_allocator.h>
 #include <oBase/concurrent_object_pool.h>
@@ -47,6 +48,7 @@
 #include <oBase/fnv1a.h>
 #include <oBase/fourcc.h>
 #include <oBase/guid.h>
+#include <oBase/gzip.h>
 #include <oBase/index_allocator.h>
 #include <oBase/index_allocator_base.h>
 #include <oBase/ini.h>
@@ -54,6 +56,7 @@
 #include <oBase/intrusive_ptr.h>
 #include <oBase/leak_tracker.h>
 #include <oBase/linear_allocator.h>
+#include <oBase/lzma.h>
 #include <oBase/macros.h>
 #include <oBase/memory.h>
 #include <oBase/moving_average.h>
@@ -63,6 +66,7 @@
 #include <oBase/path.h>
 #include <oBase/path_traits.h>
 #include <oBase/scc.h>
+#include <oBase/snappy.h>
 #include <oBase/string.h>
 #include <oBase/string_traits.h>
 #include <oBase/text_document.h>
