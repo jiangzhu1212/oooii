@@ -109,7 +109,7 @@ An example XML:
 #ifndef oWinControlSet_h
 #define oWinControlSet_h
 
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oBase/fixed_string.h>
 #include <oBase/xml.h>

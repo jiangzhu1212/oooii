@@ -30,7 +30,7 @@
 #ifndef oGUIMenu_h
 #define oGUIMenu_h
 
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 #include <oBasis/oRTTI.h>
 #include <oBase/fixed_string.h>
 #include <oBase/throw.h>

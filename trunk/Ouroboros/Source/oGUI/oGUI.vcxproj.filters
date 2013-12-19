@@ -75,6 +75,9 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\win_as_string.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\oGUI.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
@@ -133,6 +136,9 @@
     </ClCompile>
     <ClCompile Include="win_as_string.cpp">
       <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="oGUI.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

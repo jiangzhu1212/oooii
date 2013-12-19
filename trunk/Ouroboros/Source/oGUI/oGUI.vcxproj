@@ -25,6 +25,7 @@
     <ClInclude Include="..\..\Include\oGUI\mru.h" />
     <ClInclude Include="..\..\Include\oGUI\msgbox.h" />
     <ClInclude Include="..\..\Include\oGUI\notification_area.h" />
+    <ClInclude Include="..\..\Include\oGUI\oGUI.h" />
     <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h" />
     <ClInclude Include="..\..\Include\oGUI\progress_bar.h" />
     <ClInclude Include="..\..\Include\oGUI\window.h" />
@@ -47,6 +48,7 @@
     <ClCompile Include="msgbox.cpp" />
     <ClCompile Include="notification_area.cpp" />
     <ClCompile Include="oGDI.cpp" />
+    <ClCompile Include="oGUI.cpp" />
     <ClCompile Include="oGUIMenu.cpp" />
     <ClCompile Include="oWinCommonDialog.cpp" />
     <ClCompile Include="oWinControlSet.cpp" />

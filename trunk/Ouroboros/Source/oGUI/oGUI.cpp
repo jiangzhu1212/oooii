@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 #include <oCompute/linear_algebra.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oRTTI.h>

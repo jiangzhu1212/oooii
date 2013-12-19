@@ -28,7 +28,7 @@
 #define oGUI_mru_h
 
 #include <oBase/fixed_string.h>
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 #include <vector>
 
 namespace ouro {

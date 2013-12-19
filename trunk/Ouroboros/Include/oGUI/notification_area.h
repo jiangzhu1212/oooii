@@ -28,7 +28,7 @@
 #ifndef oGUI_win_tray_h
 #define oGUI_win_tray_h
 
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 
 namespace ouro {
 	namespace notification_area {

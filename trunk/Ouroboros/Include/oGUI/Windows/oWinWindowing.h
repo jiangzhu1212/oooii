@@ -41,7 +41,7 @@
 #include <oStd/thread.h>
 #include <oCore/display.h>
 #include <oCore/process.h>
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 #include <oBasis/oInvalid.h>
 
 #define WIN32_LEAN_AND_MEAN

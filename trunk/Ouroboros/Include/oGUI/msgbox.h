@@ -27,7 +27,7 @@
 #ifndef oGUI_msgbox_h
 #define oGUI_msgbox_h
 
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 #include <stdarg.h>
 
 namespace ouro {

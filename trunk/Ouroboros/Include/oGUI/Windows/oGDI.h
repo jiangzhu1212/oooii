@@ -29,7 +29,7 @@
 
 #include <oStd/atomic.h>
 #include <oBase/color.h>
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oGUI/Windows/oWinRect.h>
 

@@ -96,9 +96,6 @@
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oCompression.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oInt.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
@@ -130,9 +127,6 @@
       <Filter>Source\3D Math &amp; Graphics\Bullet-Vectormathlib</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oMIME.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oGUI.h">
       <Filter>oBasis</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oGeometry.h">
@@ -282,6 +276,9 @@
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h">
       <Filter>oBasis</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oCompression.h">
+      <Filter>oBasis\Compression</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oBuffer.cpp">
@@ -372,9 +369,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oInputMapper.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oGUI.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oSnappy.cpp">

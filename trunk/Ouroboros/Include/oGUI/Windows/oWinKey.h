@@ -26,7 +26,7 @@
 #ifndef oVKToX11Keyboard_h
 #define oVKToX11Keyboard_h
 
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

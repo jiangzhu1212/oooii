@@ -30,7 +30,7 @@
 #ifndef oGUI_window_h
 #define oGUI_window_h
 
-#include <oBasis/oGUI.h>
+#include <oGUI/oGUI.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oStd/future.h>
 #include <oCore/display.h>
