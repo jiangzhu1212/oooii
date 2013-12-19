@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oCameraControllerArcball.h>
-#include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
 #include <oCompute/arcball.h>
 
@@ -82,7 +81,7 @@ int oCameraControllerArcballImpl::OnAction(const ouro::input::action& _Action)
 	int Response = oCAMERA_CONTROLLER_SHOW_POINTER;
 
 	LastPointerPosition = PointerPosition.xy();
-	oGUIRecordInputState(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
+	record_state(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
 	float2 PointerPositionDelta = PointerPosition.xy() - LastPointerPosition;
 
 	if (KeyStates[oCAMERA_CONTROLLER_ARCBALL_DESC::ORBIT])

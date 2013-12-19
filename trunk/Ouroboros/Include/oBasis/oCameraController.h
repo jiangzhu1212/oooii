@@ -29,6 +29,7 @@
 
 #include <oBasis/oInterface.h>
 #include <oBasis/oPlatformFeatures.h>
+#include <oBase/input.h>
 #include <oBase/types.h>
 
 // Yaw is up/down, pitch is left/right, roll is spin left/spin right. This 

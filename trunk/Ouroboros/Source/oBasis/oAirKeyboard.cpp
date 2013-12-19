@@ -27,7 +27,6 @@
 #include <oBasis/oXMLSerialize.h>
 #include <oConcurrency/mutex.h>
 #include <oConcurrency/thread_safe.h>
-#include <oBasis/oGUI.h>
 
 using namespace ouro;
 using namespace oConcurrency;

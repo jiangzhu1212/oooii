@@ -31,7 +31,6 @@
 
 #ifdef oHAS_KINECT_SDK
 
-#include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/mutex.h>
 

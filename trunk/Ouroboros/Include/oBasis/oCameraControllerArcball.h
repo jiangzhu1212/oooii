@@ -30,7 +30,6 @@
 #define oCameraControllerArcball_h
 
 #include <oBasis/oCameraController.h>
-#include <oBasis/oGUI.h>
 #include <array>
 
 struct oCAMERA_CONTROLLER_ARCBALL_DESC

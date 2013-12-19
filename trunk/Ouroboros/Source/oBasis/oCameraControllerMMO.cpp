@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oCameraControllerMMO.h>
-#include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
 #include <oCompute/eye.h>
 
@@ -79,7 +78,7 @@ bool oCameraControllerMMOCreate(const oCAMERA_CONTROLLER_MMO_DESC& _Desc, oCamer
 
 int oCameraControllerMMOImpl::OnAction(const ouro::input::action& _Action)
 {
-	oGUIRecordInputState(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
+	record_state(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
 	int Response = 0;
 
 	if (Desc.AllowMouseWheelAcceleration && !ouro::equal(PointerPosition.z, 0.0f))

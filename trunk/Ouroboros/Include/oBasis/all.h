@@ -44,7 +44,6 @@
 #include <oBasis/oError.h>
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oGeometry.h>
-#include <oBasis/oGUI.h>
 #include <oBasis/oGZip.h>
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oInt.h>

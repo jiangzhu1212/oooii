@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/input.h>
+#include <oBase/assert.h>
 #include <oBase/stringize.h>
 
 namespace ouro {
@@ -328,4 +329,45 @@ const char* as_string(const resized_action_type_t& _Key)
 oDEFINE_TO_STRING(resized_action_type_t);
 oDEFINE_FROM_STRING(resized_action_type_t, input::action_type_count);
 
+namespace input {
+
+void record_state(const ouro::input::action& _Action, const ouro::input::key* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition)
+{
+	oASSERT((_NumKeys % _NumKeyStates) == 0, "NumKeyStates must be a multiple of num keys");
+
+	bool KeyDown = false;
+	switch (_Action.action_type)
+	{
+		case ouro::input::key_down:
+		{
+			KeyDown = true;
+			break;
+		}
+
+		case ouro::input::key_up:
+		{
+			KeyDown = false;
+			break;
+		}
+
+		case ouro::input::pointer_move:
+			*_pPointerPosition = _Action.position().xyz();
+			return;
+
+		default:
+			return;
+	}
+
+	ouro::input::key TestKey = _Action.key;
+	for (size_t i = 0; i < _NumKeys; i++)
+	{
+		if (TestKey == _pKeys[i])
+		{
+			_pKeyStates[(i % _NumKeyStates)] = KeyDown;
+			break;
+		}
+	}
+}
+
+	} // namespace input
 } // namespace ouro

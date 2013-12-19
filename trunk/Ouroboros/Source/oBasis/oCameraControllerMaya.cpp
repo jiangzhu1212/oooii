@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oCameraControllerMaya.h>
 #include <oCompute/arcball.h>
-#include <oBasis/oGUI.h>
 #include <oBasis/oRefCount.h>
 
 struct oCameraControllerModelerImpl : oCameraControllerModeler
@@ -84,7 +83,7 @@ int oCameraControllerModelerImpl::OnAction(const ouro::input::action& _Action)
 	int Response = oCAMERA_CONTROLLER_SHOW_POINTER;
 
 	LastPointerPosition = PointerPosition.xy();
-	oGUIRecordInputState(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
+	record_state(_Action, Desc.Controls.data(), Desc.Controls.size(), KeyStates.data(), KeyStates.size(), &PointerPosition);
 	float2 PointerPositionDelta = PointerPosition.xy() - LastPointerPosition;
 
 	const bool kActive = Desc.Controls[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION] == ouro::input::none || KeyStates[oCAMERA_CONTROLLER_MODELER_DESC::ACTIVATION];

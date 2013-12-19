@@ -359,6 +359,19 @@ inline type get_type(const key& _Key)
 // as key events, but rather as an app event that is singular, not a down/up.
 inline bool is_standard(const key& _Key) { return _Key >= standard_first && _Key <= standard_last; }
 
+// @tony: Can oInputMapper replace this?
+// A utility function to analyze the specified action and compare it for keydown
+// and keyup events from keys specified in the keys array. If there's a match,
+// the corresponding keystate is marked as true if down, and false if up. NOTE:
+// _NumKeys can be a multiple of _NumKeyStates to support multiple key bindings
+// for the same KeyState. i.e. if you have two states LEFT and RIGHT and you 
+// want to bind A and D, but also left-arrow and right-arrow, that can be done
+// with an array of [A,D,left,right] and the Keystates will be written correctly
+// for LEFT and RIGHT. If the action is a pointer move, then the position is 
+// recorded to _pPointerPosition.
+void record_state(const ouro::input::action& _Action, const ouro::input::key* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition);
+template<size_t NumKeys, size_t NumKeyStates> void record_state(const ouro::input::action& _Action, const ouro::input::key (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { record_state(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
+
 	} // namespace input
 } // namespace ouro
 

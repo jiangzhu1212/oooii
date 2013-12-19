@@ -34,7 +34,6 @@
 #ifndef oAirKeyboard_h
 #define oAirKeyboard_h
 
-#include <oBasis/oGUI.h>
 #include <oBasis/oRTTI.h>
 #include <oBasis/oInterface.h>
 #include <oBase/types.h>

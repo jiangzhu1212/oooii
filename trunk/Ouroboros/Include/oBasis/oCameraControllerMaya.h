@@ -31,7 +31,6 @@
 
 #include <oCompute/arcball.h>
 #include <oBasis/oCameraController.h>
-#include <oBasis/oGUI.h>
 #include <array>
 
 struct oCAMERA_CONTROLLER_MODELER_DESC

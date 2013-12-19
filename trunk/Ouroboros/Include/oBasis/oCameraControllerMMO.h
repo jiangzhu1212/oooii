@@ -33,7 +33,6 @@
 #define oCameraControllerMMO_h
 
 #include <oBasis/oCameraController.h>
-#include <oBasis/oGUI.h>
 #include <array>
 
 struct oCAMERA_CONTROLLER_MMO_DESC
