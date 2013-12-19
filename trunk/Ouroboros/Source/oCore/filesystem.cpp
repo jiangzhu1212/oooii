@@ -596,11 +596,11 @@ void enumerate(const path& _WildcardPath
 }
 
 void* map(const path& _Path
-	, bool _ReadOnly
+	, map_option::value _MapOption
 	, unsigned long long _Offset
 	, unsigned long long _Size)
 {
-	HANDLE hFile = CreateFileA(_Path, _ReadOnly ? GENERIC_READ : (GENERIC_READ|GENERIC_WRITE), 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+	HANDLE hFile = CreateFileA(_Path, _MapOption == map_option::binary_read ? GENERIC_READ : (GENERIC_READ|GENERIC_WRITE), 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (hFile == INVALID_HANDLE_VALUE)
 		oFSTHROWLAST();
 	finally CloseFile([&] { CloseHandle(hFile); });
@@ -612,7 +612,7 @@ void* map(const path& _Path
 	unsigned long long offsetPadding = _Offset - alignedOffset.as_unsigned_long_long;
 	unsigned long long alignedSize = _Size + offsetPadding;
 
-	DWORD fProtect = _ReadOnly ? PAGE_READONLY : PAGE_READWRITE;
+	DWORD fProtect = _MapOption == map_option::binary_read ? PAGE_READONLY : PAGE_READWRITE;
 	HANDLE hMapped = CreateFileMapping(hFile, nullptr, fProtect, 0, 0, nullptr);
 	if (!hMapped)
 		oFSTHROWLAST();

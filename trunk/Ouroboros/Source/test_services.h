@@ -55,6 +55,10 @@ public:
 	virtual void vreport(const char* _Format, va_list _Args) = 0;
 	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
 
+	// Returns the root path from which any test data should be loaded.
+	virtual char* test_root_path(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
+	template<size_t size> char* test_root_path(char (&_StrDestination)[size]) const { return test_root_path(_StrDestination, size); }
+
 	// Load the entire contents of the specified file into a newly allocated 
 	// buffer.
 	virtual std::shared_ptr<char> load_buffer(const char* _Path, size_t* _pSize = nullptr) = 0;

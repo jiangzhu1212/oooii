@@ -129,6 +129,14 @@ const std::error_category& filesystem_category();
 
 };}
 
+/* enum class */ namespace map_option
+{ enum value {
+
+	binary_read,
+	binary_write,
+
+};}
+
 /* enum class */ namespace seek_origin
 { enum value {
 
@@ -305,12 +313,11 @@ inline void enumerate_recursively(const path& _WildcardPath
 }
 
 // Memory-maps the specified file, similar to mmap or MapViewOfFile, but with a 
-// set of policy constraints to keep its usage simple. Because oFile doesn't
-// expose file handles, the specified file is opened and exposed exclusively as 
-// the mapped pointer and the file is closed when unmapped. If _ReadOnly is 
-// false, the pointer will be mapped write only.
+// set of policy constraints to keep its usage simple. The specified path is 
+// opened and exposed solely as the mapped pointer and the file is closed when 
+// unmapped.
 void* map(const path& _Path
-	, bool _ReadOnly
+	, map_option::value _MapOption
 	, unsigned long long _Offset
 	, unsigned long long _Size);
 

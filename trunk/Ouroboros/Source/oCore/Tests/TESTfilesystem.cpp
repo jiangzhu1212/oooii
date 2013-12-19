@@ -26,6 +26,8 @@
 #include <oBase/assert.h>
 #include <oBase/finally.h>
 
+#include "../../test_services.h"
+
 using namespace oStd;
 using namespace ouro::filesystem;
 
@@ -52,15 +54,17 @@ static void TESTfilesystem_paths()
 	oTRACE("DATA: %s", path.c_str());
 }
 
-static void TESTfilesystem_map()
+static void TESTfilesystem_map(test_services& _Services)
 {
-	path TestPath = data_path() / "Test/Textures/lena_1.png";
+	path_string StrTestPath;
+	path TestPath = _Services.test_root_path(StrTestPath, StrTestPath.capacity());
+	TestPath /= "Test/Textures/lena_1.png";
 	if (!exists(TestPath))
 		oTHROW(no_such_file_or_directory, "not found: %s", TestPath.c_str());
 
 	unsigned long long size = file_size(TestPath);
 	
-	void* mapped = map(TestPath, true, 0, size);
+	void* mapped = map(TestPath, map_option::binary_read, 0, size);
 	if (!mapped)
 		oTHROW(protocol_error, "map failed");
 	finally Unmap([&] { if (mapped) unmap(mapped); }); // safety unmap if we fail for some non-mapping reason
@@ -78,10 +82,10 @@ static void TESTfilesystem_map()
 	mapped = nullptr; // signal Unmap to noop
 }
 
-void TESTfilesystem()
+void TESTfilesystem(test_services& _Services)
 {
 	TESTfilesystem_paths();
-	TESTfilesystem_map();
+	TESTfilesystem_map(_Services);
 }
 
 	} // namespace tests

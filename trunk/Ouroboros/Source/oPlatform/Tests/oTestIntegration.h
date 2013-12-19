@@ -51,6 +51,11 @@ public:
 		oTRACEA("%s", oErrorGetLastString());
 	}
 
+	char* test_root_path(char* _StrDestination, size_t _SizeofStrDestination) const override
+	{
+		return strlcpy(_StrDestination, filesystem::data_path().c_str(), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
+	}
+
 	std::shared_ptr<char> load_buffer(const char* _Path, size_t* _pSize = nullptr) override
 	{
 		path FullPath = filesystem::data_path() / _Path;

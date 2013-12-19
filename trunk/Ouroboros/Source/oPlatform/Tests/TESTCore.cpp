@@ -37,7 +37,7 @@ oTEST_REGISTER_CORE_TEST(adapter);
 oTEST_REGISTER_CORE_TEST(camera);
 oTEST_REGISTER_CORE_TEST(cpu);
 oTEST_REGISTER_CORE_TEST(debugger);
-oTEST_REGISTER_CORE_TEST0(filesystem);
+oTEST_REGISTER_CORE_TEST(filesystem);
 oTEST_REGISTER_CORE_TEST0(filesystem_monitor);
 oTEST_REGISTER_CORE_TEST0(process_heap);
 #if defined(_WIN32) || defined(_WIN64)

@@ -32,30 +32,30 @@
 
 namespace ouro {
 
-const char* as_string(const ouro::module::type::value& _Type)
+const char* as_string(const module::type::value& _Type)
 {
 	switch (_Type)
 	{
-		case ouro::module::type::unknown: return "unknown";
-		case ouro::module::type::app: return "application";
-		case ouro::module::type::dll: return "dll";
-		case ouro::module::type::lib: return "library";
-		case ouro::module::type::font_unknown: return "unknown font";
-		case ouro::module::type::font_raster: return "raster font";
-		case ouro::module::type::font_truetype: return "truetype font";
-		case ouro::module::type::font_vector: return "vector font";
-		case ouro::module::type::virtual_device: return "virtual device";
-		case ouro::module::type::drv_unknown: return "unknown driver";
-		case ouro::module::type::drv_comm: return "comm driver";
-		case ouro::module::type::drv_display: return "display driver";
-		case ouro::module::type::drv_installable: return "installable driver";
-		case ouro::module::type::drv_keyboard: return "keyboard driver";
-		case ouro::module::type::drv_language: return "language driver";
-		case ouro::module::type::drv_mouse: return "mouse driver";
-		case ouro::module::type::drv_network: return "network driver";
-		case ouro::module::type::drv_printer: return "printer driver";
-		case ouro::module::type::drv_sound: return "sound driver";
-		case ouro::module::type::drv_system: return "system driver";
+		case module::type::unknown: return "unknown";
+		case module::type::app: return "application";
+		case module::type::dll: return "dll";
+		case module::type::lib: return "library";
+		case module::type::font_unknown: return "unknown font";
+		case module::type::font_raster: return "raster font";
+		case module::type::font_truetype: return "truetype font";
+		case module::type::font_vector: return "vector font";
+		case module::type::virtual_device: return "virtual device";
+		case module::type::drv_unknown: return "unknown driver";
+		case module::type::drv_comm: return "comm driver";
+		case module::type::drv_display: return "display driver";
+		case module::type::drv_installable: return "installable driver";
+		case module::type::drv_keyboard: return "keyboard driver";
+		case module::type::drv_language: return "language driver";
+		case module::type::drv_mouse: return "mouse driver";
+		case module::type::drv_network: return "network driver";
+		case module::type::drv_printer: return "printer driver";
+		case module::type::drv_sound: return "sound driver";
+		case module::type::drv_system: return "system driver";
 		default: break;
 	}
 	return "?";
@@ -231,7 +231,7 @@ static bool is_64bit(const path& _Path)
 
 	unsigned long long size = filesystem::file_size(_Path);
 
-	void* mapped = ouro::filesystem::map(_Path, false, 0, size);
+	void* mapped = filesystem::map(_Path, filesystem::map_option::binary_read, 0, size);
 	if (mapped)
 	{
 		IMAGE_NT_HEADERS* pHeader = ImageNtHeader(mapped);
@@ -341,7 +341,7 @@ info get_info(id _ModuleID)
 
 	namespace this_module {
 
-ouro::path get_path()
+path get_path()
 {
 	return module::get_path(module::id());
 }

@@ -37,7 +37,7 @@ namespace ouro {
 		void TESTcamera(test_services& _Services);
 		void TESTcpu(test_services& _Services);
 		void TESTdebugger(test_services& _Services);
-		void TESTfilesystem();
+		void TESTfilesystem(test_services& _Services);
 		void TESTfilesystem_monitor();
 		void TESTprocess_heap();
 		#if defined(_WIN32) || defined(_WIN64)
