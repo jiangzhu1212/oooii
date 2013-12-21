@@ -66,7 +66,7 @@ struct oOBJ_GROUP
 {
 	ouro::mstring GroupName;
 	ouro::mstring MaterialName;
-	oGPU_RANGE Range;
+	ouro::gpu::vertex_range Range;
 };
 
 struct oOBJ_TEXTURE
@@ -223,7 +223,7 @@ bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** 
 
 // Convenience function to collapse groups into an array of ranges. If this 
 // succeeds, the number of valid ranges will be Desc.NumRanges.
-bool oOBJCopyRanges(oGPU_RANGE* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc);
-template<size_t size> bool oOBJCopyRanges(oGPU_RANGE (&_pDestination)[size], const oOBJ_DESC& _Desc) { return oOBJCopyRanges(_pDestination, size, _Desc); }
+bool oOBJCopyRanges(ouro::gpu::vertex_range* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc);
+template<size_t size> bool oOBJCopyRanges(ouro::gpu::vertex_range (&_pDestination)[size], const oOBJ_DESC& _Desc) { return oOBJCopyRanges(_pDestination, size, _Desc); }
 
 #endif

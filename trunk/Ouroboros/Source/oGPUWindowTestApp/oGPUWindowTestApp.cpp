@@ -156,7 +156,7 @@ oGPUWindowThread::oGPUWindowThread()
 	: pGPUWindow(nullptr)
 	, Running(true)
 {
-	if (!oGPUDeviceCreate(oGPU_DEVICE_INIT(), &Device))
+	if (!oGPUDeviceCreate(ouro::gpu::device_init(), &Device))
 	{
 		oASSERT(false, "Could not create device:\n%s", oErrorGetLastString());
 		Running = false;
@@ -273,10 +273,10 @@ void oGPUWindowThread::Render()
 	{
 		CommandList->Begin();
 		CommandList->SetRenderTarget(WindowRenderTarget);
-		CommandList->Clear(WindowRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		CommandList->SetBlendState(oGPU_OPAQUE);
-		CommandList->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
-		CommandList->SetSurfaceState(oGPU_FRONT_FACE);
+		CommandList->Clear(WindowRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
+		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
+		CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
 		CommandList->SetPipeline(Pipeline);
 
 		oGPUUtilMeshDraw(CommandList, Mesh);
@@ -496,11 +496,11 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 				oGPURenderTarget* pRT = GPUWindow.GetRenderTarget();
 				if (pRT)
 				{
-					oGPU_RENDER_TARGET_DESC RTD;
+					oGPURenderTarget::DESC RTD;
 					pRT->GetDesc(&RTD);
-					if (RTD.ClearDesc.ClearColor[0] == ClearToggle.Color[0]) RTD.ClearDesc.ClearColor[0] = ClearToggle.Color[1];
-					else RTD.ClearDesc.ClearColor[0] = ClearToggle.Color[0];
-					pRT->SetClearDesc(RTD.ClearDesc);
+					if (RTD.clear.clear_color[0] == ClearToggle.Color[0]) RTD.clear.clear_color[0] = ClearToggle.Color[1];
+					else RTD.clear.clear_color[0] = ClearToggle.Color[0];
+					pRT->SetClearDesc(RTD.clear);
 				}
 			}
 

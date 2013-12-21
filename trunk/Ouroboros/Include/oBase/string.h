@@ -105,9 +105,9 @@ template<size_t size> int snprintf(char (&_StrDestination)[size], const char* _F
 }
 
 // Posix form of a safer strtok
-inline char* strtok_r(char* _strToken, const char* _strDelim, char** _Context)
+inline char* strtok_r(char* _StrToken, const char* _StrDelim, char** _Context)
 {
-	return strtok_s(_strToken, _strDelim, _Context);
+	return strtok_s(_StrToken, _StrDelim, _Context);
 }
 
 #endif

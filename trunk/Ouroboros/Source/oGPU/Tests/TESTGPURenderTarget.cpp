@@ -42,17 +42,17 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 		oGPUCommandList::DESC cld;
-		cld.DrawOrder = 1;
+		cld.draw_order = 1;
 
 		if (!Device->CreateCommandList("CLMainScene", cld, &CLMainScene))
 			return false;
 
-		cld.DrawOrder = 0;
+		cld.draw_order = 0;
 		if (!Device->CreateCommandList("CLRenderTarget", cld, &CLRenderTarget))
 			return false;
 
 		oGPUBuffer::DESC DCDesc;
-		DCDesc.StructByteSize = sizeof(oGPUTestConstants);
+		DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
 		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 			return false;
 
@@ -76,16 +76,16 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 		if (!oGPUUtilCreateFirstCube(Device, TextureDesc.pElements, TextureDesc.NumElements, &Cube))
 			return false;
 
-		oGPU_CLEAR_DESC cd;
-		cd.ClearColor[0] = DeepSkyBlue;
+		ouro::gpu::clear_info ci;
+		ci.clear_color[0] = DeepSkyBlue;
 
 		oGPURenderTarget::DESC rtd;
-		rtd.Dimensions = int3(256, 256, 1);
-		rtd.ArraySize = 1;
-		rtd.MRTCount = 1;
-		rtd.Format[0] = ouro::surface::b8g8r8a8_unorm;
-		rtd.DepthStencilFormat = ouro::surface::d24_unorm_s8_uint;
-		rtd.ClearDesc = cd;
+		rtd.dimensions = ushort3(256, 256, 1);
+		rtd.array_size = 1;
+		rtd.mrt_count = 1;
+		rtd.format[0] = ouro::surface::b8g8r8a8_unorm;
+		rtd.depth_stencil_format = ouro::surface::d24_unorm_s8_uint;
+		rtd.clear = ci;
 		if (!Device->CreateRenderTarget("RenderTarget", rtd, &RenderTarget))
 			return false;
 
@@ -98,7 +98,7 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 
 		oGPURenderTarget::DESC RTDesc;
 		PrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
 
 		float rotationStep = Device->GetFrameID() * 1.0f;
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
@@ -129,10 +129,10 @@ private:
 	void RenderToTarget(oGPUCommandList* _pCommandList, oGPURenderTarget* _pTarget)
 	{
 		_pCommandList->Begin();
-		_pCommandList->Clear(_pTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		_pCommandList->SetBlendState(oGPU_OPAQUE);
-		_pCommandList->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
-		_pCommandList->SetSurfaceState(oGPU_FRONT_FACE);
+		_pCommandList->Clear(_pTarget, ouro::gpu::clear_type::color_depth_stencil);
+		_pCommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+		_pCommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
+		_pCommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
 		_pCommandList->SetPipeline(PLPassThrough);
 		_pCommandList->SetRenderTarget(_pTarget);
 		oGPUUtilMeshDraw(_pCommandList, Triangle);
@@ -145,7 +145,7 @@ private:
 
 		oGPURenderTarget::DESC RTDesc;
 		_pTarget->GetDesc(&RTDesc);
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
 
 		float rotationStep = Device->GetFrameID() * 1.0f;
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
@@ -154,12 +154,12 @@ private:
 
 		oGPUCommitBuffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
-		_pCommandList->Clear(_pTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		_pCommandList->SetBlendState(oGPU_OPAQUE);
-		_pCommandList->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
-		_pCommandList->SetSurfaceState(oGPU_FRONT_FACE);
+		_pCommandList->Clear(_pTarget, ouro::gpu::clear_type::color_depth_stencil);
+		_pCommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+		_pCommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::test_and_write);
+		_pCommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
 		_pCommandList->SetBuffers(0, 1, &TestConstants);
-		oGPU_SAMPLER_STATE s = oGPU_LINEAR_WRAP;
+		ouro::gpu::sampler_type::value s = ouro::gpu::sampler_type::linear_wrap;
 		_pCommandList->SetSamplers(0, 1, &s);
 		_pCommandList->SetShaderResources(0, 1, &_pTexture);
 		_pCommandList->SetPipeline(PLTexture);

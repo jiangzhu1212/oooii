@@ -30,14 +30,14 @@ using namespace ouro;
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, Query);
 oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Query)
-	, Desc(_Desc)
+	, Info(_Desc)
 {
 	*_pSuccess = false;
 	oD3D11DEVICE();
 
-	switch (Desc.Type)
+	switch (Info.type)
 	{
-		case oGPU_QUERY_TIMER:
+		case gpu::query_type::timer:
 		{
 			static const D3D11_QUERY_DESC sQueryDescs[3] =
 			{
@@ -62,9 +62,9 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Query)
 
 void oD3D11Query::Begin(ID3D11DeviceContext* _pDeviceContext)
 {
-	switch (Desc.Type)
+	switch (Info.type)
 	{
-		case oGPU_QUERY_TIMER:
+		case gpu::query_type::timer:
 			_pDeviceContext->Begin(Queries[TIMER_DISJOINT]);
 			_pDeviceContext->End(Queries[TIMER_START]);
 			break;
@@ -74,9 +74,9 @@ void oD3D11Query::Begin(ID3D11DeviceContext* _pDeviceContext)
 
 void oD3D11Query::End(ID3D11DeviceContext* _pDeviceContext)
 {
-	switch (Desc.Type)
+	switch (Info.type)
 	{
-		case oGPU_QUERY_TIMER:
+		case gpu::query_type::timer:
 			_pDeviceContext->End(Queries[TIMER_STOP]);
 			_pDeviceContext->End(Queries[TIMER_DISJOINT]);
 			break;
@@ -107,9 +107,9 @@ template<typename T> bool PollAsync(ID3D11DeviceContext* _pDeviceContext, ID3D11
 
 bool oD3D11Query::ReadQuery(ID3D11DeviceContext* _pDeviceContext, void* _pData, size_t _SizeofData)
 {
-	switch (Desc.Type)
+	switch (Info.type)
 	{
-		case oGPU_QUERY_TIMER:
+		case gpu::query_type::timer:
 		{
 			if (sizeof(double) != _SizeofData)
 				return oErrorSetLast(std::errc::invalid_argument, "Timer query returns a double representing seconds");

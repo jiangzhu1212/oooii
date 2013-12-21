@@ -38,7 +38,7 @@ struct GPU_GenerateMips : public oTest
 		si.layout = _Layout;
 		auto mipchain = ouro::surface::buffer::make(si);
 		const auto* i = image.get();
-		oTESTB(oGPUGenerateMips(_pDevice, &i, 1, si, oGPU_TEXTURE_1D_MAP, mipchain.get()), "Failed to generate mips with the GPU");
+		oTESTB(oGPUGenerateMips(_pDevice, &i, 1, si, ouro::gpu::texture_type::default_1d, mipchain.get()), "Failed to generate mips with the GPU");
 		mipchain->flatten();
 		oTESTI2(mipchain, _StartIndex);
 		return SUCCESS;
@@ -51,7 +51,7 @@ struct GPU_GenerateMips : public oTest
 		si.layout = _Layout;
 		auto mipchain = ouro::surface::buffer::make(si);
 		const auto* i = image.get();
-		oTESTB(oGPUGenerateMips(_pDevice, &i, 1, si, oGPU_TEXTURE_2D_MAP, mipchain.get()), "Failed to generate mips with the GPU");
+		oTESTB(oGPUGenerateMips(_pDevice, &i, 1, si, ouro::gpu::texture_type::default_2d, mipchain.get()), "Failed to generate mips with the GPU");
 		mipchain->flatten();
 		oTESTI2(mipchain, _StartIndex);
 		return SUCCESS;
@@ -72,7 +72,7 @@ struct GPU_GenerateMips : public oTest
 		for (int i = 0; i < oCOUNTOF(img); i++)
 			img[i] = images[i].get();
 		
-		oTESTB(oGPUGenerateMips(_pDevice, img, oCOUNTOF(img), si, oGPU_TEXTURE_3D_MAP, mipchain.get()), "Failed to generate mips with the GPU");
+		oTESTB(oGPUGenerateMips(_pDevice, img, oCOUNTOF(img), si, ouro::gpu::texture_type::default_3d, mipchain.get()), "Failed to generate mips with the GPU");
 		mipchain->flatten();
 		oTESTI2(mipchain, _StartIndex);
 		return SUCCESS;
@@ -97,7 +97,7 @@ struct GPU_GenerateMips : public oTest
 		for (int i = 0; i < oCOUNTOF(img); i++)
 			img[i] = images[i].get();
 		
-		oTESTB(oGPUGenerateMips(_pDevice, img, oCOUNTOF(img), si, oGPU_TEXTURE_CUBE_MAP, mipchain.get()), "Failed to generate mips with the GPU");
+		oTESTB(oGPUGenerateMips(_pDevice, img, oCOUNTOF(img), si, ouro::gpu::texture_type::default_cube, mipchain.get()), "Failed to generate mips with the GPU");
 		mipchain->flatten();
 		oTESTI2(mipchain, _StartIndex);
 
@@ -107,7 +107,7 @@ struct GPU_GenerateMips : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oGPUDevice::INIT init("GPU_GenerateMips");
-		init.Version = version(10,0); // for more compatibility when running on varied machines
+		init.version = version(10,0); // for more compatibility when running on varied machines
 		intrusive_ptr<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 

@@ -128,19 +128,19 @@ struct oD3D11Device : oGPUDevice
 	ouro::intrusive_ptr<ID3D11Device> D3DDevice;
 	ouro::intrusive_ptr<ID3D11DeviceContext> ImmediateContext;
 	ouro::intrusive_ptr<IDXGISwapChain> SwapChain;
-	ouro::intrusive_ptr<ID3D11BlendState> BlendStates[oGPU_BLEND_STATE_COUNT];
-	ouro::intrusive_ptr<ID3D11RasterizerState> SurfaceStates[oGPU_SURFACE_STATE_COUNT];
-	ouro::intrusive_ptr<ID3D11DepthStencilState> DepthStencilStates[oGPU_DEPTH_STENCIL_STATE_COUNT];
-	ouro::intrusive_ptr<ID3D11SamplerState> SamplerStates[oGPU_SAMPLER_STATE_COUNT];
+	ouro::intrusive_ptr<ID3D11BlendState> BlendStates[ouro::gpu::blend_state::count];
+	ouro::intrusive_ptr<ID3D11RasterizerState> SurfaceStates[ouro::gpu::surface_state::count];
+	ouro::intrusive_ptr<ID3D11DepthStencilState> DepthStencilStates[ouro::gpu::depth_stencil_state::count];
+	ouro::intrusive_ptr<ID3D11SamplerState> SamplerStates[ouro::gpu::sampler_type::count];
 
 	// used to flush an explicit setting of a UAV counter.
 	ouro::intrusive_ptr<ID3D11ComputeShader> NoopCS;
 
 	// These will hold null/noop values and are initialized only at construction
 	// time, so it's safe to access from command lists in multiple threads.
-	uint NoopUAVInitialCounts[oGPU_MAX_NUM_UNORDERED_BUFFERS];
-	ID3D11UnorderedAccessView* NullUAVs[oGPU_MAX_NUM_UNORDERED_BUFFERS];
-	ID3D11RenderTargetView* NullRTVs[oGPU_MAX_NUM_MRTS];
+	uint NoopUAVInitialCounts[ouro::gpu::max_num_unordered_buffers];
+	ID3D11UnorderedAccessView* NullUAVs[ouro::gpu::max_num_unordered_buffers];
+	ID3D11RenderTargetView* NullRTVs[ouro::gpu::max_num_mrts];
 
 	// For this heap there shouldn't be too many simultaneous allocations - 
 	// remember this is to support Map/Unmap style API, so maybe on a thread 

@@ -38,7 +38,7 @@ struct oGfxMosaicImpl : oGfxMosaic
 	bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays) override;
 	void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures) override;
 
-	void SetBlendState(oGPU_BLEND_STATE _BlendState) override { BlendState = _BlendState; }
+	void SetBlendState(ouro::gpu::blend_state::value _BlendState) override { BlendState = _BlendState; }
 
 private:
 	intrusive_ptr<oGPUDevice> Device;
@@ -46,14 +46,14 @@ private:
 	intrusive_ptr<oGPUBuffer> Indices;
 	intrusive_ptr<oGPUBuffer> Vertices[2];
 	uint NumPrimitives;
-	oGPU_BLEND_STATE BlendState;
+	ouro::gpu::blend_state::value BlendState;
 	oRefCount RefCount;
 };
 
 oGfxMosaicImpl::oGfxMosaicImpl(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _PipelineDesc, bool* _pSuccess)
 	: Device(_pDevice)
 	, NumPrimitives(0)
-	, BlendState(oGPU_OPAQUE)
+	, BlendState(ouro::gpu::blend_state::opaque)
 {
 	*_pSuccess = false;
 
@@ -190,13 +190,13 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 
 void oGfxMosaicImpl::Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures)
 {
-	std::array<oGPU_SAMPLER_STATE, oGPU_MAX_NUM_SAMPLERS> samplers;
-	samplers.fill(oGPU_LINEAR_CLAMP);
+	std::array<ouro::gpu::sampler_type::value, ouro::gpu::max_num_samplers> samplers;
+	samplers.fill(ouro::gpu::sampler_type::linear_clamp);
 	if (_pRenderTarget)
 		_pCommandList->SetRenderTarget(_pRenderTarget);
 	_pCommandList->SetBlendState(BlendState);
-	_pCommandList->SetSurfaceState(oGPU_TWO_SIDED);
-	_pCommandList->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
+	_pCommandList->SetSurfaceState(ouro::gpu::surface_state::two_sided);
+	_pCommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
 	_pCommandList->SetSamplers(0, oUInt(samplers.size()), samplers.data());
 	_pCommandList->SetShaderResources(_TextureStartSlot, _NumTextures, _ppTextures);
 	_pCommandList->SetPipeline(Pipeline);

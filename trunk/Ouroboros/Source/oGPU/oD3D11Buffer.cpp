@@ -31,15 +31,15 @@ oDEFINE_GPUDEVICE_CREATE(oD3D11, Buffer);
 oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, Buffer)
 {
 	oD3D11DEVICE();
-	ID3D11UnorderedAccessView** ppUAV = _Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND ? &UAVAppend : &UAV;
+	ID3D11UnorderedAccessView** ppUAV = _Desc.type == ouro::gpu::buffer_type::unordered_structured_append ? &UAVAppend : &UAV;
 	Buffer = make_buffer(D3DDevice, _Name, _Desc, nullptr, ppUAV, &SRV);
 	Desc = get_info(Buffer);
-	if (_Desc.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND)
+	if (_Desc.type == ouro::gpu::buffer_type::unordered_structured_append)
 		UAV = make_unflagged_copy(*ppUAV);
 	*_pSuccess = true;
 }
 
 int2 oD3D11Buffer::GetByteDimensions(int _Subresource) const threadsafe
 {
-	return int2(Desc.StructByteSize, Desc.ArraySize);
+	return int2(Desc.struct_byte_size, Desc.array_size);
 }

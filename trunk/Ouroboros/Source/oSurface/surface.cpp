@@ -36,9 +36,11 @@ using namespace oStd;
 namespace ouro {
 	namespace surface {
 
+static inline int safe_array_size(const info& _Info) { return max(1, _Info.array_size); }
+
 #define oCHECK_INFO(_Info) \
 	if (any(_Info.dimensions < int3(1,1,1))) throw std::invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Info.dimensions.x, _Info.dimensions.y, _Info.dimensions.z)); \
-	if (max(1, _Info.array_size) != 1 && _Info.dimensions.z != 1) throw std::invalid_argument(formatf("array_size or depth has to be 1 [%d,%d]", _Info.array_size, _Info.dimensions.z));
+	if (safe_array_size(_Info) != 1 && _Info.dimensions.z != 1) throw std::invalid_argument(formatf("array_size or depth has to be 1 [%d,%d]", _Info.array_size, _Info.dimensions.z));
 
 #define oCHECK_DIM(_Format, _Dim) if (_Dim < min_dimensions(_Format).x) throw std::invalid_argument(formatf("invalid dimension: %d", _Dim));
 #define oCHECK_DIM2(_Format, _Dim) if (any(_Dim < min_dimensions(_Format))) throw std::invalid_argument(formatf("invalid dimensions: [%d,%d]", _Dim.x, _Dim.y));
@@ -46,7 +48,7 @@ namespace ouro {
 #define oCHECK_NOT_PLANAR(_Format) if (is_planar(_Format)) throw std::invalid_argument("Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
 
 struct bit_size { unsigned char r,g,b,a; };
-struct subformats { enum format format[4]; };
+struct subformats { format_e format[4]; };
 
 namespace traits
 {	enum value {
@@ -298,6 +300,10 @@ bool from_string(surface::format* _pFormat, const char* _StrSource)
 	}
 	return false;
 }
+
+oDEFINE_RESIZED_AS_STRING(surface::format);
+oDEFINE_RESIZED_TO_STRING(surface::format);
+oDEFINE_RESIZED_FROM_STRING(surface::format);
 
 	namespace surface {
 
@@ -737,13 +743,13 @@ int total_size(const info& _SurfaceInfo, int _SubsurfaceIndex)
 		return size;
 	}
 	
-	return slice_pitch(_SurfaceInfo, _SubsurfaceIndex) * max(_SurfaceInfo.array_size, 1);
+	return slice_pitch(_SurfaceInfo, _SubsurfaceIndex) * safe_array_size(_SurfaceInfo);
 }
 
 int2 dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
 {
 	int2 sliceDimensions = slice_dimensions(_SurfaceInfo, _SubsurfaceIndex);
-	return int2(sliceDimensions.x, sliceDimensions.y * max(1, _SurfaceInfo.array_size));
+	return int2(sliceDimensions.x, sliceDimensions.y * safe_array_size(_SurfaceInfo));
 }
 
 int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
@@ -801,7 +807,7 @@ subresource_info subresource(const info& _SurfaceInfo, int _Subresource)
 	subresource_info inf;
 	int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
 	unpack_subresource(_Subresource, numMips, _SurfaceInfo.array_size, &inf.mip_level, &inf.array_slice, &inf.subsurface);
-	if (_SurfaceInfo.array_size && max(1, inf.array_slice) >= max(1, _SurfaceInfo.array_size)) throw std::invalid_argument("array slice index is out of range");
+	if (_SurfaceInfo.array_size && max(1, inf.array_slice) >= safe_array_size(_SurfaceInfo)) throw std::invalid_argument("array slice index is out of range");
 	if (inf.subsurface >= num_subformats(_SurfaceInfo.format)) throw std::invalid_argument("subsurface index is out of range for the specified surface");
 	inf.dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, inf.mip_level, inf.subsurface);
 	inf.format = _SurfaceInfo.format;
@@ -1072,7 +1078,7 @@ tile_info get_tile(const info& _SurfaceInfo, const int2& _TileDimensions, int _T
 	int numTilesPerSlice = num_slice_tiles(_SurfaceInfo, _TileDimensions);
 	inf.dimensions = _TileDimensions;
 	inf.array_slice = _TileID / numTilesPerSlice;
-	if (max(1, inf.array_slice) >= max(1, _SurfaceInfo.array_size)) throw std::invalid_argument("TileID is out of range for the specified mip dimensions");
+	if (max(1, inf.array_slice) >= safe_array_size(_SurfaceInfo)) throw std::invalid_argument("TileID is out of range for the specified mip dimensions");
 
 	int firstTileInMip = 0;
 	int3 mipDim = _SurfaceInfo.dimensions;

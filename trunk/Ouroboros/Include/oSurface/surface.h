@@ -90,6 +90,7 @@
 #include <oBase/byte.h>
 #include <oBase/color.h>
 #include <oBase/fourcc.h>
+#include <oBase/macros.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oStd/mutex.h>
 #include <functional>
@@ -103,8 +104,8 @@ inline float ubyte_to_unorm(size_t c) { return (c & 0xff) / 255.0f; }
 inline float ushort_to_unorm(size_t c) { return (c & 0xffff) / 65535.0f; }
 
 	namespace surface {
-	
-enum format
+
+oDECLARE_SMALL_ENUM(format, unsigned char)
 {
 	unknown,
 	r32g32b32a32_typeless,
@@ -241,7 +242,9 @@ enum format
 	format_count,
 };
 
-enum layout
+typedef format format_e;
+
+oDECLARE_SMALL_ENUM(layout, unsigned char)
 {
 	// image: no mip chain, so RowSize == RowPitch
 	// tight: mips are right after each other, the naive/initial thing a person
@@ -282,6 +285,8 @@ enum layout
 
 };
 
+typedef layout layout_e;
+
 struct info
 {
 	info()
@@ -301,8 +306,8 @@ struct info
 			&& array_size == _That.array_size;
 	}
 
-	enum layout layout;
-	enum format format;
+	layout_e layout;
+	format_e format;
 	int3 dimensions;
 	int array_size;
 };
@@ -351,7 +356,7 @@ struct subresource_info
 	{}
 
 	int3 dimensions;
-	enum format format;
+	format_e format;
 	int mip_level;
 	int array_slice;
 	int subsurface;

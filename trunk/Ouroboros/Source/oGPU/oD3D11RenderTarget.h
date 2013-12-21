@@ -39,16 +39,16 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d,
 	~oD3D11RenderTarget();
 
 	void GetDesc(DESC* _pDesc) const threadsafe override;
-	void SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threadsafe override;
+	void SetClearDesc(const ouro::gpu::clear_info& _ClearInfo) threadsafe override;
 	void Resize(const int3& _NewDimensions) override;
 	void GetTexture(int _MRTIndex, oGPUTexture** _ppTexture) override;
 	void GetDepthTexture(oGPUTexture** _ppTexture) override;
 	std::shared_ptr<ouro::surface::buffer> CreateSnapshot(int _MRTIndex) override;
 
-	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.MRTCount, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
+	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.mrt_count, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
 
-	std::array<ouro::intrusive_ptr<oGPUTexture>, oGPU_MAX_NUM_MRTS> Textures;
-	std::array<ouro::intrusive_ptr<ID3D11RenderTargetView>, oGPU_MAX_NUM_MRTS> RTVs;
+	std::array<ouro::intrusive_ptr<oGPUTexture>, ouro::gpu::max_num_mrts> Textures;
+	std::array<ouro::intrusive_ptr<ID3D11RenderTargetView>, ouro::gpu::max_num_mrts> RTVs;
 	ouro::intrusive_ptr<oGPUTexture> DepthStencilTexture;
 	ouro::intrusive_ptr<ID3D11DepthStencilView> DSV;
 	ouro::intrusive_ptr<IDXGISwapChain> SwapChain;

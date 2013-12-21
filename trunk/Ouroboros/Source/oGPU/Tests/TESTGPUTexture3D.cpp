@@ -46,7 +46,7 @@ struct GPU_Texture3D_App : public oGPUTextureTestApp
 		images[1] = green.get();
 		images[2] = blue.get();
 
-		if (!oGPUCreateTexture(Device, images, oCOUNTOF(images), oGPU_TEXTURE_3D_MAP, &Texture))
+		if (!oGPUCreateTexture(Device, images, oCOUNTOF(images), ouro::gpu::texture_type::default_3d, &Texture))
 			return false;
 
 		return true;

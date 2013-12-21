@@ -32,7 +32,7 @@ struct GPU_Query : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oGPUDevice::INIT init("GPU_Query");
-		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
+		init.driver_debug_level = gpu::debug_level::normal;
 		intrusive_ptr<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
@@ -44,7 +44,7 @@ struct GPU_Query : public oTest
 			intrusive_ptr<oGPUQuery> Query;
 
 			oGPUQuery::DESC QueryDesc;
-			QueryDesc.Type = oGPU_QUERY_TIMER;
+			QueryDesc.type = ouro::gpu::query_type::timer;
 			
 			oTESTB0(Device->CreateQuery("Timer", QueryDesc, &Query));
 

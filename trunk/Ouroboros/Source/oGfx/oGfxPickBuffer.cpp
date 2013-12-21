@@ -36,19 +36,19 @@ bool oGfxPickBufferCreate(oGPUDevice* _pDevice, const void* _pComputeShader, oGf
 oGfxPickBuffer::oGfxPickBuffer(oGPUDevice* _pDevice, const void* _pComputeShader, bool* bSuccess)
 {
 	oGPUTexture::DESC d;
-	d.Dimensions = int3(oGPU_MAX_NUM_PICKS_PER_FRAME, 1, 1);
-	d.ArraySize = 1;
-	d.Format = ouro::surface::r32g32_sint;
-	d.Type = oGPU_TEXTURE_2D_MAP;
+	d.dimensions = ushort3(oGPU_MAX_NUM_PICKS_PER_FRAME, 1, 1);
+	d.array_size = 1;
+	d.format = ouro::surface::r32g32_sint;
+	d.type = ouro::gpu::texture_type::default_2d;
 	oVERIFY(_pDevice->CreateTexture("oGfxPickBuffer.PicksInput", d, &PicksInput));
 
 	oGPUBuffer::DESC BufferDesc;
-	BufferDesc.Type = oGPU_BUFFER_UNORDERED_STRUCTURED;
-	BufferDesc.StructByteSize = sizeof(uint);
-	BufferDesc.ArraySize = oGPU_MAX_NUM_PICKS_PER_FRAME;
+	BufferDesc.type = gpu::buffer_type::unordered_structured;
+	BufferDesc.struct_byte_size = sizeof(uint);
+	BufferDesc.array_size = oGPU_MAX_NUM_PICKS_PER_FRAME;
 	oVERIFY(_pDevice->CreateBuffer("oGfxPickBuffer.PicksOutput", BufferDesc, &PicksOutput));
 
-	BufferDesc.Type = oGPU_BUFFER_READBACK;
+	BufferDesc.type = gpu::buffer_type::readback;
 	oVERIFY(_pDevice->CreateBuffer("oGfxPickBuffer.PicksStaging", BufferDesc, &PicksStaging));
 
 	oGPUComputeShader::DESC descComputeShader;
@@ -78,7 +78,7 @@ void oGfxPickBuffer::PDraw(oGPUCommandList* _pCommandList, oGPUTexture* _pPickRe
 	_pCommandList->SetShaderResources(1, 1, &PicksInput);
 
 	// @oooii-jeffrey: Shouldn't this be for both textures?
-	oGPU_SAMPLER_STATE state = oGPU_POINT_CLAMP;
+	ouro::gpu::sampler_type::value state = ouro::gpu::sampler_type::point_clamp;
 	_pCommandList->SetSamplers(1, 1, &state);
 	_pCommandList->SetUnorderedResources(0, 1, &PicksOutput);
 	_pCommandList->Dispatch(PickResourceShader, int3(1, 1, 1));

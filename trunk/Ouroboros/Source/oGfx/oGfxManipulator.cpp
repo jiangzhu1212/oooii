@@ -120,14 +120,14 @@ bool oGfxManipulatorImpl::CreateAxisGeometry(oGPUDevice* _pDevice, const char* _
 {
 	auto& Line = Lines[_Axis];
 	
-	oGPU_BUFFER_DESC desc;
-	desc.Type = oGPU_BUFFER_VERTEX;
-	desc.StructByteSize = sizeof(oGFX_LINE_VERTEX);
-	desc.ArraySize = _NumLines * 2;
+	gpu::buffer_info i;
+	i.type = gpu::buffer_type::vertex;
+	i.struct_byte_size = sizeof(oGFX_LINE_VERTEX);
+	i.array_size = _NumLines * 2;
 	
 	uri_string Name;
 	snprintf(Name, "%s_%s", _BaseName, ouro::as_string(_Axis));
-	if(!_pDevice->CreateBuffer(Name, desc, &Line.LineList))
+	if(!_pDevice->CreateBuffer(Name, i, &Line.LineList))
 		return oErrorPrefixLast("Failed to create a line list for a manipulator: ");
 
 	if(!CreateGeometryMesh(_pDevice, Name, _GeometryDesc, &Line.PickMesh) )

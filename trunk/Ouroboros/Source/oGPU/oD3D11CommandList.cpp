@@ -62,8 +62,8 @@ static ID3D11UnorderedAccessView* oD3D11GetUAV(const oGPUResource* _pResource, i
 			oGPUBuffer::DESC d;
 			oD3D11Buffer* b = static_cast<oD3D11Buffer*>(const_cast<oGPUResource*>(_pResource));
 			b->GetDesc(&d);
-			oASSERT(!_AssertHasCounter || d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND || d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER, "Buffer does not have a counter");
-			if (_UseAppendIfAvailable && d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND)
+			oASSERT(!_AssertHasCounter || d.type == ouro::gpu::buffer_type::unordered_structured_append || d.type == ouro::gpu::buffer_type::unordered_structured_counter, "Buffer does not have a counter");
+			if (_UseAppendIfAvailable && d.type == ouro::gpu::buffer_type::unordered_structured_append)
 				return b->UAVAppend;
 			else
 				return b->UAV;
@@ -75,7 +75,7 @@ static ID3D11UnorderedAccessView* oD3D11GetUAV(const oGPUResource* _pResource, i
 	}
 }
 
-static void oD3D11GetUAVs(ID3D11UnorderedAccessView* (&_ppUAVs)[oGPU_MAX_NUM_UNORDERED_BUFFERS], int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _AssertHaveCounters = false)
+static void oD3D11GetUAVs(ID3D11UnorderedAccessView* (&_ppUAVs)[gpu::max_num_unordered_buffers], int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _AssertHaveCounters = false)
 {
 	if (!_ppUnorderedResources || _NumUnorderedResources == oInvalid || _NumUnorderedResources == 0)
 		memset(_ppUAVs, 0, sizeof(_ppUAVs));
@@ -131,7 +131,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 	*_pSuccess = false;
 	oD3D11DEVICE();
 
-	if (Desc.DrawOrder == oInvalid)
+	if (Desc.draw_order == ouro::gpu::command_list_info::immediate)
 		D3DDevice->GetImmediateContext(&Context);
 	else
 	{
@@ -155,7 +155,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 			if (DeviceCreationFlags & D3D11_CREATE_DEVICE_SINGLETHREADED)
 				snprintf(err, "oGPUCommandLists cannot be created on an oGPUDevice created as single-threaded: ");
 			else
-				snprintf(err, "Failed to create oGPUDeviceContext %u: ", _Desc.DrawOrder);
+				snprintf(err, "Failed to create oGPUDeviceContext %u: ", _Desc.draw_order);
 
 			throw ouro::windows::error(hr, err);
 		}
@@ -167,7 +167,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 
 oD3D11CommandList::~oD3D11CommandList()
 {
-	if (Desc.DrawOrder != oInvalid)
+	if (Desc.draw_order != oInvalid)
 		oDEVICE_UNREGISTER_THIS();
 }
 
@@ -206,13 +206,13 @@ static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const int2& _Targ
 
 void oD3D11CommandList::Begin()
 {
-	if (Desc.DrawOrder != oInvalid) // ignore for immediate
+	if (Desc.draw_order != oInvalid) // ignore for immediate
 		oDEVICE_LOCK_SUBMIT();
 }
 
 void oD3D11CommandList::End()
 {
-	if (Desc.DrawOrder != oInvalid) // ignore for immediate
+	if (Desc.draw_order != oInvalid) // ignore for immediate
 	{
 		Context->FinishCommandList(FALSE, &CommandList);
 		oDEVICE_UNLOCK_SUBMIT();
@@ -281,7 +281,7 @@ void oD3D11CommandList::CopyCounter(oGPUBuffer* _pDestination, uint _Destination
 	#ifdef _DEBUG
 		oGPUBuffer::DESC d;
 		static_cast<oGPUBuffer*>(_pUnorderedSource)->GetDesc(&d);
-		oASSERT(d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND || d.Type == oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER, "Source must be an unordered structured buffer with APPEND or COUNTER modifiers");
+		oASSERT(d.type == gpu::buffer_type::unordered_structured_append || d.type == gpu::buffer_type::unordered_structured_counter, "Source must be an unordered structured buffer with APPEND or COUNTER modifiers");
 	#endif
 
 	oASSERT(byte_aligned(_DestinationAlignedOffset, sizeof(uint)), "_DestinationAlignedOffset must be sizeof(uint)-aligned");
@@ -290,13 +290,13 @@ void oD3D11CommandList::CopyCounter(oGPUBuffer* _pDestination, uint _Destination
 
 void oD3D11CommandList::SetCounters(int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pValues)
 {
-	ID3D11UnorderedAccessView* UAVs[oGPU_MAX_NUM_UNORDERED_BUFFERS];
+	ID3D11UnorderedAccessView* UAVs[gpu::max_num_unordered_buffers];
 	oD3D11GetUAVs(UAVs, _NumUnorderedResources, _ppUnorderedResources, 0, 0, true);
 
 	// Executing a noop only seems to apply the initial counts if done through
 	// OMSetRenderTargetsAndUnorderedAccessViews, so set things up that way with
 	// a false setting here, and then flush it with a dispatch of a noop.
-	Context->CSSetUnorderedAccessViews(0, oGPU_MAX_NUM_UNORDERED_BUFFERS, D3DDevice()->NullUAVs, D3DDevice()->NoopUAVInitialCounts); // clear any conflicting binding
+	Context->CSSetUnorderedAccessViews(0, gpu::max_num_unordered_buffers, D3DDevice()->NullUAVs, D3DDevice()->NoopUAVInitialCounts); // clear any conflicting binding
 	Context->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, _NumUnorderedResources, UAVs, _pValues); // set up binding
 	Context->CSSetShader(D3DDevice()->NoopCS, nullptr, 0); // 
 	Context->Dispatch(1, 1, 1);
@@ -310,14 +310,14 @@ void oD3D11CommandList::SetRenderTargetAndUnorderedResources(oGPURenderTarget* _
 
 	UINT StartSlot = _UnorderedResourcesStartSlot;
 	if (StartSlot == oInvalid)
-		StartSlot = RT ? RT->Desc.MRTCount : 0;
+		StartSlot = RT ? RT->Desc.mrt_count : 0;
 
-	ID3D11UnorderedAccessView* UAVs[oGPU_MAX_NUM_UNORDERED_BUFFERS];
+	ID3D11UnorderedAccessView* UAVs[gpu::max_num_unordered_buffers];
 	oD3D11GetUAVs(UAVs, _NumUnorderedResources, _ppUnorderedResources, 0, 0, !_SetForDispatch);
 
 	UINT NumUAVs = _NumUnorderedResources;
 	if (_NumUnorderedResources == oInvalid)
-		NumUAVs = oGPU_MAX_NUM_UNORDERED_BUFFERS - StartSlot;
+		NumUAVs = gpu::max_num_unordered_buffers - StartSlot;
 
 	UINT* pInitialCounts = _pInitialCounts;
 	if (!pInitialCounts)
@@ -326,26 +326,26 @@ void oD3D11CommandList::SetRenderTargetAndUnorderedResources(oGPURenderTarget* _
 	if (_SetForDispatch)
 	{
 		// buffers can't be bound in both places at once, so ensure that state
-		Context->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, oGPU_MAX_NUM_UNORDERED_BUFFERS, D3DDevice()->NullUAVs, D3DDevice()->NoopUAVInitialCounts);
+		Context->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, gpu::max_num_unordered_buffers, D3DDevice()->NullUAVs, D3DDevice()->NoopUAVInitialCounts);
 		Context->CSSetUnorderedAccessViews(StartSlot, NumUAVs, UAVs, pInitialCounts);
 	}
 
 	else
 	{
 		// buffers can't be bound in both places at once, so ensure that state
-		Context->CSSetUnorderedAccessViews(0, oGPU_MAX_NUM_UNORDERED_BUFFERS, D3DDevice()->NullUAVs, D3DDevice()->NoopUAVInitialCounts);
+		Context->CSSetUnorderedAccessViews(0, gpu::max_num_unordered_buffers, D3DDevice()->NullUAVs, D3DDevice()->NoopUAVInitialCounts);
 
 		if (RT)
 		{
-			Context->OMSetRenderTargetsAndUnorderedAccessViews(RT->Desc.MRTCount, (ID3D11RenderTargetView* const*)RT->RTVs.data(), RT->DSV, StartSlot, NumUAVs, UAVs, pInitialCounts);
+			Context->OMSetRenderTargetsAndUnorderedAccessViews(RT->Desc.mrt_count, (ID3D11RenderTargetView* const*)RT->RTVs.data(), RT->DSV, StartSlot, NumUAVs, UAVs, pInitialCounts);
 			oGPURenderTarget::DESC d;
 			_pRenderTarget->GetDesc(&d);
-			SetViewports(Context, d.Dimensions.xy(), _NumViewports, _pViewports);
+			SetViewports(Context, d.dimensions.xy(), _NumViewports, _pViewports);
 		}
 
 		else
 		{
-			oASSERT(NumUAVs >= 0 && NumUAVs <= oGPU_MAX_NUM_UNORDERED_BUFFERS, "Invalid _NumUnorderedResources");
+			oASSERT(NumUAVs >= 0 && NumUAVs <= gpu::max_num_unordered_buffers, "Invalid _NumUnorderedResources");
 			Context->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, StartSlot, NumUAVs, UAVs, pInitialCounts);
 			SetViewports(Context, 1, _NumViewports, _pViewports);
 		}	
@@ -380,23 +380,23 @@ void oD3D11CommandList::SetPipeline(const oGPUPipeline* _pPipeline)
 	}
 }
 
-void oD3D11CommandList::SetSurfaceState(oGPU_SURFACE_STATE _State)
+void oD3D11CommandList::SetSurfaceState(ouro::gpu::surface_state::value _State)
 {
 	Context->RSSetState(D3DDevice()->SurfaceStates[_State]);
 }
 
-void oD3D11CommandList::SetBlendState(oGPU_BLEND_STATE _State)
+void oD3D11CommandList::SetBlendState(ouro::gpu::blend_state::value _State)
 {
 	static const FLOAT sBlendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	Context->OMSetBlendState(D3DDevice()->BlendStates[_State], sBlendFactor, 0xffffffff);
 }
 
-void oD3D11CommandList::SetDepthStencilState(oGPU_DEPTH_STENCIL_STATE _State)
+void oD3D11CommandList::SetDepthStencilState(ouro::gpu::depth_stencil_state::value _State)
 {
 	Context->OMSetDepthStencilState(D3DDevice()->DepthStencilStates[_State], 0);
 }
 
-void oD3D11CommandList::SetSamplers(int _StartSlot, int _NumStates, const oGPU_SAMPLER_STATE* _pSamplerState)
+void oD3D11CommandList::SetSamplers(int _StartSlot, int _NumStates, const ouro::gpu::sampler_type::value* _pSamplerState)
 {
 	ID3D11SamplerState* Samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
 	oASSERT(oCOUNTOF(Samplers) >= _NumStates, "Too many samplers specified");
@@ -458,16 +458,16 @@ void oD3D11CommandList::SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBu
 	set_constant_buffers(Context, _StartSlot, _NumBuffers, CBs);
 }
 
-void oD3D11CommandList::Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear)
+void oD3D11CommandList::Clear(oGPURenderTarget* _pRenderTarget, ouro::gpu::clear_type::value _Clear)
 {
 	oD3D11RenderTarget* pRT = static_cast<oD3D11RenderTarget*>(_pRenderTarget);
 
-	if (_Clear >= oGPU_CLEAR_COLOR)
+	if (_Clear >= gpu::clear_type::color)
 	{
 		FLOAT c[4];
-		for (int i = 0; i < pRT->Desc.MRTCount; i++)
+		for (int i = 0; i < pRT->Desc.mrt_count; i++)
 		{
-			pRT->Desc.ClearDesc.ClearColor[i].decompose(&c[0], &c[1], &c[2], &c[3]);
+			pRT->Desc.clear.clear_color[i].decompose(&c[0], &c[1], &c[2], &c[3]);
 			Context->ClearRenderTargetView(pRT->RTVs[i], c);
 		}
 	}
@@ -482,10 +482,10 @@ void oD3D11CommandList::Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clea
 		D3D11_CLEAR_STENCIL,
 		D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL,
 	};
-	static_assert(oCOUNTOF(sClearFlags) == oGPU_CLEAR_COUNT, "# clears mismatch");
+	static_assert(oCOUNTOF(sClearFlags) == gpu::clear_type::count, "# clears mismatch");
 
-	if (pRT->DSV && _Clear != oGPU_CLEAR_COLOR)
-		Context->ClearDepthStencilView(pRT->DSV, sClearFlags[_Clear], pRT->Desc.ClearDesc.DepthClearValue, pRT->Desc.ClearDesc.StencilClearValue);
+	if (pRT->DSV && _Clear != gpu::clear_type::color)
+		Context->ClearDepthStencilView(pRT->DSV, sClearFlags[_Clear], pRT->Desc.clear.depth_clear_value, pRT->Desc.clear.stencil_clear_value);
 }
 
 void oD3D11CommandList::SetVertexBuffers(const oGPUBuffer* _pIndexBuffer, int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartVertex)
@@ -499,10 +499,10 @@ void oD3D11CommandList::SetVertexBuffers(const oGPUBuffer* _pIndexBuffer, int _S
 	if (_pIndexBuffer)
 	{
 		b = static_cast<oD3D11Buffer*>(const_cast<oGPUBuffer*>(_pIndexBuffer))->Buffer;
-		oGPU_BUFFER_DESC d;
-		_pIndexBuffer->GetDesc(&d);
-		Format = dxgi::from_surface_format(d.Format);
-		StartByteOffset = d.StructByteSize * _StartIndex;
+		gpu::buffer_info i;
+		_pIndexBuffer->GetDesc(&i);
+		Format = dxgi::from_surface_format(i.format);
+		StartByteOffset = i.struct_byte_size * _StartIndex;
 	}
 	Context->IASetIndexBuffer(b, Format, StartByteOffset);
 
@@ -517,12 +517,12 @@ void oD3D11CommandList::SetVertexBuffers(const oGPUBuffer* _pIndexBuffer, int _S
 			Strides[i] = 0;
 			ByteOffsets[i] = 0;
 
-			oGPU_BUFFER_DESC d;
+			gpu::buffer_info bi;
 			if (_ppVertexBuffers[i])
 			{
-				_ppVertexBuffers[i]->GetDesc(&d);
-				Strides[i] = d.StructByteSize;
-				ByteOffsets[i] = _StartVertex * d.StructByteSize;
+				_ppVertexBuffers[i]->GetDesc(&bi);
+				Strides[i] = bi.struct_byte_size;
+				ByteOffsets[i] = _StartVertex * bi.struct_byte_size;
 				pVertices[i] = static_cast<const oD3D11Buffer*>(_ppVertexBuffers[i])->Buffer;
 			}
 			else
@@ -588,7 +588,7 @@ bool oD3D11CommandList::GenerateMips(oGPURenderTarget* _pRenderTarget)
 {
 	oGPURenderTarget::DESC desc;
 	_pRenderTarget->GetDesc(&desc);
-	if (!oGPUTextureTypeHasMips(desc.Type))
+	if (!ouro::gpu::is_mipped(desc.type))
 		return oErrorSetLast(std::errc::invalid_argument, "Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
 
 	intrusive_ptr<oGPUTexture> texture;
@@ -624,7 +624,7 @@ void oD3D11CommandList::Dispatch(oGPUComputeShader* _pComputeShader, oGPUBuffer*
 	#ifdef _DEBUG
 		oGPUBuffer::DESC d;
 		_pThreadGroupCountBuffer->GetDesc(&d);
-		oASSERT(d.Type == oGPU_BUFFER_UNORDERED_RAW, "Parameters for dispatch must come from an oGPUBuffer of type oGPU_BUFFER_UNORDERED_RAW");
+		oASSERT(d.type == gpu::buffer_type::unordered_raw, "Parameters for dispatch must come from an oGPUBuffer of type gpu::buffer_type::unordered_raw");
 
 		// Found this out the hard way... if a UAV is bound as a target, then it 
 		// won't be flushed such that values are ready for this indirect dispatch.

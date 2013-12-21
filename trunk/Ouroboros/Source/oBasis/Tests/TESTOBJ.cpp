@@ -60,8 +60,8 @@ static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const th
 	{
 		oTESTB(!strcmp(Expected.pGroups[i].GroupName.c_str(), d.pGroups[i].GroupName.c_str()), "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
 		oTESTB(!strcmp(Expected.pGroups[i].MaterialName.c_str(), d.pGroups[i].MaterialName.c_str()), "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(Expected.pGroups[i].Range.StartPrimitive == d.pGroups[i].Range.StartPrimitive, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(Expected.pGroups[i].Range.NumPrimitives == d.pGroups[i].Range.NumPrimitives, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(Expected.pGroups[i].Range.start_primitive == d.pGroups[i].Range.start_primitive, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(Expected.pGroups[i].Range.num_primitives == d.pGroups[i].Range.num_primitives, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
 	}
 
 	oErrorSetLast(0);

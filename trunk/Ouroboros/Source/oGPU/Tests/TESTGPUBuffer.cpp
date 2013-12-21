@@ -36,25 +36,25 @@ struct GPU_Buffer : public oTest
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
 		oGPUDevice::INIT init("GPU_Buffer");
-		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
+		init.driver_debug_level = gpu::debug_level::normal;
 		intrusive_ptr<oGPUDevice> Device;
 		oTESTB0(oGPUDeviceCreate(init, &Device));
 
 		oGPUBuffer::DESC BufferDesc;
-		BufferDesc.StructByteSize = sizeof(int);
-		BufferDesc.Type = oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND;
-		BufferDesc.ArraySize = oCOUNTOF(GPU_BufferAppendIndices) * 2;
+		BufferDesc.struct_byte_size = sizeof(int);
+		BufferDesc.type = gpu::buffer_type::unordered_structured_append;
+		BufferDesc.array_size = oCOUNTOF(GPU_BufferAppendIndices) * 2;
 
 		intrusive_ptr<oGPUBuffer> AppendBuffer;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppend", BufferDesc, &AppendBuffer) );
 
-		BufferDesc.Type = oGPU_BUFFER_READBACK;
+		BufferDesc.type = gpu::buffer_type::readback;
 
 		intrusive_ptr<oGPUBuffer> AppendReadbackBuffer;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppend", BufferDesc, &AppendReadbackBuffer) );
 
-		BufferDesc.Type = oGPU_BUFFER_READBACK;
-		BufferDesc.ArraySize = 1;
+		BufferDesc.type = gpu::buffer_type::readback;
+		BufferDesc.array_size = 1;
 
 		intrusive_ptr<oGPUBuffer> AppendBufferCount;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppendCount", BufferDesc, &AppendBufferCount) );
@@ -71,9 +71,9 @@ struct GPU_Buffer : public oTest
 		Device->BeginFrame();
 		CommandList->Begin();
 
-		CommandList->SetBlendState(oGPU_OPAQUE);
-		CommandList->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
-		CommandList->SetSurfaceState(oGPU_TWO_SIDED);
+		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
+		CommandList->SetSurfaceState(ouro::gpu::surface_state::two_sided);
 
 		CommandList->SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, false, 0, 1, &AppendBuffer);
 		CommandList->SetPipeline(Pipeline);

@@ -44,7 +44,7 @@ interface oGfxMosaic : oInterface
 
 	virtual bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays) = 0;
 	inline bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc) { return Rebuild(_Desc, 0, nullptr, nullptr); }
-	virtual void SetBlendState(oGPU_BLEND_STATE _BlendState) = 0; // will be oGPU_OPAQUE by default
+	virtual void SetBlendState(ouro::gpu::blend_state::value _BlendState) = 0; // will be ouro::gpu::blend_state::opaque by default
 
 	virtual void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures) = 0;
 	inline void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const ouro::intrusive_ptr<oGPUTexture>* _ppTextures) { Draw(_pCommandList, _pRenderTarget, _TextureStartSlot, _NumTextures, (const oGPUTexture* const*)_ppTextures); }

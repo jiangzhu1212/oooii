@@ -34,12 +34,12 @@
 oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Query, 0x47a1c5e7, 0xd484, 0x414c, 0x9b, 0x23, 0x15, 0x87, 0xe8, 0x75, 0xf9, 0x7f)
 {
 	oDEFINE_GPUDEVICECHILD_INTERFACE();
-	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
+	oDEFINE_CONST_GETDESC_INTERFACE(Info, threadsafe);
 	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, Query);
 	void Begin(ID3D11DeviceContext* _pDeviceContext);
 	void End(ID3D11DeviceContext* _pDeviceContext);
 	bool ReadQuery(ID3D11DeviceContext* _pDeviceContext, void* _pData, size_t _SizeofData);
-	DESC Desc;
+	DESC Info;
 
 	enum TIMER_QUERIES
 	{

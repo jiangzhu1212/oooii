@@ -55,15 +55,15 @@ public:
 		}
 
 		oGPUDevice::INIT DevInit;
-		DevInit.DebugName = "TestDevice";
-		DevInit.Version = version(10, 0);
-		DevInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
+		DevInit.debug_name = "TestDevice";
+		DevInit.version = version(10, 0);
+		DevInit.driver_debug_level = gpu::debug_level::normal;
 
 		if (!oGPUDeviceCreate(DevInit, &Device))
 			return; // pass through error
 
 		oGPUCommandList::DESC CLDesc;
-		CLDesc.DrawOrder = 0;
+		CLDesc.draw_order = 0;
 		if (!Device->CreateCommandList("TestCL", CLDesc, &CommandList))
 			return; // pass through error
 
@@ -94,13 +94,13 @@ public:
 		{
 			if (Device->BeginFrame())
 			{
-				oGPU_CLEAR_DESC CD;
-				CD.ClearColor[0] = (Counter & 0x1) ? White : Blue;
-				PrimaryRenderTarget->SetClearDesc(CD);
+				ouro::gpu::clear_info ci;
+				ci.clear_color[0] = (Counter & 0x1) ? White : Blue;
+				PrimaryRenderTarget->SetClearDesc(ci);
 
 				CommandList->Begin();
 				CommandList->SetRenderTarget(PrimaryRenderTarget);
-				CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
+				CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
 				CommandList->End();
 
 				Device->EndFrame();

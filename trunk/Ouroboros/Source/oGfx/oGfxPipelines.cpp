@@ -55,7 +55,7 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 
 	#define oPL_RIGID(_Enum, _PS) do { \
 		_pDesc->DebugName = #_Enum; \
-		_pDesc->InputType = oGPU_TRIANGLES; \
+		_pDesc->InputType = ouro::gpu::primitive_type::triangles; \
 		oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements); \
 		_pDesc->pVertexShader = oGfxRigidVS4ByteCode; \
 		_pDesc->pPixelShader = _PS; \
@@ -69,7 +69,7 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 	{
 		case oGFX_PIPELINE_VERTEX_NORMALS:
 			_pDesc->DebugName = "oGFX_PIPELINE_VERTEX_NORMALS";
-			_pDesc->InputType = oGPU_POINTS;
+			_pDesc->InputType = ouro::gpu::primitive_type::points;
 			oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxPassThroughVS4ByteCode;
 			_pDesc->pGeometryShader = oGfxVertexNormalsGS4ByteCode;
@@ -78,7 +78,7 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 
 		case oGFX_PIPELINE_VERTEX_TANGENTS:
 			_pDesc->DebugName = "oGFX_PIPELINE_VERTEX_TANGENTS";
-			_pDesc->InputType = oGPU_POINTS;
+			_pDesc->InputType = ouro::gpu::primitive_type::points;
 			oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxPassThroughVS4ByteCode;
 			_pDesc->pGeometryShader = oGfxVertexTangentsGS4ByteCode;
@@ -87,7 +87,7 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 
 		case oGFX_PIPELINE_LINES:
 			_pDesc->DebugName = "oGFX_PIPELINE_LINES";
-			_pDesc->InputType = oGPU_LINES;
+			_pDesc->InputType = ouro::gpu::primitive_type::lines;
 			oGfxGetVertexElements(oGFX_VE_LINE, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxLinesVS4ByteCode;
 			_pDesc->pPixelShader = oGfxColorPS4ByteCode;
@@ -95,7 +95,7 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 
 		case oGFX_PIPELINE_LINE_STRIPS:
 			_pDesc->DebugName = "oGFX_PIPELINE_LINE_STRIPS";
-			_pDesc->InputType = oGPU_LINE_STRIPS;
+			_pDesc->InputType = ouro::gpu::primitive_type::line_strips;
 			oGfxGetVertexElements(oGFX_VE_LINE, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxLinesVS4ByteCode;
 			_pDesc->pPixelShader = oGfxColorPS4ByteCode;
@@ -103,7 +103,7 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 
 		case oGFX_PIPELINE_PASS_THROUGH:
 			_pDesc->DebugName = "oGFX_PIPELINE_PASS_THROUGH";
-			_pDesc->InputType = oGPU_TRIANGLES;
+			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
 			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxPositionPassThroughVS4ByteCode;
 			_pDesc->pPixelShader = oGfxWhitePS4ByteCode;
@@ -111,14 +111,14 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 
 		case oGFX_PIPELINE_RIGID_ZPREPASS:
 			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_ZPREPASS";
-			_pDesc->InputType = oGPU_TRIANGLES;
+			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
 			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxPositionVS4ByteCode;
 			return true;
 
 		case oGFX_PIPELINE_RIGID_SHADOW:
 			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_SHADOW";
-			_pDesc->InputType = oGPU_TRIANGLES;
+			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
 			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxShadowVS4ByteCode;
 			_pDesc->pPixelShader = oGfxShadowPS4ByteCode;
@@ -126,7 +126,7 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 
 		case oGFX_PIPELINE_RIGID_WHITE:
 			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_WHITE";
-			_pDesc->InputType = oGPU_TRIANGLES;
+			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
 			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
 			_pDesc->pVertexShader = oGfxPositionVS4ByteCode;
 			_pDesc->pPixelShader = oGfxWhitePS4ByteCode;

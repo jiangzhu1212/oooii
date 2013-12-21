@@ -30,16 +30,16 @@
 using namespace ouro;
 using namespace ouro::d3d11;
 
-static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name, const oGPU_TEXTURE_DESC& _Texture1Desc, oGPUTexture** _ppTexture2)
+static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name, const ouro::gpu::texture_info& _Texture1Desc, oGPUTexture** _ppTexture2)
 {
-	oASSERT(ouro::surface::num_subformats(_Texture1Desc.Format) <= 2, "Many-plane textures not supported");
-	if (ouro::surface::num_subformats(_Texture1Desc.Format) == 2)
+	oASSERT(ouro::surface::num_subformats(_Texture1Desc.format) <= 2, "Many-plane textures not supported");
+	if (ouro::surface::num_subformats(_Texture1Desc.format) == 2)
 	{
 		// To keep YUV textures singular to prepare for new YUV-based DXGI formats
 		// coming, create a private data companion texture.
-		oGPU_TEXTURE_DESC Texture2Desc(_Texture1Desc);
-		Texture2Desc.Format = ouro::surface::subformat(_Texture1Desc.Format, 1);
-		Texture2Desc.Dimensions = ouro::surface::dimensions_npot(_Texture1Desc.Format, _Texture1Desc.Dimensions, 0, 1);
+		ouro::gpu::texture_info Texture2Desc(_Texture1Desc);
+		Texture2Desc.format = ouro::surface::subformat(_Texture1Desc.format, 1);
+		Texture2Desc.dimensions = ouro::surface::dimensions_npot(_Texture1Desc.format, _Texture1Desc.dimensions, 0, 1);
 
 		mstring Texture2Name(_Texture1Name);
 		sncatf(Texture2Name, ".Texture2");
@@ -62,7 +62,7 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 	{
 		Desc = get_texture_info(_pTexture);
 
-		if (!oGPUTextureTypeIs2DMap(Desc.Type))
+		if (!gpu::is_2d(Desc.type))
 		{
 			oErrorSetLast(std::errc::invalid_argument, "the specified texture must be 2D");
 			return;
@@ -83,7 +83,7 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 
 	if (*_pSuccess)
 	{
-		if (!oGPUTextureTypeIsReadback(_Desc.Type))
+		if (!gpu::is_readback(_Desc.type))
 		{
 			if (!SRV && *_pSuccess)
 			{
@@ -92,7 +92,7 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 				SRV = make_srv(name, Texture);
 			}
 
-			if (*_pSuccess && oGPUTextureTypeIsUnordered(_Desc.Type))
+			if (*_pSuccess && gpu::is_unordered(_Desc.type))
 				UAV = make_uav(_Name, Texture, 0, 0);
 		}
 
@@ -103,16 +103,16 @@ oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char
 int2 oD3D11Texture::GetByteDimensions(int _Subresource) const threadsafe
 {
 	const oGPUTexture::DESC& d = thread_cast<oD3D11Texture*>(this)->Desc;
-	int numMips = ouro::surface::num_mips(oGPUTextureTypeHasMips(d.Type), d.Dimensions); 
+	int numMips = ouro::surface::num_mips(gpu::is_mipped(d.type), d.dimensions); 
 	int mipLevel, sliceIndex, surfaceIndex;
-	ouro::surface::unpack_subresource(_Subresource, numMips, d.ArraySize, &mipLevel, &sliceIndex, &surfaceIndex);
+	ouro::surface::unpack_subresource(_Subresource, numMips, d.array_size, &mipLevel, &sliceIndex, &surfaceIndex);
 	if (surfaceIndex > 0)
-		return Texture2->GetByteDimensions(ouro::surface::calc_subresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, d.ArraySize));
+		return Texture2->GetByteDimensions(ouro::surface::calc_subresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, d.array_size));
 
 	ouro::surface::info inf;
-	inf.dimensions = d.Dimensions;
-	inf.format = d.Format;
-	inf.array_size = d.ArraySize;
-	inf.layout = oGPUTextureTypeHasMips(d.Type) ? ouro::surface::tight : ouro::surface::image;
+	inf.dimensions = d.dimensions;
+	inf.format = d.format;
+	inf.array_size = d.array_size;
+	inf.layout = gpu::is_mipped(d.type) ? ouro::surface::tight : ouro::surface::image;
 	return ouro::surface::byte_dimensions(inf, _Subresource);
 }

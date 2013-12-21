@@ -57,7 +57,7 @@ struct DrawOrderEqual
 	{
 		oGPUCommandList::DESC d;
 		_pCommandList->GetDesc(&d);
-		return d.DrawOrder == DrawOrder;
+		return d.draw_order == DrawOrder;
 	}
 };
 
@@ -66,10 +66,10 @@ bool ByDrawOrder(const oGPUCommandList* _pCommandList1, const oGPUCommandList* _
 	oGPUCommandList::DESC d1, d2;
 	_pCommandList1->GetDesc(&d1);
 	_pCommandList2->GetDesc(&d2);
-	return d1.DrawOrder > d2.DrawOrder;
+	return d1.draw_order > d2.draw_order;
 };
 
-bool oGPUDeviceCreate(const oGPU_DEVICE_INIT& _Init, oGPUDevice** _ppDevice)
+bool oGPUDeviceCreate(const ouro::gpu::device_init& _Init, oGPUDevice** _ppDevice)
 {
 	intrusive_ptr<ID3D11Device> Device;
 	try { Device = make_device(_Init); }
@@ -92,7 +92,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	: D3DDevice(_pDevice)
 	, FrameID(oInvalid)
 	, hHeap(HeapCreate(0, oMB(10), 0))
-	, IsSoftwareEmulation(_Init.UseSoftwareEmulation)
+	, IsSoftwareEmulation(_Init.use_software_emulation)
 {
 	*_pSuccess = false;
 
@@ -117,7 +117,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			{ TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MIN, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MIN, D3D11_COLOR_WRITE_ENABLE_ALL },
 			{ TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MAX, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MAX, D3D11_COLOR_WRITE_ENABLE_ALL },
 		};
-		static_assert(oCOUNTOF(sBlends) == oGPU_BLEND_STATE_COUNT, "# blend states mismatch");
+		static_assert(oCOUNTOF(sBlends) == ouro::gpu::blend_state::count, "# blend states mismatch");
 
 		D3D11_BLEND_DESC desc = {0};
 		oFORI(i, BlendStates)
@@ -132,7 +132,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 
 			if (!StateExists(i, BlendStates))
 			{
-				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_BLEND_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.debug_name.c_str(), ouro::as_string((ouro::gpu::blend_state::value)i));
 				debug_name(BlendStates[i], StateName);
 			}
 		}
@@ -151,7 +151,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			oV(_pDevice->CreateDepthStencilState(&sDepthStencils[i], &DepthStencilStates[i]));
 			if (!StateExists(i, DepthStencilStates))
 			{
-				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_DEPTH_STENCIL_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.debug_name.c_str(), ouro::as_string((ouro::gpu::depth_stencil_state::value)i));
 				debug_name(DepthStencilStates[i], StateName);
 			}
 		}
@@ -167,7 +167,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			D3D11_FILL_WIREFRAME,
 			D3D11_FILL_WIREFRAME,
 		};
-		static_assert(oCOUNTOF(sFills) == oGPU_SURFACE_STATE_COUNT, "# surface states mismatch");
+		static_assert(oCOUNTOF(sFills) == ouro::gpu::surface_state::count, "# surface states mismatch");
 
 		static const D3D11_CULL_MODE sCulls[] = 
 		{
@@ -178,7 +178,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 			D3D11_CULL_FRONT,
 			D3D11_CULL_NONE,
 		};
-		static_assert(oCOUNTOF(sCulls) == oGPU_SURFACE_STATE_COUNT, "# surface states mismatch");
+		static_assert(oCOUNTOF(sCulls) == ouro::gpu::surface_state::count, "# surface states mismatch");
 
 		D3D11_RASTERIZER_DESC desc;
 		memset(&desc, 0, sizeof(desc));
@@ -193,7 +193,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	
 			if (!StateExists(i, SurfaceStates))
 			{
-				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string((oGPU_SURFACE_STATE)i));
+				snprintf(StateName, "%s.%s", _Init.debug_name.c_str(), ouro::as_string((ouro::gpu::surface_state::value)i));
 				debug_name(SurfaceStates[i], StateName);
 			}
 		}
@@ -202,7 +202,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	// Sampler States
 	{
 		static const int NUM_ADDRESS_STATES = 6;
-		static const int NUM_MIP_BIAS_LEVELS = oGPU_SAMPLER_STATE_COUNT / NUM_ADDRESS_STATES;
+		static const int NUM_MIP_BIAS_LEVELS = ouro::gpu::sampler_type::count / NUM_ADDRESS_STATES;
 
 		static const D3D11_FILTER sFilters[] = 
 		{
@@ -251,7 +251,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 				desc.MaxAnisotropy = 16; // documented default
 				desc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // documented default
 
-				snprintf(StateName, "%s.%s", _Init.DebugName.c_str(), ouro::as_string(oGPU_SAMPLER_STATE(NUM_ADDRESS_STATES * bias + state)));
+				snprintf(StateName, "%s.%s", _Init.debug_name.c_str(), ouro::as_string(ouro::gpu::sampler_type::value(NUM_ADDRESS_STATES * bias + state)));
 				oV(_pDevice->CreateSamplerState(&desc, &SamplerStates[i]));
 				debug_name(SamplerStates[i], StateName);
 				i++;
@@ -328,7 +328,7 @@ void oD3D11Device::GetDesc(DESC* _pDesc) const threadsafe
 
 const char* oD3D11Device::GetName() const threadsafe
 {
-	return Desc.DebugName;
+	return Desc.debug_name;
 }
 
 uint oD3D11Device::GetFrameID() const threadsafe
@@ -339,7 +339,7 @@ uint oD3D11Device::GetFrameID() const threadsafe
 void oD3D11Device::GetImmediateCommandList(oGPUCommandList** _ppCommandList)
 {
 	oGPUCommandList::DESC CLDesc;
-	CLDesc.DrawOrder = oInvalid;
+	CLDesc.draw_order = oInvalid;
 	oVERIFY(oD3D11Device::CreateCommandList("Immediate", CLDesc, _ppCommandList));
 }
 
@@ -382,7 +382,7 @@ bool oD3D11Device::CLInsert(oGPUCommandList* _pCommandList) threadsafe
 
 	oGPUCommandList::DESC d;
 	_pCommandList->GetDesc(&d);
-	auto it = find_if(pThis->CommandLists, DrawOrderEqual(d.DrawOrder));
+	auto it = find_if(pThis->CommandLists, DrawOrderEqual(d.draw_order));
 
 	if (it == pThis->CommandLists.end())
 	{
@@ -390,7 +390,7 @@ bool oD3D11Device::CLInsert(oGPUCommandList* _pCommandList) threadsafe
 		return true;
 	}
 
-	return oErrorSetLast(std::errc::operation_in_progress, "Entry with DrawOrder %d already exists", d.DrawOrder);
+	return oErrorSetLast(std::errc::operation_in_progress, "Entry with DrawOrder %d already exists", d.draw_order);
 }
 
 void oD3D11Device::MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, ouro::surface::mapped_subresource* _pMappedSubresource) threadsafe
@@ -422,8 +422,8 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		uint StructureByteStride = 1;
 		if (type == oGPU_BUFFER)
 		{
-			oGPU_BUFFER_DESC d = get_info(static_cast<ID3D11Buffer*>(pD3DResource));
-			StructureByteStride = __max(1, d.StructByteSize);
+			gpu::buffer_info i = get_info(static_cast<ID3D11Buffer*>(pD3DResource));
+			StructureByteStride = __max(1, i.struct_byte_size);
 			oASSERT(_Subregion.top == 0 && _Subregion.bottom == 1, "Buffer subregion must have top == 0 and bottom == 1");
 		}
 

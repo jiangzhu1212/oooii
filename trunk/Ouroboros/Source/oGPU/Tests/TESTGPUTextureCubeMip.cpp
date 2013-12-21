@@ -52,7 +52,7 @@ struct GPU_TextureCubeMip_App : public oGPUTextureTestApp
 		images[4] = _4.get();
 		images[5] = _5.get();
 
-		if (!oGPUCreateTexture(Device, images, oCOUNTOF(images), oGPU_TEXTURE_CUBE_MAP_MIPS, &Texture))
+		if (!oGPUCreateTexture(Device, images, oCOUNTOF(images), ouro::gpu::texture_type::mipped_cube, &Texture))
 			return false;
 
 		return true;

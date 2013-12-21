@@ -160,5 +160,5 @@ void oD3D11Pipeline::GetDesc(DESC* _pDesc) const threadsafe
 	_pDesc->DebugName = DebugName;
 	_pDesc->pElements = pElements;
 	_pDesc->NumElements = NumElements;
-	_pDesc->InputType = static_cast<oGPU_PRIMITIVE_TYPE>(InputTopology);
+	_pDesc->InputType = static_cast<ouro::gpu::primitive_type::value>(InputTopology);
 }

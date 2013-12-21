@@ -38,6 +38,24 @@
 #define oDEFINE_FROM_STRING(_T, _NumTs) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string<_T, _NumTs>(_pValue, _StrSource); }
 #define oDEFINE_FROM_STRING2(_T, _NumTs, _InvalidValue) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string<_T, _NumTs>(_pValue, _StrSource, _InvalidValue); }
 
+#define oDEFINE_RESIZED_AS_STRING(_T) \
+	const char* as_string(const resized_type<_T, unsigned short>& _Type) { return as_string((_T)_Type); } \
+	const char* as_string(const resized_type<_T, short>& _Type) { return as_string((_T)_Type); } \
+	const char* as_string(const resized_type<_T, unsigned char>& _Type) { return as_string((_T)_Type); } \
+	const char* as_string(const resized_type<_T, char>& _Type) { return as_string((_T)_Type); }
+
+#define oDEFINE_RESIZED_TO_STRING(_T) \
+	char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const resized_type<_T, unsigned short>& _Type) { return to_string(_StrDestination, _SizeofStrDestination, (_T)_Type); } \
+	char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const resized_type<_T, short>& _Type) { return to_string(_StrDestination, _SizeofStrDestination, (_T)_Type); } \
+	char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const resized_type<_T, unsigned char>& _Type) { return to_string(_StrDestination, _SizeofStrDestination, (_T)_Type); } \
+	char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const resized_type<_T, char>& _Type) { return to_string(_StrDestination, _SizeofStrDestination, (_T)_Type); }
+
+#define oDEFINE_RESIZED_FROM_STRING(_T) \
+	bool from_string(resized_type<_T, unsigned short>* _pType, const char* _StrSource) { _T t; bool result = from_string(&t, _StrSource); *_pType = t; return result; } \
+	bool from_string(resized_type<_T, short>* _pType, const char* _StrSource) { _T t; bool result = from_string(&t, _StrSource); *_pType = t; return result; } \
+	bool from_string(resized_type<_T, unsigned char>* _pType, const char* _StrSource) { _T t; bool result = from_string(&t, _StrSource); *_pType = t; return result; } \
+	bool from_string(resized_type<_T, char>* _pType, const char* _StrSource) { _T t; bool result = from_string(&t, _StrSource); *_pType = t; return result; }
+
 namespace ouro {
 
 // Returns a const string representation of the specified value. This is most

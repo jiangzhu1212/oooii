@@ -122,7 +122,7 @@ private:
 			{
 				sGroups[i].GroupName = sGroupNames[i];
 				sGroups[i].MaterialName = "Body";
-				sGroups[i].Range = oGPU_RANGE(i*2, 2, i*4, (i+1)*4-1); // min/max is valid after vertex reduction
+				sGroups[i].Range = ouro::gpu::vertex_range(i*2, 2, i*4, (i+1)*4-1); // min/max is valid after vertex reduction
 			}
 
 			InitGroupsDone = true;

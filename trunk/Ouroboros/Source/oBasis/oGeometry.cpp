@@ -394,10 +394,10 @@ struct oGeometry_Impl : public oGeometry
 
 		if (Ranges.empty())
 		{
-			oGPU_RANGE r;
-			r.StartPrimitive = 0;
-			r.NumPrimitives = oUInt(Indices.size() / 3);
-			r.MaxVertex = oUInt(Positions.size());
+			ouro::gpu::vertex_range r;
+			r.start_primitive = 0;
+			r.num_primitives = oUInt(Indices.size() / 3);
+			r.max_vertex = oUInt(Positions.size());
 			Ranges.push_back(r);
 		}
 
@@ -406,7 +406,7 @@ struct oGeometry_Impl : public oGeometry
 
 	void FillMapped(MAPPED* _pMapped) const;
 
-	std::vector<oGPU_RANGE> Ranges;
+	std::vector<ouro::gpu::vertex_range> Ranges;
 	std::vector<unsigned int> Indices;
 	std::vector<float3> Positions;
 	std::vector<float3> Normals;
@@ -1896,8 +1896,8 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 		for (unsigned int i = 0; i < d.NumGroups; i++)
 		{
 			const oOBJ_GROUP& g = d.pGroups[i];
-			const size_t indexStart = g.Range.StartPrimitive * 3;
-			const size_t indexEnd = indexStart + g.Range.NumPrimitives * 3;
+			const size_t indexStart = g.Range.start_primitive * 3;
+			const size_t indexEnd = indexStart + g.Range.num_primitives * 3;
 			for (size_t j = indexStart; j < indexEnd; j++)
 				pGeometry->ContinuityIDs[pGeometry->Indices[j]] = i;
 		}

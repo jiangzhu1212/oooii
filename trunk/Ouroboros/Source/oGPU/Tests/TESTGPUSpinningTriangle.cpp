@@ -43,7 +43,7 @@ public:
 		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 		oGPUBuffer::DESC DCDesc;
-		DCDesc.StructByteSize = sizeof(oGPUTestConstants);
+		DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
 		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 			return false;
 
@@ -66,7 +66,7 @@ public:
 
 		oGPURenderTarget::DESC RTDesc;
 		PrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
 
 		// this is -1 because there was a code change that resulted in BeginFrame()
 		// being moved out of the Render function below so it updated the FrameID
@@ -81,10 +81,10 @@ public:
 
 		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
-		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		CommandList->SetBlendState(oGPU_OPAQUE);
-		CommandList->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
-		CommandList->SetSurfaceState(oGPU_TWO_SIDED);
+		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
+		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::test_and_write);
+		CommandList->SetSurfaceState(ouro::gpu::surface_state::two_sided);
 		CommandList->SetBuffers(0, 1, &TestConstants);
 		CommandList->SetPipeline(Pipeline);
 		CommandList->SetRenderTarget(PrimaryRenderTarget);

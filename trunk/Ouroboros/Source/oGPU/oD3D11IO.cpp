@@ -76,7 +76,7 @@ bool oGPUCompileShader(
 	, const char* _CommonDefines
 	, const char* _SpecificDefines
 	, const version& _TargetShaderModel
-	, oGPU_PIPELINE_STAGE _Stage
+	, ouro::gpu::pipeline_stage::value _Stage
 	, const char* _ShaderPath
 	, const char* _EntryPoint
 	, const char* _ShaderBody
@@ -144,7 +144,7 @@ bool oGPUSurfaceConvert(
 	, ouro::surface::format _SourceFormat
 	, const int2& _MipDimensions)
 {
-	oGPU_DEVICE_INIT DeviceInit("oGPUSurfaceConvert Temp Device");
+	ouro::gpu::device_init DeviceInit("oGPUSurfaceConvert Temp Device");
 	intrusive_ptr<ID3D11Device> D3DDevice;
 	try
 	{
@@ -152,7 +152,7 @@ bool oGPUSurfaceConvert(
 	}
 	catch (std::exception&)
 	{
-		DeviceInit.UseSoftwareEmulation = true;
+		DeviceInit.use_software_emulation = true;
 		D3DDevice = make_device(DeviceInit);
 	}
 
@@ -184,7 +184,7 @@ bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format _New
 	return success;
 }
 
-bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture)
+bool oGPUTextureLoad(oGPUDevice* _pDevice, const ouro::gpu::texture_info& _Desc, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture)
 {
 	uri u(_URIReference);
 	if (_stricmp(u.scheme(), "file"))
@@ -205,7 +205,7 @@ bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const
 	return success;
 }
 
-bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture)
+bool oGPUTextureLoad(oGPUDevice* _pDevice, const ouro::gpu::texture_info& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture)
 {
 	intrusive_ptr<ID3D11Device> D3DDevice;
 	oVERIFY(_pDevice->QueryInterface(&D3DDevice));

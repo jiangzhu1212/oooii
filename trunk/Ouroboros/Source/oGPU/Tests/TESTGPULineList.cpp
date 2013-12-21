@@ -61,12 +61,12 @@ public:
 		if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
 			return false;
 
-		oGPU_BUFFER_DESC bd;
-		bd.Type = oGPU_BUFFER_VERTEX;
-		bd.StructByteSize = sizeof(oGPU_LINE_VERTEX);
-		bd.ArraySize = 6;
+		gpu::buffer_info i;
+		i.type = gpu::buffer_type::vertex;
+		i.struct_byte_size = sizeof(oGPU_LINE_VERTEX);
+		i.array_size = 6;
 
-		if (!Device->CreateBuffer("LineList", bd, &LineList))
+		if (!Device->CreateBuffer("LineList", i, &LineList))
 			return false;
 
 		return true;
@@ -98,9 +98,9 @@ public:
 
 		CommandList->Commit(LineList, 0, msr, ouro::surface::box(6));
 
-		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		CommandList->SetBlendState(oGPU_OPAQUE);
-		CommandList->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
+		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
+		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
 		CommandList->SetPipeline(Pipeline);
 		CommandList->SetRenderTarget(PrimaryRenderTarget);
 		CommandList->Draw(nullptr, 0, 1, &LineList, 0, 3);

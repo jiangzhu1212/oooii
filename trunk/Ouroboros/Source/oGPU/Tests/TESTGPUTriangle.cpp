@@ -55,10 +55,10 @@ struct GPU_Triangle_App : public oGPUTestApp
 	bool Render() override
 	{
 		CommandList->Begin();
-		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		CommandList->SetBlendState(oGPU_OPAQUE);
-		CommandList->SetDepthStencilState(oGPU_DEPTH_STENCIL_NONE);
-		CommandList->SetSurfaceState(oGPU_FRONT_FACE);
+		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
+		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
+		CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
 		CommandList->SetPipeline(Pipeline);
 		CommandList->SetRenderTarget(PrimaryRenderTarget);
 		oGPUUtilMeshDraw(CommandList, Mesh);

@@ -88,7 +88,7 @@ interface oGeometry : oInterface
 
 	struct MAPPED
 	{
-		oGPU_RANGE* pRanges;
+		ouro::gpu::vertex_range* pRanges;
 		unsigned int* pIndices;
 		float3* pPositions;
 		float3* pNormals;
@@ -99,7 +99,7 @@ interface oGeometry : oInterface
 
 	struct CONST_MAPPED
 	{
-		const oGPU_RANGE* pRanges;
+		const ouro::gpu::vertex_range* pRanges;
 		const unsigned int* pIndices;
 		const float3* pPositions;
 		const float3* pNormals;

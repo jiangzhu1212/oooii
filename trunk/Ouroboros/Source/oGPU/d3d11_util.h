@@ -66,17 +66,17 @@ inline int trace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _S
 // Utility API
 
 // Creates a device with the specified description.
-intrusive_ptr<ID3D11Device> make_device(const oGPU_DEVICE_INIT& _Init);
+intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init);
 
 // Returns information about the specified device. There's no way to determine
 // if the device is software, so pass that through.
-oGPU_DEVICE_DESC get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation);
+gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation);
 
 // Returns an IFF based on the extension specified in the file path
 D3DX11_IMAGE_FILE_FORMAT from_path(const path& _Path);
 
 // Returns the D3D11 equivalent.
-D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(oGPU_PRIMITIVE_TYPE _Type);
+D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(gpu::primitive_type::value _Type);
 
 // Returns the number of elements as described the specified topology given
 // the number of primitives. An element can refer to indices or vertices, but
@@ -90,7 +90,7 @@ D3D_FEATURE_LEVEL feature_level(const version& _ShaderModel);
 // Returns the shader profile for the specified stage of the specified feature
 // level. If the specified feature level does not support the specified stage,
 // this will return nullptr.
-const char* shader_profile(D3D_FEATURE_LEVEL _Level, oGPU_PIPELINE_STAGE _Stage);
+const char* shader_profile(D3D_FEATURE_LEVEL _Level, gpu::pipeline_stage::value _Stage);
 
 // Given a buffer of compiled byte code, return its size.
 size_t byte_code_size(const void* _pByteCode);
@@ -100,8 +100,8 @@ size_t byte_code_size(const void* _pByteCode);
 
 // Allow ID3D11Buffers to be a bit more self-describing - mainly for index 
 // buffers.
-void set_info(ID3D11Resource* _pBuffer, const oGPU_BUFFER_DESC& _Desc);
-oGPU_BUFFER_DESC get_info(const ID3D11Resource* _pBuffer);
+void set_info(ID3D11Resource* _pBuffer, const gpu::buffer_info& _Info);
+gpu::buffer_info get_info(const ID3D11Resource* _pBuffer);
 
 // Create common interfaces. NOTE: It is often benchmarked as faster due to 
 // driver PCIE usage to use D3D11_USAGE_DEFAULT and UpdateSubresource rather 
@@ -112,7 +112,7 @@ oGPU_BUFFER_DESC get_info(const ID3D11Resource* _pBuffer);
 
 intrusive_ptr<ID3D11Buffer> make_buffer(ID3D11Device* _pDevice
 	, const char* _DebugName
-	, const oGPU_BUFFER_DESC& _Desc
+	, const gpu::buffer_info& _Info
 	, const void* _pInitBuffer
 	, ID3D11UnorderedAccessView** _ppUAV = nullptr
 	, ID3D11ShaderResourceView** _ppSRV = nullptr);
@@ -176,12 +176,12 @@ void update_index_buffer(ID3D11DeviceContext* _pDeviceContext
 void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix = "\t");
 void trace_image_load_info(const D3DX11_IMAGE_LOAD_INFO& _ImageLoadInfo, const char* _Prefix = "\t");
 
-// Fills the specified oGPU_TEXTURE_DESC with the description from the 
-// specified resource. The resource can be: ID3D11Texture1D, ID3D11Texture2D
+// Fills the specified texture_info with the description from the specified 
+// resource. The resource can be: ID3D11Texture1D, ID3D11Texture2D
 // ID3D11Texture3D or ID3D11Buffer. If an ID3D11Buffer the size of a single
-// struct is in Dimensions.x, and the number of structures is in Dimensions.y.
-// The y value will be replicated in ArraySize as well.
-oGPU_TEXTURE_DESC get_texture_info(ID3D11Resource* _pResource, D3D11_USAGE* _pUsage = nullptr);
+// struct is in dimensions.x, and the number of structures is in dimensions.y.
+// The y value will be replicated in array_size as well.
+gpu::texture_info get_texture_info(ID3D11Resource* _pResource, D3D11_USAGE* _pUsage = nullptr);
 
 // From the specified texture, create the correct shader resource view
 intrusive_ptr<ID3D11ShaderResourceView> make_srv(const char* _DebugName, ID3D11Resource* _pTexture);
@@ -266,7 +266,7 @@ struct new_texture
 
 new_texture make_texture(ID3D11Device* _pDevice
 	, const char* _DebugName
-	, const oGPU_TEXTURE_DESC& _Desc
+	, const gpu::texture_info& _Info
 	, surface::const_mapped_subresource* _pInitData = nullptr);
 
 // Creates a CPU-readable copy of the specified texture/render target. Only 
@@ -289,15 +289,16 @@ void save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pB
 void save(const surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
 
 // Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
-// Specify surface::unknown and oDEFAULT for x, y or ArraySize in the _Desc to 
-// use values from the specified file. If mips is specified as HAS_MIPs, then 
-// mips will be allocated, but not filled in. If AUTO_MIPS is specified, then 
-// mips will be generated.
+// Specify surface::unknown and 0 for x, y or array_size in the _Info to use 
+// values from the specified file. If the type has mips then mips will be 
+// allocated but not filled in.
 intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const path& _Path);
+	, const gpu::texture_info& _Info
+	, const char* _DebugName
+	, const path& _Path);
 
 intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const oGPU_TEXTURE_DESC& _Desc
+	, const gpu::texture_info& _Info
 	, const char* _DebugName
 	, const void* _pBuffer
 	, size_t _SizeofBuffer);

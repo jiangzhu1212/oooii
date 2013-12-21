@@ -36,10 +36,10 @@ struct GPU_BCEncodeDecode : public oTest
 		intrusive_ptr<oBuffer> OriginalFile;
 		oTESTB(oBufferLoad(_OriginalPath, &OriginalFile), "Failed to load %s", _OriginalPath);
 
-		oGPU_TEXTURE_DESC d;
-		d.Dimensions = int3(oDEFAULT, oDEFAULT, 1);
-		d.ArraySize = oDEFAULT;
-		d.Format = ouro::surface::unknown;
+		ouro::gpu::texture_info d;
+		d.dimensions = ushort3(0, 0, 1);
+		d.array_size = 0;
+		d.format = ouro::surface::unknown;
 
 		intrusive_ptr<oGPUTexture> OriginalAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, d, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), &OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
@@ -59,10 +59,10 @@ struct GPU_BCEncodeDecode : public oTest
 		oTESTB(oBufferLoad(_ConvertedPath, &ConvertedFile), "Failed to load %s", _ConvertedPath);
 
 		oGPUTexture::DESC td;
-		td.Dimensions = int3(oDEFAULT, oDEFAULT, 1);
-		td.ArraySize = oDEFAULT;
-		td.Format = ouro::surface::unknown;
-		td.Type = oGPU_TEXTURE_2D_READBACK;
+		td.dimensions = ushort3(0, 0, 1);
+		td.array_size = 0;
+		td.format = ouro::surface::unknown;
+		td.type = ouro::gpu::texture_type::readback_2d;
 
 		intrusive_ptr<oGPUTexture> ConvertedFileAsTexture;
 		oTESTB(oGPUTextureLoad(_pDevice, td, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), &ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());
@@ -73,8 +73,8 @@ struct GPU_BCEncodeDecode : public oTest
 		BGRATexture->GetDesc(&td);
 
 		ouro::surface::info si;
-		si.format = td.Format;
-		si.dimensions = td.Dimensions;
+		si.format = td.format;
+		si.dimensions = td.dimensions;
 		std::shared_ptr<ouro::surface::buffer> ConvertedImage = ouro::surface::buffer::make(si);
 
 		ouro::surface::mapped_subresource msrSource;
@@ -124,7 +124,7 @@ struct GPU_BCEncodeDecode : public oTest
 	{
 		oGPUDevice::INIT DeviceInit("TESTBCEncDec Temp Device");
 		#ifdef _DEBUG
-			DeviceInit.DriverDebugLevel = oGPU_DEBUG_NORMAL;
+			DeviceInit.driver_debug_level = gpu::debug_level::normal;
 		#endif
 
 		intrusive_ptr<oGPUDevice> Device;
@@ -134,7 +134,7 @@ struct GPU_BCEncodeDecode : public oTest
 				snprintf(_StrStatus, _SizeofStrStatus, "Non-D3D or Pre-D3D11 HW detected: Using the non-accelerated path will take too long, so this test will be skipped.");
 				return SKIPPED;
 			#else
-				DeviceInit.UseSoftwareEmulation = true;
+				DeviceInit.use_software_emulation = true;
 				oTESTB(oGPUDeviceCreate(DeviceInit, &Device), "Failed to create device");
 			#endif
 		}

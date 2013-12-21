@@ -50,18 +50,18 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 {
 	*_pSuccess = false;
 	
-	for (uint i = 0; i < oCOUNTOF(Desc.Format); i++)
+	for (uint i = 0; i < oCOUNTOF(Desc.format); i++)
 	{
-		if (ouro::surface::is_yuv(Desc.Format[i]))
+		if (ouro::surface::is_yuv(Desc.format[i]))
 		{
-			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", ouro::as_string(Desc.Format[i]));
+			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", ouro::as_string(Desc.format[i]));
 			return;
 		}
 	}
 
 	// invalidate width/height to force allocation in this call to resize
-	Desc.Dimensions = int3(oInvalid,oInvalid,oInvalid);
-	Resize(_Desc.Dimensions);
+	Desc.dimensions = ushort3(0,0,0);
+	Resize(_Desc.dimensions);
 	*_pSuccess = true;
 }
 
@@ -81,8 +81,8 @@ oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pS
 	}
 	
 	oWinSetIsRenderTarget(SCD.OutputWindow);
-	Desc.DepthStencilFormat = _DepthStencilFormat;
-	Desc.Format[0] = dxgi::to_surface_format(SCD.BufferDesc.Format);
+	Desc.depth_stencil_format = _DepthStencilFormat;
+	Desc.format[0] = dxgi::to_surface_format(SCD.BufferDesc.Format);
 	Resize(int3(SCD.BufferDesc.Width, SCD.BufferDesc.Height, 1));
 	*_pSuccess = true;
 }
@@ -121,24 +121,24 @@ void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 	{
 		DXGI_SWAP_CHAIN_DESC d;
 		oV(pThis->SwapChain->GetDesc(&d));
-		_pDesc->Dimensions = int3(oInt(d.BufferDesc.Width), oInt(d.BufferDesc.Height), 1);
-		_pDesc->Format[0] = dxgi::to_surface_format(d.BufferDesc.Format);
+		_pDesc->dimensions = int3(oInt(d.BufferDesc.Width), oInt(d.BufferDesc.Height), 1);
+		_pDesc->format[0] = dxgi::to_surface_format(d.BufferDesc.Format);
 
 		if (pThis->DepthStencilTexture)
 		{
 			oGPUTexture::DESC d;
 			pThis->DepthStencilTexture->GetDesc(&d);
-			_pDesc->DepthStencilFormat = d.Format;
+			_pDesc->depth_stencil_format = d.format;
 		}
 
 		else
-			_pDesc->DepthStencilFormat = ouro::surface::unknown;
+			_pDesc->depth_stencil_format = ouro::surface::unknown;
 	}
 }
 
-void oD3D11RenderTarget::SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threadsafe
+void oD3D11RenderTarget::SetClearDesc(const ouro::gpu::clear_info& _ClearInfo) threadsafe
 {
-	oLockThis(DescMutex)->Desc.ClearDesc = _ClearDesc;
+	oLockThis(DescMutex)->Desc.clear = _ClearInfo;
 }
 
 void oD3D11RenderTarget::ClearResources()
@@ -151,7 +151,7 @@ void oD3D11RenderTarget::ClearResources()
 
 void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 {
-	if (Desc.DepthStencilFormat != DXGI_FORMAT_UNKNOWN)
+	if (Desc.depth_stencil_format != surface::unknown)
 	{
 		lstring name;
 		snprintf(name, "%s.DS", GetName());
@@ -159,11 +159,11 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 		DepthStencilTexture = nullptr;
 		DSV = nullptr;
 
-		oGPU_TEXTURE_DESC d;
-		d.Dimensions = int3(_Dimensions, 1);
-		d.ArraySize = 1;
-		d.Format = Desc.DepthStencilFormat;
-		d.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
+		gpu::texture_info d;
+		d.dimensions = ushort3(_Dimensions, 1);
+		d.array_size = 1;
+		d.format = Desc.depth_stencil_format;
+		d.type = gpu::texture_type::render_target_2d;
 		new_texture New = make_texture(D3DDevice, name, d, nullptr);
 		intrusive_ptr<ID3D11Texture2D> Depth = New.pTexture2D;
 		DSV = New.pDSV;
@@ -191,9 +191,9 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 		}
 	}
 
-	if (any(Desc.Dimensions != New))
+	if (any(Desc.dimensions != New))
 	{
-		oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", type_name(typeid(*this).name()), GetName(), Desc.Dimensions.x, Desc.Dimensions.y, Desc.Dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
+		oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", type_name(typeid(*this).name()), GetName(), Desc.dimensions.x, Desc.dimensions.y, Desc.dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
 		ClearResources();
 
 		if (New.x && New.y && New.z)
@@ -208,22 +208,22 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 				Textures[0] = intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
 				oVERIFY(textureSuccess);
 				make_rtv(GetName(), SwapChainTexture, RTVs[0]);
-				Desc.ArraySize = 1;
-				Desc.MRTCount = 1;
-				Desc.Type = oGPU_TEXTURE_2D_RENDER_TARGET;
+				Desc.array_size = 1;
+				Desc.mrt_count = 1;
+				Desc.type = ouro::gpu::texture_type::render_target_2d;
 			}
 
 			else
 			{
-				for (int i = 0; i < Desc.MRTCount; i++)
+				for (int i = 0; i < Desc.mrt_count; i++)
 				{
 					lstring name;
 					snprintf(name, "%s%02d", GetName(), i);
 					oGPUTexture::DESC d;
-					d.Dimensions = New;
-					d.Format = Desc.Format[i];
-					d.ArraySize = Desc.ArraySize;
-					d.Type = oGPUTextureTypeGetRenderTargetType(Desc.Type);
+					d.dimensions = New;
+					d.format = Desc.format[i];
+					d.array_size = Desc.array_size;
+					d.type = gpu::add_render_target(Desc.type);
 					oVERIFY(Device->CreateTexture(name, d, &Textures[i]));
 					make_rtv(GetName(), static_cast<oD3D11Texture*>(Textures[i].c_ptr())->Texture, RTVs[0]);
 				}
@@ -232,13 +232,13 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 			RecreateDepthBuffer(New.xy());
 		}
 		
-		Desc.Dimensions = New;
+		Desc.dimensions = New;
 	}
 }
 
 void oD3D11RenderTarget::GetTexture(int _MRTIndex, oGPUTexture** _ppTexture)
 {
-	oASSERT(_MRTIndex < Desc.MRTCount, "Invalid MRT index");
+	oASSERT(_MRTIndex < Desc.mrt_count, "Invalid MRT index");
 	if (Textures[_MRTIndex])
 		Textures[_MRTIndex]->Reference();
 	*_ppTexture = Textures[_MRTIndex];

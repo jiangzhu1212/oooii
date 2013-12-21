@@ -39,7 +39,7 @@ struct GPU_Texture1DMip_App : public oGPUTextureTestApp
 	{
 		auto image = make_1D(512);
 		auto* i = image.get();
-		if (!oGPUCreateTexture(Device, &i, 1, oGPU_TEXTURE_1D_MAP_MIPS, &Texture))
+		if (!oGPUCreateTexture(Device, &i, 1, ouro::gpu::texture_type::mipped_1d, &Texture))
 			return false;
 		return true;
 	}

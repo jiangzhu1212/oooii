@@ -37,10 +37,10 @@
 
 // Fills a desc for an index buffer that decides on index size (ushort or 
 // uint) based on the number of vertices to be indexed.
-oAPI void oGPUGetIndexBufferDesc(uint _NumIndices, uint _NumVertices, oGPU_BUFFER_DESC* _pDesc);
+ouro::gpu::buffer_info oGPUGetIndexBufferDesc(uint _NumIndices, uint _NumVertices);
 
 // Fills a desc for a vertex buffer that can contain the specified elements
-oAPI void oGPUGetVertexBufferDesc(uint _NumVertices, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, uint _InputSlot, oGPU_BUFFER_DESC* _pDesc);
+ouro::gpu::buffer_info oGPUGetVertexBufferDesc(uint _NumVertices, const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, uint _InputSlot);
 
 // Copies indices to/from either ushorts or uints. This compares the RowPitches 
 // and does the proper swizzle copy.
@@ -143,14 +143,14 @@ oAPI bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, ouro::surfa
 
 // Creates a texture and fills it with source image data according to the type
 // specified. NOTE: render target and readback not tested.
-oAPI bool oGPUCreateTexture(oGPUDevice* _pDevice, const ouro::surface::buffer* const* _ppSourceImages, uint _NumImages, oGPU_TEXTURE_TYPE _Type, oGPUTexture** _ppTexture);
+oAPI bool oGPUCreateTexture(oGPUDevice* _pDevice, const ouro::surface::buffer* const* _ppSourceImages, uint _NumImages, ouro::gpu::texture_type::value _Type, oGPUTexture** _ppTexture);
 
 // Fill in the rest of the mip chain for the specified texture. It's mip0 level
 // should be fully initialized.
 oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture);
 
 // Generate mips with the GPU from source image(s) to a preallocated oBuffer with oSURFACE_DESC and oGPU_TEXTURE_TYPE
-oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const ouro::surface::buffer** _pMip0Images, uint _NumImages, ouro::surface::info& _SurfaceInfo, oGPU_TEXTURE_TYPE _Type, ouro::surface::buffer* _pMipBuffer);
+oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const ouro::surface::buffer** _pMip0Images, uint _NumImages, ouro::surface::info& _SurfaceInfo, ouro::gpu::texture_type::value _Type, ouro::surface::buffer* _pMipBuffer);
 
 // Creates a texture with mips from the specified oBuffer, described by an ouro::surface::info.
 oAPI bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, const ouro::surface::info& _SurfaceInfo, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
@@ -161,11 +161,11 @@ oAPI bool oGPUCreateTextureCubeMip(oGPUDevice* _pDevice, const ouro::surface::in
 // Binds the readable (samplable) shader resources from a render target in order
 inline void oGPURenderTargetSetShaderResources(oGPUCommandList* _pCommandList, int _StartSlot, bool _IncludeDepthStencil, oGPURenderTarget* _pRenderTarget)
 {
-	oGPU_RENDER_TARGET_DESC rtd;
+	oGPURenderTarget::DESC rtd;
 	_pRenderTarget->GetDesc(&rtd);
-	ouro::intrusive_ptr<oGPUTexture> MRTs[oGPU_MAX_NUM_MRTS+1];
+	ouro::intrusive_ptr<oGPUTexture> MRTs[ouro::gpu::max_num_mrts+1];
 	int i = 0;
-	for (; i < rtd.MRTCount; i++)
+	for (; i < rtd.mrt_count; i++)
 		_pRenderTarget->GetTexture(i, &MRTs[i]);
 	if (_IncludeDepthStencil)
 		_pRenderTarget->GetDepthTexture(&MRTs[i++]);
@@ -178,7 +178,7 @@ std::shared_ptr<ouro::surface::buffer> oGPUSaveImage(oGPUTexture* _pTexture, int
 
 // Given a list of bytecode buffers create a pipeline. This is most useful when
 // compiling shaders dynamically rather than using the static-compilation path.
-bool oGPUPipelineCreate(oGPUDevice* _pDevice, const char* _Name, ouro::intrusive_ptr<oBuffer> _ByteCode[oGPU_PIPELINE_STAGE_COUNT], const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements, oGPU_PRIMITIVE_TYPE _InputType, oGPUPipeline** _ppPipeline);
+bool oGPUPipelineCreate(oGPUDevice* _pDevice, const char* _Name, ouro::intrusive_ptr<oBuffer> _ByteCode[ouro::gpu::pipeline_stage::count], const oGPU_VERTEX_ELEMENT* _pElements, size_t _NumElements, ouro::gpu::primitive_type::value _InputType, oGPUPipeline** _ppPipeline);
 
 // _____________________________________________________________________________
 // Mesh convenience functions

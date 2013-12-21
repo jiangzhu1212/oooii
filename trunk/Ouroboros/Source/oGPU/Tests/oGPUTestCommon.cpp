@@ -42,10 +42,10 @@ bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapsho
 		SnapshotFrames.assign(_pSnapshotFrameIDs, _pSnapshotFrameIDs + _NumSnapshotFrameIDs);
 
 	{
-		oGPU_DEVICE_INIT init;
-		init.DebugName = "oGPUTestApp.Device";
-		init.Version = version(10,0); // for broader compatibility
-		init.DriverDebugLevel = oGPU_DEBUG_NORMAL;
+		ouro::gpu::device_init init;
+		init.debug_name = "oGPUTestApp.Device";
+		init.version = version(10,0); // for broader compatibility
+		init.driver_debug_level = gpu::debug_level::normal;
 		if (!oGPUDeviceCreate(init, &Device))
 			return false; // pass through error
 	}
@@ -137,7 +137,7 @@ bool oGPUTextureTestApp::Initialize()
 	PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 	oGPUBuffer::DESC DCDesc;
-	DCDesc.StructByteSize = sizeof(oGPUTestConstants);
+	DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
 	if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 		return false;
 
@@ -169,7 +169,7 @@ bool oGPUTextureTestApp::Render()
 
 	oGPURenderTarget::DESC RTDesc;
 	PrimaryRenderTarget->GetDesc(&RTDesc);
-	float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+	float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
 
 	float rotationStep = GetRotationStep();
 	float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
@@ -178,12 +178,12 @@ bool oGPUTextureTestApp::Render()
 
 	oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
-	CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-	CommandList->SetBlendState(oGPU_OPAQUE);
-	CommandList->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
-	CommandList->SetSurfaceState(oGPU_FRONT_FACE);
+	CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
+	CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+	CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::test_and_write);
+	CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
 	CommandList->SetBuffers(0, 1, &TestConstants);
-	oGPU_SAMPLER_STATE s = oGPU_LINEAR_WRAP;
+	ouro::gpu::sampler_type::value s = ouro::gpu::sampler_type::linear_wrap;
 	CommandList->SetSamplers(0, 1, &s);
 	CommandList->SetShaderResources(0, 1, &Texture);
 	CommandList->SetPipeline(Pipeline);

@@ -28,7 +28,7 @@
 
 struct GPU_Traits : public oTest
 {
-	RESULT TestTextureEnum(char* _StrStatus, size_t _SizeofStrStatus, oGPU_TEXTURE_TYPE _Type)
+	RESULT TestTextureEnum(char* _StrStatus, size_t _SizeofStrStatus, ouro::gpu::texture_type::value _Type)
 	{
 		bool Is1D = false;
 		bool Is2D = false;
@@ -41,106 +41,106 @@ struct GPU_Traits : public oTest
 
 		switch(_Type)
 		{
-		case oGPU_TEXTURE_1D_MAP:
+		case ouro::gpu::texture_type::default_1d:
 			Is1D = true;
 			break;
-		case oGPU_TEXTURE_1D_MAP_MIPS:
+		case ouro::gpu::texture_type::mipped_1d:
 			Is1D = true;
 			HasMips = true;
 			break;
-		case oGPU_TEXTURE_1D_RENDER_TARGET:
+		case ouro::gpu::texture_type::render_target_1d:
 			Is1D = true;
 			IsRenderTarget = true;
 			break;
-		case oGPU_TEXTURE_1D_RENDER_TARGET_MIPS:
+		case ouro::gpu::texture_type::mipped_render_target_1d:
 			Is1D = true;
-			IsRenderTarget = true;
-			HasMips = true;
-			break;
-		case oGPU_TEXTURE_1D_READBACK:
-			Is1D = true;
-			IsReadBack = true;
-			break;
-		case oGPU_TEXTURE_1D_READBACK_MIPS:
-			Is1D = true;
-			HasMips = true;
-			IsReadBack = true;
-			break;
-		case oGPU_TEXTURE_2D_MAP:
-			Is2D = true;
-			break;
-		case oGPU_TEXTURE_2D_MAP_MIPS:
-			Is2D = true;
-			HasMips = true;
-			break;
-		case oGPU_TEXTURE_2D_RENDER_TARGET:
-			Is2D = true;
-			IsRenderTarget = true;
-			break;
-		case oGPU_TEXTURE_2D_RENDER_TARGET_MIPS:
-			Is2D = true;
 			IsRenderTarget = true;
 			HasMips = true;
 			break;
-		case oGPU_TEXTURE_2D_READBACK:
+		case ouro::gpu::texture_type::readback_1d:
+			Is1D = true;
+			IsReadBack = true;
+			break;
+		case ouro::gpu::texture_type::mipped_readback_1d:
+			Is1D = true;
+			HasMips = true;
+			IsReadBack = true;
+			break;
+		case ouro::gpu::texture_type::default_2d:
+			Is2D = true;
+			break;
+		case ouro::gpu::texture_type::mipped_2d:
+			Is2D = true;
+			HasMips = true;
+			break;
+		case ouro::gpu::texture_type::render_target_2d:
+			Is2D = true;
+			IsRenderTarget = true;
+			break;
+		case ouro::gpu::texture_type::mipped_render_target_2d:
+			Is2D = true;
+			IsRenderTarget = true;
+			HasMips = true;
+			break;
+		case ouro::gpu::texture_type::readback_2d:
 			Is2D = true;
 			IsReadBack = true;
 			break;
-		case oGPU_TEXTURE_2D_READBACK_MIPS:
+		case ouro::gpu::texture_type::mipped_readback_2d:
 			Is2D = true;
 			HasMips = true;
 			IsReadBack = true;
 			break;
-		case oGPU_TEXTURE_2D_MAP_UNORDERED:
+		case ouro::gpu::texture_type::unordered_2d:
 			Is2D = true;
 			IsUnordered = true;
 			break;
-		case oGPU_TEXTURE_CUBE_MAP:
+		case ouro::gpu::texture_type::default_cube:
 			IsCube = true;
 			break;
-		case oGPU_TEXTURE_CUBE_MAP_MIPS:
+		case ouro::gpu::texture_type::mipped_cube:
 			IsCube = true;
 			HasMips = true;
 			break;
-		case oGPU_TEXTURE_CUBE_RENDER_TARGET:
+		case ouro::gpu::texture_type::render_target_cube:
 			IsCube = true;
 			IsRenderTarget = true;
 			break;
-		case oGPU_TEXTURE_CUBE_RENDER_TARGET_MIPS:
+		case ouro::gpu::texture_type::mipped_render_target_cube:
 			IsCube = true;
 			IsRenderTarget = true;
 			HasMips = true;
 			break;
-		case oGPU_TEXTURE_CUBE_READBACK:
+		case ouro::gpu::texture_type::readback_cube:
 			IsCube = true;
 			IsReadBack = true;
 			break;
-		case oGPU_TEXTURE_CUBE_READBACK_MIPS:
+		case ouro::gpu::texture_type::mipped_readback_cube:
 			IsCube = true;
 			HasMips = true;
 			IsReadBack = true;
 			break;
-		case oGPU_TEXTURE_3D_MAP:
+		case ouro::gpu::texture_type::default_3d:
 			Is3D = true;
 			break;
-		case oGPU_TEXTURE_3D_MAP_MIPS:
+		case ouro::gpu::texture_type::mipped_3d:
 			Is3D = true;
 			HasMips = true;
 			break;
-		case oGPU_TEXTURE_3D_RENDER_TARGET:
+		case ouro::gpu::texture_type::render_target_3d:
 			Is3D = true;
 			IsRenderTarget = true;
 			break;
-		case oGPU_TEXTURE_3D_RENDER_TARGET_MIPS:
+		case ouro::gpu::texture_type::mipped_render_target_3d:
 			Is3D = true;
 			IsRenderTarget = true;
 			HasMips = true;
 			break;
-		case oGPU_TEXTURE_3D_READBACK:
+		case ouro::gpu::texture_type::readback_3d:
 			Is3D = true;
 			IsReadBack = true;
 			break;
-		case oGPU_TEXTURE_3D_READBACK_MIPS:
+		case ouro::gpu::texture_type::mipped_readback_3d:
 			Is3D = true;
 			HasMips = true;
 			IsReadBack = true;
@@ -149,18 +149,18 @@ struct GPU_Traits : public oTest
 			oTESTB(false, "Unknown texture type %s", ouro::as_string(_Type));
 		}
 
-		oTESTB(oGPUTextureTypeHasMips(_Type) == HasMips, "oGPUTextureTypeHasMips incorrectly returning %s for %s", HasMips ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(oGPUTextureTypeIsReadback(_Type) == IsReadBack, "oGPUTextureTypeIsReadback incorrectly returning %s for %s", IsReadBack ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(oGPUTextureTypeIsRenderTarget(_Type) == IsRenderTarget, "oGPUTextureTypeIsRenderTarget incorrectly returning %s for %s", IsRenderTarget ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(oGPUTextureTypeIs1DMap(_Type) == Is1D, "oGPUTextureTypeIs1DMap incorrectly returning %s for %s", Is1D ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(oGPUTextureTypeIs2DMap(_Type) == Is2D, "oGPUTextureTypeIs2DMap incorrectly returning %s for %s", Is2D ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(oGPUTextureTypeIsCubeMap(_Type) == IsCube, "oGPUTextureTypeIsCubeMap incorrectly returning %s for %s", IsCube ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(oGPUTextureTypeIs3DMap(_Type) == Is3D, "oGPUTextureTypeIs3DMap incorrectly returning %s for %s", Is3D ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(oGPUTextureTypeIsUnordered(_Type) == IsUnordered, "oGPUTextureTypeIsUnordered incorrectly returning %s for %s", IsUnordered ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(ouro::gpu::is_mipped(_Type) == HasMips, "gpu::is_mipped incorrectly returning %s for %s", HasMips ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(ouro::gpu::is_readback(_Type) == IsReadBack, "gpu::is_readback incorrectly returning %s for %s", IsReadBack ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(ouro::gpu::is_render_target(_Type) == IsRenderTarget, "gpu::is_render_target incorrectly returning %s for %s", IsRenderTarget ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(ouro::gpu::is_1d(_Type) == Is1D, "gpu::is_1d incorrectly returning %s for %s", Is1D ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(ouro::gpu::is_2d(_Type) == Is2D, "gpu::is_2d incorrectly returning %s for %s", Is2D ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(ouro::gpu::is_cube(_Type) == IsCube, "gpu::is_cube incorrectly returning %s for %s", IsCube ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(ouro::gpu::is_3d(_Type) == Is3D, "gpu::is_3d incorrectly returning %s for %s", Is3D ? "false" : "true", ouro::as_string(_Type));
+		oTESTB(ouro::gpu::is_unordered(_Type) == IsUnordered, "gpu::is_unordered incorrectly returning %s for %s", IsUnordered ? "false" : "true", ouro::as_string(_Type));
 
 		return SUCCESS;
 	}
-	bool TestTextureEnum(RESULT* _pResult, char* _StrStatus, size_t _SizeofStrStatus, oGPU_TEXTURE_TYPE _Type)
+	bool TestTextureEnum(RESULT* _pResult, char* _StrStatus, size_t _SizeofStrStatus, ouro::gpu::texture_type::value _Type)
 	{
 		RESULT Result = TestTextureEnum( _StrStatus, _SizeofStrStatus, _Type);
 		*_pResult = Result;
@@ -170,41 +170,40 @@ struct GPU_Traits : public oTest
 	{
 		RESULT Result = SUCCESS;
 
-		std::function<bool(oGPU_TEXTURE_TYPE _Type)> TestTextureTypeFn = 
+		std::function<bool(ouro::gpu::texture_type::value _Type)> TestTextureTypeFn = 
 			std::bind(&GPU_Traits::TestTextureEnum, this, &Result, _StrStatus, _SizeofStrStatus, std::placeholders::_1);
 		
 #define TEST_TEXTURE(_TextureType) \
-	if(!TestTextureTypeFn(_TextureType)) \
+	if(!TestTextureTypeFn(ouro::gpu::texture_type::_TextureType)) \
 		return Result;
 
-		TEST_TEXTURE(oGPU_TEXTURE_1D_MAP);
-		TEST_TEXTURE(oGPU_TEXTURE_1D_MAP_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_1D_RENDER_TARGET);
-		TEST_TEXTURE(oGPU_TEXTURE_1D_RENDER_TARGET_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_1D_READBACK);
-		TEST_TEXTURE(oGPU_TEXTURE_1D_READBACK_MIPS);
+		TEST_TEXTURE(default_1d);
+		TEST_TEXTURE(mipped_1d);
+		TEST_TEXTURE(render_target_1d);
+		TEST_TEXTURE(mipped_render_target_1d);
+		TEST_TEXTURE(readback_1d);
+		TEST_TEXTURE(mipped_readback_1d);
 
-		TEST_TEXTURE(oGPU_TEXTURE_2D_MAP);
-		TEST_TEXTURE(oGPU_TEXTURE_2D_MAP_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_2D_RENDER_TARGET);
-		TEST_TEXTURE(oGPU_TEXTURE_2D_RENDER_TARGET_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_2D_READBACK);
-		TEST_TEXTURE(oGPU_TEXTURE_2D_READBACK_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_2D_MAP_UNORDERED);
+		TEST_TEXTURE(default_2d);
+		TEST_TEXTURE(mipped_2d);
+		TEST_TEXTURE(render_target_2d);
+		TEST_TEXTURE(mipped_render_target_2d);
+		TEST_TEXTURE(readback_2d);
+		TEST_TEXTURE(mipped_readback_2d);
 
-		TEST_TEXTURE(oGPU_TEXTURE_CUBE_MAP);
-		TEST_TEXTURE(oGPU_TEXTURE_CUBE_MAP_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_CUBE_RENDER_TARGET);
-		TEST_TEXTURE(oGPU_TEXTURE_CUBE_RENDER_TARGET_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_CUBE_READBACK);
-		TEST_TEXTURE(oGPU_TEXTURE_CUBE_READBACK_MIPS);
+		TEST_TEXTURE(default_cube);
+		TEST_TEXTURE(mipped_cube);
+		TEST_TEXTURE(render_target_cube);
+		TEST_TEXTURE(mipped_render_target_cube);
+		TEST_TEXTURE(readback_cube);
+		TEST_TEXTURE(mipped_readback_cube);
 
-		TEST_TEXTURE(oGPU_TEXTURE_3D_MAP);
-		TEST_TEXTURE(oGPU_TEXTURE_3D_MAP_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_3D_RENDER_TARGET);
-		TEST_TEXTURE(oGPU_TEXTURE_3D_RENDER_TARGET_MIPS);
-		TEST_TEXTURE(oGPU_TEXTURE_3D_READBACK);
-		TEST_TEXTURE(oGPU_TEXTURE_3D_READBACK_MIPS);
+		TEST_TEXTURE(default_3d);
+		TEST_TEXTURE(mipped_3d);
+		TEST_TEXTURE(render_target_3d);
+		TEST_TEXTURE(mipped_render_target_3d);
+		TEST_TEXTURE(readback_3d);
+		TEST_TEXTURE(mipped_readback_3d);
 
 		return SUCCESS;
 	}

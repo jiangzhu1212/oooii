@@ -42,7 +42,7 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
 		oGPUBuffer::DESC DCDesc;
-		DCDesc.StructByteSize = sizeof(oGPUTestConstants);
+		DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
 		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 			return false;
 
@@ -50,12 +50,12 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 		if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE_INSTANCED, &pld))
 			return false;
 
-		oGPU_BUFFER_DESC bd;
-		bd.Type = oGPU_BUFFER_VERTEX;
-		bd.ArraySize = 2;
-		bd.StructByteSize = oGPUCalcVertexSize(pld.pElements, pld.NumElements, 1);
+		gpu::buffer_info i;
+		i.type = gpu::buffer_type::vertex;
+		i.array_size = 2;
+		i.struct_byte_size = static_cast<ushort>(oGPUCalcVertexSize(pld.pElements, pld.NumElements, 1));
 
-		if (!Device->CreateBuffer("InstanceList", bd, &InstanceList))
+		if (!Device->CreateBuffer("InstanceList", i, &InstanceList))
 			return false;
 
 		if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
@@ -81,7 +81,7 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 
 		oGPURenderTarget::DESC RTDesc;
 		PrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.Dimensions.x / oCastAsFloat(RTDesc.Dimensions.y), 0.001f, 1000.0f);
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
 
 		{
 			ouro::surface::mapped_subresource msr;
@@ -102,10 +102,10 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 
 		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(oIDENTITY4x4, V, P, White));
 
-		CommandList->Clear(PrimaryRenderTarget, oGPU_CLEAR_COLOR_DEPTH_STENCIL);
-		CommandList->SetBlendState(oGPU_OPAQUE);
-		CommandList->SetDepthStencilState(oGPU_DEPTH_TEST_AND_WRITE);
-		CommandList->SetSurfaceState(oGPU_TWO_SIDED);
+		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
+		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
+		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::test_and_write);
+		CommandList->SetSurfaceState(ouro::gpu::surface_state::two_sided);
 		CommandList->SetBuffers(0, 1, &TestConstants);
 		CommandList->SetPipeline(Pipeline);
 		CommandList->SetRenderTarget(PrimaryRenderTarget);

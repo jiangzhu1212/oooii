@@ -78,7 +78,7 @@ interface oGPUResource : oGPUDeviceChild
 oDEFINE_GUID_I(oGPUBuffer, 0xe4b3cb37, 0x2fd7, 0x4bf5, 0x8c, 0xbb, 0x69, 0x23, 0xf0, 0x18, 0x5a, 0x51);
 interface oGPUBuffer : oGPUResource
 {
-	typedef oGPU_BUFFER_DESC DESC;
+	typedef ouro::gpu::buffer_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
@@ -89,7 +89,7 @@ interface oGPUTexture : oGPUResource
 	// A large buffer filled with surface data. Most often this is one or more 
 	// 2D planes wrapped onto the surface of a screen or mesh.
 
-	typedef oGPU_TEXTURE_DESC DESC;
+	typedef ouro::gpu::texture_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
@@ -99,18 +99,18 @@ interface oGPURenderTarget : oGPUDeviceChild
 {
 	// A 2D plane onto which rendering occurs
 
-	typedef oGPU_RENDER_TARGET_DESC DESC;
+	typedef ouro::gpu::render_target_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
 	// Modifies the values for clearing without modifying other topology
-	virtual void SetClearDesc(const oGPU_CLEAR_DESC& _ClearDesc) threadsafe = 0;
+	virtual void SetClearDesc(const ouro::gpu::clear_info& _ClearInfo) threadsafe = 0;
 
 	inline void SetClearColor(int _Index, ouro::color _Color) threadsafe
 	{
 		DESC d;
 		GetDesc(&d);
-		d.ClearDesc.ClearColor[_Index] = _Color;
-		SetClearDesc(d.ClearDesc);
+		d.clear.clear_color[_Index] = _Color;
+		SetClearDesc(d.clear);
 	}
 
 	inline void SetClearColor(ouro::color _Color) threadsafe { SetClearColor(0, _Color); }
@@ -160,7 +160,7 @@ interface oGPUComputeShader : oGPUDeviceChild
 oDEFINE_GUID_I(oGPUQuery, 0x5408deea, 0x6a3b, 0x4ffd, 0xb5, 0x5a, 0x65, 0xc3, 0x40, 0xd5, 0x5a, 0x99);
 interface oGPUQuery : oGPUDeviceChild
 {
-	typedef oGPU_QUERY_DESC DESC;
+	typedef ouro::gpu::query_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 };
 
@@ -172,7 +172,7 @@ interface oGPUCommandList : oGPUDeviceChild
 	// device. All operations herein are single-threaded. For parallelism separate 
 	// command lists can be built in different threads.
 
-	typedef oGPU_COMMAND_LIST_DESC DESC;
+	typedef ouro::gpu::command_list_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 
 	// Begins recording of GPU command submissions. All rendering for this context 
@@ -221,8 +221,8 @@ interface oGPUCommandList : oGPUDeviceChild
 	virtual void Copy(oGPUBuffer* _pDestination, int _DestinationOffsetBytes, oGPUBuffer* _pSource, int _SourceOffsetBytes, int _SizeBytes) = 0;
 
 	// Copy the counter value stored in a source buffer of type 
-	// oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND or 
-	// oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER to a destination buffer. An offset
+	// gpu::buffer_type::unordered_structured_append or 
+	// gpu::buffer_type::unordered_structured_counter to a destination buffer. An offset
 	// into that buffer can be specified - it must be aligned to sizeof(uint).
 	// To read back this value to the CPU, _pDestination should be a READBACK 
 	// buffer of at least sizeof(uint) size. Then use MapRead() on the device to
@@ -242,7 +242,7 @@ interface oGPUCommandList : oGPUDeviceChild
 	inline void SetCounter(oGPUResource* _pResource, uint _Value) { SetCounters(1, &_pResource, &_Value); }
 
 	// Set the texture sampler states in this context
-	virtual void SetSamplers(int _StartSlot, int _NumStates, const oGPU_SAMPLER_STATE* _pSamplerState) = 0;
+	virtual void SetSamplers(int _StartSlot, int _NumStates, const ouro::gpu::sampler_type::value* _pSamplerState) = 0;
 
 	// Set any shader resources (textures or buffers not accessed as constants)
 	virtual void SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources) = 0;
@@ -297,9 +297,9 @@ interface oGPUCommandList : oGPUDeviceChild
 	// version.
 	inline void SetRenderTarget(oGPURenderTarget* _pRenderTarget, int _NumViewports = 0, const oAABoxf* _pViewports = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, false, oInvalid, oInvalid, (oGPUResource**)nullptr); }
 
-	inline void ClearRenderTargetAndUnorderedResources() { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, false, 0, oGPU_MAX_NUM_UNORDERED_BUFFERS, (oGPUResource**)nullptr); }
+	inline void ClearRenderTargetAndUnorderedResources() { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, false, 0, ouro::gpu::max_num_unordered_buffers, (oGPUResource**)nullptr); }
 
-	inline void ClearUnorderedResources() { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, 0, oGPU_MAX_NUM_UNORDERED_BUFFERS, (oGPUResource**)nullptr); } 
+	inline void ClearUnorderedResources() { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, 0, ouro::gpu::max_num_unordered_buffers, (oGPUResource**)nullptr); } 
 
 	// _____________________________________________________________________________
 	// Rasterization-specific
@@ -307,18 +307,18 @@ interface oGPUCommandList : oGPUDeviceChild
 	virtual void SetPipeline(const oGPUPipeline* _pPipeline) = 0;
 
 	// Set the rasterization state in this context
-	virtual void SetSurfaceState(oGPU_SURFACE_STATE _State) = 0;
+	virtual void SetSurfaceState(ouro::gpu::surface_state::value _State) = 0;
 
 	// Set the output merger (blend) state in this context
-	virtual void SetBlendState(oGPU_BLEND_STATE _State) = 0;
+	virtual void SetBlendState(ouro::gpu::blend_state::value _State) = 0;
 
 	// Set the depth-stencil state in this context
-	virtual void SetDepthStencilState(oGPU_DEPTH_STENCIL_STATE _State) = 0;
+	virtual void SetDepthStencilState(ouro::gpu::depth_stencil_state::value _State) = 0;
 
 	// Uses a render target's CLEAR_DESC to clear all associated buffers
 	// according to the type of clear specified here. If _pRenderTarget is nullptr
 	// the the currently set render target is cleared.
-	virtual void Clear(oGPURenderTarget* _pRenderTarget, oGPU_CLEAR _Clear) = 0;
+	virtual void Clear(oGPURenderTarget* _pRenderTarget, ouro::gpu::clear_type::value _Clear) = 0;
 
 	// Submits the specified geometry inputs for rendering under the current state
 	// of the command list. If _pIndices is nullptr, then non-indexed drawing is
@@ -361,8 +361,8 @@ interface oGPUCommandList : oGPUDeviceChild
 	// for unordered access. If not null, _pInitialCounts should be 
 	// _NumUnorderedResources in length and is used to set the initial value of a 
 	// counter or append/consume count for buffers of type 
-	// oGPU_BUFFER_UNORDERED_STRUCTURED_APPEND or 
-	// oGPU_BUFFER_UNORDERED_STRUCTURED_COUNTER. Specify oInvalid to skip 
+	// gpu::buffer_type::unordered_structured_append or 
+	// gpu::buffer_type::unordered_structured_counter. Specify oInvalid to skip 
 	// initialization of an entry, thus retaining any prior value of the counter.
 	virtual void Dispatch(oGPUComputeShader* _pComputeShader, const int3& _ThreadGroupCount) = 0;
 
@@ -376,9 +376,9 @@ interface oGPUDevice : oInterface
 {
 	// Main SW abstraction for a graphics processor
 
-	typedef oGPU_DEVICE_INIT INIT;
+	typedef ouro::gpu::device_init INIT;
 	
-	typedef oGPU_DEVICE_DESC DESC;
+	typedef ouro::gpu::device_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
 	
 	virtual const char* GetName() const threadsafe = 0;
@@ -437,7 +437,7 @@ interface oGPUDevice : oInterface
 	virtual bool Present(int _SyncInterval) = 0;
 };
 
-oAPI bool oGPUDeviceCreate(const oGPU_DEVICE_INIT& _Init, oGPUDevice** _ppDevice);
+oAPI bool oGPUDeviceCreate(const ouro::gpu::device_init& _Init, oGPUDevice** _ppDevice);
 
 // Compiles a shader to its driver-specific bytecode. To make parsing easy, 
 // there are two lists of defines that can be specified. These are concatenated
@@ -448,7 +448,7 @@ oAPI bool oGPUCompileShader(
 	, const char* _CommonDefines // semi-colon delimited list of symbols (= value) 
 	, const char* _SpecificDefines // semi-colon delimited list of symbols (= value)
 	, const ouro::version& _TargetShaderModel // shader model version to compile against
-	, oGPU_PIPELINE_STAGE _Stage // type of shader to compile
+	, ouro::gpu::pipeline_stage::value _Stage // type of shader to compile
 	, const char* _ShaderPath // full path to shader - mostly for error reporting
 	, const char* _EntryPoint // name of the top-level shader function to use
 	, const char* _ShaderBody // a string of the loaded shader file (NOTE: This 
@@ -486,7 +486,7 @@ oAPI bool oGPUSurfaceConvert(
 oAPI bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format _NewFormat, oGPUTexture** _ppDestinationTexture);
 
 // Loads a texture from disk. The _Desc specifies certain conversions/resizes
-// that can occur on load. Use oDEFAULT or ouro::surface::unknown to use values as 
+// that can occur on load. Use 0 or ouro::surface::unknown to use values as 
 // they are found in the specified image resource/buffer.
 // @tony: At this time the implementation does NOT use oImage loading 
 // code plus a simple call to call oGPUCreateTexture(). Because this API 
@@ -494,8 +494,8 @@ oAPI bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format
 // DirectX's .dds support for advanced formats like BC6 and BC7 as well as their
 // internal conversion library. When it's time to go cross-platform, we'll 
 // revisit this and hopefully call more generic code.
-oAPI bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture);
-oAPI bool oGPUTextureLoad(oGPUDevice* _pDevice, const oGPU_TEXTURE_DESC& _Desc, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture);
+oAPI bool oGPUTextureLoad(oGPUDevice* _pDevice, const ouro::gpu::texture_info& _Info, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture);
+oAPI bool oGPUTextureLoad(oGPUDevice* _pDevice, const ouro::gpu::texture_info& _Info, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture);
 
 enum oGPU_FILE_FORMAT
 {

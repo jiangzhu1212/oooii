@@ -315,8 +315,8 @@ static void ReduceElements(const oOBJ_INIT& _Init
 			if (LastGroupIndex != oInvalid)
 			{
 				oOBJ_GROUP& LastGroup = _pSinglyIndexedElements->Groups[LastGroupIndex];
-				LastGroup.Range.NumPrimitives = oUInt(_pIndices->size() / 3) - LastGroup.Range.StartPrimitive;
-				Group.Range.StartPrimitive = oUInt(_pIndices->size() / 3);
+				LastGroup.Range.num_primitives = oUInt(_pIndices->size() / 3) - LastGroup.Range.start_primitive;
+				Group.Range.start_primitive = oUInt(_pIndices->size() / 3);
 			}
 			LastGroupIndex = Face.GroupIndex;
 		}
@@ -387,12 +387,12 @@ static void ReduceElements(const oOBJ_INIT& _Init
 
 	// close out last group
 	unsigned int LastFaceGroupIndex = _SourceElements.Faces.back().GroupIndex;
-	oGPU_RANGE& r = _pSinglyIndexedElements->Groups[LastFaceGroupIndex].Range;
-	r.NumPrimitives = oUInt(_pIndices->size() / 3) - r.StartPrimitive;
+	ouro::gpu::vertex_range& r = _pSinglyIndexedElements->Groups[LastFaceGroupIndex].Range;
+	r.num_primitives = oUInt(_pIndices->size() / 3) - r.start_primitive;
 
 	// Go back through groups and calc min/max verts
 	oFOR(oOBJ_GROUP& g, _pSinglyIndexedElements->Groups)
-		oCalcMinMaxVertices(data(*_pIndices), g.Range.StartPrimitive*3, g.Range.NumPrimitives*3, oUInt(_pSinglyIndexedElements->Positions.size()), &g.Range.MinVertex, &g.Range.MaxVertex);
+		oCalcMinMaxVertices(data(*_pIndices), g.Range.start_primitive*3, g.Range.num_primitives*3, oUInt(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
 }
 
 static uint oOBJGetVertexElements(oGPU_VERTEX_ELEMENT* _pElements, uint _MaxNumElements, const oOBJ_DESC& _OBJDesc)
@@ -894,7 +894,7 @@ bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** 
 	return success;
 }
 
-bool oOBJCopyRanges(oGPU_RANGE* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc)
+bool oOBJCopyRanges(ouro::gpu::vertex_range* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc)
 {
 	if (_Desc.NumGroups > _NumRanges)
 		return oErrorSetLast(std::errc::invalid_argument);

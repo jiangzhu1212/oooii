@@ -39,7 +39,7 @@ struct GPU_Texture2D_App : public oGPUTextureTestApp
 	{
 		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", surface::alpha_option::force_alpha);
 		auto* p = image.get();
-		if (!oGPUCreateTexture(Device, &p, 1, oGPU_TEXTURE_2D_MAP, &Texture))
+		if (!oGPUCreateTexture(Device, &p, 1, ouro::gpu::texture_type::default_2d, &Texture))
 			return false;
 
 		return true;
