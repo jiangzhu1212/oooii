@@ -53,7 +53,7 @@ static int oGUIMenuFindPosition(ouro::menu_handle _hParentMenu, ouro::menu_handl
 		if (hSubmenu == _hSubmenu)
 			return i;
 	}
-	return oInvalid;
+	return -1;
 }
 
 #ifdef oENABLE_ASSERTS
@@ -69,9 +69,10 @@ static bool oGUIMenuContainsRange(ouro::menu_handle _hMenu, int _ItemIDRangeFirs
 	for (int i = 0; i < n; i++)
 	{
 		UINT uID = GetMenuItemID((HMENU)_hMenu, i);
-		if (uID == oInvalid)
+		oCHECK_SIZE(int, uID);
+		if (uID == ~0u)
 			return false;
-		int ID = oInt(uID);
+		int ID = static_cast<int>(uID);
 		if (ID >= _ItemIDRangeFirst && ID <= _ItemIDRangeLast)
 			nFound++;
 	}
@@ -82,7 +83,8 @@ static bool oGUIMenuContainsRange(ouro::menu_handle _hMenu, int _ItemIDRangeFirs
 
 char* oGUIMenuGetTextByPosition(char* _StrDestination, size_t _SizeofStrDestination, ouro::menu_handle _hMenu, int _MenuItemPosition)
 {
-	if (!GetMenuStringA((HMENU)_hMenu, _MenuItemPosition, _StrDestination, oInt(_SizeofStrDestination), MF_BYPOSITION))
+	oCHECK_SIZE(int, _SizeofStrDestination);
+	if (!GetMenuStringA((HMENU)_hMenu, _MenuItemPosition, _StrDestination, static_cast<int>(_SizeofStrDestination), MF_BYPOSITION))
 		return nullptr;
 	return _StrDestination;
 }
@@ -105,7 +107,8 @@ void oGUIMenuAttach(ouro::window_handle _hWindow, ouro::menu_handle _hMenu)
 
 int oGUIMenuGetNumItems(ouro::menu_handle _hMenu)
 {
-	return oInt(GetMenuItemCount((HMENU)_hMenu));
+
+	return GetMenuItemCount((HMENU)_hMenu);
 }
 
 void oGUIMenuAppendSubmenu(ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu, const char* _Text)
@@ -116,7 +119,7 @@ void oGUIMenuAppendSubmenu(ouro::menu_handle _hParentMenu, ouro::menu_handle _hS
 void oGUIMenuRemoveSubmenu(ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu)
 {
 	int p = oGUIMenuFindPosition(_hParentMenu, _hSubmenu);
-	if (p != oInvalid && !RemoveMenu((HMENU)_hParentMenu, p, MF_BYPOSITION))
+	if (p != -1 && !RemoveMenu((HMENU)_hParentMenu, p, MF_BYPOSITION))
 	{
 		DWORD hr = GetLastError();
 		if (GetLastError() != ERROR_RESOURCE_TYPE_NOT_FOUND)
@@ -160,7 +163,7 @@ void oGUIMenuItemToSubmenu(ouro::menu_handle _hParentMenu, int _ItemID, ouro::me
 void oGUIMenuSubmenuToItem(ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu, int _ItemID, bool _Enabled)
 {
 	int p = oGUIMenuFindPosition(_hParentMenu, _hSubmenu);
-	oASSERT(p != oInvalid, "the specified submenu is not under the specified parent menu");
+	oASSERT(p != -1, "the specified submenu is not under the specified parent menu");
 	
 	mstring text;	
 	oVERIFY(oGUIMenuGetTextByPosition(text, text.capacity(), _hParentMenu, p));
@@ -180,7 +183,8 @@ void oGUIMenuAppendSeparator(ouro::menu_handle _hParentMenu)
 
 void oGUIMenuCheck(ouro::menu_handle _hMenu, int _ItemID, bool _Checked)
 {
-	if (-1 == CheckMenuItem((HMENU)_hMenu, oUInt(_ItemID), MF_BYCOMMAND | (_Checked ? MF_CHECKED : MF_UNCHECKED)))
+	oASSERT(_ItemID >= 0, "");
+	if (-1 == CheckMenuItem((HMENU)_hMenu, static_cast<unsigned int>(_ItemID), MF_BYCOMMAND | (_Checked ? MF_CHECKED : MF_UNCHECKED)))
 		oASSERT(false, "MenuItemID not found in the specified menu");
 }
 
@@ -190,7 +194,8 @@ bool oGUIMenuIsChecked(ouro::menu_handle _hMenu, int _ItemID)
 	ZeroMemory(&mii, sizeof(mii));
 	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_STATE;
-	if (!GetMenuItemInfo((HMENU)_hMenu, oUInt(_ItemID), FALSE, &mii))
+	oASSERT(_ItemID >= 0, "");
+	if (!GetMenuItemInfo((HMENU)_hMenu, static_cast<unsigned int>(_ItemID), FALSE, &mii))
 		return false;
 
 	if (mii.fState & MFS_CHECKED)
@@ -215,12 +220,13 @@ int oGUIMenuGetCheckedRadio(ouro::menu_handle _hMenu, int _ItemIDRadioRangeFirst
 	for (int i = _ItemIDRadioRangeFirst; i <= _ItemIDRadioRangeLast; i++)
 		if (oGUIMenuIsChecked(_hMenu, i))
 			return i;
-	return oInvalid;
+	return -1;
 }
 
 void oGUIMenuEnable(ouro::menu_handle _hMenu, int _ItemID, bool _Enabled)
 {
-	if (-1 == EnableMenuItem((HMENU)_hMenu, oUInt(_ItemID), MF_BYCOMMAND | (_Enabled ? MF_ENABLED : MF_GRAYED)))
+	oASSERT(_ItemID >= 0, "");
+	if (-1 == EnableMenuItem((HMENU)_hMenu, static_cast<unsigned int>(_ItemID), MF_BYCOMMAND | (_Enabled ? MF_ENABLED : MF_GRAYED)))
 		oASSERT(false, "MenuItemID not found in the specified menu");
 }
 
@@ -230,7 +236,8 @@ bool oGUIMenuIsEnabled(ouro::menu_handle _hMenu, int _ItemID)
 	ZeroMemory(&mii, sizeof(mii));
 	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_STATE;
-	oVB(GetMenuItemInfo((HMENU)_hMenu, oUInt(_ItemID), FALSE, &mii));
+	oASSERT(_ItemID >= 0, "");
+	oVB(GetMenuItemInfo((HMENU)_hMenu, static_cast<unsigned int>(_ItemID), FALSE, &mii));
 	if (mii.fState & (MF_GRAYED|MF_DISABLED))
 		return false;
 	return true;
@@ -238,7 +245,8 @@ bool oGUIMenuIsEnabled(ouro::menu_handle _hMenu, int _ItemID)
 
 char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, ouro::menu_handle _hMenu, int _ItemID)
 {
-	if (!GetMenuStringA((HMENU)_hMenu, _ItemID, _StrDestination, oInt(_SizeofStrDestination), MF_BYCOMMAND))
+	oCHECK_SIZE(int, _SizeofStrDestination);
+	if (!GetMenuStringA((HMENU)_hMenu, _ItemID, _StrDestination, static_cast<int>(_SizeofStrDestination), MF_BYCOMMAND))
 		return nullptr;
 	return _StrDestination;
 }
@@ -246,7 +254,7 @@ char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, ouro:
 char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, ouro::menu_handle _hParentMenu, ouro::menu_handle _hSubmenu)
 {
 	int pos = oGUIMenuFindPosition(_hParentMenu, _hSubmenu);
-	if (pos == oInvalid)
+	if (pos == -1)
 		return nullptr;
 	return oGUIMenuGetTextByPosition(_StrDestination, _SizeofStrDestination, _hParentMenu, pos);
 }
