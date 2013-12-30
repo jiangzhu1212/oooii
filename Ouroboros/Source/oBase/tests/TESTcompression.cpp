@@ -79,8 +79,8 @@ void TESTcompression(test_services& _Services)
 
 	sstring strUncompressed, strSnappy, strLZMA, strGZip, strSnappyTime, strLZMATime, strGZipTime;
 	format_bytes(strUncompressed, Size, 2);
-	format_bytes(strSnappyTime, CompressedSize0, 2);
-	format_bytes(strLZMATime, CompressedSize1, 2);
+	format_bytes(strSnappy, CompressedSize0, 2);
+	format_bytes(strLZMA, CompressedSize1, 2);
 	format_bytes(strGZip, CompressedSize2, 2);
 	
 	format_duration(strSnappyTime, timeSnappy, true);
