@@ -70,8 +70,7 @@ void oWinControlSet::Deinitialize()
 
 HWND oWinControlSet::GetControl(int _ID) const
 {
-	oCHECK_SIZE(int, Controls.size());
-	if (_ID < 0 || _ID >= static_cast<int>(Controls.size()))
+	if (_ID < 0 || _ID >= as_int(Controls.size()))
 		return (HWND)oErrorSetLast(std::errc::invalid_argument, "Invalid ID %d", _ID);
 	return Controls[_ID];
 }
@@ -131,17 +130,15 @@ bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONT
 	if (!oSTRVALID(StrID))
 		return oErrorSetLast(std::errc::invalid_argument, "Invalid or missing ID attribute for the specified Control.");
 
-	int ID = oInvalid;
+	int ID = ouro::invalid;
 	if (_ControlContext.IDFromString(&ID, StrID))
 	{
-		oCHECK_SIZE(unsigned short, ID);
-		_pDesc->id = static_cast<unsigned short>(ID);
+		_pDesc->id = as_ushort(ID);
 	}
 	else
 		return oErrorSetLast(std::errc::invalid_argument, "Undeclared ID %s. All IDs must be declared as an enum in code.", StrID);
 
-	oCHECK_SIZE(int, Controls.size());
-	if (ID < static_cast<int>(_Controls.size()) && _Controls[ID])
+	if (ID < as_int(_Controls.size()) && _Controls[ID])
 		return oErrorSetLast(std::errc::invalid_argument, "ID %s has already been used", StrID);
 
 	if (!_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Type", &_pDesc->type))
@@ -239,7 +236,7 @@ bool oWinControlSet::CreateControlsRecursive(const XML_CONTEXT& _XmlContext, con
 	{
 		bool VisitChildren = false;
 		int2 RelativePos;
-		int2 Size(oInvalid, oInvalid);
+		int2 Size(ouro::invalid, ouro::invalid);
 		if (!_stricmp("RefPoint", NodeName))
 		{
 			//#ifdef _DEBUG

@@ -397,9 +397,9 @@ public:
 struct oBMI_DESC
 {
 	oBMI_DESC()
-		: Dimensions(oInvalid, oInvalid)
+		: Dimensions(ouro::invalid, ouro::invalid)
 		, Format(ouro::surface::unknown)
-		, RowPitch(oInvalid)
+		, RowPitch(ouro::invalid)
 		, FlipVertically(true)
 		, ARGBMonochrome8Zero(ouro::Black)
 		, ARGBMonochrome8One(ouro::White)

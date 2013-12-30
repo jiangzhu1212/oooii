@@ -37,7 +37,6 @@
 
 #include <oBase/assert.h>
 #include <oStd/chrono.h>
-#include <oBasis/oInvalid.h>
 
 class oScopedPartialTimeout
 {
@@ -45,8 +44,8 @@ public:
 	// Pointer to a timeout value to update. The value should be initialized to 
 	// the user-specified total timeout initially and then allowed to be updated 
 	// in a loop using UpdateTimeout(). If the value of the timeout is 
-	// oInfiniteWait, then this class doesn't update the value thus allowing the 
-	// oInfiniteWait value to be propagated.
+	// ouro::infinite, then this class doesn't update the value thus allowing the 
+	// ouro::infinite value to be propagated.
 	oScopedPartialTimeout(unsigned int* _pTimeoutMSCountdown);
 	~oScopedPartialTimeout();
 

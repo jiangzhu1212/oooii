@@ -36,7 +36,7 @@ interface oHTTPClient : oInterface
 	struct DESC 
 	{
 		DESC()
-			: TimeoutMS(oInfiniteWait)
+			: TimeoutMS(ouro::infinite)
 		{}
 		oNetAddr ServerAddr; // TODO: Connect to clients with hostname instead, since it might be a virtual host on the server at the target IP address
 		unsigned int TimeoutMS;

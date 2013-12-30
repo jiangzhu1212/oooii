@@ -13,9 +13,6 @@
     <Filter Include="oBasis\String Parsing">
       <UniqueIdentifier>{d77a4985-cdb4-44e3-9573-80500f36c46d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="oBasis\Language Enhancements">
-      <UniqueIdentifier>{5a5a209c-4864-4ac5-96c1-29cc98fd9fdf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="oBasis\Types">
       <UniqueIdentifier>{7cb7b979-c6c7-4ef7-89fb-67abfa0c31e3}</UniqueIdentifier>
     </Filter>
@@ -66,17 +63,11 @@
     <ClInclude Include="..\..\Include\oBasis\oURI.h">
       <Filter>oBasis\String Parsing</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oError.h">
-      <Filter>oBasis\Language Enhancements</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h">
       <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oInterface.h">
       <Filter>oBasis\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oInvalid.h">
-      <Filter>oBasis\Language Enhancements</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oOSC.h">
       <Filter>oBasis\String Parsing</Filter>
@@ -89,12 +80,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h">
       <Filter>oBasis</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oInt.h">
-      <Filter>oBasis\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\SafeInt3.h">
-      <Filter>oBasis\Types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\External\bullet\vectormathlibrary\include\vectormath\scalar\cpp\mat_aos.h">
       <Filter>Source\3D Math &amp; Graphics\Bullet-Vectormathlib</Filter>
@@ -256,6 +241,9 @@
       <Filter>oBasis</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h">
+      <Filter>oBasis</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBasis\oError.h">
       <Filter>oBasis</Filter>
     </ClInclude>
   </ItemGroup>

@@ -68,8 +68,7 @@ bool oURIQueryReadCompound(void* _pDestination, const oRTTI& _RTTI, const char* 
 					case oRTTI_TYPE_ENUM:
 					case oRTTI_TYPE_ATOM:
 					{
-						oCHECK_SIZE(int, _Attr.Size);
-						oURIQueryReadValue(_Attr.GetDestPtr(_pDestination), static_cast<int>(_Attr.Size), _Value, *_Attr.RTTI);
+						oURIQueryReadValue(_Attr.GetDestPtr(_pDestination), as_int(_Attr.Size), _Value, *_Attr.RTTI);
 						break;
 					}
 

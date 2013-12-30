@@ -26,9 +26,9 @@
 #include <oBase/algorithm.h>
 #include <oBase/assert.h>
 #include <oBase/byte.h>
+#include <oBase/invalid.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oBasis/oError.h>
-#include <oBasis/oInvalid.h>
 #include <oBasis/oMath.h>
 #include <vector>
 
@@ -74,18 +74,18 @@ template<typename T> bool oRemoveDegeneratesT(const TVEC3<T>* _pPositions, size_
 		const TVEC3<T>& b = _pPositions[_pIndices[J]];
 		const TVEC3<T>& c = _pPositions[_pIndices[K]];
 
-		if (ouro::equal(cross(a - b, a - c), TVEC3<T>(T(0.0), T(0.0), T(0.0))))
+		if (equal(cross(a - b, a - c), TVEC3<T>(T(0.0), T(0.0), T(0.0))))
 		{
-			_pIndices[I] = oInvalid;
-			_pIndices[J] = oInvalid;
-			_pIndices[K] = oInvalid;
+			_pIndices[I] = invalid;
+			_pIndices[J] = invalid;
+			_pIndices[K] = invalid;
 		}
 	}
 
 	*_pNewNumIndices = _NumberOfIndices;
 	for (size_t i = 0; i < *_pNewNumIndices; i++)
 	{
-		if (_pIndices[i] == oInvalid)
+		if (_pIndices[i] == invalid)
 		{
 			memcpy(&_pIndices[i], &_pIndices[i+1], sizeof(unsigned int) * (_NumberOfIndices - i - 1));
 			i--;
@@ -119,7 +119,7 @@ template<typename T> static void CalculateFace(size_t index, TVEC3<T>* _pFaceNor
 
 	// gracefully put in a zero vector for degenerate faces
 	float3 cr = cross(a - b, a - c);
-	_pFaceNormals[index] = ouro::equal(cr, float3(0.0f, 0.0f, 0.0f)) ? float3(0.0f, 0.0f, 0.0f) : CCWMultiplier * normalize(cr);
+	_pFaceNormals[index] = equal(cr, float3(0.0f, 0.0f, 0.0f)) ? float3(0.0f, 0.0f, 0.0f) : CCWMultiplier * normalize(cr);
 }
 
 template<typename T> bool oCalcFaceNormalsT(TVEC3<T>* _pFaceNormals, const unsigned int* _pIndices, size_t _NumberOfIndices, const TVEC3<T>* _pPositions, size_t _NumberOfPositions, bool _CCW)
@@ -151,7 +151,7 @@ template<typename InnerContainerT, typename VecT> void oCalcVertexNormalsT_Avera
 	for (size_t i = 0; i < _NumberOfVertices; i++)
 	{
 		// If there is length on the data already, leave it alone
-		if (!_OverwriteAll && ouro::equal(_pNormals[i], TVEC3<VecT>(VecT(0.0), VecT(0.0), VecT(0.0))))
+		if (!_OverwriteAll && equal(_pNormals[i], TVEC3<VecT>(VecT(0.0), VecT(0.0), VecT(0.0))))
 			continue;
 
 		TVEC3<VecT> N(VecT(0.0), VecT(0.0), VecT(0.0));
@@ -159,7 +159,7 @@ template<typename InnerContainerT, typename VecT> void oCalcVertexNormalsT_Avera
 		for (size_t t = 0; t < TrianglesUsed.size(); t++)
 		{
 			uint faceIndex = TrianglesUsed[t];
-			if (!ouro::equal(dot(_FaceNormals[faceIndex], _FaceNormals[faceIndex]), 0.0f))
+			if (!equal(dot(_FaceNormals[faceIndex], _FaceNormals[faceIndex]), 0.0f))
 				N += _FaceNormals[faceIndex];
 		}
 
@@ -174,8 +174,7 @@ template<typename T> bool oCalcVertexNormalsT(TVEC3<T>* _pVertexNormals, const u
 	if (!oCalcFaceNormals(data(faceNormals), _pIndices, _NumberOfIndices, _pPositions, _NumberOfVertices, _CCW))
 		return false;
 
-	oCHECK_SIZE(unsigned int, _NumberOfIndices);
-	const unsigned int nFaces = static_cast<unsigned int>(_NumberOfIndices) / 3;
+	const unsigned int nFaces = as_uint(_NumberOfIndices) / 3;
 
 	const size_t REASONABLE_MAX_FACES_PER_VERTEX = 32;
 	std::vector<fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>> trianglesUsedByVertexA(_NumberOfVertices);
@@ -224,8 +223,7 @@ template<typename T> bool oCalcVertexNormalsT(TVEC3<T>* _pVertexNormals, const u
 		// print out why we ended up in this path...
 		for (size_t i = 0; i < _NumberOfVertices; i++)
 		{
-			oCHECK_SIZE(unsigned int, trianglesUsedByVertex[i].size());
-			MaxValence = __max(MaxValence, static_cast<unsigned int>(trianglesUsedByVertex[i].size()));
+			MaxValence = __max(MaxValence, as_uint(trianglesUsedByVertex[i].size()));
 		}
 		oTRACE("debug-slow path in normals caused by reasonable max valence (%u) being exceeded. Actual valence: %u", REASONABLE_MAX_FACES_PER_VERTEX, MaxValence);
 	}

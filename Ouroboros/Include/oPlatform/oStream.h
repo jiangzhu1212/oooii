@@ -28,6 +28,7 @@
 #ifndef oStream_h
 #define oStream_h
 
+#include <oBase/invalid.h>
 #include <oBase/memory.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oPlatformFeatures.h>
@@ -119,7 +120,7 @@ struct oSTREAM_WRITE
 // Use this as the offset if "always at the end" is desired. This is 
 // particularly important when several async writes are being done to the same
 // stream, such as when worker threads log info to one log file.
-static const unsigned long long oSTREAM_APPEND = ~0ull;
+static const unsigned long long oSTREAM_APPEND = ouro::invalid;
 
 interface oStream : oInterface
 {

@@ -68,7 +68,7 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 			if (!_lParam)
 			{
 				_pAction->action_type = (HIWORD(_wParam) == 1) ? input::hotkey : input::menu;
-				_pAction->action_code = input::action::invalid;
+				_pAction->action_code = invalid;
 			}
 			else
 			{
@@ -86,11 +86,10 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 			{
 				_pAction->window = (window_handle)(_lParam);
 				_pAction->device_type = input::control;
-				_pAction->device_id = input::action::invalid;
+				_pAction->device_id = invalid;
 				_pAction->key = input::none;
 				_pAction->position(0.0f);
-				oCHECK_SIZE(int, _wParam);
-				_pAction->action_code = static_cast<int>(_wParam);
+				_pAction->action_code = as_int(_wParam);
 				switch (LOWORD(_wParam))
 				{
 					case TB_ENDTRACK: _pAction->action_type = input::control_deactivated; break;
@@ -109,8 +108,7 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 			const NMHDR& nmhdr = *(const NMHDR*)_lParam;
 			*_pAction = input::action();
 			_pAction->device_type = input::control;
-			oCHECK_SIZE(int, nmhdr.idFrom);
-			_pAction->device_id = static_cast<int>(nmhdr.idFrom);
+			_pAction->device_id = as_int(nmhdr.idFrom);
 			_pAction->window = nmhdr.hwndFrom;
 			_pAction->position(0.0f);
 			_pAction->action_code = nmhdr.code;
@@ -263,7 +261,7 @@ struct window_impl : window
 	void trigger(const input::action& _Action) override;
 	void post(int _CustomEventCode, uintptr_t _Context) override;
 	void dispatch(const oTASK& _Task) override;
-	oStd::future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = oInvalid, bool _IncludeBorder = false) const override;
+	oStd::future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override;
 	void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) override;
 	void stop_timer(uintptr_t _Context) override;
 
@@ -732,8 +730,7 @@ void window_impl::set_hotkeys(const ouro::basic_hotkey_info* _pHotKeys, size_t _
 		{
 			ACCEL* pAccels = this->new_array<ACCEL>(_NumHotKeys);
 			oWinAccelFromHotKeys(pAccels, pCopy, _NumHotKeys);
-			oCHECK_SIZE(unsigned int, _NumHotKeys);
-			this->hAccel = CreateAcceleratorTable((LPACCEL)pAccels, static_cast<unsigned int>(_NumHotKeys));
+			this->hAccel = CreateAcceleratorTable((LPACCEL)pAccels, as_uint(_NumHotKeys));
 			this->delete_array(pAccels);
 			this->delete_array(pCopy);
 		}
@@ -751,8 +748,7 @@ int window_impl::get_hotkeys(ouro::basic_hotkey_info* _pHotKeys, size_t _MaxNumH
 			int nHotKeys = CopyAcceleratorTable(hAccel, nullptr, 0);
 			ACCEL* pAccels = w->new_array<ACCEL>(nHotKeys);
 			CopyAcceleratorTable(hAccel, pAccels, nHotKeys);
-			oCHECK_SIZE(int, _MaxNumHotKeys);
-			int NumCopied = __min(nHotKeys, static_cast<int>(_MaxNumHotKeys));
+			int NumCopied = __min(nHotKeys, as_int(_MaxNumHotKeys));
 			oWinAccelToHotKeys(_pHotKeys, pAccels, NumCopied);
 			w->delete_array(pAccels);
 			N = NumCopied;
@@ -809,7 +805,7 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 	{
 		bo.pause();
 		Now = timer::now_ms();
-		if (_TimeoutMS != oInfiniteWait && Now > Then)
+		if (_TimeoutMS != ouro::infinite && Now > Then)
 			return oErrorSetLast(std::errc::timed_out);
 	}
 
@@ -1173,7 +1169,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 
 		case oWM_SKELETON:
 		{
-			input::action a(_hWnd, Timestamp, LOWORD(_wParam), input::skeleton, input::skeleton_update, input::none, input::action::invalid);
+			input::action a(_hWnd, Timestamp, LOWORD(_wParam), input::skeleton, input::skeleton_update, input::none, invalid);
 			a.skeleton = (void*)_lParam;
 			ActionHooks.Visit(a);
 			return 0;
@@ -1215,13 +1211,10 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 		{
 			int2 p(0, 0);
 			DragQueryPoint((HDROP)_wParam, (POINT*)&p);
-			const int NumPaths = DragQueryFile((HDROP)_wParam, ~0u, nullptr, 0); 
+			const int NumPaths = DragQueryFile((HDROP)_wParam, invalid, nullptr, 0); 
 			path_string* pPaths = new path_string[NumPaths];
 			for (int i = 0; i < NumPaths; i++)
-			{
-				oCHECK_SIZE(unsigned int, pPaths[i].capacity());
-				DragQueryFile((HDROP)_wParam, i, const_cast<char*>(pPaths[i].c_str()), static_cast<unsigned int>(pPaths[i].capacity()));
-			}
+				DragQueryFile((HDROP)_wParam, i, const_cast<char*>(pPaths[i].c_str()), as_uint(pPaths[i].capacity()));
 			DragFinish((HDROP)_wParam);
 
 			drop_event e((window_handle)_hWnd, pPaths, NumPaths, p);

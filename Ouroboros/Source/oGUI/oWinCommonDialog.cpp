@@ -118,8 +118,7 @@ static bool oWinDialogGetOpenOrSavePath(path& _Path, const char* _DialogTitle, c
 	o.nMaxCustFilter = 0;
 	o.nFilterIndex = 1;
 	o.lpstrFile = StrPath;
-	oCHECK_SIZE(DWORD, StrPath.capacity());
-	o.nMaxFile = static_cast<DWORD>(StrPath.capacity());
+	o.nMaxFile = as_type<DWORD>(StrPath.capacity());
 	o.lpstrFileTitle = nullptr;
 	o.nMaxFileTitle = 0;
 	o.lpstrInitialDir = nullptr;

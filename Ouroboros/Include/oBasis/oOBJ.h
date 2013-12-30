@@ -28,9 +28,9 @@
 #ifndef oOBJ_h
 #define oOBJ_h
 
+#include <oBase/invalid.h>
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oInterface.h>
-#include <oBasis/oInvalid.h>
 #include <oCompute/oAABox.h>
 #include <oCompute/oComputeColor.h>
 
@@ -78,7 +78,7 @@ struct oOBJ_TEXTURE
 		, OriginOffset(0.0f, 0.0f, 0.0f)
 		, Scale(1.0f, 1.0f, 1.0f)
 		, Turbulance(0.0f, 0.0f, 0.0f)
-		, Resolution(oInvalid, oInvalid)
+		, Resolution(ouro::invalid, ouro::invalid)
 		, BumpMultiplier(1.0f)
 		, Type(oOBJ_DEFAULT)
 		, IMFChan('l')

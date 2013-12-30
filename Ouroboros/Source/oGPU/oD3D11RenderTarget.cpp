@@ -121,7 +121,7 @@ void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 	{
 		DXGI_SWAP_CHAIN_DESC d;
 		oV(pThis->SwapChain->GetDesc(&d));
-		_pDesc->dimensions = int3(oInt(d.BufferDesc.Width), oInt(d.BufferDesc.Height), 1);
+		_pDesc->dimensions = int3(as_int(d.BufferDesc.Width), as_int(d.BufferDesc.Height), 1);
 		_pDesc->format[0] = dxgi::to_surface_format(d.BufferDesc.Format);
 
 		if (pThis->DepthStencilTexture)

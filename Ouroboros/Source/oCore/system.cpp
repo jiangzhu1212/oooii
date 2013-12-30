@@ -369,8 +369,7 @@ bool gui_is_drawable()
 
 char* host_name(char* _StrDestination, size_t _SizeofStrDestination)
 {
-	oCHECK_SIZE(DWORD, _SizeofStrDestination);
-	DWORD nElements = static_cast<DWORD>(_SizeofStrDestination);
+	DWORD nElements = as_type<DWORD>(_SizeofStrDestination);
 	oVB(GetComputerNameExA(ComputerNameDnsHostname, _StrDestination, &nElements));
 	return _StrDestination;
 }
@@ -404,8 +403,7 @@ void setenv(const char* _EnvVarName, const char* _Value)
 
 char* getenv(char* _Value, size_t _SizeofValue, const char* _EnvVarName)
 {
-	oCHECK_SIZE(int, _SizeofValue);
-	size_t len = GetEnvironmentVariableA(_EnvVarName, _Value, (int)_SizeofValue);
+	size_t len = GetEnvironmentVariableA(_EnvVarName, _Value, as_int(_SizeofValue));
 	return (len && len < _SizeofValue) ? _Value : nullptr;
 }
 

@@ -82,7 +82,7 @@ inline void oHTTPHandlerMethodNotAllowed(oHTTPHandler::CommonParams& _CommonPara
 //some common querys shared by many of our rest services
 struct oHTTPHandlerCommonQueryParams 
 {
-	oHTTPHandlerCommonQueryParams() : Range(oInvalid, oInvalid), Count(false) {}
+	oHTTPHandlerCommonQueryParams() : Range(ouro::invalid, ouro::invalid), Count(false) {}
 	oHTTPHandlerCommonQueryParams(int2 _Range) : Range(_Range), Count(false) {}
 	int2 Range;
 	bool Count;

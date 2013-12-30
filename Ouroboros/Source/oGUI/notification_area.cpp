@@ -335,7 +335,7 @@ void show_message(ouro::window_handle _hWnd, unsigned int _ID, ouro::icon_handle
 		}
 
 		show_icon(_hWnd, _ID, 0, _hIcon, true);
-		if (timeout != oInfiniteWait)
+		if (timeout != ouro::infinite)
 			schedule_icon_hide(_hWnd, _ID, timeout);
 	}
 

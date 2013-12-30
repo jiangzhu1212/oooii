@@ -377,7 +377,7 @@ static char* oP4ParseFilesLine(oP4_FILE_DESC* _pFile, char* _P4FilesLine)
 
 	tok = oStrTok(nullptr, " ", &ctx);
 	if (!strcmp("default", tok))
-		_pFile->Changelist = oInvalid;
+		_pFile->Changelist = ouro::invalid;
 
 	tok = oStrTok(nullptr, " ", &ctx);
 	if (strcmp("change", tok))
@@ -416,7 +416,7 @@ size_t oP4ListOpened(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles, co
 	char* result = data(response);
 	snprintf(cmdline, "p4 opened -m %u %s", _MaxNumOpenedFiles, oSAFESTR(_P4Base));
 	if (!oP4Execute(cmdline, nullptr, result, response.size()))
-		return oInvalid; // pass through error
+		return ouro::invalid; // pass through error
 
 	if (!strncmp("File(s) not", data(response), 11))
 		return 0;
@@ -430,7 +430,7 @@ size_t oP4ListOpened(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles, co
 // Parses the pieces from the format returned by "p4 sync -n"
 // modifies _P4SyncLine for parsing.
 // returns the pointer to the next entry/line
-// This hard-sets Changelist to oInvalid and IsText to false because that data
+// This hard-sets Changelist to ouro::invalid and IsText to false because that data
 // is not included in this data.
 static char* oP4ParseSyncLine(oP4_FILE_DESC* _pFile, char* _P4SyncLine)
 {
@@ -469,7 +469,7 @@ static char* oP4ParseSyncLine(oP4_FILE_DESC* _pFile, char* _P4SyncLine)
 
 	// Changelist cannot be parsed from the source string, a new query must be 
 	// made.
-	_pFile->Changelist = oInvalid;
+	_pFile->Changelist = ouro::invalid;
 
 	// IsText cannot be parsed from the source string, a new query must be made.
 	_pFile->IsText = false;
@@ -502,34 +502,34 @@ size_t oP4ListOutOfDate(oP4_FILE_DESC* _pOutOfDateFiles, size_t _MaxNumOutOfDate
 	response.resize(oKB(100));
 	char* result = data(response);
 
-	if (!oSTRVALID(_P4Base) && _UpToChangelist != oInvalid)
+	if (!oSTRVALID(_P4Base) && _UpToChangelist != ouro::invalid)
 		_P4Base = "//...";
 
-	if (_UpToChangelist != oInvalid)
+	if (_UpToChangelist != ouro::invalid)
 		snprintf(cmdline, "p4 sync -n %s@%d", oSAFESTR(_P4Base), _UpToChangelist);
 	else
 		snprintf(cmdline, "p4 sync -n %s", oSAFESTR(_P4Base));
 
 	if (!oP4Execute(cmdline, nullptr, result, response.size()))
-		return oInvalid; // pass through error
+		return ouro::invalid; // pass through error
 
 	if (strstr(result, "up-to-date"))
 		return 0;
 
 	size_t nFiles = oP4ParseOutOfDateList(_pOutOfDateFiles, _MaxNumOutOfDateFiles, result);
-	if (nFiles == oInvalid)
-		return oInvalid;
+	if (nFiles == ouro::invalid)
+		return ouro::invalid;
 
 	// Now patch changelist and file type
 	for (size_t i = 0; i < nFiles; i++)
 	{
-		if (_UpToChangelist != oInvalid)
+		if (_UpToChangelist != ouro::invalid)
 			snprintf(cmdline, "p4 files %s@%d", _pOutOfDateFiles[i].Path.c_str(), _UpToChangelist);
 		else
 			snprintf(cmdline, "p4 files %s", _pOutOfDateFiles[i].Path.c_str());
 
 		if (!oP4Execute(cmdline, nullptr, result, response.size()))
-			return oInvalid; // pass through error
+			return ouro::invalid; // pass through error
 
 		// ignore other fields
 		oP4_FILE_DESC fd;
@@ -659,7 +659,7 @@ int oP4ParseChangesLine(const char* _ChangesLine)
 	}
 
 	oErrorSetLast(std::errc::protocol_error);
-	return oInvalid;
+	return ouro::invalid;
 }
 
 bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecString)
@@ -739,7 +739,7 @@ static int oP4RunChangesCommand(const char* _P4Base, const char* _pCommand)
 	snprintf(cmdline, "p4 changes -m1 %s%s", _P4Base, _pCommand);
 
 	if (!oP4Execute(cmdline, nullptr, result, response.size()))
-		return oInvalid; // pass through error
+		return ouro::invalid; // pass through error
 
 	return oP4ParseChangesLine(result);
 }
@@ -762,8 +762,8 @@ int oP4GetCurrentChangelist(const char* _P4Base)
 	files.resize(1); // for speed, don't check every file, just see if anything is open or out-of-date.
 	// Check all open files if they're under P4Base
 	size_t nOpened = oP4ListOpened(data(files), files.size(), _P4Base);
-	if (nOpened == oInvalid)
-		return oInvalid; // pass through error
+	if (nOpened == ouro::invalid)
+		return ouro::invalid; // pass through error
 
 	int CL = oP4EstimateHaveChangelist(_P4Base);
 
@@ -773,8 +773,8 @@ int oP4GetCurrentChangelist(const char* _P4Base)
 
 	// Now check for needed updates
 	size_t nOutOfDate = oP4ListOutOfDate(data(files), files.size(), _P4Base, CL);
-	if (nOutOfDate == oInvalid)
-		return oInvalid; // pass through error
+	if (nOutOfDate == ouro::invalid)
+		return ouro::invalid; // pass through error
 	
 	else if (nOutOfDate)
 	{
@@ -798,7 +798,7 @@ int oP4GetCurrentChangelist(const char* _P4Base)
 int oP4GetNextChangelist(int _CurrentCL, const char* _P4Base /*= nullptr*/)
 {
 	int TOT = oP4GetTopOfTree(_P4Base);
-	if(oInvalid == TOT || _CurrentCL == TOT)
+	if(ouro::invalid == TOT || _CurrentCL == TOT)
 		return TOT;
 
 	for(int CL = _CurrentCL + 1; CL < TOT; ++CL)
@@ -808,7 +808,7 @@ int oP4GetNextChangelist(int _CurrentCL, const char* _P4Base /*= nullptr*/)
 		snprintf(cmd, "@%d", CL);
 		int ChangesUpTo = oP4RunChangesCommand(_P4Base, cmd);
 
-		if(oInvalid == ChangesUpTo || ChangesUpTo == CL)
+		if(ouro::invalid == ChangesUpTo || ChangesUpTo == CL)
 			return CL;
 	}
 

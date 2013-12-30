@@ -31,7 +31,7 @@
 #include "d3d11.h"
 
 // {75D2C3FA-A10C-48C2-ABCA-4CB84F4C447B}
-oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Texture, oGPU_TEXTURE, 0x75d2c3fa, 0xa10c, 0x48c2, 0xab, 0xca, 0x4c, 0xb8, 0x4f, 0x4c, 0x44, 0x7b)
+oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Texture, ouro::gpu::resource_type::texture, 0x75d2c3fa, 0xa10c, 0x48c2, 0xab, 0xca, 0x4c, 0xb8, 0x4f, 0x4c, 0x44, 0x7b)
 {
 	oDEFINE_GPURESOURCE_INTERFACE();
 	//oDECLARE_GPURESOURCE_CTOR(oD3D11, Texture);

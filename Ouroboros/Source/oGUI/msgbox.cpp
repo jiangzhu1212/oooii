@@ -235,9 +235,9 @@ INT_PTR CALLBACK DLGAssert::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPAR
 	{
 		case WM_INITDIALOG:
 		{
-			if (TimeoutMS != oInfiniteWait)
+			if (TimeoutMS != ouro::infinite)
 				SetTimer(_hWnd, 1, TimeoutMS, WndDialogTimerProc);
-			if (DisableTimeoutMS != 0 && DisableTimeoutMS != oInfiniteWait)
+			if (DisableTimeoutMS != 0 && DisableTimeoutMS != ouro::infinite)
 				SetTimer(_hWnd, 2, DisableTimeoutMS, WndDialogTimerProc);
 			SendDlgItemMessage(_hWnd, IDICON, STM_SETICON, (WPARAM)hIcon, 0);
 			return false;

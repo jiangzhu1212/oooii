@@ -92,7 +92,7 @@ namespace
 		std::vector<std::pair<bool, sstring>> key; //true if a literal, false for a capture
 
 		oStrParse(_key, "/", [&](const char* _part){
-			int len = static_cast<int>(strlen(_part));
+			int len = as_int(strlen(_part));
 			key.resize(key.size()+1);
 			auto& entry = key.back();
 			if(_part[0] == '?')
@@ -112,8 +112,7 @@ namespace
 
 	void oHandlerEntry::AddKey(std::vector<std::pair<bool, sstring>>& _key, int _keyIndex, oHTTPHandler* _handler)
 	{
-		oCHECK_SIZE(int, _key.size());
-		if(_keyIndex == static_cast<int>(_key.size()))
+		if(_keyIndex == as_int(_key.size()))
 		{
 			oASSERT(!Handler, "Already a handler registered for this key");
 
@@ -172,8 +171,7 @@ namespace
 
 	const oHTTPHandler* oHandlerEntry::MatchURIPath(std::vector<oStringCapture>& _parsedURI, int _keyIndex, std::function<void (const char* _capture)> _CaptureVar, std::function<void (const char* _OSC)> _OSCCapture, std::function<const oHTTPURICapture* (const char* _key)> _GetCaptureHandler) const
 	{
-		oCHECK_SIZE(int, _parsedURI.size());
-		if(_keyIndex == static_cast<int>(_parsedURI.size()))
+		if(_keyIndex == as_int(_parsedURI.size()))
 		{
 			if(Handler)
 				return Handler;
@@ -421,14 +419,13 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 				return cap->second.c_ptr();
 		});
 
-		oHTTPHandler::CommonParams params;
-		params.Query = uriParts.Query.c_str();
-		params.pResponse = _pResponse;
-		_pResponse->Content.pData = nullptr;
-		params.AllocateResponse = [&](size_t _BufferSize){
+			oHTTPHandler::CommonParams params;
+			params.Query = uriParts.Query.c_str();
+			params.pResponse = _pResponse;
+			_pResponse->Content.pData = nullptr;
+			params.AllocateResponse = [&](size_t _BufferSize){
 			oASSERT(!_pResponse->Content.pData, "tried to allocate a response buffer more than once");
-			oCHECK_SIZE(unsigned int, _BufferSize);
-			_pResponse->Content.Length = static_cast<unsigned int>(_BufferSize);
+			_pResponse->Content.Length = as_uint(_BufferSize);
 			_pResponse->Content.pData = Desc->AllocBufferCallback(_BufferSize);
 		};
 		int capIndex = 0;
@@ -438,8 +435,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 			capIndex = 0;
 
 			auto handleOSC = [&](int _Type, void* _pField, size_t _SizeofField){
-				oCHECK_SIZE(int, captures.size());
-				if(capIndex < static_cast<int>(captures.size()))
+				if(capIndex < as_int(captures.size()))
 				{
 					bool parsed = false;
 					switch (_Type)
@@ -517,8 +513,7 @@ bool oWebServerImpl::Retrieve(const oHTTP_REQUEST& _Request, oHTTP_RESPONSE* _pR
 			return false; //file probably didn't exist
 		}
 
-		oCHECK_SIZE(int, cacheBuffer->GetSize());
-		_pResponse->Content.Length = static_cast<int>(cacheBuffer->GetSize());
+		_pResponse->Content.Length = as_int(cacheBuffer->GetSize());
 		_pResponse->StatusLine.StatusCode = oHTTP_OK;
 		_pResponse->Content.Type = mimeType;
 		_pResponse->Content.pData = Desc->AllocBufferCallback(cacheBuffer->GetSize());

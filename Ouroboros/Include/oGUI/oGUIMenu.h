@@ -89,7 +89,7 @@ bool oGUIMenuIsChecked(ouro::menu_handle _hMenu, int _ItemID);
 // to zero out a selected one.
 void oGUIMenuCheckRadio(ouro::menu_handle _hMenu, int _ItemIDRadioRangeFirst, int _ItemIDRadioRangeLast, int _ItemIDToCheck);
 
-// If none are checked, this returns oInvalid.
+// If none are checked, this returns ouro::invalid.
 int oGUIMenuGetCheckedRadio(ouro::menu_handle _hMenu, int _ItemIDRadioRangeFirst, int _ItemIDRadioRangeLast);
 
 char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, ouro::menu_handle _hMenu, int _ItemID);

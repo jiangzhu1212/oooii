@@ -90,7 +90,7 @@ template<typename StateT, size_t size> bool StateExists(size_t _Index, StateT (&
 
 oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init, bool* _pSuccess)
 	: D3DDevice(_pDevice)
-	, FrameID(oInvalid)
+	, FrameID(ouro::invalid)
 	, hHeap(HeapCreate(0, oMB(10), 0))
 	, IsSoftwareEmulation(_Init.use_software_emulation)
 {
@@ -262,7 +262,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	// Set up some null buffers that will be used to reset parts of the API that
 	// do no easily transition between compute and rasterization pipelines.
 	{
-		// ends up being all set to oInvalid/-1/D3D11_KEEP_UNORDERED_ACCESS_VIEWS 
+		// ends up being all set to ouro::invalid/-1/D3D11_KEEP_UNORDERED_ACCESS_VIEWS 
 		// which means leave value alone
 		memset(NoopUAVInitialCounts, 0xff, sizeof(NoopUAVInitialCounts));
 
@@ -339,7 +339,7 @@ uint oD3D11Device::GetFrameID() const threadsafe
 void oD3D11Device::GetImmediateCommandList(oGPUCommandList** _ppCommandList)
 {
 	oGPUCommandList::DESC CLDesc;
-	CLDesc.draw_order = oInvalid;
+	CLDesc.draw_order = ouro::invalid;
 	oVERIFY(oD3D11Device::CreateCommandList("Immediate", CLDesc, _ppCommandList));
 }
 
@@ -403,15 +403,14 @@ void oD3D11Device::MEMReserve(ID3D11DeviceContext* _pDeviceContext, oGPUResource
 	HeapUnlock(hHeap);
 	_pMappedSubresource->data = p;
 	_pMappedSubresource->row_pitch = ByteDimensions.x;
-	_pMappedSubresource->depth_pitch = oUInt(size);
+	_pMappedSubresource->depth_pitch = as_uint(size);
 }
 
 void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource* _pResource, int _Subresource, const ouro::surface::mapped_subresource& _Source, const ouro::surface::box& _Subregion) threadsafe
 {
-	int D3DSubresource = oInvalid;
-	oGPU_RESOURCE_TYPE type = _pResource->GetType();
+	int D3DSubresource = ouro::invalid;
+	ouro::gpu::resource_type::value type = _pResource->GetType();
 
-	oASSERT(type != oGPU_MESH, "Do not use GPU mesh directly, use its buffers");
 	ID3D11Resource* pD3DResource = oD3D11GetSubresource(_pResource, _Subresource, &D3DSubresource);
 
 	D3D11_BOX box;
@@ -420,7 +419,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 	if (!_Subregion.empty())
 	{
 		uint StructureByteStride = 1;
-		if (type == oGPU_BUFFER)
+		if (type == ouro::gpu::resource_type::buffer)
 		{
 			gpu::buffer_info i = get_info(static_cast<ID3D11Buffer*>(pD3DResource));
 			StructureByteStride = __max(1, i.struct_byte_size);

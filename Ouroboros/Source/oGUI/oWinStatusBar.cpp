@@ -56,8 +56,7 @@ HWND oWinStatusBarCreate(HWND _hParent, HMENU _ID, int _MinHeight)
 bool oWinIsStatusBar(HWND _hStatusBar)
 {
 	sstring ClassName;
-	oCHECK_SIZE(int, ClassName.capacity());
-	if (!GetClassName(_hStatusBar, ClassName.c_str(), static_cast<int>(ClassName.capacity())))
+	if (!GetClassName(_hStatusBar, ClassName.c_str(), as_int(ClassName.capacity())))
 		return false;
 
 	return !strcmp(ClassName, STATUSCLASSNAME);
@@ -73,8 +72,8 @@ void oWinStatusBarSetNumItems(HWND _hStatusBar, const int* _pItemWidths, size_t 
 	std::array<int, 256> CoordOfRight;
 
 	int LastLeft = 0;
-	oCHECK_SIZE(int, _NumItems);
-	for (int i = 0; i < static_cast<int>(_NumItems); i++)
+	const int n = as_int(_NumItems);
+	for (int i = 0; i < n; i++)
 	{
 		LastLeft += _pItemWidths[i];
 		
@@ -149,8 +148,7 @@ void oWinStatusBarSetTipText(HWND _hStatusBar, int _ItemIndex, const char* _Text
 
 char* oWinStatusBarGetTipText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hStatusBar, int _ItemIndex)
 {
-	oCHECK_SIZE(unsigned short, _SizeofStrDestination);
-	UINT w = (UINT)(static_cast<unsigned short>(_SizeofStrDestination) << 16) | (UINT)(_ItemIndex & 0xffff);
+	UINT w = (UINT)(as_ushort(_SizeofStrDestination) << 16) | (UINT)(_ItemIndex & 0xffff);
 	SendMessage(_hStatusBar, SB_GETTIPTEXT, (WPARAM)w, (LPARAM)_StrDestination);
 	return _StrDestination;
 }

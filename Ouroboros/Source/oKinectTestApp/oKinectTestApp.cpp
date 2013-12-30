@@ -226,7 +226,7 @@ oKinectTestApp::oKinectTestApp()
 	, Ready(false)
 {
 	int nKinects = oKinectGetCount();
-	if (nKinects && nKinects != oInvalid)
+	if (nKinects && nKinects != ouro::invalid)
 	{
 		window::init winit;
 
@@ -248,7 +248,7 @@ oKinectTestApp::oKinectTestApp()
 
 			w.Window = window::make(winit);
 
-			int SectionWidths[4] = { kCoordSpace, kCoordSpace, kCoordSpace, oInvalid };
+			int SectionWidths[4] = { kCoordSpace, kCoordSpace, kCoordSpace, ouro::invalid };
 			w.Window->set_num_status_sections(SectionWidths);
 
 			input::tracking_skeleton s;
@@ -296,7 +296,7 @@ oKinectTestApp::oKinectTestApp()
 	else if (nKinects == 0)
 		msgbox(msg_type::info, nullptr, "oKinect Test App", "No Kinects attached.");
 
-	else if (nKinects == oInvalid)
+	else if (nKinects == ouro::invalid)
 		msgbox(msg_type::error, nullptr, "oKinect Test App"
 			, "This application was not built with Kinect support. It will need to be recompiled against the Kinect SDK to support Kinect features.");
 
@@ -418,7 +418,7 @@ void oKinectTestApp::MainEventHook(const window::basic_event& _Event, int _Index
 			float2 Ratio = float2(_Event.as_shape().shape.client_size) / float2(int2(di.mode.width, di.mode.height));
 			float R = max(Ratio);
 			ouro::font_info fd;
-			fd.point_size = oInt(round(R * 35.0f));
+			fd.point_size = round(R * 35.0f);
 			kw.hFont = oGDICreateFont(fd);
 			break;
 		}

@@ -29,7 +29,7 @@
       <RuntimeTypeInfo>true</RuntimeTypeInfo>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
-      <PreprocessorDefinitions>oENABLE_RELEASE_ASSERTS;NOMINMAX;_USE_MATH_DEFINES;_VARIADIC_MAX=10;_ALLOW_KEYWORD_MACROS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>oENABLE_RELEASE_ASSERTS;NOMINMAX;_USE_MATH_DEFINES;_VARIADIC_MAX=10;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>SyncCThrow</ExceptionHandling>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>

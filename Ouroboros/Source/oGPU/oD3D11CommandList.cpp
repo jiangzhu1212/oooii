@@ -57,7 +57,7 @@ static ID3D11UnorderedAccessView* oD3D11GetUAV(const oGPUResource* _pResource, i
 {
 	switch (_pResource->GetType())
 	{
-		case oGPU_BUFFER:
+		case ouro::gpu::resource_type::buffer:
 		{
 			oGPUBuffer::DESC d;
 			oD3D11Buffer* b = static_cast<oD3D11Buffer*>(const_cast<oGPUResource*>(_pResource));
@@ -69,15 +69,14 @@ static ID3D11UnorderedAccessView* oD3D11GetUAV(const oGPUResource* _pResource, i
 				return b->UAV;
 		}
 
-		case oGPU_MESH: return nullptr;
-		case oGPU_TEXTURE: return static_cast<oD3D11Texture*>(const_cast<oGPUResource*>(_pResource))->UAV;
+		case ouro::gpu::resource_type::texture: return static_cast<oD3D11Texture*>(const_cast<oGPUResource*>(_pResource))->UAV;
 		oNODEFAULT;
 	}
 }
 
 static void oD3D11GetUAVs(ID3D11UnorderedAccessView* (&_ppUAVs)[gpu::max_num_unordered_buffers], int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _AssertHaveCounters = false)
 {
-	if (!_ppUnorderedResources || _NumUnorderedResources == oInvalid || _NumUnorderedResources == 0)
+	if (!_ppUnorderedResources || _NumUnorderedResources == ouro::invalid || _NumUnorderedResources == 0)
 		memset(_ppUAVs, 0, sizeof(_ppUAVs));
 	else
 	{
@@ -98,10 +97,8 @@ static ID3D11ShaderResourceView* oD3D11GetSRV(const oGPUResource* _pResource, in
 {
 	switch (_pResource->GetType())
 	{
-		case oGPU_BUFFER: return static_cast<oD3D11Buffer*>(const_cast<oGPUResource*>(_pResource))->SRV;
-		case oGPU_MESH: return nullptr;
-		
-		case oGPU_TEXTURE:
+		case ouro::gpu::resource_type::buffer: return static_cast<oD3D11Buffer*>(const_cast<oGPUResource*>(_pResource))->SRV;
+		case ouro::gpu::resource_type::texture:
 		{
 			oD3D11Texture* t = static_cast<oD3D11Texture*>(const_cast<oGPUResource*>(_pResource));
 			return _SRVIndex == 0 ? t->SRV : (t->Texture2 ? t->Texture2->SRV : nullptr);
@@ -113,12 +110,11 @@ static ID3D11ShaderResourceView* oD3D11GetSRV(const oGPUResource* _pResource, in
 
 ID3D11Resource* oD3D11GetSubresource(oGPUResource* _pResource, int _Subresource, int* _pD3DSubresourceIndex)
 {
-	oASSERT(_pResource->GetType() != oGPU_MESH, "Do not use GPU mesh directly, use its buffers");
 	*_pD3DSubresourceIndex = 0;
 	switch (_pResource->GetType())
 	{
-		case oGPU_BUFFER: return static_cast<oD3D11Buffer*>(_pResource)->Buffer;
-		case oGPU_TEXTURE: *_pD3DSubresourceIndex = _Subresource; return static_cast<oD3D11Texture*>(_pResource)->Texture;
+		case ouro::gpu::resource_type::buffer: return static_cast<oD3D11Buffer*>(_pResource)->Buffer;
+		case ouro::gpu::resource_type::texture: *_pD3DSubresourceIndex = _Subresource; return static_cast<oD3D11Texture*>(_pResource)->Texture;
 		oNODEFAULT;
 	}
 }
@@ -167,7 +163,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 
 oD3D11CommandList::~oD3D11CommandList()
 {
-	if (Desc.draw_order != oInvalid)
+	if (Desc.draw_order != ouro::invalid)
 		oDEVICE_UNREGISTER_THIS();
 }
 
@@ -201,18 +197,18 @@ static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const int2& _Targ
 		Viewports[0] = to_viewport(_TargetDimensions);
 	}
 
-	_pDeviceContext->RSSetViewports(oUInt(_NumViewports), Viewports);
+	_pDeviceContext->RSSetViewports(as_uint(_NumViewports), Viewports);
 }
 
 void oD3D11CommandList::Begin()
 {
-	if (Desc.draw_order != oInvalid) // ignore for immediate
+	if (Desc.draw_order != ouro::invalid) // ignore for immediate
 		oDEVICE_LOCK_SUBMIT();
 }
 
 void oD3D11CommandList::End()
 {
-	if (Desc.draw_order != oInvalid) // ignore for immediate
+	if (Desc.draw_order != ouro::invalid) // ignore for immediate
 	{
 		Context->FinishCommandList(FALSE, &CommandList);
 		oDEVICE_UNLOCK_SUBMIT();
@@ -270,7 +266,6 @@ void oD3D11CommandList::Copy(oGPUResource* _pDestination, oGPUResource* _pSource
 {
 	oASSERT(_pDestination && _pSource && _pDestination->GetType() == _pSource->GetType(), "Copy(%s, %s) can only occur between two same-typed objects", _pDestination ? ouro::as_string(_pDestination->GetType()) : "(null)", _pSource ? ouro::as_string(_pSource->GetType()) : "(null)");
 	int D3DSubresourceIndex = 0;
-	oASSERT(_pDestination->GetType() != oGPU_MESH, "Do not use GPU mesh directly, use its buffers");
 	ID3D11Resource* d = oD3D11GetSubresource(_pDestination, 0, &D3DSubresourceIndex);
 	ID3D11Resource* s = oD3D11GetSubresource(_pSource, 0, &D3DSubresourceIndex);
 	Context->CopyResource(d, s);
@@ -309,14 +304,14 @@ void oD3D11CommandList::SetRenderTargetAndUnorderedResources(oGPURenderTarget* _
 	oD3D11RenderTarget* RT = static_cast<oD3D11RenderTarget*>(_pRenderTarget);
 
 	UINT StartSlot = _UnorderedResourcesStartSlot;
-	if (StartSlot == oInvalid)
+	if (StartSlot == invalid)
 		StartSlot = RT ? RT->Desc.mrt_count : 0;
 
 	ID3D11UnorderedAccessView* UAVs[gpu::max_num_unordered_buffers];
 	oD3D11GetUAVs(UAVs, _NumUnorderedResources, _ppUnorderedResources, 0, 0, !_SetForDispatch);
 
 	UINT NumUAVs = _NumUnorderedResources;
-	if (_NumUnorderedResources == oInvalid)
+	if (_NumUnorderedResources == invalid)
 		NumUAVs = gpu::max_num_unordered_buffers - StartSlot;
 
 	UINT* pInitialCounts = _pInitialCounts;
@@ -403,7 +398,7 @@ void oD3D11CommandList::SetSamplers(int _StartSlot, int _NumStates, const ouro::
 	for (int i = 0; i < _NumStates; i++)
 		Samplers[i] = D3DDevice()->SamplerStates[_pSamplerState[i]];
 	
-	set_samplers(Context, oUInt(_StartSlot), oUInt(_NumStates), Samplers);
+	set_samplers(Context, as_uint(_StartSlot), as_uint(_NumStates), Samplers);
 }
 
 void oD3D11CommandList::SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources)
@@ -554,7 +549,7 @@ void oD3D11CommandList::Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _N
 
 	if (!!_pIndices)
 	{
-		if (_NumInstances != oInvalid)
+		if (_NumInstances != invalid)
 			Context->DrawIndexedInstanced(NumElements, _NumInstances, StartElement, 0, _StartInstance);
 		else
 			Context->DrawIndexed(NumElements, StartElement, 0);
@@ -562,7 +557,7 @@ void oD3D11CommandList::Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _N
 
 	else
 	{
-		if (_NumInstances != oInvalid)
+		if (_NumInstances != invalid)
 			Context->DrawInstanced(NumElements, _NumInstances, StartElement, _StartInstance);
 		else
 			Context->Draw(NumElements, StartElement);

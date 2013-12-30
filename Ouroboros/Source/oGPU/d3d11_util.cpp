@@ -200,8 +200,7 @@ void debug_name(ID3D11Device* _pDevice, const char* _Name)
 
 char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11Device* _pDevice)
 {
-	oCHECK_SIZE(unsigned int, _SizeofStrDestination);
-	unsigned int size = static_cast<unsigned int>(_SizeofStrDestination);
+	unsigned int size = as_uint(_SizeofStrDestination);
 	unsigned int CreationFlags = const_cast<ID3D11Device*>(_pDevice)->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
 		oV(const_cast<ID3D11Device*>(_pDevice)->GetPrivateData(WKPDID_D3DDebugObjectName, &size, _StrDestination));
@@ -222,8 +221,7 @@ void debug_name(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
 
 char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild)
 {
-	oCHECK_SIZE(unsigned int, _SizeofStrDestination);
-	unsigned int size = static_cast<unsigned int>(_SizeofStrDestination);
+	unsigned int size = as_uint(_SizeofStrDestination);
 	intrusive_ptr<ID3D11Device> Device;
 	const_cast<ID3D11DeviceChild*>(_pDeviceChild)->GetDevice(&Device);
 	unsigned int CreationFlags = Device->GetCreationFlags();
@@ -597,7 +595,7 @@ intrusive_ptr<ID3D11Buffer> make_buffer(ID3D11Device* _pDevice
 		case gpu::buffer_type::index:
 			if (_Info.format != surface::r16_uint && _Info.format != surface::r32_uint)
 				throw std::invalid_argument(formatf("An index buffer must specify a format of r16_uint or r32_uint only (%s specified).", as_string(_Info.format)));
-			if (_Info.struct_byte_size != oInvalid && _Info.struct_byte_size != static_cast<unsigned int>(surface::element_size(_Info.format)))
+			if (_Info.struct_byte_size != invalid && _Info.struct_byte_size != static_cast<unsigned int>(surface::element_size(_Info.format)))
 				throw std::invalid_argument("An index buffer must specify struct_byte_size properly, or set it to 0.");
 			BindFlags = D3D11_BIND_INDEX_BUFFER;
 			break;
@@ -640,10 +638,10 @@ intrusive_ptr<ID3D11Buffer> make_buffer(ID3D11Device* _pDevice
 	}
 
 	unsigned int ElementStride = _Info.struct_byte_size;
-	if (ElementStride == oInvalid && Format != surface::unknown)
+	if (ElementStride == invalid && Format != surface::unknown)
 		ElementStride = surface::element_size(Format);
 
-	if (ElementStride == 0 || ElementStride == oInvalid)
+	if (ElementStride == 0 || ElementStride == invalid)
 		throw std::invalid_argument("A structured buffer requires a valid non-zero buffer size to be specified.");
 
 	D3D11_BUFFER_DESC desc;
@@ -673,8 +671,7 @@ intrusive_ptr<ID3D11Buffer> make_buffer(ID3D11Device* _pDevice
 	// expected (unlike D3D11's StructByteSize)? Probably, but this needs to stick 
 	// around a bit longer until it can truly be orphaned.
 	gpu::buffer_info i(_Info);
-	oCHECK_SIZE(unsigned short, ElementStride);
-	i.struct_byte_size = static_cast<unsigned short>(ElementStride);
+	i.struct_byte_size = as_ushort(ElementStride);
 	set_info(Buffer, i);
 
 	if (_Info.type >= gpu::buffer_type::unordered_raw)
@@ -1422,8 +1419,7 @@ void convert(ID3D11Texture2D* _pSourceTexture, surface::format _NewFormat
 
 	gpu::texture_info info;
 	info.dimensions = ushort3(static_cast<ushort>(desc.Width), static_cast<ushort>(desc.Height), 1);
-	oCHECK_SIZE(unsigned short, desc.ArraySize);
-	info.array_size = static_cast<ushort>(desc.ArraySize);
+	info.array_size = as_ushort(desc.ArraySize);
 	info.format = _NewFormat;
 	info.type = gpu::add_readback(info.type); // @tony: this should probably come from somewhere better.
 

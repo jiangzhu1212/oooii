@@ -618,16 +618,14 @@ void* map(const path& _Path
 		oFSTHROWLAST();
 	finally CloseMapped([&] { CloseHandle(hMapped); });
 
-	oCHECK_SIZE(SIZE_T, alignedSize);
-	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.as_unsigned_int[1], alignedOffset.as_unsigned_int[0], static_cast<SIZE_T>(alignedSize));
+	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.as_unsigned_int[1], alignedOffset.as_unsigned_int[0], as_type<SIZE_T>(alignedSize));
 	if (!p)
 		oFSTHROWLAST();
 
 	// Exit with a ref count of 1 on the underlying HANDLE, held by MapViewOfFile
 	// so the file is fully closed when unmap is called. Right now the count is at 
 	// 3, but the finallies will remove 2.
-	oCHECK_SIZE(size_t, alignedSize);
-	return byte_add(p, static_cast<size_t>(offsetPadding));
+	return byte_add(p, as_size_t(offsetPadding));
 }
 
 void unmap(void* _MappedPointer)
@@ -723,19 +721,17 @@ unsigned long long tell(file_handle _hFile)
 
 unsigned long long read(file_handle _hFile, void* _pDestination, unsigned long long _SizeofDestination, unsigned long long _ReadSize)
 {
-	oCHECK_SIZE(size_t, _ReadSize);
-	oCHECK_SIZE(size_t, _SizeofDestination);
-	size_t bytesRead = fread_s(_pDestination, static_cast<size_t>(_SizeofDestination), 1, static_cast<size_t>(_ReadSize), (FILE*)_hFile);
-	if (static_cast<size_t>(_ReadSize) != bytesRead && !at_end(_hFile))
+	const size_t ReadSize = as_size_t(_ReadSize);
+	size_t bytesRead = fread_s(_pDestination, as_size_t(_SizeofDestination), 1, ReadSize, (FILE*)_hFile);
+	if (ReadSize != bytesRead && !at_end(_hFile))
 		oFSTHROW_FOPEN0();
 	return bytesRead;
 }
 
 unsigned long long write(file_handle _hFile, const void* _pSource, unsigned long long _WriteSize, bool _Flush)
 {
-	oCHECK_SIZE(size_t, _WriteSize);
 	size_t bytesWritten = fwrite(_pSource, 1, static_cast<size_t>(_WriteSize), (FILE*)_hFile);
-	if (static_cast<size_t>(_WriteSize) != bytesWritten)
+	if (as_size_t(_WriteSize) != bytesWritten)
 		oFSTHROW_FOPEN0();
 	if (_Flush)
 		fflush((FILE*)_hFile);
@@ -770,8 +766,7 @@ std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, si
 	unsigned long long FileSize = file_size(_Path);
 
 	// in case we need a UTF32 nul terminator
-	oCHECK_SIZE(size_t, FileSize);
-	size_t AllocSize = static_cast<size_t>(FileSize) + (_LoadOption == load_option::text_read ? 4 : 0);
+	size_t AllocSize = as_size_t(FileSize) + (_LoadOption == load_option::text_read ? 4 : 0);
 
 	char* p = new char[AllocSize];
 	std::shared_ptr<char> buffer(p, delete_buffer);
@@ -792,8 +787,7 @@ std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, si
 	// record honest size (tools like FXC crash if any larger size is given)
 	if (_pSize)
 	{
-		oCHECK_SIZE(size_t, FileSize);
-		*_pSize = static_cast<size_t>(FileSize);
+		*_pSize = as_size_t(FileSize);
 
 		if (_LoadOption == load_option::text_read)
 		{

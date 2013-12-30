@@ -40,7 +40,7 @@ static int oGUIMenuFindPosition(ouro::menu_handle _hParentMenu, int _ItemID)
 		if (ID == _ItemID)
 			return i;
 	}
-	return oInvalid;
+	return ouro::invalid;
 }
 #endif
 
@@ -69,10 +69,9 @@ static bool oGUIMenuContainsRange(ouro::menu_handle _hMenu, int _ItemIDRangeFirs
 	for (int i = 0; i < n; i++)
 	{
 		UINT uID = GetMenuItemID((HMENU)_hMenu, i);
-		oCHECK_SIZE(int, uID);
-		if (uID == ~0u)
+		if (uID == invalid)
 			return false;
-		int ID = static_cast<int>(uID);
+		int ID = as_int(uID);
 		if (ID >= _ItemIDRangeFirst && ID <= _ItemIDRangeLast)
 			nFound++;
 	}
@@ -83,8 +82,7 @@ static bool oGUIMenuContainsRange(ouro::menu_handle _hMenu, int _ItemIDRangeFirs
 
 char* oGUIMenuGetTextByPosition(char* _StrDestination, size_t _SizeofStrDestination, ouro::menu_handle _hMenu, int _MenuItemPosition)
 {
-	oCHECK_SIZE(int, _SizeofStrDestination);
-	if (!GetMenuStringA((HMENU)_hMenu, _MenuItemPosition, _StrDestination, static_cast<int>(_SizeofStrDestination), MF_BYPOSITION))
+	if (!GetMenuStringA((HMENU)_hMenu, _MenuItemPosition, _StrDestination, as_int(_SizeofStrDestination), MF_BYPOSITION))
 		return nullptr;
 	return _StrDestination;
 }
@@ -245,8 +243,7 @@ bool oGUIMenuIsEnabled(ouro::menu_handle _hMenu, int _ItemID)
 
 char* oGUIMenuGetText(char* _StrDestination, size_t _SizeofStrDestination, ouro::menu_handle _hMenu, int _ItemID)
 {
-	oCHECK_SIZE(int, _SizeofStrDestination);
-	if (!GetMenuStringA((HMENU)_hMenu, _ItemID, _StrDestination, static_cast<int>(_SizeofStrDestination), MF_BYCOMMAND))
+	if (!GetMenuStringA((HMENU)_hMenu, _ItemID, _StrDestination, as_int(_SizeofStrDestination), MF_BYCOMMAND))
 		return nullptr;
 	return _StrDestination;
 }

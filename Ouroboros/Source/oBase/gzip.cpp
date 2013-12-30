@@ -25,6 +25,7 @@
 #include <oBase/gzip.h>
 #include <oBase/byte.h>
 #include <oBase/throw.h>
+#include <oBase/types.h>
 #include <zlib/zlib.h>
 
 namespace ouro {
@@ -68,7 +69,6 @@ struct GZIP_HDR
 size_t gzip_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
 {
 	size_t CompressedSize = 0;
-	oCHECK_SIZE(unsigned int, _SizeofSource);
 
 	if (_pDestination)
 	{
@@ -84,14 +84,13 @@ size_t gzip_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination, c
 		h.MTIME = 0;
 		h.XFL = 0x02;
 		h.OS = 0xff;
-		unsigned int ISIZE = static_cast<unsigned int>(_SizeofSource);
+		unsigned int ISIZE = as_uint(_SizeofSource);
 
 		memcpy(_pDestination, &h, sizeof(h));
 		_SizeofDestination -= sizeof(h);
 		_pDestination = byte_add(_pDestination, sizeof(h));
 	
-		oCHECK_SIZE(unsigned int, _SizeofDestination);
-		uLongf bytesWritten = static_cast<unsigned int>(_SizeofDestination);
+		uLongf bytesWritten = as_ulong(_SizeofDestination);
 		int result = compress2(static_cast<Bytef*>(_pDestination), &bytesWritten, static_cast<const Bytef*>(_pSource), static_cast<unsigned int>(_SizeofSource), 9);
 		if (result != Z_OK)
 			oTHROW(protocol_error, "compression failed");
@@ -153,8 +152,7 @@ size_t gzip_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination,
 		src = byte_add(src, 2);
 
 	size_t sz = _SizeofSource - byte_diff(src, _pSource) - GZipFooterSize;
-	oCHECK_SIZE(unsigned int, sz);
-	unsigned int compressedSize = static_cast<unsigned int>(sz);
+	unsigned int compressedSize = as_uint(sz);
 	unsigned int UncompressedSize = *(unsigned int*)byte_add(_pSource, sizeof(h) + compressedSize + sizeof(unsigned int));
 
 	if (_pDestination)
@@ -162,8 +160,7 @@ size_t gzip_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination,
 		if (_pDestination && _SizeofDestination < UncompressedSize)
 			oTHROW0(no_buffer_space);
 
-		oCHECK_SIZE(uLongf, _SizeofDestination);
-		uLongf bytesWritten = static_cast<uLongf>(_SizeofDestination);
+		uLongf bytesWritten = as_ulong(_SizeofDestination);
 		if (Z_OK != uncompress(static_cast<Bytef*>(_pDestination), &bytesWritten, static_cast<const Bytef*>(src), compressedSize))
 			oTHROW(protocol_error, "decompression error");
 

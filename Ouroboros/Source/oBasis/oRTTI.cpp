@@ -32,7 +32,7 @@
 #include <oCompute/oSphere.h>
 #include <oCompute/linear_algebra.h>
 #include <oBasis/oError.h>
-#include <oBasis/oInvalid.h>
+#include <oBase/invalid.h>
 #include <oBase/fixed_string.h>
 #include <oBase/fixed_vector.h>
 #include <vector>
@@ -225,7 +225,7 @@ int oRTTI::GetSize() const
 			return ((oRTTI_DATA_COMPOUND_BASE*)this)->Size;
 
 		default:
-			return oInvalid;
+			return ouro::invalid;
 	}
 }
 
@@ -498,7 +498,7 @@ bool oRTTI::IsPlainArray() const
 
 int oRTTI::GetItemSize() const
 {
-	if (Type != oRTTI_TYPE_CONTAINER) return oInvalid;
+	if (Type != oRTTI_TYPE_CONTAINER) return ouro::invalid;
 	return ((oRTTI_DATA_CONTAINER*)this)->ItemSize;
 }
 
@@ -510,7 +510,7 @@ void* oRTTI::GetItemPtr(const void* _pContainer, int _ContainerSizeInBytes, int 
 
 int oRTTI::GetItemCount(const void* _pContainer, int _ContainerSizeInBytes) const
 {
-	if (Type != oRTTI_TYPE_CONTAINER) return oInvalid;
+	if (Type != oRTTI_TYPE_CONTAINER) return ouro::invalid;
 	return ((oRTTI_DATA_CONTAINER*)this)->ContainerType->GetItemCount(*((oRTTI_DATA_CONTAINER*)this)->ItemType, _pContainer, _ContainerSizeInBytes);
 }
 

@@ -163,8 +163,6 @@ watcher::watcher(monitor_impl* _pMonitor, const path& _Path, bool _Recursive, si
 	, Recursive(_Recursive)
 	, Watching(true)
 {
-	oCHECK_SIZE(DWORD, _BufferSize);
-
 	if (Directory.has_filename())
 	{
 		if (_Recursive)

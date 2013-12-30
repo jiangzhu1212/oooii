@@ -155,7 +155,7 @@ static const date file_time_epoch_start(1601, month::January, 1);
 // of recorded history: Jan 1, 4713 BCE. This function interprets on or after 
 // Oct 15, 1582 as a Gregorian Calendar date and dates prior as a Julian 
 // Calendar Date. This will not return correct values for dates before 
-// March 1, 4801 BCE and will instead return oInvalid.
+// March 1, 4801 BCE and will instead return ouro::invalid.
 long long julian_day_number(const date& _Date);
 
 // Returns the Julian Date (JD) from the specified date. This begins with 

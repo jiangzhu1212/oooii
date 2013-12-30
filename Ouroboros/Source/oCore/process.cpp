@@ -263,9 +263,8 @@ public:
 		if (_Size > UINT_MAX)
 			throw std::invalid_argument("Windows supports only 32-bit sized writes");
 
-		oCHECK_SIZE(DWORD, _Size);
 		DWORD dwSizeofWritten = 0;
-		oVB(WriteFile(hInputWrite, _pSource, static_cast<DWORD>(_Size), &dwSizeofWritten, 0));
+		oVB(WriteFile(hInputWrite, _pSource, as_type<DWORD>(_Size), &dwSizeofWritten, 0));
 		return dwSizeofWritten;
 	}
 
@@ -282,9 +281,8 @@ public:
 		if (_Size > UINT_MAX)
 			throw std::invalid_argument("Windows supports only 32-bit sized reads");
 
-		oCHECK_SIZE(DWORD, _Size);
 		DWORD dwSizeofRead = 0;
-		oVB(ReadFile(hOutputRead, _pDestination, static_cast<DWORD>(_Size), &dwSizeofRead, 0));
+		oVB(ReadFile(hOutputRead, _pDestination, as_type<DWORD>(_Size), &dwSizeofRead, 0));
 		return dwSizeofRead;
 	}
 
@@ -466,8 +464,7 @@ path process::get_name(id _ID)
 {
 	windows::scoped_handle hProcess = OpenProcess(PROCESS_QUERY_INFORMATION|PROCESS_VM_READ, FALSE, asdword(_ID));
 	path_string Temp;
-	oCHECK_SIZE(unsigned int, Temp.capacity());
-	oVB(GetModuleFileNameExA(hProcess, nullptr, Temp.c_str(), static_cast<unsigned int>(Temp.capacity())));
+	oVB(GetModuleFileNameExA(hProcess, nullptr, Temp.c_str(), as_uint(Temp.capacity())));
 	return path(Temp);
 }
 

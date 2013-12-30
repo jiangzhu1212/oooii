@@ -37,7 +37,7 @@ oScopedPartialTimeout::~oScopedPartialTimeout()
 
 void oScopedPartialTimeout::UpdateTimeout()
 {
-	if (*pTimeoutMSCountdown != oInfiniteWait)
+	if (*pTimeoutMSCountdown != ouro::infinite)
 	{
 		unsigned int CurrentTime = ouro::timer::now_ms();
 		unsigned int diff = CurrentTime - Start;

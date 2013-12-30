@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oRefCount.h>
-#include <oBasis/oInvalid.h>
 #include <oBasis/oXMLSerialize.h>
 #include <oConcurrency/mutex.h>
 #include <oConcurrency/thread_safe.h>

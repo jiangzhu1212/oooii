@@ -125,7 +125,7 @@ oAPI bool oGPUCreateReadbackCopy(oGPUBuffer* _pSource, oGPUBuffer** _ppReadbackC
 // command list. The purpose of this utility code is primarily to wrap the 
 // lengthy code it takes to get the counter out for debugging/inspection 
 // purposes and should not be used in production code since it synchronizes/
-// stalls the device. This returns oInvalid on failure. REMEMBER THAT THIS MUST 
+// stalls the device. This returns ouro::invalid on failure. REMEMBER THAT THIS MUST 
 // BE CALLED AFTER A FLUSH OF ALL COMMANDLISTS THAT WOULD UPDATE THE COUNTER. 
 // i.e. the entire app should use the immediate command list, otherwise this 
 // could be sampling stale data. If using the immediate command list everywhere 

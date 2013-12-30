@@ -63,7 +63,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList, 0x2d6106c4, 0x7741, 
 	void SetBlendState(ouro::gpu::blend_state::value _State) override;
 	void SetDepthStencilState(ouro::gpu::depth_stencil_state::value _State) override;
 	void Clear(oGPURenderTarget* _pRenderTarget, ouro::gpu::clear_type::value _Clear) override;
-	void Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance = oInvalid, uint _NumInstances = oInvalid) override;
+	void Draw(const oGPUBuffer* _pIndices, int _StartSlot, int _NumVertexBuffers, const oGPUBuffer* const* _ppVertexBuffers, uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance = ouro::invalid, uint _NumInstances = ouro::invalid) override;
 	void Draw(oGPUBuffer* _pDrawArgs, int _AlignedByteOffsetForArgs) override;
 	void DrawSVQuad(uint _NumInstances = 1) override;
 	bool GenerateMips(oGPURenderTarget* _pRenderTarget) override;

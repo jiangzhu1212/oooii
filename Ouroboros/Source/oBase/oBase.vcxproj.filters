@@ -435,6 +435,9 @@
     <ClInclude Include="..\..\Include\oBase\snappy.h">
       <Filter>oBase\compression</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\invalid.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

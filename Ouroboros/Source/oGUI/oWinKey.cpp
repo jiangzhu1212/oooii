@@ -463,7 +463,7 @@ bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 	_pAction->position(0.0f);
 	_pAction->window = _hWnd;
 	_pAction->timestamp_ms = _TimestampMS;
-	_pAction->action_code = ouro::input::action::invalid;
+	_pAction->action_code = ouro::invalid;
 
 	switch (_uMsg)
 	{
@@ -675,8 +675,7 @@ void oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _N
 
 	oWinSetFocus(_hWnd);
 
-	oCHECK_SIZE(int, pKeyHead - Input);
-	int NumberOfKeys = static_cast<int>(pKeyHead - Input);
+	int NumberOfKeys = as_int(pKeyHead - Input);
 	SendInput(NumberOfKeys, Input, sizeof(INPUT));
 
 	AttachThreadInput(GetCurrentThreadId(), _ThreadID, false);
@@ -685,8 +684,7 @@ void oWinSendKeys(HWND _hWnd, unsigned int _ThreadID, short int* _pVKeys, int _N
 void oWinSendASCIIMessage(HWND _hWnd, unsigned int _ThreadID, const char* _pMessage)
 {
 	short int VirtualKeys[64];
-	oCHECK_SIZE(int, strlen(_pMessage));
-	int MessageLength = static_cast<int>(strlen(_pMessage));
+	int MessageLength = as_int(strlen(_pMessage));
 	if(MessageLength > oCOUNTOF(VirtualKeys))
 		oTHROW(no_buffer_space, "Only support %d length messages", oCOUNTOF(VirtualKeys));
 

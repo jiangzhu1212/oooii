@@ -251,7 +251,7 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	i.shape.client_size = int2(640,480);
 	Window = window::make(i);
 
-	int Widths[2] = { 100, oInvalid };
+	int Widths[2] = { 100, ouro::invalid };
 	Window->set_num_status_sections(Widths);
 
 	// Disable anti-aliasing since on Windows ClearType seems to be non-deterministic
@@ -379,7 +379,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, ouro::menu_handle _hMenu)
 	CB.id = ID_COMBOBOX;
 	Controls[ID_COMBOBOX] = oWinControlCreate(CB);
 
-	oWinControlInsertSubItem(Controls[ID_COMBOBOX], "After3", oInvalid);
+	oWinControlInsertSubItem(Controls[ID_COMBOBOX], "After3", ouro::invalid);
 	oWinControlInsertSubItem(Controls[ID_COMBOBOX], "Btwn2And3", 2);
 
 	CB.type = ouro::control_type::combotextbox;
@@ -387,7 +387,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, ouro::menu_handle _hMenu)
 	CB.id = ID_COMBOTEXTBOX;
 	Controls[ID_COMBOTEXTBOX] = oWinControlCreate(CB);
 
-	oWinControlInsertSubItem(Controls[ID_COMBOTEXTBOX], "After3", oInvalid);
+	oWinControlInsertSubItem(Controls[ID_COMBOTEXTBOX], "After3", ouro::invalid);
 	oWinControlInsertSubItem(Controls[ID_COMBOTEXTBOX], "Btwn2And3", 2);
 	oWinControlSetText(Controls[ID_COMBOTEXTBOX], "Select...");
 }

@@ -26,6 +26,7 @@
 #ifndef oBase_input_h
 #define oBase_input_h
 
+#include <oBase/invalid.h>
 #include <oBase/macros.h>
 #include <oBase/resized_type.h>
 #include <oHLSL/oHLSLTypes.h>
@@ -256,8 +257,6 @@ struct action
 	// All input communication should provide this struct. This can also be 
 	// populated and sent to an action handler to spoof hardware events, for 
 	// example from a network stream thus enabling remote access.
-
-	static const unsigned int invalid = ~0u;
 
 	action()
 		: window(nullptr)

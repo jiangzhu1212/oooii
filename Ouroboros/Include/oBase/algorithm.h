@@ -37,6 +37,7 @@
 #include <vector>
 #include <oBase/fixed_vector.h>
 #include <oBase/throw.h>
+#include <oBase/types.h>
 #include <oBase/unordered_map.h>
 
 namespace ouro {
@@ -174,8 +175,7 @@ bool ranged_set(ContainerT& _Container, IndexT _Index, const T& _Item)
 template<typename T, typename IndexT, typename ContainerT>
 bool ranged_set(ContainerT& _Container, IndexT _Index, T&& _Item)
 {
-	oCHECK_SIZE(IndexT, _Container.size());
-	if (_Index >= 0 && _Index < static_cast<IndexT>(_Container.size()))
+	if (_Index >= 0 && _Index < as_type<IndexT>(_Container.size()))
 	{
 		_Container[_Index] = std::move(_Item);
 		return true;

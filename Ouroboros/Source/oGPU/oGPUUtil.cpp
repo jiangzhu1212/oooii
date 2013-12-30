@@ -291,7 +291,7 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 	if (d.type != gpu::buffer_type::unordered_structured_append && d.type != gpu::buffer_type::unordered_structured_counter)
 	{
 		oErrorSetLast(std::errc::invalid_argument, "The specified buffer must be of type gpu::buffer_type::unordered_structured_append or gpu::buffer_type::unordered_structured_counter");
-		return oInvalid;
+		return ouro::invalid;
 	}
 
 	intrusive_ptr<oGPUDevice> Device;
@@ -308,7 +308,7 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 		rb.struct_byte_size = sizeof(uint);
 
 		if (!Device->CreateBuffer(Name, rb, &Counter))
-			return oInvalid; // pass through error
+			return ouro::invalid; // pass through error
 	}
 
 	intrusive_ptr<oGPUCommandList> ICL;
@@ -317,7 +317,7 @@ uint oGPUReadbackCounter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocat
 
 	surface::mapped_subresource msr;
 	if (!Device->MapRead(Counter, 0, &msr, true))
-		return oInvalid; // pass through error
+		return ouro::invalid; // pass through error
 	uint c = *(uint*)msr.data;
 	Device->UnmapRead(Counter, 0);
 	return c;
@@ -330,7 +330,7 @@ bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, surface::mapped_
 
 	switch (_pSourceResource->GetType())
 	{
-	case oGPU_BUFFER:
+		case ouro::gpu::resource_type::buffer:
 		{
 			oGPUBuffer::DESC i;
 			static_cast<oGPUBuffer*>(_pSourceResource)->GetDesc(&i);
@@ -339,7 +339,7 @@ bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, surface::mapped_
 			break;
 		}
 
-	case oGPU_TEXTURE:
+		case ouro::gpu::resource_type::texture:
 		{
 			oGPUTexture::DESC i;
 			static_cast<oGPUTexture*>(_pSourceResource)->GetDesc(&i);

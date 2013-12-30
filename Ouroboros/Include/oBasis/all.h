@@ -45,7 +45,6 @@
 #include <oBasis/oGeometry.h>
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oInterface.h>
-#include <oBasis/oInvalid.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>

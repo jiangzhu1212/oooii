@@ -814,7 +814,7 @@ void oTestManager_Impl::PrintDesc()
 		, const std::function<void(char* _Line)>& _GetLine = nullptr
 		, int* _pExitCode = nullptr
 		, bool _ShowWindow = false
-		, unsigned int _ExecutionTimeout = oInfiniteWait);
+		, unsigned int _ExecutionTimeout = ouro::infinite);
 
 	path DevPath = filesystem::dev_path();
 	lstring CLStr;

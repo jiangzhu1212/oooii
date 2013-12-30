@@ -22,14 +22,18 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A nothing class designed to control the difference between setting an integer
-// type to all 0xff's based on type. Mainly this should be used as an initializer
-// for unsigned int types or counting types.
+// -1 or 0xfff..ff is commonly used as a invalid value when 0 is a valid value.
+// however different types can have issues:~0u != ~0ull and size_t is thus a 
+// PITA. This object abstracts an invalid index value and also makes the code
+// more self-documenting.
 #pragma once
-#ifndef oInvalid_h
-#define oInvalid_h
+#ifndef oBase_invalid_h
+#define oBase_invalid_h
 
-class oInvalid_t
+namespace ouro {
+	namespace detail {
+
+class invalid_t
 {
 public:
 	operator char() const { return -1; }
@@ -42,17 +46,19 @@ public:
 	operator unsigned long() const { return ~0u; }
 	operator long long() const { return -1; }
 	operator unsigned long long() const { return ~0ull; }
+
+	template<typename T> bool operator==(const T& _That) const { return (T)*this == _That; }
+	template<typename T> bool operator!=(const T& _That) const { return !(*this == _That); }
 };
 
-const oInvalid_t oInvalid;
+template<typename T> bool operator==(const T _Value, const invalid_t& _Invalid) { return _Invalid == _Value; }
+template<typename T> bool operator!=(const T _Value, const invalid_t& _Invalid) { return _Invalid != _Value; }
 
-template<typename T> bool operator==(const oInvalid_t _Invalid, const T _Value) { return (T)_Invalid == _Value; }
-template<typename T> bool operator==(const T _Value, const oInvalid_t _Invalid) { return _Invalid == _Value; }
+	} // namespace detail
 
-template<typename T> bool operator!=(const oInvalid_t _Invalid, const T _Value) { return !((T)_Invalid == _Value); }
-template<typename T> bool operator!=(const T _Value, const oInvalid_t _Invalid) { return !((T)_Invalid == _Value); }
+static const detail::invalid_t invalid;
+static const detail::invalid_t infinite;
 
-// For timeout parameters
-static const oInvalid_t oInfiniteWait = oInvalid;
+} // namespace ouro
 
 #endif

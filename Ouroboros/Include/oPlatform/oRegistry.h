@@ -35,8 +35,8 @@
 struct oREGISTRY_DESC
 {
 	oREGISTRY_DESC()
-		: Status(oInvalid)
-		, AccessEpoch(oInvalid)
+		: Status(ouro::invalid)
+		, AccessEpoch(ouro::invalid)
 		, AccessCount(0)
 	{}
 
@@ -66,7 +66,7 @@ interface oRegistry : oInterface
 
 	// Returns false if there is a pre-existing entry. AccessEpoch is set to the 
 	// current epoch, AccessCount is set to zero, and Accessed is also set.
-	virtual bool Add(const oURI& _URIReference, oInterface* _pInterface, int _Status = oInvalid) threadsafe = 0;
+	virtual bool Add(const oURI& _URIReference, oInterface* _pInterface, int _Status = ouro::invalid) threadsafe = 0;
 	
 	// Returns false if there is no pre-existing entry.
 	virtual bool Remove(const oURI& _URIReference) threadsafe = 0;
@@ -79,8 +79,8 @@ interface oRegistry : oInterface
 	
 	// Returns false if there is no pre-existing entry. This sets AccessEpoch to
 	// the current epoch, AccessCount to zero, and sets the Accessed timestamp. 
-	// This sets the _Status as well, by default to oInvalid.
-	virtual bool Set(const oURI& _URIReference, oInterface* _pInterface, int _Status = oInvalid) threadsafe = 0;
+	// This sets the _Status as well, by default to ouro::invalid.
+	virtual bool Set(const oURI& _URIReference, oInterface* _pInterface, int _Status = ouro::invalid) threadsafe = 0;
 	
 	// Exclusive-locks the registry and traverses each entry. Operations that 
 	// would affect stats such as AccessCount are not performed. The visitor 
