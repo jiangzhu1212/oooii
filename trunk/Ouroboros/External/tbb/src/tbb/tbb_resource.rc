@@ -95,7 +95,7 @@ BEGIN
 #ifndef TBB_USE_DEBUG
             VALUE "OriginalFilename", "tbb.dll\0"
 #else
-            VALUE "OriginalFilename", "tbb_debug.dll\0"
+            VALUE "OriginalFilename", "tbbD.dll\0"
 #endif
             VALUE "ProductName", "Intel(R) Threading Building Blocks for Windows\0"
             VALUE "ProductVersion", TBB_VERSION "\0"

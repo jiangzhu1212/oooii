@@ -25,6 +25,7 @@
 #include <oBasis/oURI.h>
 #include <oBase/assert.h>
 #include <oBasis/oError.h>
+#include <oBasis/oInvalid.h>
 #include <cerrno>
 #include <cstdlib>
 #include <regex>

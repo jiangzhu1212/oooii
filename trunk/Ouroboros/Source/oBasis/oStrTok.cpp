@@ -26,7 +26,6 @@
 #include <oBase/assert.h>
 #include <oBase/byte.h>
 #include <oBase/string.h>
-#include <oBasis/oInt.h>
 #include <cctype>
 #include <cerrno>
 #include <iterator>

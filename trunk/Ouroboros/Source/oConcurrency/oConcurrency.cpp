@@ -32,7 +32,7 @@ namespace oConcurrency {
 		{
 		public:
 			const char* name() const override { return "container"; }
-			std::string message(value_type _ErrCode) const override
+			std::string message(int _ErrCode) const override
 			{
 				switch (_ErrCode)
 				{
@@ -46,7 +46,7 @@ namespace oConcurrency {
 		{
 		public:
 			const char* name() const override { return "threadpool"; }
-			std::string message(value_type _ErrCode) const override
+			std::string message(int _ErrCode) const override
 			{
 				switch (_ErrCode)
 				{

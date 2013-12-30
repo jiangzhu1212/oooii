@@ -88,7 +88,8 @@ bool oFileCacheImpl::Retrieve(path_string& _Path, const oBuffer** _Buffer) threa
 	fileReader->GetDesc(&fileDesc);
 
 	intrusive_ptr<oBuffer> buffer;
-	if(!oBufferCreate("oFileCache entry buffer", oBuffer::New(oSizeT(fileDesc.Size)), oSizeT(fileDesc.Size), oBuffer::Delete, &buffer))
+	oCHECK_SIZE(size_t, fileDesc.Size);
+	if(!oBufferCreate("oFileCache entry buffer", oBuffer::New(static_cast<size_t>(fileDesc.Size)), static_cast<size_t>(fileDesc.Size), oBuffer::Delete, &buffer))
 		return oErrorSetLast(std::errc::invalid_argument, "Could not create an oBuffer to hold the file %s", _Path);
 		
 	oSTREAM_READ r;

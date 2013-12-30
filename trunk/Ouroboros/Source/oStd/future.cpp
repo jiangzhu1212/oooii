@@ -24,6 +24,8 @@
  **************************************************************************/
 #include <oStd/future.h>
 
+#ifndef oHAS_WORKSTEALING_FUTURE
+
 namespace oStd
 {
 	namespace future_detail
@@ -32,7 +34,7 @@ namespace oStd
 		{
 		public:
 			const char* name() const { return "future"; }
-			std::string message(value_type _ErrCode) const
+			std::string message(int _ErrCode) const
 			{
 				switch (_ErrCode)
 				{
@@ -64,3 +66,5 @@ namespace oStd
 	}
 
 } // namespace oStd
+
+#endif

@@ -50,7 +50,7 @@ namespace
 		void InitiateReceive(threadsafe oSocket* _pSocket)
 		{
 			LastTimeStamp = ouro::timer::now_ms();
-			_pSocket->Recv(&ReceiveBuffer[0], oInt(oCOUNTOF(ReceiveBuffer)));
+			_pSocket->Recv(&ReceiveBuffer[0], static_cast<int>(oCOUNTOF(ReceiveBuffer)));
 		}
 
 		bool ShouldCloseSocket(const threadsafe oSocket* _pSocket) { return bCloseSocket || ouro::timer::now_ms() - LastTimeStamp > HTTPRequestTimeoutMS; }

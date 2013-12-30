@@ -28,7 +28,6 @@
 #include <oBase/byte.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oBasis/oError.h>
-#include <oBasis/oInt.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oMath.h>
 #include <vector>
@@ -175,7 +174,8 @@ template<typename T> bool oCalcVertexNormalsT(TVEC3<T>* _pVertexNormals, const u
 	if (!oCalcFaceNormals(data(faceNormals), _pIndices, _NumberOfIndices, _pPositions, _NumberOfVertices, _CCW))
 		return false;
 
-	const uint nFaces = oUInt(_NumberOfIndices) / 3;
+	oCHECK_SIZE(unsigned int, _NumberOfIndices);
+	const unsigned int nFaces = static_cast<unsigned int>(_NumberOfIndices) / 3;
 
 	const size_t REASONABLE_MAX_FACES_PER_VERTEX = 32;
 	std::vector<fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>> trianglesUsedByVertexA(_NumberOfVertices);
@@ -220,10 +220,13 @@ template<typename T> bool oCalcVertexNormalsT(TVEC3<T>* _pVertexNormals, const u
 
 		oCalcVertexNormalsT_AverageFaceNormals(trianglesUsedByVertex, faceNormals, _pVertexNormals, _NumberOfVertices, _OverwriteAll);
 
-		uint MaxValence = 0;
+		unsigned int MaxValence = 0;
 		// print out why we ended up in this path...
-		for (uint i = 0; i < _NumberOfVertices; i++)
-			MaxValence = __max(MaxValence, oUInt(trianglesUsedByVertex[i].size()));
+		for (size_t i = 0; i < _NumberOfVertices; i++)
+		{
+			oCHECK_SIZE(unsigned int, trianglesUsedByVertex[i].size());
+			MaxValence = __max(MaxValence, static_cast<unsigned int>(trianglesUsedByVertex[i].size()));
+		}
 		oTRACE("debug-slow path in normals caused by reasonable max valence (%u) being exceeded. Actual valence: %u", REASONABLE_MAX_FACES_PER_VERTEX, MaxValence);
 	}
 

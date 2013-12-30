@@ -344,13 +344,17 @@ bool uses_gpu_compositing()
 
 void enable_gpu_compositing(bool _Enable, bool _Force)
 {
-	if (_Enable && _Force && !uses_gpu_compositing())
-	{
-		::system("%SystemRoot%\\system32\\rundll32.exe %SystemRoot%\\system32\\shell32.dll,Control_RunDLL %SystemRoot%\\system32\\desk.cpl desk,@Themes /Action:OpenTheme /file:\"C:\\Windows\\Resources\\Themes\\aero.theme\"");
-		this_thread::sleep_for(oSeconds(31)); // Windows takes about 30 sec to settle after doing this.
-	}
-	else	
-		oVB(DwmEnableComposition(_Enable ? DWM_EC_ENABLECOMPOSITION : DWM_EC_DISABLECOMPOSITION));
+	#if NTDDI_VERSION < _WIN32_WINNT_WIN8
+		if (_Enable && _Force && !uses_gpu_compositing())
+		{
+			::system("%SystemRoot%\\system32\\rundll32.exe %SystemRoot%\\system32\\shell32.dll,Control_RunDLL %SystemRoot%\\system32\\desk.cpl desk,@Themes /Action:OpenTheme /file:\"C:\\Windows\\Resources\\Themes\\aero.theme\"");
+			this_thread::sleep_for(oSeconds(31)); // Windows takes about 30 sec to settle after doing this.
+		}
+		else	
+			oVB(DwmEnableComposition(_Enable ? DWM_EC_ENABLECOMPOSITION : DWM_EC_DISABLECOMPOSITION));
+	#else
+		oTHROW(function_not_supported, "No programatic control of GPU compositing in Windows 8 and beyond.");
+	#endif
 }
 
 bool is_remote_session()
@@ -483,7 +487,7 @@ void set_privilege(privilege _Privilege, bool _Enabled)
 
 // starting suspended can BSOD the machine, be careful
 //#define DEBUG_EXECUTED_PROCESS
-int spawn(const char* _CommandLine
+int spawn_for(const char* _CommandLine
 	, const std::function<void(char* _Line)>& _GetLine
 	, bool _ShowWindow
 	, unsigned int _ExecutionTimeout)
@@ -562,7 +566,7 @@ int spawn(const char* _CommandLine
 	, const std::function<void(char* _Line)>& _GetLine
 	, bool _ShowWindow)
 {
-	return spawn(_CommandLine, _GetLine, _ShowWindow, INFINITE);
+	return spawn_for(_CommandLine, _GetLine, _ShowWindow, INFINITE);
 }
 
 void spawn_associated_application(const char* _DocumentName, bool _ForEdit)

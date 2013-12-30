@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oKinect/oKinect.h>
+#include <oBasis/oInvalid.h>
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oKINECT_FEATURES)
 	oRTTI_ENUM_BEGIN_VALUES(oKINECT_FEATURES)

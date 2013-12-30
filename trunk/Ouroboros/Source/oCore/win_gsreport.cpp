@@ -93,7 +93,10 @@ DECLSPEC_SELECTANY UINT_PTR __security_cookie_complement = (UINT_PTR)~(DEFAULT_S
 #endif  /* defined (_CRTBLD) && !defined (_SYSCRT) */
 
 #if defined (_AMD64_)
-#define UNW_FLAG_NHANDLER 0x00
+
+	#ifndef UNW_FLAG_NHANDLER
+		#define UNW_FLAG_NHANDLER 0x00
+	#endif
 
 #elif defined (_IA64_)
 

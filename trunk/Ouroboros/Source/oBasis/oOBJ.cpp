@@ -167,7 +167,8 @@ static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
 	move_past_line_whitespace(&_F);
 	oOBJ_FACE face;
 	face.NumIndices = 0;
-	face.GroupIndex = oUInt(_pElements->Groups.size());
+	oCHECK_SIZE(unsigned int, _pElements->Groups.size());
+	face.GroupIndex = static_cast<unsigned int>(_pElements->Groups.size());
 	while (face.NumIndices < 4 && *_F != 0 && !is_newline(*_F))
 	{
 		bool foundSlash = false;
@@ -187,9 +188,9 @@ static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
 				unsigned int NumElements = 0;
 				switch (element)
 				{
-					case oOBJ_POSITIONS: NumElements = oUInt(_pElements->Positions.size()); break;
-					case oOBJ_TEXCOORDS: NumElements = oUInt(_pElements->Texcoords.size()); break;
-					case oOBJ_NORMALS: NumElements = oUInt(_pElements->Normals.size()); break;
+					case oOBJ_POSITIONS: oCHECK_SIZE(unsigned int, _pElements->Positions.size()); NumElements = static_cast<unsigned int>(_pElements->Positions.size()); break;
+					case oOBJ_TEXCOORDS: oCHECK_SIZE(unsigned int, _pElements->Texcoords.size()); NumElements = static_cast<unsigned int>(_pElements->Texcoords.size()); break;
+					case oOBJ_NORMALS: oCHECK_SIZE(unsigned int, _pElements->Normals.size()); NumElements = static_cast<unsigned int>(_pElements->Normals.size()); break;
 					oNODEFAULT;
 				}
 				ZeroBasedIndexFromFile = NumElements + NegativeIndex;
@@ -315,8 +316,9 @@ static void ReduceElements(const oOBJ_INIT& _Init
 			if (LastGroupIndex != oInvalid)
 			{
 				oOBJ_GROUP& LastGroup = _pSinglyIndexedElements->Groups[LastGroupIndex];
-				LastGroup.Range.num_primitives = oUInt(_pIndices->size() / 3) - LastGroup.Range.start_primitive;
-				Group.Range.start_primitive = oUInt(_pIndices->size() / 3);
+				oCHECK_SIZE(unsigned int, _pIndices->size());
+				LastGroup.Range.num_primitives = static_cast<unsigned int>(_pIndices->size() / 3) - LastGroup.Range.start_primitive;
+				Group.Range.start_primitive = static_cast<unsigned int>(_pIndices->size() / 3);
 			}
 			LastGroupIndex = Face.GroupIndex;
 		}
@@ -328,7 +330,8 @@ static void ReduceElements(const oOBJ_INIT& _Init
 
 			if (it == _pIndexMap->end())
 			{
-				unsigned int NewIndex = oUInt(_pSinglyIndexedElements->Positions.size());
+				oCHECK_SIZE(unsigned int, _pSinglyIndexedElements->Positions.size());
+				unsigned int NewIndex = static_cast<unsigned int>(_pSinglyIndexedElements->Positions.size());
 				_pSinglyIndexedElements->Positions.push_back(_SourceElements.Positions[Face.Index[p][oOBJ_POSITIONS]]);
 			
 				if (!_SourceElements.Normals.empty())
@@ -388,11 +391,13 @@ static void ReduceElements(const oOBJ_INIT& _Init
 	// close out last group
 	unsigned int LastFaceGroupIndex = _SourceElements.Faces.back().GroupIndex;
 	ouro::gpu::vertex_range& r = _pSinglyIndexedElements->Groups[LastFaceGroupIndex].Range;
-	r.num_primitives = oUInt(_pIndices->size() / 3) - r.start_primitive;
+	oCHECK_SIZE(unsigned int, _pIndices->size());
+	r.num_primitives = static_cast<unsigned int>(_pIndices->size() / 3) - r.start_primitive;
 
 	// Go back through groups and calc min/max verts
+	oCHECK_SIZE(unsigned int, _pSinglyIndexedElements->Positions.size());
 	oFOR(oOBJ_GROUP& g, _pSinglyIndexedElements->Groups)
-		oCalcMinMaxVertices(data(*_pIndices), g.Range.start_primitive*3, g.Range.num_primitives*3, oUInt(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
+		oCalcMinMaxVertices(data(*_pIndices), g.Range.start_primitive*3, g.Range.num_primitives*3, static_cast<unsigned int>(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
 }
 
 static uint oOBJGetVertexElements(oGPU_VERTEX_ELEMENT* _pElements, uint _MaxNumElements, const oOBJ_DESC& _OBJDesc)
@@ -496,7 +501,7 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 		if (IndexMapMallocBytes)
 		{
 			mstring reserved, additional;
-			oTRACE("oOBJ: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), format_commas(additional, (uint)oUInt(IndexMapMallocBytes / sizeof(unsigned int))), format_commas(reserved, _Init.EstimatedNumVertices));
+			oTRACE("oOBJ: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), format_commas(additional, static_cast<unsigned int>(IndexMapMallocBytes / sizeof(unsigned int))), format_commas(reserved, _Init.EstimatedNumVertices));
 		}
 	#endif
 
@@ -549,7 +554,9 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 			sstring StrTime;
 			double SolverTime = 0.0;
 			oTRACE("Calculating texture coordinates... (%s)", oSAFESTRN(_OBJPath));
-			if (!oCalcTexcoords(VertexElements.Bound, data(Indices), oUInt(Indices.size()), data(VertexElements.Positions), data(VertexElements.Texcoords), oUInt(VertexElements.Texcoords.size()), &SolverTime))
+			oCHECK_SIZE(unsigned int, Indices.size());
+			oCHECK_SIZE(unsigned int, VertexElements.Texcoords.size());
+			if (!oCalcTexcoords(VertexElements.Bound, data(Indices), static_cast<unsigned int>(Indices.size()), data(VertexElements.Positions), data(VertexElements.Texcoords), static_cast<unsigned int>(VertexElements.Texcoords.size()), &SolverTime))
 			{
 				VertexElements.Texcoords.clear();
 				oTRACE("Calculating texture coordinates failed. %s (%s)", oErrorGetLastString(), _OBJPath);
@@ -578,9 +585,12 @@ void oOBJImpl::GetDesc(oOBJ_DESC* _pDesc) const
 	_pDesc->pGroups = data(VertexElements.Groups);
 	_pDesc->pVertexElements = GPUVertexElements;
 	_pDesc->NumVertexElements = NumGPUVertexElements;
-	_pDesc->NumVertices = oUInt(VertexElements.Positions.size());
-	_pDesc->NumIndices = oUInt(Indices.size());
-	_pDesc->NumGroups = oUInt(VertexElements.Groups.size());
+	oCHECK_SIZE(unsigned int, VertexElements.Positions.size());
+	_pDesc->NumVertices = static_cast<unsigned int>(VertexElements.Positions.size());
+	oCHECK_SIZE(unsigned int, Indices.size());
+	_pDesc->NumIndices = static_cast<unsigned int>(Indices.size());
+	oCHECK_SIZE(unsigned int, VertexElements.Groups.size());
+	_pDesc->NumGroups = static_cast<unsigned int>(VertexElements.Groups.size());
 	_pDesc->Bound = VertexElements.Bound;
 }
 
@@ -884,7 +894,8 @@ void oMTLImpl::GetDesc(oMTL_DESC* _pDesc) const threadsafe
 
 	_pDesc->MTLPath = MTLPath;
 	_pDesc->pMaterials = data(m);
-	_pDesc->NumMaterials = oUInt(m.size());
+	oCHECK_SIZE(unsigned int, m.size());
+	_pDesc->NumMaterials = static_cast<unsigned int>(m.size());
 }
 
 bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** _ppMTL)

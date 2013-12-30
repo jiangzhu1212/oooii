@@ -36,7 +36,7 @@ static void test_index_allocator()
 {
 	const size_t CAPACITY = 4;
 	const size_t ARENA_BYTES = CAPACITY * IndexAllocatorT::index_size;
-	std::vector<char> buffer(1024, 0xcc);
+	std::vector<unsigned char> buffer(1024, 0xcc);
 
 	IndexAllocatorT a(&buffer[0], ARENA_BYTES);
 

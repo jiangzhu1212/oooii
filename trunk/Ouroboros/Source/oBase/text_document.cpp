@@ -33,7 +33,7 @@ namespace ouro
 		{
 		public:
 			const char* name() const override { return "text_document"; }
-			std::string message(value_type _ErrCode) const override
+			std::string message(int _ErrCode) const override
 			{
 				switch (_ErrCode)
 				{

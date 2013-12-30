@@ -71,7 +71,7 @@ class scc_category_impl : public std::error_category
 {
 public:
 	const char* name() const override { return "future"; }
-	std::string message(value_type _ErrCode) const override
+	std::string message(int _ErrCode) const override
 	{
 		switch (_ErrCode)
 		{

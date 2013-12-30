@@ -25,6 +25,9 @@
  **************************************************************************/
 #include <oPlatform/oRegistry.h>
 #include <oConcurrency/mutex.h>
+#ifdef oHAS_MAKE_EXCEPTION_PTR
+	#define copy_exception make_exception_ptr
+#endif
 #include <tbb/concurrent_hash_map.h>
 
 using namespace ouro;
@@ -43,7 +46,7 @@ struct oRegistryTBB : oRegistry
 
 	void SetEpoch(int _Epoch) threadsafe override { Epoch = _Epoch; }
 	int GetEpoch() const threadsafe override { return Epoch; }
-	int GetNumEntries() threadsafe const override { return oInt(hash().size()); }
+	int GetNumEntries() threadsafe const override { return static_cast<int>(hash().size()); }
 	void Clear() threadsafe override { lock_guard<shared_mutex> lock(TopologyMutex); hash().clear(); }
 	bool Exists(const oURI& _URIReference) const threadsafe override { return hash().count(_URIReference) == 1; }
 	bool Add(const oURI& _URIReference, oInterface* _pInterface, int _Status = oInvalid) threadsafe override;

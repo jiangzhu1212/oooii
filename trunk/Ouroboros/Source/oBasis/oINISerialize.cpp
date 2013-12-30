@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oINISerialize.h>
 #include <oBasis/oError.h>
-#include <oBasis/oInt.h>
 #include <oBasis/oStrTok.h>
 #include <oBase/fixed_string.h>
 #include <vector>
@@ -53,7 +52,8 @@ bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const ouro::ini& 
 			case oRTTI_TYPE_ENUM:
 			case oRTTI_TYPE_ATOM:
 			{
-				if (f->RTTI->FromString(_INI.find_value(_Section, f->Name), f->GetDestPtr(_pDestination), oInt(f->Size)))
+				oCHECK_SIZE(int, f->Size);
+				if (f->RTTI->FromString(_INI.find_value(_Section, f->Name), f->GetDestPtr(_pDestination), static_cast<int>(f->Size)))
 					notFound = false;
 				else
 					FromStringFailed.push_back(f->Name);
@@ -77,7 +77,8 @@ bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const ouro::ini& 
 						{
 							if (!f->RTTI->SetItemCount(f->GetDestPtr(_pDestination), f->Size, i+1))
 								FromStringFailed.push_back("item");
-							if (!itemRTTI->FromString(token, f->RTTI->GetItemPtr(f->GetDestPtr(_pDestination), f->Size, i++), oInt(f->RTTI->GetItemSize())))
+							oCHECK_SIZE(int, f->RTTI->GetItemSize());
+							if (!itemRTTI->FromString(token, f->RTTI->GetItemPtr(f->GetDestPtr(_pDestination), f->Size, i++), static_cast<int>(f->RTTI->GetItemSize())))
 								FromStringFailed.push_back(f->Name);
 							break;
 						}

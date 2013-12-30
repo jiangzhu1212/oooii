@@ -156,7 +156,7 @@ public:
 		, va_list _Args) const;
 
 	inline int add_emitter(const emitter& _Emitter) { LOCK(); return (int)sparse_set(Emitters, _Emitter); }
-	inline void remove_emitter(int _Emitter) { LOCK(); safe_set(Emitters, _Emitter, 0); }
+	inline void remove_emitter(int _Emitter) { LOCK(); safe_set(Emitters, _Emitter, nullptr); }
 	void set_log(const path& _Path);
 	inline path get_log() const { return filesystem::get_path(Log); }
 	inline void set_prompter(const prompter& _Prompter) { LOCK(); Prompter = _Prompter; }

@@ -49,7 +49,7 @@ struct PLATFORM_oHTTP : public oTest
 				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
-				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
+				_pResponse->Content.Length = static_cast<unsigned int>(strlen(indexHtmlPage));
 			}
 			else
 			{
@@ -60,7 +60,7 @@ struct PLATFORM_oHTTP : public oTest
 				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->StatusLine.StatusCode = oHTTP_INTERNAL_SERVER_ERROR;
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
-				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
+				_pResponse->Content.Length = static_cast<unsigned int>(strlen(indexHtmlPage));
 			}
 		}
 		else
@@ -74,7 +74,7 @@ struct PLATFORM_oHTTP : public oTest
 				const void* pBuffer = nullptr;
 				size_t size;
 				GetDescoooii_ico(&name, &pBuffer, &size);
-				_pResponse->Content.Length = oUInt(size);
+				_pResponse->Content.Length = static_cast<unsigned int>(size);
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
 				_pResponse->Content.Type = oMIME_IMAGE_ICO;
 				_pResponse->Content.pData = new char[_pResponse->Content.Length];
@@ -89,7 +89,7 @@ struct PLATFORM_oHTTP : public oTest
 				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
-				_pResponse->Content.Length = oUInt(strlen(indexHtmlPage));
+				_pResponse->Content.Length = static_cast<unsigned int>(strlen(indexHtmlPage));
 			}
 			else
 				_pResponse->StatusLine.StatusCode = oHTTP_NOT_FOUND;
@@ -105,10 +105,10 @@ struct PLATFORM_oHTTP : public oTest
 					_pResponse->StatusLine.StatusCode = oHTTP_OK;
 					oSTREAM_DESC desc;
 					FileReader->GetDesc(&desc);
-					_pResponse->Content.Length = oUInt(desc.Size);
+					_pResponse->Content.Length = static_cast<unsigned int>(desc.Size);
 
 					_pResponse->Content.pData = new char[(int)desc.Size];
-					memset(_pResponse->Content.pData, NULL, oSizeT(desc.Size));
+					memset(_pResponse->Content.pData, NULL, static_cast<size_t>(desc.Size));
 					oSTREAM_READ r;
 					r.pData = _pResponse->Content.pData;
 					r.Range = desc;
@@ -186,9 +186,9 @@ struct PLATFORM_oHTTP : public oTest
 				FileReader->GetDesc(&fileDesc);
 
 				void *pImageFile = new char[(int)fileDesc.Size];
-				memset(pImageFile, NULL, oSizeT(fileDesc.Size));
+				memset(pImageFile, NULL, static_cast<size_t>(fileDesc.Size));
 				ouro::intrusive_ptr<oBuffer> postImageBuffer;
-				oBufferCreate("test post buffer", pImageFile, oSizeT(fileDesc.Size), oBuffer::Delete, &postImageBuffer);
+				oBufferCreate("test post buffer", pImageFile, static_cast<size_t>(fileDesc.Size), oBuffer::Delete, &postImageBuffer);
 
 				oSTREAM_READ r;
 				r.pData = pImageFile;
@@ -297,7 +297,7 @@ struct PLATFORM_oHTTPLarge : public oTest
 			std::generate(begin(TestBuffer), end(TestBuffer), []() { return rand();});
 
 			// Test Head: Head should only return the header for the request.
-			Client->Post("/test", oMIME_APPLICATION_XDMP, TestBuffer.data(), oInt(TestBuffer.size()), &response, nullptr, 0);
+			Client->Post("/test", oMIME_APPLICATION_XDMP, TestBuffer.data(), static_cast<int>(TestBuffer.size()), &response, nullptr, 0);
 			oTESTB(response.StatusLine.StatusCode == oHTTP_OK, "Server did not accept the large buffer");
 		}
 

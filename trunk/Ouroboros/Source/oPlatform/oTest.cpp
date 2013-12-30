@@ -808,7 +808,7 @@ void oTestManager_Impl::PrintDesc()
 	for (unsigned int i = 0; i < DriverDescs.size(); i++)
 		Report(oConsoleReporting::INFO, "Video Driver %u: %s v%s\n", i, DriverDescs[i].description.c_str(), to_string2(StrVer, DriverDescs[i].version));
 
-	auto scc = make_scc(scc_protocol::svn, std::bind(system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
+	auto scc = make_scc(scc_protocol::svn, std::bind(system::spawn_for, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
 
 	bool oSystemExecute(const char* _CommandLine
 		, const std::function<void(char* _Line)>& _GetLine = nullptr

@@ -25,6 +25,7 @@
 #include <oBasis/oError.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oRTTI.h>
+#include <oBasis/oInvalid.h>
 #include "oBasisTestCommon.h"
 #include <oCompute/linear_algebra.h>
 #include <oCompute/oAABox.h>
@@ -159,17 +160,17 @@ bool oBasisTest_oRTTI()
 	oRTTI_Test.Constructor(oRTTI_OF(Test), &test);
 
 	const oRTTI_ATTR* f = oRTTI_OF(Test).GetAttr(4);
-	oTESTB(f->RTTI->FromString("012345678901234567890123456789012345678901234567890123456789012", f->GetDestPtr(&test), oInt(f->Size)), "Failed FromString(test.Member4)");
+	oTESTB(f->RTTI->FromString("012345678901234567890123456789012345678901234567890123456789012", f->GetDestPtr(&test), static_cast<int>(f->Size)), "Failed FromString(test.Member4)");
 	// @oooii-jeffrey: Disabling this test as oStrcpy (strcpy_s) asserts, so we 
 	// can't handle that
-	//oTESTB(!f->RTTI->FromString("0123456789012345678901234567890123456789012345678901234567890123", f->GetDestPtr(&test), oInt(f->Size)), "Should have failed FromString(test.Member4)");
+	//oTESTB(!f->RTTI->FromString("0123456789012345678901234567890123456789012345678901234567890123", f->GetDestPtr(&test), static_cast<int>(f->Size)), "Should have failed FromString(test.Member4)");
 
 	sstring TestMember4;
 	f->RTTI->ToString(TestMember4, f->GetDestPtr(&test));
 	oTESTB(0==strcmp(TestMember4.c_str(), "012345678901234567890123456789012345678901234567890123456789012"), "Failed ToString(test.Member4)");
 
 	f = oRTTI_OF(Test).GetAttr(6);
-	f->RTTI->FromString("	 1.0 2.0", f->GetDestPtr(&test), oInt(f->Size));
+	f->RTTI->FromString("	 1.0 2.0", f->GetDestPtr(&test), static_cast<int>(f->Size));
 	oTESTB(ouro::equal(test.Float2Member, float2(1.0f, 2.0f)), "Failed FromString(test.Float2Member)");
 
 	sstring str;
@@ -177,7 +178,7 @@ bool oBasisTest_oRTTI()
 	oTESTB(!strcmp("1.000000 2.000000", str), "Failed ToString(test.Float2Member)");
 
 	f = oRTTI_OF(Test).GetAttr(7);
-	f->RTTI->FromString("	 1.0 2.0  3.0", f->GetDestPtr(&test), oInt(f->Size));
+	f->RTTI->FromString("	 1.0 2.0  3.0", f->GetDestPtr(&test), static_cast<int>(f->Size));
 	oTESTB(ouro::equal(test.Float3Member, float3(1.0f, 2.0f, 3.0f)), "Failed FromString(test.Float3Member)");
 
 	str.clear();
@@ -185,7 +186,7 @@ bool oBasisTest_oRTTI()
 	oTESTB(!strcmp("1.000000 2.000000 3.000000", str), "Failed ToString(test.Float3Member)");
 
 	f = oRTTI_OF(Test).GetAttr(8);
-	f->RTTI->FromString("	 1.0   2.0  3.0 4.0", f->GetDestPtr(&test), oInt(f->Size));
+	f->RTTI->FromString("	 1.0   2.0  3.0 4.0", f->GetDestPtr(&test), static_cast<int>(f->Size));
 	oTESTB(ouro::equal(test.Float4Member, float4(1.0f, 2.0f, 3.0f, 4.0f)), "Failed FromString(test.Float4Member)");
 
 	str.clear();
@@ -193,7 +194,7 @@ bool oBasisTest_oRTTI()
 	oTESTB(!strcmp("1.000000 2.000000 3.000000 4.000000", str), "Failed ToString(test.Float4Member)");
 
 	f = oRTTI_OF(Test).GetAttr(9);
-	f->RTTI->FromString("4.0 3.0 2.0 1.0", f->GetDestPtr(&test), oInt(f->Size));
+	f->RTTI->FromString("4.0 3.0 2.0 1.0", f->GetDestPtr(&test), static_cast<int>(f->Size));
 	oTESTB(ouro::equal(test.PlaneMember, oPlanef(float4(4.0f, 3.0f, 2.0f, 1.0f))), "Failed FromString(test.PlaneMember)");
 
 	str.clear();
@@ -201,7 +202,7 @@ bool oBasisTest_oRTTI()
 	oTESTB(!strcmp("4.000000 3.000000 2.000000 1.000000", str), "Failed ToString(test.PlaneMember)");
 
 	f = oRTTI_OF(Test).GetAttr(10);
-	f->RTTI->FromString("1.1 2.2 3.3 4.4", f->GetDestPtr(&test), oInt(f->Size));
+	f->RTTI->FromString("1.1 2.2 3.3 4.4", f->GetDestPtr(&test), static_cast<int>(f->Size));
 	oTESTB(all(test.SphereMember == oSpheref(float3(1.1f, 2.2f, 3.3f), 4.4f)), "Failed FromString(test.SphereMember)");
 
 	str.clear();
@@ -209,7 +210,7 @@ bool oBasisTest_oRTTI()
 	oTESTB(!strcmp("1.100000 2.200000 3.300000 4.400000", str), "Failed ToString(test.SphereMember)");
 
 	f = oRTTI_OF(Test).GetAttr(11);
-	f->RTTI->FromString("	 1.0   2.0  3.0 4.0 5.0   6.0", f->GetDestPtr(&test), oInt(f->Size));
+	f->RTTI->FromString("	 1.0   2.0  3.0 4.0 5.0   6.0", f->GetDestPtr(&test), static_cast<int>(f->Size));
 	oTESTB(ouro::equal(test.BoxMember, oAABoxf(oAABoxf::min_max, float3(1.0f, 2.0f, 3.0f), float3(4.0f, 5.0f, 6.0f))), "Failed FromString(test.BoxMember)");
 
 	str.clear();

@@ -135,6 +135,20 @@ const char* as_string(const gpu::primitive_type::value& _Value)
 
 STR_SUPPORT(gpu::primitive_type::value, gpu::primitive_type::count);
 
+const char* as_string(const gpu::resource_type::value& _Value)
+{
+	switch (_Value)
+	{
+		case gpu::resource_type::buffer: return "buffer";
+		case gpu::resource_type::texture: return "texture";
+
+		default: break;
+	}
+	return "?";
+}
+
+STR_SUPPORT(gpu::resource_type::value, gpu::resource_type::count);
+
 const char* as_string(const gpu::buffer_type::value& _Value)
 {
 	switch (_Value)
@@ -469,14 +483,6 @@ bool from_string(gpu::vertex_trait::value* _pValue, const char* _StrSource)
 
 using namespace ouro;
 
-oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGPU_RESOURCE_TYPE)
-	oRTTI_ENUM_BEGIN_VALUES(oGPU_RESOURCE_TYPE)
-		oRTTI_VALUE(oGPU_BUFFER)
-		oRTTI_VALUE(oGPU_MESH)
-		oRTTI_VALUE(oGPU_TEXTURE)
-	oRTTI_ENUM_END_VALUES(oGPU_RESOURCE_TYPE)
-oRTTI_ENUM_END_DESCRIPTION(oGPU_RESOURCE_TYPE)
-
 static_assert(sizeof(ouro::gpu::vertex_range) == 16, "unexpected struct packing for vertex_range");
 static_assert(sizeof(fourcc) == 4, "unexpected struct packing for fourcc");
 static_assert(sizeof(ouro::resized_type<ouro::surface::format, short>) == 2, "unexpected struct packing for oResizedType<ouro::surface::format, short>");
@@ -546,7 +552,7 @@ uint oGPUCalcNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumEleme
 	uchar nSlots = 0;
 
 	#ifdef _DEBUG
-		uint lastSlot = oInvalid;
+		uint lastSlot = ~0u;
 	#endif
 
 	for (uint i = 0; i < _NumElements; i++)
@@ -554,9 +560,9 @@ uint oGPUCalcNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumEleme
 		nSlots = __max(nSlots, _pElements[i].InputSlot+1);
 
 		#ifdef _DEBUG
-			oASSERT(lastSlot == oInvalid 
+			oASSERT(lastSlot == ~0u 
 				|| lastSlot == _pElements[i].InputSlot 
-				|| lastSlot == oUInt(_pElements[i].InputSlot - 1), "Non-packed elements");
+				|| lastSlot == static_cast<unsigned int>(_pElements[i].InputSlot - 1), "Non-packed elements");
 			lastSlot = _pElements[i].InputSlot;
 		#endif
 	}

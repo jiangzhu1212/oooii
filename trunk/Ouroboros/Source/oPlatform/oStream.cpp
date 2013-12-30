@@ -449,12 +449,12 @@ struct oStreamReaderWindowedImpl : oStreamReader
 
 	bool WindowRange(const oSTREAM_RANGE& _Range, oSTREAM_RANGE* _pWindowedRange) threadsafe
 	{
-		oULLong Start = *WindowStart + _Range.Offset; 
+		unsigned long long Start = *WindowStart + _Range.Offset; 
 
 		if(Start > *WindowEnd)
 			return false;
 
-		oULLong End = Start + _Range.Size;
+		unsigned long long End = Start + _Range.Size;
 
 		if(End > *WindowEnd)
 			return false;

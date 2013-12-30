@@ -125,7 +125,7 @@ int main(int argc, const char* argv[])
 		unsigned int Revision = opt.Revision;
 		if (opt.AutoRevision)
 		{
-			auto scc = make_scc(scc_protocol::svn, std::bind(ouro::system::spawn, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
+			auto scc = make_scc(scc_protocol::svn, std::bind(ouro::system::spawn_for, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
 			path DevPath = ouro::filesystem::dev_path();
 			printf("scc");
 			lstring RevStr;

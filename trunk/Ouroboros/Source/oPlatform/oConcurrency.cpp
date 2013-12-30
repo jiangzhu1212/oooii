@@ -78,6 +78,9 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 	using namespace oConcurrency;
 	typedef oConcurrency::detail::task_group<allocator_t> task_group_t;
 #elif oHAS_TBB
+	#ifdef oHAS_MAKE_EXCEPTION_PTR
+		#define copy_exception make_exception_ptr
+	#endif
 	#include <tbb/tbb.h>
 	#include <tbb/task_scheduler_init.h>
 	using namespace tbb;
@@ -322,13 +325,15 @@ void oConcurrency::parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK&
 	#endif
 }
 
+void noop_fn() {}
+
 void oConcurrency::begin_thread(const char* _DebuggerName)
 {
 	ouro::debugger::thread_name(_DebuggerName);
 	#if oHAS_TBB
 		// Issuing a NOP task causes TBB to allocate bookkeeping for this thread's 
 		// memory which otherwise reports as a false-positive memory leak.
-		oStd::future<void> f = oStd::async([=] {});
+		oStd::future<void> f = oStd::async(noop_fn);
 		f.wait();
 	#endif
 }

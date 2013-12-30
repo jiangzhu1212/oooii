@@ -26,8 +26,6 @@
 #ifndef oRTTIForContainers_h
 #define oRTTIForContainers_h
 
-#include <oBasis/oInt.h>
-
 struct oRTTI_DATA_CONTAINER // : oRTTI
 {
 	struct INFO
@@ -86,7 +84,8 @@ template<typename ContainerT> bool oStdContainerSetItemCount(const oRTTI& _RTTI,
 
 template<typename ContainerT> int oStdContainerGetItemCount(const oRTTI& _RTTI, const ContainerT* _pStdContainer, int _ContainerSizeInBytes)
 {
-	return oInt(_pStdContainer->size());
+	oCHECK_SIZE(int, _pStdContainer->size());
+	return static_cast<int>(_pStdContainer->size());
 }
 
 template<typename ContainerT> void* oStdContainerGetItemPtr(const oRTTI& _RTTI, const ContainerT* _pStdContainer, int _ContainerSizeInBytes, int _Index)

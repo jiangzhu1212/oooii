@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oKinect/oKinectUtil.h>
 #include <oCore/windows/win_error.h>
+#include <oBasis/oInvalid.h>
 
 #ifdef oHAS_KINECT_SDK
 

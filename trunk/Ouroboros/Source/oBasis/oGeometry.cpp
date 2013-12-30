@@ -28,6 +28,7 @@
 #include <oStd/for.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>
+#include <oBasis/oInvalid.h>
 #include <oBasis/oOBJ.h>
 #include <oBasis/oRefCount.h>
 
@@ -396,8 +397,10 @@ struct oGeometry_Impl : public oGeometry
 		{
 			ouro::gpu::vertex_range r;
 			r.start_primitive = 0;
-			r.num_primitives = oUInt(Indices.size() / 3);
-			r.max_vertex = oUInt(Positions.size());
+			oCHECK_SIZE(unsigned int, Indices.size());
+			r.num_primitives = static_cast<unsigned int>(Indices.size() / 3);
+			oCHECK_SIZE(unsigned int, Positions.size());
+			r.max_vertex = static_cast<unsigned int>(Positions.size());
 			Ranges.push_back(r);
 		}
 

@@ -44,7 +44,6 @@
 #include <oBasis/oFilterChain.h>
 #include <oBasis/oGeometry.h>
 #include <oBasis/oInputMapper.h>
-#include <oBasis/oInt.h>
 #include <oBasis/oInterface.h>
 #include <oBasis/oInvalid.h>
 #include <oBasis/oLockedPointer.h>

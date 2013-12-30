@@ -695,7 +695,7 @@ void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 			float2 Ratio = float2(VizDesc.Size) / float2(int2(di.mode.width, di.mode.height));
 			float R = min(Ratio);
 			ouro::font_info fd;
-			fd.point_size = oInt(round(R * 50.0f));
+			fd.point_size = round(R * 50.0f);
 			hFont = oGDICreateFont(fd);
 			break;
 		}

@@ -33,9 +33,6 @@
 #include <CDErr.h>
 #include <Dbt.h>
 #include <SetupAPI.h>
-#include <dxerr.h>
-#include <d3d11.h>
-#include <d3dx11.h>
 
 namespace ouro {
 	namespace windows {

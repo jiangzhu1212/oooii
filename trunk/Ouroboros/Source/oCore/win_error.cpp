@@ -27,10 +27,15 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <dxerr.h>
 #include <d3d11.h>
-#include <d3dx11.h>
 #include <DShow.h>
+
+// dxerr is not just a part of Windows error HRESULT handling.
+#if NTDDI_VERSION < _WIN32_WINNT_WIN8
+	#include <dxerr.h>
+	#include <d3dx11.h>
+	#pragma comment(lib, "dxerr.lib")
+#endif
 
 // Use the Windows Vista UI look. If this causes issues or the dialog not to appear, try other values from processorAchitecture { x86 ia64 amd64 * }
 #pragma comment(linker, "\"/manifestdependency:type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
@@ -167,8 +172,10 @@ const char* as_string_HR_DX11(HRESULT _hResult)
 		case D3D11_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS: return "D3D11_ERROR_TOO_MANY_UNIQUE_STATE_OBJECTS";
 		case D3D11_ERROR_TOO_MANY_UNIQUE_VIEW_OBJECTS: return "D3D11_ERROR_TOO_MANY_UNIQUE_VIEW_OBJECTS";
 		case D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD: return "D3D11_ERROR_DEFERRED_CONTEXT_MAP_WITHOUT_INITIAL_DISCARD";
-		case D3DERR_INVALIDCALL: return "D3DERR_INVALIDCALL";
-		case D3DERR_WASSTILLDRAWING: return "D3DERR_WASSTILLDRAWING";
+		#if NTDDI_VERSION < _WIN32_WINNT_WIN8
+			case D3DERR_INVALIDCALL: return "D3DERR_INVALIDCALL";
+			case D3DERR_WASSTILLDRAWING: return "D3DERR_WASSTILLDRAWING";
+		#endif
 		default: break;
 	}
 	return as_string_HR_DXGI(_hResult);
@@ -208,7 +215,9 @@ static std::string message(HRESULT _hResult)
 		char buf[512];
 		const char* s = as_string_HR_DX11(_hResult);
 		if (*s == '?') s = as_string_HR_VFW(_hResult);
-		if (*s == '?') s = DXGetErrorStringA(_hResult);
+		#if NTDDI_VERSION < _WIN32_WINNT_WIN8
+			if (*s == '?') s = DXGetErrorStringA(_hResult);
+		#endif
 		if (*s == '?') { _snprintf_s(buf, sizeof(buf), "unrecognized error code 0x%08x", _hResult); s = buf; }
 		else msg = s;
 	}
@@ -222,7 +231,7 @@ class category_impl : public std::error_category
 {
 public:
 	const char* name() const { return "windows"; }
-	std::string message(value_type _ErrCode) const
+	std::string message(int _ErrCode) const
 	{
 		errno_t e = errno_from_hresult((HRESULT)_ErrCode);
 		if (e && e != ENOTRECOVERABLE)

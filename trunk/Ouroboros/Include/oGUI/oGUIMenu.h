@@ -31,7 +31,6 @@
 #define oGUIMenu_h
 
 #include <oGUI/oGUI.h>
-#include <oBasis/oRTTI.h>
 #include <oBase/fixed_string.h>
 #include <oBase/throw.h>
 #include <vector>

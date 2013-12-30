@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oRefCount.h>
+#include <oBasis/oInvalid.h>
 #include <oBasis/oXMLSerialize.h>
 #include <oConcurrency/mutex.h>
 #include <oConcurrency/thread_safe.h>
@@ -203,7 +204,8 @@ void oAirKeyboardImpl::RemoveSkeleton(int _ID) threadsafe
 int oAirKeyboardImpl::HookActions(const ouro::input::action_hook& _Hook) threadsafe
 {
 	lock_guard<shared_mutex> lockB(HooksMutex);
-	return oInt(sparse_set(oThreadsafe(Hooks), _Hook));
+	size_t index = sparse_set(oThreadsafe(Hooks), _Hook);
+	return static_cast<int>(index);
 }
 
 void oAirKeyboardImpl::UnhookActions(int _HookID) threadsafe

@@ -78,7 +78,7 @@ struct PLATFORM_FileSync : public oTest
 
 			static const uint128 ExpectedFileHash(13254728276562583748ull, 8059648572410507760ull);
 			oTESTB(TestSuccess, "Test failed, ReadFile->Read returned false");
-			oTESTB( ouro::murmur3( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
+			oTESTB( ouro::murmur3( TempFileBlob, static_cast<unsigned int>( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
 		}
 
 		// Now test writing data out then reading it back

@@ -84,9 +84,15 @@
 
 	#if _MSC_VER < 1700 // VS2012 has this c++11 feature. but sealed in VS2010 does the same thing.
 		#define final sealed
+	#elif _MSC_VER < 1800
+		#define oHAS_MEMBER_DELETE 1
+		#define oHAS_NOEXCEPT 1
+		#define oHAS_MAKE_EXCEPTION_PTR 1
 	#else
 		#define oHAS_MEMBER_DELETE 1
 		#define oHAS_NOEXCEPT 1
+		#define oHAS_THREAD_LOCAL 1
+		#define oHAS_MAKE_EXCEPTION_PTR 1
 	#endif
 
 #else
