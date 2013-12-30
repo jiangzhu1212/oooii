@@ -109,7 +109,7 @@ class filesystem_category_impl : public std::error_category
 {
 public:
 	const char* name() const override { return "filesystem"; }
-	std::string message(value_type _ErrCode) const override
+	std::string message(int _ErrCode) const override
 	{
 		return std::generic_category().message(_ErrCode);
 	}

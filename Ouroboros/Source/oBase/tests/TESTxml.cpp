@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/xml.h>
-#include <oBase/throw.h>
-
 #include <oBase/assert.h>
+#include <oBase/throw.h>
+#include <memory>
 
 namespace ouro {
 	namespace tests {

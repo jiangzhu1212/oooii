@@ -112,7 +112,7 @@ struct oStdHash<ouro::fixed_string<CHAR_T, CAPACITY>> : public std::unary_functi
 {
 	size_t operator()( const ouro::fixed_string<CHAR_T, CAPACITY>& _Key) const
 	{
-		uint128 Hash = ouro::murmur3(_Key.c_str(), oUInt(_Key.length()));
+		uint128 Hash = ouro::murmur3(_Key.c_str(), static_cast<unsigned int>(_Key.length()));
 		return *(size_t*)&Hash;
 	}
 };

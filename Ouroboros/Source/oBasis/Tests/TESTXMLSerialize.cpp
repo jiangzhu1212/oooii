@@ -24,8 +24,10 @@
  **************************************************************************/
 #include <oBasis/oURI.h>
 #include <oBasis/oError.h>
+#include <oBasis/oInvalid.h>
 #include <oBasis/oXMLSerialize.h>
 #include "oBasisTestCommon.h"
+#include <memory>
 #include <vector>
 
 using namespace ouro;
@@ -122,7 +124,7 @@ static bool TestArray()
 
 	oXMLReadCompound(&Test, oRTTI_OF(oXMLArrayTest), *XML, XML->root(), true);
 
-	for (int i=0; i<oInt(Test.IntValues.size()); ++i)
+	for (int i=0; i<static_cast<int>(Test.IntValues.size()); ++i)
 	{
 		oTESTB(i==Test.IntValues[i], "Error reading Array value at index %d, expected %d got %d",i,i,Test.IntValues[i]);
 	}
@@ -141,7 +143,7 @@ static bool TestEmbeddedArray()
 
 	oXMLReadCompound(&Test, oRTTI_OF(oXMLEmbeddedArrayTest), *XML, XML->first_child(XML->root(), "Parent"), true);
 
-	for (int i=0; i<oInt(Test.IntValues.size()); ++i)
+	for (int i=0; i<static_cast<int>(Test.IntValues.size()); ++i)
 	{
 		oTESTB(i==Test.IntValues[i], "Error reading Embedded Array value at index %d, expected %d got %d",i,i,Test.IntValues[i]);
 	}
@@ -160,7 +162,7 @@ static bool TestRawArray()
 
 	oXMLReadCompound(&Test, oRTTI_OF(oXMLRawArrayTest), *XML, XML->root(), true);
 
-	for (int i=0; i<oInt(Test.IntValues.size()); ++i)
+	for (int i=0; i<static_cast<int>(Test.IntValues.size()); ++i)
 	{
 		oTESTB(i==Test.IntValues[i], "Error reading Raw Array value at index %d, expected %d got %d",i,i,Test.IntValues[i]);
 	}

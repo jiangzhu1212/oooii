@@ -186,6 +186,16 @@ namespace primitive_type
 
 };}
 
+namespace resource_type
+{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+
+	buffer,
+	texture,
+
+	count,
+
+};}
+
 namespace buffer_type
 { oDECLARE_SMALL_ENUM(value, unsigned char) {
 	// Binding fit for rasterization HW. Using this requires a structure byte size
@@ -809,16 +819,6 @@ inline texture_type::value remove_render_target(const texture_type::value& _Type
 #include <oBasis/oPlatformFeatures.h>
 #include <oCompute/oAABox.h>
 
-enum oGPU_RESOURCE_TYPE
-{
-	oGPU_BUFFER, // generic RO, WO or RW non-texture buffer, or index/vertex buffer
-	oGPU_MESH, // description of a geometry using index and vertex buffers to form triangles
-	oGPU_TEXTURE, // buffer able to be bound as a rasterization target or HW sampled
-
-	oGPU_RESOURCE_TYPE_COUNT,
-};
-oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oGPU_RESOURCE_TYPE)
-
 // _____________________________________________________________________________
 // Structures that encapsulate parameters for common GPU-related operations
 
@@ -937,7 +937,7 @@ struct oGPU_PIPELINE_DESC : oGPU_STATIC_PIPELINE_DESC
 	{
 		DebugName = "oGPU_PIPELINE_DESC";
 		pElements = nullptr;
-		NumElements = oInvalid;
+		NumElements = ~0u;
 		InputType = ouro::gpu::primitive_type::unknown;
 		pVertexShader = nullptr;
 		pHullShader = nullptr;

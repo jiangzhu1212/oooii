@@ -30,6 +30,7 @@
 
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oInterface.h>
+#include <oBasis/oInvalid.h>
 #include <oCompute/oAABox.h>
 #include <oCompute/oComputeColor.h>
 

@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oBase/csv.h>
 #include <oBase/throw.h>
+#include <memory>
 
 namespace ouro {
 	namespace tests {

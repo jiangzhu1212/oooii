@@ -127,7 +127,7 @@ static bool oP4Execute(const char* _CommandLine, const char* _CheckValidString, 
 {
 	if (_P4ResponseString)
 		*_P4ResponseString = 0;
-	int ec = ouro::system::spawn(_CommandLine, [&](char* _Line) { if (_P4ResponseString) strlcat(_P4ResponseString, _Line, _SizeofP4ResponseString); }, false, _TimeoutMS);
+	int ec = ouro::system::spawn_for(_CommandLine, [&](char* _Line) { if (_P4ResponseString) strlcat(_P4ResponseString, _Line, _SizeofP4ResponseString); }, false, _TimeoutMS);
 	if (ec)
 		return oErrorSetLast(std::errc::io_error, "spawn '%s' returned %d", _CommandLine, ec); // pass through error
 	if (!_P4ResponseString)

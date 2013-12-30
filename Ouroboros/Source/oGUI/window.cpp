@@ -732,7 +732,8 @@ void window_impl::set_hotkeys(const ouro::basic_hotkey_info* _pHotKeys, size_t _
 		{
 			ACCEL* pAccels = this->new_array<ACCEL>(_NumHotKeys);
 			oWinAccelFromHotKeys(pAccels, pCopy, _NumHotKeys);
-			this->hAccel = CreateAcceleratorTable((LPACCEL)pAccels, oUInt(_NumHotKeys));
+			oCHECK_SIZE(unsigned int, _NumHotKeys);
+			this->hAccel = CreateAcceleratorTable((LPACCEL)pAccels, static_cast<unsigned int>(_NumHotKeys));
 			this->delete_array(pAccels);
 			this->delete_array(pCopy);
 		}
@@ -750,7 +751,8 @@ int window_impl::get_hotkeys(ouro::basic_hotkey_info* _pHotKeys, size_t _MaxNumH
 			int nHotKeys = CopyAcceleratorTable(hAccel, nullptr, 0);
 			ACCEL* pAccels = w->new_array<ACCEL>(nHotKeys);
 			CopyAcceleratorTable(hAccel, pAccels, nHotKeys);
-			int NumCopied = __min(nHotKeys, oInt(_MaxNumHotKeys));
+			oCHECK_SIZE(int, _MaxNumHotKeys);
+			int NumCopied = __min(nHotKeys, static_cast<int>(_MaxNumHotKeys));
 			oWinAccelToHotKeys(_pHotKeys, pAccels, NumCopied);
 			w->delete_array(pAccels);
 			N = NumCopied;
@@ -1216,7 +1218,10 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 			const int NumPaths = DragQueryFile((HDROP)_wParam, ~0u, nullptr, 0); 
 			path_string* pPaths = new path_string[NumPaths];
 			for (int i = 0; i < NumPaths; i++)
-				DragQueryFile((HDROP)_wParam, i, const_cast<char*>(pPaths[i].c_str()), oUInt(pPaths[i].capacity()));
+			{
+				oCHECK_SIZE(unsigned int, pPaths[i].capacity());
+				DragQueryFile((HDROP)_wParam, i, const_cast<char*>(pPaths[i].c_str()), static_cast<unsigned int>(pPaths[i].capacity()));
+			}
 			DragFinish((HDROP)_wParam);
 
 			drop_event e((window_handle)_hWnd, pPaths, NumPaths, p);

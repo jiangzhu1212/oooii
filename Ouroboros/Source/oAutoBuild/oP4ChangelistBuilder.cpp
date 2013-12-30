@@ -44,7 +44,7 @@ static int oStrFindFirstDiff(const char* _StrSource1, const char* _StrSource2)
 	}
 	if(!*_StrSource1 && !*_StrSource2)
 		return -1;
-	return oInt(byte_diff(_StrSource1, origSrc1));
+	return static_cast<int>(byte_diff(_StrSource1, origSrc1));
 }
 
 struct oBUILD_TOOL_P4_SETTINGS
@@ -419,7 +419,7 @@ void oP4ChangelistBuilderImpl::UpdateBuildStatistics()
 	}
 	
 	if (SuccessfulBuilds)
-		AverageBuildTimeMS = oInt(TotalBuildTimeMS / SuccessfulBuilds);
+		AverageBuildTimeMS = static_cast<int>(TotalBuildTimeMS / SuccessfulBuilds);
 
 	TotalBuildTimeMS = 0;
 	SuccessfulBuilds = 0;
@@ -433,7 +433,7 @@ void oP4ChangelistBuilderImpl::UpdateBuildStatistics()
 	}
 
 	if (SuccessfulBuilds)
-		AverageDailyBuildTimeMS = oInt(TotalBuildTimeMS / SuccessfulBuilds);
+		AverageDailyBuildTimeMS = static_cast<int>(TotalBuildTimeMS / SuccessfulBuilds);
 }
 
 bool oP4ChangelistBuilderImpl::WasChangelistAlreadyAdded(int _Changelist, bool _IsDaily /*= false*/)
@@ -679,7 +679,7 @@ void oP4ChangelistBuilderImpl::BuildNextBuild()
 int oP4ChangelistBuilderImpl::GetCount() const
 {
 	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
-	return oInt(NextBuildInfos.size() + (uint)CurrentBuildActive);
+	return static_cast<int>(NextBuildInfos.size() + (uint)CurrentBuildActive);
 }
 
 void oP4ChangelistBuilderImpl::ReportWorking(std::function<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const

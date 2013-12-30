@@ -245,7 +245,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		// HACK: if a socket is a recycled socket, then this can fail with ERROR_INVALID_PARAMETER. HAve not currently found a way
 		// to check with windows if a handle is already associated with iocp. So for now just assume that if we get this error back
 		// it is because we are recycling a socket, and therefore everything is ok.
-		if (hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, oUInt(WorkerThreads.size())) && GetLastError() != ERROR_INVALID_PARAMETER)
+		if (hIOCP != CreateIoCompletionPort(_Handle, hIOCP, key, static_cast<unsigned int>(WorkerThreads.size())) && GetLastError() != ERROR_INVALID_PARAMETER)
 			throw ouro::windows::error();
 		return NewIOCPContext(_pIOCP);
 	}

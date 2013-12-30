@@ -25,6 +25,7 @@
 #include <oBasis/oURI.h>
 #include <oBasis/oError.h>
 #include <oBasis/oINISerialize.h>
+#include <oBasis/oInvalid.h>
 #include <oHLSL/oHLSLMath.h>
 #include "oBasisTestCommon.h"
 #include <vector>
@@ -121,7 +122,7 @@ static bool TestArray()
 	oTESTB(Test.IntValues.size() == 6, "TestArray: Expected 6 values of Int");
 	oTESTB(Test.StringValues.size() == 6, "TestArray: Expected 6 values of String");
 	oTESTB(Test.Float2Values.size() == 6, "TestArray: Expected 6 values of Float2");
-	for (int i = 0; i < oInt(Test.IntValues.size()); i++)
+	for (int i = 0; i < static_cast<int>(Test.IntValues.size()); i++)
 	{
 		oTESTB(i == Test.IntValues[i], "TestArray: Expected value at index %d to be %d, but got %d",i,i,Test.IntValues[i]);
 		sstring val;

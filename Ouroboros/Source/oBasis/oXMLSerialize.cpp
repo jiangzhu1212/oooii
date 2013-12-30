@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oXMLSerialize.h>
 #include <oBasis/oStrTok.h>
-#include <oBasis/oInt.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oError.h>
 #include <vector>
@@ -62,7 +61,8 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const xml& _XML, 
 					if (n)
 					{
 						notFound = false;
-						if (!f->RTTI->FromString(_XML.node_value(n), f->GetDestPtr(_pDestination), oInt(f->Size)))
+						oCHECK_SIZE(int, f->Size);
+						if (!f->RTTI->FromString(_XML.node_value(n), f->GetDestPtr(_pDestination), static_cast<int>(f->Size)))
 							FromStringFailed.push_back(f->Name);
 					}
 				}
@@ -72,7 +72,8 @@ bool oXMLReadCompound(void* _pDestination, const oRTTI& _RTTI, const xml& _XML, 
 					if (oSTRVALID(v))
 					{
 						notFound = false;
-						if (!f->RTTI->FromString(v, f->GetDestPtr(_pDestination), oInt(f->Size)))
+						oCHECK_SIZE(int, f->Size);
+						if (!f->RTTI->FromString(v, f->GetDestPtr(_pDestination), static_cast<int>(f->Size)))
 							FromStringFailed.push_back(f->Name);
 					}
 				}
@@ -164,7 +165,8 @@ bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _
 				int numElements = _RTTI.GetItemCount(_pDestination, _DestSizeInBytes);
 				for (int i=0; i<numElements; ++i)
 				{
-					if (!itemRTTI->FromString(nodeValue, _RTTI.GetItemPtr(_pDestination, _DestSizeInBytes, i), oInt(_RTTI.GetItemSize())))
+					oCHECK_SIZE(int, _RTTI.GetItemSize());
+					if (!itemRTTI->FromString(nodeValue, _RTTI.GetItemPtr(_pDestination, _DestSizeInBytes, i), static_cast<int>(_RTTI.GetItemSize())))
 						FromStringFailed.push_back(_pElementName);
 					nodeValue = oStrTokSkip(nodeValue, " \t\r\n", numTokensPerElement);
 					if (!nodeValue)
@@ -190,7 +192,8 @@ bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _
 		case oRTTI_TYPE_ATOM:
 			if (cur_count < new_count && !_RTTI.SetItemCount(_pDestination, _DestSizeInBytes, new_count))
 				FromStringFailed.push_back("item");
-			if (!itemRTTI->FromString(_XML.node_value(node), _RTTI.GetItemPtr(_pDestination, _DestSizeInBytes, i), oInt(_RTTI.GetItemSize())))
+			oCHECK_SIZE(int, _RTTI.GetItemSize());
+			if (!itemRTTI->FromString(_XML.node_value(node), _RTTI.GetItemPtr(_pDestination, _DestSizeInBytes, i), static_cast<int>(_RTTI.GetItemSize())))
 				FromStringFailed.push_back(_pElementName);
 			break;
 

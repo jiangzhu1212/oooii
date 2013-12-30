@@ -10,7 +10,8 @@
 
 // Microsoft Visual Studio
 
-#if defined(_MSC_VER)
+// @tony added check for pre-VS2012 since thereafter stdint.h is present
+#if defined(_MSC_VER) && _MSC_VER < 1700 // if VS before 2012
 
 typedef unsigned char uint8_t;
 typedef unsigned long uint32_t;

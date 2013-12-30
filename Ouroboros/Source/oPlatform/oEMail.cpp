@@ -294,7 +294,7 @@ bool oEMail_Impl::SendAttachment(const char *_pAttachmentName, const void *_pAtt
 	// encode attachment to base64
 	int size = (int)(4 * (_SizeOfAttachment / 3.f + 1));
 	char *pBase64Attachment = new char[size];
-	Base64Encode((const char*)_pAttachment, pBase64Attachment, oInt(_SizeOfAttachment), size);
+	Base64Encode((const char*)_pAttachment, pBase64Attachment, static_cast<int>(_SizeOfAttachment), size);
 	
 	// now send attachment
 	oSMTPCOMMAND(SendSocket( pBase64Attachment, size));

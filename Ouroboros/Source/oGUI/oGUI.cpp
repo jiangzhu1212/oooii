@@ -24,8 +24,6 @@
  **************************************************************************/
 #include <oGUI/oGUI.h>
 #include <oCompute/linear_algebra.h>
-#include <oBasis/oInterface.h>
-#include <oBasis/oRTTI.h>
 
 namespace ouro {
 

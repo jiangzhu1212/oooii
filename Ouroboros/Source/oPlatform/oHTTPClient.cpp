@@ -101,16 +101,17 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 	// Add content headers
 	if (TheRequest.Content.Type != oMIME_UNKNOWN)
 		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_TYPE, as_string(TheRequest.Content.Type));
-
+	
+	oCHECK_SIZE(unsigned int, TheRequest.Content.Length);
 	if (TheRequest.Content.Length)
-		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, oUInt(TheRequest.Content.Length));
+		oHTTPAddHeader(TheRequest.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, static_cast<unsigned int>(TheRequest.Content.Length));
 
 	// Create request header
 	to_string(TheHeader, TheRequest);
 
 	// Send header and body
 	if (TheRequest.Content.pData && TheRequest.Content.Length)
-		Socket->Send(TheHeader.c_str(), (oSocket::size_t)TheHeader.length(), TheRequest.Content.pData, oUInt(TheRequest.Content.Length));
+		Socket->Send(TheHeader.c_str(), (oSocket::size_t)TheHeader.length(), TheRequest.Content.pData, static_cast<unsigned int>(TheRequest.Content.Length));
 	else
 		Socket->Send(TheHeader.c_str(), (oSocket::size_t)TheHeader.length());
 

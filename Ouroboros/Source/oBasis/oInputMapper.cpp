@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oError.h>
+#include <oBasis/oInvalid.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/mutex.h>
 #include <array>
@@ -42,7 +43,9 @@ public:
 	inline int Hook(const input::action_hook& _Hook) threadsafe
 	{
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> lockB(Mutex);
-		return oInt(sparse_set(oThreadsafe(Hooks), _Hook));
+		size_t index = sparse_set(oThreadsafe(Hooks), _Hook);
+		oCHECK_SIZE(int, index);
+		return static_cast<int>(index);
 	}
 
 	inline void Unhook(int _HookID) threadsafe
@@ -114,14 +117,16 @@ void oInput::Parse(const char* _InputMapping)
 		{
 			if (!_stricmp("OR", tok))
 			{
-				if (++KeySetIndex >= oInt(Keys.size()))
+				oCHECK_SIZE(int, Keys.size());
+				if (++KeySetIndex >= static_cast<int>(Keys.size()))
 					oTHROW(no_buffer_space, "Only %u sets of keys OR'ed together are allowed.", Keys.size());
 				KeyIndex = 0;
 			}
 
 			else
 			{
-				if (KeyIndex >= oInt(Keys[KeySetIndex].size()))
+				oCHECK_SIZE(int, Keys[KeySetIndex].size());
+				if (KeyIndex >= static_cast<int>(Keys[KeySetIndex].size()))
 					oTHROW(no_buffer_space, "Only up to %u simultaneous keys supported", Keys[KeySetIndex].size());
 
 				ouro::input::key Key = ouro::input::none;
@@ -279,7 +284,7 @@ struct oInputSetImpl : oInputSet
 	mstring Name;
 	std::vector<oInput> Inputs;
 	std::vector<oInputSequence> InputSequences;
-	int MaxTimeMS;
+	unsigned int MaxTimeMS;
 	oRefCount RefCount;
 };
 
@@ -328,7 +333,7 @@ oInputSetImpl::oInputSetImpl(const xml& _XML, xml::node _InputSet, const oRTTI& 
 				return; // pass through error
 
 			InputSequences.push_back(std::move(Seq));
-			MaxTimeMS = __max(MaxTimeMS, oInt(Seq.MaxTimeMS));
+			MaxTimeMS = __max(MaxTimeMS, static_cast<unsigned int>(Seq.MaxTimeMS));
 		}
 	}
 
@@ -493,7 +498,8 @@ void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
 			if (InputSet)
 			{
 				oInputSetImpl* pInputSet = oThreadsafe(static_cast<threadsafe oInputSetImpl*>(InputSet.c_ptr()));
-				for (int i = 0; i < oInt(pInputSet->Inputs.size()); i++)
+				oCHECK_SIZE(int, pInputSet->Inputs.size());
+				for (int i = 0; i < static_cast<int>(pInputSet->Inputs.size()); i++)
 				{
 					bool InputDown = false;
 					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action_type == ouro::input::key_down, &InputDown))
@@ -511,7 +517,8 @@ void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
 						a.action_code = i; // at least trigger this input
 						
 						// Check to see if it gets overridden by a sequence
-						for (int s = 0; s < oInt(pInputSet->InputSequences.size()); s++)
+						oCHECK_SIZE(int, pInputSet->InputSequences.size());
+						for (int s = 0; s < static_cast<int>(pInputSet->InputSequences.size()); s++)
 						{
 							if (thread_cast<oInputHistory&>(InputHistory).SequenceTriggered(pInputSet->InputSequences[s], _Action.timestamp_ms))
 							{

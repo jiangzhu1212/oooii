@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oURIQuerySerialize.h>
 #include <oBasis/oError.h>
-#include <oBasis/oInt.h>
 #include <oBase/fixed_string.h>
 
 using namespace ouro;
@@ -66,15 +65,16 @@ bool oURIQueryReadCompound(void* _pDestination, const oRTTI& _RTTI, const char* 
 				Found = true;
 				switch(_Attr.RTTI->Type)
 				{
-				case oRTTI_TYPE_ENUM:
-				case oRTTI_TYPE_ATOM:
+					case oRTTI_TYPE_ENUM:
+					case oRTTI_TYPE_ATOM:
 					{
-						oURIQueryReadValue(_Attr.GetDestPtr(_pDestination), oInt(_Attr.Size), _Value, *_Attr.RTTI);
+						oCHECK_SIZE(int, _Attr.Size);
+						oURIQueryReadValue(_Attr.GetDestPtr(_pDestination), static_cast<int>(_Attr.Size), _Value, *_Attr.RTTI);
 						break;
 					}
 
-				default:
-					break;
+					default:
+						break;
 				}
 				// Stop enumerating
 				return false;

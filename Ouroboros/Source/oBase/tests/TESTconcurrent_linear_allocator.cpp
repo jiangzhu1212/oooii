@@ -34,7 +34,7 @@ namespace ouro {
 
 static void test_basics()
 {
-	std::vector<char> buffer(1024, 0xcc);
+	std::vector<unsigned char> buffer(1024, 0xcc);
 	concurrent_linear_allocator Allocator(&buffer[0], buffer.size());
 
 	static const size_t kAllocSize = 30;

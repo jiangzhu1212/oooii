@@ -205,11 +205,10 @@ bool from_string(oSYSPATH* _pValue, const char* _StrSource)
 
 } // namespace ouro
 
-static void oSetHighLowOffset(long& _low, long& _high, oULLong _offset)
+static void oSetHighLowOffset(long& _low, long& _high, unsigned long long _offset)
 {
-	unsigned long long offset = _offset.Ref();
-	_low = offset & 0xffffffffull;
-	_high = offset >> 32ull;
+	_low = _offset & 0xffffffffull;
+	_high = _offset >> 32ull;
 }
 
 struct oFileReaderImpl : public oStreamReader
@@ -329,7 +328,8 @@ struct oFileReaderImpl : public oStreamReader
 
 		SetFilePointer(hFile, offsetLow, &offsetHigh, FILE_BEGIN);
 		EoF = false; // because of file pointer move
-		oVB(ReadFile(hFile, _StreamRead.pData, oUInt(_StreamRead.Range.Size), &numBytesRead, nullptr));
+		oCHECK_SIZE(unsigned int, _StreamRead.Range.Size);
+		oVB(ReadFile(hFile, _StreamRead.pData, static_cast<unsigned int>(_StreamRead.Range.Size), &numBytesRead, nullptr));
 		EoF = (numBytesRead == 0);
 
 		// Unbuffered io is inconsistent on what it returns for these numbers and 
@@ -463,7 +463,8 @@ struct oFileWriterImpl : public oStreamWriter
 			SetFilePointer(hFile, offsetLow, &offsetHigh, FILE_BEGIN);
 		}
 
-		oVB(WriteFile(hFile, _Write.pData, oUInt(_Write.Range.Size), &numBytesWritten, nullptr));
+		oCHECK_SIZE(unsigned int, _Write.Range.Size);
+		oVB(WriteFile(hFile, _Write.pData, static_cast<unsigned int>(_Write.Range.Size), &numBytesWritten, nullptr));
 
 		if (numBytesWritten != _Write.Range.Size) // happens when trying to read past end of file, but ReadFile itself still succeeds
 			oTHROW(io_error, "Failed to write data to disk.");

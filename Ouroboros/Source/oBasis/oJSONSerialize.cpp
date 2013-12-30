@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oJSONSerialize.h>
 #include <oBasis/oError.h>
-#include <oBasis/oInt.h>
 #include <oBase/fixed_string.h>
 #include <vector>
 
@@ -84,7 +83,8 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const json& _JSO
 				if (node)
 				{
 					notFound = false;
-					if (!oJSONReadValue(f->GetDestPtr(_pDestination), oInt(f->Size), *f->RTTI, _JSON, node))
+					oCHECK_SIZE(int, f->Size);
+					if (!oJSONReadValue(f->GetDestPtr(_pDestination), static_cast<int>(f->Size), *f->RTTI, _JSON, node))
 						FromStringFailed.push_back(f->Name);
 				}
 			}
@@ -108,7 +108,8 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const json& _JSO
 				if (node)
 				{
 					notFound = false;
-					if (!oJSONReadContainer(f->GetDestPtr(_pDestination), oInt(f->Size), *f->RTTI, _JSON, node, _FailOnMissingValues))
+					oCHECK_SIZE(int, f->Size);
+					if (!oJSONReadContainer(f->GetDestPtr(_pDestination), static_cast<int>(f->Size), *f->RTTI, _JSON, node, _FailOnMissingValues))
 						FromStringFailed.push_back(f->Name);
 				}
 			}
@@ -167,7 +168,8 @@ bool oJSONReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& 
 			{
 				if (!_RTTI.SetItemCount(_pDestination, _DestSizeInBytes, i+1))
 					FromStringFailed.push_back("item");
-				if (!oJSONReadValue(_RTTI.GetItemPtr(_pDestination, _DestSizeInBytes, i), oInt(_RTTI.GetItemSize()), *itemRTTI, _JSON, node))
+				oCHECK_SIZE(int, _RTTI.GetItemSize());
+				if (!oJSONReadValue(_RTTI.GetItemPtr(_pDestination, _DestSizeInBytes, i), static_cast<int>(_RTTI.GetItemSize()), *itemRTTI, _JSON, node))
 					FromStringFailed.push_back("item");
 				break;
 			}

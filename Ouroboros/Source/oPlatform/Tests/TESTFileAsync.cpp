@@ -94,7 +94,7 @@ struct PLATFORM_FileAsync : public oTest
 			Latch.wait();
 			oTRACE("Read test finished");
 			static const uint128 ExpectedFileHash(13254728276562583748ull, 8059648572410507760ull);
-			oTESTB( ouro::murmur3( TempFileBlob, oUInt( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
+			oTESTB( ouro::murmur3( TempFileBlob, static_cast<unsigned int>( FileDesc.Size ) ) == ExpectedFileHash, "Test failed to compute correct hash" );
 
 			// Attempt to read too many bytes in to the file
 			StreamRead.Range.Offset = FileDesc.Size;

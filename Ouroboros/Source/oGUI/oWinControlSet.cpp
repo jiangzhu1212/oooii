@@ -28,7 +28,6 @@
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oBasis/oError.h> // @tony fixme
-#include <oBasis/oInt.h> // @tony fixme
 
 using namespace ouro;
 
@@ -71,7 +70,8 @@ void oWinControlSet::Deinitialize()
 
 HWND oWinControlSet::GetControl(int _ID) const
 {
-	if (_ID < 0 || _ID >= oInt(Controls.size()))
+	oCHECK_SIZE(int, Controls.size());
+	if (_ID < 0 || _ID >= static_cast<int>(Controls.size()))
 		return (HWND)oErrorSetLast(std::errc::invalid_argument, "Invalid ID %d", _ID);
 	return Controls[_ID];
 }
@@ -133,11 +133,15 @@ bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONT
 
 	int ID = oInvalid;
 	if (_ControlContext.IDFromString(&ID, StrID))
-		_pDesc->id = oUShort(ID);
+	{
+		oCHECK_SIZE(unsigned short, ID);
+		_pDesc->id = static_cast<unsigned short>(ID);
+	}
 	else
 		return oErrorSetLast(std::errc::invalid_argument, "Undeclared ID %s. All IDs must be declared as an enum in code.", StrID);
 
-	if (ID < oInt(_Controls.size()) && _Controls[ID])
+	oCHECK_SIZE(int, Controls.size());
+	if (ID < static_cast<int>(_Controls.size()) && _Controls[ID])
 		return oErrorSetLast(std::errc::invalid_argument, "ID %s has already been used", StrID);
 
 	if (!_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Type", &_pDesc->type))

@@ -45,6 +45,8 @@
 #ifndef oStd_future_h
 #define oStd_future_h
 
+#ifndef oHAS_WORKSTEALING_FUTURE
+
 #include <oStd/callable.h>
 #include <oStd/atomic.h>
 #include <oStd/condition_variable.h>
@@ -767,12 +769,6 @@ namespace future_detail {
 		oDEFINE_PACKAGED_TASK_CTORS() \
 		typedef std::function<result_type(oCALLABLE_CONCAT(oARG_PARTIAL_TYPENAMES,_nArgs))> Callable; \
 		\
-		explicit packaged_task(result_type (*Function__)(oCALLABLE_CONCAT(oARG_PARTIAL_TYPENAMES,_nArgs))) \
-		{ \
-			Commitment = std::make_shared<future_detail::oCommitment<result_type>>(); \
-			Function = std::move(oCALLABLE_PASS0); \
-		} \
-		\
 		explicit packaged_task(oCALLABLE_PARAMS0) \
 		{ \
 			Commitment = std::make_shared<future_detail::oCommitment<result_type>>(); \
@@ -818,8 +814,7 @@ namespace future_detail {
 	#error reimplement async using variadic templates
 #else
 	#define oASYNC(_nArgs) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE,_nArgs) future<oCALLABLE_CONCAT(oCALLABLE_RETURN_TYPE,_nArgs)> async(oCALLABLE_CONCAT(oCALLABLE_PARAMS,_nArgs)) \
-	{ \
-		packaged_task<oCALLABLE_CONCAT(oCALLABLE_RETURN_TYPE,_nArgs)(oCALLABLE_CONCAT(oARG_PARTIAL_TYPENAMES,_nArgs))> p(oCALLABLE_PASS0); \
+	{	packaged_task<oCALLABLE_CONCAT(oCALLABLE_RETURN_TYPE,_nArgs)(oCALLABLE_CONCAT(oARG_PARTIAL_TYPENAMES,_nArgs))> p(oCALLABLE_PASS0); \
 		p.commit_to_task(oCALLABLE_CONCAT(oARG_PASS,_nArgs)); \
 		return std::move(p.get_future()); \
 	}
@@ -828,4 +823,5 @@ namespace future_detail {
 
 } // namespace oStd
 
+#endif
 #endif

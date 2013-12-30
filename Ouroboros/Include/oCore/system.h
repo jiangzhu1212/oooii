@@ -148,19 +148,19 @@ void set_privilege(privilege _Privilege, bool _Enabled = true);
 // or if the timeout is reached, this will return std::errc::timed_out. This 
 // can also return std::errc::operation_in_process if the process did not time 
 // out but still is not ready to return an exit code.
-int spawn(const char* _CommandLine
+int spawn_for(const char* _CommandLine
 	, const std::function<void(char* _Line)>& _GetLine
 	, bool _ShowWindow
 	, unsigned int _ExecutionTimeout);
 
 template<typename Rep, typename Period>
-int spawn(const char* _CommandLine
+int spawn_for(const char* _CommandLine
 	, const std::function<void(char* _Line)>& _GetLine
 	, bool _ShowWindow
 	, const oStd::chrono::duration<Rep, Period>& _Timeout)
 {
 	oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_Timeout);
-	return spawn(_CommandLine, _GetLine, _ShowWindow, static_cast<unsigned int>(ms.count()));
+	return spawn_for(_CommandLine, _GetLine, _ShowWindow, static_cast<unsigned int>(ms.count()));
 }
 
 // Same as above, but no timeout

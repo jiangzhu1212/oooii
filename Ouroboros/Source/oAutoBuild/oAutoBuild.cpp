@@ -376,7 +376,7 @@ void oAutoBuildLogHandler::OnGet(CommonParams& _CommonParams) const
 	path P(filepathAbsolute);
 
 	oMIMEFromExtension(&_CommonParams.pResponse->Content.Type, P.extension());
-	_CommonParams.pResponse->Content.Length = oInt(cacheBuffer->GetSize());
+	_CommonParams.pResponse->Content.Length = static_cast<int>(cacheBuffer->GetSize());
 	_CommonParams.pResponse->StatusLine.StatusCode = oHTTP_OK;
  	_CommonParams.AllocateResponse(cacheBuffer->GetSize());
  	memcpy(_CommonParams.pResponse->Content.pData, cacheBuffer->GetData(), cacheBuffer->GetSize());

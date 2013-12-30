@@ -137,7 +137,7 @@ bool oRunPackagingStage(const oBUILD_TOOL_PACKAGING_SETTINGS& _Settings, oPackag
 		// xxlstring PackageResponse;
 		oFOR(auto& command_line, _Settings.CommandLines)
 		{
-			int ExitCode = ouro::system::spawn(command_line, nullptr, false, _Settings.TimeoutSeconds * 1000);
+			int ExitCode = ouro::system::spawn_for(command_line, nullptr, false, _Settings.TimeoutSeconds * 1000);
 			if (ExitCode)
 				return false;
 		}

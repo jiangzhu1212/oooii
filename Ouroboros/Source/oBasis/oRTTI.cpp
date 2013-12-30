@@ -32,6 +32,7 @@
 #include <oCompute/oSphere.h>
 #include <oCompute/linear_algebra.h>
 #include <oBasis/oError.h>
+#include <oBasis/oInvalid.h>
 #include <oBase/fixed_string.h>
 #include <oBase/fixed_vector.h>
 #include <vector>
