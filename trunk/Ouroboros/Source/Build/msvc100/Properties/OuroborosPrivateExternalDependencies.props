@@ -9,8 +9,8 @@
       <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libjpegTurbo$(oBuildSuffix).lib;libpng$(oBuildSuffix).lib;wininet.lib;tbb$(oBuildSuffix).lib;tlsf$(oBuildSuffix).lib;BC6HBC7EncoderDecoder11$(oBuildSuffix).lib;snappymt$(oBuildSuffix).lib;lzmamt$(oBuildSuffix).lib;zlibmt$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <DelayLoadDLLs>tbb$(oBuildSuffix).dll;%(DelayLoadDLLs)</DelayLoadDLLs>
+      <AdditionalDependencies>libjpegTurbo$(oBuildSuffix).lib;libpng$(oBuildSuffix).lib;wininet.lib;tlsf$(oBuildSuffix).lib;BC6HBC7EncoderDecoder11$(oBuildSuffix).lib;snappymt$(oBuildSuffix).lib;lzmamt$(oBuildSuffix).lib;tbb.lib;zlibmt$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <DelayLoadDLLs>tbb.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <ResourceCompile>
       <AdditionalIncludeDirectories>$(oSuiteDir)Source\Build\msvc100\ResourceScripts;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
