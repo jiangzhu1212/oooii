@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oURI.h>
 #include <oBasis/oError.h>
-#include <oBasis/oInvalid.h>
 #include <oBasis/oXMLSerialize.h>
 #include "oBasisTestCommon.h"
 #include <memory>

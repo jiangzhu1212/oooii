@@ -56,7 +56,7 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 	struct ATTR
 	{
 		inline bool IsGroup() const { return Type == nullptr; }
-		inline bool IsVirtual() const { return Offset == oInvalid; }
+		inline bool IsVirtual() const { return Offset == ouro::invalid; }
 		inline bool DontSerialize() const { return (Flags & oRTTI_COMPOUND_ATTR_DONT_SERIALIZE) == oRTTI_COMPOUND_ATTR_DONT_SERIALIZE; }
 
 		const oRTTI* RTTI;
@@ -183,7 +183,7 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 		oRTTI_COMPOUND_GET_VERSION(compound_type), \
 		sizeof(compound_type), \
 		#compound_type, \
-		oInvalid, \
+		ouro::invalid, \
 		oRTTI_COMPOUND_ARRAY_TEMPLATE_GET_POINTER(compound_type, BASE, Bases), \
 		oRTTI_COMPOUND_ARRAY_TEMPLATE_GET_POINTER(compound_type, ATTR, Attrs), \
 		oRTTIConstruct##compound_type, \
@@ -276,8 +276,8 @@ struct oRTTI_DATA_COMPOUND // : oRTTI
 	{ \
 		&attr_rtti, \
 		attr_name, \
-		oInvalid, \
-		oInvalid, \
+		ouro::invalid, \
+		ouro::invalid, \
 		attr_flags, \
 		(void (compound_type::*)(void*))&compound_type::attr_get, \
 		(void (compound_type::*)(const void*))&compound_type::attr_set, \

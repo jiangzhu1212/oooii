@@ -132,7 +132,7 @@ template<typename T> void oCalcMinMaxVertices(const T* _pIndices, uint _StartInd
 {
 	if (_pIndices)
 	{
-		*_pMinVertex = oInvalid;
+		*_pMinVertex = ouro::invalid;
 		*_pMaxVertex = 0;
 
 		const uint kRun = _StartIndex + _NumIndices;

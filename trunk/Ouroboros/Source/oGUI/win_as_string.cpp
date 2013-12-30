@@ -655,8 +655,7 @@ char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWIN
 		case WM_DROPFILES:
 		{
 			path_string p;
-			oCHECK_SIZE(UINT, p.capacity());
-			UINT nFiles = DragQueryFile((HDROP)_wParam, ~0u, p, static_cast<UINT>(p.capacity()));
+			UINT nFiles = DragQueryFile((HDROP)_wParam, invalid, p, as_uint(p.capacity()));
 			DragQueryFile((HDROP)_wParam, 0, p, static_cast<UINT>(p.capacity()));
 			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DROPFILES hDrop=0x%x %u files starting with \"%s\"", _hWnd, _wParam, nFiles, p.c_str());
 			break;
@@ -666,8 +665,7 @@ char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWIN
 			const char* type = _wParam == GIDC_ARRIVAL ? "arrival" : "removal";
 
 			mstring Name;
-			oCHECK_SIZE(UINT, Name.capacity() * sizeof(mstring::char_type));
-			UINT Size = static_cast<UINT>(Name.capacity() * sizeof(mstring::char_type));
+			UINT Size = as_uint(Name.capacity() * sizeof(mstring::char_type));
 			GetRawInputDeviceInfo((HANDLE)_lParam, RIDI_DEVICENAME, Name.c_str(), &Size);
 
 			RID_DEVICE_INFO RIDDI;
@@ -741,8 +739,7 @@ char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWIN
 			}
 
 			sstring StrGUID;
-			oCHECK_SIZE(int, _wParam);
-			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, as_string::DBT(static_cast<int>(_wParam)), devtype, to_string(StrGUID, *pGUID), name);
+			snprintf(_StrDestination, _SizeofStrDestination, "HWND 0x%x WM_DEVICECHANGE %s devtype=%s GUID=%s name=%s", _hWnd, as_string::DBT(as_int(_wParam)), devtype, to_string(StrGUID, *pGUID), name);
 			break;
 		}
 		default:

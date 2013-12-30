@@ -552,7 +552,7 @@ uint oGPUCalcNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumEleme
 	uchar nSlots = 0;
 
 	#ifdef _DEBUG
-		uint lastSlot = ~0u;
+		uint lastSlot = ouro::invalid;
 	#endif
 
 	for (uint i = 0; i < _NumElements; i++)
@@ -560,7 +560,7 @@ uint oGPUCalcNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumEleme
 		nSlots = __max(nSlots, _pElements[i].InputSlot+1);
 
 		#ifdef _DEBUG
-			oASSERT(lastSlot == ~0u 
+			oASSERT(lastSlot == ouro::invalid 
 				|| lastSlot == _pElements[i].InputSlot 
 				|| lastSlot == static_cast<unsigned int>(_pElements[i].InputSlot - 1), "Non-packed elements");
 			lastSlot = _pElements[i].InputSlot;

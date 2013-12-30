@@ -38,11 +38,11 @@
 #ifndef oWinWindowing_h
 #define oWinWindowing_h
 
+#include <oBase/invalid.h>
 #include <oStd/thread.h>
 #include <oCore/display.h>
 #include <oCore/process.h>
 #include <oGUI/oGUI.h>
-#include <oBasis/oInvalid.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -339,18 +339,18 @@ bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
 // Let me know if you see leaks relating to HICONs.
 bool oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
 
-// Sets the text of a window. If _SubItemIndex is oInvalid, this will set the
+// Sets the text of a window. If _SubItemIndex is ouro::invalid, this will set the
 // main text. If the window is a control that contains subitems, the specified
 // subitem's text will be set. The specified _SubItemIndex must exist or be
-// oInvalid for this to return success/true.
+// ouro::invalid for this to return success/true.
 // Also note that this is a pointer specified, so the buffer must remain valid
 // until this function returns.
-bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex = oInvalid);
+bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex = ouro::invalid);
 
 // Returns _StrDestination on success, otherwise nullptr.
-char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, int _SubItemIndex = oInvalid);
-template<size_t size> char* oWinGetText(char (&_StrDestination)[size], HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, size, _hWnd, _SubItemIndex); }
-template<size_t capacity> char* oWinGetText(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _StrDestination.capacity(), _hWnd, _SubItemIndex); }
+char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, int _SubItemIndex = ouro::invalid);
+template<size_t size> char* oWinGetText(char (&_StrDestination)[size], HWND _hWnd, int _SubItemIndex = ouro::invalid) { return oWinGetText(_StrDestination, size, _hWnd, _SubItemIndex); }
+template<size_t capacity> char* oWinGetText(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hWnd, int _SubItemIndex = ouro::invalid) { return oWinGetText(_StrDestination, _StrDestination.capacity(), _hWnd, _SubItemIndex); }
 
 // Returns the window class's hbrBackground value. This is a non-counted 
 // reference, so no lifetime management should be performed on the HBRUSH.
@@ -599,9 +599,9 @@ int oWinControlGetNumSubItems(HWND _hControl);
 // Valid for: All
 bool oWinControlClearSubItems(HWND _hControl);
 
-// Inserts before the specified subitem index. If _SubItemIndex is oInvalid (-1) 
+// Inserts before the specified subitem index. If _SubItemIndex is ouro::invalid (-1) 
 // then the item is appended. This returns the index of the item set, or 
-// oInvalid on failure.
+// ouro::invalid on failure.
 // Valid for: ComboBox, ComboTextbox, Tab, ListBox
 int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex);
 
@@ -614,7 +614,7 @@ bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _Sub
 bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _Delimiter = '|');
 
 // Returns the index of the first subitem to match the specified text, or 
-// oInvalid if not found (or other error).
+// ouro::invalid if not found (or other error).
 // Valid For: ComboBox, ComboTextbox, Tab, ListBox
 int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText);
 
@@ -679,16 +679,16 @@ inline bool oWinControlSetFont(HWND _hControl, HFONT _hFont = nullptr) { return 
 
 // Either sets the text for simple controls, or the nth text item in list-like
 // controls such as tabs, combobox, and listboxes. If _SubItemIndex is not found
-// this will fail. If _SubItemIndex is oInvalid, then the main text of the 
+// this will fail. If _SubItemIndex is ouro::invalid, then the main text of the 
 // control is set. If the control doesn't have the concept of main text, then 
 // this will fail.
 // Valid for: All
-inline bool oWinControlSetText(HWND _hControl, const char* _Text, int _SubItemIndex = oInvalid) { return oWinSetText(_hControl, _Text, _SubItemIndex); }
+inline bool oWinControlSetText(HWND _hControl, const char* _Text, int _SubItemIndex = ouro::invalid) { return oWinSetText(_hControl, _Text, _SubItemIndex); }
 
 // Returns _StrDestination on success, otherwise nullptr.
-inline char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _SizeofStrDestination, _hControl, _SubItemIndex); }
-template<size_t size> char* oWinControlGetText(char (&_StrDestination)[size], HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
-template<size_t capacity> char* oWinControlGetText(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hControl, int _SubItemIndex = oInvalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
+inline char* oWinControlGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl, int _SubItemIndex = ouro::invalid) { return oWinGetText(_StrDestination, _SizeofStrDestination, _hControl, _SubItemIndex); }
+template<size_t size> char* oWinControlGetText(char (&_StrDestination)[size], HWND _hControl, int _SubItemIndex = ouro::invalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
+template<size_t capacity> char* oWinControlGetText(ouro::fixed_string<char, capacity>& _StrDestination, HWND _hControl, int _SubItemIndex = ouro::invalid) { return oWinGetText(_StrDestination, _hControl, _SubItemIndex); }
 
 // Returns _StrDestination on success, otherwise nullptr. _StrDestination is 
 // filled with the portion of the specified _hControl that is considered 
@@ -720,11 +720,11 @@ float oWinControlGetFloat(HWND _hControl);
 
 // Associates the specified _hIcon with the specified _hControl
 // Valid for: Icon
-bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex = oInvalid);
+bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex = ouro::invalid);
 
 // Get's the icon associated with the specified _hControl
 // Valid for: Icon
-HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex = oInvalid);
+HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex = ouro::invalid);
 
 // Returns true if the specified _hControl's checked state is true. This returns 
 // false for any other tri-state state or if the specified _hControl is not a 

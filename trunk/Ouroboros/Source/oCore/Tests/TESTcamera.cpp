@@ -61,14 +61,14 @@ void TESTcamera(test_services& _Services)
 
 	struct CONTEXT
 	{
-		CONTEXT(ouro::intrusive_ptr<threadsafe oCamera> _pCamera)
+		CONTEXT(intrusive_ptr<threadsafe oCamera> _pCamera)
 			: Camera(_pCamera)
-			, LastFrame(oInvalid)
+			, LastFrame(ouro::invalid)
 			, Running(true)
 		{}
 
-		ouro::intrusive_ptr<threadsafe oCamera> Camera;
-		ouro::intrusive_ptr<oWindow> Window;
+		intrusive_ptr<threadsafe oCamera> Camera;
+		intrusive_ptr<oWindow> Window;
 		unsigned int LastFrame;
 		bool Running;
 
@@ -76,7 +76,7 @@ void TESTcamera(test_services& _Services)
 		{
 			switch (_Event.Type)
 			{
-				case ouro::event_type::closing:
+				case event_type::closing:
 					Running = false;
 					break;
 				default:
@@ -90,13 +90,13 @@ void TESTcamera(test_services& _Services)
 
 	while (1)
 	{
-		ouro::intrusive_ptr<threadsafe oCamera> Camera;
+		intrusive_ptr<threadsafe oCamera> Camera;
 		if (oCameraEnum(index++, &Camera))
 		{
 			oCamera::MODE mode;
 			mode.Dimensions = int2(640, 480);
-			mode.Format = ouro::surface::r8g8b8_unorm;
-			mode.BitRate = ~0u;
+			mode.Format = surface::r8g8b8_unorm;
+			mode.BitRate = invalid;
 
 			oCamera::MODE closest;
 			if (!Camera->FindClosestMatchingMode(mode, &closest))
@@ -107,7 +107,7 @@ void TESTcamera(test_services& _Services)
 				oMSGBOX_DESC d;
 				d.Type = oMSGBOX_ERR;
 				d.Title = "oCamera Test";
-				oMsgBox(d, "Camera %s does not support mode %s %dx%d", Camera->GetName(), ouro::as_string(mode.Format), mode.Dimensions.x, mode.Dimensions.y);
+				oMsgBox(d, "Camera %s does not support mode %s %dx%d", Camera->GetName(), as_string(mode.Format), mode.Dimensions.x, mode.Dimensions.y);
 				continue;
 			}
 
@@ -144,8 +144,8 @@ void TESTcamera(test_services& _Services)
 		oCamera::DESC cd;
 		Contexts[i].Camera->GetDesc(&cd);
 
-		ouro::lstring Title;
-		snprintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, ouro::as_string(cd.Mode.Format));
+		lstring Title;
+		snprintf(Title, "%s (%dx%d %s)", Contexts[i].Camera->GetName(), cd.Mode.Dimensions.x, cd.Mode.Dimensions.y, as_string(cd.Mode.Format));
 
 		window::init init;
 		init.shape.ClientSize = cd.Mode.Dimensions;
@@ -180,19 +180,19 @@ void TESTcamera(test_services& _Services)
 					Contexts[i].LastFrame = mapped.Frame;
 
 					float fps = Contexts[i].Camera->GetFPS();
-					ouro::sstring sFPS;
+					sstring sFPS;
 					snprintf(sFPS, "FPS: %.01f", fps + (rand() %100) / 100.0f);
 					
 					RECT rClient;
 					GetClientRect(hWnd, &rClient);
 
-					ouro::text_info td;
-					td.Foreground = ouro::CadetBlue;
+					text_info td;
+					td.Foreground = CadetBlue;
 					td.Position = int2(0, 0);
 					td.Size = oWinRectSize(rClient);
-					td.Shadow = ouro::Black;
+					td.Shadow = Black;
 					td.ShadowOffset = int2(1,1);
-					td.Alignment = ouro::alignment::middle_left;
+					td.Alignment = alignment::middle_left;
 
 					oGDIScopedGetDC hDC(hWnd);
 					oGDIDrawText(hDC, td, sFPS);

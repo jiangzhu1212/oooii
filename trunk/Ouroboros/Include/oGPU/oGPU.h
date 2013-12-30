@@ -62,7 +62,7 @@ interface oGPUResource : oGPUDeviceChild
 	// generally differentiates these objects from process and target interfaces.
 
 	// Returns the type of this resource.
-	virtual oGPU_RESOURCE_TYPE GetType() const threadsafe = 0;
+	virtual ouro::gpu::resource_type::value GetType() const threadsafe = 0;
 
 	// Returns an ID for this resource fit for use as a hash.
 	virtual unsigned int GetID() const threadsafe = 0;
@@ -278,9 +278,9 @@ interface oGPUCommandList : oGPUDeviceChild
 	// resources for access during Dispatch() calls if _SetForDispatch is true. 
 	// If _SetForDispatch is true, then _pRenderTarget must be null, though 
 	// viewport settings will be respected. If _UnorderedResourceStartSlot is 
-	// oInvalid, the value _pRenderTarget::DESC.MRTCount will be used. If 
+	// ouro::invalid, the value _pRenderTarget::DESC.MRTCount will be used. If 
 	// _pRenderTarget is nullptr then a valid _UnorderedResourceStartSlot value 
-	// must be specified. If _NumUnorderedResources is oInvalid, all slots after 
+	// must be specified. If _NumUnorderedResources is ouro::invalid, all slots after 
 	// the render target's MRTs are cleared. See SetRnederTarget() as an example 
 	// of setting the RT while clearing unordered targets).
 	virtual void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) = 0;
@@ -295,7 +295,7 @@ interface oGPUCommandList : oGPUDeviceChild
 	// will be used as shader resources, which conflicts with being a target. If
 	// this is not the desired behavior, use the above more explicit/complicated 
 	// version.
-	inline void SetRenderTarget(oGPURenderTarget* _pRenderTarget, int _NumViewports = 0, const oAABoxf* _pViewports = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, false, oInvalid, oInvalid, (oGPUResource**)nullptr); }
+	inline void SetRenderTarget(oGPURenderTarget* _pRenderTarget, int _NumViewports = 0, const oAABoxf* _pViewports = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, false, ouro::invalid, ouro::invalid, (oGPUResource**)nullptr); }
 
 	inline void ClearRenderTargetAndUnorderedResources() { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, false, 0, ouro::gpu::max_num_unordered_buffers, (oGPUResource**)nullptr); }
 
@@ -334,8 +334,8 @@ interface oGPUCommandList : oGPUDeviceChild
 		, const oGPUBuffer* const* _ppVertexBuffers
 		, uint _StartPrimitive
 		, uint _NumPrimitives
-		, uint _StartInstance = oInvalid
-		, uint _NumInstances = oInvalid
+		, uint _StartInstance = ouro::invalid
+		, uint _NumInstances = ouro::invalid
 	) = 0;
 
 	// Draws points without any bound geometry but with the count provided by a GPU
@@ -355,14 +355,14 @@ interface oGPUCommandList : oGPUDeviceChild
 	// Clears the specified resource created for unordered access.
 	virtual void ClearF(oGPUResource* _pUnorderedResource, const float4 _Values) = 0;
 
-	// If all 3 values in _ThreadGroupCount are oInvalid, then the counts are 
+	// If all 3 values in _ThreadGroupCount are ouro::invalid, then the counts are 
 	// automatically determined by the GPU. Unordered resources can be 
 	// oGPUBuffer or oGPUTexture, but each must have been created readied
 	// for unordered access. If not null, _pInitialCounts should be 
 	// _NumUnorderedResources in length and is used to set the initial value of a 
 	// counter or append/consume count for buffers of type 
 	// gpu::buffer_type::unordered_structured_append or 
-	// gpu::buffer_type::unordered_structured_counter. Specify oInvalid to skip 
+	// gpu::buffer_type::unordered_structured_counter. Specify ouro::invalid to skip 
 	// initialization of an entry, thus retaining any prior value of the counter.
 	virtual void Dispatch(oGPUComputeShader* _pComputeShader, const int3& _ThreadGroupCount) = 0;
 
@@ -384,7 +384,7 @@ interface oGPUDevice : oInterface
 	virtual const char* GetName() const threadsafe = 0;
 	virtual uint GetFrameID() threadsafe const = 0;
 
-	// Returns a command list with an oInvalid DrawOrder in its DESC that does not
+	// Returns a command list with an ouro::invalid DrawOrder in its DESC that does not
 	// lock or wait for BeginFrame/EndFrame. Be very careful with this because it
 	// sets state that deferred command lists may not be aware of and does so
 	// immediately without care for ordering. This should only be called from a 

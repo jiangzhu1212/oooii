@@ -60,6 +60,5 @@ inline std::string formatf(const char* _Format, ...)
 #define oCHECK0(_Expression) do { if (!(_Expression)) oTHROW(protocol_error, "%s", #_Expression); } while(false)
 #define oTHROW_INVARG(_Message, ...) do { throw std::invalid_argument(ouro::formatf(_Message, ## __VA_ARGS__)); } while(false)
 #define oTHROW_INVARG0() do { throw std::invalid_argument("invalid argument"); } while(false)
-#define oCHECK_SIZE(_IntendedType, _Value) if (static_cast<size_t>(static_cast<_IntendedType>(_Value)) != static_cast<size_t>(_Value)) throw std::invalid_argument(ouro::formatf("out of range: %s -> " #_IntendedType, typeid(_Value).name()));
 
 #endif

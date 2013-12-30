@@ -156,7 +156,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 				{
 					if (!_Element.Instanced)
 					{
-						int textureSet = oInvalid;
+						int textureSet = ouro::invalid;
 						switch((int)_Element.Semantic)
 						{
 							case 'TEX1': textureSet = 0; break;
@@ -170,7 +170,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 							case 'TEX9': textureSet = 8; break;
 							default: break;
 						}
-						if (textureSet != oInvalid)
+						if (textureSet != ouro::invalid)
 						{
 							_pElementData->data = ExtraGeoMapped[textureSet].pTexcoords;
 							_pElementData->row_pitch = sizeof(*ExtraGeoMapped[textureSet].pTexcoords);
@@ -197,7 +197,7 @@ void oGfxMosaicImpl::Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRe
 	_pCommandList->SetBlendState(BlendState);
 	_pCommandList->SetSurfaceState(ouro::gpu::surface_state::two_sided);
 	_pCommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
-	_pCommandList->SetSamplers(0, oUInt(samplers.size()), samplers.data());
+	_pCommandList->SetSamplers(0, as_uint(samplers.size()), samplers.data());
 	_pCommandList->SetShaderResources(_TextureStartSlot, _NumTextures, _ppTextures);
 	_pCommandList->SetPipeline(Pipeline);
 	_pCommandList->Draw(Indices, 0, Vertices[1] ? 2 : 1, &Vertices[0], 0, NumPrimitives);

@@ -24,13 +24,13 @@
  **************************************************************************/
 #include <oKinect/oKinectUtil.h>
 #include <oCore/windows/win_error.h>
-#include <oBasis/oInvalid.h>
+#include <oBase/invalid.h>
 
 #ifdef oHAS_KINECT_SDK
 
 using namespace ouro;
 
-static_assert(NUI_SKELETON_POSITION_COUNT == ouro::input::bone_count, "bone count mismatch");
+static_assert(NUI_SKELETON_POSITION_COUNT == input::bone_count, "bone count mismatch");
 
 DWORD oKinectGetInitFlags(oKINECT_FEATURES _Features)
 {
@@ -49,22 +49,22 @@ DWORD oKinectGetInitFlags(oKINECT_FEATURES _Features)
 	return 0;
 }
 
-ouro::input::status oKinectStatusFromHR(HRESULT _hrNuiStatus)
+input::status oKinectStatusFromHR(HRESULT _hrNuiStatus)
 {
 	switch (_hrNuiStatus)
 	{
-		case S_OK: return ouro::input::ready;
-		case S_NUI_INITIALIZING: return ouro::input::initializing;
-		case E_NUI_NOTCONNECTED: return ouro::input::not_connected;
-		case E_NUI_NOTGENUINE: return ouro::input::is_clone;
-		case E_NUI_NOTSUPPORTED: return ouro::input::not_supported;
-		case E_NUI_INSUFFICIENTBANDWIDTH: return ouro::input::insufficient_bandwidth;
-		case E_NUI_NOTPOWERED: return ouro::input::not_powered;
-		//case ???: return ouro::input::low_power;
-		case E_NUI_NOTREADY: return ouro::input::not_ready;
+		case S_OK: return input::ready;
+		case S_NUI_INITIALIZING: return input::initializing;
+		case E_NUI_NOTCONNECTED: return input::not_connected;
+		case E_NUI_NOTGENUINE: return input::is_clone;
+		case E_NUI_NOTSUPPORTED: return input::not_supported;
+		case E_NUI_INSUFFICIENTBANDWIDTH: return input::insufficient_bandwidth;
+		case E_NUI_NOTPOWERED: return input::not_powered;
+		//case ???: return input::low_power;
+		case E_NUI_NOTREADY: return input::not_ready;
 		default: break;
 	}
-	return ouro::input::not_ready;
+	return input::not_ready;
 }
 
 #define oKERR(err, msg) { std::errc::err, msg }
@@ -80,26 +80,26 @@ static const struct { std::errc::errc err; const char* msg; } sStatusErrc[] =
 	oKERR(no_such_device, "Kinect not powered"),
 	oKERR(resource_unavailable_try_again, "Kinect not ready"),
 };
-static_assert(oCOUNTOF(sStatusErrc) == ouro::input::status_count, "array mismatch");
+static_assert(oCOUNTOF(sStatusErrc) == input::status_count, "array mismatch");
 
-std::errc::errc oKinectGetErrcFromStatus(ouro::input::status _Status)
+std::errc::errc oKinectGetErrcFromStatus(input::status _Status)
 {
 	return sStatusErrc[_Status].err;
 }
 
-const char* oKinectGetErrcStringFromStatus(ouro::input::status _Status)
+const char* oKinectGetErrcStringFromStatus(input::status _Status)
 {
 	return sStatusErrc[_Status].msg;
 }
 
-NUI_SKELETON_POSITION_INDEX oKinectFromBone(ouro::input::skeleton_bone _Bone)
+NUI_SKELETON_POSITION_INDEX oKinectFromBone(input::skeleton_bone _Bone)
 {
 	return (NUI_SKELETON_POSITION_INDEX)_Bone;
 }
 
-ouro::input::skeleton_bone oKinectToBone(NUI_SKELETON_POSITION_INDEX _BoneIndex)
+input::skeleton_bone oKinectToBone(NUI_SKELETON_POSITION_INDEX _BoneIndex)
 {
-	return (ouro::input::skeleton_bone)_BoneIndex;
+	return (input::skeleton_bone)_BoneIndex;
 }
 
 // Once done, this will need NuiImageStreamReleaseFrame called on the hStream 
@@ -108,7 +108,7 @@ void oKinectGetLatestFrame(INuiSensor* _pSensor, HANDLE _hStream, DWORD _Timeout
 {
 	HRESULT hr = S_OK;
 	NUI_IMAGE_FRAME Frame;
-	Frame.dwFrameNumber = oInvalid;
+	Frame.dwFrameNumber = invalid;
 	Frame.liTimeStamp.QuadPart = 0;
 
 	do
@@ -128,36 +128,36 @@ void oKinectGetLatestFrame(INuiSensor* _pSensor, HANDLE _hStream, DWORD _Timeout
 	while (SUCCEEDED(hr));
 }
 
-ouro::surface::format oKinectGetFormat(NUI_IMAGE_TYPE _Type)
+surface::format oKinectGetFormat(NUI_IMAGE_TYPE _Type)
 {
 	// All are currently BGRA8 basically to support player index coloring.
 	switch (_Type)
 	{
 		case NUI_IMAGE_TYPE_COLOR: 
 		case NUI_IMAGE_TYPE_COLOR_YUV:
-		case NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX: return ouro::surface::b8g8r8a8_unorm;
-		case NUI_IMAGE_TYPE_COLOR_INFRARED: return ouro::surface::b8g8r8a8_unorm;
-		case NUI_IMAGE_TYPE_COLOR_RAW_BAYER: return ouro::surface::b8g8r8a8_unorm;
-		case NUI_IMAGE_TYPE_COLOR_RAW_YUV: return ouro::surface::b8g8r8a8_unorm;
-		case NUI_IMAGE_TYPE_DEPTH: return ouro::surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_DEPTH_AND_PLAYER_INDEX: return surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_COLOR_INFRARED: return surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_COLOR_RAW_BAYER: return surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_COLOR_RAW_YUV: return surface::b8g8r8a8_unorm;
+		case NUI_IMAGE_TYPE_DEPTH: return surface::b8g8r8a8_unorm;
 		default: break;
 	}
-	return ouro::surface::unknown;
+	return surface::unknown;
 }
 
-void oKinectGetDesc(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, ouro::surface::info* _pInfo)
+void oKinectGetDesc(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, surface::info* _pInfo)
 {
 	_pInfo->dimensions.z = 1;
 	NuiImageResolutionToSize(_Resolution, (DWORD&)_pInfo->dimensions.x, (DWORD&)_pInfo->dimensions.y);
 	_pInfo->format = oKinectGetFormat(_Type);
-	_pInfo->layout = ouro::surface::image;
+	_pInfo->layout = surface::image;
 }
 
-bool oKinectCreateSurface(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, std::shared_ptr<ouro::surface::buffer>* _ppSurface)
+bool oKinectCreateSurface(NUI_IMAGE_TYPE _Type, NUI_IMAGE_RESOLUTION _Resolution, std::shared_ptr<surface::buffer>* _ppSurface)
 {
-	ouro::surface::info info;
+	surface::info info;
 	oKinectGetDesc(NUI_IMAGE_TYPE_COLOR, NUI_IMAGE_RESOLUTION_640x480, &info);
-	*_ppSurface = ouro::surface::buffer::make(info);
+	*_ppSurface = surface::buffer::make(info);
 	return true;
 }
 
@@ -198,7 +198,7 @@ RGBQUAD oKinectGetColoredDepth(unsigned short _DepthAndIndex)
 	return q;
 }
 
-void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, ouro::surface::mapped_subresource& _Destination)
+void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, surface::mapped_subresource& _Destination)
 {
 	NUI_LOCKED_RECT r;
 	int2 Dimensions;
@@ -228,15 +228,15 @@ void oKinectCopyBits(const NUI_IMAGE_FRAME& _NIF, ouro::surface::mapped_subresou
 	_NIF.pFrameTexture->UnlockRect(0);
 }
 
-unsigned int oKinectUpdate(INuiSensor* _pSensor, HANDLE _hStream, ouro::surface::buffer* _pSurface)
+unsigned int oKinectUpdate(INuiSensor* _pSensor, HANDLE _hStream, surface::buffer* _pSurface)
 {
-	unsigned int FrameNumber = oInvalid;
+	unsigned int FrameNumber = invalid;
 
 	NUI_IMAGE_FRAME NIF;
 	oKinectGetLatestFrame(_pSensor, _hStream, 10000, &NIF);
 
 	FrameNumber = NIF.dwFrameNumber;
-	ouro::surface::mapped_subresource Mapped;
+	surface::mapped_subresource Mapped;
 	int2 ByteDimensions;
 	_pSurface->map(0, &Mapped, &ByteDimensions);
 	oKinectCopyBits(NIF, Mapped);
@@ -266,14 +266,14 @@ int2 oKinectSkeletonToScreen(
 }
 
 int oKinectCalcScreenSpacePositions(
-	const ouro::input::tracking_skeleton& _Skeleton
+	const input::tracking_skeleton& _Skeleton
 	, const int2& _TargetPosition
 	, const int2& _TargetDimensions
 	, const int2& _DepthBufferResolution
-	, int2 _ScreenSpacePositions[ouro::input::bone_count])
+	, int2 _ScreenSpacePositions[input::bone_count])
 {
 	int NumValid = 0;
-	for (size_t i = 0; i < ouro::input::bone_count; i++)
+	for (size_t i = 0; i < input::bone_count; i++)
 	{
 		_ScreenSpacePositions[i] = oKinectSkeletonToScreen(_Skeleton.positions[i], _TargetPosition, _TargetDimensions, _DepthBufferResolution);
 		if (_ScreenSpacePositions[i].x != oDEFAULT)
@@ -285,7 +285,7 @@ int oKinectCalcScreenSpacePositions(
 
 #endif // oHAS_KINECT_SDK
 
-void oKinectCalcBoneSpacePositions(ouro::input::skeleton_bone _OriginBone, ouro::input::tracking_skeleton& _Skeleton)
+void oKinectCalcBoneSpacePositions(input::skeleton_bone _OriginBone, input::tracking_skeleton& _Skeleton)
 {
 	const float3 Offset = _Skeleton.positions[_OriginBone].xyz();
 	oFOR(auto& P, _Skeleton.positions)

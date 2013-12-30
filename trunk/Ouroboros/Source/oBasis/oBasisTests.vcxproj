@@ -40,7 +40,6 @@
     <ClCompile Include="Tests\TESTRTTI.cpp">
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
     </ClCompile>
-    <ClCompile Include="Tests\TESTSize.cpp" />
     <ClCompile Include="Tests\TESTString.cpp" />
     <ClCompile Include="Tests\TESTURI.cpp" />
     <ClCompile Include="Tests\TESTURIQuerySerialize.cpp" />

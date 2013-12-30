@@ -41,9 +41,9 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oMSBUILD_SETTINGS)
 	oRTTI_COMPOUND_ATTRIBUTES_END(oMSBUILD_SETTINGS)
 oRTTI_COMPOUND_END_DESCRIPTION(oMSBUILD_SETTINGS)
 
-static const char* oStrStr( const char* _pStr, const char* _pSubStr, size_t _MaxCharCount /*= oInvalid*/ )
+static const char* oStrStr( const char* _pStr, const char* _pSubStr, size_t _MaxCharCount /*= ouro::invalid*/ )
 {
-	if(oInvalid == _MaxCharCount)
+	if(ouro::invalid == _MaxCharCount)
 		return strstr(_pStr, _pSubStr);
 
 	size_t SearchLen = strlen(_pSubStr);

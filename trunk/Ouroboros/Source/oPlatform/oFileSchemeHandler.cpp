@@ -328,8 +328,7 @@ struct oFileReaderImpl : public oStreamReader
 
 		SetFilePointer(hFile, offsetLow, &offsetHigh, FILE_BEGIN);
 		EoF = false; // because of file pointer move
-		oCHECK_SIZE(unsigned int, _StreamRead.Range.Size);
-		oVB(ReadFile(hFile, _StreamRead.pData, static_cast<unsigned int>(_StreamRead.Range.Size), &numBytesRead, nullptr));
+		oVB(ReadFile(hFile, _StreamRead.pData, as_uint(_StreamRead.Range.Size), &numBytesRead, nullptr));
 		EoF = (numBytesRead == 0);
 
 		// Unbuffered io is inconsistent on what it returns for these numbers and 
@@ -463,8 +462,7 @@ struct oFileWriterImpl : public oStreamWriter
 			SetFilePointer(hFile, offsetLow, &offsetHigh, FILE_BEGIN);
 		}
 
-		oCHECK_SIZE(unsigned int, _Write.Range.Size);
-		oVB(WriteFile(hFile, _Write.pData, static_cast<unsigned int>(_Write.Range.Size), &numBytesWritten, nullptr));
+		oVB(WriteFile(hFile, _Write.pData, as_uint(_Write.Range.Size), &numBytesWritten, nullptr));
 
 		if (numBytesWritten != _Write.Range.Size) // happens when trying to read past end of file, but ReadFile itself still succeeds
 			oTHROW(io_error, "Failed to write data to disk.");

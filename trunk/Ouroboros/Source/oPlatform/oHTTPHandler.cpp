@@ -45,8 +45,7 @@ void oHTTPHandlerBuildStaticFileResponse(const char* _FullPath, oHTTPHandler::Co
 	oSTREAM_DESC streamDesc;
 	reader->GetDesc(&streamDesc);
 
-	oCHECK_SIZE(size_t, streamDesc.Size);
-	_CommonParams.AllocateResponse(static_cast<size_t>(streamDesc.Size));
+	_CommonParams.AllocateResponse(as_size_t(streamDesc.Size));
 	oSTREAM_READ read;
 	read.pData = _CommonParams.pResponse->Content.pData;
 	read.Range.Offset = 0;

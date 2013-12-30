@@ -783,8 +783,7 @@ bool oMirroredArena_Impl::IsInChanges(const void* _pAddress, size_t _Size, const
 	{
 		case 'COPY':
 		{
-			oCHECK_SIZE(unsigned int, pChangeHeader->Size);
-			if (_pAddress < Desc.BaseAddress || _pAddress >= byte_add(Desc.BaseAddress, static_cast<unsigned int>(pChangeHeader->Size)))
+			if (_pAddress < Desc.BaseAddress || _pAddress >= byte_add(Desc.BaseAddress, as_int(pChangeHeader->Size)))
 				return false;
 
 			size_t offset = byte_diff(_pAddress, Desc.BaseAddress);

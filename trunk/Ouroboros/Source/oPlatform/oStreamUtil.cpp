@@ -39,8 +39,7 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const std::function<voi
 	unsigned long long actualSize = sd.Size + (_AsString ? 4 : 0);
 	oSTREAM_READ r;
 	r.Range.Size = sd.Size; // only read what's available
-	oCHECK_SIZE(size_t, actualSize);
-	r.pData = _Allocate(static_cast<size_t>(actualSize)); // 4 for support of UTF16/UTF32's null
+	r.pData = _Allocate(as_size_t(actualSize)); // 4 for support of UTF16/UTF32's null
 
 	if (!r.pData)
 	{
@@ -67,8 +66,7 @@ bool oStreamLoad(void** _ppOutBuffer, size_t* _pOutSize, const std::function<voi
 	// Some apps (FXC!!) get confused if you report a size that has extra 
 	// characters beyond the nul terminator (WHY!?). So fudge the number here 
 	// based on content and keep it all as internalized to file I/O as possible.
-	oCHECK_SIZE(size_t, sd.Size);
-	*_pOutSize = static_cast<size_t>(sd.Size);
+	*_pOutSize = as_size_t(sd.Size);
 	if (_AsString)
 	{
 		utf_type::value type = utfcmp(r.pData, static_cast<size_t>(__min(sd.Size, 512ull)));

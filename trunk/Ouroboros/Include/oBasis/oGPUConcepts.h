@@ -38,6 +38,7 @@
 #ifndef oGPUConcepts_h
 #define oGPUConcepts_h
 
+#include <oBase/invalid.h>
 #include <oBase/macros.h>
 #include <oBase/types.h>
 #include <oBase/vendor.h>
@@ -567,7 +568,7 @@ struct texture_info
 
 struct vertex_range
 {
-	vertex_range(unsigned int _StartPrimitive = 0, unsigned int _NumPrimitives = 0, unsigned int _MinVertex = 0, unsigned int _MaxVertex = ~0u)
+	vertex_range(unsigned int _StartPrimitive = 0, unsigned int _NumPrimitives = 0, unsigned int _MinVertex = 0, unsigned int _MaxVertex = invalid)
 		: start_primitive(_StartPrimitive)
 		, num_primitives(_NumPrimitives)
 		, min_vertex(_MinVertex)
@@ -937,7 +938,7 @@ struct oGPU_PIPELINE_DESC : oGPU_STATIC_PIPELINE_DESC
 	{
 		DebugName = "oGPU_PIPELINE_DESC";
 		pElements = nullptr;
-		NumElements = ~0u;
+		NumElements = ouro::invalid;
 		InputType = ouro::gpu::primitive_type::unknown;
 		pVertexShader = nullptr;
 		pHullShader = nullptr;

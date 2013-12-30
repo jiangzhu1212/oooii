@@ -80,7 +80,7 @@ struct oBUILD_TOOL_SERVER_SETTINGS
 	oBUILD_TOOL_SERVER_SETTINGS()
 		: Port(80)
 		, StaticBaseURI("file://DATA/Apps/AutoBuild/")
-		, DailyBuildHour(oInvalid)
+		, DailyBuildHour(ouro::invalid)
 		, NewBuildCheckSeconds(60)
 	{}
 	unsigned short Port;

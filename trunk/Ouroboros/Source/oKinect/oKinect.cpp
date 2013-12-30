@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oKinect/oKinect.h>
-#include <oBasis/oInvalid.h>
+#include <oBase/invalid.h>
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oKINECT_FEATURES)
 	oRTTI_ENUM_BEGIN_VALUES(oKINECT_FEATURES)
@@ -426,7 +426,7 @@ void oKinectImpl::OnEvent()
 
 int oKinectGetCount()
 {
-	int Count = oInvalid;
+	int Count = ouro::invalid;
 	NuiGetSensorCount(&Count);
 	return Count;
 }
@@ -443,7 +443,7 @@ bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Wi
 int oKinectGetCount()
 {
 	oErrorSetLast(std::errc::no_such_device, "library not compiled with Kinect support");
-	return oInvalid;
+	return ouro::invalid;
 }
 
 bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Window, threadsafe oKinect** _ppKinect)

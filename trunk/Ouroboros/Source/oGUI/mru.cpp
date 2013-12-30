@@ -79,9 +79,9 @@ void mru::add(const char* _Entry)
 	Entries.insert(Entries.begin(), _Entry);
 
 	// Write the list back out
-	oCHECK_SIZE(int, Entries.size());
 	int i = 0;
-	for (; i < static_cast<int>(Entries.size()); i++)
+	const int n = as_int(Entries.size());
+	for (; i < n; i++)
 		registry::set(registry::current_user, Info.registry_key, entry_name(i), Entries[i]);
 
 	// and delete any extra stale entries that remain as a result of the Entries

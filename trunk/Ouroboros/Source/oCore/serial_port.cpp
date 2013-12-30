@@ -101,9 +101,8 @@ serial_port_impl::serial_port_impl(const info& _Info)
 	dcb.DCBlength = sizeof(DCB);
 	oVB(GetCommState(hNewFile, &dcb));
 
-	oCHECK_SIZE(BYTE, Info.byte_size);
 	dcb.BaudRate = Info.baud;
-	dcb.ByteSize = (BYTE)Info.byte_size;
+	dcb.ByteSize = as_type<BYTE>(Info.byte_size);
 	dcb.StopBits = get_stop_bits(Info.stop_bits);
 	dcb.Parity = get_parity(Info.parity);
 

@@ -151,7 +151,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	//size_t extraSize = _Usage == oMirroredArena::READ_WRITE ? ARENA_SIZE : kPad-16;
 	//oTESTB(!MirroredArenaServer->IsInChanges(test1, sizeof(TEST1) + extraSize, ouro::data(transitBuffer)), "false positive on a too-large test1 buffer test");
 	
-	oTESTB(!MirroredArenaServer->IsInChanges(ouro::byte_add(BASE_ADDRESS, ~0u), 16, ouro::data(transitBuffer)), "false positive on an address outside of arena before");
+	oTESTB(!MirroredArenaServer->IsInChanges(ouro::byte_add(BASE_ADDRESS, ouro::invalid), 16, ouro::data(transitBuffer)), "false positive on an address outside of arena before");
 	oTESTB(!MirroredArenaServer->IsInChanges(ouro::byte_add(BASE_ADDRESS, ARENA_SIZE), 16, ouro::data(transitBuffer)), "false positive on an address outside of arena after");
 
 	oTRACE("SERVER: creating a socket to send diffs...");

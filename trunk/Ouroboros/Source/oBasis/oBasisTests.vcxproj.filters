@@ -34,9 +34,6 @@
     <ClCompile Include="Tests\TESTRTTI.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTSize.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTString.cpp">
       <Filter>Source</Filter>
     </ClCompile>

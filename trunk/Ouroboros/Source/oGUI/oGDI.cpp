@@ -326,8 +326,8 @@ bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, o
 bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
 {
 	RECT destRect;
-	if (_DestRect.bottom == oInvalid || _DestRect.top == oInvalid ||
-		_DestRect.left == oInvalid || _DestRect.right == oInvalid)
+	if (_DestRect.bottom == ouro::invalid || _DestRect.top == ouro::invalid ||
+		_DestRect.left == ouro::invalid || _DestRect.right == ouro::invalid)
 	{
 		RECT rClient;
 		GetClientRect(_hWnd, &rClient);
@@ -343,10 +343,10 @@ bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize,
 bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
 {
 	RECT destRect;
-	destRect.bottom = oInvalid;
-	destRect.left = oInvalid;
-	destRect.right = oInvalid;
-	destRect.top = oInvalid;
+	destRect.bottom = ouro::invalid;
+	destRect.left = ouro::invalid;
+	destRect.right = ouro::invalid;
+	destRect.top = ouro::invalid;
 
 	return oGDIStretchBits(_hWnd, destRect, _SourceSize, _SourceFormat, _pSourceBits, _SourceRowPitch, _FlipVertically);
 }

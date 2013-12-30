@@ -49,10 +49,10 @@ struct oRegistryTBB : oRegistry
 	int GetNumEntries() threadsafe const override { return static_cast<int>(hash().size()); }
 	void Clear() threadsafe override { lock_guard<shared_mutex> lock(TopologyMutex); hash().clear(); }
 	bool Exists(const oURI& _URIReference) const threadsafe override { return hash().count(_URIReference) == 1; }
-	bool Add(const oURI& _URIReference, oInterface* _pInterface, int _Status = oInvalid) threadsafe override;
+	bool Add(const oURI& _URIReference, oInterface* _pInterface, int _Status = ouro::invalid) threadsafe override;
 	bool Remove(const oURI& _URIReference) threadsafe override;
 	bool Get(const oURI& _URIReference, oInterface** _ppInterface, oREGISTRY_DESC* _pDesc = nullptr) const threadsafe override;
-	bool Set(const oURI& _URIReference, oInterface* _pInterface, int _Status = oInvalid) threadsafe override;
+	bool Set(const oURI& _URIReference, oInterface* _pInterface, int _Status = ouro::invalid) threadsafe override;
 	void Enum(std::function<bool(const oURI& _URIReference, oInterface* _pInterface, const oREGISTRY_DESC& _Desc)> _Visitor) threadsafe override;
 private:
 	struct RECORD

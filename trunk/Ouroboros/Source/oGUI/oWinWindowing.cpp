@@ -434,8 +434,7 @@ static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam
 			RID_DEVICE_INFO RIDDI;
 			RIDDI.cbSize = sizeof(RIDDI);
 			UINT Size = sizeof(RIDDI);
-			oCHECK_SIZE(UINT, InstanceName.capacity());
-			UINT NameCapacity = static_cast<UINT>(InstanceName.capacity());
+			UINT NameCapacity = as_uint(InstanceName.capacity());
 			oVB(GetRawInputDeviceInfoA((HANDLE)_lParam, RIDI_DEVICEINFO, &RIDDI, &Size));
 			oVB(GetRawInputDeviceInfoA((HANDLE)_lParam, RIDI_DEVICENAME, InstanceName.c_str(), &NameCapacity));
 
@@ -447,8 +446,7 @@ static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam
 			UINT RawCount = GetRawInputDeviceList(ctx->RawInputs.data(), &RawCapacity, sizeof(RAWINPUTDEVICELIST));
 			for (UINT i = 0; i < RawCount; i++)
 			{
-				oCHECK_SIZE(UINT, ctx->RawInputInstanceNames[i].capacity());
-				UINT Capacity = static_cast<UINT>(ctx->RawInputInstanceNames[i].capacity());
+				UINT Capacity = as_uint(ctx->RawInputInstanceNames[i].capacity());
 				oVB(GetRawInputDeviceInfoA(ctx->RawInputs[i].hDevice, RIDI_DEVICENAME, ctx->RawInputInstanceNames[i].c_str(), &Capacity));
 			}
 
@@ -735,16 +733,14 @@ void oWinDestroy(HWND _hWnd)
 char* oWinMakeClassName(char* _StrDestination, size_t _SizeofStrDestination, WNDPROC _Wndproc)
 {
 	int written = snprintf(_StrDestination, _SizeofStrDestination, "Ouroboros.Window.WndProc.%x", _Wndproc);
-	oCHECK_SIZE(size_t, written);
-	return static_cast<size_t>(written) < _SizeofStrDestination ? _StrDestination : nullptr;
+	return as_size_t(written) < _SizeofStrDestination ? _StrDestination : nullptr;
 }
 
 bool oWinIsClass(HWND _hWnd, WNDPROC _Wndproc)
 {
 	sstring ClassName, ExpectedClassName;
 	oVERIFY_R(oWinMakeClassName(ExpectedClassName, _Wndproc));
-	oCHECK_SIZE(int, ClassName.capacity());
-	oVERIFY_R(GetClassName(_hWnd, ClassName.c_str(), static_cast<int>(ClassName.capacity())));
+	oVERIFY_R(GetClassName(_hWnd, ClassName.c_str(), as_int(ClassName.capacity())));
 	return !strcmp(ClassName, ExpectedClassName);
 }
 
@@ -1783,11 +1779,11 @@ bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 	switch (type)
 	{
 		case ouro::control_type::combotextbox:
-			if (_SubItemIndex == oInvalid)
+			if (_SubItemIndex == ouro::invalid)
 				oVB(SetWindowText(_hWnd, _Text));
 			// pass through
 		case ouro::control_type::combobox:
-			if (_SubItemIndex != oInvalid)
+			if (_SubItemIndex != ouro::invalid)
 			{
 				oVERIFY(oWinControlDeleteSubItem(_hWnd, _Text, _SubItemIndex));
 				oVERIFY(oWinControlInsertSubItem(_hWnd, _Text, _SubItemIndex));
@@ -1879,7 +1875,7 @@ char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWn
 {
 	oWINVP(_hWnd);
 	ouro::control_type::value type = ouro::control_type::unknown;
-	if (_SubItemIndex != oInvalid)
+	if (_SubItemIndex != ouro::invalid)
 		type = oWinControlGetType(_hWnd);
 	switch (type)
 	{
@@ -1904,15 +1900,13 @@ char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWn
 			TCITEM item;
 			item.mask = TCIF_TEXT;
 			item.pszText = (LPSTR)_StrDestination;
-			oCHECK_SIZE(int, _SizeofStrDestination);
-			item.cchTextMax = static_cast<int>(_SizeofStrDestination);
+			item.cchTextMax = as_int(_SizeofStrDestination);
 			oVB(TabCtrl_GetItem(_hWnd, _SubItemIndex, &item));
 			return _StrDestination;
 		}
 
 		default:
-			oCHECK_SIZE(int, _SizeofStrDestination);
-			oVB(GetWindowText(_hWnd, _StrDestination, static_cast<int>(_SizeofStrDestination)));
+			oVB(GetWindowText(_hWnd, _StrDestination, as_int(_SizeofStrDestination)));
 			return _StrDestination;
 	}
 }
@@ -2023,7 +2017,7 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 				if (i >= oCOUNTOF(sAllowableKeys))
 					return DLGC_WANTARROWS;
 
-				DWORD dwStart = oInvalid, dwEnd = oInvalid;
+				DWORD dwStart = ouro::invalid, dwEnd = ouro::invalid;
 				SendMessage(_hControl, EM_GETSEL, (WPARAM)&dwStart, (LPARAM)&dwEnd);
 
 				// allow only one '.', unless it's in the selecte d text about to be replaced
@@ -2397,7 +2391,7 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 	}
 
 	oErrorSetLastBadType(_hControl, type);
-	return oInvalid;
+	return ouro::invalid;
 }
 
 bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
@@ -2437,7 +2431,7 @@ bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _
 	const char* tok = strtok_r((char*)copy.c_str(), delim, &ctx);
 	while (tok)
 	{
-		oWinControlInsertSubItem(_hControl, tok, oInvalid);
+		oWinControlInsertSubItem(_hControl, tok, ouro::invalid);
 		tok = strtok_r(nullptr, delim, &ctx);
 	}
 	return true;
@@ -2594,7 +2588,7 @@ int oWinControlGetSelectedSubItem(HWND _hControl)
 		case ouro::control_type::tab: return TabCtrl_GetCurSel(_hControl);
 		default: break;
 	}
-	return oInvalid;
+	return ouro::invalid;
 }
 
 ouro::control_type::value oWinControlGetType(HWND _hControl)
@@ -2754,8 +2748,7 @@ char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestina
 				return nullptr;
 			}
 
-			oCHECK_SIZE(int, _SizeofStrDestination);
-			oVB(GetWindowText(_hControl, _StrDestination, static_cast<int>(_SizeofStrDestination)));
+			oVB(GetWindowText(_hControl, _StrDestination, as_int(_SizeofStrDestination)));
 
 			if (start != end)
 			{
@@ -2867,7 +2860,7 @@ bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex)
 	switch (type)
 	{
 		case ouro::control_type::icon:
-			if (_SubItemIndex != oInvalid)
+			if (_SubItemIndex != ouro::invalid)
 				return oErrorSetLast(std::errc::invalid_argument, "Invalid _SubItemIndex");
 			SendMessage(_hControl, STM_SETICON, (WPARAM)_hIcon, 0);
 			return true;
@@ -2882,7 +2875,7 @@ HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex)
 	switch (type)
 	{
 		case ouro::control_type::icon:
-			if (_SubItemIndex != oInvalid)
+			if (_SubItemIndex != ouro::invalid)
 		{
 				oErrorSetLast(std::errc::invalid_argument, "Invalid _SubItemIndex");
 	return nullptr;

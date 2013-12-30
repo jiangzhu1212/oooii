@@ -80,7 +80,7 @@
 
 // Place this macro in the implementation class of an oGPUResource
 #define oDEFINE_GPURESOURCE_INTERFACE() oDEFINE_GPUDEVICECHILD_INTERFACE() \
-	oGPU_RESOURCE_TYPE GetType() const threadsafe override { return MIXINGetType(); } \
+	ouro::gpu::resource_type::value GetType() const threadsafe override { return MIXINGetType(); } \
 	unsigned int GetID() const threadsafe override { return MIXINGetID(); } \
 	void GetDesc(interface_type::DESC* _pDesc) const threadsafe override { MIXINGetDesc(_pDesc); } \
 	int2 GetByteDimensions(int _Subresource) const threadsafe override;
@@ -88,7 +88,7 @@
 // The one true hash. This is a persistent hash that can be used at tool time 
 // and at runtime and should be capable of uniquely identifying any resource 
 // in the system.
-inline unsigned int oGPUDeviceResourceHash(const char* _SourceName, oGPU_RESOURCE_TYPE _Type) { return ouro::fnv1a<unsigned int>(_SourceName, oInt(strlen(_SourceName)), _Type); }
+inline unsigned int oGPUDeviceResourceHash(const char* _SourceName, ouro::gpu::resource_type::value _Type) { return ouro::fnv1a<unsigned int>(_SourceName, static_cast<unsigned int>(strlen(_SourceName)), _Type); }
 
 template<typename InterfaceT, typename ImplementationT>
 struct oGPUDeviceChildMixinBase
@@ -169,7 +169,7 @@ protected:
 	}
 };
 
-template<typename InterfaceT, typename ImplementationT, oGPU_RESOURCE_TYPE Type>
+template<typename InterfaceT, typename ImplementationT, ouro::gpu::resource_type::value Type>
 struct oGPUResourceMixin : oGPUDeviceChildMixinBase<InterfaceT, ImplementationT>
 {
 	typedef typename InterfaceT::DESC desc_type;
@@ -206,7 +206,7 @@ protected:
 		return !!*_ppInterface;
 	}
 
-	inline oGPU_RESOURCE_TYPE MIXINGetType() const threadsafe
+	inline ouro::gpu::resource_type::value MIXINGetType() const threadsafe
 	{
 		return Type;
 	}

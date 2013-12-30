@@ -154,6 +154,7 @@
     <ClInclude Include="..\..\Include\oBase\ini.h" />
     <ClInclude Include="..\..\Include\oBase\input.h" />
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
+    <ClInclude Include="..\..\Include\oBase\invalid.h" />
     <ClInclude Include="..\..\Include\oBase\json.h" />
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator.h" />

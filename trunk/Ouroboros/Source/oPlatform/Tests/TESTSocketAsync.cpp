@@ -141,8 +141,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		void InitiateReceive(threadsafe oSocket* _pSocket) threadsafe
 		{
 			oLockedPointer<oBuffer> LockedBuffer(ReceiveBuffer);
-			oCHECK_SIZE(unsigned int, LockedBuffer->GetSize());
-			_pSocket->Recv(LockedBuffer->GetData(), static_cast<unsigned int>(LockedBuffer->GetSize()));
+			_pSocket->Recv(LockedBuffer->GetData(), as_uint(LockedBuffer->GetSize()));
 		}
 
 		oStd::atomic_uint SendCount;
@@ -212,8 +211,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		Settings.Callback = Receiver;
 		Socket->GoAsynchronous(Settings);
 
-		oCHECK_SIZE(unsigned int, strlen(TESTSocketTCP0));
-		Receiver->ExpectedMessageLength = static_cast<unsigned int>(strlen(TESTSocketTCP0)) + 1;
+		Receiver->ExpectedMessageLength = as_uint(strlen(TESTSocketTCP0)) + 1;
 		
 		oSocket::DESC Desc;
 		Socket->GetDesc(&Desc);

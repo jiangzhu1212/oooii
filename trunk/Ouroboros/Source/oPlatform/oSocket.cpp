@@ -211,8 +211,8 @@ oSocket::size_t oWinsockRecvFromBlocking(SOCKET hSocket, void* _pData, oSocket::
 {
 	oSocket::size_t TotalReceived = 0;
 	
-	if (oInfiniteWait == _Timeout)
-		_Timeout = SaneMaxTimout; // oInfiniteWait doesn't seem to work with setsockopt, so use a sane max
+	if (ouro::infinite == _Timeout)
+		_Timeout = SaneMaxTimout; // ouro::infinite doesn't seem to work with setsockopt, so use a sane max
 
 	oWSAVB(setsockopt(hSocket, SOL_SOCKET, SO_RCVTIMEO,(char *)&_Timeout, sizeof(unsigned int)));
 
@@ -992,7 +992,7 @@ SocketServer_Impl::SocketServer_Impl(const char* _DebugName, const DESC& _Desc, 
 	sockaddr_in SAddr;
 	oNetAddrToSockAddr(Addr, &SAddr);
 
-	hSocket = winsock::make(SAddr, winsock::reliable | winsock::exclusive_address, oInfiniteWait, Desc.MaxNumConnections);
+	hSocket = winsock::make(SAddr, winsock::reliable | winsock::exclusive_address, ouro::infinite, Desc.MaxNumConnections);
 	if (INVALID_SOCKET == hSocket)
 		return; // leave last error from inside oWinsockCreate
 
@@ -1334,7 +1334,7 @@ SocketServer2_Impl::SocketServer2_Impl(const char* _DebugName, const DESC& _Desc
 	sockaddr_in SAddr;
 	oNetAddrToSockAddr(Addr, &SAddr);
 
-	hListenSocket = winsock::make(SAddr, winsock::reliable | winsock::exclusive_address, oInfiniteWait, oInvalid);
+	hListenSocket = winsock::make(SAddr, winsock::reliable | winsock::exclusive_address, ouro::infinite, ouro::invalid);
 	if (INVALID_SOCKET == hListenSocket)
 		return; // leave last error from inside oWinsockCreate
 	
@@ -1507,7 +1507,7 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 		oSocket::DESC desc;
 		desc.Style = oSocket::BLOCKING;
 		desc.BlockingSettings = Desc.BlockingSettings;
-		desc.ConnectionTimeoutMS = oInfiniteWait; //not used for this type of socket anyway
+		desc.ConnectionTimeoutMS = ouro::infinite; //not used for this type of socket anyway
 
 		sockaddr_in* AddrLocal;
 		int SzAddrLocal;

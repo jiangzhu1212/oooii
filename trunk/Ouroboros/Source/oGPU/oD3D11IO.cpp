@@ -158,12 +158,12 @@ bool oGPUSurfaceConvert(
 
 	ouro::surface::mapped_subresource Destination;
 	Destination.data = _pDestination;
-	Destination.row_pitch = oUInt(_DestinationRowPitch);
+	Destination.row_pitch = as_int(_DestinationRowPitch);
 	Destination.depth_pitch = 0;
 
 	ouro::surface::const_mapped_subresource Source;
 	Source.data = _pSource;
-	Source.row_pitch = oULLong(_SourceRowPitch);
+	Source.row_pitch = as_int(_SourceRowPitch);
 	Source.depth_pitch = 0;
 	convert(D3DDevice, Destination, _DestinationFormat, Source, _SourceFormat, _MipDimensions);
 	return true;

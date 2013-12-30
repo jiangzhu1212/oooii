@@ -24,11 +24,11 @@
  **************************************************************************/
 #include <oBasis/oGeometry.h>
 #include <oBase/algorithm.h>
+#include <oBase/invalid.h>
 #include <oBasis/oError.h>
 #include <oStd/for.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>
-#include <oBasis/oInvalid.h>
 #include <oBasis/oOBJ.h>
 #include <oBasis/oRefCount.h>
 
@@ -337,7 +337,7 @@ struct oGeometry_Impl : public oGeometry
 			Colors[i] = _Color;
 	}
 
-	inline void SetContinuityID(unsigned int _ID, unsigned int _BaseVertexIndex = 0, unsigned int _NumVertices = oInvalid)
+	inline void SetContinuityID(unsigned int _ID, unsigned int _BaseVertexIndex = 0, unsigned int _NumVertices = invalid)
 	{
 		ContinuityIDs.resize(Positions.size());
 		const size_t count = __min(_NumVertices, ContinuityIDs.size() - _BaseVertexIndex);
@@ -395,12 +395,10 @@ struct oGeometry_Impl : public oGeometry
 
 		if (Ranges.empty())
 		{
-			ouro::gpu::vertex_range r;
+			gpu::vertex_range r;
 			r.start_primitive = 0;
-			oCHECK_SIZE(unsigned int, Indices.size());
-			r.num_primitives = static_cast<unsigned int>(Indices.size() / 3);
-			oCHECK_SIZE(unsigned int, Positions.size());
-			r.max_vertex = static_cast<unsigned int>(Positions.size());
+			r.num_primitives = as_uint(Indices.size() / 3);
+			r.max_vertex = as_uint(Positions.size());
 			Ranges.push_back(r);
 		}
 
@@ -409,7 +407,7 @@ struct oGeometry_Impl : public oGeometry
 
 	void FillMapped(MAPPED* _pMapped) const;
 
-	std::vector<ouro::gpu::vertex_range> Ranges;
+	std::vector<gpu::vertex_range> Ranges;
 	std::vector<unsigned int> Indices;
 	std::vector<float3> Positions;
 	std::vector<float3> Normals;
@@ -1029,7 +1027,7 @@ namespace CircleDetails
 			}
 		}
 		
-		if (_ContinuityID != oInvalid)
+		if (_ContinuityID != invalid)
 			_pGeometry->SetContinuityID(_ContinuityID, _BaseVertexIndex);
 
 		return true;
@@ -1091,7 +1089,7 @@ namespace CircleDetails
 			}
 		}
 
-		if (_ContinuityID != oInvalid)
+		if (_ContinuityID != invalid)
 			_pGeometry->SetContinuityID(_ContinuityID, _BaseVertexIndex);
 
 		return true;
@@ -1102,7 +1100,7 @@ bool oGeometryFactory_Impl::CreateCircle(const CIRCLE_DESC& _Desc, const oGeomet
 {
 	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, false, true, true };
 	GEO_CONSTRUCT("CreateCircle", sSupportedLayout, _Layout, _Desc.FaceType);
-	if (!CircleDetails::CreateCircleInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, _Layout.ContinuityIDs ? 0 : oInvalid))
+	if (!CircleDetails::CreateCircleInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, _Layout.ContinuityIDs ? 0 : invalid))
 	{
 		delete pGeometry;
 		*_ppGeometry = 0;
@@ -1117,7 +1115,7 @@ bool oGeometryFactory_Impl::CreateWasher(const WASHER_DESC& _Desc, const oGeomet
 {
 	static const oGeometry::LAYOUT sSupportedLayout = { true, true, true, false, true, true };
 	GEO_CONSTRUCT("CreateWasher", sSupportedLayout, _Layout, _Desc.FaceType);
-	if (!CircleDetails::CreateWasherInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, _Layout.ContinuityIDs ? 0 : oInvalid))
+	if (!CircleDetails::CreateWasherInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, _Layout.ContinuityIDs ? 0 : invalid))
 	{
 		delete pGeometry;
 		*_ppGeometry = 0;
@@ -1179,7 +1177,7 @@ static void tcs(std::vector<float3>& tc, const std::vector<float3>& positions, b
 			v = (v - 0.5f) * 2.0f;
 
 		float u = 0.5f;
-		if (!ouro::equal(phi, 0.0f))
+		if (!equal(phi, 0.0f))
 		{
 			float a = clamp(p.y / sinf(phi), -1.0f, 1.0f);
 			u = acosf(a) / (2.0f * oPIf);
@@ -1386,13 +1384,13 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 		c.Color = _Desc.Color;
 
 		c.Radius = _Desc.Bounds.radius();
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 
 		float4x4 m = make_rotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
 		pGeometry->Transform(m);
 
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 	}
 	else
@@ -1563,7 +1561,7 @@ bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGe
 		for (unsigned int i = 0; i <= _Desc.Divide; i++)
 		{
 			c.Radius = lerp(_Desc.Radius0, _Desc.Radius1, i/static_cast<float>(_Desc.Divide));
-			if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, i * fStep, _Layout.ContinuityIDs ? 0 : oInvalid))
+			if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, i * fStep, _Layout.ContinuityIDs ? 0 : invalid))
 				return false;
 		}
 
@@ -1628,12 +1626,12 @@ bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGe
 			oGeometry::LAYOUT layout = _Layout;
 			layout.Normals = false; // normals get created later
 
-			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0.0f, _Layout.ContinuityIDs ? 1 : oInvalid))
+			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0.0f, _Layout.ContinuityIDs ? 1 : invalid))
 				return false;
 
 			c.FaceType = GetOppositeWindingOrder(_Desc.FaceType);
 			c.Radius = __max(_Desc.Radius1, oVERYSMALL); // pure 0 causes a degenerate face and thus degenerate normals
-			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, _Desc.Height, _Layout.ContinuityIDs ? 2 : oInvalid))
+			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, _Desc.Height, _Layout.ContinuityIDs ? 2 : invalid))
 				return false;
 
 			//fixme: implement texcoord generation
@@ -1687,7 +1685,7 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 
 		//main circle
 		c.Radius = kCenterRadius;
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 
 		float4x4 m = make_rotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
@@ -1696,25 +1694,25 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 		//small circles
 		c.Radius = kRangeRadius;
 		unsigned int nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 		m = make_translation(float3(kCenterRadius, 0.0f, 0.0f));
 		pGeometry->Transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 		m = make_translation(float3(-kCenterRadius, 0.0f, 0.0f));
 		pGeometry->Transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 		m = make_rotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * make_translation(float3(0.0f, 0.0f, kCenterRadius));
 		pGeometry->Transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : oInvalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 		m = make_rotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * make_translation(float3(0.0f, 0.0f, -kCenterRadius));
 		pGeometry->Transform(m,nextCircleIndex);
@@ -1918,14 +1916,14 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 	float3 dim = pGeometry->Bounds.size();
 	float s = 1.0f / __max(dim.x, __max(dim.y, dim.z));
 
-	if (!ouro::equal(s, 1.0f))
+	if (!equal(s, 1.0f))
 	{
 		float4x4 scale = make_scale(s);
 		pGeometry->Transform(scale);
 	}
 
 #if 0
-	ouro::path mtlpath = obj.OBJPath;
+	path mtlpath = obj.OBJPath;
 	mtlpath.replace_filename(obj.MaterialLibraryPath.c_str());
 	
 	void* pBuffer = 0;

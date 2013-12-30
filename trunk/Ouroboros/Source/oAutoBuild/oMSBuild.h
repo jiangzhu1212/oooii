@@ -34,7 +34,7 @@ struct oMSBUILD_SETTINGS
 		: TimeoutSeconds(0)
 		, ToolPath("msbuild.exe")
 		, CleanAlways(true)
-		, ThreadsPerBuild(oInvalid)
+		, ThreadsPerBuild(ouro::invalid)
 	{}
 
 	uint TimeoutSeconds;

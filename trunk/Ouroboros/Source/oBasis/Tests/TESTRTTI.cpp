@@ -25,7 +25,6 @@
 #include <oBasis/oError.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oRTTI.h>
-#include <oBasis/oInvalid.h>
 #include "oBasisTestCommon.h"
 #include <oCompute/linear_algebra.h>
 #include <oCompute/oAABox.h>

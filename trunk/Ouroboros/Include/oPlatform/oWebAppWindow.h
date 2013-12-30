@@ -36,7 +36,7 @@ interface oWebAppWindow : public oInterface, ouro::window
 
 	virtual bool IsRunning() const = 0;
 	virtual void Close() = 0;
-	virtual bool WaitUntilClosed(unsigned int _TimeoutMS = oInfiniteWait) = 0;
+	virtual bool WaitUntilClosed(unsigned int _TimeoutMS = ouro::infinite) = 0;
 };	
 
 bool oWebAppWindowCreate(const char* _pTitle, unsigned short _ServerPort, oWebAppWindow** _ppWebAppWindow);

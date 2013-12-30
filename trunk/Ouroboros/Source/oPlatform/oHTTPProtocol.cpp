@@ -240,8 +240,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 
 					// TODO: Possible race condition on DefaultResponseBody? Could a previous send of DefaultResponseBody still be in progress at this time?
 					snprintf(DefaultResponseBody, pDefaultPage, TheResponse.StatusLine.StatusCode, as_string(TheResponse.StatusLine.StatusCode), TheResponse.StatusLine.StatusCode, as_string(TheResponse.StatusLine.StatusCode));
-					oCHECK_SIZE(unsigned int, DefaultResponseBody.size());
-					TheResponse.Content.Length = static_cast<unsigned int>(DefaultResponseBody.size());
+					TheResponse.Content.Length = as_uint(DefaultResponseBody.size());
 
 					// If MIMEData was set by StartResponse, finish it early because something went wrong (Response.Size==0)
 					if (bCallFinishResponse)
@@ -257,8 +256,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 				}
 
 				// TODO: While it's ok to set a content length header field of 0, for multipart/byteranges it may not be allowed or desired to set this header field..
-				oCHECK_SIZE(unsigned int, TheResponse.Content.Length);
-				oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, static_cast<unsigned int>(TheResponse.Content.Length));
+				oHTTPAddHeader(TheResponse.HeaderFields, oHTTP_HEADER_CONTENT_LENGTH, as_uint(TheResponse.Content.Length));
 
 				// With the HEAD method we don't actually send the body
 				if (TheRequest.RequestLine.Method == oHTTP_HEAD)
@@ -298,9 +296,7 @@ bool oHTTPProtocol::ProcessSocketReceive(void* _pData, unsigned int _SizeData, i
 				size_t SizeAdded = 0;
 				oInsertContent(TheHeader.c_str(), TheHeader.size(), SendBuffer, &SizeAdded, SendBufferSize, nullptr);
 				oASSERT(SizeAdded==SendBufferSize, "Expected SendBuffer to be filled exactly");
-				oCHECK_SIZE(unsigned int, SendBufferTransferSize);
-				oCHECK_SIZE(unsigned int, TheResponse.Content.Length);
-				if (_pSocket->Send(SendBuffer, static_cast<unsigned int>(SendBufferTransferSize), TheResponse.Content.pData, TheResponse.Content.pData ? static_cast<unsigned int>(TheResponse.Content.Length) : 0))
+				if (_pSocket->Send(SendBuffer, as_uint(SendBufferTransferSize), TheResponse.Content.pData, TheResponse.Content.pData ? as_uint(TheResponse.Content.Length) : 0))
 				{
 					++SendsInProgress;
 				}

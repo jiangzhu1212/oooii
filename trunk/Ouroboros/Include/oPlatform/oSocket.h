@@ -94,8 +94,8 @@ interface oSocket : oInterface
 	struct BLOCKING_SETTINGS
 	{
 		BLOCKING_SETTINGS()
-			: SendTimeout(oInfiniteWait)
-			, RecvTimeout(oInfiniteWait)
+			: SendTimeout(ouro::infinite)
+			, RecvTimeout(ouro::infinite)
 		{}
 		unsigned int SendTimeout;
 		unsigned int RecvTimeout;
@@ -155,7 +155,7 @@ interface oSocket : oInterface
 	// std::errc::no_buffer_space: This can occur when the MaxSimultaneousMessages has been exhausted
 	// Send will send the provided header using the socket's protocol.  The user can optionally send a body as well that will
 	// be linearized with the header on receive
-	virtual bool Send(const void* _pHeader, oSocket::size_t _SizeHeader, const void* _pBody = nullptr, oSocket::size_t _SizeBody = oInvalid) threadsafe = 0;
+	virtual bool Send(const void* _pHeader, oSocket::size_t _SizeHeader, const void* _pBody = nullptr, oSocket::size_t _SizeBody = ouro::invalid) threadsafe = 0;
 
 	// Failure cases: 
 	// std::errc::invalid_argument: This can occur when a call to SendTo is made on a connection based protocol (i.e. TCP)
@@ -245,8 +245,8 @@ interface oSocketServer : oInterface
 	virtual bool GetHostname(char* _pString, size_t _strLen)  const threadsafe = 0;
 	template<size_t hostnameSize> inline bool GetHostname(char (&_OutHostname)[hostnameSize]) const threadsafe { return GetHostname(_OutHostname, hostnameSize); }
 
-	virtual bool WaitForConnection(const oSocket::BLOCKING_SETTINGS& _BlockingSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS = oInfiniteWait) threadsafe = 0;
-	virtual bool WaitForConnection(const oSocket::ASYNC_SETTINGS& _AsyncSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS = oInfiniteWait) threadsafe = 0;
+	virtual bool WaitForConnection(const oSocket::BLOCKING_SETTINGS& _BlockingSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS = ouro::infinite) threadsafe = 0;
+	virtual bool WaitForConnection(const oSocket::ASYNC_SETTINGS& _AsyncSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS = ouro::infinite) threadsafe = 0;
 };
 
 oAPI bool oSocketServerCreate(const char* _DebugName, const oSocketServer::DESC& _Desc, threadsafe oSocketServer** _ppSocketServer);

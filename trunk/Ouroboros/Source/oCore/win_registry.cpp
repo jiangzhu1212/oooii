@@ -62,14 +62,12 @@ void delete_key(hkey _hKey, const char* _KeyPath, bool _Recursive)
 		if (KP[KP.length()-1] != '\\')
 			strlcat(KP, "\\");
 		size_t KPLen = KP.length();
-		oCHECK_SIZE(DWORD, KP.capacity() - KPLen);
-		DWORD dwSize = DWORD(KP.capacity() - KPLen);
+		DWORD dwSize = as_type<DWORD>(KP.capacity() - KPLen);
 		err = RegEnumKeyEx(hKey, 0, &KP[KPLen], &dwSize, nullptr, nullptr, nullptr, nullptr);
 		while (!err)
 		{
 			delete_key(_hKey, KP, _Recursive);
-			oCHECK_SIZE(DWORD, KP.capacity() - KPLen);
-			DWORD dwSize = DWORD(KP.capacity() - KPLen);
+			DWORD dwSize = as_type<DWORD>(KP.capacity() - KPLen);
 			err = RegEnumKeyEx(hKey, 0, &KP[KPLen], &dwSize, nullptr, nullptr, nullptr, nullptr);
 		}
 

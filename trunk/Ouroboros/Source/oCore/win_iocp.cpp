@@ -25,6 +25,7 @@
 #include <oCore/windows/win_iocp.h>
 #include <oBase/backoff.h>
 #include <oBase/concurrent_object_pool.h>
+#include <oBase/invalid.h>
 #include <oCore/debugger.h>
 #include <oCore/process_heap.h>
 #include <oCore/reporting.h>
@@ -59,7 +60,7 @@ public:
 	static void* find_instance();
 
 	// Waits for all work to be completed
-	void wait() { wait_for(~0u); }
+	void wait() { wait_for(infinite); }
 	bool wait_for(unsigned int _TimeoutMS);
 	void join();
 
@@ -202,7 +203,7 @@ bool iocp_threadpool::wait_for(unsigned int _TimeoutMS)
 {
 	backoff bo;
 
-	unsigned int start = ouro::timer::now_ms();
+	unsigned int start = timer::now_ms();
 
 	#ifdef _DEBUG
 		local_timeout to(5.0);
@@ -210,7 +211,7 @@ bool iocp_threadpool::wait_for(unsigned int _TimeoutMS)
 
 	while (NumAssociations > 0)
 	{ 
-		if (_TimeoutMS != ~0u && ouro::timer::now_ms() >= (start + _TimeoutMS))
+		if (_TimeoutMS != infinite && timer::now_ms() >= (start + _TimeoutMS))
 			return false;
 
 		bo.pause();

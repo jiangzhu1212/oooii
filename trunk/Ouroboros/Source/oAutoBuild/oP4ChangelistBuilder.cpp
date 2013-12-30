@@ -151,7 +151,7 @@ public:
 
 	oP4ChangelistBuilderImpl(const ini& _INI, const char* _LogRoot, int _ServerPort, bool *_pSuccess)
 		: ServerPort(_ServerPort)
-		, LastCL(oInvalid)
+		, LastCL(ouro::invalid)
 		, StartBuildMS(0)
 		, CurrentBuildInfoValid(false)
 		, CurrentBuildActive(false)
@@ -390,7 +390,7 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 		strchr(TempPath.c_str(), '/')[0] = 0;
 		ChangeInfo Info;
 		Info.IsDaily = true;
-		Info.CL = oInvalid;
+		Info.CL = ouro::invalid;
 		Info.UserName = TempPath;
 		Info.Succeeded = ParseAutoBuildResultsSpecialBuild(TempPath, &Info);
 		FinishedDailyBuildInfos.push_back(Info);
@@ -468,7 +468,7 @@ bool oP4ChangelistBuilderImpl::WasChangelistAlreadyBuilt(int _Changelist, bool _
 
 void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDaily /*= false*/)
 {
-	if (_Changelist == oInvalid)
+	if (_Changelist == ouro::invalid)
 		return;
 
 	if (WasChangelistAlreadyAdded(_Changelist, _IsDaily))
@@ -513,7 +513,7 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 
 void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 {
-	// Check p4 for new builds. This can be oInvalid if we lose our connection.
+	// Check p4 for new builds. This can be ouro::invalid if we lose our connection.
 	int NextCL = oP4GetNextChangelist(LastCL, P4Settings.Root);
 	TryAddingChangelist(NextCL);
 
@@ -525,7 +525,7 @@ void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 		ouro::system::now(&CurrentDate);
 		CurrentDate = ouro::system::to_local(CurrentDate);
 
-		if (_DailyBuildHour == CurrentDate.hour && !WasChangelistAlreadyAdded(oInvalid, true))
+		if (_DailyBuildHour == CurrentDate.hour && !WasChangelistAlreadyAdded(ouro::invalid, true))
 		{
 			TryAddingChangelist(LastSuccesfulBuildInfo.CL, true);
 		}

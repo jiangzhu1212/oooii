@@ -80,7 +80,7 @@ struct oP4_FILE_DESC
 	ouro::uri_string Path;
 	oP4_STATUS Status;
 	int Revision;
-	int Changelist; // oInvalid is the default changelist
+	int Changelist; // ouro::invalid is the default changelist
 	bool IsText;
 };
 
@@ -172,9 +172,9 @@ template<size_t size> bool oP4GetClientPath(char (&_StrDestination)[size], const
 template<size_t capacity> bool oP4GetClientPath(ouro::fixed_string<char, capacity>& _StrDestination, const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, _StrDestination.capacity(), _pDepotPath); }
 
 // Fill the specified array with file descs for all files that are opened in a 
-// pending changelist (oInvalid is the default changelist) under the specified 
+// pending changelist (ouro::invalid is the default changelist) under the specified 
 // P4Base.
-// Returns the number of validly populated _pOpenedFiles or oInvalid in case of 
+// Returns the number of validly populated _pOpenedFiles or ouro::invalid in case of 
 // error.
 size_t oP4ListOpened(oP4_FILE_DESC* _pOpenedFiles, size_t _MaxNumOpenedFiles, const char* _P4Base = nullptr);
 template<size_t size> size_t oP4ListOpened(oP4_FILE_DESC (&_pOpenedFiles)[size], const char* _P4Base = nullptr) { return oP4ListOpened(_pOpenedFiles, size, _P4Base); }
@@ -183,10 +183,10 @@ template<size_t size> size_t oP4ListOpened(oP4_FILE_DESC (&_pOpenedFiles)[size],
 // NOTE: For these the Revision and Changelist are the TARGET values to which 
 // a Get Latest will update them to. To limit the check to a specific 
 // changelist, specify that changelist as the _UpToChangelist value.
-// Returns the number of validly populated _pOutOfDateFiles or oInvalid in case 
+// Returns the number of validly populated _pOutOfDateFiles or ouro::invalid in case 
 // of error.
-size_t oP4ListOutOfDate(oP4_FILE_DESC* _pOutOfDateFiles, size_t _MaxNumOutOfDateFiles, const char* _P4Base = nullptr, int _UpToChangelist = oInvalid);
-template<size_t size> size_t oP4ListOutOfDate(oP4_FILE_DESC (&_pOutOfDateFiles)[size], const char* _P4Base = nullptr, int _UpToChangelist = oInvalid) { return oP4ListOutOfDate(_pOutOfDateFiles, size, _P4Base, _UpToChangelist); }
+size_t oP4ListOutOfDate(oP4_FILE_DESC* _pOutOfDateFiles, size_t _MaxNumOutOfDateFiles, const char* _P4Base = nullptr, int _UpToChangelist = ouro::invalid);
+template<size_t size> size_t oP4ListOutOfDate(oP4_FILE_DESC (&_pOutOfDateFiles)[size], const char* _P4Base = nullptr, int _UpToChangelist = ouro::invalid) { return oP4ListOutOfDate(_pOutOfDateFiles, size, _P4Base, _UpToChangelist); }
 
 // _____________________________________________________________________________
 // P4 String Parsing: convert the raw string as returned by one of the above

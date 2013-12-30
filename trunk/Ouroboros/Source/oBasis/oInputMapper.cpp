@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oError.h>
-#include <oBasis/oInvalid.h>
 #include <oBasis/oRefCount.h>
 #include <oConcurrency/mutex.h>
 #include <array>
@@ -44,8 +43,7 @@ public:
 	{
 		oConcurrency::lock_guard<oConcurrency::shared_mutex> lockB(Mutex);
 		size_t index = sparse_set(oThreadsafe(Hooks), _Hook);
-		oCHECK_SIZE(int, index);
-		return static_cast<int>(index);
+		return as_int(index);
 	}
 
 	inline void Unhook(int _HookID) threadsafe
@@ -117,16 +115,14 @@ void oInput::Parse(const char* _InputMapping)
 		{
 			if (!_stricmp("OR", tok))
 			{
-				oCHECK_SIZE(int, Keys.size());
-				if (++KeySetIndex >= static_cast<int>(Keys.size()))
+				if (++KeySetIndex >= as_int(Keys.size()))
 					oTHROW(no_buffer_space, "Only %u sets of keys OR'ed together are allowed.", Keys.size());
 				KeyIndex = 0;
 			}
 
 			else
 			{
-				oCHECK_SIZE(int, Keys[KeySetIndex].size());
-				if (KeyIndex >= static_cast<int>(Keys[KeySetIndex].size()))
+				if (KeyIndex >= as_int(Keys[KeySetIndex].size()))
 					oTHROW(no_buffer_space, "Only up to %u simultaneous keys supported", Keys[KeySetIndex].size());
 
 				ouro::input::key Key = ouro::input::none;
@@ -210,9 +206,9 @@ private:
 };
 
 oInputSequence::oInputSequence(const xml& _XML, xml::node _hInputSequence, const oRTTI& _IDEnum, bool* _pSuccess)
-	: MinTimeMS(oInvalid)
-	, MaxTimeMS(oInvalid)
-	, InputID(oInvalid)
+	: MinTimeMS(ouro::invalid)
+	, MaxTimeMS(ouro::invalid)
+	, InputID(ouro::invalid)
 {
 	*_pSuccess = false;
 
@@ -293,7 +289,7 @@ oInputSetImpl::oInputSetImpl(const xml& _XML, xml::node _InputSet, const oRTTI& 
 {
 	*_pSuccess = false;
 
-	MaxTimeMS = oInvalid;
+	MaxTimeMS = ouro::invalid;
 	_XML.find_attr_value(_InputSet, "id", &Name);
 	for (xml::node hChild = _XML.first_child(_InputSet); hChild; hChild = _XML.next_sibling(hChild))
 	{
@@ -306,7 +302,7 @@ oInputSetImpl::oInputSetImpl(const xml& _XML, xml::node _InputSet, const oRTTI& 
 				return;
 			}
 
-			int EnumValue = oInvalid;
+			int EnumValue = ouro::invalid;
 			if (!_IDEnum.FromString(IDString, &EnumValue, sizeof(int)))
 			{
 				mstring temp;
@@ -379,10 +375,10 @@ class oInputHistory
 {
 public:
 	oInputHistory(size_t _HistorySize = 1500)
-		: Latest(oInvalid)
+		: Latest(ouro::invalid)
 	{
 		History.resize(_HistorySize);
-		fill(History, oINPUT_LOG(0, oInvalid, false));
+		fill(History, oINPUT_LOG(0, ouro::invalid, false));
 	}
 
 	void Add(unsigned int _TimestampMS, int _InputID, bool _IsDown)
@@ -407,7 +403,7 @@ public:
 
 		// Keep checking backwards until there's a timeout or no more history.
 		size_t Current = (Latest - 1) % History.size();
-		const unsigned int LastTimestamp = _InputSequence.MaxTimeMS == oInvalid ? oInvalid : (_TriggerTimeMS - _InputSequence.MaxTimeMS);
+		const unsigned int LastTimestamp = _InputSequence.MaxTimeMS == ouro::invalid ? ouro::invalid : (_TriggerTimeMS - _InputSequence.MaxTimeMS);
 
 		while (Current != Latest)
 		{
@@ -428,7 +424,7 @@ public:
 	
 	struct oINPUT_LOG
 	{
-		oINPUT_LOG(unsigned int _TimestampMS = 0, int _InputID = oInvalid, bool _IsDown = false)
+		oINPUT_LOG(unsigned int _TimestampMS = 0, int _InputID = ouro::invalid, bool _IsDown = false)
 			: TimestampMS(_TimestampMS)
 			, InputID(_InputID)
 			, IsDown(_IsDown)
@@ -498,8 +494,7 @@ void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
 			if (InputSet)
 			{
 				oInputSetImpl* pInputSet = oThreadsafe(static_cast<threadsafe oInputSetImpl*>(InputSet.c_ptr()));
-				oCHECK_SIZE(int, pInputSet->Inputs.size());
-				for (int i = 0; i < static_cast<int>(pInputSet->Inputs.size()); i++)
+				for (int i = 0; i < as_int(pInputSet->Inputs.size()); i++)
 				{
 					bool InputDown = false;
 					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action_type == ouro::input::key_down, &InputDown))
@@ -517,8 +512,7 @@ void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
 						a.action_code = i; // at least trigger this input
 						
 						// Check to see if it gets overridden by a sequence
-						oCHECK_SIZE(int, pInputSet->InputSequences.size());
-						for (int s = 0; s < static_cast<int>(pInputSet->InputSequences.size()); s++)
+						for (int s = 0; s < as_int(pInputSet->InputSequences.size()); s++)
 						{
 							if (thread_cast<oInputHistory&>(InputHistory).SequenceTriggered(pInputSet->InputSequences[s], _Action.timestamp_ms))
 							{

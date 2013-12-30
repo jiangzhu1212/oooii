@@ -155,7 +155,7 @@ bool oGfxManipulatorImpl::CreateAxisGeometry( oGPUDevice* _pDevice, const char* 
 oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulator::DESC& _Desc, oGPUDevice* _pDevice, bool* _pSuccess) 
 	: Desc(_Desc)
 	, Transform(oIDENTITY4x4)
-	, PickedAxis((oManipulator::AXIS)(size_t)oInvalid)
+	, PickedAxis((oManipulator::AXIS)(size_t)ouro::invalid)
 {
 	if(!oManipulatorCreate(_Desc, &Manipulator))
 	{
@@ -291,7 +291,7 @@ void oGfxManipulatorImpl::StopPick()
 {
 	Manipulator->GetTransform(&Transform);
 	Manipulator->EndManipulation();
-	PickedAxis = (oManipulator::AXIS)(size_t)oInvalid;
+	PickedAxis = (oManipulator::AXIS)(size_t)ouro::invalid;
 	Update();
 }
 
@@ -386,8 +386,8 @@ void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandLi
 					((oGFX_LINE_VERTEX*)msr.data)[2 * i + 1].Color = Line.LineColor;
 				}
 
-				_pCommandList->Commit(Line.LineList, 0, msr, ouro::surface::box(oInt(LineCount * 2)));
-				_Callback(Line.LineList, oUInt(LineCount));
+				_pCommandList->Commit(Line.LineList, 0, msr, ouro::surface::box(as_int(LineCount * 2)));
+				_Callback(Line.LineList, as_uint(LineCount));
 			}
 		}
 	}

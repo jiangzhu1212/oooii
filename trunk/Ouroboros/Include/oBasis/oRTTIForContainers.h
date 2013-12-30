@@ -64,7 +64,7 @@ struct oRTTI_DATA_CONTAINER // : oRTTI
 #define oRTTI_CONTAINED_TYPE_DESCRIPTION(container_name, contained_type_name) \
 	oRTTI_DATA_CONTAINER oRTTI_##container_name##_##contained_type_name = { \
 		oRTTI_TYPE_CONTAINER, \
-		oInvalid, \
+		ouro::invalid, \
 		(const oRTTI*)&oRTTI_##contained_type_name, \
 		&oRTTIContainer_##container_name \
 	};
@@ -84,8 +84,7 @@ template<typename ContainerT> bool oStdContainerSetItemCount(const oRTTI& _RTTI,
 
 template<typename ContainerT> int oStdContainerGetItemCount(const oRTTI& _RTTI, const ContainerT* _pStdContainer, int _ContainerSizeInBytes)
 {
-	oCHECK_SIZE(int, _pStdContainer->size());
-	return static_cast<int>(_pStdContainer->size());
+	return as_int(_pStdContainer->size());
 }
 
 template<typename ContainerT> void* oStdContainerGetItemPtr(const oRTTI& _RTTI, const ContainerT* _pStdContainer, int _ContainerSizeInBytes, int _Index)

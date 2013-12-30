@@ -176,10 +176,10 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, con
 	, TimerMessageVersion(0)
 	, pCurrentInputSet(nullptr)
 	, NoKinectMessage("Kinect initializing...")
-	, hookAirKeys(oInvalid)
-	, hookInputMaps(oInvalid)
-	, hookEvents(oInvalid)
-	, hookActions(oInvalid)
+	, hookAirKeys(ouro::invalid)
+	, hookInputMaps(ouro::invalid)
+	, hookEvents(ouro::invalid)
+	, hookActions(ouro::invalid)
 {
 	*_pSuccess = false;
 
@@ -251,30 +251,30 @@ void oGestureManagerImpl::HookWindow(bool _Hooked)
 	else
 	{
 		#define oSAFE_UNHOOKE(_OBJ, _HookID) do \
-		{	if (_HookID != oInvalid) \
+		{	if (_HookID != ouro::invalid) \
 			{	_OBJ->unhook_events(_HookID); \
-				_HookID = oInvalid; \
+				_HookID = ouro::invalid; \
 			} \
 		} while (false)
 
 		#define oSAFE_UNHOOKA(_OBJ, _HookID) do \
-		{	if (_HookID != oInvalid) \
+		{	if (_HookID != ouro::invalid) \
 				{	_OBJ->unhook_actions(_HookID); \
-				_HookID = oInvalid; \
+				_HookID = ouro::invalid; \
 			} \
 		} while (false)
 
 		#define SAFE_UNHOOKE(_OBJ, _HookID) do \
-		{	if (_HookID != oInvalid) \
+		{	if (_HookID != ouro::invalid) \
 			{	_OBJ->UnhookEvents(_HookID); \
-				_HookID = oInvalid; \
+				_HookID = ouro::invalid; \
 			} \
 		} while (false)
 
 		#define SAFE_UNHOOKA(_OBJ, _HookID) do \
-		{	if (_HookID != oInvalid) \
+		{	if (_HookID != ouro::invalid) \
 				{	_OBJ->UnhookActions(_HookID); \
-				_HookID = oInvalid; \
+				_HookID = ouro::invalid; \
 			} \
 		} while (false)
 
@@ -674,7 +674,7 @@ int oGestureManagerImpl::SetHeadMessageV(int _SkeletonIndex, const char* _Format
 	if (_SkeletonIndex != 0 && _SkeletonIndex != 1)
 	{
 		oErrorSetLast(std::errc::invalid_argument, "Invalid _SkeletonIndex %d", _SkeletonIndex);
-		return oInvalid;
+		return ouro::invalid;
 	}
 
 	int l = vsnprintf(ComboMessage[_SkeletonIndex], _Format, _Args);
@@ -702,9 +702,9 @@ void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 
 		case ouro::event_type::timer:
 		{
-			int TimerVersion = oInvalid;
+			int TimerVersion = ouro::invalid;
 			oGESTURE_TIMER_EVENT GTE = oGESTURE_TIMER_HEAD_MESSAGE;
-			int SkeletonIndex = oInvalid;
+			int SkeletonIndex = ouro::invalid;
 			DECODE_TIMER_MSG(_Event.as_timer().context, &TimerVersion, &GTE, &SkeletonIndex);
 			
 			switch (GTE)

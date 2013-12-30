@@ -578,7 +578,7 @@ camera::mode directshow_camera::find_closest_matching(const mode& _ModeToMatch) 
 	mode_list(&nModes, modes);
 
 	float minDistance = std::numeric_limits<float>::max();
-	unsigned int minIndex = ~0u;
+	unsigned int minIndex = invalid;
 	for (unsigned int i = 0; i < nModes; i++)
 	{
 		float d = distance(_ModeToMatch, modes[i]);
@@ -839,7 +839,7 @@ void camera::enumerate(const std::function<bool(std::shared_ptr<camera> _Camera)
 			"uses 32- or 64-bit drivers.");
 #endif
 
-	unsigned int index = ~0u;
+	unsigned int index = invalid;
 	std::shared_ptr<camera> _Camera;
 	while (make(++index, _Camera))
 	{

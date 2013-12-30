@@ -285,7 +285,7 @@ void enumerate_addresses(const std::function<void(const sockaddr_in& _Addr)> _En
 
 bool wait_multiple(WSAEVENT* _pHandles, size_t _NumberOfHandles, bool _WaitAll, unsigned int _TimeoutMS)
 {
-	return WSA_WAIT_TIMEOUT != WSAWaitForMultipleEvents(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == ~0u ? WSA_INFINITE : _TimeoutMS, FALSE);
+	return WSA_WAIT_TIMEOUT != WSAWaitForMultipleEvents(static_cast<DWORD>(_NumberOfHandles), _pHandles, _WaitAll, _TimeoutMS == ouro::infinite ? WSA_INFINITE : _TimeoutMS, FALSE);
 }
 
 // WSA_FLAG_NO_HANDLE_INHERIT

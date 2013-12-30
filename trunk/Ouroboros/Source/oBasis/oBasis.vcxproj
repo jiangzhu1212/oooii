@@ -50,9 +50,7 @@
     <ClInclude Include="..\..\Include\oBasis\oINISerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oInitOnce.h" />
     <ClInclude Include="..\..\Include\oBasis\oInputMapper.h" />
-    <ClInclude Include="..\..\Include\oBasis\oInt.h" />
     <ClInclude Include="..\..\Include\oBasis\oInterface.h" />
-    <ClInclude Include="..\..\Include\oBasis\oInvalid.h" />
     <ClInclude Include="..\..\Include\oBasis\oJSONSerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oLockedPointer.h" />
     <ClInclude Include="..\..\Include\oBasis\oLockThis.h" />
@@ -80,7 +78,6 @@
     <ClInclude Include="..\..\Include\oBasis\oURI.h" />
     <ClInclude Include="..\..\Include\oBasis\oURIQuerySerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oXMLSerialize.h" />
-    <ClInclude Include="..\..\Include\oBasis\SafeInt3.h" />
     <ClInclude Include="oManipulatorBase.h" />
     <ClInclude Include="oManipulatorRotation.h" />
     <ClInclude Include="oManipulatorScale.h" />
