@@ -47,7 +47,7 @@ if not "!all_args_present!"=="true" (
 )
 
 :: Find FXC: before Windows 8 check for the DirectX SDK
-set fxc_exe="%ProgramFiles(x86)\Windows Kits\8.0\bin\x64\fxc.exe"
+set fxc_exe="%ProgramFiles(x86)%\Windows Kits\8.0\bin\x64\fxc.exe"
 if not exist !fxc_exe! (
 	if "!DXSDK_DIR!"=="" (
 		echo cannot find Windows Kits or DirectX SDK
