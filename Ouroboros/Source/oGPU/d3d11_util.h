@@ -33,7 +33,6 @@
 
 #include <oCore/windows/win_error.h>
 #include <d3d11.h>
-#include <d3dx11.h>
 
 namespace ouro {
 	namespace d3d11 {
@@ -71,9 +70,6 @@ intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init);
 // Returns information about the specified device. There's no way to determine
 // if the device is software, so pass that through.
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation);
-
-// Returns an IFF based on the extension specified in the file path
-D3DX11_IMAGE_FILE_FORMAT from_path(const path& _Path);
 
 // Returns the D3D11 equivalent.
 D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(gpu::primitive_type::value _Type);
@@ -174,7 +170,6 @@ void update_index_buffer(ID3D11DeviceContext* _pDeviceContext
 
 // Uses oTRACE to display the fields of the specified desc.
 void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix = "\t");
-void trace_image_load_info(const D3DX11_IMAGE_LOAD_INFO& _ImageLoadInfo, const char* _Prefix = "\t");
 
 // Fills the specified texture_info with the description from the specified 
 // resource. The resource can be: ID3D11Texture1D, ID3D11Texture2D
@@ -182,6 +177,17 @@ void trace_image_load_info(const D3DX11_IMAGE_LOAD_INFO& _ImageLoadInfo, const c
 // struct is in dimensions.x, and the number of structures is in dimensions.y.
 // The y value will be replicated in array_size as well.
 gpu::texture_info get_texture_info(ID3D11Resource* _pResource, D3D11_USAGE* _pUsage = nullptr);
+
+// This converts back from a texture_info to typical fields in texture-related
+// structs (including D3DX11_IMAGE_LOAD_INFO, specify the info's format as 
+// unknown to use DXGI_FORMAT_FROM_FILE)
+void init_values(const gpu::texture_info& _Info
+	, DXGI_FORMAT* _pFormat
+	, D3D11_USAGE* _pUsage
+	, unsigned int* _pCPUAccessFlags
+	, unsigned int* _pBindFlags
+	, unsigned int* _pMipLevels
+	, unsigned int* _pMiscFlags = nullptr);
 
 // From the specified texture, create the correct shader resource view
 intrusive_ptr<ID3D11ShaderResourceView> make_srv(const char* _DebugName, ID3D11Resource* _pTexture);
@@ -273,50 +279,8 @@ new_texture make_texture(ID3D11Device* _pDevice
 // textures are currently supported.
 intrusive_ptr<ID3D11Resource> make_cpu_copy(ID3D11Resource* _pResource);
 
-// _____________________________________________________________________________
-// Texture Serialization API
-
 // Copies the specified render target to the specified image/path
 std::shared_ptr<surface::buffer> make_snapshot(ID3D11Texture2D* _pRenderTarget);
-
-// Saves image to the specified file. The format is derived from the path's 
-// extension. If the specified resource is not CPU-accessible a temporary copy
-// is made. Remember, more exotic formats like BC formats are only supported by 
-// DDS.
-void save(ID3D11Resource* _pResource, const path& _Path);
-void save(const surface::buffer* _pSurface, const path& _Path);
-void save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
-void save(const surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
-
-// Creates a new texture by parsing _pBuffer as a D3DX11-supported file format
-// Specify surface::unknown and 0 for x, y or array_size in the _Info to use 
-// values from the specified file. If the type has mips then mips will be 
-// allocated but not filled in.
-intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture_info& _Info
-	, const char* _DebugName
-	, const path& _Path);
-
-intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture_info& _Info
-	, const char* _DebugName
-	, const void* _pBuffer
-	, size_t _SizeofBuffer);
-
-// Uses GPU acceleration for BC6H and BC7 conversions if the source is in the 
-// correct format. All other conversions go through D3DX11LoadTextureFromTexture
-void convert(ID3D11Texture2D* _pSourceTexture, surface::format _NewFormat
-	, ID3D11Texture2D** _ppDestinationTexture);
-
-// Uses the above convert(), but the parameters could be CPU buffers. This means 
-// there's a copy-in and a copy-out to set up the source and destination
-// textures for the internal call.
-void convert(ID3D11Device* _pDevice
-	, surface::mapped_subresource& _Destination
-	, surface::format _DestinationFormat
-	, surface::const_mapped_subresource& _Source
-	, surface::format _SourceFormat
-	, const int2& _MipDimensions);
 
 // _____________________________________________________________________________
 // State/Flush API

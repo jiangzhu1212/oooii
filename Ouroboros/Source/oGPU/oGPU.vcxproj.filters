@@ -40,6 +40,9 @@
     <ClCompile Include="dxgi_util.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
+    <ClCompile Include="d3dx11_util.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -85,6 +88,9 @@
       <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="dxgi_util.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx11_util.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
   </ItemGroup>
