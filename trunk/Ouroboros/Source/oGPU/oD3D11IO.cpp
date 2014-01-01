@@ -25,12 +25,14 @@
 #include <oGPU/oGPU.h>
 #include <oCore/filesystem.h>
 #include "oGPUCommon.h"
-#include <d3d11.h>
 #include "oD3D11Texture.h"
 #include "oD3D11Device.h"
+#include "d3d11_util.h"
+#include "d3dx11_util.h"
 
 using namespace ouro;
 using namespace ouro::d3d11;
+using namespace ouro::d3dx11;
 
 #if 0
 static char* oStrTokToSwitches(char* _StrDestination

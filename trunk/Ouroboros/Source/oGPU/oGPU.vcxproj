@@ -126,6 +126,7 @@
     <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
     <ClInclude Include="d3d11_util.h" />
+    <ClInclude Include="d3dx11_util.h" />
     <ClInclude Include="dxgi_util.h" />
     <ClInclude Include="oD3D11Buffer.h" />
     <ClInclude Include="oD3D11CommandList.h" />
@@ -140,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="d3d11_util.cpp" />
+    <ClCompile Include="d3dx11_util.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
     <ClCompile Include="oD3D11Buffer.cpp" />
     <ClCompile Include="oD3D11CommandList.cpp" />
