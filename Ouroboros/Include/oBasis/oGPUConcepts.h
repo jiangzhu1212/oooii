@@ -497,25 +497,55 @@ namespace vertex_trait
 	tangent16 = 2 << 3,
 	tangent10 = 3 << 3,
 
-	uv132 = 1 << 5,
-	uvw132 = 2 << 5,
-	uvwx132 = 3 << 5,
-	uv116 = 4 << 5,
-	uvw116 = 5 << 5,
-	uvwx116 = 6 << 5,
+	uv032 = 1 << 5,
+	uvw032 = 2 << 5,
+	uvwx032 = 3 << 5,
+	uv016 = 4 << 5,
+	uvw016 = 5 << 5,
+	uvwx016 = 6 << 5,
 
-	uv232 = 1 << 8,
-	uvw232 = 2 << 8,
-	uvwx232 = 3 << 8,
-	uv216 = 4 << 8,
-	uvw216 = 5 << 8,
-	uvwx216 = 6 << 8,
+	uv132 = 1 << 8,
+	uvw132 = 2 << 8,
+	uvwx132 = 3 << 8,
+	uv116 = 4 << 8,
+	uvw116 = 5 << 8,
+	uvwx116 = 6 << 8,
 
-	color132 = 1 << 11,
-	color18 = 2 << 11,
+	color032 = 1 << 11,
+	color08 = 2 << 11,
 	
-	color232 = 1 << 13,
-	color28 = 2 << 13,
+	color132 = 1 << 13,
+	color18 = 2 << 13,
+
+};}
+
+namespace input_layout
+{	oDECLARE_SMALL_ENUM(value, unsigned char) {
+
+	// p: position xyz
+	// n: normal xyz
+	// t: tangent xyzw (w is -1 or 1 for winding order)
+	// uv0: texcoord0 xy
+	// c0: color0 xyzw
+
+	// f: float
+	// h: half (half means [-32768-32767] integer values for position)
+	// n: dec3n (1010102)
+	// b: byte
+
+	Pf,
+	PfUV0f,
+	PfCb,
+	PfUV0fCb,
+	PfNfTfUV0f,
+	PfNfTfUV0fCb,
+
+	Ph,
+	PhUV0h,
+	PhCb,
+	PhUV0hCb,
+	PhNnTnUV0h,
+	PhNnTnUV0hCb,
 
 };}
 
@@ -812,6 +842,8 @@ inline texture_type::value get_basic(const texture_type::value& _Type) { return 
 inline texture_type::value remove_readback(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & ~texture_trait::readback); }
 inline texture_type::value remove_mipped(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & ~texture_trait::mipped); }
 inline texture_type::value remove_render_target(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & ~texture_trait::render_target); }
+
+unsigned short get_vertex_traits(const input_layout::value& _Layout);
 
 	} // namespace gpu
 } // namespace ouro

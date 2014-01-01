@@ -98,13 +98,15 @@
     <Filter Include="Source\D3D11">
       <UniqueIdentifier>{1adba936-89bf-4e16-830f-fb5c7b91e8a1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\D3D11\Shaders">
-      <UniqueIdentifier>{b160c573-ab2f-4a0d-b342-b6b0a89820f0}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <FXC Include="Shaders\NoopCS.sh">
-      <Filter>Source\D3D11\Shaders</Filter>
-    </FXC>
+    <CustomBuild Include="oGPUShaders.hlsl">
+      <Filter>Source\D3D11</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="oGPUShaders.txt">
+      <Filter>Source\D3D11</Filter>
+    </None>
   </ItemGroup>
 </Project>

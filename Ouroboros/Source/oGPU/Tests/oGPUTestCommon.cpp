@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
-#include <oGPUTestColorPSByteCode.h>
 #include <oCore/filesystem.h>
 
 #include <oBasis/oMath.h>

@@ -22,13 +22,105 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+
 #include <oGPUTestHLSL.h>
 
 static int TESTGPUBufferAppendIndices[20] = 
 { 5, 6, 7, 18764, 2452, 2423, 52354, 344, -1542, 3434, 53, -4535, 3535, 88884747, 534535, 88474, -445, 4428855, -1235, 4661};
 
-void main(in uint ID : SV_VertexID, out float4 Position : SV_Position, out int Index : TESTBUFFERINDEX)
+void VSTestBuffer(in uint ID : SV_VertexID, out float4 Position : SV_Position, out int Index : TESTBUFFERINDEX)
 {
 	Position = float4(0.0f, 0.0f, 0.0f, 1.0f);
 	Index = TESTGPUBufferAppendIndices[ID];
+}
+
+AppendStructuredBuffer<int> Output : register( u0 );
+
+void PSTestBuffer(in float4 Position : SV_Position, in int Index : TESTBUFFERINDEX)
+{
+	Output.Append(Index);
+}
+
+float4 PSTestColor(VSOUT In) : SV_Target
+{
+	return In.Color;
+}
+
+VSOUT VSTestPassThroughColor(float3 LSPosition : POS0, float4 Color : CLR0)
+{
+	VSOUT Out = (VSOUT)0;
+	Out.SSPosition = float4(LSPosition,1);
+	Out.Color = Color;
+	return Out;
+}
+
+VSOUT VSTestPassThrough(float3 LSPosition : POS0)
+{
+	VSOUT Out = (VSOUT)0;
+	Out.SSPosition = float4(LSPosition,1);
+	return Out;
+}
+	
+VSOUT VSTestTexture1D(float3 LSPosition : POS0, float Texcoord : TEX0)
+{
+	return CommonVS(LSPosition, float3(Texcoord, 0, 0));
+}
+
+SamplerState Bilin : register(s0);
+Texture1D Diffuse1D : register(t0);
+
+float4 PSTestTexture1D(VSOUT In) : SV_Target
+{
+	return Diffuse1D.Sample(Bilin, In.Texcoord.x);
+}
+
+VSOUT VSTestTexture2D(float3 LSPosition : POS0, float2 Texcoord : TEX0)
+{
+	return CommonVS(LSPosition, float3(Texcoord, 0));
+}
+
+Texture2D Diffuse2D : register(t0);
+
+float4 PSTestTexture2D(VSOUT In) : SV_Target
+{
+	return Diffuse2D.Sample(Bilin, In.Texcoord.xy);
+}
+
+VSOUT VSTestTexture3D(float3 LSPosition : POS0, float3 Texcoord : TEX0)
+{
+	return CommonVS(LSPosition, Texcoord);
+}
+
+Texture3D Diffuse3D : register(t0);
+
+float4 PSTestTexture3D(VSOUT In) : SV_Target
+{
+	return Diffuse3D.Sample(Bilin, In.Texcoord);
+}
+
+VSOUT VSTestTextureCube(float3 LSPosition : POS0, float3 Texcoord : TEX0)
+{
+	return CommonVS(LSPosition, LSPosition);
+}
+
+TextureCube DiffuseCube : register(t0);
+
+float4 PSTestTextureCube(VSOUT In) : SV_Target
+{
+	return DiffuseCube.Sample(Bilin, In.Texcoord);
+}
+
+VSOUT VSTestWhiteInstanced(VSININSTANCED In)
+{
+	return CommonVS(In);
+}
+
+VSOUT VSTestWhite(float3 LSPosition : POS0)
+{
+	return CommonVS(LSPosition, oZERO3);
+}
+
+float4 PSTestWhite(VSOUT In) : SV_Target
+{
+	return oWHITE4;
 }

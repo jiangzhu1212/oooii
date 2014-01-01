@@ -7,21 +7,6 @@
     <Filter Include="Source">
       <UniqueIdentifier>{1775e422-7373-4d7a-aa46-8537140a2263}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Shaders">
-      <UniqueIdentifier>{4ca057d6-5ba5-408b-920f-2ef8ddda258a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Shaders\Headers">
-      <UniqueIdentifier>{b20e4a27-c9cb-4fde-9f4b-07b1190d23e6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Shaders\Additional Dependencies">
-      <UniqueIdentifier>{132781a6-5b3d-4481-9278-001e6e8472f9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Shaders\Additional Dependencies\oHLSL">
-      <UniqueIdentifier>{224f08b0-53f5-4f3d-abe1-f712763cc238}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\Shaders\Additional Dependencies\oCompute">
-      <UniqueIdentifier>{ab4773f1-3f36-4dca-ab45-768f81705b0e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="oGfx\Needs Code Review">
       <UniqueIdentifier>{9adf1f58-973f-4a5a-b34b-8cf48c536773}</UniqueIdentifier>
     </Filter>
@@ -65,9 +50,6 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h">
       <Filter>oGfx</Filter>
     </ClInclude>
-    <ClInclude Include="Shaders\oGfxCommon.h">
-      <Filter>Source\Shaders\Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h">
       <Filter>oGfx</Filter>
     </ClInclude>
@@ -80,145 +62,21 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxMosaic.h">
       <Filter>oGfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOn.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypes.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLTypesInternal.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLMacros.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLMath.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLStructs.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\oHLSLSwizzlesOff.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeMorton.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputePhong.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeProcedural.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeRaycast.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeSimplex.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeUtil.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oQuaternion.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeColor.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeConstants.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeFilter.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oComputeGBuffer.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxManipulator.h">
       <Filter>oGfx\Needs Code Review</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxPickBuffer.h">
       <Filter>oGfx\Needs Code Review</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\all.h">
-      <Filter>Source\Shaders\Additional Dependencies\oCompute</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oHLSL\all.h">
-      <Filter>Source\Shaders\Additional Dependencies\oHLSL</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FXC Include="Shaders\oGfxVertexTangentsGS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxColorPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxLinesVS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxPassThroughVS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxVertexNormalsGS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxRigidInstancedVS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxRigidVS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxObjectIDPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxTextureColorPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxMaterialPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxVertexPhongPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxHeroPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxTexcoordPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxWSVNormalPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxVSDepthPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxWSPNormalPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxPositionVS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxWhitePS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxGridPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxShadowPS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxShadowVS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
-    <FXC Include="Shaders\oGfxPositionPassThroughVS4.sh">
-      <Filter>Source\Shaders</Filter>
-    </FXC>
+    <CustomBuild Include="oGfxShaders.hlsl">
+      <Filter>Source</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="oGfxShaders.txt">
+      <Filter>Source</Filter>
+    </None>
   </ItemGroup>
 </Project>
