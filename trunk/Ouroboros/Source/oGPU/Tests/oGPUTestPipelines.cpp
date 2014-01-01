@@ -23,22 +23,22 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oGPUTestPipelines.h"
-#include <oGPUTestColorPSByteCode.h>
-#include <oGPUTestPassThroughColorVSByteCode.h>
-#include <oGPUTestPassThroughVSByteCode.h>
-#include <oGPUTestBufferVSByteCode.h>
-#include <oGPUTestBufferPSByteCode.h>
-#include <oGPUTestTexture1DPSByteCode.h>
-#include <oGPUTestTexture1DVSByteCode.h>
-#include <oGPUTestTexture2DPSByteCode.h>
-#include <oGPUTestTexture2DVSByteCode.h>
-#include <oGPUTestTexture3DPSByteCode.h>
-#include <oGPUTestTexture3DVSByteCode.h>
-#include <oGPUTestTextureCubePSByteCode.h>
-#include <oGPUTestTextureCubeVSByteCode.h>
-#include <oGPUTestWhiteInstancedVSByteCode.h>
-#include <oGPUTestWhitePSByteCode.h>
-#include <oGPUTestWhiteVSByteCode.h>
+#include <PSTestColor.h>
+#include <VSTestPassThroughColor.h>
+#include <VSTestPassThrough.h>
+#include <VSTestBuffer.h>
+#include <PSTestBuffer.h>
+#include <PSTestTexture1D.h>
+#include <VSTestTexture1D.h>
+#include <PSTestTexture2D.h>
+#include <VSTestTexture2D.h>
+#include <PSTestTexture3D.h>
+#include <VSTestTexture3D.h>
+#include <PSTestTextureCube.h>
+#include <VSTestTextureCube.h>
+#include <VSTestWhiteInstanced.h>
+#include <VSTestWhite.h>
+#include <PSTestWhite.h>
 
 static const oGPU_VERTEX_ELEMENT oGPU_TEST_POSITION_ONLY_VERTEX[] = 
 {
@@ -87,8 +87,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = oGPU_TEST_POSITION_ONLY_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_ONLY_VERTEX);
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			_pDesc->pVertexShader = oGPUTestPassThroughVSByteCode;
-			_pDesc->pPixelShader = oGPUTestWhitePSByteCode;
+			_pDesc->pVertexShader = VSTestPassThrough;
+			_pDesc->pPixelShader = PSTestWhite;
 			return true;
 
 		case oGPU_TEST_PASS_THROUGH_COLOR:
@@ -96,8 +96,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = oGPU_TEST_POSITION_COLOR_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_COLOR_VERTEX);
 			_pDesc->InputType = ouro::gpu::primitive_type::lines;
-			_pDesc->pVertexShader = oGPUTestPassThroughColorVSByteCode;
-			_pDesc->pPixelShader = oGPUTestColorPSByteCode;
+			_pDesc->pVertexShader = VSTestPassThroughColor;
+			_pDesc->pPixelShader = PSTestColor;
 			return true;
 
 		case oGPU_TEST_TRANSFORMED_WHITE:
@@ -105,8 +105,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = oGPU_TEST_POSITION_ONLY_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_ONLY_VERTEX);
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			_pDesc->pVertexShader = oGPUTestWhiteVSByteCode;
-			_pDesc->pPixelShader = oGPUTestWhitePSByteCode;
+			_pDesc->pVertexShader = VSTestWhite;
+			_pDesc->pPixelShader = PSTestWhite;
 			return true;
 
 		case oGPU_TEST_TRANSFORMED_WHITE_INSTANCED:
@@ -114,8 +114,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = oGPU_TEST_POSITION_ONLY_INSTANCED_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_ONLY_INSTANCED_VERTEX);
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			_pDesc->pVertexShader = oGPUTestWhiteInstancedVSByteCode;
-			_pDesc->pPixelShader = oGPUTestWhitePSByteCode;
+			_pDesc->pVertexShader = VSTestWhiteInstanced;
+			_pDesc->pPixelShader = PSTestWhite;
 			return true;
 
 		case oGPU_TEST_BUFFER:
@@ -123,8 +123,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = nullptr;
 			_pDesc->NumElements = 0;
 			_pDesc->InputType = ouro::gpu::primitive_type::points;
-			_pDesc->pVertexShader = oGPUTestBufferVSByteCode;
-			_pDesc->pPixelShader = oGPUTestBufferPSByteCode;
+			_pDesc->pVertexShader = VSTestBuffer;
+			_pDesc->pPixelShader = PSTestBuffer;
 			return true;
 
 		case oGPU_TEST_TEXTURE_1D:
@@ -132,8 +132,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD1D_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD1D_VERTEX);
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			_pDesc->pVertexShader = oGPUTestTexture1DVSByteCode;
-			_pDesc->pPixelShader = oGPUTestTexture1DPSByteCode;
+			_pDesc->pVertexShader = VSTestTexture1D;
+			_pDesc->pPixelShader = PSTestTexture1D;
 			return true;
 
 		case oGPU_TEST_TEXTURE_2D:
@@ -141,8 +141,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD2D_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD2D_VERTEX);
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			_pDesc->pVertexShader = oGPUTestTexture2DVSByteCode;
-			_pDesc->pPixelShader = oGPUTestTexture2DPSByteCode;
+			_pDesc->pVertexShader = VSTestTexture2D;
+			_pDesc->pPixelShader = PSTestTexture2D;
 			return true;
 
 		case oGPU_TEST_TEXTURE_3D:
@@ -150,8 +150,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD3D_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD3D_VERTEX);
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			_pDesc->pVertexShader = oGPUTestTexture3DVSByteCode;
-			_pDesc->pPixelShader = oGPUTestTexture3DPSByteCode;
+			_pDesc->pVertexShader = VSTestTexture3D;
+			_pDesc->pPixelShader = PSTestTexture3D;
 			return true;
 
 		case oGPU_TEST_TEXTURE_CUBE:
@@ -159,8 +159,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 			_pDesc->pElements = oGPU_TEST_POSITION_TEXCOORD3D_VERTEX;
 			_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_TEXCOORD3D_VERTEX);
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			_pDesc->pVertexShader = oGPUTestTextureCubeVSByteCode;
-			_pDesc->pPixelShader = oGPUTestTextureCubePSByteCode;
+			_pDesc->pVertexShader = VSTestTextureCube;
+			_pDesc->pPixelShader = PSTestTextureCube;
 			return true;
 
 		//case oGPU_TEST_COLOR:
@@ -168,8 +168,8 @@ bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDes
 		//	_pDesc->pElements = oGPU_TEST_POSITION_ONLY_VERTEX;
 		//	_pDesc->NumElements = oCOUNTOF(oGPU_TEST_POSITION_ONLY_VERTEX);
 		//	_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-		//	_pDesc->pVertexShader = oGPUTestWhiteVSByteCode;
-		//	_pDesc->pPixelShader = oGPUTestColorPSByteCode;
+		//	_pDesc->pVertexShader = VSTestWhite;
+		//	_pDesc->pPixelShader = PSTestColor;
 		//	return true;
 
 		//case oGPU_TEST_PHONG:

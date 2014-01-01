@@ -40,7 +40,7 @@
 #include "oD3D11Texture.h"
 #include "oD3D11Query.h"
 
-#include "NoopCSByteCode.h"
+#include "CSNoop.h"
 
 using namespace ouro;
 using namespace ouro::d3d11;
@@ -273,7 +273,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 
 	// Set up a noop compute shader to flush for SetCounter()
 	{
-		oV(D3DDevice->CreateComputeShader(NoopCSByteCode, byte_code_size(NoopCSByteCode), nullptr, &NoopCS));
+		oV(D3DDevice->CreateComputeShader(CSNoop, byte_code_size(CSNoop), nullptr, &NoopCS));
 
 		sstring CSName;
 		debug_name(CSName, _pDevice);

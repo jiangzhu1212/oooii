@@ -118,11 +118,11 @@ static const float3 oCYAN3 = float3(0.0f, 1.0f, 1.0f);
 
 static const float4 oBLACK4 = float4(0.0f, 0.0f, 0.0f, 1.0f);
 static const float4 oWHITE4 = float4(1.0f, 1.0f, 1.0f, 1.0f);
-static const float4 oRED4 = float4(1.0f,0.0f,0.0f, 1.0f);
-static const float4 oGREEN4 = float4(0.0f, 1.0f,0.0f, 1.0f);
-static const float4 oBLUE4 = float4(0.0f,0.0f, 1.0f, 1.0f);
-static const float4 oYELLOW4 = float4(1.0f, 1.0f,0.0f, 1.0f);
-static const float4 oMAGENTA4 = float4(1.0f,0.0f, 1.0f, 1.0f);
+static const float4 oRED4 = float4(1.0f, 0.0f, 0.0f, 1.0f);
+static const float4 oGREEN4 = float4(0.0f, 1.0f, 0.0f, 1.0f);
+static const float4 oBLUE4 = float4(0.0f, 0.0f, 1.0f, 1.0f);
+static const float4 oYELLOW4 = float4(1.0f, 1.0f, 0.0f, 1.0f);
+static const float4 oMAGENTA4 = float4(1.0f, 0.0f, 1.0f, 1.0f);
 static const float4 oCYAN4 = float4(0.0f, 1.0f, 1.0f, 1.0f);
 
 static const float3 oCOLORS3[] = { oBLACK3, oBLUE3, oGREEN3, oCYAN3, oRED3, oMAGENTA3, oYELLOW3, oWHITE3, };

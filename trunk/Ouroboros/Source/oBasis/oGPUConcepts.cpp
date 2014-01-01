@@ -424,22 +424,22 @@ const char* as_string(const gpu::vertex_trait::value& _Value)
 		case gpu::vertex_trait::tangent32: return "tangent32";
 		case gpu::vertex_trait::tangent16: return "tangent16";
 		case gpu::vertex_trait::tangent10: return "tangent10";
+		case gpu::vertex_trait::uv032: return "uv032";
+		case gpu::vertex_trait::uvw032: return "uvw032";
+		case gpu::vertex_trait::uvwx032: return "uvwx032";
+		case gpu::vertex_trait::uv016: return "uv016";
+		case gpu::vertex_trait::uvw016: return "uvw016";
+		case gpu::vertex_trait::uvwx016: return "uvwx016";
 		case gpu::vertex_trait::uv132: return "uv132";
 		case gpu::vertex_trait::uvw132: return "uvw132";
 		case gpu::vertex_trait::uvwx132: return "uvwx132";
 		case gpu::vertex_trait::uv116: return "uv116";
 		case gpu::vertex_trait::uvw116: return "uvw116";
 		case gpu::vertex_trait::uvwx116: return "uvwx116";
-		case gpu::vertex_trait::uv232: return "uv232";
-		case gpu::vertex_trait::uvw232: return "uvw232";
-		case gpu::vertex_trait::uvwx232: return "uvwx232";
-		case gpu::vertex_trait::uv216: return "uv216";
-		case gpu::vertex_trait::uvw216: return "uvw216";
-		case gpu::vertex_trait::uvwx216: return "uvwx216";
+		case gpu::vertex_trait::color032: return "color032";
+		case gpu::vertex_trait::color08: return "color08";
 		case gpu::vertex_trait::color132: return "color132";
 		case gpu::vertex_trait::color18: return "color18";
-		case gpu::vertex_trait::color232: return "color232";
-		case gpu::vertex_trait::color28: return "color28";
 		
 		default: break;
 	}
@@ -447,6 +447,30 @@ const char* as_string(const gpu::vertex_trait::value& _Value)
 }
 
 oDEFINE_TO_STRING(gpu::vertex_trait::value);
+
+const char* as_string(const gpu::input_layout::value& _Value)
+{
+	switch (_Value)
+	{
+		case gpu::input_layout::Pf: return "Pf";
+		case gpu::input_layout::PfUV0f: return "PfUV0f";
+		case gpu::input_layout::PfCb: return "PfCb";
+		case gpu::input_layout::PfUV0fCb: return "PfUV0fCb";
+		case gpu::input_layout::PfNfTfUV0f: return "PfNfTfUV0f";
+		case gpu::input_layout::PfNfTfUV0fCb: return "PfNfTfUV0fCb";
+		case gpu::input_layout::Ph: return "Ph";
+		case gpu::input_layout::PhUV0h: return "PhUV0h";
+		case gpu::input_layout::PhCb: return "PhCb";
+		case gpu::input_layout::PhUV0hCb: return "PhUV0hCb";
+		case gpu::input_layout::PhNnTnUV0h: return "PhNnTnUV0h";
+		case gpu::input_layout::PhNnTnUV0hCb: return "PhNnTnUV0hCb";
+	
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(gpu::input_layout::value);
 
 bool from_string(gpu::vertex_trait::value* _pValue, const char* _StrSource)
 {
@@ -459,26 +483,51 @@ bool from_string(gpu::vertex_trait::value* _pValue, const char* _StrSource)
 	else if (!_stricmp("tangent32", _StrSource)) *_pValue = gpu::vertex_trait::tangent32;
 	else if (!_stricmp("tangent16", _StrSource)) *_pValue = gpu::vertex_trait::tangent16;
 	else if (!_stricmp("tangent10", _StrSource)) *_pValue = gpu::vertex_trait::tangent10;
+	else if (!_stricmp("uv032", _StrSource)) *_pValue = gpu::vertex_trait::uv032;
+	else if (!_stricmp("uvw032", _StrSource)) *_pValue = gpu::vertex_trait::uvw032;
+	else if (!_stricmp("uvwx032", _StrSource)) *_pValue = gpu::vertex_trait::uvwx032;
+	else if (!_stricmp("uv016", _StrSource)) *_pValue = gpu::vertex_trait::uv016;
+	else if (!_stricmp("uvw016", _StrSource)) *_pValue = gpu::vertex_trait::uvw016;
+	else if (!_stricmp("uvwx016", _StrSource)) *_pValue = gpu::vertex_trait::uvwx016;
 	else if (!_stricmp("uv132", _StrSource)) *_pValue = gpu::vertex_trait::uv132;
 	else if (!_stricmp("uvw132", _StrSource)) *_pValue = gpu::vertex_trait::uvw132;
 	else if (!_stricmp("uvwx132", _StrSource)) *_pValue = gpu::vertex_trait::uvwx132;
 	else if (!_stricmp("uv116", _StrSource)) *_pValue = gpu::vertex_trait::uv116;
 	else if (!_stricmp("uvw116", _StrSource)) *_pValue = gpu::vertex_trait::uvw116;
 	else if (!_stricmp("uvwx116", _StrSource)) *_pValue = gpu::vertex_trait::uvwx116;
-	else if (!_stricmp("uv232", _StrSource)) *_pValue = gpu::vertex_trait::uv232;
-	else if (!_stricmp("uvw232", _StrSource)) *_pValue = gpu::vertex_trait::uvw232;
-	else if (!_stricmp("uvwx232", _StrSource)) *_pValue = gpu::vertex_trait::uvwx232;
-	else if (!_stricmp("uv216", _StrSource)) *_pValue = gpu::vertex_trait::uv216;
-	else if (!_stricmp("uvw216", _StrSource)) *_pValue = gpu::vertex_trait::uvw216;
-	else if (!_stricmp("uvwx216", _StrSource)) *_pValue = gpu::vertex_trait::uvwx216;
+	else if (!_stricmp("color032", _StrSource)) *_pValue = gpu::vertex_trait::color032;
+	else if (!_stricmp("color08", _StrSource)) *_pValue = gpu::vertex_trait::color08;
 	else if (!_stricmp("color132", _StrSource)) *_pValue = gpu::vertex_trait::color132;
 	else if (!_stricmp("color18", _StrSource)) *_pValue = gpu::vertex_trait::color18;
-	else if (!_stricmp("color232", _StrSource)) *_pValue = gpu::vertex_trait::color232;
-	else if (!_stricmp("color28", _StrSource)) *_pValue = gpu::vertex_trait::color28;
 	else return false;
 	return true;
 }
 
+namespace gpu {
+
+unsigned short get_vertex_traits(const input_layout::value& _Layout)
+{
+	switch (_Layout)
+	{
+		case input_layout::Pf: return vertex_trait::position32;
+		case input_layout::PfUV0f: return vertex_trait::position32 | vertex_trait::uv032;
+		case input_layout::PfCb: return vertex_trait::position32 | vertex_trait::color08;
+		case input_layout::PfUV0fCb: return vertex_trait::position32 | vertex_trait::uv032 | vertex_trait::color08;
+		case input_layout::PfNfTfUV0f: return vertex_trait::position32 | vertex_trait::normal32 | vertex_trait::tangent32 | vertex_trait::uv032;
+		case input_layout::PfNfTfUV0fCb: return vertex_trait::position32 | vertex_trait::normal32 | vertex_trait::tangent32 | vertex_trait::uv032 | vertex_trait::color08;
+	
+		case input_layout::Ph: return vertex_trait::position16;
+		case input_layout::PhUV0h: return vertex_trait::position16 | vertex_trait::uv016;
+		case input_layout::PhCb: return vertex_trait::position16 | vertex_trait::color08;
+		case input_layout::PhUV0hCb: return vertex_trait::position16 | vertex_trait::uv016 | vertex_trait::color08;
+		case input_layout::PhNnTnUV0h: return vertex_trait::position16 | vertex_trait::normal10 | vertex_trait::tangent10 | vertex_trait::uv016;
+		case input_layout::PhNnTnUV0hCb: return vertex_trait::position16 | vertex_trait::normal10 | vertex_trait::tangent10 | vertex_trait::uv016 | vertex_trait::color08;
+
+		default: break;
+	}
+	return 0;
+}
+	} // namespace gpu
 } // namespace ouro
 
 using namespace ouro;

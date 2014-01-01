@@ -27,27 +27,27 @@
 
 typedef unsigned char BYTE;
 
-#include <oGfxColorPS4ByteCode.h>
-#include <oGfxGridPS4ByteCode.h>
-#include <oGfxHeroPS4ByteCode.h>
-#include <oGfxLinesVS4ByteCode.h>
-#include <oGfxObjectIDPS4ByteCode.h>
-#include <oGfxMaterialPS4ByteCode.h>
-#include <oGfxPassThroughVS4ByteCode.h>
-#include <oGfxPositionPassThroughVS4ByteCode.h>
-#include <oGfxPositionVS4ByteCode.h>
-#include <oGfxRigidVS4ByteCode.h>
-#include <oGfxShadowPS4ByteCode.h>
-#include <oGfxShadowVS4ByteCode.h>
-#include <oGfxTexcoordPS4ByteCode.h>
-#include <oGfxTextureColorPS4ByteCode.h>
-#include <oGfxVertexNormalsGS4ByteCode.h>
-#include <oGfxVertexPhongPS4ByteCode.h>
-#include <oGfxVertexTangentsGS4ByteCode.h>
-#include <oGfxVSDepthPS4ByteCode.h>
-#include <oGfxWhitePS4ByteCode.h>
-#include <oGfxWSPNormalPS4ByteCode.h>
-#include <oGfxWSVNormalPS4ByteCode.h>
+#include <PSColor.h>
+#include <PSGrid.h>
+#include <PSHero.h>
+#include <VSLines.h>
+#include <PSObjectID.h>
+#include <PSMaterial.h>
+#include <VSPassThrough.h>
+#include <VSPositionPassThrough.h>
+#include <VSPosition.h>
+#include <VSRigid.h>
+#include <PSShadow.h>
+#include <VSShadow.h>
+#include <PSTexcoord.h>
+#include <PSTextureColor.h>
+#include <GSVertexNormals.h>
+#include <PSVertexPhong.h>
+#include <GSVertexTangents.h>
+#include <PSVSDepth.h>
+#include <PSWhite.h>
+#include <PSWSPixelNormal.h>
+#include <PSWSVertexNormal.h>
 
 bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 {
@@ -57,7 +57,7 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 		_pDesc->DebugName = #_Enum; \
 		_pDesc->InputType = ouro::gpu::primitive_type::triangles; \
 		oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements); \
-		_pDesc->pVertexShader = oGfxRigidVS4ByteCode; \
+		_pDesc->pVertexShader = VSRigid; \
 		_pDesc->pPixelShader = _PS; \
 	} while(false)
 
@@ -71,78 +71,78 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 			_pDesc->DebugName = "oGFX_PIPELINE_VERTEX_NORMALS";
 			_pDesc->InputType = ouro::gpu::primitive_type::points;
 			oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = oGfxPassThroughVS4ByteCode;
-			_pDesc->pGeometryShader = oGfxVertexNormalsGS4ByteCode;
-			_pDesc->pPixelShader = oGfxColorPS4ByteCode;
+			_pDesc->pVertexShader = VSPassThrough;
+			_pDesc->pGeometryShader = GSVertexNormals;
+			_pDesc->pPixelShader = PSColor;
 			return true;
 
 		case oGFX_PIPELINE_VERTEX_TANGENTS:
 			_pDesc->DebugName = "oGFX_PIPELINE_VERTEX_TANGENTS";
 			_pDesc->InputType = ouro::gpu::primitive_type::points;
 			oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = oGfxPassThroughVS4ByteCode;
-			_pDesc->pGeometryShader = oGfxVertexTangentsGS4ByteCode;
-			_pDesc->pPixelShader = oGfxColorPS4ByteCode;
+			_pDesc->pVertexShader = VSPassThrough;
+			_pDesc->pGeometryShader = GSVertexTangents;
+			_pDesc->pPixelShader = PSColor;
 			return true;
 
 		case oGFX_PIPELINE_LINES:
 			_pDesc->DebugName = "oGFX_PIPELINE_LINES";
 			_pDesc->InputType = ouro::gpu::primitive_type::lines;
 			oGfxGetVertexElements(oGFX_VE_LINE, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = oGfxLinesVS4ByteCode;
-			_pDesc->pPixelShader = oGfxColorPS4ByteCode;
+			_pDesc->pVertexShader = VSLines;
+			_pDesc->pPixelShader = PSColor;
 			return true;
 
 		case oGFX_PIPELINE_LINE_STRIPS:
 			_pDesc->DebugName = "oGFX_PIPELINE_LINE_STRIPS";
 			_pDesc->InputType = ouro::gpu::primitive_type::line_strips;
 			oGfxGetVertexElements(oGFX_VE_LINE, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = oGfxLinesVS4ByteCode;
-			_pDesc->pPixelShader = oGfxColorPS4ByteCode;
+			_pDesc->pVertexShader = VSLines;
+			_pDesc->pPixelShader = PSColor;
 			return true;
 
 		case oGFX_PIPELINE_PASS_THROUGH:
 			_pDesc->DebugName = "oGFX_PIPELINE_PASS_THROUGH";
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
 			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = oGfxPositionPassThroughVS4ByteCode;
-			_pDesc->pPixelShader = oGfxWhitePS4ByteCode;
+			_pDesc->pVertexShader = VSPositionPassThrough;
+			_pDesc->pPixelShader = PSWhite;
 			return true;
 
 		case oGFX_PIPELINE_RIGID_ZPREPASS:
 			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_ZPREPASS";
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
 			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = oGfxPositionVS4ByteCode;
+			_pDesc->pVertexShader = VSPosition;
 			return true;
 
 		case oGFX_PIPELINE_RIGID_SHADOW:
 			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_SHADOW";
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
 			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = oGfxShadowVS4ByteCode;
-			_pDesc->pPixelShader = oGfxShadowPS4ByteCode;
+			_pDesc->pVertexShader = VSShadow;
+			_pDesc->pPixelShader = PSShadow;
 			return true;
 
 		case oGFX_PIPELINE_RIGID_WHITE:
 			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_WHITE";
 			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
 			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = oGfxPositionVS4ByteCode;
-			_pDesc->pPixelShader = oGfxWhitePS4ByteCode;
+			_pDesc->pVertexShader = VSPosition;
+			_pDesc->pPixelShader = PSWhite;
 			return true;
 
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_TEXCOORD, oGfxTexcoordPS4ByteCode)
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_WSVNORMAL, oGfxWSVNormalPS4ByteCode)
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_WSPNORMAL, oGfxWSPNormalPS4ByteCode)
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_VSDEPTH, oGfxVSDepthPS4ByteCode)
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_GRID, oGfxGridPS4ByteCode)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_TEXCOORD, PSTexcoord)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_WSVNORMAL, PSWSVertexNormal)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_WSPNORMAL, PSWSPixelNormal)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_VSDEPTH, PSVSDepth)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_GRID, PSGrid)
 
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_OBJECT_ID, oGfxObjectIDPS4ByteCode)
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_TEXTURE_COLOR, oGfxTextureColorPS4ByteCode)
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_VERTEX_PHONG, oGfxVertexPhongPS4ByteCode)
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_MATERIAL, oGfxMaterialPS4ByteCode)
-		oCASE_RIGID(oGFX_PIPELINE_RIGID_HERO, oGfxHeroPS4ByteCode)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_OBJECT_ID, PSObjectID)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_TEXTURE_COLOR, PSTextureColor)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_VERTEX_PHONG, PSVertexPhong)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_MATERIAL, PSMaterial)
+		oCASE_RIGID(oGFX_PIPELINE_RIGID_HERO, PSHero)
 
 		default: return oErrorSetLast(std::errc::not_supported);
 	}

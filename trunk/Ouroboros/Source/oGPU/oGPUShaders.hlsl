@@ -22,12 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oGfxCommon.h"
 
-oGFX_VS_OUT_UNLIT main(oGFX_LINE_VERTEX In)
+[numthreads(1, 1, 1)] void CSNoop()
 {
-	oGFX_VS_OUT_UNLIT Out = (oGFX_VS_OUT_UNLIT)0;
-	Out.SSPosition = oGfxLStoSS(In.LSPosition);
-	Out.Color = In.Color;
-	return Out;
 }

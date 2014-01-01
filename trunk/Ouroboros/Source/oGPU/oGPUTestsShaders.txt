@@ -1,0 +1,16 @@
+VSTestBuffer
+PSTestBuffer
+PSTestColor
+VSTestPassThroughColor
+VSTestPassThrough
+VSTestTexture1D
+PSTestTexture1D
+VSTestTexture2D
+PSTestTexture2D
+VSTestTexture3D
+PSTestTexture3D
+VSTestTextureCube
+PSTestTextureCube
+VSTestWhite
+VSTestWhiteInstanced
+PSTestWhite

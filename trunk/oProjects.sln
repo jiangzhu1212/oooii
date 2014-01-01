@@ -53,6 +53,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Apps", "Apps", "{6D2DEECB-E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{214923A8-7DC6-4CC0-ACE3-B40564F05945}"
 	ProjectSection(SolutionItems) = preProject
+		Ouroboros\Source\Build\CompileShaders.cmd = Ouroboros\Source\Build\CompileShaders.cmd
 		Ouroboros\Include\Ouroboros.h = Ouroboros\Include\Ouroboros.h
 		Ouroboros\Include\Ouroboros_externals.h = Ouroboros\Include\Ouroboros_externals.h
 	EndProjectSection
