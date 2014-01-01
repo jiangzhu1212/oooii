@@ -116,7 +116,12 @@
 #endif
 
 #ifndef oHAS_THREAD_LOCAL
-#ifdef _MSC_VER
+	#ifdef _MSC_VER
+		// @tony: This is negligent: VS2012 enforces that no keyword is macro-ized, but then doesn't
+		// support thread_local. How dare they prevent override of something that does't exist.
+		// My solution: comment out the broken and inappropriate code in VS2012's xkeycheck.h because
+		// more of the code remains compliant rather than endlessly creating wrapper macros for supposed
+		// language intrinsics.
 		#define thread_local __declspec(thread)
 	#else
 		#error unsupported target
