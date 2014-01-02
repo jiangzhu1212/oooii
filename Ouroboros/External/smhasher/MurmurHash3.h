@@ -14,7 +14,7 @@
 #if defined(_MSC_VER) && _MSC_VER < 1700 // if VS before 2012
 
 typedef unsigned char uint8_t;
-typedef unsigned long uint32_t;
+typedef unsigned int uint32_t; // @tony more consistent with stdint
 typedef unsigned __int64 uint64_t;
 
 // Other compilers
