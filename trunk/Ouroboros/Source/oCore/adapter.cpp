@@ -145,7 +145,7 @@ void enumerate_video_drivers(const std::function<bool(const info& _Info)>& _Enum
 
 		ULONG uReturn = 0;
 		WbemClassObject = nullptr;
-		oV(Enumerator->Next(WBEM_INFINITE, 1, &WbemClassObject, &uReturn));
+		Enumerator->Next(WBEM_INFINITE, 1, &WbemClassObject, &uReturn);
 		if (0 == uReturn)
 			break;
 
@@ -194,19 +194,34 @@ static info get_info(int _AdapterIndex, IDXGIAdapter* _pAdapter)
 {
 	DXGI_ADAPTER_DESC ad;
 	_pAdapter->GetDesc(&ad);
+	
 	info adapter_info;
-	detail::enumerate_video_drivers([&](const info& _Info)->bool
+	// There's a new adapter called teh Basic Render Driver that is not a video driver, so 
+	// it won't show up with enumerate_video_drivers, so handle it explicitly here.
+	if (ad.VendorId == 0x1414 && ad.DeviceId == 0x8c) // Microsoft Basic Render Driver
 	{
-		mstring vendor, device;
-		snprintf(vendor, "VEN_%X", ad.VendorId);
-		snprintf(device, "DEV_%04X", ad.DeviceId);
-		if (strstr(_Info.plugnplay_id, vendor) && strstr(_Info.plugnplay_id, device))
+		adapter_info.description = "Microsoft Basic Render Driver";
+		adapter_info.plugnplay_id = "Microsoft Basic Render Driver";
+		adapter_info.version = version(1,0);
+		adapter_info.vendor = vendor::microsoft;
+		adapter_info.feature_level = version(11,1);
+	}
+
+	else
+	{
+		detail::enumerate_video_drivers([&](const info& _Info)->bool
 		{
-			adapter_info = _Info;
-			return false;
-		}
-		return true;
-	});
+			mstring vendor, device;
+			snprintf(vendor, "VEN_%X", ad.VendorId);
+			snprintf(device, "DEV_%04X", ad.DeviceId);
+			if (strstr(_Info.plugnplay_id, vendor) && strstr(_Info.plugnplay_id, device))
+			{
+				adapter_info = _Info;
+				return false;
+			}
+			return true;
+		});
+	}
 
 	*(int*)&adapter_info.id = _AdapterIndex;
 
@@ -223,7 +238,7 @@ static info get_info(int _AdapterIndex, IDXGIAdapter* _pAdapter)
 		, nullptr
 		, &FeatureLevel
 		, nullptr)))
-		adapter_info.feature_level = version((FeatureLevel>>12) & 0xffff, (FeatureLevel>>8) & 0xffff);
+		adapter_info.feature_level = version((FeatureLevel>>12) & 0xffff, (FeatureLevel>>8) & 0xf);
 
 	return adapter_info;
 }
@@ -237,7 +252,7 @@ void enumerate(const std::function<bool(const info& _Info)>& _Enumerator)
 	intrusive_ptr<IDXGIAdapter> Adapter;
 	while (DXGI_ERROR_NOT_FOUND != Factory->EnumAdapters(AdapterIndex, &Adapter))
 	{
-		info adapter_info = std::move(get_info(AdapterIndex, Adapter));
+		info adapter_info = get_info(AdapterIndex, Adapter);
 
 		if (!_Enumerator(adapter_info))
 			return;

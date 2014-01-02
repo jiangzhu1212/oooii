@@ -237,8 +237,13 @@ intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init)
 	bool UsingDebug = false;
 	if (_Init.driver_debug_level != gpu::debug_level::none)
 	{
-		Flags |= D3D11_CREATE_DEVICE_DEBUG;
-		UsingDebug = true;
+		#if NTDDI_VERSION >= NTDDI_WIN8
+		oTRACE("Win8 SDK is very particular - or I may have to D/L the Win 8.1 dev sdk");
+
+		#else
+			Flags |= D3D11_CREATE_DEVICE_DEBUG;
+			UsingDebug = true;
+		#endif
 	}
 
 	if (!_Init.multithreaded)
@@ -282,6 +287,8 @@ intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init)
 
 		oTRACE("Debug D3D11 not found: device created in non-debug mode so driver error reporting will not be available.");
 	}
+	else
+		oV(hr);
 
 	version D3DVersion = version((FeatureLevel>>12) & 0xffff, (FeatureLevel>>8) & 0xffff);
 	if (D3DVersion < _Init.version)
