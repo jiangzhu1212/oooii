@@ -122,15 +122,24 @@ void copy(ID3D11Resource* _pTexture
 	, surface::mapped_subresource* _pDstSubresource
 	, bool _FlipVertically = false);
 
+// http://msdn.microsoft.com/en-us/library/windows/desktop/ff476486(v=vs.85).aspx
+// This is not cheap enough to reevaluate for each call to update_subresource, so
+// call this once and cache the result per device and pass it to update_subresource
+// as appropriate.
+bool supports_deferred_contexts(ID3D11Device* _pDevice);
+
 // If _pDstResource is D3D11_USAGE_DEFAULT, then this calls UpdateSubresource. 
 // If resource is D3D11_USAGE_DYNAMIC or D3D11_USAGE_STAGING then map, memcpy, 
 // unmap is used. This exists because some forms of D3D11 (D3D11 API with D3D10 
-// feature level) don't always work as advertised.
+// feature level) don't always work as advertised. For more info about the last
+// parameter follow this link:
+
 void update_subresource(ID3D11DeviceContext* _pDeviceContext
 	, ID3D11Resource* _pDstResource
 	, unsigned int _DstSubresource
 	, const D3D11_BOX* _pDstBox
-	, const surface::const_mapped_subresource& _Source);
+	, const surface::const_mapped_subresource& _Source
+	, bool _DeviceSupportsDeferredContexts);
 
 // If _pResource is D3D11_USAGE_DEFAULT, then this allocates a buffer using new
 // and returns it in _pMappedResource. If _pResource is D3D11_USAGE_DYNAMIC or 

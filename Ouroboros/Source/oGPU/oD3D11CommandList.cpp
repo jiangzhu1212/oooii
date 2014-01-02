@@ -131,16 +131,6 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, CommandList)
 		D3DDevice->GetImmediateContext(&Context);
 	else
 	{
-		D3D11_FEATURE_DATA_THREADING threadingCaps = { FALSE, FALSE };
-		oV(D3DDevice->CheckFeatureSupport(D3D11_FEATURE_THREADING, &threadingCaps, sizeof(threadingCaps)));
-
-		if (!threadingCaps.DriverCommandLists)
-		{
-			// Is this just a thing of the past? Hopefully...
-			oErrorSetLast(std::errc::permission_denied, "Code requires driver workaround: http://msdn.microsoft.com/en-us/library/windows/desktop/ff476486(v=vs.85).aspx, but we haven't implemented it.");
-			return;
-		}
-
 		HRESULT hr = D3DDevice->CreateDeferredContext(0, &Context);
 		if (FAILED(hr))
 		{

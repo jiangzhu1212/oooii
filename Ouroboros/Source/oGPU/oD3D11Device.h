@@ -162,6 +162,7 @@ struct oD3D11Device : oGPUDevice
 	std::vector<oGPUCommandList*> CommandLists; // non-oRefs to avoid circular refs
 
 	bool IsSoftwareEmulation;
+	bool SupportsDeferredCommandLists;
 
 private:
 	oD3D11Device(const oD3D11Device&)/* = delete */;
