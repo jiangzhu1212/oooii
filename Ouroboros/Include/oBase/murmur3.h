@@ -31,7 +31,7 @@
 #include <oBase/uint128.h>
 
 // Prefer ouro::murmur3 for codebase consistency
-void MurmurHash3_x64_128(const void* key, int len, unsigned long seed, void* out);
+void MurmurHash3_x64_128(const void* key, const int len, unsigned int seed, void* out);
 
 namespace ouro {
 
