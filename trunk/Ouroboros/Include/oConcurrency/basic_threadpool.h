@@ -79,7 +79,7 @@ protected:
 
 	// To ensure all members are constructed at time of worker instantiation, 
 	// separate out a call to be called from the most-derived constructor.
-	void construct_workers(task_type&& _DoWork, size_t _NumWorkers = 0);
+	void construct_workers(const task_type& _DoWork, size_t _NumWorkers = 0);
 
 	basic_threadpool_base(const basic_threadpool_base&); /* = delete */
 	const basic_threadpool_base& operator=(const basic_threadpool_base&); /* = delete */
@@ -95,12 +95,12 @@ size_t basic_threadpool_base<Alloc>::calc_num_workers(size_t _NumWorkersRequeste
 }
 
 template<typename Alloc>
-inline void basic_threadpool_base<Alloc>::construct_workers(task_type&& _DoWork, size_t _NumWorkers)
+inline void basic_threadpool_base<Alloc>::construct_workers(const task_type& _DoWork, size_t _NumWorkers)
 {
 	NumWorking = calc_num_workers(_NumWorkers);
 	Workers.resize(NumWorking);
 	oFOR(auto& w, Workers)
-		w = std::move(oStd::thread(std::move(_DoWork)));
+		w = oStd::thread(_DoWork);
 
 	// wait until all have settled and thus ensure all have initialized
 	flush();
@@ -179,7 +179,7 @@ template<typename Alloc>
 inline basic_threadpool<Alloc>::basic_threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
 	: basic_threadpool_base(_Alloc)
 {
-	construct_workers(std::move(std::bind(&basic_threadpool::work, this)), _NumWorkers);
+	construct_workers(std::bind(&basic_threadpool::work, this), _NumWorkers);
 }
 
 template<typename Alloc>

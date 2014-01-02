@@ -106,7 +106,7 @@ threadpool<Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
 {
 	LocalQueues.resize(calc_num_workers(_NumWorkers));
 	WorkerIDs.resize(LocalQueues.size());
-	construct_workers(std::move(std::bind(&threadpool::worker_proc, this)), _NumWorkers);
+	construct_workers(std::bind(&threadpool::worker_proc, this), _NumWorkers);
 }
 
 template<typename Alloc>
