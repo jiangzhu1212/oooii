@@ -93,6 +93,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 	, FrameID(ouro::invalid)
 	, hHeap(HeapCreate(0, oMB(10), 0))
 	, IsSoftwareEmulation(_Init.use_software_emulation)
+	, SupportsDeferredCommandLists(d3d11::supports_deferred_contexts(_pDevice))
 {
 	*_pSuccess = false;
 
@@ -435,7 +436,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		pBox = &box;
 	}
 
-	update_subresource(_pDeviceContext, pD3DResource, D3DSubresource, pBox, _Source);
+	update_subresource(_pDeviceContext, pD3DResource, D3DSubresource, pBox, _Source, SupportsDeferredCommandLists);
 
 	HeapLock(hHeap);
 	if (find_and_erase(thread_cast<oD3D11Device*>(this)->HeapAllocations, _Source.data)) // safe because vector is protected with HeapLock

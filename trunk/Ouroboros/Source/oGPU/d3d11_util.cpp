@@ -696,19 +696,48 @@ void copy(ID3D11Resource* _pTexture
 	D3DDeviceContext->Unmap(_pTexture, _Subresource);
 }
 
+bool supports_deferred_contexts(ID3D11Device* _pDevice)
+{
+	D3D11_FEATURE_DATA_THREADING threadingCaps = { FALSE, FALSE };
+	oV(_pDevice->CheckFeatureSupport(D3D11_FEATURE_THREADING, &threadingCaps, sizeof(threadingCaps)));
+	return !!threadingCaps.DriverCommandLists;
+}
+
 void update_subresource(ID3D11DeviceContext* _pDeviceContext
 	, ID3D11Resource* _pDstResource
 	, unsigned int _DstSubresource
 	, const D3D11_BOX* _pDstBox
-	, const surface::const_mapped_subresource& _Source)
+	, const surface::const_mapped_subresource& _Source, bool _DeviceSupportsDeferredContexts)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
 	gpu::texture_info info = get_texture_info(_pDstResource, &Usage);
 
+	//D3D11_BOX DstBox;
+	const D3D11_BOX* pLocalDstBox = _pDstBox;
+	const void* pAdjustedSrcData = _Source.data;
+
+#if 0 // need a way to test this
+	if (_pDstBox && !_DeviceSupportsDeferredContexts)
+	{
+		DstBox = *_pDstBox;
+		pLocalDstBox = &DstBox;
+
+		if (surface::is_block_compressed(info.format))
+		{
+			DstBox.left /= 4;
+			DstBox.right /= 4;
+			DstBox.top /= 4;
+			DstBox.bottom /= 4;
+		}
+
+		pAdjustedSrcData = ((const unsigned char*)_Source.data) - (DstBox.front * _Source.depth_pitch) - (DstBox.top * _Source.row_pitch) - (DstBox.left * surface::element_size(info.format));
+	}
+#endif
+
 	switch (Usage)
 	{
 		case D3D11_USAGE_DEFAULT:
-			_pDeviceContext->UpdateSubresource(_pDstResource, _DstSubresource, _pDstBox, _Source.data, _Source.row_pitch, _Source.depth_pitch);
+			_pDeviceContext->UpdateSubresource(_pDstResource, _DstSubresource, _pDstBox, pAdjustedSrcData, _Source.row_pitch, _Source.depth_pitch);
 			break;
 		case D3D11_USAGE_STAGING:
 		case D3D11_USAGE_DYNAMIC:
