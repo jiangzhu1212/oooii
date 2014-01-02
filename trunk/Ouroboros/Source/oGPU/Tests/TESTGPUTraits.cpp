@@ -25,146 +25,70 @@
 #include <oPlatform/oTest.h>
 #include <oBasis/oGPUConcepts.h>
 
+namespace ouro {
+	namespace tests {
+
+void TESTtexture_traits(gpu::texture_type::value _Type)
+{
+	bool Is1D = false;
+	bool Is2D = false;
+	bool Is3D = false;
+	bool IsCube = false;
+	bool HasMips = false;
+	bool IsRenderTarget = false;
+	bool IsUnordered = false;
+	bool IsReadBack = false;
+
+	switch(_Type)
+	{
+		case gpu::texture_type::default_1d: Is1D = true; break;
+		case gpu::texture_type::mipped_1d: Is1D = HasMips = true; break;
+		case gpu::texture_type::render_target_1d: Is1D = IsRenderTarget = true; break;
+		case gpu::texture_type::mipped_render_target_1d: Is1D = IsRenderTarget = HasMips = true; break;
+		case gpu::texture_type::readback_1d: Is1D = IsReadBack = true; break;
+		case gpu::texture_type::mipped_readback_1d: Is1D = HasMips = IsReadBack = true; break;
+		case gpu::texture_type::default_2d: Is2D = true; break;
+		case gpu::texture_type::mipped_2d: Is2D = HasMips = true; break;
+		case gpu::texture_type::render_target_2d: Is2D = IsRenderTarget = true; break;
+		case gpu::texture_type::mipped_render_target_2d: Is2D = IsRenderTarget = HasMips = true; break;
+		case gpu::texture_type::readback_2d: Is2D = IsReadBack = true; break;
+		case gpu::texture_type::mipped_readback_2d: Is2D = HasMips = IsReadBack = true; break;
+		case gpu::texture_type::unordered_2d: Is2D = IsUnordered = true; break;
+		case gpu::texture_type::default_cube: IsCube = true; break;
+		case gpu::texture_type::mipped_cube: IsCube = HasMips = true; break;
+		case gpu::texture_type::render_target_cube: IsCube = IsRenderTarget = true; break;
+		case gpu::texture_type::mipped_render_target_cube: IsCube = IsRenderTarget = HasMips = true; break;
+		case gpu::texture_type::readback_cube: IsCube = IsReadBack = true; break;
+		case gpu::texture_type::mipped_readback_cube: IsCube = HasMips = IsReadBack = true; break;
+		case gpu::texture_type::default_3d: Is3D = true; break;
+		case gpu::texture_type::mipped_3d: Is3D = HasMips = true; break;
+		case gpu::texture_type::render_target_3d: Is3D = IsRenderTarget = true; break;
+		case gpu::texture_type::mipped_render_target_3d: Is3D = IsRenderTarget = HasMips = true; break;
+		case gpu::texture_type::readback_3d: Is3D = IsReadBack = true; break;
+		case gpu::texture_type::mipped_readback_3d: Is3D = HasMips = IsReadBack = true; break;
+		default: oTHROW_INVARG("Unknown texture type %s", as_string(_Type));
+	}
+
+	oCHECK(gpu::is_mipped(_Type) == HasMips, "gpu::is_mipped incorrectly returning %s for %s", HasMips ? "false" : "true", as_string(_Type));
+	oCHECK(gpu::is_readback(_Type) == IsReadBack, "gpu::is_readback incorrectly returning %s for %s", IsReadBack ? "false" : "true", as_string(_Type));
+	oCHECK(gpu::is_render_target(_Type) == IsRenderTarget, "gpu::is_render_target incorrectly returning %s for %s", IsRenderTarget ? "false" : "true", as_string(_Type));
+	oCHECK(gpu::is_1d(_Type) == Is1D, "gpu::is_1d incorrectly returning %s for %s", Is1D ? "false" : "true", as_string(_Type));
+	oCHECK(gpu::is_2d(_Type) == Is2D, "gpu::is_2d incorrectly returning %s for %s", Is2D ? "false" : "true", as_string(_Type));
+	oCHECK(gpu::is_cube(_Type) == IsCube, "gpu::is_cube incorrectly returning %s for %s", IsCube ? "false" : "true", as_string(_Type));
+	oCHECK(gpu::is_3d(_Type) == Is3D, "gpu::is_3d incorrectly returning %s for %s", Is3D ? "false" : "true", as_string(_Type));
+	oCHECK(gpu::is_unordered(_Type) == IsUnordered, "gpu::is_unordered incorrectly returning %s for %s", IsUnordered ? "false" : "true", as_string(_Type));
+}
+
+	} // namespace tests	
+} // namespace ouro
 
 struct GPU_Traits : public oTest
 {
-	RESULT TestTextureEnum(char* _StrStatus, size_t _SizeofStrStatus, ouro::gpu::texture_type::value _Type)
-	{
-		bool Is1D = false;
-		bool Is2D = false;
-		bool Is3D = false;
-		bool IsCube = false;
-		bool HasMips = false;
-		bool IsRenderTarget = false;
-		bool IsUnordered = false;
-		bool IsReadBack = false;
-
-		switch(_Type)
-		{
-		case ouro::gpu::texture_type::default_1d:
-			Is1D = true;
-			break;
-		case ouro::gpu::texture_type::mipped_1d:
-			Is1D = true;
-			HasMips = true;
-			break;
-		case ouro::gpu::texture_type::render_target_1d:
-			Is1D = true;
-			IsRenderTarget = true;
-			break;
-		case ouro::gpu::texture_type::mipped_render_target_1d:
-			Is1D = true;
-			IsRenderTarget = true;
-			HasMips = true;
-			break;
-		case ouro::gpu::texture_type::readback_1d:
-			Is1D = true;
-			IsReadBack = true;
-			break;
-		case ouro::gpu::texture_type::mipped_readback_1d:
-			Is1D = true;
-			HasMips = true;
-			IsReadBack = true;
-			break;
-		case ouro::gpu::texture_type::default_2d:
-			Is2D = true;
-			break;
-		case ouro::gpu::texture_type::mipped_2d:
-			Is2D = true;
-			HasMips = true;
-			break;
-		case ouro::gpu::texture_type::render_target_2d:
-			Is2D = true;
-			IsRenderTarget = true;
-			break;
-		case ouro::gpu::texture_type::mipped_render_target_2d:
-			Is2D = true;
-			IsRenderTarget = true;
-			HasMips = true;
-			break;
-		case ouro::gpu::texture_type::readback_2d:
-			Is2D = true;
-			IsReadBack = true;
-			break;
-		case ouro::gpu::texture_type::mipped_readback_2d:
-			Is2D = true;
-			HasMips = true;
-			IsReadBack = true;
-			break;
-		case ouro::gpu::texture_type::unordered_2d:
-			Is2D = true;
-			IsUnordered = true;
-			break;
-		case ouro::gpu::texture_type::default_cube:
-			IsCube = true;
-			break;
-		case ouro::gpu::texture_type::mipped_cube:
-			IsCube = true;
-			HasMips = true;
-			break;
-		case ouro::gpu::texture_type::render_target_cube:
-			IsCube = true;
-			IsRenderTarget = true;
-			break;
-		case ouro::gpu::texture_type::mipped_render_target_cube:
-			IsCube = true;
-			IsRenderTarget = true;
-			HasMips = true;
-			break;
-		case ouro::gpu::texture_type::readback_cube:
-			IsCube = true;
-			IsReadBack = true;
-			break;
-		case ouro::gpu::texture_type::mipped_readback_cube:
-			IsCube = true;
-			HasMips = true;
-			IsReadBack = true;
-			break;
-		case ouro::gpu::texture_type::default_3d:
-			Is3D = true;
-			break;
-		case ouro::gpu::texture_type::mipped_3d:
-			Is3D = true;
-			HasMips = true;
-			break;
-		case ouro::gpu::texture_type::render_target_3d:
-			Is3D = true;
-			IsRenderTarget = true;
-			break;
-		case ouro::gpu::texture_type::mipped_render_target_3d:
-			Is3D = true;
-			IsRenderTarget = true;
-			HasMips = true;
-			break;
-		case ouro::gpu::texture_type::readback_3d:
-			Is3D = true;
-			IsReadBack = true;
-			break;
-		case ouro::gpu::texture_type::mipped_readback_3d:
-			Is3D = true;
-			HasMips = true;
-			IsReadBack = true;
-			break;
-		default:
-			oTESTB(false, "Unknown texture type %s", ouro::as_string(_Type));
-		}
-
-		oTESTB(ouro::gpu::is_mipped(_Type) == HasMips, "gpu::is_mipped incorrectly returning %s for %s", HasMips ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(ouro::gpu::is_readback(_Type) == IsReadBack, "gpu::is_readback incorrectly returning %s for %s", IsReadBack ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(ouro::gpu::is_render_target(_Type) == IsRenderTarget, "gpu::is_render_target incorrectly returning %s for %s", IsRenderTarget ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(ouro::gpu::is_1d(_Type) == Is1D, "gpu::is_1d incorrectly returning %s for %s", Is1D ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(ouro::gpu::is_2d(_Type) == Is2D, "gpu::is_2d incorrectly returning %s for %s", Is2D ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(ouro::gpu::is_cube(_Type) == IsCube, "gpu::is_cube incorrectly returning %s for %s", IsCube ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(ouro::gpu::is_3d(_Type) == Is3D, "gpu::is_3d incorrectly returning %s for %s", Is3D ? "false" : "true", ouro::as_string(_Type));
-		oTESTB(ouro::gpu::is_unordered(_Type) == IsUnordered, "gpu::is_unordered incorrectly returning %s for %s", IsUnordered ? "false" : "true", ouro::as_string(_Type));
-
-		return SUCCESS;
-	}
 	bool TestTextureEnum(RESULT* _pResult, char* _StrStatus, size_t _SizeofStrStatus, ouro::gpu::texture_type::value _Type)
 	{
-		RESULT Result = TestTextureEnum( _StrStatus, _SizeofStrStatus, _Type);
-		*_pResult = Result;
-		return SUCCESS == Result;
+		try { ouro::tests::TESTtexture_traits(_Type); *_pResult = SUCCESS; }
+		catch (std::exception& e) { strlcpy(_StrStatus, e.what(), _SizeofStrStatus);  *_pResult = FAILURE; }
+		return SUCCESS == *_pResult;
 	}
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
 	{
