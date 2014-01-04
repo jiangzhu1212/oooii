@@ -24,8 +24,8 @@
  **************************************************************************/
 #include <oCore/camera.h>
 #include <oCore/module.h>
+#include <oCore/windows/win_com.h>
 #include <oCore/windows/win_util.h>
-#include <oBase/finally.h>
 #include <oBase/throw.h>
 
 #define WIN32_LEAN_AND_MEAN
@@ -786,8 +786,7 @@ void get_display_name(char* _StrDestination, size_t _SizeofStrDestination, IMoni
 
 static bool make(unsigned int _Index, std::shared_ptr<camera>& _Camera)
 {
-	oV(CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED));
-	finally OnScopeExit([&] { CoUninitialize(); });
+	windows::com::ensure_initialized();
 
 	intrusive_ptr<IMoniker> Moniker;
 	

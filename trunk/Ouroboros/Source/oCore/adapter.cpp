@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oCore/adapter.h>
 #include <oCore/display.h>
+#include <oCore/windows/win_com.h>
 #include <oCore/windows/win_util.h>
 #include <oBase/guid.h>
 #include <oHLSL/oHLSLMath.h>
@@ -103,8 +104,7 @@ void enumerate_video_drivers(const std::function<bool(const info& _Info)>& _Enum
 	// DC12A687-737F-11CF-884D-00AA004B2E24
 	static const guid oGUID_IID_WbemLocator = { 0xdc12a687, 0x737f, 0x11cf, { 0x88, 0x4D, 0x00, 0xAA, 0x00, 0x4B, 0x2E, 0x24 } };
 
-	CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-	finally Deinitialize([&] { CoUninitialize(); });
+	windows::com::ensure_initialized();
 
 	intrusive_ptr<IWbemLocator> WbemLocator;
 	oV(CoCreateInstance((const GUID&)oGUID_CLSID_WbemLocator
