@@ -40,6 +40,7 @@
     <ClCompile Include="serial_port.cpp" />
     <ClCompile Include="system.cpp" />
     <ClCompile Include="winmain.cpp" />
+    <ClCompile Include="win_com.cpp" />
     <ClCompile Include="win_crt_heap.cpp" />
     <ClCompile Include="win_crt_leak_tracker.cpp" />
     <ClCompile Include="win_error.cpp" />
@@ -68,6 +69,7 @@
     <ClInclude Include="..\..\Include\oCore\reporting.h" />
     <ClInclude Include="..\..\Include\oCore\serial_port.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
+    <ClInclude Include="..\..\Include\oCore\windows\win_com.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_crt_heap.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_crt_leak_tracker.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_error.h" />
