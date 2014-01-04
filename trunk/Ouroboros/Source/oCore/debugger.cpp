@@ -292,6 +292,17 @@ symbol_info translate(symbol _Symbol)
 	symbol_info si;
 	si.address = _Symbol;
 
+	if (!si.address)
+	{
+		si.module = "(null)";
+		si.filename = "(null)";
+		si.name = "(null)";
+		si.symbol_offset = 0;
+		si.line = 0;
+		si.char_offset = 0;
+		return si;
+	}
+
 	oIMAGEHLP_MODULE module;
 	memset(&module, 0, sizeof(module));
 	module.SizeOfStruct = sizeof(module);
