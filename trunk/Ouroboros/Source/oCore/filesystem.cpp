@@ -706,9 +706,16 @@ unsigned long long file_size(file_handle _hFile)
 	HANDLE hFile = (HANDLE)_get_osfhandle(_fileno(_hFile));
 	if (hFile == INVALID_HANDLE_VALUE)
 		oTHROW0(no_such_file_or_directory);
-	LARGE_INTEGER fsize;
-	oVB(GetFileSizeEx(hFile, &fsize));
-	return fsize.QuadPart;
+	
+	#if (_WIN32_WINNT >= _WIN32_WINNT_VISTA)
+		FILE_STANDARD_INFO fsi;
+		oVB(GetFileInformationByHandleEx(hFile, FileStandardInfo, &fsi, sizeof(fsi)));
+		return fsi.EndOfFile.QuadPart;
+	#else
+		LARGE_INTEGER fsize;
+		oVB(GetFileSizeEx(hFile, &fsize));
+		return fsize.QuadPart;
+	#endif
 }
 
 unsigned long long tell(file_handle _hFile)
