@@ -106,8 +106,8 @@ HRESULT IsPinDirection(IPin *pPin, PIN_DIRECTION dir, BOOL *pResult)
 // Note: This function does not return a pointer to the connected pin.
 static HRESULT IsPinConnected(IPin *pPin, BOOL *pResult)
 {
-	IPin *pTmp = nullptr;
-	HRESULT hr = pPin->ConnectedTo(&pTmp);
+	intrusive_ptr<IPin> TmpPin;
+	HRESULT hr = pPin->ConnectedTo(&TmpPin);
 	if (SUCCEEDED(hr))
 	{
 		*pResult = TRUE;
@@ -119,7 +119,6 @@ static HRESULT IsPinConnected(IPin *pPin, BOOL *pResult)
 		hr = S_OK;
 	}
 
-	SafeRelease(&pTmp);
 	return hr;
 }
 
@@ -306,7 +305,7 @@ protected:
 	intrusive_ptr<IAMStreamConfig> StreamConfig;
 
 	mode Mode;
-	oStd::shared_mutex Mutex;
+	shared_mutex Mutex;
 	atomic_uint RingBufferReadIndex;
 	unsigned int MonotonicCounter;
 	unsigned int ID;
@@ -436,7 +435,7 @@ float directshow_camera::fps() const
 
 camera::mode directshow_camera::get_mode() const
 {
-	oStd::shared_lock<oStd::shared_mutex> lock(const_cast<oStd::shared_mutex&>(Mutex));
+	shared_lock<shared_mutex> lock(const_cast<shared_mutex&>(Mutex));
 	return Mode;
 }
 
@@ -450,7 +449,7 @@ void directshow_camera::set_mode(const mode& _Mode)
 	if (memcmp(&closest, &_Mode, sizeof(mode)))
 		oTHROW(not_supported, "Unsupported mode specified: %s %dx%d", as_string(_Mode.format), _Mode.dimensions.x, _Mode.dimensions.y);
 
-	oStd::lock_guard<oStd::shared_mutex> lock(Mutex);
+	lock_guard<shared_mutex> lock(Mutex);
 
 	intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
@@ -459,7 +458,10 @@ void directshow_camera::set_mode(const mode& _Mode)
 	bool PriorRunning = Running;
 	Running = false;
 	if (PriorRunning)
+	{
 		MediaControl->StopWhenReady();
+		this_thread::sleep_for(chrono::milliseconds(500));
+	}
 
 	destroy_output();
 	unsigned int nModes = 0;
@@ -482,7 +484,7 @@ bool directshow_camera::capturing() const
 
 void directshow_camera::capturing(bool _Capturing)
 {
-	oStd::lock_guard<oStd::shared_mutex> lock(Mutex);
+	lock_guard<shared_mutex> lock(Mutex);
 
 	intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
@@ -662,7 +664,7 @@ bool directshow_camera::map_const(const_mapped* _pMapped) const
 {
 	if (Running)
 	{
-		const_cast<oStd::shared_mutex&>(Mutex).lock_shared();
+		const_cast<shared_mutex&>(Mutex).lock_shared();
 		unsigned int index = RingBufferReadIndex;
 		
 		surface::info si;
@@ -678,7 +680,7 @@ bool directshow_camera::map_const(const_mapped* _pMapped) const
 
 void directshow_camera::unmap_const() const
 {
-	const_cast<oStd::shared_mutex&>(Mutex).unlock_shared();
+	const_cast<shared_mutex&>(Mutex).unlock_shared();
 }
 
 HRESULT DSSampleGrabberCB::BufferCB(double SampleTime, BYTE* pBuffer, long BufferLen)
@@ -697,7 +699,7 @@ bool directshow_camera::BufferCB(double _SampleTime, void* _pBuffer, size_t _Siz
 {
 	if (Running && _SizeofBuffer > 0)
 	{
-		oStd::shared_lock<oStd::shared_mutex> lock(Mutex);
+		shared_lock<shared_mutex> lock(Mutex);
 
 		int WriteIndex = (RingBufferReadIndex + 1) % oCOUNTOF(RingBuffer);
 	
@@ -786,6 +788,8 @@ void get_display_name(char* _StrDestination, size_t _SizeofStrDestination, IMoni
 
 static bool make(unsigned int _Index, std::shared_ptr<camera>& _Camera)
 {
+	_Camera = nullptr;
+
 	windows::com::ensure_initialized();
 
 	intrusive_ptr<IMoniker> Moniker;
@@ -821,7 +825,7 @@ static bool make(unsigned int _Index, std::shared_ptr<camera>& _Camera)
 	intrusive_ptr<IAMStreamConfig> AMStreamConfig;
 	if (SUCCEEDED(CaptureGraphBuilder->FindInterface(nullptr, (const GUID*)&GUID_MEDIATYPE_Video, BaseFilter, (const GUID&)GUID_IID_IAMStreamConfig, (void**)&AMStreamConfig)))
 	{
-		_Camera = std::move(std::make_shared<directshow_camera>(GraphBuilder, AMStreamConfig, BaseFilter, Name, MonikerID));
+		_Camera = std::make_shared<directshow_camera>(GraphBuilder, AMStreamConfig, BaseFilter, Name, MonikerID);
 		return true;
 	}
 	return false;
@@ -841,9 +845,7 @@ void camera::enumerate(const std::function<bool(std::shared_ptr<camera> _Camera)
 	unsigned int index = invalid;
 	std::shared_ptr<camera> _Camera;
 	while (make(++index, _Camera))
-	{
 		_Enumerator(_Camera);
-	}
 }
 
 } // namespace ouro
