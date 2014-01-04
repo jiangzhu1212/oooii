@@ -12,7 +12,6 @@
     <ClCompile>
       <Optimization>Full</Optimization>
       <PreprocessorDefinitions>_NDEBUG;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
     </ClCompile>
     <Lib>
       <TargetMachine>MachineX64</TargetMachine>
