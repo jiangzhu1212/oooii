@@ -54,6 +54,11 @@ unsigned char _BitScanReverse(unsigned long* Index, unsigned long Mask);
 	unsigned char _BitScanReverse64(unsigned long* Index, unsigned __int64 Mask);
 	#pragma intrinsic(_BitScanReverse64)
 	#pragma intrinsic(_BitScanForward64)
+#else
+	#if _MSC_VER >= 1700
+		void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand);
+		#pragma intrinsic(_InterlockedCompareExchangePointer)
+	#endif
 #endif
 
 // _____________________________________________________________________________
@@ -116,7 +121,9 @@ long _InterlockedXor(long volatile *Destination, long Value);
 	#pragma intrinsic(_InterlockedCompareExchangePointer)
 #else
 	inline void* _InterlockedExchangePointer(void* volatile *Target, void* Value) { return (void*)_InterlockedExchange((long volatile*)Target, (long)Value); }
-	inline void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand) { return (void*)_InterlockedCompareExchange((long volatile*)Destination, (long)(long*)Exchange, (long)(long*)Comperand); }
+	#if _MSC_VER < 1700
+		inline void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand) { return (void*)_InterlockedCompareExchange((long volatile*)Destination, (long)(long*)Exchange, (long)(long*)Comperand); }
+	#endif
 #endif
 
 #ifdef oHAS_64BIT_ATOMICS
