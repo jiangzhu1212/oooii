@@ -154,9 +154,6 @@
     <ProjectReference Include="..\oHLSL\oHLSL.vcxproj">
       <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\oKinect\oKinect.vcxproj">
-      <Project>{0dc2d3e8-1010-4ee2-9dbf-e5950c8cc860}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\oPlatform\oPlatform.vcxproj">
       <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>
     </ProjectReference>
