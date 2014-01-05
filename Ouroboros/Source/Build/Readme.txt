@@ -5,6 +5,7 @@ The copyright used for Ouroboros: the open-source portion of OOOii code. NOT ALL
 
 == msvs ==
 Microsoft Visual Studio support. Visual Studio is quite a powerful tool, but not always so well documented. This directory contains various tricks and tools useful for developing with OOOii lib. The tools can be used directly, or as an example for your own codebase.
+In Properties, all common Property sheets for use with Ouroboros are stored. The intent that if a project builds using Ouroboros it should replicate the use of these property sheets throughout the project for consistent building.
 
 === JeffWilcox.VisualStudioGuides.vsix ===
 This plugin for VS2010 enables a registry setting to draw a vertical line in the text editor to indicate where coders should manually wrap their code lines for more readable code. HAVE VS CLOSED WHEN YOU DOUBLE-CLICK THIS TO INSTALL! After install, the guide line is configurable by adding/editing a "Guides" string entry at: [HKEY_CURRENT_USER\Software\Microsoft\VisualStudio\10.0\Text Editor]. The format is: RGB(r,g,b) col,col,col. Where r,g,b is each a 0-255 value for the color of the line and the vertical line will be drawn at each col specified. There is a registry script for the standard 80 columns, called JeffWilcox.VisualStudioGuides.80.reg
@@ -51,8 +52,5 @@ The batch file configures Windows for the fastest possible reboot on BSOD, basic
 o a time-taking mem dump write
 o the recovery boot screen
 o on-boot popups describing errors
-
-== msvc100 (msvc110, etc) ==
-Property sheets and custom build rules for use with Ouroboros and other suites. The intent that if a project builds using Ouroboros, it should replicate the use of these property sheets throughout the project for consistent building.
 
 In the BuildRules subdirectory there are build rules to use FXC to compile HLSL shaders and oFile2cpp to compile any binary to C++ source code. To use either one of these: right-click on a project that requires shaders, select "Build Customizations" and from the dialog check or browse to find oFXC or oFile2cpp. Once enabled, right-click on an HLSL or binary file in the project for its properties and change the General|Item Type to FXC or oFile2cpp. Another property page option will appear called that will give all the compiler options.
