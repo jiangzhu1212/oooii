@@ -47,35 +47,35 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Release32.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\Release32.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\Common.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\pch.props" />
     <Import Project="oUnitTestsSuite.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\OuroborosPublicExternalDependencies.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\OuroborosPublicExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Debug32.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\Debug32.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\Common.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\pch.props" />
     <Import Project="oUnitTestsSuite.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\OuroborosPublicExternalDependencies.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\OuroborosPublicExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Release64.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\Release64.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\Common.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\pch.props" />
     <Import Project="oUnitTestsSuite.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\OuroborosPublicExternalDependencies.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\OuroborosPublicExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Debug64.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\Common.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\pch.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\Debug64.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\Common.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\pch.props" />
     <Import Project="oUnitTestsSuite.props" />
-    <Import Project="..\Ouroboros\Source\Build\msvc100\Properties\OuroborosPublicExternalDependencies.props" />
+    <Import Project="..\Ouroboros\Source\Build\msvs\Properties\OuroborosPublicExternalDependencies.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>

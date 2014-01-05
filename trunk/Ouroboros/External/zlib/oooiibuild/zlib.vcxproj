@@ -73,22 +73,22 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\Source\Build\msvc100\Properties\Debug32.props" />
+    <Import Project="..\..\..\Source\Build\msvs\Properties\Debug32.props" />
     <Import Project="oooiiproperties.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\Source\Build\msvc100\Properties\Debug64.props" />
+    <Import Project="..\..\..\Source\Build\msvs\Properties\Debug64.props" />
     <Import Project="oooiiproperties.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\Source\Build\msvc100\Properties\Release32.props" />
+    <Import Project="..\..\..\Source\Build\msvs\Properties\Release32.props" />
     <Import Project="oooiiproperties.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-    <Import Project="..\..\..\Source\Build\msvc100\Properties\Release64.props" />
+    <Import Project="..\..\..\Source\Build\msvs\Properties\Release64.props" />
     <Import Project="oooiiproperties.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
