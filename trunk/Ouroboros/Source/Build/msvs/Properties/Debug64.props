@@ -5,7 +5,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-    <LibraryPath>$(DXSDK_DIR)Lib\x64;$(KINECTSDK10_DIR)lib\amd64;$(LibraryPath)</LibraryPath>
+    <LibraryPath>$(KINECTSDK10_DIR)lib\amd64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

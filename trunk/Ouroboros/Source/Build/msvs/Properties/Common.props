@@ -15,7 +15,6 @@
     <OutDir>$(oBinDir)</OutDir>
     <IntDir>$(oTmpDir)</IntDir>
     <TargetName>$(ProjectName)$(oBuildSuffix)</TargetName>
-    <IncludePath>$(DXSDK_DIR)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(oSuiteLibDir);$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup>
