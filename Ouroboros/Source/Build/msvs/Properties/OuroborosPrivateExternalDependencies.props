@@ -5,11 +5,11 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>$(oSuiteExtDir)bullet\vectormathlibrary\include\;$(oSuiteExtDir)tlsf\;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)OpenEXR\Half\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;$(ProgramW6432)\Microsoft SDKs\Kinect\v1.7\inc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(oSuiteExtDir)bullet\vectormathlibrary\include\;$(oSuiteExtDir)tlsf\;$(oSuiteExtDir)BC6HBC7EncoderDecoder11\;$(oSuiteExtDir)DXSDK\Include\;$(oSuiteExtDir)OpenEXR\Half\;$(oSuiteExtDir)OpenSSL\openssl-1.0.0e\include\;$(oSuiteExtDir)tbb\include\;$(ProgramW6432)\Microsoft SDKs\Kinect\v1.7\inc\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>FREEIMAGE_LIB;__TBB_NO_IMPLICIT_LINKAGE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libjpegTurbo$(oBuildSuffix).lib;libpng$(oBuildSuffix).lib;wininet.lib;tlsf$(oBuildSuffix).lib;BC6HBC7EncoderDecoder11$(oBuildSuffix).lib;snappymt$(oBuildSuffix).lib;lzmamt$(oBuildSuffix).lib;tbb.lib;zlibmt$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libjpegTurbo$(oBuildSuffix).lib;libpng$(oBuildSuffix).lib;wininet.lib;tlsf$(oBuildSuffix).lib;BC6HBC7EncoderDecoder11$(oBuildSuffix).lib;snappy$(oBuildSuffix).lib;lzma$(oBuildSuffix).lib;tbb.lib;zlib$(oBuildSuffix).lib;%(AdditionalDependencies)</AdditionalDependencies>
       <DelayLoadDLLs>tbb.dll;%(DelayLoadDLLs)</DelayLoadDLLs>
     </Link>
     <ResourceCompile>
