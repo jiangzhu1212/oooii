@@ -9,15 +9,15 @@
 #include <stdio.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
-#include <d3dx10.h>
+//#include <d3dx10.h>
 #include <d3dx11.h>
 #include "utils.h"
 #include "BC7EncodeDecode.h"
-#include <BC7DecodeByteCode.h> // @oooii-tony: Move shader byte code into compiled binary
-#include <BC7Encode_EncodeBlockCSByteCode.h> // @oooii-tony: Move shader byte code into compiled binary
-#include <BC7Encode_TryMode02CSByteCode.h> // @oooii-tony: Move shader byte code into compiled binary
-#include <BC7Encode_TryMode137CSByteCode.h> // @oooii-tony: Move shader byte code into compiled binary
-#include <BC7Encode_TryMode456CSByteCode.h> // @oooii-tony: Move shader byte code into compiled binary
+#include <BC7Decode.h> // @tony: Move shader byte code into compiled binary
+#include <BC7Encode_EncodeBlockCS.h> // @tony: Move shader byte code into compiled binary
+#include <BC7Encode_TryMode02CS.h> // @tony: Move shader byte code into compiled binary
+#include <BC7Encode_TryMode137CS.h> // @tony: Move shader byte code into compiled binary
+#include <BC7Encode_TryMode456CS.h> // @tony: Move shader byte code into compiled binary
 
 struct BufferBC7
 {
@@ -46,16 +46,16 @@ HRESULT CGPUBC7Encoder::Initialize( ID3D11Device* pDevice, ID3D11DeviceContext* 
 		// @oooii-tony: Replace reading from a SDK samples location with looking to
 		// our own binary for the shaders
 
-		hr = pDevice->CreateComputeShader(BC7Encode_TryMode456CSByteCode, sizeof(BC7Encode_TryMode456CSByteCode), NULL, &m_pTryMode456CS );
+		hr = pDevice->CreateComputeShader(BC7Encode_TryMode456CS, sizeof(BC7Encode_TryMode456CS), NULL, &m_pTryMode456CS );
 		if ( FAILED( hr ) ) return hr;
 
-		hr = pDevice->CreateComputeShader(BC7Encode_TryMode137CSByteCode, sizeof(BC7Encode_TryMode137CSByteCode), NULL, &m_pTryMode137CS );
+		hr = pDevice->CreateComputeShader(BC7Encode_TryMode137CS, sizeof(BC7Encode_TryMode137CS), NULL, &m_pTryMode137CS );
 		if ( FAILED( hr ) ) return hr;
 
-		hr = pDevice->CreateComputeShader(BC7Encode_TryMode02CSByteCode, sizeof(BC7Encode_TryMode02CSByteCode), NULL, &m_pTryMode02CS );
+		hr = pDevice->CreateComputeShader(BC7Encode_TryMode02CS, sizeof(BC7Encode_TryMode02CS), NULL, &m_pTryMode02CS );
 		if ( FAILED( hr ) ) return hr;
 
-		hr = pDevice->CreateComputeShader(BC7Encode_EncodeBlockCSByteCode, sizeof(BC7Encode_EncodeBlockCSByteCode), NULL, &m_pEncodeBlockCS );
+		hr = pDevice->CreateComputeShader(BC7Encode_EncodeBlockCS, sizeof(BC7Encode_EncodeBlockCS), NULL, &m_pEncodeBlockCS );
 		if ( FAILED( hr ) ) return hr;
 
     //V_RETURN( CreateComputeShaderCached( L"BC7Encode.hlsl", "TryMode456CS", "cs_4_0", m_pDevice, &m_pTryMode456CS ) );
@@ -430,7 +430,7 @@ HRESULT CGPUBC7Decoder::Initialize( ID3D11Device* pDevice, ID3D11DeviceContext* 
 		// @oooii-tony: Replace reading from a SDK samples location with looking to
 		// our own binary for the shaders
 
-		hr = pDevice->CreateComputeShader(BC7DecodeByteCode, sizeof(BC7DecodeByteCode), NULL, &m_pCS );
+		hr = pDevice->CreateComputeShader(BC7Decode, sizeof(BC7Decode), NULL, &m_pCS );
 		if ( FAILED( hr ) ) return hr;
 
 		//V_RETURN( CreateComputeShaderCached( L"BC7Decode.hlsl", "main", "cs_4_0", m_pDevice, &m_pCS ) );

@@ -230,15 +230,15 @@ interface oSchemeHandler : oInterface
 
 // Register the specified scheme handler with this device. The device retains
 // a reference to the handler while registered.
-oAPI bool oRegisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHandler);
+bool oRegisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHandler);
 
 // Remove the device's reference to a scheme handler. If not called explicitly
 // this will happen automatically during static destruction.
-oAPI void oUnregisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHandler);
+void oUnregisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHandler);
 
 // Searches the registered scheme handlers for the one handling the specified 
 // scheme.
-oAPI bool oFindSchemeHandler(const char* _Scheme, threadsafe oSchemeHandler** _ppSchemeHandler);
+bool oFindSchemeHandler(const char* _Scheme, threadsafe oSchemeHandler** _ppSchemeHandler);
 
 // Walks through all URIBases and registered scheme handlers to fill the 
 // specified oSTREAM_DESC. While implementation-specific, the goal of this API 
@@ -246,7 +246,7 @@ oAPI bool oFindSchemeHandler(const char* _Scheme, threadsafe oSchemeHandler** _p
 // information from a URI than opening the resource for reading. If a buffer is 
 // specified and the function returns true, _pResolvedURIParts will be the parts 
 // of the URI after search path evaluation.
-oAPI bool oStreamGetDesc(const char* _URIReference, oSTREAM_DESC* _pDesc, oURIParts* _pResolvedURIParts = nullptr);
+bool oStreamGetDesc(const char* _URIReference, oSTREAM_DESC* _pDesc, oURIParts* _pResolvedURIParts = nullptr);
 
 // Convenience when client code just wants to test if the resource is present
 inline bool oStreamExists(const char* _URIReference)
@@ -257,59 +257,59 @@ inline bool oStreamExists(const char* _URIReference)
 
 // Walks through all URIBases and registered scheme handlers to create a 
 // stream for reading.
-oAPI bool oStreamReaderCreate(const char* _URIReference, threadsafe oStreamReader** _ppReader);
+bool oStreamReaderCreate(const char* _URIReference, threadsafe oStreamReader** _ppReader);
 
 // Opens a stream for writing. The full URI must be specified for this - no 
 // use of the search path is done.
-oAPI bool oStreamWriterCreate(const char* _URI, threadsafe oStreamWriter** _ppWriter);
+bool oStreamWriterCreate(const char* _URI, threadsafe oStreamWriter** _ppWriter);
 
 // Opens a stream for writing that does not support DispatchWrite and does not 
 // interact with the underlying async IO management system and thus does not 
 // block any async I/O system's flush operation because as a log file, this 
 // stream is intended to be low-level and open as long as the process is open.
-oAPI bool oStreamLogWriterCreate(const char* _URI, threadsafe oStreamWriter** _ppLogWriter);
+bool oStreamLogWriterCreate(const char* _URI, threadsafe oStreamWriter** _ppLogWriter);
 
 // Creates a monitor that will call the specified _OnEvent whenever something in 
 // the specified URI reference changes.
-oAPI bool oStreamMonitorCreate(const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor);
+bool oStreamMonitorCreate(const oSTREAM_MONITOR_DESC& _Desc, const oSTREAM_ON_EVENT& _OnEvent, threadsafe oStreamMonitor** _ppMonitor);
 
 // Copies the source URI to the destination URI. Currently the source URI must 
 // resolve to the same scheme as the destination URI.
-oAPI bool oStreamCopy(const char* _SourceURIReference, const char* _DestinationURI, bool _Recursive = true);
+bool oStreamCopy(const char* _SourceURIReference, const char* _DestinationURI, bool _Recursive = true);
 
 // Move works on either files or folders. This is the same thing as renaming the 
 // file. Currently the source URI must resolve to the same scheme as the 
 // destination URI.
-oAPI bool oStreamMove(const char* _SourceURIReference, const char* _DestinationURI, bool _OverwriteDestination = false);
+bool oStreamMove(const char* _SourceURIReference, const char* _DestinationURI, bool _OverwriteDestination = false);
 
 // Delete a resource. The full URI must be specified for this - no use of the 
 // search path is done.
-oAPI bool oStreamDelete(const char* _URI);
+bool oStreamDelete(const char* _URI);
 
 // Returns true if the specified URIReference has a late-written timestamp more 
 // recent than the specified reference timestamp.
-oAPI bool oStreamIsNewer(const char* _URIReference, time_t _ReferenceUnixTimestamp);
+bool oStreamIsNewer(const char* _URIReference, time_t _ReferenceUnixTimestamp);
 
 // A single string with a semi-colon-delimited list of search paths to look 
 // into when evaluating a URI reference. The specified string is copied 
 // internally.
-oAPI bool oStreamSetURIBaseSearchPath(const char* _URIBaseSearchPath);
+bool oStreamSetURIBaseSearchPath(const char* _URIBaseSearchPath);
 
 // Fills the destination with a semi-colon-delmited list of URI bases as is 
 // currently set in this object. If none are set, the empty string is copied.
-oAPI char* oStreamGetURIBaseSearchPath(char* _StrDestination, size_t _SizeofStrDestination);
+char* oStreamGetURIBaseSearchPath(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> inline char* oStreamGetURIBaseSearchPath(char (&_StrDestination)[size]) { return oStreamGetURIBaseSearchPath(_StrDestination, size); }
 template<size_t capacity> inline char* oStreamGetURIBaseSearchPath(ouro::fixed_string<char, capacity>& _StrDestination) { return oStreamGetURIBaseSearchPath(_StrDestination, _StrDestination.capacity()); }
 
 // Creates a new oStreamReader interface for a subset of the specified 
 // oStreamReader.
-oAPI bool oStreamReaderCreateWindowed(threadsafe oStreamReader* _pReader, const oSTREAM_RANGE& _Window, threadsafe oStreamReader** _ppWindowedReader);
+bool oStreamReaderCreateWindowed(threadsafe oStreamReader* _pReader, const oSTREAM_RANGE& _Window, threadsafe oStreamReader** _ppWindowedReader);
 
 // Returns the type of the contents of the specified stream. This opens the 
 // specified stream and reads a small number of bytes at the start of the file
 // to make its determination. The rules for determining if the stream is an 
 // ascii stream are the same as Perl -T.
 // http://code.activestate.com/recipes/173220-test-if-a-file-or-string-is-text-or-binary/
-oAPI ouro::utf_type::value oStreamGetUTFType(const char* _URIReference);
+ouro::utf_type::value oStreamGetUTFType(const char* _URIReference);
 
 #endif
