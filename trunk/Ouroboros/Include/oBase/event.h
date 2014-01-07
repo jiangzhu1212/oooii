@@ -34,8 +34,8 @@
 #ifndef oBase_event_h
 #define oBase_event_h
 
-#include <oStd/condition_variable.h>
-#include <oStd/mutex.h>
+#include <condition_variable>
+#include <mutex>
 
 namespace ouro {
 
@@ -71,24 +71,24 @@ public:
 	// Sleep the calling thread until the Set mask matches the one specified, or
 	// absolute the timeout threshold is reached.
 	template <typename Clock, typename Duration>
-	bool wait_until(const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1);
+	bool wait_until(const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1);
 
 	// Sleep the calling thread until any bit in the Set mask is set, or the 
 	// absolute timeout threshold is reached. This returns the mask as it is 
 	// when the wait is unblocked.
 	template <typename Clock, typename Duration>
-	int wait_until_any(const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1);
+	int wait_until_any(const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1);
 
 	// Sleep the calling thread until the Set mask matches the one specified, or
 	// the relative timeout threshold is reached.
 	template <typename Rep, typename Period>
-	bool wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1);
+	bool wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1);
 
 	// Sleep the calling thread until the Set mask matches the one specified, or
 	// the relative timeout threshold is reached. This returns the mask as it is
 	// when the wait is unblocked.
 	template <typename Rep, typename Period>
-	int wait_for_any(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1);
+	int wait_for_any(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1);
 
 	// Poll the state of the event mask and returns true if the masks match 
 	// exactly. Use of this API is discouraged, but is sometimes useful for 
@@ -99,8 +99,8 @@ public:
 	bool is_any_set(int _Mask = 1) const;
 
 private:
-	oStd::mutex M;
-	oStd::condition_variable CV;
+	std::mutex M;
+	std::condition_variable CV;
 	int Set;
 	bool DoAutoReset;
 };
@@ -133,20 +133,20 @@ inline void event::set(int _Mask)
 
 inline void event::reset(int _Mask)
 {
-	oStd::lock_guard<oStd::mutex> lock(M);
+	std::lock_guard<std::mutex> lock(M);
 	Set &=~ _Mask;
 }
 
 inline void event::wait(int _Mask)
 {
-	oStd::unique_lock<oStd::mutex> lock(M);
+	std::unique_lock<std::mutex> lock(M);
 	while (!is_set(_Mask))
 		CV.wait(lock);
 }
 
 inline int event::wait_any(int _Mask)
 {
-	oStd::unique_lock<oStd::mutex> lock(M);
+	std::unique_lock<std::mutex> lock(M);
 	while (!is_any_set(_Mask))
 		CV.wait(lock);
 	return Set;
@@ -154,9 +154,9 @@ inline int event::wait_any(int _Mask)
 
 template <typename Clock, typename Duration>
 inline bool event::wait_until(
-	const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask)
+	const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask)
 {
-	oStd::unique_lock<oStd::mutex> lock(M);
+	std::unique_lock<std::mutex> lock(M);
 	while (!is_set(_Mask))
 		if (ouro::cv_status::timeout == CV.wait_until(lock, _AbsoluteTime))
 			return false;
@@ -165,9 +165,9 @@ inline bool event::wait_until(
 
 template <typename Clock, typename Duration>
 inline int event::wait_until_any(
-	const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask)
+	const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask)
 {
-	oStd::unique_lock<oStd::mutex> lock(M);
+	std::unique_lock<std::mutex> lock(M);
 	while (!is_any_set(_Mask))
 		if (ouro::cv_status::timeout == CV.wait_until(lock, _AbsoluteTime))
 			return 0;
@@ -175,19 +175,19 @@ inline int event::wait_until_any(
 }
 
 template <typename Rep, typename Period>
-inline bool event::wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
+inline bool event::wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
 {
-	oStd::unique_lock<oStd::mutex> lock(M);
+	std::unique_lock<std::mutex> lock(M);
 	while (!is_set(_Mask))
-		if (oStd::cv_status::timeout == CV.wait_for(lock, _RelativeTime))
+		if (std::cv_status::timeout == CV.wait_for(lock, _RelativeTime))
 			return false;
 	return true;
 }
 
 template <typename Rep, typename Period>
-inline int event::wait_for_any(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
+inline int event::wait_for_any(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
 {
-	oStd::unique_lock<oStd::mutex> lock(M);
+	std::unique_lock<std::mutex> lock(M);
 	while (!is_any_set(_Mask))
 		if (ouro::cv_status::timeout == CV.wait_for(lock, _RelativeTime))
 			return 0;

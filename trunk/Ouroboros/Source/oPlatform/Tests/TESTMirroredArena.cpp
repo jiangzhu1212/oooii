@@ -30,6 +30,7 @@
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>
+#include <chrono>
 
 using namespace ouro::page_allocator;
 
@@ -288,7 +289,7 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 		oTRACE("%s: MirroredArenaClient server created", GetName());
 		NotifyReady();
 
-		oTESTB(connectEvent.wait_for(oStd::chrono::milliseconds(2000)), "Timed out waiting for connection");
+		oTESTB(connectEvent.wait_for(std::chrono::milliseconds(2000)), "Timed out waiting for connection");
 
 		std::vector<char> transitBuffer(ARENA_SIZE + 1024);
 
