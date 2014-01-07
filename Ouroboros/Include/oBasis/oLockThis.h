@@ -63,9 +63,9 @@ template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS
 	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, oConcurrency::lock_guard>(_Mutex, _pThis);
 }
 
-template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, oConcurrency::shared_lock> oLockSharedThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)
+template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, ouro::shared_lock> oLockSharedThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)
 {
-	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, oConcurrency::shared_lock>(_Mutex, _pThis);
+	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, ouro::shared_lock>(_Mutex, _pThis);
 }
 
 #define oLockThis(_Mutex) oLockThisAuto(_Mutex, this)

@@ -26,8 +26,6 @@
 #include "oD3D11CommandList.h"
 #include <oStd/for.h>
 #include <oCore/windows/win_util.h>
-
-#include <oBasis/oLockThis.h>
 #include <oGUI/Windows/oWinWindowing.h>
 
 #include "d3d11_util.h"
@@ -314,7 +312,7 @@ bool oD3D11Device::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 
 	else if (_InterfaceID == (const oGUID&)__uuidof(IDXGISwapChain))
 	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(SwapChainMutex);
+		oStd::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(SwapChainMutex));
 		SwapChain->AddRef();
 		*_ppInterface = SwapChain;
 	}
@@ -379,7 +377,8 @@ bool oD3D11Device::CreatePrimaryRenderTarget(ouro::window* _pWindow, ouro::surfa
 
 bool oD3D11Device::CLInsert(oGPUCommandList* _pCommandList) threadsafe
 {
-	auto pThis = oLockThis(CommandListsInsertRemoveMutex);
+	oStd::lock_guard<oStd::mutex> lock(thread_cast<oStd::mutex&>(CommandListsInsertRemoveMutex));
+	oD3D11Device* pThis = thread_cast<oD3D11Device*>(this);
 
 	oGPUCommandList::DESC d;
 	_pCommandList->GetDesc(&d);
@@ -446,24 +445,27 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 
 void oD3D11Device::CLRemove(oGPUCommandList* _pCommandList) threadsafe
 {
-	auto pThis = oLockThis(CommandListsInsertRemoveMutex);
+	oStd::lock_guard<oStd::mutex> lock(thread_cast<oStd::mutex&>(CommandListsInsertRemoveMutex));
+	oD3D11Device* pThis = thread_cast<oD3D11Device*>(this);
 	find_and_erase(pThis->CommandLists, _pCommandList);
 }
 
 void oD3D11Device::CLLockSubmit() threadsafe
 {
-	CommandListsBeginEndMutex.lock_shared();
+	thread_cast<shared_mutex&>(CommandListsBeginEndMutex).lock_shared();
 }
 
 void oD3D11Device::CLUnlockSubmit() threadsafe
 {
-	CommandListsBeginEndMutex.unlock_shared();
+	thread_cast<shared_mutex&>(CommandListsBeginEndMutex).unlock_shared();
 }
 
 void oD3D11Device::DrawCommandLists() threadsafe
 {
-	auto pThis = oLockThis(CommandListsInsertRemoveMutex);
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock2(CommandListsBeginEndMutex);
+	oStd::lock_guard<oStd::mutex> lock(thread_cast<oStd::mutex&>(CommandListsInsertRemoveMutex));
+	oD3D11Device* pThis = thread_cast<oD3D11Device*>(this);
+
+	oStd::lock_guard<shared_mutex> lock2(thread_cast<shared_mutex&>(CommandListsBeginEndMutex));
 
 	oFOR(oGPUCommandList* pGPUCommandList, pThis->CommandLists)
 	{
@@ -478,7 +480,7 @@ void oD3D11Device::DrawCommandLists() threadsafe
 
 void oD3D11Device::RTReleaseSwapChain() threadsafe
 {
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(SwapChainMutex);
+	oStd::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(SwapChainMutex));
 	SwapChain = nullptr;
 }
 
@@ -540,7 +542,7 @@ void oD3D11Device::EndOSFrame()
 
 bool oD3D11Device::IsFullscreenExclusive() const
 {
-	oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(SwapChainMutex);
+	shared_lock<shared_mutex> lock(thread_cast<shared_mutex&>(SwapChainMutex));
 	if (!SwapChain)
 		return false;
 
@@ -551,7 +553,7 @@ bool oD3D11Device::IsFullscreenExclusive() const
 
 bool oD3D11Device::SetFullscreenExclusive(bool _Fullscreen)
 {
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(SwapChainMutex);
+	oStd::lock_guard<shared_mutex> lock(SwapChainMutex);
 	if (!SwapChain)
 		return oErrorSetLast(std::errc::protocol_error, "no primary render target has been created");
 
@@ -574,7 +576,7 @@ bool oD3D11Device::SetFullscreenExclusive(bool _Fullscreen)
 
 bool oD3D11Device::Present(int _SyncInterval)
 {
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(SwapChainMutex);
+	oStd::lock_guard<shared_mutex> lock(SwapChainMutex);
 
 	if (!SwapChain)
 		return oErrorSetLast(std::errc::operation_not_permitted, "Present() must only be called on the primary render target");

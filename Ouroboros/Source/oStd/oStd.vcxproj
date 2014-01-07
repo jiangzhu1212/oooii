@@ -29,6 +29,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="shared_mutex.cpp" />
     <ClCompile Include="thread.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -41,6 +42,7 @@
     <ClInclude Include="..\..\Include\oStd\make_unique.h" />
     <ClInclude Include="..\..\Include\oStd\mutex.h" />
     <ClInclude Include="..\..\Include\oStd\ratio.h" />
+    <ClInclude Include="..\..\Include\oStd\shared_mutex.h" />
     <ClInclude Include="..\..\Include\oStd\thread.h" />
     <ClInclude Include="crt_assert.h" />
     <ClInclude Include="pch.h" />

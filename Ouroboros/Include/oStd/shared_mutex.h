@@ -22,21 +22,59 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
+// Approximation of the proposed C++17 shared_mutex interface.
+
 #pragma once
-#ifndef oStd_all_h
-#define oStd_all_h
-#include <oStd/atomic.h>
-#include <oStd/callable.h>
-#include <oStd/chrono.h>
-#include <oStd/condition_variable.h>
-#include <oStd/for.h>
-#include <oStd/future.h>
-#include <oStd/intrinsics.h>
-#include <oStd/make_unique.h>
+#ifndef oStd_shared_mutex_h
+#define oStd_shared_mutex_h
+
 #include <oStd/mutex.h>
-#include <oStd/ratio.h>
-#include <oStd/shared_mutex.h>
 #include <oStd/thread.h>
+
+namespace ouro {
+
+	class shared_mutex
+	{
+		#if defined(_WIN32) || defined(_WIN64)
+			void* Footprint;
+		#else
+			#error Unsupported platform (oSHARED_MUTEX_FOOTPRINT)
+		#endif
+		#ifdef _DEBUG
+			oStd::thread::id ThreadID;
+		#endif
+		shared_mutex(const shared_mutex&); /* = delete */
+		shared_mutex& operator=(const shared_mutex&); /* = delete */
+	public:
+		shared_mutex();
+		~shared_mutex();
+
+		// Exclusive
+		void lock();
+		bool try_lock();
+		void unlock();
+
+		// Shared
+		void lock_shared();
+		bool try_lock_shared();
+		void unlock_shared();
+
+		typedef void* native_handle_type;
+		native_handle_type native_handle();
+	};
+
+	template<class Mutex> class shared_lock
+	{
+		Mutex& m;
+		shared_lock(const shared_lock&); /* = delete */
+		shared_lock& operator=(const shared_lock&); /* = delete */
+	public:
+		typedef Mutex mutex_type;
+		explicit shared_lock(mutex_type& _Mutex) : m(_Mutex) { m.lock_shared(); }
+		shared_lock(mutex_type& _Mutex, oStd::adopt_lock_t) : m(_Mutex) {}
+		~shared_lock() { m.unlock_shared(); }
+	};
+
+} // namespace ouro
+
 #endif
