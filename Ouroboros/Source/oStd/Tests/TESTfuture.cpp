@@ -176,6 +176,7 @@ void TESTfuture(ouro::test_services& _Services)
 
 		oCHECK(ThisShouldFail == false, "Error reporting failed");
 		oTRACE("Testing graceful failure - done.");
+	}
 
 	test_workstealing(_Services);
 };
