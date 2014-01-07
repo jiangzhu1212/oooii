@@ -205,7 +205,7 @@ struct PLATFORM_oSocketAsync : public oTest
 
 		oTESTB(oSocketServer2Create("TestTCPServerASYNC", ServerDesc, &Server), oErrorGetLastString());
 
-		oTESTB(connectEvent.wait_for(oStd::chrono::milliseconds(2000)), "Timed out waiting for connection");
+		oTESTB(connectEvent.wait_for(std::chrono::milliseconds(2000)), "Timed out waiting for connection");
 
 		oSocket::ASYNC_SETTINGS Settings;
 		Settings.Callback = Receiver;
@@ -217,11 +217,11 @@ struct PLATFORM_oSocketAsync : public oTest
 		Socket->GetDesc(&Desc);
 		Receiver->InitiateReceive(Socket);
 
-		oTESTB(Receiver->MessageArrived.wait_for(oStd::chrono::milliseconds(TESTSocketTCPTimeout)), "Failed to recieve TCP message from client");
+		oTESTB(Receiver->MessageArrived.wait_for(std::chrono::milliseconds(TESTSocketTCPTimeout)), "Failed to recieve TCP message from client");
 		oTESTB(0 == _stricmp(Receiver->Results, TESTSocketTCP0), "Failed to retrieve TCP message");
 		Receiver->MessageArrived.reset();
 		Socket->Send(TESTSocketTCP1, oCOUNTOF(TESTSocketTCP1));
-		oTESTB(Receiver->MessageArrived.wait_for(oStd::chrono::milliseconds(TESTSocketTCPTimeout)), "Failed to send TCP message to client");
+		oTESTB(Receiver->MessageArrived.wait_for(std::chrono::milliseconds(TESTSocketTCPTimeout)), "Failed to send TCP message to client");
 
 		Server = nullptr; //make sure this goes away first, he references some locals in callback lambdas.
 

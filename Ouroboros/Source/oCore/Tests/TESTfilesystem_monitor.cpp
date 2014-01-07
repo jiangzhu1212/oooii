@@ -126,7 +126,7 @@ void TESTfilesystem_monitor()
 
 	filesystem::copy_file(TestFile, ZeroFile, filesystem::copy_option::overwrite_if_exists);
 
-	static const oStd::chrono::milliseconds kTimeout(fsmi.accessibility_poll_rate_ms * 3);
+	static const std::chrono::milliseconds kTimeout(fsmi.accessibility_poll_rate_ms * 3);
 
 	oCHECK(Events->FileAdded.wait_for(kTimeout), "timed out waiting for the added event");
 	oCHECK(Events->FileModified.wait_for(kTimeout), "timed out waiting for the modified event");

@@ -73,7 +73,7 @@ struct PLATFORM_oSocketBlockingServer : public oSpecialTest
 
 		NotifyReady();
 		
-		oTESTB(connectEvent.wait_for(oStd::chrono::milliseconds(2000)), "Timed out waiting for connection");
+		oTESTB(connectEvent.wait_for(std::chrono::milliseconds(2000)), "Timed out waiting for connection");
 
 		const char* s = "Server acknowledges your connection, waiting to receive data.";
 

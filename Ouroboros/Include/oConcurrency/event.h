@@ -46,16 +46,16 @@ public:
 	int wait_any(int _Mask = 1) const threadsafe { return E().wait_any(_Mask); }
 	
 	template<typename Clock, typename Duration>
-	bool wait_until(const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1) const threadsafe { return E().wait_until(_AbsoluteTime, _Mask); }
+	bool wait_until(const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1) const threadsafe { return E().wait_until(_AbsoluteTime, _Mask); }
 
 	template<typename Clock, typename Duration>
-	int wait_until_any(const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1) const threadsafe { return E().wait_until_any(_AbsoluteTime, _Mask); }
+	int wait_until_any(const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1) const threadsafe { return E().wait_until_any(_AbsoluteTime, _Mask); }
 
 	template<typename Rep, typename Period>
-	bool wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1) const threadsafe { return E().wait_for(_RelativeTime, _Mask); }
+	bool wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1) const threadsafe { return E().wait_for(_RelativeTime, _Mask); }
 
 	template<typename Rep, typename Period>
-	int wait_for_any(const oStd::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1) const threadsafe { return E().wait_for_any(_RelativeTime, _Mask); }
+	int wait_for_any(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1) const threadsafe { return E().wait_for_any(_RelativeTime, _Mask); }
 
 	bool is_set(int _Mask = 1) const threadsafe { return E().is_set(_Mask); }
 	bool is_any_set(int _Mask = 1) const threadsafe { return E().is_any_set(_Mask); }
