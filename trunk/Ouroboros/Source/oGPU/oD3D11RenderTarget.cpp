@@ -25,15 +25,14 @@
 #include "oD3D11RenderTarget.h"
 #include "oD3D11Device.h"
 #include "oD3D11Texture.h"
-#include <oBasis/oLockThis.h>
 #include <oSurface/surface.h>
 #include "dxgi_util.h"
 #include <oGUI/Windows/oWinWindowing.h>
 
 using namespace ouro;
-using namespace ouro::d3d11;
+using namespace d3d11;
 
-bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
+bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
 {
 	oGPU_CREATE_CHECK_NAME();
 	if (!_pSwapChain)
@@ -52,9 +51,9 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	
 	for (uint i = 0; i < oCOUNTOF(Desc.format); i++)
 	{
-		if (ouro::surface::is_yuv(Desc.format[i]))
+		if (surface::is_yuv(Desc.format[i]))
 		{
-			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", ouro::as_string(Desc.format[i]));
+			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", as_string(Desc.format[i]));
 			return;
 		}
 	}
@@ -65,7 +64,7 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
 	*_pSuccess = true;
 }
 
-oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, const char* _Name, bool* _pSuccess)
+oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat, const char* _Name, bool* _pSuccess)
 	: oGPUDeviceChildMixin(_pDevice, _Name)
 	, SwapChain(_pSwapChain)
 {
@@ -114,7 +113,9 @@ bool oD3D11RenderTarget::QueryInterface(const oGUID& _InterfaceID, threadsafe vo
 
 void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 {
-	auto pThis = oLockSharedThis(DescMutex);
+	shared_lock<shared_mutex> lock(thread_cast<shared_mutex&>(DescMutex));
+	oD3D11RenderTarget* pThis = thread_cast<oD3D11RenderTarget*>(this);
+
 	*_pDesc = pThis->Desc;
 
 	if (SwapChain)
@@ -132,13 +133,16 @@ void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 		}
 
 		else
-			_pDesc->depth_stencil_format = ouro::surface::unknown;
+			_pDesc->depth_stencil_format = surface::unknown;
 	}
 }
 
-void oD3D11RenderTarget::SetClearDesc(const ouro::gpu::clear_info& _ClearInfo) threadsafe
+void oD3D11RenderTarget::SetClearDesc(const gpu::clear_info& _ClearInfo) threadsafe
 {
-	oLockThis(DescMutex)->Desc.clear = _ClearInfo;
+	oStd::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(DescMutex));
+	oD3D11RenderTarget* pThis = thread_cast<oD3D11RenderTarget*>(this);
+
+	pThis->Desc.clear = _ClearInfo;
 }
 
 void oD3D11RenderTarget::ClearResources()
@@ -175,7 +179,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 
 void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 {
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(DescMutex);
+	oStd::lock_guard<shared_mutex> lock(DescMutex);
 
 	int3 New = _NewDimensions;
 	if (SwapChain)
@@ -210,7 +214,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 				make_rtv(GetName(), SwapChainTexture, RTVs[0]);
 				Desc.array_size = 1;
 				Desc.mrt_count = 1;
-				Desc.type = ouro::gpu::texture_type::render_target_2d;
+				Desc.type = gpu::texture_type::render_target_2d;
 			}
 
 			else
@@ -251,7 +255,7 @@ void oD3D11RenderTarget::GetDepthTexture(oGPUTexture** _ppTexture)
 	*_ppTexture = DepthStencilTexture;
 }
 
-std::shared_ptr<ouro::surface::buffer> oD3D11RenderTarget::CreateSnapshot(int _MRTIndex)
+std::shared_ptr<surface::buffer> oD3D11RenderTarget::CreateSnapshot(int _MRTIndex)
 {
 	if (!Textures[_MRTIndex])		
 		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");

@@ -19,6 +19,9 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="shared_mutex.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oStd\atomic.h">
@@ -56,6 +59,9 @@
     </ClInclude>
     <ClInclude Include="crt_assert.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oStd\shared_mutex.h">
+      <Filter>oStd</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

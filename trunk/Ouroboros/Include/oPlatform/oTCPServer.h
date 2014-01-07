@@ -76,7 +76,7 @@ private:
 		std::set<const ouro::intrusive_ptr<threadsafe oSocket>> socketsToRemove;
 
 		{
-			oStd::lock_guard<oStd::shared_mutex> lock(ConnectedSocketsMutex);
+			oStd::lock_guard<ouro::shared_mutex> lock(ConnectedSocketsMutex);
 			ConnectedSockets.push_back(_Socket);
 		}
 
@@ -84,7 +84,7 @@ private:
 		// second time with a write lock. Hopefully that second time doesn't happen 
 		// often.
 		{
-			oStd::shared_lock<oStd::shared_mutex> lock(ConnectedSocketsMutex);
+			ouro::shared_lock<ouro::shared_mutex> lock(ConnectedSocketsMutex);
 			oFOR(const auto& _socket, ConnectedSockets)
 			{
 				oSocket::DESC desc;
@@ -113,7 +113,7 @@ private:
 
 	oInitOnce<DescT> Desc;
 	ouro::intrusive_ptr<threadsafe oSocketServer2> SocketServer;
-	oStd::shared_mutex ConnectedSocketsMutex;
+	ouro::shared_mutex ConnectedSocketsMutex;
 	std::vector<ouro::intrusive_ptr<threadsafe oSocket>> ConnectedSockets;
 };
 

@@ -52,7 +52,7 @@ public:
 		ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 	}
 
-	void Call(const ouro::input::action& _Action) threadsafe
+	void Call(const input::action& _Action) threadsafe
 	{
 		oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
 		oFOR(const auto& h, oThreadsafe(Hooks))
@@ -61,7 +61,7 @@ public:
 
 private:
 	oConcurrency::shared_mutex Mutex;
-	std::vector<ouro::input::action_hook> Hooks;
+	std::vector<input::action_hook> Hooks;
 };
 
 class oInput
@@ -77,18 +77,18 @@ public:
 	{
 		StateValidMask = State = 0;
 		oFOR(auto& k, Keys)
-			k.fill(ouro::input::none);
+			k.fill(input::none);
 	}
 
 	// Returns true if InputIsDown should be respected. Several keys can make up
 	// an input result, so it could take several key events to get the state of 
 	// the input. It can either be down or up based on the value of InputIsDown.
-	bool OnKey(ouro::input::key _Key, bool _IsDown, bool* _pInputIsDown);
+	bool OnKey(input::key _Key, bool _IsDown, bool* _pInputIsDown);
 
 private:
 	// Up to 4 keys can be pressed at the same time to trigger a Input.
 	// Up to 7 different combinations can trigger a Input.
-	std::array<std::array<ouro::input::key, 4>, 4> Keys;
+	std::array<std::array<input::key, 4>, 4> Keys;
 	short StateValidMask;
 	short State;
 
@@ -125,9 +125,9 @@ void oInput::Parse(const char* _InputMapping)
 				if (KeyIndex >= as_int(Keys[KeySetIndex].size()))
 					oTHROW(no_buffer_space, "Only up to %u simultaneous keys supported", Keys[KeySetIndex].size());
 
-				ouro::input::key Key = ouro::input::none;
+				input::key Key = input::none;
 				if (!oRTTI_OF(ouro_input_key).FromString(tok, &Key, sizeof(Key)))
-					oTHROW(protocol_error, "unrecognized ouro::input::key \"%s\"", tok);
+					oTHROW(protocol_error, "unrecognized input::key \"%s\"", tok);
 
 				Keys[KeySetIndex][KeyIndex] = Key;
 
@@ -142,7 +142,7 @@ void oInput::Parse(const char* _InputMapping)
 	}
 }
 
-bool oInput::OnKey(ouro::input::key _Key, bool _IsDown, bool* _pInputIsDown)
+bool oInput::OnKey(input::key _Key, bool _IsDown, bool* _pInputIsDown)
 {
 	const bool WasDown = IsDown();
 	int StateMask = 1;
@@ -150,7 +150,7 @@ bool oInput::OnKey(ouro::input::key _Key, bool _IsDown, bool* _pInputIsDown)
 	{
 		for (int i = 0; i < 4; i++)
 		{
-			if (K[i] != ouro::input::none && K[i] == _Key)
+			if (K[i] != input::none && K[i] == _Key)
 			{
 				if (_IsDown)
 					State |= StateMask;
@@ -206,9 +206,9 @@ private:
 };
 
 oInputSequence::oInputSequence(const xml& _XML, xml::node _hInputSequence, const oRTTI& _IDEnum, bool* _pSuccess)
-	: MinTimeMS(ouro::invalid)
-	, MaxTimeMS(ouro::invalid)
-	, InputID(ouro::invalid)
+	: MinTimeMS(invalid)
+	, MaxTimeMS(invalid)
+	, InputID(invalid)
 {
 	*_pSuccess = false;
 
@@ -289,7 +289,7 @@ oInputSetImpl::oInputSetImpl(const xml& _XML, xml::node _InputSet, const oRTTI& 
 {
 	*_pSuccess = false;
 
-	MaxTimeMS = ouro::invalid;
+	MaxTimeMS = invalid;
 	_XML.find_attr_value(_InputSet, "id", &Name);
 	for (xml::node hChild = _XML.first_child(_InputSet); hChild; hChild = _XML.next_sibling(hChild))
 	{
@@ -302,7 +302,7 @@ oInputSetImpl::oInputSetImpl(const xml& _XML, xml::node _InputSet, const oRTTI& 
 				return;
 			}
 
-			int EnumValue = ouro::invalid;
+			int EnumValue = invalid;
 			if (!_IDEnum.FromString(IDString, &EnumValue, sizeof(int)))
 			{
 				mstring temp;
@@ -375,10 +375,10 @@ class oInputHistory
 {
 public:
 	oInputHistory(size_t _HistorySize = 1500)
-		: Latest(ouro::invalid)
+		: Latest(invalid)
 	{
 		History.resize(_HistorySize);
-		fill(History, oINPUT_LOG(0, ouro::invalid, false));
+		fill(History, oINPUT_LOG(0, invalid, false));
 	}
 
 	void Add(unsigned int _TimestampMS, int _InputID, bool _IsDown)
@@ -403,7 +403,7 @@ public:
 
 		// Keep checking backwards until there's a timeout or no more history.
 		size_t Current = (Latest - 1) % History.size();
-		const unsigned int LastTimestamp = _InputSequence.MaxTimeMS == ouro::invalid ? ouro::invalid : (_TriggerTimeMS - _InputSequence.MaxTimeMS);
+		const unsigned int LastTimestamp = _InputSequence.MaxTimeMS == invalid ? invalid : (_TriggerTimeMS - _InputSequence.MaxTimeMS);
 
 		while (Current != Latest)
 		{
@@ -424,7 +424,7 @@ public:
 	
 	struct oINPUT_LOG
 	{
-		oINPUT_LOG(unsigned int _TimestampMS = 0, int _InputID = ouro::invalid, bool _IsDown = false)
+		oINPUT_LOG(unsigned int _TimestampMS = 0, int _InputID = invalid, bool _IsDown = false)
 			: TimestampMS(_TimestampMS)
 			, InputID(_InputID)
 			, IsDown(_IsDown)
@@ -450,16 +450,16 @@ struct oInputMapperImpl : oInputMapper
 
 	void SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe override;
 
-	int HookActions(const ouro::input::action_hook& _Hook) threadsafe override { return Hooks.Hook(_Hook); }
+	int HookActions(const input::action_hook& _Hook) threadsafe override { return Hooks.Hook(_Hook); }
 	void UnhookActions(int _HookID) threadsafe override { Hooks.Unhook(_HookID); }
 
 	// Call this from the key event handler to record the event.
-	void OnAction(const ouro::input::action& _Action) threadsafe override;
+	void OnAction(const input::action& _Action) threadsafe override;
 	void OnLostCapture() threadsafe override;
 
 	intrusive_ptr<threadsafe oInputSet> InputSet;
 	oInputHistory InputHistory;
-	shared_mutex Mutex;
+	oConcurrency::shared_mutex Mutex;
 	oRefCount RefCount;
 	oActionHookHelper Hooks;
 };
@@ -479,25 +479,25 @@ bool oInputMapperCreate(threadsafe oInputMapper** _ppInputMapper)
 
 void oInputMapperImpl::SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe
 {
-	lock_guard<shared_mutex> lock(Mutex);
+	lock_guard<oConcurrency::shared_mutex> lock(Mutex);
 	InputSet = _pInputSet;
 };
 
-void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
+void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 {
 	switch (_Action.action_type)
 	{
-		case ouro::input::key_down:
-		case ouro::input::key_up:
+		case input::key_down:
+		case input::key_up:
 		{
-			shared_lock<shared_mutex> lock(Mutex);
+			oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
 			if (InputSet)
 			{
 				oInputSetImpl* pInputSet = oThreadsafe(static_cast<threadsafe oInputSetImpl*>(InputSet.c_ptr()));
 				for (int i = 0; i < as_int(pInputSet->Inputs.size()); i++)
 				{
 					bool InputDown = false;
-					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action_type == ouro::input::key_down, &InputDown))
+					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action_type == input::key_down, &InputDown))
 					{
 						// this is not really safe. It is only safe if OnAction is only ever 
 						// called from one thread for one instance, which tends to be the
@@ -507,8 +507,8 @@ void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
 						// another.
 						thread_cast<oInputHistory&>(InputHistory).Add(_Action.timestamp_ms, i, InputDown);
 
-						ouro::input::action a(_Action);
-						a.action_type = ouro::input::control_activated;
+						input::action a(_Action);
+						a.action_type = input::control_activated;
 						a.action_code = i; // at least trigger this input
 						
 						// Check to see if it gets overridden by a sequence
@@ -521,7 +521,7 @@ void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
 							}
 						}
 
-						oTRACE("Input %d %s", a.action_code, (_Action.action_type == ouro::input::key_down) ? "down" : "up");
+						oTRACE("Input %d %s", a.action_code, (_Action.action_type == input::key_down) ? "down" : "up");
 						Hooks.Call(a);
 					}
 				}
@@ -536,7 +536,7 @@ void oInputMapperImpl::OnAction(const ouro::input::action& _Action) threadsafe
 
 void oInputMapperImpl::OnLostCapture() threadsafe
 {
-	shared_lock<shared_mutex> lock(Mutex);
+	oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
 	if (InputSet)
 	{
 		oInputSetImpl* pInputSet = oThreadsafe(static_cast<threadsafe oInputSetImpl*>(InputSet.c_ptr()));

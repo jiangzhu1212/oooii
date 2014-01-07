@@ -32,7 +32,7 @@
 #include <oCore/process.h>
 #include <oBase/backoff.h>
 #include <oBase/moving_average.h>
-#include <oStd/mutex.h>
+#include <oStd/shared_mutex.h>
 #include <oStd/thread.h>
 
 namespace ouro {
@@ -94,7 +94,7 @@ public:
 
 	inline info get_info() const
 	{
-		oStd::shared_lock<oStd::shared_mutex> lock(const_cast<oStd::shared_mutex&>(StatsMutex));
+		shared_lock<shared_mutex> lock(const_cast<shared_mutex&>(StatsMutex));
 		return Stats;
 	}
 
@@ -121,7 +121,7 @@ private:
 			double usage = process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 			float usagef = static_cast<float>(usage);
 			float avg = static_cast<float>(MA.calculate(usage));
-			oStd::lock_guard<oStd::shared_mutex> lock(StatsMutex);
+			oStd::lock_guard<shared_mutex> lock(StatsMutex);
 			Stats.average_usage = avg;
 			Stats.low_usage = __min(Stats.low_usage, usagef);
 			Stats.high_usage = __max(Stats.high_usage, usagef);
@@ -143,7 +143,7 @@ private:
 		}
 	}
 
-	oStd::shared_mutex StatsMutex;
+	shared_mutex StatsMutex;
 	info Stats;
 	unsigned long long PreviousSystemTime;
 	unsigned long long PreviousProcessTime;

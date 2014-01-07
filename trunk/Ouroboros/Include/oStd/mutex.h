@@ -41,9 +41,7 @@
 		#define oRECURSIVE_MUTEX_FOOTPRINT() mutable unsigned int Footprint[6]
 	#endif
 
-	#define oSHARED_MUTEX_FOOTPRINT() void* Footprint
-
-	#define oMUTEX_FOOTPRINT() oSHARED_MUTEX_FOOTPRINT()
+	#define oMUTEX_FOOTPRINT() void* Footprint
 
 	#define oONCEFLAG_FOOTPRINT() void* Footprint
 
@@ -101,32 +99,6 @@ namespace oStd {
 		native_handle_type native_handle();
 	};
 
-	class shared_mutex
-	{
-		oSHARED_MUTEX_FOOTPRINT();
-		#ifdef _DEBUG
-			oStd::thread::id ThreadID;
-		#endif
-		shared_mutex(const shared_mutex&); /* = delete */
-		shared_mutex& operator=(const shared_mutex&); /* = delete */
-	public:
-		shared_mutex();
-		~shared_mutex();
-
-		// Exclusive
-		void lock();
-		bool try_lock();
-		void unlock();
-
-		// Shared
-		void lock_shared();
-		bool try_lock_shared();
-		void unlock_shared();
-
-		typedef void* native_handle_type;
-		native_handle_type native_handle();
-	};
-
 	class timed_mutex
 	{
 		mutex Mutex;
@@ -177,19 +149,6 @@ namespace oStd {
 		explicit lock_guard(mutex_type& _Mutex) : m(_Mutex) { m.lock(); }
 		lock_guard(mutex_type& _Mutex, adopt_lock_t) : m(_Mutex) {}
 		~lock_guard() { m.unlock(); }
-	};
-
-	template<class Mutex> class shared_lock
-	{
-		Mutex& m;
-		shared_lock(const shared_lock&); /* = delete */
-		shared_lock& operator=(const shared_lock&); /* = delete */
-	public:
-		typedef Mutex mutex_type;
-
-		explicit shared_lock(mutex_type& _Mutex) : m(_Mutex) { m.lock_shared(); }
-		shared_lock(mutex_type& _Mutex, adopt_lock_t) : m(_Mutex) {}
-		~shared_lock() { m.unlock_shared(); }
 	};
 
 #define assert_not_owner() \

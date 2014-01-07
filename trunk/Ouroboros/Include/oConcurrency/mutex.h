@@ -30,7 +30,7 @@
 #define oConcurrency_mutex_h
 
 #include <oConcurrency/thread_safe.h>
-#include <oStd/mutex.h>
+#include <oStd/shared_mutex.h>
 
 namespace oConcurrency {
 
@@ -68,8 +68,8 @@ public:
 
 class shared_mutex
 {
-	oStd::shared_mutex M;
-	oStd::shared_mutex& m() const threadsafe { return thread_cast<oStd::shared_mutex&>(M); }
+	ouro::shared_mutex M;
+	ouro::shared_mutex& m() const threadsafe { return thread_cast<ouro::shared_mutex&>(M); }
 	shared_mutex(const shared_mutex&);
 	shared_mutex& operator=(const shared_mutex&);
 public:

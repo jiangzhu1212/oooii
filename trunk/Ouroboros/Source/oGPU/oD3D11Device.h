@@ -30,7 +30,6 @@
 
 #include "oGPUCommon.h"
 #include "d3d11_util.h"
-#include <oConcurrency/mutex.h>
 #include <oCore/windows/win_util.h>
 #include <oGUI/window.h>
 #include <vector>
@@ -155,10 +154,10 @@ struct oD3D11Device : oGPUDevice
 	oRefCount RefCount;
 	uint FrameID;
 
-	oConcurrency::mutex CommandListsInsertRemoveMutex;
-	oConcurrency::shared_mutex CommandListsBeginEndMutex;
-	oConcurrency::shared_mutex FrameMutex;
-	oConcurrency::shared_mutex SwapChainMutex;
+	oStd::mutex CommandListsInsertRemoveMutex;
+	ouro::shared_mutex CommandListsBeginEndMutex;
+	ouro::shared_mutex FrameMutex;
+	ouro::shared_mutex SwapChainMutex;
 	std::vector<oGPUCommandList*> CommandLists; // non-oRefs to avoid circular refs
 
 	bool IsSoftwareEmulation;
