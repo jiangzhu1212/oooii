@@ -48,10 +48,11 @@
 #ifndef oHAS_WORKSTEALING_FUTURE
 
 #include <oStd/callable.h>
-#include <oStd/atomic.h>
 #include <oStd/condition_variable.h>
 #include <oStd/mutex.h>
+#include <atomic>
 #include <cassert>
+#include <chrono>
 #include <exception>
 #include <memory>
 #include <system_error>
@@ -153,7 +154,7 @@ namespace future_detail {
 		{}
 		~oCommitmentState() {}
 
-		void reference() { oStd::atomic_increment(&RefCount); }
+		void reference() { ++RefCount; }
 		// release() must exist only in templated derivations because it must also
 		// be responsible for calling the dtor of the typed value stored in the 
 		// commitment.
@@ -191,7 +192,7 @@ namespace future_detail {
 		}
 
 		template<typename Rep, typename Period>
-		future_status::value wait_for(oStd::chrono::duration<Rep,Period> const& _RelativeTime)
+		future_status::value wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
 			oFUTURE_ASSERT(!work_steals(), "wait_for cannot be called on a work-stealing future");
 			unique_lock<mutex> lock(Mutex);
@@ -256,7 +257,7 @@ namespace future_detail {
 		mutable condition_variable CV;
 		mutable mutex Mutex;
 		STATE State;
-		int RefCount;
+		std::atomic<int> RefCount;
 		std::exception_ptr pException;
 
 		void set_future_attached()
@@ -415,8 +416,7 @@ namespace future_detail {
 
 		void release()
 		{
-			int NewRef = oStd::atomic_decrement(&RefCount);
-			if (NewRef == 0)
+			if (--RefCount == 0)
 			{
 				oFUTURE_THROW(is_ready(), broken_promise);
 				if (has_value() || State.HasValueAtThreadExit)
@@ -486,8 +486,7 @@ namespace future_detail {
 
 		void release()
 		{
-			int NewRef = oStd::atomic_decrement(&RefCount);
-			if (NewRef == 0)
+			if (--RefCount == 0)
 			{
 				oFUTURE_THROW(is_ready(), broken_promise);
 				delete this;
@@ -545,8 +544,7 @@ namespace future_detail {
 
 		void release()
 		{
-			int NewRef = oStd::atomic_decrement(&RefCount);
-			if (NewRef == 0)
+			if (--RefCount == 0)
 			{
 				oFUTURE_THROW(is_ready(), broken_promise);
 				delete this;
@@ -575,14 +573,14 @@ namespace future_detail {
 		inline void wait() { oFUTURE_THROW(valid(), no_state); This()->Commitment->wait(); }
 
 		template<typename Rep, typename Period>
-		future_status::value wait_for(oStd::chrono::duration<Rep,Period> const& _RelativeTime)
+		future_status::value wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
 			oFUTURE_THROW(valid(), no_state); 
 			return This()->Commitment->wait_for(_RelativeTime);
 		}
 
 		template<typename Clock, typename Duration>
-		future_status::value wait_until(oStd::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
+		future_status::value wait_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
 		{
 			oFUTURE_THROW(valid(), no_state); 
 			chrono::high_resolution_clock::duration duration = time_point_cast<chrono::high_resolution_clock::time_point>(_AbsoluteTime) - chrono::high_resolution_clock::now();

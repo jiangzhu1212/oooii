@@ -162,6 +162,8 @@ void TESTfuture(ouro::test_services& _Services)
 
 	// test failure
 	{
+		oTRACE("Testing graceful failure - there should be some std::system_error \"not supported\" that come through.");
+
 		oStd::future<bool> FutureToFail = oStd::async(fail_and_report);
 
 		bool ThisShouldFail = true;
@@ -173,7 +175,7 @@ void TESTfuture(ouro::test_services& _Services)
 		}
 
 		oCHECK(ThisShouldFail == false, "Error reporting failed");
-	}
+		oTRACE("Testing graceful failure - done.");
 
 	test_workstealing(_Services);
 };
