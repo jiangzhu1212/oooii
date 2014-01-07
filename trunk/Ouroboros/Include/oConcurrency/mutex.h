@@ -30,6 +30,7 @@
 #define oConcurrency_mutex_h
 
 #include <oConcurrency/thread_safe.h>
+#include <oStd/mutex.h>
 #include <oStd/shared_mutex.h>
 
 namespace oConcurrency {

@@ -28,8 +28,8 @@
 #ifndef oStd_shared_mutex_h
 #define oStd_shared_mutex_h
 
-#include <oStd/mutex.h>
-#include <oStd/thread.h>
+#include <mutex>
+#include <thread>
 
 namespace ouro {
 
@@ -41,7 +41,7 @@ namespace ouro {
 			#error Unsupported platform (oSHARED_MUTEX_FOOTPRINT)
 		#endif
 		#ifdef _DEBUG
-			oStd::thread::id ThreadID;
+			std::thread::id ThreadID;
 		#endif
 		shared_mutex(const shared_mutex&); /* = delete */
 		shared_mutex& operator=(const shared_mutex&); /* = delete */
@@ -71,7 +71,7 @@ namespace ouro {
 	public:
 		typedef Mutex mutex_type;
 		explicit shared_lock(mutex_type& _Mutex) : m(_Mutex) { m.lock_shared(); }
-		shared_lock(mutex_type& _Mutex, oStd::adopt_lock_t) : m(_Mutex) {}
+		shared_lock(mutex_type& _Mutex, std::adopt_lock_t) : m(_Mutex) {}
 		~shared_lock() { m.unlock_shared(); }
 	};
 
