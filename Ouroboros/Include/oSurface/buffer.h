@@ -29,6 +29,7 @@
 #ifndef oSurface_buffer_h
 #define oSurface_buffer_h
 
+#include <memory>
 #include <oSurface/resize.h>
 
 namespace ouro {
@@ -38,7 +39,7 @@ class buffer
 {
 public:
 	static std::shared_ptr<buffer> make(const info& _Info);
-	static std::shared_ptr<buffer> buffer::make(const info& _Info, void* _pData);
+	static std::shared_ptr<buffer> make(const info& _Info, void* _pData);
 
 	virtual info get_info() const = 0;
 	inline size_t size() const { return total_size(get_info()); }

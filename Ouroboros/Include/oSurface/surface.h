@@ -92,7 +92,6 @@
 #include <oBase/fourcc.h>
 #include <oBase/macros.h>
 #include <oHLSL/oHLSLMath.h>
-#include <oStd/mutex.h>
 #include <functional>
 
 namespace ouro {

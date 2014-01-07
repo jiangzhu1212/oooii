@@ -29,7 +29,7 @@
 	#define oHAS_SLIM_TRY_LOCK
 #endif
 
-using namespace oStd;
+using namespace std;
 
 namespace ouro {
 
