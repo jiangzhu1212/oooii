@@ -27,6 +27,7 @@
 #include <oCore/windows/win_error.h>
 #include <oCore/windows/win_iocp.h>
 #include <oBase/backoff.h>
+#include <atomic>
 
 using namespace oStd;
 
@@ -120,7 +121,7 @@ public:
 	void unwatch_all();
 
 	// API called from class watch
-	void watch_ended() { oStd::atomic_decrement(&NumActiveWatches); }
+	void watch_ended() { NumActiveWatches--; }
 	void on_event(const path& _Path, file_event::value _Event, double _Timestamp);
 
 private:
@@ -133,7 +134,7 @@ private:
 	HANDLE hTimerQueue;
 	HANDLE hTimerQueueTimer;
 	info Info;
-	int NumActiveWatches;
+	std::atomic<int> NumActiveWatches;
 	bool Debug;
 
 	// Some events need further analysis, so here's a container for them
@@ -431,7 +432,7 @@ void monitor_impl::watch(const path& _Path, size_t _BufferSize, bool _Recursive)
 	Watches.push_back(new watcher(this, _Path, _Recursive, _BufferSize));
 	Watches.back()->watch_changes();
 
-	oStd::atomic_increment(&NumActiveWatches);
+	NumActiveWatches++;
 }
 
 void monitor_impl::unwatch(const path& _Path)

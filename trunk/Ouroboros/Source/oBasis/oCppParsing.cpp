@@ -85,18 +85,7 @@ char* oGetStdVectorType(char* _StrDestination, size_t _SizeofStrDestination, con
 	return _StrDestination;
 }
 
-bool oIsStdBindImplementationDetail(const char* _Symbol)
-{
-	static const char* stdbindstrs[] = { "std::tr1::_Pmf", "std::tr1::_Callable_", "std::tr1::_Bind", "std::tr1::_Impl", "std::tr1::_Function", };
-	static size_t stdbindlens[] = { 14, 20, 15, 15, 19, };
-	static_assert(oCOUNTOF(stdbindstrs) == oCOUNTOF(stdbindlens), "");
-	oFORI(i, stdbindstrs)
-		if (!memcmp(_Symbol, stdbindstrs[i], stdbindlens[i]))
-			return true;
-	return false;
-}
-
-static regex reInclude("#[ \\t]*include[ \\t]+(<|\")([^>\"]+)(?:>|\")", std::tr1::regex_constants::optimize); // @tony: ok static (duplication won't affect correctness)
+static regex reInclude("#[ \\t]*include[ \\t]+(<|\")([^>\"]+)(?:>|\")", std::regex_constants::optimize); // @tony: ok static (duplication won't affect correctness)
 
 bool oGetNextInclude(char* _StrDestination, size_t _SizeofStrDestination, const char** _ppContext)
 {

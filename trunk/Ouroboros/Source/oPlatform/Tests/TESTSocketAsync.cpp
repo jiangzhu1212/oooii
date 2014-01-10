@@ -144,8 +144,8 @@ struct PLATFORM_oSocketAsync : public oTest
 			_pSocket->Recv(LockedBuffer->GetData(), as_uint(LockedBuffer->GetSize()));
 		}
 
-		oStd::atomic_uint SendCount;
-		oStd::atomic_uint ReceiveCount;
+		std::atomic<unsigned int> SendCount;
+		std::atomic<unsigned int> ReceiveCount;
 		oRefCount Refcount;
 
 		ouro::intrusive_ptr<oBuffer> ReceiveBuffer;

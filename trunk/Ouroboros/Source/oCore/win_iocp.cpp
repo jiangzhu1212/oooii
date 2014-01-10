@@ -78,7 +78,7 @@ private:
 
 	HANDLE hIoPort;
 	std::vector<oStd::thread> Workers;
-	size_t NumRunningThreads;
+	std::atomic<size_t> NumRunningThreads;
 	size_t NumAssociations;
 
 	concurrent_object_pool<iocp_overlapped> pool;
@@ -95,7 +95,7 @@ unsigned int iocp_threadpool::concurrency()
 void iocp_threadpool::work()
 {
 	debugger::thread_name("iocp worker");
-	atomic_increment(&NumRunningThreads);
+	NumRunningThreads++;
 	while (true)
 	{
 		DWORD nBytes = 0;
@@ -120,7 +120,7 @@ void iocp_threadpool::work()
 				ol->Task(0);
 		}
 	}
-	atomic_decrement(&NumRunningThreads);
+	NumRunningThreads--;
 }
 
 iocp_threadpool& iocp_threadpool::singleton()
@@ -192,7 +192,7 @@ iocp_threadpool& iocp_threadpool::operator=(iocp_threadpool&& _That)
 	{
 		hIoPort = _That.hIoPort; _That.hIoPort = INVALID_HANDLE_VALUE;
 		Workers = std::move(_That.Workers);
-		NumRunningThreads = _That.NumRunningThreads; _That.NumRunningThreads = 0;
+		NumRunningThreads.store(_That.NumRunningThreads); _That.NumRunningThreads = 0;
 		NumAssociations = _That.NumAssociations; _That.NumAssociations = 0;
 		pool = std::move(_That.pool);
 	}
@@ -237,7 +237,7 @@ void iocp_threadpool::join()
 
 OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion)
 {
-	atomic_increment(&NumAssociations);
+	NumAssociations++;
 	iocp_overlapped* ol = pool.allocate();
 	if (ol)
 	{
@@ -252,7 +252,7 @@ OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const std::function<void(
 	}
 
 	else
-		atomic_decrement(&NumAssociations);
+		NumAssociations--;
 
 	return ol;
 }
@@ -262,7 +262,7 @@ void iocp_threadpool::disassociate(OVERLAPPED* _pOverlapped)
 	iocp_overlapped* ol = static_cast<iocp_overlapped*>(_pOverlapped);
 	ol->clear();
 	pool.deallocate(ol);
-	atomic_decrement(&NumAssociations);
+	NumAssociations--;
 }
 
 namespace iocp {

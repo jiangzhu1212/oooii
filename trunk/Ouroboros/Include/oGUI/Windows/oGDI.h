@@ -27,11 +27,11 @@
 #ifndef oGDI_h
 #define oGDI_h
 
-#include <oStd/atomic.h>
 #include <oBase/color.h>
 #include <oGUI/oGUI.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oGUI/Windows/oWinRect.h>
+#include <atomic>
 
 // For functions that take logical height. Point size is like what appears in 
 // most Windows API.
@@ -42,15 +42,16 @@ int oGDIPointToLogicalHeight(HDC _hDC, float _Point);
 int oGDILogicalHeightToPoint(HDC _hDC, int _Height);
 float oGDILogicalHeightToPointF(HDC _hDC, int _Height);
 
+// extra casting is here in case type is std::atomic<some_type>
 #define oDEFINE_GDI_BOOL_CAST_OPERATORS(_Type, _Member) \
-	operator bool() { return !!_Member; } \
-	operator bool() const { return !!_Member; } \
-	operator bool() volatile { return !!_Member; } \
-	operator bool() const volatile { return !!_Member; } \
-	operator _Type() { return _Member; } \
-	operator _Type() const { return _Member; } \
-	operator _Type() volatile { return _Member; } \
-	operator _Type() const volatile { return _Member; }
+	operator bool() { return !!(_Type)_Member; } \
+	operator bool() const { return !!(_Type)_Member; } \
+	operator bool() volatile { return !!(_Type)_Member; } \
+	operator bool() const volatile { return !!(_Type)_Member; } \
+	operator _Type() { return (_Type)_Member; } \
+	operator _Type() const { return (_Type)_Member; } \
+	operator _Type() volatile { return (_Type)_Member; } \
+	operator _Type() const volatile { return (_Type)_Member; }
 
 #define oDEFINE_GDI_MOVE_PTR(_Name) do { _Name = _That._Name; _That._Name = nullptr; } while (false)
 
@@ -310,7 +311,7 @@ public:
 
 template<typename HGDIOBJType> class oGDIScopedObject
 {
-	oStd::atomic<HGDIOBJType> hObject;
+	std::atomic<HGDIOBJType> hObject;
 
 	oGDIScopedObject(const oGDIScopedObject& _That);
 	const oGDIScopedObject& operator=(const oGDIScopedObject& _That);
@@ -319,7 +320,7 @@ public:
 	oGDIScopedObject() : hObject(nullptr) {}
 	oGDIScopedObject(oGDIScopedObject&& _That) { operator=(std::move(_That)); }
 	oGDIScopedObject(HGDIOBJType _hObject) : hObject(_hObject) {}
-	~oGDIScopedObject() { if (hObject) DeleteObject(hObject); }
+	~oGDIScopedObject() { if (hObject.load()) DeleteObject(hObject); }
 	
 	// in the sense that this swaps the internal value and then 
 	// after that's done cleans up the object. This way one thread can assign
@@ -327,8 +328,8 @@ public:
 	// appropriate
 	const oGDIScopedObject& operator=(HGDIOBJType _hObject)
 	{
-		HGDIOBJType hTemp = hObject;
-		hObject.exchange(_hObject);
+		HGDIOBJType hTemp = (HGDIOBJType)hObject;
+		hObject = _hObject;
 		if (hTemp) DeleteObject(hTemp); 
 		return *this;
 	}
@@ -337,8 +338,8 @@ public:
 	{
 		if (this != &_That)
 		{
-			HGDIOBJType hTemp = _That.hObject;
-			_That.hObject.exchange(nullptr);
+			HGDIOBJType hTemp = (HGDIOBJType)_That.hObject;
+			_That.hObject = nullptr;
 			HGDIOBJType hThisTemp = hObject;
 			hObject.exchange(hTemp);
 			if (hThisTemp) DeleteObject(hThisTemp);

@@ -30,9 +30,7 @@
 #include <cstddef> // ptrdiff_t
 #include <type_traits>
 
-// @tony: I don't fully understand all the strong v. weak and memory_order 
-// semantics. I'm sure it has to do with Acq and Rel versions of _Interlocked,
-// but I don't want to look up the mapping right now, so just do something basic.
+#define oATOMIC_FLAG_INIT {0}
 
 namespace oStd {
 
@@ -102,18 +100,16 @@ namespace oStd {
 	template<> inline int atomic_decrement(int* _X) { return (int)_InterlockedDecrement((volatile long*)_X); }
 	template<> inline long atomic_decrement(long* _X) { return _InterlockedDecrement(_X); }
 
-	#ifdef oHAS_64BIT_ATOMICS
-		template<> inline long long atomic_exchange<long long>(volatile long long* _X, long long _Y) { return _InterlockedExchange64(_X, _Y); }
-		template<> inline double atomic_exchange<double>(volatile double* _X, double _Y) { long long L = _InterlockedExchange64((volatile long long*)_X, *(long long*)&_Y); return *(double*)&L; }
-		template<> inline bool atomic_compare_exchange<long long>(volatile long long* _X, long long _New, long long _Old) { return _InterlockedCompareExchange64(_X, _New, _Old) == _Old; }
-		template<> inline bool atomic_compare_exchange<double>(volatile double* _X, double _New, double _Old) { return _InterlockedCompareExchange64((volatile long long*)_X, *(long long*)&_New, *(long long*)&_Old) == *(long long*)&_Old; }
-		template<> inline long long atomic_fetch_add(volatile long long* _X, long long _Y) { return _InterlockedAdd64(_X, _Y); }
-		template<> inline long long atomic_fetch_and(volatile long long* _X, long long _Y) { return _InterlockedAnd64(_X, _Y); }
-		template<> inline long long atomic_increment(volatile long long* _X) { return _InterlockedIncrement64(_X); }
-		template<> inline long long atomic_decrement(long long* _X) { return _InterlockedDecrement64(_X); }
-		template<> inline long long atomic_fetch_or(volatile long long* _X, long long _Y) { return _InterlockedOr64(_X, _Y); }
-		template<> inline long long atomic_fetch_xor(volatile long long* _X, long long _Y) { return _InterlockedXor64(_X, _Y); }
-	#endif
+	template<> inline long long atomic_exchange<long long>(volatile long long* _X, long long _Y) { return _InterlockedExchange64(_X, _Y); }
+	template<> inline double atomic_exchange<double>(volatile double* _X, double _Y) { long long L = _InterlockedExchange64((volatile long long*)_X, *(long long*)&_Y); return *(double*)&L; }
+	template<> inline bool atomic_compare_exchange<long long>(volatile long long* _X, long long _New, long long _Old) { return _InterlockedCompareExchange64(_X, _New, _Old) == _Old; }
+	template<> inline bool atomic_compare_exchange<double>(volatile double* _X, double _New, double _Old) { return _InterlockedCompareExchange64((volatile long long*)_X, *(long long*)&_New, *(long long*)&_Old) == *(long long*)&_Old; }
+	template<> inline long long atomic_fetch_add(volatile long long* _X, long long _Y) { return _InterlockedAdd64(_X, _Y); }
+	template<> inline long long atomic_fetch_and(volatile long long* _X, long long _Y) { return _InterlockedAnd64(_X, _Y); }
+	template<> inline long long atomic_increment(volatile long long* _X) { return _InterlockedIncrement64(_X); }
+	template<> inline long long atomic_decrement(long long* _X) { return _InterlockedDecrement64(_X); }
+	template<> inline long long atomic_fetch_or(volatile long long* _X, long long _Y) { return _InterlockedOr64(_X, _Y); }
+	template<> inline long long atomic_fetch_xor(volatile long long* _X, long long _Y) { return _InterlockedXor64(_X, _Y); }
 
 template<typename T> class atomic_base
 {

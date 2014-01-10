@@ -28,8 +28,7 @@
 #ifndef oConcurrency_tagged_pointer_h
 #define oConcurrency_tagged_pointer_h
 
-#include <oConcurrency/thread_safe.h>
-#include <oStd/atomic.h>
+#include <atomic>
 #include <stdexcept>
 
 namespace oConcurrency {
@@ -79,12 +78,10 @@ public:
 		#endif
 	}
 		
-	tagged_pointer(const threadsafe tagged_pointer& _That) : TagAndPointer(_That.TagAndPointer) {}
-	const tagged_pointer<T>& operator=(const tagged_pointer<T>& _That) { TagAndPointer = _That.TagAndPointer; return *this; }
+	tagged_pointer(const tagged_pointer& _That) : TagAndPointer((uintptr_t)_That.TagAndPointer) {}
+	const tagged_pointer<T>& operator=(const tagged_pointer<T>& _That) { TagAndPointer = (uintptr_t)_That.TagAndPointer; return *this; }
 	bool operator==(const tagged_pointer<T>& _That) const { return TagAndPointer == _That.TagAndPointer; }
-	bool operator==(const threadsafe tagged_pointer<T>& _That) const threadsafe { return TagAndPointer == _That.TagAndPointer; }
 	bool operator!=(const tagged_pointer<T>& _That) const { return TagAndPointer != _That.TagAndPointer; }
-	bool operator!=(const threadsafe tagged_pointer<T>& _That) const threadsafe { return TagAndPointer != _That.TagAndPointer; }
 	size_t tag() const
 	{
 		#ifdef o32BIT
@@ -96,13 +93,14 @@ public:
 	
 	T* ptr() const { return (T*)(TagAndPointer & ~(tag_mask)); }
 	
-	static inline bool CAS(threadsafe tagged_pointer<T>* Destination, const tagged_pointer<T>& New, const tagged_pointer<T>& Old)
+	static inline bool CAS(tagged_pointer<T>* Destination, const tagged_pointer<T>& New, const tagged_pointer<T>& Old)
 	{
-		return oStd::atomic_compare_exchange(&Destination->TagAndPointer, New.TagAndPointer, Old.TagAndPointer);
+		uintptr_t O = Old.TagAndPointer;
+		return Destination->TagAndPointer.compare_exchange_strong(O, New.TagAndPointer);
 	}
 
 private:
-	uintptr_t TagAndPointer;
+	std::atomic<uintptr_t> TagAndPointer;
 };
 
 } // namespace oConcurrency

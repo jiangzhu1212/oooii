@@ -28,13 +28,22 @@
 #define oBase_concurrent_index_allocator_h
 
 #include <oBase/index_allocator_base.h>
-#include <oStd/atomic.h>
+#include <atomic>
 
 namespace ouro {
 
-class concurrent_index_allocator : public index_allocator_base
+struct concurrent_index_allocator_traits
 {
+	typedef std::atomic<unsigned int> index_type;
+
+	static const unsigned int index_mask = 0x00ffffff;
+};
+
+class concurrent_index_allocator : public index_allocator_base<concurrent_index_allocator_traits>
+{
+	static const unsigned int tag_bits = 8;
 	static const unsigned int tag_one = (1u << 31) >> (tag_bits - 1);
+	static const unsigned int tag_mask = ~traits_type::index_mask;
 public:
 	// It is client code's responsibility to free _pArena after this class has
 	// been destroyed.
@@ -62,14 +71,15 @@ inline concurrent_index_allocator::concurrent_index_allocator(void* _pArena, siz
 inline unsigned int concurrent_index_allocator::allocate()
 {
 	unsigned int oldI, newI, allocatedIndex;
+	oldI = Freelist;
 	do
 	{
-		oldI = Freelist;
-		allocatedIndex = oldI & ~tag_mask;
-		if (allocatedIndex == tagged_invalid_index)
+		allocatedIndex = oldI & traits_type::index_mask;
+		if (allocatedIndex == invalid_index)
 			return invalid_index;
 		newI = (static_cast<unsigned int*>(pArena)[allocatedIndex]) | ((oldI + tag_one) & tag_mask);
-	} while (!oStd::atomic_compare_exchange(&Freelist, newI, oldI));
+
+	} while (!Freelist.compare_exchange_strong(oldI, newI));
 
 	return allocatedIndex;
 }
@@ -77,12 +87,12 @@ inline unsigned int concurrent_index_allocator::allocate()
 inline void concurrent_index_allocator::deallocate(unsigned int _Index)
 {
 	unsigned int oldI, newI;
+	oldI = Freelist;
 	do
 	{
-		oldI = Freelist;
 		static_cast<unsigned int*>(pArena)[_Index] = oldI & ~tag_mask;
 		newI = _Index | ((oldI + tag_one) & tag_mask);
-	} while (!oStd::atomic_compare_exchange(&Freelist, newI, oldI));
+	} while (!Freelist.compare_exchange_strong(oldI, newI));
 }
 
 } // namespace ouro

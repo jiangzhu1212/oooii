@@ -48,6 +48,12 @@ namespace oConcurrency {
 // valid reasons for being LIFOs.
 template<typename T> struct is_fifo : std::true_type {};
 
+const std::error_category& container_category();
+/*enum class*/ namespace container_errc { enum value { not_empty }; };
+/*constexpr*/ inline std::error_code make_error_code(container_errc::value _ErrorCode) { return std::error_code(static_cast<int>(_ErrorCode), container_category()); }
+/*constexpr*/ inline std::error_condition make_error_condition(container_errc::value _ErrorCode) { return std::error_condition(static_cast<int>(_ErrorCode), container_category()); }
+class container_error : public std::logic_error { public: container_error(container_errc::value _ErrorCode) : logic_error(container_category().message(_ErrorCode)) {} };
+
 // _____________________________________________________________________________
 // Platform requirements
 

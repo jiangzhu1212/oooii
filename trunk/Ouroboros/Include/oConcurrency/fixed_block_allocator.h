@@ -41,25 +41,25 @@
 
 #include <oStd/callable.h>
 #include <oBase/config.h>
-#include <oConcurrency/thread_safe.h>
+#include <atomic>
 
 // Defines methods for calling ctors and dtors on allocations
 #ifndef oHAS_VARIADIC_TEMPLATES
 	#define oALLOCATOR_CONSTRUCT_N(n) \
 		template<oCALLABLE_CONCAT(oARG_TYPENAMES,n)> \
-		T* construct(oCALLABLE_CONCAT(oARG_DECL,n)) threadsafe \
+		T* construct(oCALLABLE_CONCAT(oARG_DECL,n)) \
 		{ T* p = allocate(); return p \
 			? new (p) T(oCALLABLE_CONCAT(oARG_PASS,n)) \
 			: nullptr; \
 		}
 	#define oALLOCATOR_CONSTRUCT oCALLABLE_PROPAGATE_SKIP0(oALLOCATOR_CONSTRUCT_N) \
-	T* construct() threadsafe \
+	T* construct() \
 	{ T* p = allocate(); return p \
 		? new (p) T() \
 		: nullptr; \
 	}
 	#define oALLOCATOR_DESTROY() \
-		void destroy(T* _Instance) threadsafe \
+		void destroy(T* _Instance) \
 		{	_Instance->T::~T(); \
 			deallocate(_Instance); \
 		}
@@ -96,13 +96,13 @@ public:
 	fixed_block_allocator(size_t _BlockSize, size_t _NumBlocks);
 
 	// Allocate a block. This will return nullptr if there is no available room.
-	void* allocate(size_t _BlockSize) threadsafe;
+	void* allocate(size_t _BlockSize);
 
 	// Mark a block as available
-	void deallocate(size_t _BlockSize, size_t _NumBlocks, void* _Pointer) threadsafe;
+	void deallocate(size_t _BlockSize, size_t _NumBlocks, void* _Pointer);
 
 	// Returns true if the specified pointer was allocated from this allocator.
-	bool valid(size_t _BlockSize, size_t _NumBlocks, void* _Pointer) const threadsafe;
+	bool valid(size_t _BlockSize, size_t _NumBlocks, void* _Pointer) const;
 
 	// Slow! This walks the free list counting how many members there are. This is
 	// designed for out-of-performance-critical code such as garbage collecting to
@@ -117,7 +117,7 @@ private:
 		struct { unsigned int Tag : 8; unsigned int Index : 24; };
 	};
 
-	oCACHE_ALIGNED(tagged_index_t NextAvailable);
+	oCACHE_ALIGNED(std::atomic<unsigned int> NextAvailable);
 
 	fixed_block_allocator(const fixed_block_allocator&); /* = delete */
 	const fixed_block_allocator& operator=(const fixed_block_allocator&); /* = delete */
@@ -136,10 +136,10 @@ public:
 	inline fixed_block_allocator_s(size_t _NumBlocks) : fixed_block_allocator(block_size, _NumBlocks) {}
 	inline static size_t max_num_blocks() { fixed_block_allocator::max_num_blocks(); }
 	inline static size_t calc_required_size(size_t _NumBlocks) { return fixed_block_allocator::calc_required_size(block_size, _NumBlocks); }
-	inline bool valid(size_t _NumBlocks, void* _Pointer) const threadsafe { return fixed_block_allocator::IsValid(block_size, _NumBlocks, _Pointer); }
+	inline bool valid(size_t _NumBlocks, void* _Pointer) const { return fixed_block_allocator::IsValid(block_size, _NumBlocks, _Pointer); }
 	inline size_t count_available() const { return fixed_block_allocator::count_available(block_size); }
-	inline void* allocate() threadsafe { return fixed_block_allocator::allocate(block_size); }
-	inline void deallocate(size_t _NumBlocks, void* _Pointer) threadsafe { return fixed_block_allocator::deallocate(block_size, _NumBlocks, _Pointer); }
+	inline void* allocate() { return fixed_block_allocator::allocate(block_size); }
+	inline void deallocate(size_t _NumBlocks, void* _Pointer) { return fixed_block_allocator::deallocate(block_size, _NumBlocks, _Pointer); }
 };
 
 // Partially-specializes fixed_block_allocator by binding the block size as 
@@ -151,10 +151,10 @@ class fixed_block_allocator_t : public fixed_block_allocator_s<sizeof(T)>
 public:
 	typedef T value_type;
 	inline fixed_block_allocator_t(size_t _NumBlocks) : fixed_block_allocator_s(_NumBlocks) {}
-	inline T* allocate() threadsafe { return static_cast<T*>(fixed_block_allocator_s<sizeof(T)>::allocate()); }
-	inline void deallocate(size_t _NumBlocks, T* _Pointer) threadsafe { fixed_block_allocator_s<sizeof(T)>::deallocate(_NumBlocks, _Pointer); }
+	inline T* allocate() { return static_cast<T*>(fixed_block_allocator_s<sizeof(T)>::allocate()); }
+	inline void deallocate(size_t _NumBlocks, T* _Pointer) { fixed_block_allocator_s<sizeof(T)>::deallocate(_NumBlocks, _Pointer); }
 	oALLOCATOR_CONSTRUCT();
-	void destroy(size_t _NumBlocks, T* _Instance) threadsafe
+	void destroy(size_t _NumBlocks, T* _Instance)
 	{
 		_Instance->T::~T();
 		deallocate(_NumBlocks, _Instance);
@@ -168,8 +168,8 @@ class backed_fixed_block_allocator
 {
 public:
 	backed_fixed_block_allocator() : Allocator(Capacity) {}
-	inline T* allocate() threadsafe { return Allocator.allocate(); }
-	inline void deallocate(T* _Pointer) threadsafe { return Allocator.deallocate(Capacity, _Pointer); }
+	inline T* allocate() { return Allocator.allocate(); }
+	inline void deallocate(T* _Pointer) { return Allocator.deallocate(Capacity, _Pointer); }
 	oALLOCATOR_CONSTRUCT();
 	oALLOCATOR_DESTROY();
 private:

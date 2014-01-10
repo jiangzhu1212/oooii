@@ -1297,7 +1297,7 @@ private:
 	intrusive_ptr<SocketServerPool> SocketPool;
 
 	int DesiredAccepts;
-	oStd::atomic_int IssuedAcceptCount; //once this exceeds DesiredAccepts, accepts will begin to get starved out.
+	std::atomic<int> IssuedAcceptCount; //once this exceeds DesiredAccepts, accepts will begin to get starved out.
 	//Once we run out of socket ops, start saving disconnects for later.
 	//	Note that before this happens, accepts will have been starved out by IssuedAcceptCount.
 	//	Disconnects themselves will start the normal accept "loop" back up.

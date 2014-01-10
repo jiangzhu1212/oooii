@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
-#include <oConcurrency/concurrent_queue_base.h>
 #include <oBase/config.h>
 
 namespace oConcurrency {

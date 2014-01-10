@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Similar to Microsoft's InterlockedSList, this provides for a threadsafe 
+// Similar to Microsoft's InterlockedSList, this provides for a 
 // singly linked list whose insertion has the behavior of a stack (LIFO).
 // NOTE: The type T must include a member pointer pNext. All allocation of nodes 
 // is the responsibility of the user because this data structure is often used 
@@ -31,8 +31,6 @@
 #define oConcurrency_concurrent_stack_h
 
 #include <oConcurrency/oConcurrency.h> // for is_fifo
-#include <oConcurrency/concurrent_queue_base.h>
-#include <oConcurrency/thread_safe.h>
 #include <oStd/atomic.h>
 
 namespace oConcurrency {
@@ -56,26 +54,26 @@ public:
 	~concurrent_stack();
 
 	// Push an element onto the stack.
-	void push(pointer _pElement) threadsafe;
+	void push(pointer _pElement);
 
 	// Returns the top of the stack without removing the item from the stack.
-	pointer peek() const threadsafe;
+	pointer peek() const;
 
 	// If there are no elements, this return nullptr.
-	pointer pop() threadsafe;
+	pointer pop();
 
 	// Returns true if no elements are in the stack
-	bool empty() const threadsafe;
+	bool empty() const;
 
 	// Returns the head that is thus a linked list of all items that were in the 
 	// stack, leaving the stack empty.
-	pointer pop_all() threadsafe;
+	pointer pop_all();
 
 	// Returns the number of elements in the stack. This is an instantaneous 
 	// sampling and thus might not be valid by the very next line of code. Client
 	// code should not be reliant on this value and the API is included only for 
 	// debugging and testing purposes.
-	size_type size() const threadsafe;
+	size_type size() const;
 
 private:
 	union header_t
@@ -109,7 +107,7 @@ concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::~concurrent_stack()
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-void concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::push(pointer _pElement) threadsafe
+void concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::push(pointer _pElement)
 {
 	header_t New, Old;
 	do 
@@ -129,7 +127,7 @@ void concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::push(pointer _pElem
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::peek() const threadsafe
+typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::peek() const
 {
 	header_t Old;
 	Old.All = Head.All;
@@ -137,7 +135,7 @@ typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurr
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pop() threadsafe
+typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pop()
 {
 	header_t New, Old;
 	pointer pElement = nullptr;
@@ -155,13 +153,13 @@ typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurr
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-bool concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::empty() const threadsafe
+bool concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::empty() const
 {
 	return !Head.pHead;
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pop_all() threadsafe
+typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pop_all()
 {
 	pointer pElement = nullptr;
 	header_t New, Old;
@@ -178,7 +176,7 @@ typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurr
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::size_type concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::size() const threadsafe
+typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::size_type concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::size() const
 {
 	return Head.Size;
 }

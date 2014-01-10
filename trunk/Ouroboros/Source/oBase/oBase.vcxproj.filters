@@ -196,9 +196,6 @@
     <ClCompile Include="string\argtok.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
-    <ClCompile Include="index_allocator_base.cpp">
-      <Filter>Source\allocator</Filter>
-    </ClCompile>
     <ClCompile Include="tlsf_allocator.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>

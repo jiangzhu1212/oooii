@@ -26,12 +26,12 @@
 #include <oBase/byte.h>
 #include <oBase/finally.h>
 #include <oBase/fixed_string.h>
-#include <oStd/atomic.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <oConcurrency/basic_threadpool.h>
 #include <oConcurrency/threadpool.h>
 #include <oConcurrency/tests/oConcurrencyTests.h>
+#include <atomic>
 
 #include "../../test_services.h"
 
@@ -45,17 +45,17 @@ template<typename ThreadpoolT> void test_basics(ThreadpoolT& t)
 	oCHECK(t.joinable(), "Threadpool is not joinable");
 
 	{
-		volatile int value = -1;
-		t.dispatch([&] { oStd::atomic_increment(&value); });
+		std::atomic<int> value(-1);
+		t.dispatch([&] { value++; });
 		t.flush();
 		oCHECK(value == 0, "Threadpool did not execute a single task correctly.");
 	}
 
 	static const int kNumDispatches = 100;
 	{
-		int value = 0;
+		std::atomic<int> value(0);
 		for (int i = 0; i < kNumDispatches; i++)
-			t.dispatch([&] { oStd::atomic_increment(&value); });
+			t.dispatch([&] { value++; });
 
 		t.flush();
 		oCHECK(value == kNumDispatches, "Threadpool did not dispatch correctly, or failed to properly block on flush");
@@ -66,22 +66,22 @@ template<typename TaskGroupT> static void test_task_group(TaskGroupT& g)
 {
 	static const int kNumRuns = 100;
 	{
-		int value = 0;
+		std::atomic<int> value = 0;
 		for (size_t i = 0; i < kNumRuns; i++)
-			g.run([&] { oStd::atomic_increment(&value); });
+			g.run([&] { value++; });
 
 		g.wait();
-		oStd::atomic_thread_fence_read_write();
+		std::atomic_thread_fence(std::memory_order_seq_cst);
 		oCHECK(value == kNumRuns, "oTaskgroup either failed to run or failed to block on wait (1st run)");
 	}
 
 	{
-		int value = 0;
+		std::atomic<int> value = 0;
 		for (int i = 0; i < kNumRuns; i++)
-			g.run([&] { oStd::atomic_increment(&value); });
+			g.run([&] { value++; });
 
 		g.wait();
-		oStd::atomic_thread_fence_read_write();
+		std::atomic_thread_fence(std::memory_order_seq_cst);
 		oCHECK(value == kNumRuns, "oTaskgroup was not able to be reused or either failed to run or failed to block on wait (2nd run)");
 	}
 }

@@ -45,13 +45,6 @@ size_t oGetLineNumber(const char* _Start, const char* _Line);
 // string that represents the typename held in the vector. Returns dst
 char* oGetStdVectorType(char* _StrDestination, size_t _SizeofStrDestination, const char* _TypeinfoName);
 
-// Returns true if the specified symbol string is a symbol/template 
-// instantiation used inside of std::bind. This is useful for filtering out 
-// symbols such as from a call stack where this boiler-plate detail is more 
-// noise that useful, so the user could instead print out a ... std::bind ...
-// rather than the 8-10 implementation detail function calls.
-bool oIsStdBindImplementationDetail(const char* _Symbol);
-
 // Fills strDestination with the file name of the next found include path
 // context should be the address of the pointer to a string of C++ source
 // code, and it will be updated to point just after the found header. This 

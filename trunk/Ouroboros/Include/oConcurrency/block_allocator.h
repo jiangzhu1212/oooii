@@ -30,7 +30,7 @@
 // do a linear search through a list of those allocators to find one that has
 // memory to allocate; likewise on deallocation. Additionally the size of the 
 // reserve chunks can be dynamically altered using the grow() and shrink() 
-// functions. Be careful! They are not threadsafe and assume the application is
+// functions. Be careful! They are not and assume the application is
 // in a steady state.
 
 #ifndef oConcurrency_block_allocator_h
@@ -38,6 +38,7 @@
 
 #include <oConcurrency/concurrent_stack.h>
 #include <oConcurrency/fixed_block_allocator.h>
+#include <atomic>
 #include <cstdlib>
 
 namespace oConcurrency {
@@ -62,10 +63,10 @@ public:
 	// memory from the underlying platform. Such allocations occur in chunks. The 
 	// memory is not yielded back to the platform automatically. Use shrink() to 
 	// explicitly deallocate chunks.
-	void* allocate() threadsafe;
+	void* allocate();
 
 	// Deallocates a pointer allocated from this allocator.
-	void deallocate(void* _Pointer) threadsafe;
+	void deallocate(void* _Pointer);
 
 	// Re-initializes all chunks to be as if no allocations have occurred. This 
 	// will leave dangling pointers in client code and should be used only when it
@@ -77,7 +78,7 @@ public:
 	// Reserves enough memory to allocate the specified number of elements. 
 	// Allocation occurs in chunks, so this may allocate more memory than is 
 	// needed. This will not release memory, only ensure there is at least enough
-	// to meet the specified needs. This is not threadsafe. Existing allocations
+	// to meet the specified needs. This is not. Existing allocations
 	// will be preserved but this should not be called when other threads might be 
 	// allocating or deallocating memory.
 	void reserve(size_t _NumElements);
@@ -85,7 +86,7 @@ public:
 	// Ensures the specified number of elements can be allocated and will release
 	// all chunks not required to meet the specified needs. Only chunks with zero
 	// outstanding allocations can be freed, so this will quietly skip any such
-	// chunks. This is not threadsafe. Existing allocations will be preserved but
+	// chunks. This is not. Existing allocations will be preserved but
 	// this should not be called when other threads might be allocating or 
 	// deallocating memory.
 	void shrink(size_t _NumElements);
@@ -95,10 +96,10 @@ public:
 
 	// Returns the number of blocks per chunk that was specified at construction
 	// time.
-	size_t num_blocks_per_chunk() const threadsafe { return NumBlocksPerChunk; }
+	size_t num_blocks_per_chunk() const { return NumBlocksPerChunk; }
 
 	// Returns the current number of chunks in use.
-	inline size_t num_chunks() const threadsafe { return Chunks.size(); }
+	inline size_t num_chunks() const { return Chunks.size(); }
 
 	// Returns true if even one allocation is valid, false if all chunks report
 	// full availability. The default behavior of this allocator is to ignore 
@@ -121,16 +122,16 @@ private:
 	struct chunk_t
 	{
 		chunk_t* pNext;
-		// In the runtime case (Alloc/Dealloc) this is a threadsafe-specified access
-		// from threadsafe methods. However to support growable methods, we must 
+		// In the runtime case (Alloc/Dealloc) this is a-specified access
+		// from methods. However to support growable methods, we must 
 		// operate on these sometimes from non-threadsafe methods. So this pointer 
-		// is not enforced as threadsafe, but is ok to use in threadsafe methods 
+		// is not enforced as, but is ok to use in methods 
 		// because of oConcurrentBlockAllocator implementation guarantees.
 		fixed_block_allocator* pAllocator;
 	};
 
-	threadsafe fixed_block_allocator* pLastAlloc;
-	threadsafe fixed_block_allocator* pLastDealloc;
+	std::atomic<fixed_block_allocator*> pLastAlloc;
+	std::atomic<fixed_block_allocator*> pLastDealloc;
 	size_t BlockSize;
 	size_t NumBlocksPerChunk;
 	size_t ChunkSize;
@@ -141,10 +142,10 @@ private:
 
 	// Allocates and initializes a new chunk. Use this when out of currently 
 	// reserved memory.
-	chunk_t* allocate_chunk() threadsafe;
+	chunk_t* allocate_chunk();
 
 	// Maps a pointer back to the chunk allocator it came from
-	threadsafe fixed_block_allocator* find_chunk_allocator(void* _Pointer) const threadsafe;
+	fixed_block_allocator* find_chunk_allocator(void* _Pointer) const;
 
 	block_allocator(const block_allocator&); /* = delete */
 	const block_allocator& operator=(const block_allocator&); /* = delete */
@@ -177,8 +178,8 @@ public:
 		: block_allocator_s(_NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)
 	{}
 
-	T* allocate() threadsafe { return static_cast<T*>(block_allocator::allocate()); }
-	void deallocate(T* _Pointer) threadsafe { block_allocator::deallocate(_Pointer); }
+	T* allocate() { return static_cast<T*>(block_allocator::allocate()); }
+	void deallocate(T* _Pointer) { block_allocator::deallocate(_Pointer); }
 
 	oALLOCATOR_CONSTRUCT();
 	oALLOCATOR_DESTROY();

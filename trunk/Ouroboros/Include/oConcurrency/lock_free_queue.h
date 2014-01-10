@@ -28,38 +28,42 @@
 #ifndef oConcurrency_lock_free_queue_h
 #define oConcurrency_lock_free_queue_h
 
-#include <oConcurrency/concurrent_queue_base.h>
-#include <oConcurrency/thread_safe.h>
-#include <oStd/atomic.h>
+#include <oConcurrency/oConcurrency.h>
+#include <atomic>
 #include <memory>
 
 namespace oConcurrency {
 
 template<typename T, typename Alloc = std::allocator<T>>
-class lock_free_queue : public concurrent_queue_base<T, lock_free_queue<T, Alloc>>
+class lock_free_queue
 {
 	// single reader, single writer queue using memory barriers to guarantee thread safety
 	// (no locks or atomics)
 public:
 	typedef Alloc allocator_type;
-	oDEFINE_CONCURRENT_QUEUE_TYPE(T, size_t);
+	typedef size_t size_type;
+	typedef T value_type;
+	typedef value_type& reference;
+	typedef const value_type& const_reference;
+	typedef value_type* pointer;
+	typedef const value_type* const_pointer;
 
 	lock_free_queue(size_type _Capacity = 10000, const allocator_type& _Allocator = allocator_type());
 	~lock_free_queue();
 
 	// Push an element into the queue.
-	void push(const_reference _Element) threadsafe;
+	void push(const_reference _Element);
 	
 	// Returns false if the queue is empty, otherwise _Element is a valid element
 	// from the head of the queue.
-	bool try_pop(reference _Element) threadsafe;
+	bool try_pop(reference _Element);
 
 	// Returns true if no elements are in the queue
-	bool empty() const threadsafe;
+	bool empty() const;
 	
 	// Returns the number of elements in the queue. Client code should not be 
 	// reliant on this value and the API is included only for debugging and 
-	// testing purposes. It is not threadsafe.
+	// testing purposes. It is not.
 	size_type size() const;
 
 private:
@@ -95,16 +99,16 @@ lock_free_queue<T, Alloc>::~lock_free_queue()
 }
 
 template<typename T, typename Alloc>
-void lock_free_queue<T, Alloc>::push(const_reference _Element) threadsafe
+void lock_free_queue<T, Alloc>::push(const_reference _Element)
 {
 	size_type r = Read;
 	size_type w = Write;
 
 	if (((w+1) % NumElements) != r)
 	{
-		oStd::atomic_thread_fence_read_write();
+		std::atomic_thread_fence(std::memory_order_seq_cst);
 		ElementPool[w++] = _Element;
-		oStd::atomic_thread_fence_read_write();
+		std::atomic_thread_fence(std::memory_order_seq_cst);
 		Write = w % NumElements;
 	}
 
@@ -113,7 +117,7 @@ void lock_free_queue<T, Alloc>::push(const_reference _Element) threadsafe
 }
 
 template<typename T, typename Alloc>
-bool lock_free_queue<T, Alloc>::try_pop(reference _Element) threadsafe
+bool lock_free_queue<T, Alloc>::try_pop(reference _Element)
 {
 	bool popped = false;
 	size_type r = Read;
@@ -121,10 +125,10 @@ bool lock_free_queue<T, Alloc>::try_pop(reference _Element) threadsafe
 
 	if (r != w)
 	{
-		oStd::atomic_thread_fence_read_write();
+		std::atomic_thread_fence(std::memory_order_seq_cst);
 		_Element = ElementPool[r];
 		ElementPool[r++].~value_type();
-		oStd::atomic_thread_fence_read_write();
+		std::atomic_thread_fence(std::memory_order_seq_cst);
 		Read = r % NumElements;
 		popped = true;
 	}
@@ -133,7 +137,7 @@ bool lock_free_queue<T, Alloc>::try_pop(reference _Element) threadsafe
 }
 
 template<typename T, typename Alloc>
-bool lock_free_queue<T, Alloc>::empty() const threadsafe
+bool lock_free_queue<T, Alloc>::empty() const
 {
 	return Read == Write;
 }

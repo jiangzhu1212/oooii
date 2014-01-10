@@ -33,11 +33,12 @@
 #include <oBasis/oInterface.h>
 #include <oBasis/oRefCount.h>
 #include <oBase/type_info.h>
+#include <atomic>
 
 typedef void* (*NewVFn)();
 
-bool oConstructOnceV(void* volatile* _pPointer, NewVFn _New);
-template<typename T> bool oConstructOnce(T* volatile* _pPointer, T* (*_New)() ) { return oConstructOnceV((void* volatile*)_pPointer, (NewVFn)_New); }
+bool oConstructOnceV(std::atomic<void*>* _pPointer, NewVFn _New);
+template<typename T> bool oConstructOnce(std::atomic<T*>* _pPointer, T* (*_New)() ) { return oConstructOnceV((std::atomic<void*>*)_pPointer, (NewVFn)_New); }
 
 // This must be defined in the module where an oSingleton is defined and must be
 // given the class name of the singleton. What this guarantees that if a dynamic 
@@ -91,7 +92,7 @@ public:
 
 	static T* Singleton()
 	{
-		static T* sInstance;
+		static std::atomic<T*> sInstance;
 		if (oConstructOnce(&sInstance, New))
 		{
 			// If the above static were an ouro::ref, it is possible to go through static
@@ -115,7 +116,7 @@ class oThreadlocalSingleton : public oSingletonBaseT<T, true>
 public:
 	static T* Singleton()
 	{
-		thread_local static T* sInstance;
+		thread_local static std::atomic<T*> sInstance;
 		if (oConstructOnce(&sInstance, New))
 		{
 			// We need to add a module singleton reference to this instance

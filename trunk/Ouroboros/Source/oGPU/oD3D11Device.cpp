@@ -512,7 +512,7 @@ bool oD3D11Device::ReadQuery(oGPUQuery* _pQuery, void* _pData, uint _SizeofData)
 bool oD3D11Device::BeginFrame()
 {
 	FrameMutex.lock_shared();
-	oStd::atomic_increment(&FrameID);
+	FrameID++;
 	return true;
 }
 

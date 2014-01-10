@@ -25,7 +25,6 @@
 #include <oConcurrency/fixed_block_allocator.h>
 #include <oBase/byte.h>
 #include <oBase/macros.h>
-#include <oStd/atomic.h>
 #include <oBase/config.h>
 
 using namespace ouro;
@@ -37,15 +36,15 @@ typedef unsigned short index_type;
 static /*constexpr*/ size_t index_mask() { return std::numeric_limits<index_type>::max(); }
 static /*constexpr*/ index_type invalid_index() { return static_cast<index_type>(index_mask()); }
 
-static inline index_type* begin(const threadsafe fixed_block_allocator* _pThis) { return (index_type*)byte_align(_pThis+1, fixed_block_allocator::default_alignment); }
-static inline index_type* at(const threadsafe fixed_block_allocator* _pThis, size_t _BlockSize, size_t _Index) { return byte_add(begin(_pThis), _BlockSize, _Index); }
+static inline index_type* begin(const fixed_block_allocator* _pThis) { return (index_type*)byte_align(_pThis+1, fixed_block_allocator::default_alignment); }
+static inline index_type* at(const fixed_block_allocator* _pThis, size_t _BlockSize, size_t _Index) { return byte_add(begin(_pThis), _BlockSize, _Index); }
 
 size_t fixed_block_allocator::calc_required_size(size_t _BlockSize, size_t _NumBlocks)
 {
 	return (_BlockSize * _NumBlocks) + byte_align(sizeof(fixed_block_allocator), default_alignment);
 }
 
-bool fixed_block_allocator::valid(size_t _BlockSize, size_t _NumBlocks, void* _Pointer) const threadsafe
+bool fixed_block_allocator::valid(size_t _BlockSize, size_t _NumBlocks, void* _Pointer) const
 {
 	const index_type* pBegin = begin(this);
 	ptrdiff_t diff = byte_diff(_Pointer, pBegin);
@@ -57,7 +56,7 @@ fixed_block_allocator::fixed_block_allocator(size_t _BlockSize, size_t _NumBlock
 	// Point to the first block and then in each block of uninit'ed memory store
 	// an index to the next free block, like a linked list. At init time, this
 	// means store an index to the very next block.
-	NextAvailable.All = 0;
+	NextAvailable = 0;
 	if (_BlockSize < sizeof(index_type))
 		throw std::invalid_argument("block size too small, must be at least " oSTRINGIZE(INDEX_TYPE_SIZE) " bytes");
 
@@ -71,43 +70,46 @@ fixed_block_allocator::fixed_block_allocator(size_t _BlockSize, size_t _NumBlock
 	*at(this, _BlockSize, i) = invalid_index();
 }
 
-void* fixed_block_allocator::allocate(size_t _BlockSize) threadsafe
+void* fixed_block_allocator::allocate(size_t _BlockSize)
 {
 	index_type* pFreeIndex = nullptr;
 	tagged_index_t New, Old;
+	Old.All = NextAvailable;
 	do
 	{
-		Old.All = NextAvailable.All;
 		if (Old.Index == invalid_index())
 			return nullptr;
 		pFreeIndex = at(this, _BlockSize, Old.Index);
 		New.Index = *pFreeIndex;
 		New.Tag = Old.Tag + 1;
-	} while (!oStd::atomic_compare_exchange(&NextAvailable.All, New.All, Old.All));
+	} while (!NextAvailable.compare_exchange_strong(Old.All, New.All));
+
 	*pFreeIndex = static_cast<index_type>(Old.All); // it can be useful to have this for index allocators, so assign the index of this newly allocated pointer
 	//oTRACE("alloc %p index %u (then %u)", pFreeIndex, Old.Index, New.Index);
 	return reinterpret_cast<void*>(pFreeIndex);
 }
 
-void fixed_block_allocator::deallocate(size_t _BlockSize, size_t _NumBlocks, void* _Pointer) threadsafe
+void fixed_block_allocator::deallocate(size_t _BlockSize, size_t _NumBlocks, void* _Pointer)
 {
 	if (!valid(_BlockSize, _NumBlocks, _Pointer))
 		throw std::out_of_range("the specified pointer was not allocated from this allocator");
 	tagged_index_t New, Old;
+	Old.All = NextAvailable;
 	do
 	{
-		Old.All = NextAvailable.All;
 		*reinterpret_cast<index_type*>(_Pointer) = static_cast<index_type>(Old.Index & index_mask());
 		New.Index = index_of(_Pointer, begin(this), _BlockSize);
 		New.Tag = Old.Tag + 1;
-	} while (!oStd::atomic_compare_exchange(&NextAvailable.All, New.All, Old.All));
+	} while (!NextAvailable.compare_exchange_strong(Old.All, New.All));
 	//oTRACE("dealloc %p index %u (then %u)", _Pointer, New.Index, *reinterpret_cast<index_type*>(_Pointer));
 }
 
 size_t fixed_block_allocator::count_available(size_t _BlockSize) const
 {
 	size_t n = 0;
-	index_type i = static_cast<index_type>(NextAvailable.Index);
+	tagged_index_t Next;
+	Next.All = NextAvailable;
+	index_type i = static_cast<index_type>(Next.Index);
 	while (i != invalid_index())
 	{
 		n++;

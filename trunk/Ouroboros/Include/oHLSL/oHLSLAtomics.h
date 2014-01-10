@@ -22,9 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This header is designed to cross-compile in both C++ and HLSL. This defines
-// for C++ HLSL-specified versions of atomic/interlocked operators.
-// 
+// This header is designed to cross-compile in both C++ and HLSL. This 
+// defines for C++ HLSL-specified versions of atomic/interlocked operators.
 #ifndef oHLSL
 	#pragma once
 #endif

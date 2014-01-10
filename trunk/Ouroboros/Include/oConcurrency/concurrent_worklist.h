@@ -24,7 +24,7 @@
  **************************************************************************/
 // A thread-safe queue-like structure that uses a mutex to ensure concurrency 
 // but aggressively tries to avoid the lock. It also uses LIFO behavior for 
-// threadsafe try_pop to take take advantage of cache locality, while using
+// try_pop to take take advantage of cache locality, while using
 // FIFO when stealing. This has been benchmarked up to 3x faster than MS-queue
 // (oConcurrency::concurrent_queue) even in the non-try_pop_local usage case, but since the 
 // non-specialized API is not FIFO, this is not called a queue.
@@ -32,14 +32,14 @@
 #ifndef oConcurrency_concurrent_worklist_h
 #define oConcurrency_concurrent_worklist_h
 
-#include <oConcurrency/concurrent_queue_base.h>
 #include <oConcurrency/mutex.h>
+#include <atomic>
 #include <memory>
 
 namespace oConcurrency {
 
 template<typename T, typename Alloc = std::allocator<T>>
-class concurrent_worklist : public concurrent_queue_base<T, concurrent_worklist<T, Alloc>>
+class concurrent_worklist
 {
 	/** <citation
 		usage="Paper" 
@@ -51,9 +51,14 @@ class concurrent_worklist : public concurrent_queue_base<T, concurrent_worklist<
 
 public:
 	typedef Alloc allocator_type;
-	oDEFINE_CONCURRENT_QUEUE_TYPE(T, unsigned int);
+	typedef unsigned int size_type;
+	typedef T value_type;
+	typedef value_type& reference;
+	typedef const value_type& const_reference;
+	typedef value_type* pointer;
+	typedef const value_type* const_pointer;
 
-	// This implementation auto-grows capacity in a threadsafe manner if the 
+	// This implementation auto-grows capacity in a manner if the 
 	// initial capacity is inadequate. Capacity must always be a power of two.
 	concurrent_worklist(const allocator_type& _Allocator = allocator_type());
 	~concurrent_worklist();
@@ -68,15 +73,21 @@ public:
 	// of a thread pool and then only as the thread-local queue.
 
 	// Push an element into the queue.
-	void push(const_reference _Element) threadsafe;
-	void push(value_type&& _Element) threadsafe;
+	void push(const_reference _Element);
+	void push(value_type&& _Element);
 
 	// Returns false if the queue is empty. This is a LIFO operation, the most
 	// recently pushed element will be returned.
-	bool try_pop(reference _Element) threadsafe;
+	bool try_pop(reference _Element);
+
+	// Spins until an element can be popped from the queue
+	void pop(reference _Element);
+
+	// Spins until the queue is empty
+	void clear();
 
 	// Returns true if no elements are in the queue
-	bool empty() const threadsafe;
+	bool empty() const;
 
 	// Returns the number of elements in the queue. This is an instantaneous 
 	// sampling and thus might not be valid by the very next line of code. Client
@@ -87,7 +98,7 @@ public:
 	// _____________________________________________________________________________
 	// Efficient/thread-local API. The goal of these is to try to avoid locks, but
 	// is only valid if all called from the same thread, thus the APIs are not 
-	// marked threadsafe. Do not mix the standard API with this local API without
+	// marked. Do not mix the standard API with this local API without
 	// external synchronization.
 
 	// This can only be called from the same thread as the one calling 
@@ -108,23 +119,23 @@ public:
 	// _____________________________________________________________________________
 	// Extended API - this is the specialized solution for an optimized thread 
 	// pool: this is FIFO while try_pop_local (and try_pop) is LIFO. This is able
-	// to interact in any push/pop behavior and thus is marked threadsafe.
+	// to interact in any push/pop behavior and thus is marked.
 
 	// Returns false if the queue is empty. This is a FIFO operation, the first
 	// element to be pushed will be stolen through this call.
-	bool try_steal(reference _Element) threadsafe;
+	bool try_steal(reference _Element);
 
 	// Returns false if the queue is empty. This is a FIFO operation, the first
 	// element to be pushed will be stolen through this call.
 	template<typename Rep, typename Period>
 	bool try_steal_for(reference _Element
-		, const oStd::chrono::duration<Rep, Period>& _TimeoutDuration) threadsafe;
+		, const oStd::chrono::duration<Rep, Period>& _TimeoutDuration);
 
 private:
 	pointer pCircularBuffer;
 	size_type Mask;
-	volatile size_type Head;
-	volatile size_type Tail;
+	std::atomic<size_type> Head;
+	std::atomic<size_type> Tail;
 	oConcurrency::timed_mutex Mutex;
 	Alloc Allocator;
 
@@ -136,7 +147,7 @@ private:
 	void internal_push_safe(const_reference _Element, size_type _Tail);
 	void internal_push_safe(value_type&& _Element, size_type _Tail);
 	bool try_pop_internal(reference _Element, size_type _Tail);
-	bool try_steal_internal(reference _Element, bool _TryLockResult) threadsafe;
+	bool try_steal_internal(reference _Element, bool _TryLockResult);
 
 	void destroy_buffer();
 };
@@ -229,7 +240,7 @@ void concurrent_worklist<T, Alloc>::internal_push_safe(value_type&& _Element, si
 }
 
 template<typename T, typename Alloc>
-void concurrent_worklist<T, Alloc>::push(const_reference _Element) threadsafe
+void concurrent_worklist<T, Alloc>::push(const_reference _Element)
 {
 	oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
 	size_type t = Tail;
@@ -237,7 +248,7 @@ void concurrent_worklist<T, Alloc>::push(const_reference _Element) threadsafe
 }
 
 template<typename T, typename Alloc>
-void concurrent_worklist<T, Alloc>::push(value_type&& _Element) threadsafe
+void concurrent_worklist<T, Alloc>::push(value_type&& _Element)
 {
 	oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
 	size_type t = Tail;
@@ -284,7 +295,7 @@ bool concurrent_worklist<T, Alloc>::try_pop_internal(reference _Element, size_ty
 }
 
 template<typename T, typename Alloc>
-bool concurrent_worklist<T, Alloc>::try_pop(reference _Element) threadsafe
+bool concurrent_worklist<T, Alloc>::try_pop(reference _Element)
 {
 	oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
 	if (Head >= Tail)
@@ -300,7 +311,7 @@ bool concurrent_worklist<T, Alloc>::try_pop_local(reference _Element)
 		return false;
 
 	t--;
-	oStd::atomic_exchange(&Tail, t);
+	Tail = t;
 
 	if (Head <= t)
 	{
@@ -319,13 +330,12 @@ void concurrent_worklist<T, Alloc>::pop_local(reference _Element)
 }
 
 template<typename T, typename Alloc>
-bool concurrent_worklist<T, Alloc>::try_steal_internal(reference _Element, bool _TryLockResult) threadsafe
+bool concurrent_worklist<T, Alloc>::try_steal_internal(reference _Element, bool _TryLockResult)
 {
 	bool stolen = _TryLockResult;
 	if (stolen)
 	{
-		size_type h = Head;
-		oStd::atomic_exchange(&Head, h + 1);
+		size_type h = Head++;
 		if (h < Tail)
 			_Element = pCircularBuffer[h & Mask];
 
@@ -341,20 +351,33 @@ bool concurrent_worklist<T, Alloc>::try_steal_internal(reference _Element, bool 
 }
 
 template<typename T, typename Alloc>
-bool concurrent_worklist<T, Alloc>::try_steal(reference _Element) threadsafe
+bool concurrent_worklist<T, Alloc>::try_steal(reference _Element)
 {
 	return try_steal_internal(_Element, Mutex.try_lock());
 }
 
 template<typename T, typename Alloc>
 template<typename Rep, typename Period>
-bool concurrent_worklist<T, Alloc>::try_steal_for(reference _Element, const oStd::chrono::duration<Rep, Period>& _TimeoutDuration) threadsafe
+bool concurrent_worklist<T, Alloc>::try_steal_for(reference _Element, const oStd::chrono::duration<Rep, Period>& _TimeoutDuration)
 {
 	return try_steal_internal(_Element, Mutex.try_lock_for(_TimeoutDuration));
 }
 
 template<typename T, typename Alloc>
-bool concurrent_worklist<T, Alloc>::empty() const threadsafe
+void concurrent_worklist<T, Alloc>::pop(reference _Element)
+{
+	while (!try_pop(_Element));
+}
+
+template<typename T, typename Alloc>
+void concurrent_worklist<T, Alloc>::clear()
+{
+	value_type e;
+	while (try_pop(e));
+}
+
+template<typename T, typename Alloc>
+bool concurrent_worklist<T, Alloc>::empty() const
 {
 	return Head >= Tail;
 }

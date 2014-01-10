@@ -77,7 +77,7 @@ namespace detail {
 	struct BOOKKEEPING_HEADER
 	{
 		unsigned int MagicNumber; // must be 'OOii'
-		unsigned int NumDirtyPages;
+		std::atomic<unsigned int> NumDirtyPages;
 	};
 
 	static void* GetBasePointer(void* _pUserPointer)
@@ -167,7 +167,7 @@ namespace detail {
 		#endif
 
 		if ((orig & pageMask) == 0) // if the bit wasn't set before, increment count
-			oStd::atomic_increment(&pBookkeepingHeader->NumDirtyPages);
+			pBookkeepingHeader->NumDirtyPages++;
 	}
 
 	static void UnlockPage(void* _pUserPointer)

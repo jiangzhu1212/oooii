@@ -33,14 +33,6 @@
 	extern "C" {
 #endif
 
-// @tony - where should these come from?
-#if _MSC_VER >= 1600
-	#define oHAS_8BIT_ATOMICS
-	#define oHAS_16BIT_ATOMICS
-#endif
-
-#define oHAS_64BIT_ATOMICS
-
 // _____________________________________________________________________________
 // Bit scanning
 
@@ -103,12 +95,9 @@ long _InterlockedXor(long volatile *Destination, long Value);
 #pragma intrinsic(_InterlockedXor16)
 #pragma intrinsic(_InterlockedXor)
 
-#ifdef oHAS_8BIT_ATOMICS
+#if _MSC_VER >= 1600
 	#pragma intrinsic(_InterlockedExchange8)
 	#pragma intrinsic(_InterlockedCompareExchange8)
-#endif
-
-#ifdef oHAS_16BIT_ATOMICS
 	#pragma intrinsic(_InterlockedExchange16)
 	#pragma intrinsic(_InterlockedCompareExchange16)
 #endif
@@ -126,25 +115,23 @@ long _InterlockedXor(long volatile *Destination, long Value);
 	#endif
 #endif
 
-#ifdef oHAS_64BIT_ATOMICS
-	long long _InterlockedAdd64(long long volatile *Addend, long long Value);
-	long long _InterlockedAnd64(long long volatile *Destination, long long Value);
-	long long _InterlockedIncrement64(long long volatile *Addend);
-	long long _InterlockedDecrement64(long long volatile *Addend);
-	long long _InterlockedExchange64(long long volatile *Target, long long Value);
-	long long _InterlockedCompareExchange64(long long volatile *Destination, long long ExChange, long long Comperand);
-	long long _InterlockedOr64(long long volatile *Destination, long long Value);
-	long long _InterlockedXor64(long long volatile *Destination, long long Value);
-	#ifdef _M_X64
-		//#pragma intrinsic(_InterlockedAdd64)
-		#pragma intrinsic(_InterlockedAnd64)
-		#pragma intrinsic(_InterlockedIncrement64)
-		#pragma intrinsic(_InterlockedDecrement64)
-		#pragma intrinsic(_InterlockedExchange64)
-		#pragma intrinsic(_InterlockedCompareExchange64)
-		#pragma intrinsic(_InterlockedOr64)
-	#pragma intrinsic(_InterlockedXor64)
-	#endif
+long long _InterlockedAdd64(long long volatile *Addend, long long Value);
+long long _InterlockedAnd64(long long volatile *Destination, long long Value);
+long long _InterlockedIncrement64(long long volatile *Addend);
+long long _InterlockedDecrement64(long long volatile *Addend);
+long long _InterlockedExchange64(long long volatile *Target, long long Value);
+long long _InterlockedCompareExchange64(long long volatile *Destination, long long ExChange, long long Comperand);
+long long _InterlockedOr64(long long volatile *Destination, long long Value);
+long long _InterlockedXor64(long long volatile *Destination, long long Value);
+#ifdef _M_X64
+	//#pragma intrinsic(_InterlockedAdd64)
+	#pragma intrinsic(_InterlockedAnd64)
+	#pragma intrinsic(_InterlockedIncrement64)
+	#pragma intrinsic(_InterlockedDecrement64)
+	#pragma intrinsic(_InterlockedExchange64)
+	#pragma intrinsic(_InterlockedCompareExchange64)
+	#pragma intrinsic(_InterlockedOr64)
+#pragma intrinsic(_InterlockedXor64)
 #endif
 
 #ifdef __cplusplus

@@ -27,8 +27,8 @@
 #include <oBase/byte.h>
 #include <oBase/memory.h>
 #include <oBase/throw.h>
-#include <oStd/atomic.h>
 #include <oHLSL/oHLSLMath.h>
+#include <atomic>
 
 using namespace std::placeholders;
 using namespace oStd;
@@ -1201,18 +1201,18 @@ void enumerate_pixels(const info& _SurfaceInfoInput
 	}
 }
 
-typedef void (*rms_enumerator)(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, unsigned int* _pAccum);
+typedef void (*rms_enumerator)(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, std::atomic<unsigned int>* _pAccum);
 
-static void sum_squared_diff_r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, unsigned int* _pAccum)
+static void sum_squared_diff_r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, std::atomic<unsigned int>* _pAccum)
 {
 	const unsigned char* p1 = (const unsigned char*)_pPixel1;
 	const unsigned char* p2 = (const unsigned char*)_pPixel2;
 	unsigned char absDiff = unsigned char (abs(*p1 - *p2));
 	*(unsigned char*)_pPixelOut = absDiff;
-	oStd::atomic_fetch_add(_pAccum, unsigned int(absDiff * absDiff));
+	_pAccum->fetch_add(unsigned int(absDiff * absDiff));
 }
 
-static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, unsigned int* _pAccum)
+static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, std::atomic<unsigned int>* _pAccum)
 {
 	const unsigned char* p = (const unsigned char*)_pPixel1;
 	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
@@ -1222,10 +1222,10 @@ static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const 
 	float L2 = color(r, g, b, 255).luminance();
 	unsigned char absDiff = unorm_to_ubyte(abs(L1 - L2));
 	*(unsigned char*)_pPixelOut = absDiff;
-	oStd::atomic_fetch_add(_pAccum, unsigned int(absDiff * absDiff));
+	_pAccum->fetch_add(unsigned int(absDiff * absDiff));
 }
 
-static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, unsigned int* _pAccum)
+static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, std::atomic<unsigned int>* _pAccum)
 {
 	const unsigned char* p = (const unsigned char*)_pPixel1;
 	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++; unsigned char a = *p++;
@@ -1235,7 +1235,7 @@ static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, cons
 	float L2 = color(r, g, b, a).luminance();
 	unsigned char absDiff = unorm_to_ubyte(abs(L1 - L2));
 	*(unsigned char*)_pPixelOut = absDiff;
-	oStd::atomic_fetch_add(_pAccum, unsigned int(absDiff * absDiff));
+	_pAccum->fetch_add(unsigned int(absDiff * absDiff));
 }
 
 static rms_enumerator get_rms_enumerator(format _InFormat, format _OutFormat)
@@ -1261,7 +1261,7 @@ float calc_rms(const info& _SurfaceInfo
 	, const const_mapped_subresource& _MappedSubresource2)
 {
 	rms_enumerator en = get_rms_enumerator(_SurfaceInfo.format, r8_unorm);
-	unsigned int SumOfSquares = 0;
+	std::atomic<unsigned int> SumOfSquares(0);
 	unsigned int DummyPixelOut[4]; // largest a pixel can ever be currently
 
 	enumerate_pixels(_SurfaceInfo
@@ -1281,7 +1281,7 @@ float calc_rms(const info& _SurfaceInfoInput
 	std::function<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)> Fn;
 
 	rms_enumerator en = get_rms_enumerator(_SurfaceInfoInput.format, _SurfaceInfoOutput.format);
-	unsigned int SumOfSquares = 0;
+	std::atomic<unsigned int> SumOfSquares(0);
 
 	enumerate_pixels(_SurfaceInfoInput
 		, _MappedSubresourceInput1
@@ -1293,33 +1293,33 @@ float calc_rms(const info& _SurfaceInfoInput
 	return sqrt(SumOfSquares / float(_SurfaceInfoInput.dimensions.x * _SurfaceInfoInput.dimensions.y));
 }
 
-typedef void (*histogram_enumerator)(const void* _pPixel, unsigned int* _Histogram);
+typedef void (*histogram_enumerator)(const void* _pPixel, std::atomic<unsigned int>* _Histogram);
 
-static void histogram_r8_unorm_8bit(const void* _pPixel, unsigned int* _Histogram)
+static void histogram_r8_unorm_8bit(const void* _pPixel, std::atomic<unsigned int>* _Histogram)
 {
 	unsigned char c = *(const unsigned char*)_pPixel;
-	oStd::atomic_increment(&_Histogram[c]);
+	_Histogram[c]++;
 }
 
-static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, unsigned int* _Histogram)
+static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, std::atomic<unsigned int>* _Histogram)
 {
 	const unsigned char* p = (const unsigned char*)_pPixel;
 	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
 	unsigned char Index = unorm_to_ubyte(color(r, g, b, 255).luminance());
-	oStd::atomic_increment(&_Histogram[Index]);
+	_Histogram[Index]++;
 }
 
-static void histogram_r16_unorm_16bit(const void* _pPixel, unsigned int* _Histogram)
+static void histogram_r16_unorm_16bit(const void* _pPixel, std::atomic<unsigned int>* _Histogram)
 {
 	unsigned short c = *(const unsigned short*)_pPixel;
-	oStd::atomic_increment(&_Histogram[c]);
+	_Histogram[c]++;
 }
 
-static void histogram_r16_float_16bit(const void* _pPixel, unsigned int* _Histogram)
+static void histogram_r16_float_16bit(const void* _pPixel, std::atomic<unsigned int>* _Histogram)
 {
 	half h = saturate(*(const half*)_pPixel);
 	unsigned short c = static_cast<unsigned short>(round(65535.0f * h));
-	oStd::atomic_increment(&_Histogram[c]);
+	_Histogram[c]++;
 }
 
 histogram_enumerator get_histogram_enumerator(format _Format, int _Bitdepth)
@@ -1342,16 +1342,20 @@ histogram_enumerator get_histogram_enumerator(format _Format, int _Bitdepth)
 
 void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[256])
 {
-	memset(_Histogram, 0, sizeof(unsigned int) * 256);
+	std::atomic<unsigned int> H[256];
+	memset(H, 0, sizeof(unsigned int) * 256);
 	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 8);
-	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, _Histogram));
+	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, H));
+	memcpy(_Histogram, H, sizeof(unsigned int) * 256);
 }
 
 void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[65536])
 {
-	memset(_Histogram, 0, sizeof(unsigned int) * 65536);
+	std::atomic<unsigned int> H[65536];
+	memset(H, 0, sizeof(unsigned int) * 65536);
 	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 16);
-	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, _Histogram));
+	enumerate_pixels(_SurfaceInfo, _MappedSubresource, std::bind(en, _1, H));
+	memcpy(_Histogram, H, sizeof(unsigned int) * 65536);
 }
 
 	} // namespace surface

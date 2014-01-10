@@ -26,7 +26,6 @@
 #include <oPlatform/oStream.h>
 #include <oConcurrency/mutex.h>
 #include <oBasis/oLockThis.h>
-#include <oStd/atomic.h>
 #include <oPlatform/oRegistry.h>
 
 using namespace ouro;
