@@ -38,9 +38,6 @@
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_base.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_opt.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>

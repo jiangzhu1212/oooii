@@ -29,10 +29,10 @@
 #include <oBase/finally.h>
 #include <oBase/assert.h>
 #include <oStd/for.h>
-#include <oStd/atomic.h>
 #include <oStd/thread.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
+#include <atomic>
 #include <vector>
 
 using namespace ouro;
@@ -354,7 +354,7 @@ static const int kValueMask = 0x3fffffff;
 
 typedef concurrent_worklist<int, std::allocator<int>> worklist_t;
 
-static void push_local(worklist_t& _Work, int* _Results, bool* _pDone)
+static void push_local(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDone)
 {
 	begin_thread("push_local");
 
@@ -365,7 +365,7 @@ static void push_local(worklist_t& _Work, int* _Results, bool* _pDone)
 	end_thread();
 }
 
-static void pop_local(worklist_t& _Work, int* _Results, bool* _pDone)
+static void pop_local(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDone)
 {
 	begin_thread("pop_local");
 
@@ -375,7 +375,7 @@ static void pop_local(worklist_t& _Work, int* _Results, bool* _pDone)
 		if (_Work.try_pop_local(index))
 		{
 			oCHECK(index >= 0 && index < kNumTasks, "try_pop_local produced an out-of-range index");
-			oStd::atomic_fetch_or(&_Results[index], int(index | kPoppedFlag));
+			_Results[index].fetch_or(int(index | kPoppedFlag));
 		}
 	}
 	
@@ -383,7 +383,7 @@ static void pop_local(worklist_t& _Work, int* _Results, bool* _pDone)
 	end_thread();
 }
 
-static void push_pop_local(worklist_t& _Work, int* _Results, bool* _pDone)
+static void push_pop_local(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDone)
 {
 	begin_thread("push_pop_local");
 
@@ -396,7 +396,7 @@ static void push_pop_local(worklist_t& _Work, int* _Results, bool* _pDone)
 		if (_Work.try_pop_local(index))
 		{
 			oCHECK(index >= 0 && index < kNumTasks, "try_pop_local produced an out-of-range index");
-			oStd::atomic_fetch_or(&_Results[index], int(index | kPoppedFlag));
+			_Results[index].fetch_or(int(index | kPoppedFlag));
 		}
 	}
 
@@ -404,7 +404,7 @@ static void push_pop_local(worklist_t& _Work, int* _Results, bool* _pDone)
 	end_thread();
 }
 
-static void try_steal(worklist_t& _Work, int* _Results, bool* _pDone)
+static void try_steal(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDone)
 {
 	begin_thread("thief");
 	timer timer;
@@ -415,7 +415,7 @@ static void try_steal(worklist_t& _Work, int* _Results, bool* _pDone)
 		if (_Work.try_steal(index))
 		{
 			oCHECK(index >= 0 && index < kNumTasks, "try_pop_local produced an out-of-range index");
-			oStd::atomic_fetch_or(&_Results[index], int(index | kStolenFlag));
+			_Results[index].fetch_or(int(index | kStolenFlag));
 		}
 		else if (_Work.empty() && *_pDone)
 			break;
@@ -424,7 +424,7 @@ static void try_steal(worklist_t& _Work, int* _Results, bool* _pDone)
 	end_thread();
 }
 
-static void test_stealing(const std::function<void(worklist_t& _WorkParam, int* _Results, bool* _pDone)>& _Function
+static void test_stealing(const std::function<void(worklist_t& _WorkParam, std::atomic<int>* _Results, bool* _pDone)>& _Function
 	, worklist_t& _Work
 	, bool* _pWorkIsEmpty
 	, int* _pNumStolen
@@ -434,7 +434,7 @@ static void test_stealing(const std::function<void(worklist_t& _WorkParam, int* 
 {
 	ouro::finally clear_work([&]{ _Work.clear(); });
 
-	int Results[kNumTasks];
+	std::atomic<int> Results[kNumTasks];
 	memset(Results, 0, sizeof(Results));
 	bool Done = false;
 	oStd::thread t(_Function, std::ref(_Work), Results, &Done);

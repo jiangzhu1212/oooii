@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oConcurrency/block_allocator.h>
 #include <oBase/byte.h>
-#include <oStd/atomic.h>
 
 using namespace ouro;
 using namespace oConcurrency;
@@ -45,13 +44,13 @@ block_allocator::~block_allocator()
 	shrink(0);
 }
 
-void* block_allocator::allocate() threadsafe
+void* block_allocator::allocate()
 {
 	void* p = nullptr;
 
 	// This read is a bit racy, but it's only a hint, so use it without concern
 	// for its concurrent changing.
-	threadsafe fixed_block_allocator* pAllocator = pLastAlloc;
+	fixed_block_allocator* pAllocator = pLastAlloc;
 	if (pAllocator)
 		p = pAllocator->allocate(BlockSize);
 
@@ -94,20 +93,20 @@ void* block_allocator::allocate() threadsafe
 	return p;
 }
 
-void block_allocator::deallocate(void* _Pointer) threadsafe
+void block_allocator::deallocate(void* _Pointer)
 {
-	threadsafe fixed_block_allocator* pAllocator = find_chunk_allocator(_Pointer);
+	fixed_block_allocator* pAllocator = find_chunk_allocator(_Pointer);
 	if (!pAllocator)
 		throw std::runtime_error("deallocate called on a dangling pointer from a chunk that has probably been shrink()'ed");
 
 	// this assignment to pLastDealloc is a bit racy, but it's only a 
 	// caching/hint, so elsewhere where this is used, just use whatever is there 
 	// at the time
-	oStd::atomic_exchange(&pLastDealloc, pAllocator);
+	pLastDealloc = pAllocator;
 	pAllocator->deallocate(BlockSize, NumBlocksPerChunk, _Pointer);
 }
 
-block_allocator::chunk_t* block_allocator::allocate_chunk() threadsafe
+block_allocator::chunk_t* block_allocator::allocate_chunk()
 {
 	chunk_t* c = reinterpret_cast<chunk_t*>(thread_cast<block_allocator*>(this)->PlatformAllocate(ChunkSize));
 	c->pAllocator = ::new (c+1) fixed_block_allocator(BlockSize, NumBlocksPerChunk);
@@ -115,17 +114,17 @@ block_allocator::chunk_t* block_allocator::allocate_chunk() threadsafe
 	return c;
 }
 
-threadsafe fixed_block_allocator* block_allocator::find_chunk_allocator(void* _Pointer) const threadsafe
+fixed_block_allocator* block_allocator::find_chunk_allocator(void* _Pointer) const
 {
 	// This read is a bit racy, but it's only a hint, so use it without concern
 	// for its concurrent changing.
-	threadsafe fixed_block_allocator* pChunkAllocator = pLastDealloc;
+	fixed_block_allocator* pChunkAllocator = pLastDealloc;
 
 	// Check a cached version to avoid a linear lookup
 	if (pChunkAllocator && in_range(_Pointer, (const void*)pChunkAllocator, ChunkSize))
 		return pChunkAllocator;
 
-	// There is no threadsafe condition where the Chunks list shrinks, and 
+	// There is no condition where the Chunks list shrinks, and 
 	// because all insertion happens as creating a new head, any sampling of
 	// the list will be valid because its topology won't change.
 	chunk_t* c = Chunks.peek();
@@ -162,7 +161,7 @@ void block_allocator::reserve(size_t _NumElements)
 		// this assignment to pLastAlloc is a bit racy, but it's only a 
 		// caching/hint, so elsewhere where this is used, just use whatever is 
 		// there at the time
-		oStd::atomic_exchange(&pLastAlloc, newHead->pAllocator);
+		pLastAlloc = newHead->pAllocator;
 		Chunks.push(newHead);
 	}
 }

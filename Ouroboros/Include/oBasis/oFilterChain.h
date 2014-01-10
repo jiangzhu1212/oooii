@@ -85,7 +85,7 @@ public:
 	}
 
 private:
-	typedef std::vector<std::pair<TYPE, std::tr1::regex> > filters_t;
+	typedef std::vector<std::pair<TYPE, std::regex> > filters_t;
 	oInitOnce<filters_t> Filters;
 
 	// Compile an ordered list of regular expressions that will mark symbols as 

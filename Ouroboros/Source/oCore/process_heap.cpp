@@ -212,12 +212,12 @@ void context::collect_garbage()
 
 void context::reference()
 {
-	oStd::atomic_increment(&RefCount);
+	RefCount++;
 }
 
 void context::release()
 {
-	if (0 == oStd::atomic_decrement(&RefCount))
+	if (--RefCount == 0)
 	{
 		valid = false;
 		this->~context();

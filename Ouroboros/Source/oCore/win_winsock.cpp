@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/windows/win_winsock.h>
-#include <oStd/atomic.h>
 #include <oBase/macros.h>
 
 namespace ouro {
@@ -515,7 +514,7 @@ void send(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, const soc
 		oWSATHROWLAST();
 }
 
-size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, int* _pInOutCanReceive, sockaddr_in* _pSource)
+size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, std::atomic<int>* _pInOutCanReceive, sockaddr_in* _pSource)
 {
 	if (!_pInOutCanReceive)
 		oTHROW_INVARG("_pInOutCanReceive must be specified");
@@ -560,7 +559,7 @@ size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _S
 
 		else if (!bytesReceived)
 		{
-			oStd::atomic_exchange(_pInOutCanReceive, false);
+			*_pInOutCanReceive = false;
 			err = ESHUTDOWN;
 		}
 
@@ -570,7 +569,7 @@ size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _S
 
 	else if ((ne.lNetworkEvents & FD_CLOSE) || ((ne.lNetworkEvents & FD_CONNECT) && err))
 	{
-		oStd::atomic_exchange(_pInOutCanReceive, false);
+		*_pInOutCanReceive = false;
 		oWSATHROW0(ne.iErrorCode[FD_CLOSE_BIT]);
 	}
 

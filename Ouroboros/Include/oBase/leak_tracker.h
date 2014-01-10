@@ -34,6 +34,7 @@
 #include <oBase/countdown_latch.h>
 #include <oBase/fixed_string.h>
 #include <oBase/macros.h>
+#include <atomic>
 
 namespace ouro {
 
@@ -143,7 +144,7 @@ public:
 	// Only allocations within a context are reported as leaks. This is to get 
 	// around bootstrap allocations for localized reporting. For example in a unit 
 	// test infrastructure, this allows only leak detection for each specific test.
-	void new_context() { oStd::atomic_increment(&CurrentContext); }
+	void new_context() { CurrentContext++; }
 
 	// Clears all allocation tracking.
 	void reset() { lock_t Lock(Mutex); Allocations.clear(); }
@@ -176,7 +177,7 @@ private:
 	mutex_t Mutex;
 	allocations_t Allocations;
 	countdown_latch DelayLatch;
-	unsigned short CurrentContext;
+	std::atomic<unsigned short> CurrentContext;
 	bool Internal;
 
 	size_t num_outstanding_allocations(bool _CurrentContextOnly);

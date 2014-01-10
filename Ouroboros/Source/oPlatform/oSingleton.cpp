@@ -69,16 +69,17 @@ namespace oSingletonPlatform
 	#define oSINGLETON_TRACE(_Name, format, ...) __noop
 #endif
 
-bool oConstructOnceV(void* volatile* _pPointer, void* (*_New)())
+bool oConstructOnceV(std::atomic<void*>* _pPointer, void* (*_New)())
 {
 	static void* CONSTRUCTING = (void*)0x1;
 	bool constructed = false;
 	if (*_pPointer <= CONSTRUCTING)
 	{
-		if (oStd::atomic_compare_exchange(_pPointer, CONSTRUCTING, (void*)nullptr))
+		void* pNull = nullptr;
+		if (_pPointer->compare_exchange_strong(pNull, CONSTRUCTING))
 		{
 			void* p = _New();
-			oStd::atomic_exchange(_pPointer, p);
+			*_pPointer = p;
 			constructed = true;
 		}
 

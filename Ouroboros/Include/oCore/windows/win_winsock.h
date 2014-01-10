@@ -41,6 +41,7 @@
 #include <nspapi.h>
 #include <Rpc.h>
 #include <Ws2tcpip.h>
+#include <atomic>
 
 #define oWSATHROW(_WSAErr, _Message, ...) do { throw std::system_error(std::make_error_code(ouro::windows::winsock::get_errc(_WSAErr)), ouro::formatf(_Message, ## __VA_ARGS__)); } while(false)
 #define oWSATHROW0(_WSAErr) do { throw std::system_error(std::make_error_code(ouro::windows::winsock::get_errc(_WSAErr))); } while(false)
@@ -170,7 +171,7 @@ void send(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, const soc
 // used as a boolean (atomics used to change its state) that is 0 if receive 
 // should not wait because of a bad _hSocket, or non-zero if the receive should 
 // block on FD_READ events.
-size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, int* _pInOutCanReceive, sockaddr_in* _pSource);
+size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, std::atomic<int>* _pInOutCanReceive, sockaddr_in* _pSource);
 
 // Returns the number of bytes received. This can throw std::errc::connection_reset 
 // meaning a valid and error-free closing of the peer socket has occurred and no 

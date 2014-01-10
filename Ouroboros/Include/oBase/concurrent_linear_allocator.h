@@ -28,11 +28,16 @@
 #define oBase_concurrent_linear_allocator_h
 
 #include <oBase/linear_allocator_base.h>
-#include <oStd/atomic.h>
+#include <atomic>
 
 namespace ouro {
 
-class concurrent_linear_allocator : public linear_allocator_base
+struct concurrent_linear_allocator_traits
+{
+	typedef std::atomic<void*> tail_type;
+};
+
+class concurrent_linear_allocator : public linear_allocator_base<concurrent_linear_allocator_traits>
 {
 	// NOTE: None of the inherited APIs are thread safe - only allocate() and 
 	// reset() are thread safe.
@@ -58,20 +63,20 @@ public:
 inline void* concurrent_linear_allocator::allocate(size_t _Size, size_t _Alignment)
 {
 	void* pNew, *pOld, *pAligned;
+	pOld = pTail;
 	do
 	{
-		pOld = pTail;
 		pAligned = byte_align(pOld, _Alignment);
 		pNew = byte_add(pAligned, _Size);
 		if (pNew > pEnd)
 			return nullptr;
-	} while (!oStd::atomic_compare_exchange(&pTail, pNew, pOld));
+	} while (!pTail.compare_exchange_strong(pOld, pNew));
 	return pAligned;
 }
 
 inline void concurrent_linear_allocator::reset()
 {
-	oStd::atomic_exchange(&pTail, pHead);
+	pTail.store(pHead);
 }
 
 } // namespace ouro

@@ -25,7 +25,6 @@
 #include <oBase/countdown_latch.h>
 #include <oBase/finally.h>
 #include <oStd/for.h>
-#include <oStd/atomic.h>
 #include <oStd/future.h>
 #include <oBase/throw.h>
 #include <vector>
@@ -36,7 +35,7 @@ namespace ouro {
 static bool test(int _Count)
 {
 	int latchCount = _Count;
-	int count = 0;
+	std::atomic<int> count(0);
 	countdown_latch latch(latchCount);
 	
 	// NOTE: This pattern is only for testing purposes of countdown latch. In 
@@ -53,7 +52,7 @@ static bool test(int _Count)
 		oStd::future<void> f = oStd::async([&,i]
 		{
 			oStd::this_thread::sleep_for(oStd::chrono::milliseconds(100 * (i + 1))); // stagger the sleeps to simulate doing work that takes a variable amount of time
-			oStd::atomic_increment(&count);
+			count++;
 			latch.release();
 		});
 

@@ -306,7 +306,7 @@ protected:
 
 	mode Mode;
 	shared_mutex Mutex;
-	atomic_uint RingBufferReadIndex;
+	std::atomic<uint> RingBufferReadIndex;
 	unsigned int MonotonicCounter;
 	unsigned int ID;
 	uri_string Name;

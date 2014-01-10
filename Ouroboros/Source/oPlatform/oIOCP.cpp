@@ -344,7 +344,7 @@ bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oIOCP**
 oIOCPOp* oIOCPContext::GetOp()
 {
 	unsigned int AllocIndex = pSocketAllocator->allocate();
-	if (AllocIndex == index_allocator_base::invalid_index)
+	if (AllocIndex == index_allocator::invalid_index)
 		return nullptr;
 
 	return &pSocketOps[AllocIndex];

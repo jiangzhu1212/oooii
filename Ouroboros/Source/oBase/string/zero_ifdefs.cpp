@@ -59,7 +59,7 @@ struct ifdef_block
 // Match4: else or elseif or empty
 // Match5: if or empty
 // Match6: endif
-static regex reIfdef("#[ \\t]*(if(n?)def)[ \\t]+([a-zA-Z0-9_]+)|#[ \\t]*(else(if)?)|#[ \\t]*(endif)", tr1::regex_constants::optimize); // ok static (duplication won't affect correctness)
+static regex reIfdef("#[ \\t]*(if(n?)def)[ \\t]+([a-zA-Z0-9_]+)|#[ \\t]*(else(if)?)|#[ \\t]*(endif)", regex_constants::optimize); // ok static (duplication won't affect correctness)
 
 static enum ifdef_block::type get_type(const cmatch& _Matches)
 {

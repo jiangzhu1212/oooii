@@ -29,7 +29,10 @@
 // and are common enough to include in precompiled headers
 #include <algorithm>
 #include <assert.h>
+#include <atomic>
 #include <cctype>
+#include <chrono>
+#include <condition_variable>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
@@ -40,11 +43,13 @@
 #include <malloc.h>
 #include <map>
 #include <memory.h>
+#include <mutex>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string>
 #include <queue>
+#include <thread>
 #include <typeinfo>
 #include <vector>
 #include <unordered_set>

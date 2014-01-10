@@ -152,7 +152,7 @@ struct oD3D11Device : oGPUDevice
 
 	DESC Desc;
 	oRefCount RefCount;
-	uint FrameID;
+	std::atomic<uint> FrameID;
 
 	oStd::mutex CommandListsInsertRemoveMutex;
 	ouro::shared_mutex CommandListsBeginEndMutex;

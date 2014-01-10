@@ -47,7 +47,7 @@ static void test_index_allocator()
 	oFORI(i, index)
 		index[i] = a.allocate();
 
-	oCHECK(index_allocator::invalid_index == a.allocate(), "allocate succeed past allocator capacity");
+	oCHECK(a.invalid_index == a.allocate(), "allocate succeed past allocator capacity");
 
 	oFORI(i, index)
 		oCHECK(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);

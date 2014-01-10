@@ -30,7 +30,6 @@
 #include <oConcurrency/basic_threadpool.h>
 #include <oConcurrency/block_allocator.h>
 #include <oConcurrency/concurrent_queue.h>
-#include <oConcurrency/concurrent_queue_base.h>
 #include <oConcurrency/concurrent_queue_opt.h>
 #include <oConcurrency/concurrent_worklist.h>
 #include <oConcurrency/condition_variable.h>

@@ -32,6 +32,7 @@
 
 namespace ouro {
 
+template<typename traits>
 class linear_allocator_base
 {
 public:
@@ -45,7 +46,7 @@ public:
 		if (this != &_That)
 		{
 			pHead = _That.pHead;
-			pTail = _That.pTail;
+			pTail = (void*)_That.pTail;
 			pEnd = _That.pEnd;
 			_That.deinitialize();
 		}
@@ -73,11 +74,11 @@ public:
 	bool valid(void* _Pointer) const { return _Pointer >= pHead && _Pointer < pEnd; }
 
 	// returns the number of bytes available
-	size_t bytes_free() const { return byte_diff(pEnd, pTail); }
+	size_t bytes_free() const { return byte_diff(pEnd, (void*)pTail); }
 
 protected:
 	void* pHead;
-	void* pTail;
+	typename traits::tail_type pTail;
 	void* pEnd;
 
 	linear_allocator_base(const linear_allocator_base&); /* = delete */

@@ -86,7 +86,7 @@ private:
 	oState State;
 	bool bPrepareToCloseSocket;
 	bool bCallFinishResponse;
-	oStd::atomic_int SendsInProgress;
+	std::atomic<int> SendsInProgress;
 
 	// Application and transport layer interface
 	oHTTPRequestInternal TheRequest;

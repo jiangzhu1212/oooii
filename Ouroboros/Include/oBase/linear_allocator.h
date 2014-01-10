@@ -31,7 +31,12 @@
 
 namespace ouro {
 
-class linear_allocator : public linear_allocator_base
+struct linear_allocator_traits
+{
+	typedef void* tail_type;
+};
+
+class linear_allocator : public linear_allocator_base<linear_allocator_traits>
 {
 public:
 	linear_allocator() {}

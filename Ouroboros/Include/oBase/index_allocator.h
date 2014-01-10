@@ -25,8 +25,8 @@
 // Allocates indices which can be used for fixed-size pool management. The 
 // allocated arena will contain a linked list of free indices so it must be 
 // sized to contain the number of indices desired, so 
-// NumIndices * sizeof(unsigned int). This class is not. See 
-// concurrent_index_allocator for a implementation.
+// NumIndices * sizeof(unsigned int). This class is not threadsafe. See 
+// concurrent_index_allocator for a threadsafe implementation.
 #pragma once
 #ifndef oBase_index_allocator_h
 #define oBase_index_allocator_h
@@ -35,7 +35,14 @@
 
 namespace ouro {
 
-class index_allocator : public index_allocator_base
+struct index_allocator_traits
+{
+	typedef unsigned int index_type;
+
+	static const unsigned int index_mask = 0xffffffff;
+};
+
+class index_allocator : public index_allocator_base<index_allocator_traits>
 {
 public:
 	index_allocator() {}

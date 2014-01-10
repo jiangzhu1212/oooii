@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/thread.h>
-#include <oStd/atomic.h>
 #include <process.h> // _beginthread/_endthread
 #include "crt_assert.h"
 

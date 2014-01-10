@@ -47,7 +47,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_NONE, oBUILD_TOOL_PACKAGING_SETTINGS
 	oRTTI_COMPOUND_ATTRIBUTES_END(oBUILD_TOOL_PACKAGING_SETTINGS)
 oRTTI_COMPOUND_END_DESCRIPTION(oBUILD_TOOL_PACKAGING_SETTINGS)
 
-static std::regex TestErrorParse("(.+?)\\s*³\\s*(FAILURE|LEAKS)\\s*³(?:.+?)³\\s*(.+?)\\n", std::tr1::regex_constants::optimize); // @oooii-kevin: ok static (duplication won't affect correctness)
+static std::regex TestErrorParse("(.+?)\\s*³\\s*(FAILURE|LEAKS)\\s*³(?:.+?)³\\s*(.+?)\\n", std::regex_constants::optimize); // @oooii-kevin: ok static (duplication won't affect correctness)
 
 bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const char* _BuildRoot, const oConcurrency::event& _CancelEvent, oUnitTestResults* _pResults)
 {

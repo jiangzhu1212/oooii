@@ -34,13 +34,12 @@
 
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/block_allocator.h>
-#include <oConcurrency/concurrent_queue_base.h>
-#include <oConcurrency/tagged_pointer.h> 
+#include <oConcurrency/tagged_pointer.h>
 
 namespace oConcurrency {
 
 template<typename T>
-class concurrent_queue_opt : public concurrent_queue_base<T, concurrent_queue_opt<T>>
+class concurrent_queue_opt
 {
 	/** <citation
 		usage="Paper" 
@@ -51,24 +50,35 @@ class concurrent_queue_opt : public concurrent_queue_base<T, concurrent_queue_op
 	/>*/
 
 public:
-	oDEFINE_CONCURRENT_QUEUE_TYPE(T, size_t);
+	typedef size_t size_type;
+	typedef T value_type;
+	typedef value_type& reference;
+	typedef const value_type& const_reference;
+	typedef value_type* pointer;
+	typedef const value_type* const_pointer;
 
 	concurrent_queue_opt();
 	~concurrent_queue_opt();
 
 	// Push an element into the queue.
-	void push(const_reference _Element) threadsafe;
-	void push(value_type&& _Element) threadsafe;
+	void push(const_reference _Element);
+	void push(value_type&& _Element);
 
 	// Returns false if the queue is empty
-	bool try_pop(reference _Element) threadsafe;
+	bool try_pop(reference _Element);
 	
+	// Spins until an element can be popped from the queue
+	void pop(reference _Element);
+
+	// Spins until the queue is empty
+	void clear();
+
 	// Returns true if no elements are in the queue
-	bool empty() const threadsafe;
+	bool empty() const;
 
 	// SLOW! Returns the number of elements in the queue. Client code should not 
 	// be reliant on this value and the API is included only for debugging and 
-	// testing purposes. It is not threadsafe.
+	// testing purposes. It is not.
 	size_type size() const;
 
 private:
@@ -96,8 +106,8 @@ private:
 	oCACHE_ALIGNED(pointer_t Tail);
 	oCACHE_ALIGNED(block_allocator_t<node_t> Pool);
 
-	void internal_push(node_t* _pNode) threadsafe;
-	void fix_list(pointer_t _Tail, pointer_t _Head) threadsafe;
+	void internal_push(node_t* _pNode);
+	void fix_list(pointer_t _Tail, pointer_t _Head);
 };
 
 // @tony: TODO: Respect _Capacity
@@ -122,7 +132,7 @@ concurrent_queue_opt<T>::~concurrent_queue_opt()
 }
 
 template<typename T>
-void concurrent_queue_opt<T>::internal_push(node_t* _pNode) threadsafe
+void concurrent_queue_opt<T>::internal_push(node_t* _pNode)
 {
 	if (!_pNode) throw std::bad_alloc();
 	pointer_t t;
@@ -143,19 +153,19 @@ void concurrent_queue_opt<T>::internal_push(node_t* _pNode) threadsafe
 }
 
 template<typename T>
-void concurrent_queue_opt<T>::push(const_reference _Element) threadsafe
+void concurrent_queue_opt<T>::push(const_reference _Element)
 {
 	internal_push(Pool.construct(_Element));
 }
 
 template<typename T>
-void concurrent_queue_opt<T>::push(value_type&& _Element) threadsafe
+void concurrent_queue_opt<T>::push(value_type&& _Element)
 {
 	internal_push(Pool.construct(std::move(_Element)));
 }
 
 template<typename T>
-void concurrent_queue_opt<T>::fix_list(pointer_t _Tail, pointer_t _Head) threadsafe
+void concurrent_queue_opt<T>::fix_list(pointer_t _Tail, pointer_t _Head)
 {
 	pointer_t curNode, curNodeNext;
 	curNode = thread_cast<pointer_t&>(_Tail);
@@ -168,7 +178,7 @@ void concurrent_queue_opt<T>::fix_list(pointer_t _Tail, pointer_t _Head) threads
 }
 
 template<typename T>
-bool concurrent_queue_opt<T>::try_pop(reference _Element) threadsafe
+bool concurrent_queue_opt<T>::try_pop(reference _Element)
 {
 	pointer_t t, h, firstNodePrev;
 	while (true)
@@ -213,7 +223,20 @@ bool concurrent_queue_opt<T>::try_pop(reference _Element) threadsafe
 }
 
 template<typename T>
-bool concurrent_queue_opt<T>::empty() const threadsafe
+void concurrent_queue_opt<T>::pop(reference _Element)
+{
+	while (!try_pop(_Element));
+}
+
+template<typename T>
+void concurrent_queue_opt<T>::clear()
+{
+	value_type e;
+	while (try_pop(e));
+}
+
+template<typename T>
+bool concurrent_queue_opt<T>::empty() const
 {
 	return Head == Tail;
 }

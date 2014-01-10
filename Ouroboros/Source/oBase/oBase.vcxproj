@@ -48,7 +48,6 @@
     <ClCompile Include="color.cpp" />
     <ClCompile Include="date.cpp" />
     <ClCompile Include="gzip.cpp" />
-    <ClCompile Include="index_allocator_base.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="leak_tracker.cpp" />
     <ClCompile Include="lzma.cpp" />

@@ -30,6 +30,7 @@
 #include <oPlatform/oStream.h>
 #include <oGUI/window.h>
 #include "resource.h"
+#include <atomic>
 
 #include <oCore/filesystem_monitor.h>
 
@@ -244,11 +245,11 @@ void oWindowTestApp::CheckStyle(ouro::window_style::value _Style)
 
 void oWindowTestApp::OnDirectoryEvent(filesystem::file_event::value _Event, const path& _Path)
 {
-	static int counter = 0;
+	static std::atomic<int> counter = 0;
 
 	if (_Event == filesystem::file_event::added && !filesystem::is_directory(_Path))
 	{
-		int old = oStd::atomic_increment(&counter);
+		int old = counter++;
 		oTRACE("%s: %s (%d)", as_string(_Event), _Path.c_str(), old + 1);
 	}
 

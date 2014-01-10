@@ -44,13 +44,13 @@
 
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/block_allocator.h>
-#include <oConcurrency/concurrent_queue_base.h>
 #include <oConcurrency/tagged_pointer.h>
+#include <atomic>
 
 namespace oConcurrency {
 
 template<typename T>
-class concurrent_queue : public concurrent_queue_base<T, concurrent_queue<T>>
+class concurrent_queue
 {
 	/** <citation
 		usage="Paper" 
@@ -61,7 +61,12 @@ class concurrent_queue : public concurrent_queue_base<T, concurrent_queue<T>>
 	/>*/
 
 public:
-	oDEFINE_CONCURRENT_QUEUE_TYPE(T, size_t);
+	typedef size_t size_type;
+	typedef T value_type;
+	typedef value_type& reference;
+	typedef const value_type& const_reference;
+	typedef value_type* pointer;
+	typedef const value_type* const_pointer;
 
 	// This implementation auto-grows capacity in a threadsafe manner if the 
 	// initial capacity is inadequate.
@@ -69,14 +74,20 @@ public:
 	~concurrent_queue();
 
 	// Push an element into the queue.
-	void push(const_reference _Element) threadsafe;
-	void push(value_type&& _Element) threadsafe;
+	void push(const_reference _Element);
+	void push(value_type&& _Element);
 
 	// Returns false if the queue is empty
-	bool try_pop(reference _Element) threadsafe;
+	bool try_pop(reference _Element);
+
+	// Spins until an element can be popped from the queue
+	void pop(reference _Element);
+
+	// Spins until the queue is empty
+	void clear();
 
 	// Returns true if no elements are in the queue
-	bool empty() const threadsafe;
+	bool empty() const;
 
 	// SLOW! Returns the number of elements in the queue. Client code should not 
 	// be reliant on this value and the API is included only for debugging and 
@@ -93,22 +104,24 @@ private:
 	struct node_t
 	{
 		node_t(const T& _Element)
-			: next(nullptr, 0), value(_Element)
-		{}
+			: next(nullptr, 0)
+			, value(_Element)
+		{ Flag.clear(); }
 
 		node_t(T&& _Element)
-			: next(nullptr, 0), value(std::move(_Element))
-		{}
+			: next(nullptr, 0)
+			, value(std::move(_Element))
+		{ Flag.clear(); }
 
 		tagged_pointer<node_t> next;
 		value_type value;
-		oStd::atomic_flag Flag;
+		std::atomic_flag Flag;
 
 		// A two-step trivial ref count. In try_pop, the race condition described in 
 		// the original paper for non-trivial destructors is addressed by flagging 
 		// which of the two conditions/code paths should be allowed to free the 
 		// memory, so calling this query is destructive (thus the non-constness).
-		bool ShouldDeallocate() threadsafe { return Flag.test_and_set(); }
+		bool ShouldDeallocate() { return Flag.test_and_set(); }
 	};
 	#ifdef o32BIT
 		#pragma warning(default:4324) // structure was padded due to __declspec(align())
@@ -120,7 +133,7 @@ private:
 	oCACHE_ALIGNED(pointer_t Tail);
 	oCACHE_ALIGNED(block_allocator_t<node_t> Pool);
 	
-	void internal_push(node_t* _pNode) threadsafe;
+	void internal_push(node_t* _pNode);
 };
 
 template<typename T>
@@ -148,7 +161,7 @@ concurrent_queue<T>::~concurrent_queue()
 }
 
 template<typename T>
-void concurrent_queue<T>::internal_push(node_t* _pNode) threadsafe
+void concurrent_queue<T>::internal_push(node_t* _pNode)
 {
 	if (!_pNode) throw std::bad_alloc();
 	pointer_t t, next;
@@ -173,19 +186,19 @@ void concurrent_queue<T>::internal_push(node_t* _pNode) threadsafe
 }
 
 template<typename T>
-void concurrent_queue<T>::push(const_reference _Element) threadsafe
+void concurrent_queue<T>::push(const_reference _Element)
 {
 	internal_push(Pool.construct(_Element));
 }
 
 template<typename T>
-void concurrent_queue<T>::push(value_type&& _Element) threadsafe
+void concurrent_queue<T>::push(value_type&& _Element)
 {
 	internal_push(Pool.construct(std::move(_Element)));
 }
 
 template<typename T>
-bool concurrent_queue<T>::try_pop(reference _Element) threadsafe
+bool concurrent_queue<T>::try_pop(reference _Element)
 {
 	pointer_t h, t, next;
 	while (1)
@@ -230,7 +243,20 @@ bool concurrent_queue<T>::try_pop(reference _Element) threadsafe
 }
 
 template<typename T>
-bool concurrent_queue<T>::empty() const threadsafe
+void concurrent_queue<T>::pop(reference _Element)
+{
+	while (!try_pop(_Element));
+}
+
+template<typename T>
+void concurrent_queue<T>::clear()
+{
+	value_type e;
+	while (try_pop(e));
+}
+
+template<typename T>
+bool concurrent_queue<T>::empty() const
 {
 	return Head == Tail;
 }

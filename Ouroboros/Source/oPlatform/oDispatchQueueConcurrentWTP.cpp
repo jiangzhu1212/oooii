@@ -37,14 +37,14 @@
 struct oTASKPooled
 {
 public:
-	static oTASKPooled* Create(oTASK _Task, threadsafe oConcurrency::block_allocator_t<oTASKPooled>* _pPool)
+	static oTASKPooled* Create(oTASK _Task, oConcurrency::block_allocator_t<oTASKPooled>* _pPool)
 	{
 		return new(_pPool->allocate()) oTASKPooled(_Task, _pPool);
 	}
 	inline void operator()() { Task(); this->~oTASKPooled(); pPool->deallocate(this); }
 	
 private:
-	oTASKPooled(oTASK _Task, threadsafe oConcurrency::block_allocator_t<oTASKPooled>* _pPool)
+	oTASKPooled(oTASK _Task, oConcurrency::block_allocator_t<oTASKPooled>* _pPool)
 		: Task(_Task)
 		, pPool(_pPool)
 	{}
@@ -52,7 +52,7 @@ private:
 	{}
 
 	oTASK Task;
-	threadsafe oConcurrency::block_allocator_t<oTASKPooled>* pPool;
+	oConcurrency::block_allocator_t<oTASKPooled>* pPool;
 };
 
 // {C4728B88-5CFE-4B84-A8CF-922F83282A88}
@@ -76,8 +76,8 @@ struct oDispatchQueueConcurrentWTP : oDispatchQueueConcurrent
 	PTP_POOL hPool;
 	TP_CALLBACK_ENVIRON TPEnvironment;
 	oInitOnce<const char*> DebugName;
-	oStd::atomic_bool AllowEnqueue;
-	oStd::atomic_bool IsJoinable;
+	std::atomic<bool> AllowEnqueue;
+	std::atomic<bool> IsJoinable;
 	oRefCount RefCount;
 	oConcurrency::block_allocator_t<oTASKPooled> Pool;
 
@@ -143,7 +143,7 @@ bool oDispatchQueueConcurrentWTP::Dispatch(const oTASK& _Task) threadsafe
 			_Task();
 		else
 		{
-			oTASKPooled* pTask = oTASKPooled::Create(_Task, &Pool);
+			oTASKPooled* pTask = oTASKPooled::Create(_Task, &thread_cast<oDispatchQueueConcurrentWTP*>(this)->Pool);
 			PTP_WORK TPWork = CreateThreadpoolWork(WorkCallback, pTask, (PTP_CALLBACK_ENVIRON)&TPEnvironment);
 			SubmitThreadpoolWork(TPWork);
 		}
@@ -156,9 +156,9 @@ bool oDispatchQueueConcurrentWTP::Dispatch(const oTASK& _Task) threadsafe
 
 void oDispatchQueueConcurrentWTP::Flush() threadsafe
 {
-	AllowEnqueue.exchange(false);
+	AllowEnqueue.store(false);
 	CloseThreadpoolCleanupGroupMembers(TPCleanupGroup, false, nullptr);
-	AllowEnqueue.exchange(true);
+	AllowEnqueue.store(true);
 }
 
 void oDispatchQueueConcurrentWTP::Destroy()
@@ -171,8 +171,8 @@ void oDispatchQueueConcurrentWTP::Destroy()
 
 void oDispatchQueueConcurrentWTP::Join() threadsafe
 {
-	IsJoinable.exchange(false);
-	AllowEnqueue.exchange(false);
+	IsJoinable.store(false);
+	AllowEnqueue.store(false);
 	thread_cast<oDispatchQueueConcurrentWTP*>(this)->Destroy(); // safe because it is protected by atomics above and this is the end-of-life/deinitialization call
 }
 
