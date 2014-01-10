@@ -32,6 +32,7 @@
 #define oHLSL_h
 #include <oHLSL/oHLSLAtomics.h>
 #include <oHLSL/oHLSLBit.h>
+#include <oHLSL/oHLSLIntrinsics.h>
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLStructs.h>

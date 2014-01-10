@@ -26,8 +26,8 @@
 // instead of using <intrin.h> because of conflicts in MSVC between declarations
 // of ceil in <intrin.h> and <math.h>
 #pragma once
-#ifndef oStd_intrinsics_h
-#define oStd_intrinsics_h
+#ifndef oHLSLIntrinsics_h
+#define oHLSLIntrinsics_h
 
 #ifdef __cplusplus
 	extern "C" {
@@ -46,11 +46,6 @@ unsigned char _BitScanReverse(unsigned long* Index, unsigned long Mask);
 	unsigned char _BitScanReverse64(unsigned long* Index, unsigned __int64 Mask);
 	#pragma intrinsic(_BitScanReverse64)
 	#pragma intrinsic(_BitScanForward64)
-#else
-	#if _MSC_VER >= 1700
-		void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand);
-		#pragma intrinsic(_InterlockedCompareExchangePointer)
-	#endif
 #endif
 
 // _____________________________________________________________________________
@@ -102,19 +97,6 @@ long _InterlockedXor(long volatile *Destination, long Value);
 	#pragma intrinsic(_InterlockedCompareExchange16)
 #endif
 
-#ifdef _M_X64
-	void* _InterlockedExchangePointer(void* volatile *Target, void* Value);
-	void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand);
-
-	#pragma intrinsic(_InterlockedExchangePointer)
-	#pragma intrinsic(_InterlockedCompareExchangePointer)
-#else
-	inline void* _InterlockedExchangePointer(void* volatile *Target, void* Value) { return (void*)_InterlockedExchange((long volatile*)Target, (long)Value); }
-	#if _MSC_VER < 1700
-		inline void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand) { return (void*)_InterlockedCompareExchange((long volatile*)Destination, (long)(long*)Exchange, (long)(long*)Comperand); }
-	#endif
-#endif
-
 long long _InterlockedAdd64(long long volatile *Addend, long long Value);
 long long _InterlockedAnd64(long long volatile *Destination, long long Value);
 long long _InterlockedIncrement64(long long volatile *Addend);
@@ -124,6 +106,10 @@ long long _InterlockedCompareExchange64(long long volatile *Destination, long lo
 long long _InterlockedOr64(long long volatile *Destination, long long Value);
 long long _InterlockedXor64(long long volatile *Destination, long long Value);
 #ifdef _M_X64
+	void* _InterlockedExchangePointer(void* volatile *Target, void* Value);
+	void* _InterlockedCompareExchangePointer(void* volatile *Destination, void* Exchange, void* Comperand);
+	#pragma intrinsic(_InterlockedExchangePointer)
+	#pragma intrinsic(_InterlockedCompareExchangePointer)
 	//#pragma intrinsic(_InterlockedAdd64)
 	#pragma intrinsic(_InterlockedAnd64)
 	#pragma intrinsic(_InterlockedIncrement64)
