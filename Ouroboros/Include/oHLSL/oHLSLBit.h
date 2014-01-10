@@ -33,7 +33,7 @@
 
 #ifndef oHLSL
 #include <oHLSL/oHLSLTypesInternal.h>
-#include <oStd/intrinsics.h>
+#include <oHLSL/oHLSLIntrinsics.h>
 
 inline unsigned int countbits(unsigned long n)
 {

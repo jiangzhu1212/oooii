@@ -24,9 +24,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oStd\atomic.h">
-      <Filter>oStd</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oStd\thread.h">
       <Filter>oStd</Filter>
     </ClInclude>

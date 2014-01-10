@@ -32,7 +32,6 @@
 #include <oStd/condition_variable.h>
 #include <oStd/for.h>
 #include <oStd/future.h>
-#include <oStd/intrinsics.h>
 #include <oStd/make_unique.h>
 #include <oStd/mutex.h>
 #include <oStd/ratio.h>

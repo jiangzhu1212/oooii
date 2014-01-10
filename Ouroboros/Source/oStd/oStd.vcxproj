@@ -34,7 +34,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oStd\all.h" />
-    <ClInclude Include="..\..\Include\oStd\atomic.h" />
     <ClInclude Include="..\..\Include\oStd\chrono.h" />
     <ClInclude Include="..\..\Include\oStd\condition_variable.h" />
     <ClInclude Include="..\..\Include\oStd\for.h" />

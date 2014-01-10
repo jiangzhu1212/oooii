@@ -23,6 +23,7 @@
     <ClInclude Include="..\..\Include\oHLSL\all.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLAtomics.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLBit.h" />
+    <ClInclude Include="..\..\Include\oHLSL\oHLSLIntrinsics.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLMacros.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLMath.h" />
     <ClInclude Include="..\..\Include\oHLSL\oHLSLStructs.h" />

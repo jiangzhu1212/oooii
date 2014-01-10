@@ -46,7 +46,7 @@
 #include <oCompute/linear_algebra.h>
 #include <limits>
 
-#include <oStd/intrinsics.h> // for _BitScanReverse
+#include <oHLSL/oHLSLIntrinsics.h> // for _BitScanReverse
 
 // _____________________________________________________________________________
 // Denormalized float functions
