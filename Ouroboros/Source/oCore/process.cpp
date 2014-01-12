@@ -514,10 +514,10 @@ process::time_info process::get_time_info(id _ID)
 	LARGE_INTEGER li;
 	li.LowPart = k.dwLowDateTime;
 	li.HighPart = k.dwHighDateTime;
-	ti.kernel = chrono::duration_cast<chrono::seconds>(file_time(li.QuadPart)).count();
+	ti.kernel = std::chrono::duration_cast<std::chrono::seconds>(file_time(li.QuadPart)).count();
 	li.LowPart = u.dwLowDateTime;
 	li.HighPart = u.dwHighDateTime;
-	ti.user = chrono::duration_cast<chrono::seconds>(file_time(li.QuadPart)).count();
+	ti.user = std::chrono::duration_cast<std::chrono::seconds>(file_time(li.QuadPart)).count();
 
 	return ti;
 }
@@ -536,11 +536,11 @@ double process::cpu_usage(id _ID, unsigned long long* _pPreviousSystemTime, unsi
 	LARGE_INTEGER li;
 	li.LowPart = ftKernel.dwLowDateTime;
 	li.HighPart = ftKernel.dwHighDateTime;
-	kernel = chrono::duration_cast<chrono::seconds>(file_time(li.QuadPart)).count();
+	kernel = std::chrono::duration_cast<std::chrono::seconds>(file_time(li.QuadPart)).count();
 
 	li.LowPart = ftUser.dwLowDateTime;
 	li.HighPart = ftUser.dwHighDateTime;
-	user = chrono::duration_cast<chrono::seconds>(file_time(li.QuadPart)).count();
+	user = std::chrono::duration_cast<std::chrono::seconds>(file_time(li.QuadPart)).count();
 
 	unsigned long long totalSystemTime = kernel + user;
 	unsigned long long totalProcessTime = ti.kernel + ti.user;

@@ -32,9 +32,8 @@
 #ifndef oBase_date_h
 #define oBase_date_h
 
-#include <oStd/chrono.h>
 #include <oBase/uint128.h>
-
+#include <chrono>
 #include <climits>
 
 namespace ouro {
@@ -53,16 +52,19 @@ typedef unsigned long long ntp_timestamp;
 struct ntp_date : uint128 {};
 
 // This is a fixed-point representation of a portion of a second. According
-// to NTPv4 docs, oFractionalSecond32 will be in units of about 232 picoseconds 
-// and oFractionalSecond64 is in units of 0.05 attoseconds
-typedef oStd::chrono::duration<unsigned short, oStd::ratio<1,USHRT_MAX>> fractional_second16;
-typedef oStd::chrono::duration<unsigned int, oStd::ratio<1,UINT_MAX>> fractional_second32;
-typedef oStd::chrono::duration<unsigned long long, oStd::ratio<1,ULLONG_MAX>> fractional_second64;
-typedef oStd::chrono::duration<long long, oStd::pico> picoseconds;
-typedef oStd::chrono::duration<long long, oStd::atto> attoseconds;
+// to NTPv4 docs, fractional_second32 will be in units of about 232 picoseconds 
+// and fractional_second64 is in units of 0.05 attoseconds. Because std::ratio uses
+// intmax_t and not uintmax_t, fractional_second64 cannot be defined, so the maximum
+// precision will be attosecond.
+typedef std::chrono::duration<unsigned short, std::ratio<1,USHRT_MAX>> fractional_second16;
+typedef std::chrono::duration<unsigned int, std::ratio<1,UINT_MAX>> fractional_second32;
+typedef std::chrono::duration<long long, std::pico> picoseconds;
+typedef std::chrono::duration<long long, std::atto> attoseconds;
+typedef std::chrono::duration<double> secondsd;
 
 // this is in 100 nanosecond units
-typedef oStd::chrono::duration<long long, oStd::ratio<1,10000000>> file_time;
+typedef std::ratio<1,10000000> file_time_ratio;
+typedef std::chrono::duration<long long, file_time_ratio> file_time;
 
 class file_time_t // FILETIME on windows
 {
@@ -183,7 +185,7 @@ inline double get_ntp_fractional_seconds(const ntp_timestamp& _Timestamp) { retu
 // cast from one date type to another
 template<typename DateT1, typename DateT2> DateT1 date_cast(const DateT2& _Date);
 
-// Common date formats for use with oStd::strftime
+// Common date formats for use with strftime
 
 static const char* http_date_format = "%a, %d %b %Y %H:%M:%S GMT"; // Fri, 31 Dec 1999 23:59:59 GMT
 
