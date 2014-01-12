@@ -31,6 +31,7 @@
 #include <oStd/thread.h>
 #include <oBase/path.h>
 #include <functional>
+#include <chrono>
 
 namespace ouro {
 
@@ -70,16 +71,30 @@ public:
 		void wait();
 
 		template <typename Clock, typename Duration>
-		bool wait_until(const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime)
+		bool wait_until1(const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime)
 		{
 			oStd::chrono::high_resolution_clock::duration duration = oStd::chrono::time_point_cast<oStd::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - oStd::chrono::high_resolution_clock::now();
+			return wait_for1(duration);
+		}
+
+		template <typename Rep, typename Period>
+		bool wait_for1(const oStd::chrono::duration<Rep, Period>& _RelativeTime)
+		{
+			oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_RelativeTime);
+			return wait_for_ms(static_cast<unsigned int>(ms.count()));
+		}
+
+		template <typename Clock, typename Duration>
+		bool wait_until(const std::chrono::time_point<Clock, Duration>& _AbsoluteTime)
+		{
+			std::chrono::high_resolution_clock::duration duration = std::chrono::time_point_cast<std::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - std::chrono::high_resolution_clock::now();
 			return wait_for(duration);
 		}
 
 		template <typename Rep, typename Period>
-		bool wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime)
+		bool wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime)
 		{
-			oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_RelativeTime);
+			std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
 			return wait_for_ms(static_cast<unsigned int>(ms.count()));
 		}
 
@@ -164,9 +179,16 @@ public:
 
 	// returns false if the wait times out
 	template<typename Rep, typename Period>
-	inline bool wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime)
+	inline bool wait_for1(const oStd::chrono::duration<Rep, Period>& _RelativeTime)
 	{
 		oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_RelativeTime);
+		return wait_for_ms(get_id(), static_cast<unsigned int>(ms.count()));
+	}
+
+	template<typename Rep, typename Period>
+	inline bool wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime)
+	{
+		std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
 		return wait_for_ms(get_id(), static_cast<unsigned int>(ms.count()));
 	}
 

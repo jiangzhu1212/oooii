@@ -536,7 +536,7 @@ int spawn_for(const char* _CommandLine
 
 		TimeSoFar = t.seconds();
 
-	} while (TimeSoFar < Timeout && !P->wait_for(chrono::milliseconds(kTimeoutPerFlushMS)));
+	} while (TimeSoFar < Timeout && !P->wait_for(std::chrono::milliseconds(kTimeoutPerFlushMS)));
 	
 	// get any remaining text from stdout
 	size_t offset = 0;

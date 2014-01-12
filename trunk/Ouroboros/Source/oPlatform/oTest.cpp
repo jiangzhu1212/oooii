@@ -649,7 +649,7 @@ bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStr
 	mstring interprocessName;
 	snprintf(interprocessName, "oTest.%s.Started", SpecialTestName);
 	process::event Started(interprocessName);
-	oASSERTA(!Started.wait_for(oStd::chrono::milliseconds(0)), "Started event set when it shouldn't be (before start).");
+	oASSERTA(!Started.wait_for(std::chrono::milliseconds(0)), "Started event set when it shouldn't be (before start).");
 	#ifdef DEBUG_SPECIAL_TEST
 		_pProcess->start();
 	#endif
@@ -659,7 +659,7 @@ bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStr
 
 	if (testingDesc.EnableSpecialTestTimeouts)
 	{
-		if (!Started.wait_for(oStd::chrono::milliseconds(_TimeoutMS)))
+		if (!Started.wait_for(std::chrono::milliseconds(_TimeoutMS)))
 		{
 			snprintf(_StrStatus, _SizeofStrStatus, "Timed out waiting for %s to start.", SpecialTestName);
 			oTRACE("*** SPECIAL MODE UNIT TEST %s timed out waiting for Started event. (Ensure the special mode test sets the started event when appropriate.) ***", SpecialTestName);
@@ -675,7 +675,7 @@ bool oSpecialTest::Start(process* _pProcess, char* _StrStatus, size_t _SizeofStr
 		Started.wait();
 
 	// If we timeout on ending, that's good, it means the app is still running
-	if ((_pProcess->wait_for(oStd::chrono::milliseconds(200)) && _pProcess->exit_code(_pExitCode)))
+	if ((_pProcess->wait_for(std::chrono::milliseconds(200)) && _pProcess->exit_code(_pExitCode)))
 	{
 		xlstring msg;
 		size_t bytes = _pProcess->from_stdout(msg.c_str(), msg.capacity());
@@ -694,7 +694,7 @@ void oSpecialTest::NotifyReady()
 	const char* testName = type_name(typeid(*this).name());
 	snprintf(interprocessName, "oTest.%s.Started", testName);
 	process::event Ready(interprocessName);
-	oASSERTA(!Ready.wait_for(oStd::chrono::milliseconds(0)), "Ready event set when it shouldn't be (in NotifyReady).");
+	oASSERTA(!Ready.wait_for(std::chrono::milliseconds(0)), "Ready event set when it shouldn't be (in NotifyReady).");
 	Ready.set();
 }
 

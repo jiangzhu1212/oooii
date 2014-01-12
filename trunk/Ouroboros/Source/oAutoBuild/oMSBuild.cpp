@@ -107,7 +107,7 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, s
 		{
 			auto& Process = BuildProcess->second;
 
-			bool Finished = Process->wait_for(oStd::chrono::milliseconds(5));
+			bool Finished = Process->wait_for(std::chrono::seconds(5));
 
 			size_t SuccessRead = Process->from_stdout(StdOutDrain.c_str(), StdOutDrain.capacity() - 1);
 			StdOutDrain[SuccessRead] = 0;
@@ -172,7 +172,7 @@ private:
 	std::string Log;
 };
 
-bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, const oConcurrency::event& _CancelEvent, oMSBuildResults* _pResults)
+bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, const ouro::event& _CancelEvent, oMSBuildResults* _pResults)
 {
 	std::unordered_map<uri_string, LogContext, oStdHash<uri_string>, ouro::same<uri_string>> BuildLogs;
 
