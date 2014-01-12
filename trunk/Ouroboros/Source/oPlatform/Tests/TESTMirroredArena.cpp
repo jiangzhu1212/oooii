@@ -26,7 +26,7 @@
 #include <oBase/byte.h>
 #include <oCore/page_allocator.h>
 #include <oBasis/oError.h>
-#include <oConcurrency/event.h>
+#include <oBase/event.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>
@@ -264,7 +264,7 @@ struct PLATFORM_oMirroredArenaClient : public oSpecialTest
 
 		oTRACE("%s: MirroredArenaClient created", GetName());
 
-		oConcurrency::event connectEvent;
+		ouro::event connectEvent;
 		connectEvent.reset();
 		// Listen for a connection
 		ouro::intrusive_ptr<threadsafe oSocketServer2> server;

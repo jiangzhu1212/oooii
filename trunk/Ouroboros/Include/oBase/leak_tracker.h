@@ -29,7 +29,6 @@
 #ifndef oBase_leak_tracker_h
 #define oBase_leak_tracker_h
 
-#include <oStd/mutex.h>
 #include <oBase/algorithm.h>
 #include <oBase/countdown_latch.h>
 #include <oBase/fixed_string.h>
@@ -164,8 +163,8 @@ public:
 	void on_deallocate(unsigned int _AllocationID);
 
 private:
-	typedef oStd::recursive_mutex mutex_t;
-	typedef oStd::lock_guard<mutex_t> lock_t;
+	typedef std::recursive_mutex mutex_t;
+	typedef std::lock_guard<mutex_t> lock_t;
 
 	static struct hasher { size_t operator()(unsigned int _AllocationID) const { return _AllocationID; } };
 	typedef std::pair<const unsigned int, entry> pair_t;

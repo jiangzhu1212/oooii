@@ -62,25 +62,25 @@ private:
 template<typename TaskGroupT>
 void task_group_threadpool<TaskGroupT>::dispatch(const oTASK& _Task) threadsafe
 { 
-	begin_dispatch();
+	oThreadsafe(this)->begin_dispatch();
 	enable_leak_tracking_threadlocal(false);
 	oThreadsafe(TaskGroup).run(_Task);
 	enable_leak_tracking_threadlocal(true);
-	end_dispatch();
+	oThreadsafe(this)->end_dispatch();
 }
 
 template<typename TaskGroupT>
 void task_group_threadpool<TaskGroupT>::flush() threadsafe
 { 
-	begin_flush();
+	oThreadsafe(this)->begin_flush();
 	oThreadsafe(TaskGroup).wait();
-	end_flush();
+	oThreadsafe(this)->end_flush();
 }
 
 template<typename TaskGroupT>
 void task_group_threadpool<TaskGroupT>::join() threadsafe
 { 
-	joinable_threadpool_base::join();
+	oThreadsafe(this)->joinable_threadpool_base::join();
 	oThreadsafe(TaskGroup).wait();
 }
 

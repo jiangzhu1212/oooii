@@ -26,6 +26,8 @@
 #include <oBase/assert.h>
 #include <oStd/for.h>
 
+using namespace std;
+
 namespace ouro {
 
 size_t leak_tracker::num_outstanding_allocations(bool _CurrentContextOnly)
@@ -47,7 +49,7 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 	sstring memsize;
 
 	release_delay();
-	if (oStd::cv_status::timeout == DelayLatch.wait_for(oStd::chrono::milliseconds(Info.expected_delay_ms))) // some delayed frees might be in threads that get stomped on (thus no exit code runs) during static deinit, so don't wait forever
+	if (cv_status::timeout == DelayLatch.wait_for(chrono::milliseconds(Info.expected_delay_ms))) // some delayed frees might be in threads that get stomped on (thus no exit code runs) during static deinit, so don't wait forever
 		oTRACE("WARNING: a delay on the leak report count was added, but has yet to be released. The timeout has been reached, so this report will include delayed releases that haven't (yet) occurred.");
 
 	// Some 3rd party task systems (TBB) may not have good API for ensuring they
@@ -58,7 +60,7 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 	if (CheckedNumLeaks > 0)
 	{
 		oTRACE("There are potentially %u leaks(s), sleeping and checking again to eliminate async false positives...", CheckedNumLeaks);
-		oStd::this_thread::sleep_for(oStd::chrono::milliseconds(Info.unexpected_delay_ms));
+		this_thread::sleep_for(chrono::milliseconds(Info.unexpected_delay_ms));
 		RecoveredFromAsyncLeaks = true;
 	}
 
@@ -180,7 +182,7 @@ void leak_tracker::on_deallocate(unsigned int _AllocationID)
 
 void leak_tracker::thread_local_tracking(bool _Enabled)
 {
-	oStd::lock_guard<oStd::recursive_mutex> Lock(Mutex);
+	lock_guard<recursive_mutex> Lock(Mutex);
 	Internal = true;
 	Info.thread_local_tracking_enabled() = _Enabled;
 	Internal = false;

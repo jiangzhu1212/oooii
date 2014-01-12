@@ -32,6 +32,7 @@
 #include "d3d11_util.h"
 #include <oCore/windows/win_util.h>
 #include <oGUI/window.h>
+#include <mutex>
 #include <vector>
 
 #include <oBasis/oRefCount.h>
@@ -154,7 +155,7 @@ struct oD3D11Device : oGPUDevice
 	oRefCount RefCount;
 	std::atomic<uint> FrameID;
 
-	oStd::mutex CommandListsInsertRemoveMutex;
+	std::mutex CommandListsInsertRemoveMutex;
 	ouro::shared_mutex CommandListsBeginEndMutex;
 	ouro::shared_mutex FrameMutex;
 	ouro::shared_mutex SwapChainMutex;

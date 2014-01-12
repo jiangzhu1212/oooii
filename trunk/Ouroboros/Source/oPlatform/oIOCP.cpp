@@ -27,15 +27,15 @@
 #include <oBase/backoff.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oRefCount.h>
-#include <oConcurrency/countdown_latch.h>
-#include <oConcurrency/mutex.h>
 #include <oPlatform/oSingleton.h>
 #include <oCore/reporting.h>
 #include <winsock2.h>
+#include <mutex>
 
 #include <oCore/windows/win_error.h>
 
 using namespace ouro;
+using namespace std;
 
 #define IOCPKEY_SHUTDOWN 1
 #define IOCPKEY_USER_TASK 2
@@ -94,7 +94,7 @@ bool IOCPCompletionRoutine(HANDLE _hIOCP, unsigned int _TimeoutMS = INFINITE)
 	return true;
 }
 
-void IOCPThread(HANDLE	_hIOCP, unsigned int _Index, oConcurrency::countdown_latch* _pLatch)
+void IOCPThread(HANDLE	_hIOCP, unsigned int _Index, ouro::countdown_latch* _pLatch)
 {
 	_pLatch->release();
 	_pLatch = nullptr; // Drop the latch as it's not valid after releasing
@@ -169,24 +169,24 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 			return;
 		}
 
-		oConcurrency::countdown_latch InitLatch(NumThreads);  // Create a latch to ensure by the time we return from the constructor all threads have initialized properly.
+		ouro::countdown_latch InitLatch(NumThreads);  // Create a latch to ensure by the time we return from the constructor all threads have initialized properly.
 		WorkerThreads.resize(NumThreads);
 		for(unsigned int i = 0; i < NumThreads; i++)
 		{
-			WorkerThreads[i] = oStd::thread(&IOCPThread, hIOCP, i, &InitLatch);
+			WorkerThreads[i] = std::move(std::thread(&IOCPThread, hIOCP, i, &InitLatch));
 		}
 		InitLatch.wait();
 	}
 
 	~oIOCP_Singleton()
 	{
-		oFOR(oStd::thread& Thread, WorkerThreads)
+		oFOR(std::thread& Thread, WorkerThreads)
 		{
 			// Post a shutdown message for each worker to unblock and disable it.
 			PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, nullptr);
 		}
 
-		oFOR(oStd::thread& Thread, WorkerThreads)
+		oFOR(std::thread& Thread, WorkerThreads)
 			Thread.join();
 
 		if (INVALID_HANDLE_VALUE != hIOCP)
@@ -219,7 +219,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 			#endif
 		}
 
-		oConcurrency::lock_guard<oConcurrency::mutex> lock(Mutex);
+		lock_guard<mutex> lock(Mutex);
 		CheckForOrphans(true);
 	}
 
@@ -234,7 +234,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	oIOCPContext* RegisterIOCP(oHandle& _Handle, oIOCP_Impl* _pIOCP)
 	{
-		oConcurrency::lock_guard<oConcurrency::mutex> lock(Mutex);
+		lock_guard<mutex> lock(Mutex);
 		++OutstandingContextCount;
 		CheckForOrphans();
 
@@ -252,7 +252,7 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	void UnregisterIOCP(oIOCPContext* _pContext)
 	{
-		oConcurrency::lock_guard<oConcurrency::mutex> lock(Mutex);
+		lock_guard<mutex> lock(Mutex);
 		oIOCPOrphan Context;
 		Context.pContext = _pContext;
 		Context.TimeReleased = ouro::timer::now();
@@ -310,17 +310,17 @@ private:
 	};
 
 	typedef fixed_vector<oIOCPOrphan,oKB(16)> tOrphanList;
-	typedef std::vector<oStd::thread> tThreadList;			
+	typedef std::vector<std::thread> tThreadList;			
 
 	HANDLE			hIOCP;
 	tOrphanList		OrphanedContexts;
 	tThreadList		WorkerThreads;
-	oConcurrency::mutex			Mutex;
+	mutex			Mutex;
 	volatile int	OutstandingContextCount;
 };
 
 // {3DF7A5F8-BD85-4BC0-B295-DF86144C34A5}
-const oGUID oIOCP_Singleton::GUID = { 0x3df7a5f8, 0xbd85, 0x4bc0, { 0xb2, 0x95, 0xdf, 0x86, 0x14, 0x4c, 0x34, 0xa5 } };
+const ouro::guid oIOCP_Singleton::GUID = { 0x3df7a5f8, 0xbd85, 0x4bc0, { 0xb2, 0x95, 0xdf, 0x86, 0x14, 0x4c, 0x34, 0xa5 } };
 oSINGLETON_REGISTER(oIOCP_Singleton);
 
 void oIOCP_Impl::Release() threadsafe

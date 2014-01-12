@@ -37,9 +37,8 @@
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/basic_threadpool.h>
 #include <oConcurrency/concurrent_worklist.h>
-#include <oConcurrency/countdown_latch.h>
-#include <oConcurrency/thread_safe.h>
 #include <oBase/backoff.h>
+#include <oBase/countdown_latch.h>
 #include <stdexcept>
 #include <vector>
 
@@ -66,12 +65,12 @@ public:
 
 	// The task will execute on any given worker thread. There is no order-of-
 	// execution guarantee.
-	void dispatch(const oTASK& _Task) threadsafe;
+	void dispatch(const oTASK& _Task);
 
 protected:
 	template<typename Alloc> friend class detail::task_group;
 
-	mutex LocalQueuesMutex;
+	std::mutex LocalQueuesMutex;
 	std::vector<concurrent_worklist<oTASK, allocator_type>*> LocalQueues;
 	std::vector<oStd::thread::id> WorkerIDs;
 	static thread_local concurrent_worklist<oTASK, allocator_type>* pLocalQueue;
@@ -82,7 +81,7 @@ protected:
 	// 'global' variable. The bug has to do with std::bind and seems to affect
 	// 2 or more parameters bound by functions, be they methods of functions. 
 	// Revisit this in VS11.
-	static thread_local threadsafe detail::task_group<allocator_type>* pTaskGroup;
+	static thread_local detail::task_group<allocator_type>* pTaskGroup;
 
 	void worker_proc();
 	void work();
@@ -99,7 +98,7 @@ protected:
 };
 
 template<typename Alloc> thread_local concurrent_worklist<oTASK, Alloc>* threadpool<Alloc>::pLocalQueue;
-template<typename Alloc> thread_local threadsafe oConcurrency::detail::task_group<Alloc>* oConcurrency::threadpool<Alloc>::pTaskGroup;
+template<typename Alloc> thread_local oConcurrency::detail::task_group<Alloc>* oConcurrency::threadpool<Alloc>::pTaskGroup;
 
 template<typename Alloc>
 threadpool<Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
@@ -121,7 +120,7 @@ void threadpool<Alloc>::begin()
 
 	// don't use push_back so we can skip any validity checks when iterating 
 	// through LocalQueues in the main proc loop.
-	lock_guard<mutex> Lock(LocalQueuesMutex);
+	std::lock_guard<std::mutex> Lock(LocalQueuesMutex);
 	for (size_t i = 0; i < LocalQueues.size(); i++)
 	{
 		if (!LocalQueues[i])
@@ -158,7 +157,7 @@ void threadpool<Alloc>::end()
 }
 
 template<typename Alloc>
-void threadpool<Alloc>::dispatch(const oTASK& _Task) threadsafe
+void threadpool<Alloc>::dispatch(const oTASK& _Task)
 {
 	if (Running)
 	{
@@ -167,15 +166,15 @@ void threadpool<Alloc>::dispatch(const oTASK& _Task) threadsafe
 			pLocalQueue->push_local(_Task);
 			if (NumWorking == 0)
 			{
-				unique_lock<mutex> Lock(Mutex);
+				std::unique_lock<std::mutex> Lock(Mutex);
 				WorkAvailable.notify_one();
 			}
 		}
 
 		else
 		{
-			unique_lock<mutex> Lock(Mutex);
-			oThreadsafe(GlobalQueue).push_back(_Task);
+			std::unique_lock<std::mutex> Lock(Mutex);
+			GlobalQueue.push_back(_Task);
 			if (NumWorking == 0)
 				WorkAvailable.notify_one();
 		}
@@ -216,7 +215,7 @@ void threadpool<Alloc>::work()
 			while (true)
 			{
 				{
-					unique_lock<mutex> Lock(Mutex);
+					std::unique_lock<std::mutex> Lock(Mutex);
 
 					if (!Running && pLocalQueue->empty() && GlobalQueue.empty())
 						return;
@@ -301,15 +300,15 @@ public:
 	task_group(threadpool<allocator_type>& _Threadpool);
 
 	// Run a task as part of this task group
-	void run(const oTASK& _Task) threadsafe;
+	void run(const oTASK& _Task);
 
 	// blocks until all tasks associated with this task group are finished. While
 	// waiting, this work steals.
-	void wait() threadsafe;
+	void wait();
 
 protected:
 	threadpool<allocator_type>& Threadpool;
-	countdown_latch Latch;
+	ouro::countdown_latch Latch;
 	friend threadpool<allocator_type>;
 };
 
@@ -324,14 +323,14 @@ task_group<Alloc>::task_group(threadpool<Alloc>& _Threadpool)
 }
 
 template<typename Alloc>
-void task_group<Alloc>::run(const oTASK& _Task) threadsafe
+void task_group<Alloc>::run(const oTASK& _Task)
 {
 	Latch.reference();
 	Threadpool.dispatch([&,_Task] { _Task(); Latch.release(); });
 }
 
 template<typename Alloc>
-void task_group<Alloc>::wait() threadsafe
+void task_group<Alloc>::wait()
 {
 	// only block the calling thread if it's not a worker. If a worker, work
 	if (!Threadpool.pLocalQueue)
@@ -343,7 +342,7 @@ void task_group<Alloc>::wait() threadsafe
 
 	else
 	{
-		threadsafe task_group<Alloc>* pOldTaskGroup = Threadpool.pTaskGroup;
+		task_group<Alloc>* pOldTaskGroup = Threadpool.pTaskGroup;
 		Threadpool.pTaskGroup = this;
 		Threadpool.work();
 		Threadpool.pTaskGroup = pOldTaskGroup;

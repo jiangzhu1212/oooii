@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBasis/oError.h>
 #include <oBasis/oRefCount.h>
-#include <oConcurrency/event.h>
+#include <oBase/event.h>
 #include <oCore/process.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>
@@ -47,7 +47,7 @@ struct PLATFORM_oSocketBlockingServer : public oSpecialTest
 	{		
 		ouro::intrusive_ptr<threadsafe oSocketServer2> Server;
 		ouro::intrusive_ptr<threadsafe oSocket> Client;
-		oConcurrency::event connectEvent;
+		ouro::event connectEvent;
 		connectEvent.reset();
 		
 		unsigned int Timeout = INITIAL_CONNECTION_TIMEOUT;

@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oBuffer.h>
-#include <oConcurrency/event.h>
+#include <oBase/event.h>
 #include <oBase/finally.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oSocket.h>
@@ -94,7 +94,7 @@ struct TCPServerCallback : public oSocketAsyncCallback
 	}
 	void ProcessSocketSend(void*_pHeader, void* _pBody, oSocket::size_t _SizeData, const oNetAddr& _Addr, interface oSocket* _pSocket) threadsafe override
 	{ 
-		MessageArrived.set();
+		thread_cast<ouro::event&>(MessageArrived).set();
 	}
 
 	void InitiateReceive(threadsafe oSocket* _pSocket, bool _IssueCompleteReceive = false)
@@ -109,7 +109,7 @@ struct TCPServerCallback : public oSocketAsyncCallback
 
 	unsigned int CurrentOffset;
 	unsigned int ExpectedMessageLength;
-	oConcurrency::event MessageArrived;
+	ouro::event MessageArrived;
 	char Results[1024*1024];
 };
 
@@ -187,7 +187,7 @@ struct PLATFORM_oSocketAsync : public oTest
 
 		ouro::intrusive_ptr<threadsafe oSocketServer2> Server;
 		ouro::intrusive_ptr<threadsafe oSocket> Socket;
-		oConcurrency::event connectEvent;
+		ouro::event connectEvent;
 
 		oSocketServer2::DESC ServerDesc;
 		ServerDesc.ListenPort = 4545;

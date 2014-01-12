@@ -265,10 +265,10 @@ struct basic_threadpool_impl : test_threadpool
 	basic_threadpool<std::allocator<oTASK>> t;
 	~basic_threadpool_impl() { t.join(); }
 	const char* name() const threadsafe override { return "basic_threadpool"; }
-	void dispatch(const oTASK& _Task) threadsafe override { return t.dispatch(_Task); }
+	void dispatch(const oTASK& _Task) threadsafe override { return thread_cast<basic_threadpool_impl*>(this)->t.dispatch(_Task); }
 	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) threadsafe override { return false; }
-	void flush() threadsafe override { t.flush(); }
-	void release() threadsafe override { t.join(); }
+	void flush() threadsafe override { thread_cast<basic_threadpool_impl*>(this)->t.flush(); }
+	void release() threadsafe override { thread_cast<basic_threadpool_impl*>(this)->t.join(); }
 };
 
 struct threadpool_impl : test_threadpool
@@ -276,15 +276,15 @@ struct threadpool_impl : test_threadpool
 	threadpool<std::allocator<oTASK>> t;
 	~threadpool_impl() { t.join(); }
 	const char* name() const threadsafe override { return "threadpool"; }
-	void dispatch(const oTASK& _Task) threadsafe override { return t.dispatch(_Task); }
+	void dispatch(const oTASK& _Task) threadsafe override { return thread_cast<threadpool_impl*>(this)->t.dispatch(_Task); }
 	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) threadsafe override
 	{
 		oConcurrency::detail::parallel_for<16>(oThreadsafe(t), _Begin, _End, _Task);
 		return true;
 	}
 
-	void flush() threadsafe override { t.flush(); }
-	void release() threadsafe override { t.join(); }
+	void flush() threadsafe override { thread_cast<threadpool_impl*>(this)->t.flush(); }
+	void release() threadsafe override { thread_cast<threadpool_impl*>(this)->t.join(); }
 };
 
 namespace {

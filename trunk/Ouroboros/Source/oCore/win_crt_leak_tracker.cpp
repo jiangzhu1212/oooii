@@ -90,7 +90,7 @@ protected:
 
 	static int malloc_hook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
 
-	oStd::mutex Mutex;
+	std::mutex Mutex;
 	ouro::leak_tracker* pLeakTracker;
 	size_t NonLinearBytes;
 	_CRT_ALLOC_HOOK OriginalAllocHook;
