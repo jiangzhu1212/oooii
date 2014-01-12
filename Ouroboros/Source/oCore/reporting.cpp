@@ -33,7 +33,7 @@
 #include <oCore/system.h>
 #include <oCore/windows/win_exception_handler.h>
 #include <oStd/for.h>
-#include <oStd/mutex.h>
+#include <mutex>
 
 #include <oGUI/msgbox.h>
 
@@ -140,7 +140,7 @@ assert_action::value prompt_msgbox(const assert_context& _Assertion, const char*
 // End of code to possibly move
 // _____________________________________________________________________________
 
-#define LOCK() oStd::lock_guard<oStd::recursive_mutex> lock(Mutex)
+#define LOCK() std::lock_guard<std::recursive_mutex> lock(Mutex)
 
 class context
 {
@@ -168,7 +168,7 @@ private:
 	~context();
 
 	info Info;
-	mutable oStd::recursive_mutex Mutex;
+	mutable std::recursive_mutex Mutex;
 
 	fixed_vector<unsigned int, 256> Filters;
 	fixed_vector<emitter, 16> Emitters;

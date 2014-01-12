@@ -29,7 +29,6 @@
 #define oCore_win_crt_leak_tracker_h
 
 #include <oBase/leak_tracker.h>
-#include <oStd/mutex.h>
 #include <unordered_map>
 
 namespace ouro {

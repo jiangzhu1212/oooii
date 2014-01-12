@@ -32,9 +32,6 @@
 #include <windows.h>
 #include <comutil.h>
 
-// primarily intended for id classes
-template<typename T> DWORD asdword(const T& _ID) { return *((DWORD*)&_ID); }
-
 // intrusive_ptr support
 inline ULONG ref_count(IUnknown* unk) { ULONG r = unk->AddRef()-1; unk->Release(); return r; }
 inline void intrusive_ptr_add_ref(IUnknown* unk) { unk->AddRef(); }
@@ -80,5 +77,17 @@ private:
 
 	} // namespace windows
 } // namespace ouro
+
+// primarily intended for id classes
+template<typename T> DWORD asdword(const T& _ID) { return *((DWORD*)&_ID); }
+template<> inline DWORD asdword(const std::thread::id& _ID) { return ((_Thrd_t*)&_ID)->_Id; }
+inline std::thread::id astid(DWORD _ID)
+{
+	_Thrd_t tid; 
+	ouro::windows::scoped_handle h(OpenThread(THREAD_QUERY_LIMITED_INFORMATION, FALSE, _ID));
+	tid._Hnd = h;
+	tid._Id = _ID;
+	return *(std::thread::id*)&tid;
+}
 
 #endif
