@@ -377,7 +377,7 @@ bool oD3D11Device::CreatePrimaryRenderTarget(ouro::window* _pWindow, ouro::surfa
 
 bool oD3D11Device::CLInsert(oGPUCommandList* _pCommandList) threadsafe
 {
-	oStd::lock_guard<oStd::mutex> lock(thread_cast<oStd::mutex&>(CommandListsInsertRemoveMutex));
+	std::lock_guard<std::mutex> lock(thread_cast<std::mutex&>(CommandListsInsertRemoveMutex));
 	oD3D11Device* pThis = thread_cast<oD3D11Device*>(this);
 
 	oGPUCommandList::DESC d;
@@ -445,7 +445,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 
 void oD3D11Device::CLRemove(oGPUCommandList* _pCommandList) threadsafe
 {
-	oStd::lock_guard<oStd::mutex> lock(thread_cast<oStd::mutex&>(CommandListsInsertRemoveMutex));
+	std::lock_guard<std::mutex> lock(thread_cast<std::mutex&>(CommandListsInsertRemoveMutex));
 	oD3D11Device* pThis = thread_cast<oD3D11Device*>(this);
 	find_and_erase(pThis->CommandLists, _pCommandList);
 }
@@ -462,10 +462,10 @@ void oD3D11Device::CLUnlockSubmit() threadsafe
 
 void oD3D11Device::DrawCommandLists() threadsafe
 {
-	oStd::lock_guard<oStd::mutex> lock(thread_cast<oStd::mutex&>(CommandListsInsertRemoveMutex));
+	std::lock_guard<std::mutex> lock(thread_cast<std::mutex&>(CommandListsInsertRemoveMutex));
 	oD3D11Device* pThis = thread_cast<oD3D11Device*>(this);
 
-	oStd::lock_guard<shared_mutex> lock2(thread_cast<shared_mutex&>(CommandListsBeginEndMutex));
+	std::lock_guard<shared_mutex> lock2(thread_cast<shared_mutex&>(CommandListsBeginEndMutex));
 
 	oFOR(oGPUCommandList* pGPUCommandList, pThis->CommandLists)
 	{

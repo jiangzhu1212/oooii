@@ -27,11 +27,12 @@
 #define oDispatchQueueGlobalT_h
 
 #include <oBasis/oRefCount.h>
-#include <oConcurrency/mutex.h>
 #include <oBase/assert.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oInitOnce.h>
+#include <oStd/shared_mutex.h>
 #include <list>
+#include <thread>
 
 // Template for creating dispatch queues that run in order, but each task may run 
 // on any thread including the caller of flush/join.
@@ -76,12 +77,12 @@ struct oDispatchQueueGlobalT : public oDispatchQueueGlobal, T
 	oInitOnce<ouro::sstring> DebugName;
 	typedef std::list<oTASK> tasks_t;
 	tasks_t Tasks;
-	oConcurrency::shared_mutex TaskLock;
-	oConcurrency::shared_mutex FlushLock;
+	ouro::shared_mutex TaskLock;
+	mutable ouro::shared_mutex FlushLock;
 	bool IsJoinable;
 	unsigned int ExecuteKey;
 
-	oStd::thread::id ExecuteThreadID;
+	std::thread::id ExecuteThreadID;
 };
 
 template<typename T>
@@ -110,13 +111,13 @@ bool oDispatchQueueGlobalT<T>::Dispatch(const oTASK& _Task) threadsafe
 {
 	bool Scheduled = false;
 
-	if (IsJoinable && FlushLock.try_lock_shared())
+	if (IsJoinable && thread_cast<ouro::shared_mutex&>(FlushLock).try_lock_shared())
 	{
 		size_t TaskCount = 0;
 
 		// Queue up command
 		{
-			oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(TaskLock);
+			std::lock_guard<ouro::shared_mutex> Lock(thread_cast<ouro::shared_mutex&>(TaskLock));
 			// Add this command to the queue
 			oThreadsafe(Tasks).push_back(_Task);
 			TaskCount = oThreadsafe(Tasks).size();
@@ -127,7 +128,7 @@ bool oDispatchQueueGlobalT<T>::Dispatch(const oTASK& _Task) threadsafe
 		if (1 == TaskCount)
 			Issue(std::bind(&oDispatchQueueGlobalT::ExecuteNext, this, ouro::intrusive_ptr<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
 
-		FlushLock.unlock_shared();
+		thread_cast<ouro::shared_mutex&>(FlushLock).unlock_shared();
 	}
 
 	return Scheduled;
@@ -161,9 +162,9 @@ void oDispatchQueueGlobalT<T>::Join() threadsafe
 	// tasks ourselves. This condition happens when a task is holding a reference 
 	// to an object that holds this queue, and is the last reference. Then when 
 	// the task is destroyed the parent object is destroyed and that can call join.
-	if (oThreadsafe(ExecuteThreadID) != oStd::this_thread::get_id())
+	if (oThreadsafe(ExecuteThreadID) != std::this_thread::get_id())
 	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(FlushLock);
+		std::lock_guard<ouro::shared_mutex> Lock(oThreadsafe(FlushLock));
 		flushTasks();
 	}
 	else
@@ -178,9 +179,9 @@ void oDispatchQueueGlobalT<T>::Join() threadsafe
 template<typename T>
 void oDispatchQueueGlobalT<T>::ExecuteNext(ouro::intrusive_ptr<threadsafe oDispatchQueueGlobalT> _SelfRef, unsigned int _ExecuteKey) threadsafe
 {
-	if (IsJoinable && _ExecuteKey == ExecuteKey && FlushLock.try_lock_shared())
+	if (IsJoinable && _ExecuteKey == ExecuteKey && oThreadsafe(FlushLock).try_lock_shared())
 	{
-		oThreadsafe(this)->ExecuteThreadID = oStd::this_thread::get_id();
+		oThreadsafe(this)->ExecuteThreadID = std::this_thread::get_id();
 
 		size_t TaskCount = 0;
 		{
@@ -192,19 +193,19 @@ void oDispatchQueueGlobalT<T>::ExecuteNext(ouro::intrusive_ptr<threadsafe oDispa
 			task = std::move(oThreadsafe(Tasks).front());
 			task();
 		}
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(TaskLock);
+		std::lock_guard<ouro::shared_mutex> Lock(oThreadsafe(TaskLock));
 		// Remove command
 		//if deleting the task triggered a join, its possible there isn't a task to remove. if that happens, its guaranteed the task list will be empty, not just missing a single task.
 		if(!oThreadsafe(Tasks).empty()) 
 			oThreadsafe(Tasks).pop_front();
 		TaskCount = oThreadsafe(Tasks).size();
-		oThreadsafe(this)->ExecuteThreadID = oStd::thread::id();
+		oThreadsafe(this)->ExecuteThreadID = std::thread::id();
 			
 		// If there are remaining Tasks execute the next
 		if (TaskCount > 0)
 			Issue(std::bind(&oDispatchQueueGlobalT::ExecuteNext, this, ouro::intrusive_ptr<threadsafe oDispatchQueueGlobalT>(this), ExecuteKey));
 
-		FlushLock.unlock_shared();
+		oThreadsafe(FlushLock).unlock_shared();
 	}
 }
 

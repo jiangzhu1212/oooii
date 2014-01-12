@@ -34,7 +34,7 @@
 #include <windows.h>
 #include <DbgHelp.h>
 
-using namespace oStd;
+using namespace std;
 
 #pragma pack(push,8)
 typedef struct tagTHREADNAME_INFO
@@ -58,7 +58,7 @@ void thread_name(const char* _Name, thread::id _ID)
 		THREADNAME_INFO i;
 		i.dwType = 0x1000;
 		i.szName = _Name;
-		i.dwThreadID = _ID == oStd::thread::id() ? GetCurrentThreadId() : asdword(_ID);
+		i.dwThreadID = _ID == std::thread::id() ? GetCurrentThreadId() : asdword(_ID);
 		i.dwFlags = 0;
 		const static DWORD MS_VC_EXCEPTION = 0x406D1388;
 		__try { RaiseException(MS_VC_EXCEPTION, 0, sizeof(i)/sizeof(ULONG_PTR), (ULONG_PTR*)&i); }

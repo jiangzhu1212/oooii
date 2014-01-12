@@ -27,7 +27,6 @@
 #include <oBase/assert.h>
 #include <oBase/throw.h>
 #include <oStd/for.h>
-#include <oStd/thread.h>
 
 #include <oCore/reporting.h>
 #include <oCore/windows/win_error.h>
@@ -45,7 +44,7 @@
 	#define oWINDOWS_HAS_TRAY_QUIETTIME
 #endif
 
-using namespace oStd;
+using namespace std;
 
 namespace ouro {
 	namespace notification_area {

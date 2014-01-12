@@ -32,8 +32,7 @@
 
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/basic_threadpool.h>
-#include <oConcurrency/thread_safe.h>
-#include <oConcurrency/mutex.h>
+#include <oStd/shared_mutex.h>
 
 namespace oConcurrency {
 
@@ -47,7 +46,7 @@ class joinable_threadpool_base
 
 public:
 	// Returns whether this is joinable_threadpool_base or not.
-	bool joinable() const threadsafe { return State != JOINED; }
+	bool joinable() const { return State != JOINED; }
 
 protected:
 	joinable_threadpool_base() : State(JOINABLE) {}
@@ -55,28 +54,28 @@ protected:
 	// Lock around the underlying dispatch/execute/kickoff call, and only issue
 	// if begin_dispatch doesn't throw an exception. Remember a join will 
 	// invalidate the thread pool like a std::thread's join.
-	void begin_dispatch() threadsafe
+	void begin_dispatch()
 	{
 		if (State != JOINABLE || !Mutex.try_lock_shared())
 			throw std::out_of_range("threadpool call after join");
 	}
 
 	// Call this after calling the underlying dispatch call.
-	void end_dispatch() threadsafe { Mutex.unlock_shared(); }
+	void end_dispatch() { Mutex.unlock_shared(); }
 
 	// Call this as the first line of the flush implementation to ensure new 
 	// dispatches are locked out.
-	void begin_flush() threadsafe { Mutex.lock(); State = FLUSHING; }
+	void begin_flush() { Mutex.lock(); State = FLUSHING; }
 
 	// Call this once the schedule is empty to resume a valid dispatch state.
-	void end_flush() threadsafe { Mutex.unlock(); State = JOINABLE; }
+	void end_flush() { Mutex.unlock(); State = JOINABLE; }
 
 	// Call this as the first line of the join implementation to ensure new 
 	// dispatches are locked out.
-	void join() threadsafe { lock_guard<shared_mutex> lock(Mutex); State = JOINED; }
+	void join() { std::lock_guard<ouro::shared_mutex> lock(Mutex); State = JOINED; }
 
 private:
-	shared_mutex Mutex;
+	ouro::shared_mutex Mutex;
 	enum STATE { JOINABLE, FLUSHING, JOINED, };
 	STATE State;
 };

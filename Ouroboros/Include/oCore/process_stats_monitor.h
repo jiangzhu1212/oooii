@@ -60,7 +60,7 @@ public:
 			, PollRate(_PollRate)
 	{
 		reset();
-		Thread = std::move(oStd::thread(&process_stats_monitor::thread_proc, this));
+		Thread = std::move(std::thread(&process_stats_monitor::thread_proc, this));
 		backoff bo;
 		while (Done)
 			bo.pause();
@@ -151,7 +151,7 @@ private:
 	oStd::chrono::milliseconds PollRate;
 	process::id PID;
 	bool Done;
-	oStd::thread Thread;
+	std::thread Thread;
 };
 
 } // namespace ouro

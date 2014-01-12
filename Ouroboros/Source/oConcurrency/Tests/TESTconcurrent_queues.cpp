@@ -25,7 +25,7 @@
 #include <oConcurrency/concurrent_queue.h>
 #include <oConcurrency/concurrent_queue_opt.h>
 #include <oConcurrency/concurrent_worklist.h>
-#include <oConcurrency/event.h>
+#include <oBase/event.h>
 #include <oBase/finally.h>
 #include <oBase/assert.h>
 #include <oStd/for.h>
@@ -33,6 +33,7 @@
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <atomic>
+#include <thread>
 #include <vector>
 
 using namespace ouro;
@@ -155,11 +156,11 @@ static void test_concurrent_pushes(const char* _QueueName)
 
 	// Scope to ensure queue is cleaned up AFTER all threads.
 	{
-		std::vector<oStd::thread> threadArray(oStd::thread::hardware_concurrency() + 5); // throw in some contention
+		std::vector<std::thread> threadArray(std::thread::hardware_concurrency() + 5); // throw in some contention
 		ExpectedSize = NumPushes * threadArray.size();
 
 		for (size_t i = 0; i < threadArray.size(); i++)
-			threadArray[i] = oStd::thread(push_task<T, QueueT>, &q, NumPushes);
+			threadArray[i] = std::thread(push_task<T, QueueT>, &q, NumPushes);
 
 		for (size_t i = 0; i < threadArray.size(); i++)
 			threadArray[i].join();
@@ -181,7 +182,7 @@ static void test_concurrent_pops(const char* _QueueName)
 		// Scope to ensure queue is cleaned up AFTER all threads.
 		const size_t NumPops = 100;
 		{
-			std::vector<oStd::thread> threadArray(oStd::thread::hardware_concurrency() + 5); // throw in some contention
+			std::vector<std::thread> threadArray(std::thread::hardware_concurrency() + 5); // throw in some contention
 			size_t InitialSize = T(NumPops * threadArray.size());
 			for (T i = 0; i < T(InitialSize); i++)
 				q.push(i);
@@ -190,7 +191,7 @@ static void test_concurrent_pops(const char* _QueueName)
 			oCHECK(ActualSize == InitialSize, "size (%u) != #pushes (%u)", ActualSize, InitialSize);
 
 			for (size_t i = 0; i < threadArray.size(); i++)
-				threadArray[i] = oStd::thread(pop_task<T, QueueT>, &q, NumPops);
+				threadArray[i] = std::thread(pop_task<T, QueueT>, &q, NumPops);
 
 			for (size_t i = 0; i < threadArray.size(); i++)
 				threadArray[i].join();
@@ -214,10 +215,10 @@ static void test_concurrency(const char* _QueueName)
 
 	// Scope to ensure queue is cleaned up AFTER all threads.
 	{
-		std::vector<oStd::thread> threadArray(oStd::thread::hardware_concurrency() + 5); // throw in some contention
+		std::vector<std::thread> threadArray(std::thread::hardware_concurrency() + 5); // throw in some contention
 
 		for (size_t i = 0; i < threadArray.size(); i++)
-			threadArray[i] = oStd::thread(push_and_pop_task<T, QueueT>, &q, 1000, 100);
+			threadArray[i] = std::thread(push_and_pop_task<T, QueueT>, &q, 1000, 100);
 
 		for (size_t i = 0; i < threadArray.size(); i++)
 			threadArray[i].join();
@@ -437,11 +438,11 @@ static void test_stealing(const std::function<void(worklist_t& _WorkParam, std::
 	std::atomic<int> Results[kNumTasks];
 	memset(Results, 0, sizeof(Results));
 	bool Done = false;
-	oStd::thread t(_Function, std::ref(_Work), Results, &Done);
+	std::thread t(_Function, std::ref(_Work), Results, &Done);
 
-	std::vector<oStd::thread> thieves;
-	for (unsigned int i = 0; i < oStd::thread::hardware_concurrency() + 5; i++)
-		thieves.push_back(std::move(oStd::thread(try_steal, std::ref(_Work), Results, &Done)));
+	std::vector<std::thread> thieves;
+	for (unsigned int i = 0; i < std::thread::hardware_concurrency() + 5; i++)
+		thieves.push_back(std::move(std::thread(try_steal, std::ref(_Work), Results, &Done)));
 
 	t.join();
 

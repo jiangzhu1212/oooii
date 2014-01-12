@@ -32,13 +32,12 @@
 #define oConcurrency_basic_threadpool_h
 
 #include <oConcurrency/oConcurrency.h>
-#include <oConcurrency/condition_variable.h>
-#include <oConcurrency/mutex.h>
-#include <oConcurrency/thread_safe.h>
 #include <oBase/backoff.h>
 #include <oStd/for.h>
+#include <condition_variable>
 #include <deque>
 #include <exception>
+#include <mutex>
 #include <vector>
 
 namespace oConcurrency {
@@ -58,19 +57,19 @@ public:
 	virtual ~basic_threadpool_base();
 
 	// Block until all workers are idle.
-	void flush() threadsafe;
+	void flush();
 
 	// Returns true if the thread pool can still be joined.
-	bool joinable() const threadsafe;
+	bool joinable() const;
 
 	// Blocks until all workers are joined.
-	void join() threadsafe;
+	void join();
 
 protected:
 	std::vector<oStd::thread> Workers;
 	std::deque<task_type, allocator_type> GlobalQueue;
-	mutex Mutex;
-	condition_variable WorkAvailable;
+	std::mutex Mutex;
+	std::condition_variable WorkAvailable;
 	size_t NumWorking;
 	bool Running;
 
@@ -121,33 +120,33 @@ inline basic_threadpool_base<Alloc>::~basic_threadpool_base()
 }
 
 template<typename Alloc>
-inline void basic_threadpool_base<Alloc>::flush() threadsafe
+inline void basic_threadpool_base<Alloc>::flush()
 {
 	ouro::backoff bo;
 	while (Running)
 	{
 		// GlobalQueue.empty() is true before Task() is done, so don't use queue 
 		// emptiness as an indicator of flushed-ness.
-		if (oThreadsafe(GlobalQueue).empty() && NumWorking == 0)
+		if (GlobalQueue.empty() && NumWorking == 0)
 			break;
 		bo.pause();
 	}
 }
 
 template<typename Alloc>
-inline bool basic_threadpool_base<Alloc>::joinable() const threadsafe
+inline bool basic_threadpool_base<Alloc>::joinable() const
 {
-	return Running && oThreadsafe(Workers).front().joinable();
+	return Running && Workers.front().joinable();
 }
 
 template<typename Alloc>
-inline void basic_threadpool_base<Alloc>::join() threadsafe
+inline void basic_threadpool_base<Alloc>::join()
 {
-	unique_lock<mutex> Lock(Mutex);
+	std::unique_lock<std::mutex> Lock(Mutex);
 	Running = false;
 	WorkAvailable.notify_all();
 	Lock.unlock();
-	oFOR(auto& w, oThreadsafe(Workers))
+	oFOR(auto& w, Workers)
 		w.join();
 }
 
@@ -163,7 +162,7 @@ public:
 
 	// The task will execute on any given worker thread. There is no order-of-
 	// execution guarantee.
-	void dispatch(const task_type& _Task) threadsafe;
+	void dispatch(const task_type& _Task);
 
 private:
 	void work();
@@ -183,12 +182,12 @@ inline basic_threadpool<Alloc>::basic_threadpool(size_t _NumWorkers, const alloc
 }
 
 template<typename Alloc>
-inline void basic_threadpool<Alloc>::dispatch(const task_type& _Task) threadsafe
+inline void basic_threadpool<Alloc>::dispatch(const task_type& _Task)
 {
 	if (Running)
 	{
-		unique_lock<mutex> Lock(Mutex);
-		oThreadsafe(GlobalQueue).push_back(_Task);
+		std::unique_lock<std::mutex> Lock(Mutex);
+		GlobalQueue.push_back(_Task);
 		if (NumWorking == 0)
 			WorkAvailable.notify_one();
 	}
@@ -203,7 +202,7 @@ inline void basic_threadpool<Alloc>::work()
 	begin_thread("basic_threadpool Worker");
 	while (true)
 	{
-		unique_lock<mutex> Lock(Mutex);
+		std::unique_lock<std::mutex> Lock(Mutex);
 
 		while (Running && GlobalQueue.empty())
 		{

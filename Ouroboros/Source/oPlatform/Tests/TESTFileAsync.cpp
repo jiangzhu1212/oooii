@@ -25,7 +25,7 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oConcurrency/countdown_latch.h>
+#include <oBase/countdown_latch.h>
 
 struct PLATFORM_FileAsync : public oTest
 {
@@ -36,7 +36,7 @@ struct PLATFORM_FileAsync : public oTest
 		ouro::path testFilePath;
 		oTESTB0(FindInputFile(testFilePath, "oooii.ico"));
 
-		oConcurrency::countdown_latch Latch(1);
+		ouro::countdown_latch Latch(1);
 
 		// Test file reading
 		{

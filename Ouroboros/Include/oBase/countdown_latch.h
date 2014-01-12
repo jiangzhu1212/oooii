@@ -30,9 +30,9 @@
 #ifndef oBase_countdown_latch_h
 #define oBase_countdown_latch_h
 
-#include <oStd/condition_variable.h>
-#include <oStd/mutex.h>
-#include <oStd/chrono.h>
+#include <condition_variable>
+#include <mutex>
+#include <chrono>
 #include <stdexcept>
 
 namespace ouro {
@@ -88,11 +88,11 @@ public:
 	// Block the calling thread for a time or until the number of outstanding 
 	// items reaches zero.
 	template<typename Rep, typename Period>
-	oStd::cv_status::value wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime);
+	std::cv_status::cv_status wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime);
 
 private:
-	oStd::condition_variable ZeroReferences;
-	oStd::mutex Mutex;
+	std::condition_variable ZeroReferences;
+	std::mutex Mutex;
 	int NumOutstanding;
 
 	countdown_latch(const countdown_latch&); /* = delete */
@@ -123,7 +123,7 @@ inline void countdown_latch::reset(int _InitialCount)
 
 inline void countdown_latch::reference()
 {
-	oStd::lock_guard<oStd::mutex> Lock(Mutex);
+	std::lock_guard<std::mutex> Lock(Mutex);
 	if (NumOutstanding <= 0)
 		throw std::runtime_error(
 		"countdown_latch::reference() called too late to keep any waiting threads "
@@ -138,24 +138,24 @@ inline void countdown_latch::reference()
 
 inline void countdown_latch::release()
 {
-	oStd::lock_guard<oStd::mutex> Lock(Mutex);
+	std::lock_guard<std::mutex> Lock(Mutex);
 	if (--NumOutstanding <= 0)
 		ZeroReferences.notify_all();
 }
 
 inline void countdown_latch::wait()
 {
-	oStd::unique_lock<oStd::mutex> Lock(Mutex);
+	std::unique_lock<std::mutex> Lock(Mutex);
 	while (NumOutstanding > 0) // Guarded Suspension
 		ZeroReferences.wait(Lock);
 }
 
 template<typename Rep, typename Period>
-oStd::cv_status::value countdown_latch::wait_for(const oStd::chrono::duration<Rep, Period>& _RelativeTime)
+std::cv_status::cv_status countdown_latch::wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime)
 {
-	oStd::cv_status::value status = oStd::cv_status::no_timeout;
-	oStd::unique_lock<oStd::mutex> Lock(Mutex);
-	while (oStd::cv_status::no_timeout == status && NumOutstanding > 0)
+	std::cv_status::cv_status status = std::cv_status::no_timeout;
+	std::unique_lock<std::mutex> Lock(Mutex);
+	while (std::cv_status::no_timeout == status && NumOutstanding > 0)
 		status = ZeroReferences.wait_for(Lock, _RelativeTime);
 	return status;
 }

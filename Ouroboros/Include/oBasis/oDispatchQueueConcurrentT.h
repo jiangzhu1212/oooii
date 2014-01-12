@@ -50,14 +50,14 @@ template<typename ThreadpoolT> struct oDispatchQueueConcurrentT : public oDispat
 
 	bool Dispatch(const oTASK& _Task) threadsafe override
 	{
-		try { Threadpool.dispatch(_Task); }
+		try { thread_cast<ThreadpoolT&>(Threadpool).dispatch(_Task); }
 		catch (...) { return false; }
 		return true;
 	}
 
-	void Flush() threadsafe override { Threadpool.flush(); }
-	bool Joinable() const threadsafe override { return  Threadpool.joinable(); }
-	void Join() threadsafe override { return Threadpool.join(); }
+	void Flush() threadsafe override { thread_cast<ThreadpoolT&>(Threadpool).flush(); }
+	bool Joinable() const threadsafe override { return  thread_cast<ThreadpoolT&>(Threadpool).joinable(); }
+	void Join() threadsafe override { return thread_cast<ThreadpoolT&>(Threadpool).join(); }
 	const char* GetDebugName() const threadsafe override { return DebugName; }
 
 	ThreadpoolT Threadpool;

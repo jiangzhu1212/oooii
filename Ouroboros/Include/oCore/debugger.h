@@ -28,7 +28,7 @@
 #define oCore_debugger_h
 
 #include <oBase/path.h>
-#include <oStd/thread.h>
+#include <thread>
 
 namespace ouro {
 	namespace debugger {
@@ -84,7 +84,7 @@ struct symbol_info
 
 // Sets the name of the specified thread in the debugger's UI. If the default id 
 // value is specified then the id of this_thread is used.
-void thread_name(const char* _Name, oStd::thread::id _ID = oStd::thread::id());
+void thread_name(const char* _Name, std::thread::id _ID = std::thread::id());
 
 // Print the specified string to a debug window
 void print(const char* _String);
