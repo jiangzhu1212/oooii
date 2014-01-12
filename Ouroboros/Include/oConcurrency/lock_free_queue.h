@@ -90,7 +90,7 @@ template<typename T, typename Alloc>
 lock_free_queue<T, Alloc>::~lock_free_queue()
 {
 	if (!empty())
-		throw container_error(container_errc::not_empty);
+		throw std::length_error("container not empty");
 
 	Read = Write = 0;
 	Allocator.deallocate(ElementPool, NumElements);

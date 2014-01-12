@@ -7,9 +7,6 @@
     <Filter Include="oConcurrency">
       <UniqueIdentifier>{cded15fc-2964-40e0-aba2-31442340c4b4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="oConcurrency\Wrappers">
-      <UniqueIdentifier>{b09c653d-7bf4-4f02-a707-929768b9e90d}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -19,9 +16,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="fixed_block_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oConcurrency.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -73,18 +67,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\oConcurrency.h">
       <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\event.h">
-      <Filter>oConcurrency\Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\countdown_latch.h">
-      <Filter>oConcurrency\Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\mutex.h">
-      <Filter>oConcurrency\Wrappers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\condition_variable.h">
-      <Filter>oConcurrency\Wrappers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

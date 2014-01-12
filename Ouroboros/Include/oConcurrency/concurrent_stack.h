@@ -103,7 +103,7 @@ template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
 concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::~concurrent_stack()
 {
 	if (!empty())
-		throw container_error(container_errc::not_empty);
+		throw std::length_error("container not empty");
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>

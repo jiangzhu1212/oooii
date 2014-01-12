@@ -151,7 +151,7 @@ template<typename T>
 concurrent_queue<T>::~concurrent_queue()
 {
 	if (!empty())
-		throw container_error(container_errc::not_empty);
+		throw std::length_error("container not empty");
 
 	node_t* n = Head.ptr();
 	Head = Tail = pointer_t(0, 0);
