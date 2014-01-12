@@ -182,7 +182,7 @@ void threadpool<Alloc>::dispatch(const oTASK& _Task) threadsafe
 	}
 
 	else
-		throw threadpool_error(threadpool_errc::call_after_join);
+		throw std::out_of_range("threadpool call after join");
 }
 
 template<typename Alloc>
@@ -254,7 +254,7 @@ void threadpool<Alloc>::work()
 				// would skip actually running the task. Leave this for loop as-is.
 				for (auto q = std::begin(LocalQueues); q != std::end(LocalQueues); ++q)
 				{ 
-					if (*q && *q != pLocalQueue && (*q)->try_steal_for(task, oStd::chrono::milliseconds(200)))
+					if (*q && *q != pLocalQueue && (*q)->try_steal_for(task, std::chrono::milliseconds(200)))
 					{
 						StoleTask = true;
 						break;

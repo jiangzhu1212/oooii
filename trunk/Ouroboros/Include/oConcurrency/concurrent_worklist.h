@@ -26,15 +26,15 @@
 // but aggressively tries to avoid the lock. It also uses LIFO behavior for 
 // try_pop to take take advantage of cache locality, while using
 // FIFO when stealing. This has been benchmarked up to 3x faster than MS-queue
-// (oConcurrency::concurrent_queue) even in the non-try_pop_local usage case, but since the 
+// (std::concurrent_queue) even in the non-try_pop_local usage case, but since the 
 // non-specialized API is not FIFO, this is not called a queue.
 #pragma once
 #ifndef oConcurrency_concurrent_worklist_h
 #define oConcurrency_concurrent_worklist_h
 
-#include <oConcurrency/mutex.h>
 #include <atomic>
 #include <memory>
+#include <mutex>
 
 namespace oConcurrency {
 
@@ -129,14 +129,14 @@ public:
 	// element to be pushed will be stolen through this call.
 	template<typename Rep, typename Period>
 	bool try_steal_for(reference _Element
-		, const oStd::chrono::duration<Rep, Period>& _TimeoutDuration);
+		, const std::chrono::duration<Rep, Period>& _TimeoutDuration);
 
 private:
 	pointer pCircularBuffer;
 	size_type Mask;
 	std::atomic<size_type> Head;
 	std::atomic<size_type> Tail;
-	oConcurrency::timed_mutex Mutex;
+	std::timed_mutex Mutex;
 	Alloc Allocator;
 
 	static const size_t InitialCapacity = 1<<16; // must be pow-of-2
@@ -182,7 +182,7 @@ template<typename T, typename Alloc>
 concurrent_worklist<T, Alloc>::~concurrent_worklist()
 {
 	if (!empty())
-		throw oConcurrency::container_error(oConcurrency::container_errc::not_empty);
+		throw std::length_error("container not empty");
 	destroy_buffer();
 }
 
@@ -242,7 +242,7 @@ void concurrent_worklist<T, Alloc>::internal_push_safe(value_type&& _Element, si
 template<typename T, typename Alloc>
 void concurrent_worklist<T, Alloc>::push(const_reference _Element)
 {
-	oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
+	std::unique_lock<std::timed_mutex> Lock(Mutex);
 	size_type t = Tail;
 	oThreadsafe(this)->internal_push(_Element, t);
 }
@@ -250,7 +250,7 @@ void concurrent_worklist<T, Alloc>::push(const_reference _Element)
 template<typename T, typename Alloc>
 void concurrent_worklist<T, Alloc>::push(value_type&& _Element)
 {
-	oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
+	std::unique_lock<std::timed_mutex> Lock(Mutex);
 	size_type t = Tail;
 	oThreadsafe(this)->internal_push(std::move(_Element), t);
 }
@@ -263,7 +263,7 @@ void concurrent_worklist<T, Alloc>::push_local(const_reference _Element)
 		internal_push(_Element, t);
 	else
 	{
-		oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
+		std::unique_lock<std::timed_mutex> Lock(Mutex);
 		internal_push_safe(_Element, t);
 	}
 }
@@ -276,7 +276,7 @@ void concurrent_worklist<T, Alloc>::push_local(value_type&& _Element)
 		internal_push(std::move(_Element), t);
 	else
 	{
-		oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
+		std::unique_lock<std::timed_mutex> Lock(Mutex);
 		internal_push_safe(std::move(_Element), t);
 	}
 }
@@ -297,7 +297,7 @@ bool concurrent_worklist<T, Alloc>::try_pop_internal(reference _Element, size_ty
 template<typename T, typename Alloc>
 bool concurrent_worklist<T, Alloc>::try_pop(reference _Element)
 {
-	oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
+	std::unique_lock<std::timed_mutex> Lock(Mutex);
 	if (Head >= Tail)
 		return false;
 	return oThreadsafe(this)->try_pop_internal(_Element, --Tail);
@@ -319,7 +319,7 @@ bool concurrent_worklist<T, Alloc>::try_pop_local(reference _Element)
 		return true;
 	}
 
-	oConcurrency::unique_lock<oConcurrency::timed_mutex> Lock(Mutex);
+	std::unique_lock<std::timed_mutex> Lock(Mutex);
 	return try_pop_internal(_Element, t);
 }
 
@@ -358,7 +358,7 @@ bool concurrent_worklist<T, Alloc>::try_steal(reference _Element)
 
 template<typename T, typename Alloc>
 template<typename Rep, typename Period>
-bool concurrent_worklist<T, Alloc>::try_steal_for(reference _Element, const oStd::chrono::duration<Rep, Period>& _TimeoutDuration)
+bool concurrent_worklist<T, Alloc>::try_steal_for(reference _Element, const std::chrono::duration<Rep, Period>& _TimeoutDuration)
 {
 	return try_steal_internal(_Element, Mutex.try_lock_for(_TimeoutDuration));
 }

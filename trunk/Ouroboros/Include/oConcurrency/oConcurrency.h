@@ -48,12 +48,6 @@ namespace oConcurrency {
 // valid reasons for being LIFOs.
 template<typename T> struct is_fifo : std::true_type {};
 
-const std::error_category& container_category();
-/*enum class*/ namespace container_errc { enum value { not_empty }; };
-/*constexpr*/ inline std::error_code make_error_code(container_errc::value _ErrorCode) { return std::error_code(static_cast<int>(_ErrorCode), container_category()); }
-/*constexpr*/ inline std::error_condition make_error_condition(container_errc::value _ErrorCode) { return std::error_condition(static_cast<int>(_ErrorCode), container_category()); }
-class container_error : public std::logic_error { public: container_error(container_errc::value _ErrorCode) : logic_error(container_category().message(_ErrorCode)) {} };
-
 // _____________________________________________________________________________
 // Platform requirements
 
@@ -119,15 +113,6 @@ void thread_at_exit(const oTASK& _AtExit);
 oDEFINE_CALLABLE_WRAPPERS(thread_at_exit,, thread_at_exit);
 
 // _____________________________________________________________________________
-// Exception support
-
-const std::error_category& threadpool_category();
-/*enum class*/ namespace threadpool_errc { enum value { call_after_join }; };
-/*constexpr*/ inline std::error_code make_error_code(threadpool_errc::value _ErrorCode) { return std::error_code(static_cast<int>(_ErrorCode), threadpool_category()); }
-/*constexpr*/ inline std::error_condition make_error_condition(threadpool_errc::value _ErrorCode) { return std::error_condition(static_cast<int>(_ErrorCode), threadpool_category()); }
-class threadpool_error : public std::logic_error { public: threadpool_error(threadpool_errc::value _ErrorCode) : logic_error(threadpool_category().message(_ErrorCode)) {} };
-
-// _____________________________________________________________________________
 // Basic utilities
 
 // Runs the specified task (a drop-in debug replacement for oConcurrency::dispatch)
@@ -138,10 +123,6 @@ inline void serial_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task)
 	for (size_t i = _Begin; i < _End; i++)
 		_Task(i);
 }
-
-// For printf'ing or testing against platform implementations, it is often 
-// easier to treat oStd::thread::id as a simple type.
-inline unsigned int asuint(const oStd::thread::id& _ID) { return *(unsigned int*)&_ID; }
 
 } // namespace oConcurrency
 

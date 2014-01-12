@@ -194,7 +194,7 @@ inline void basic_threadpool<Alloc>::dispatch(const task_type& _Task) threadsafe
 	}
 
 	else
-		throw threadpool_error(threadpool_errc::call_after_join);
+		throw std::out_of_range("threadpool call after join");
 }
 
 template<typename Alloc>

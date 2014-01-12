@@ -58,7 +58,7 @@ protected:
 	void begin_dispatch() threadsafe
 	{
 		if (State != JOINABLE || !Mutex.try_lock_shared())
-			throw threadpool_error(threadpool_errc::call_after_join);
+			throw std::out_of_range("threadpool call after join");
 	}
 
 	// Call this after calling the underlying dispatch call.
