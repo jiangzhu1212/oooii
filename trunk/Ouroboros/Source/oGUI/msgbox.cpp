@@ -474,7 +474,7 @@ msg_result::value msgboxv(msg_type::value _Type, ouro::window_handle _hParent, c
 	msg_result::value result = msg_result::yes;
 	HICON hIcon = nullptr;
 
-	oStd::thread::id ThreadID;
+	std::thread::id ThreadID;
 
 	HWND hWnd = (HWND)_hParent;
 

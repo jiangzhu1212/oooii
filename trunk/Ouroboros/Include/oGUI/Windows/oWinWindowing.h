@@ -177,7 +177,7 @@ void oWinEnumWindows(const std::function<bool(HWND _hWnd)>& _Enumerator);
 // correct window is returned.
 bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
 	, HWND* _pHWND
-	, oStd::thread::id* _pThreadID
+	, std::thread::id* _pThreadID
 	, const char* _pWindowName = nullptr);
 
 // _____________________________________________________________________________
@@ -265,14 +265,14 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 		return pThis->WndProc(_hWnd, _uMsg, _wParam, _lParam); \
 	}
 
-// Returns the thread id for the specified window, or oStd::thread::id() if the
+// Returns the thread id for the specified window, or std::thread::id() if the
 // _hWnd is invalid.
-oStd::thread::id oWinGetWindowThread(HWND _hWnd);
+std::thread::id oWinGetWindowThread(HWND _hWnd);
 
 // Returns true of the current thread is the one dispatching messages for the 
 // window. Many of the API declared below assert this condition to be true. This 
 // can be called from any thread.
-inline bool oWinIsWindowThread(HWND _hWnd) { return oStd::this_thread::get_id() == oWinGetWindowThread(_hWnd); }
+inline bool oWinIsWindowThread(HWND _hWnd) { return std::this_thread::get_id() == oWinGetWindowThread(_hWnd); }
 
 // Returns true if the specified message is a class-specifically registered 
 // custom message.
