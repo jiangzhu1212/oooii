@@ -189,7 +189,7 @@ static oTest::RESULT RunTest(char* _StrStatus, size_t _SizeofStrStatus, oMirrore
 	AllocatorServer.reset(); // blow away the memory, buffer is in flight
 
 	oTRACE("SERVER: waiting for client process to exit.");
-	oTESTB(Client->wait_for(oSeconds(10)), "Client did not close cleanly");
+	oTESTB(Client->wait_for(std::chrono::seconds(10)), "Client did not close cleanly");
 	oTRACE("SERVER: client process exited.");
 
 	int exitcode = 0;

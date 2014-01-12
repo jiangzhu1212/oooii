@@ -231,7 +231,7 @@ bool oP4Label(const oP4_LABEL_SPEC& _Label)
 	if (sizeWritten != labelSpec.size())
 		return oErrorSetLast(std::errc::io_error, "Failed to write label spec to stdin of the p4 process.");
 
-	if (!process->wait_for(oStd::chrono::milliseconds(kP4TypicalTimeoutMS)))
+	if (!process->wait_for(std::chrono::milliseconds(kP4TypicalTimeoutMS)))
 		return oErrorSetLast(std::errc::timed_out, "Executing \"%s\" timed out after %.01f seconds.", pi.command_line, static_cast<float>(kP4TypicalTimeoutMS) / 1000.0f);
 
 	xlstring response;

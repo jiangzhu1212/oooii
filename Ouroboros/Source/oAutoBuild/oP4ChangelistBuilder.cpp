@@ -25,12 +25,15 @@
 #include "oBuildTool.h"
 #include "oMSBuild.h"
 #include "oAutoBuildOutput.h"
-#include <oConcurrency/mutex.h>
 #include <oBasis/oINISerialize.h>
 #include <oStd/future.h>
 #include <oCore/system.h>
+#include <chrono>
+#include <mutex>
+#include <thread>
 
 using namespace ouro;
+using namespace std;
 
 static const char* oAUTO_BUILD_ROOT_PATH = "//Root/";
 
@@ -74,22 +77,22 @@ bool oP4CleanSync(int _ChangeList, const char* _SyncPath, const char* _CleanPath
 	return oP4Sync(_ChangeList, _SyncPath, _CleanPath != nullptr);
 }
 
-static std::regex EncodedSearch("(%(.+?)%)");
+static regex EncodedSearch("(%(.+?)%)");
 
 char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _SizeofStrDestination, const char* _RawString)
 {
 	path_string Current = _RawString;
 
-	const std::cregex_token_iterator end;
+	const cregex_token_iterator end;
 	int arr[] = {1,2}; 
 	bool NoTranslations = true;
-	for ( std::cregex_token_iterator VecTok(_RawString, _RawString + strlen(_RawString), EncodedSearch, arr); VecTok != end; ++VecTok )
+	for ( cregex_token_iterator VecTok(_RawString, _RawString + strlen(_RawString), EncodedSearch, arr); VecTok != end; ++VecTok )
 	{
 		auto Replace = VecTok->str();
 		++VecTok;
 		auto EnvVariable = VecTok->str();
 		path_string TranslatedVariable;
-		ouro::system::getenv(TranslatedVariable, EnvVariable.c_str());
+		system::getenv(TranslatedVariable, EnvVariable.c_str());
 		replace(_StrDestination, _SizeofStrDestination, Current, Replace.c_str(), TranslatedVariable.c_str());
 		Current = _StrDestination;
 		NoTranslations = false;
@@ -100,7 +103,7 @@ char* oSystemTranslateEnvironmentVariables(char* _StrDestination, size_t _Sizeof
 	return _StrDestination;
 }
 template<size_t size> char* oSystemTranslateEnvironmentVariables(char (&_Value)[size], const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, size, _Name); }
-template<size_t capacity> char* oSystemTranslateEnvironmentVariables(ouro::fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
+template<size_t capacity> char* oSystemTranslateEnvironmentVariables(fixed_string<char, capacity>& _Value, const char* _Name) { return oSystemTranslateEnvironmentVariables(_Value, _Value.capacity(), _Name); }
 
 static const int NUM_BUILDS_TO_SERVE = 10;
 
@@ -113,20 +116,20 @@ public:
 	oChildProcessTerminator()
 	{
 		AssertIsMain();
-		ProcessID = ouro::this_process::get_id();
+		ProcessID = this_process::get_id();
 		Mutex.lock();
 	}
 	void Terminate()
 	{
-		oConcurrency::lock_guard<oConcurrency::mutex> Lock(Mutex);
-		ouro::process::terminate_children(ProcessID, 0, true);
+		lock_guard<mutex> Lock(Mutex);
+		process::terminate_children(ProcessID, 0, true);
 	}
 
 	void MainThreadYield(uint _YieldMS)
 	{
 		AssertIsMain();
 		Mutex.unlock();
-		oStd::this_thread::sleep_for(oStd::chrono::milliseconds(_YieldMS));
+		this_thread::sleep_for(chrono::milliseconds(_YieldMS));
 		Mutex.lock();
 	}
 	void MainThreadRelease()
@@ -134,12 +137,12 @@ public:
 		Mutex.unlock();
 	}
 private:
-	oConcurrency::mutex Mutex;
-	ouro::process::id ProcessID;
+	mutex Mutex;
+	process::id ProcessID;
 
 	void AssertIsMain()
 	{
-		oASSERT(ouro::this_process::get_main_thread_id() == oStd::this_thread::get_id(), "Must be called from main thread");
+		oASSERT(this_process::get_main_thread_id() == oStd::this_thread::get_id(), "Must be called from main thread");
 	}
 };
 
@@ -151,7 +154,7 @@ public:
 
 	oP4ChangelistBuilderImpl(const ini& _INI, const char* _LogRoot, int _ServerPort, bool *_pSuccess)
 		: ServerPort(_ServerPort)
-		, LastCL(ouro::invalid)
+		, LastCL(invalid)
 		, StartBuildMS(0)
 		, CurrentBuildInfoValid(false)
 		, CurrentBuildActive(false)
@@ -199,7 +202,7 @@ public:
 
 		if (BuildSettings.Solution.empty())
 		{
-			oErrorSetLast(std::errc::invalid_argument, "Missing solution");
+			oErrorSetLast(errc::invalid_argument, "Missing solution");
 			return;
 		}
 
@@ -214,7 +217,7 @@ public:
 		FileRoot.replace_filename();
 
 		// Patch everything else relative to this
-		std::function<void(path_string& _PatchPath)> RootPatcher = 
+		function<void(path_string& _PatchPath)> RootPatcher = 
 			[&](path_string& _PatchPath)
 		{
 			Temp = _PatchPath;
@@ -243,9 +246,9 @@ public:
 	
 	int GetCount() const override;
 
-	void ReportWorking(std::function<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const override;
-	void ReportBuilt(std::function<void(const std::list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const override;
-	void ReportLastSpecialBuild(std::function<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const override;
+	void ReportWorking(function<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const override;
+	void ReportBuilt(function<void(const list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const override;
+	void ReportLastSpecialBuild(function<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const override;
 
 	void MainThreadYield(uint _Milleseconds) override
 	{
@@ -280,8 +283,8 @@ private:
 
 	oRefCount Refcount;
 	oChildProcessTerminator Terminator;
-	oConcurrency::event CancelEvent;
-	oConcurrency::shared_mutex Mutex;
+	event CancelEvent;
+	shared_mutex Mutex;
 	int ServerPort;
 
 	// Settings
@@ -294,7 +297,7 @@ private:
 	oBUILD_TOOL_PACKAGING_SETTINGS PackagingSettings;
 
 	// Pending
-	std::list<ChangeInfo> NextBuildInfos;
+	list<ChangeInfo> NextBuildInfos;
 	int LastCL;
 
 	// Current
@@ -305,8 +308,8 @@ private:
 	bool CurrentBuildActive; // For tracking the CurrentBuild future
 
 	// Finished
-	std::list<ChangeInfo> FinishedBuildInfos;
-	std::list<ChangeInfo> FinishedDailyBuildInfos;
+	list<ChangeInfo> FinishedBuildInfos;
+	list<ChangeInfo> FinishedDailyBuildInfos;
 	ChangeInfo LastSuccesfulBuildInfo;
 	ChangeInfo LastSuccesfulDailyBuildInfo;
 	int LastBuildMS; // duration
@@ -329,14 +332,14 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 	path FileWildCard(LogRoot);
 	FileWildCard /= "*";
 
-	std::vector<sstring> SpecialBuildPaths;
-	std::vector<sstring> SuccesfulBuildPaths;
-	ouro::filesystem::enumerate(FileWildCard, 
-	[&](const path& _FullPath, const ouro::filesystem::file_status& _Status, unsigned long long _Size)->bool
+	vector<sstring> SpecialBuildPaths;
+	vector<sstring> SuccesfulBuildPaths;
+	filesystem::enumerate(FileWildCard, 
+	[&](const path& _FullPath, const filesystem::file_status& _Status, unsigned long long _Size)->bool
 	{
 		path_string PossibleBuild;
 		snprintf(PossibleBuild, "%s/index.html", _FullPath.c_str());
-		if(ouro::filesystem::exists(path(PossibleBuild)))
+		if(filesystem::exists(path(PossibleBuild)))
 		{
 			char* pFileName = PossibleBuild.c_str() + oStrFindFirstDiff(FileWildCard, PossibleBuild);
 
@@ -348,7 +351,7 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 		return true;
 	});
 
-	std::reverse(SuccesfulBuildPaths.begin(), SuccesfulBuildPaths.end());
+	reverse(SuccesfulBuildPaths.begin(), SuccesfulBuildPaths.end());
 
 	bool foundLastSuccessful = false;
 	oFOR(auto& _Path, SuccesfulBuildPaths)
@@ -381,7 +384,7 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 		if (count++ == NUM_BUILDS_TO_SERVE) break;
 	}
 
-	std::reverse(SpecialBuildPaths.begin(), SpecialBuildPaths.end());
+	reverse(SpecialBuildPaths.begin(), SpecialBuildPaths.end());
 
 	foundLastSuccessful = false;
 	oFOR(auto& _Path, SpecialBuildPaths)
@@ -390,7 +393,7 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 		strchr(TempPath.c_str(), '/')[0] = 0;
 		ChangeInfo Info;
 		Info.IsDaily = true;
-		Info.CL = ouro::invalid;
+		Info.CL = invalid;
 		Info.UserName = TempPath;
 		Info.Succeeded = ParseAutoBuildResultsSpecialBuild(TempPath, &Info);
 		FinishedDailyBuildInfos.push_back(Info);
@@ -440,7 +443,7 @@ bool oP4ChangelistBuilderImpl::WasChangelistAlreadyAdded(int _Changelist, bool _
 {
 	if (_IsDaily)
 	{
-		uint CurrentTimeMS = ouro::timer::now_ms();
+		uint CurrentTimeMS = timer::now_ms();
 		return (0 != LastDailyBuildMS && ((CurrentTimeMS - LastDailyBuildMS) < (2 * 60 * 60 * 1000/*2 hours ms*/)));
 	}
 	else
@@ -468,7 +471,7 @@ bool oP4ChangelistBuilderImpl::WasChangelistAlreadyBuilt(int _Changelist, bool _
 
 void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDaily /*= false*/)
 {
-	if (_Changelist == ouro::invalid)
+	if (_Changelist == invalid)
 		return;
 
 	if (WasChangelistAlreadyAdded(_Changelist, _IsDaily))
@@ -486,24 +489,24 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 
 	if (_IsDaily)
 	{
-		ouro::date CurrentDate;
-		ouro::system::now(&CurrentDate);
-		CurrentDate = ouro::system::to_local(CurrentDate);
+		date CurrentDate;
+		system::now(&CurrentDate);
+		CurrentDate = system::to_local(CurrentDate);
 
 		sstring DateStr;
 		strftime(DateStr, "%Y%m%d", CurrentDate);
 
 		snprintf(NextBuild.UserName, "%s_%s_%d", oAUTO_BUILD_SPECIAL_PREFIX, DateStr.c_str(), _Changelist);
 
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
+		lock_guard<shared_mutex> Lock(Mutex);
 		NextBuildInfos.push_back(NextBuild);
-		LastDailyBuildMS = ouro::timer::now_ms();
+		LastDailyBuildMS = timer::now_ms();
 	}
 	else
 	{
 		oP4GetChangelistUser(NextBuild.UserName.c_str(), NextBuild.UserName.capacity(), _Changelist);
 	
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
+		lock_guard<shared_mutex> Lock(Mutex);
 		if (!WasChangelistAlreadyBuilt(_Changelist))
 			NextBuildInfos.push_back(NextBuild);
 		LastCL = _Changelist;
@@ -513,19 +516,19 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 
 void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 {
-	// Check p4 for new builds. This can be ouro::invalid if we lose our connection.
+	// Check p4 for new builds. This can be invalid if we lose our connection.
 	int NextCL = oP4GetNextChangelist(LastCL, P4Settings.Root);
 	TryAddingChangelist(NextCL);
 
 	// We only can run the daily build if we're not running a remote session as 
 	// this will do more extensive testing
-	if(!ouro::system::is_remote_session())
+	if(!system::is_remote_session())
 	{
-		ouro::date CurrentDate;
-		ouro::system::now(&CurrentDate);
-		CurrentDate = ouro::system::to_local(CurrentDate);
+		date CurrentDate;
+		system::now(&CurrentDate);
+		CurrentDate = system::to_local(CurrentDate);
 
-		if (_DailyBuildHour == CurrentDate.hour && !WasChangelistAlreadyAdded(ouro::invalid, true))
+		if (_DailyBuildHour == CurrentDate.hour && !WasChangelistAlreadyAdded(invalid, true))
 		{
 			TryAddingChangelist(LastSuccesfulBuildInfo.CL, true);
 		}
@@ -542,17 +545,17 @@ void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 
 	if (!CurrentBuildActive && NextBuildInfos.size() > 0)
 	{
-		CurrentBuild = oStd::async(std::bind(&oP4ChangelistBuilderImpl::BuildNextBuild, this));
+		CurrentBuild = oStd::async(bind(&oP4ChangelistBuilderImpl::BuildNextBuild, this));
 		CurrentBuildActive = true;
 	}
 }
 
 oP4ChangelistBuilder::ChangeInfo* oP4ChangelistBuilderImpl::GetNextBuild()
 {
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
+	lock_guard<shared_mutex> Lock(Mutex);
 	oASSERT(!NextBuildInfos.empty(), "Popping an empty list");
-	StartBuildMS = ouro::timer::now_ms();
-	CurrentBuildInfo = std::move(NextBuildInfos.front());
+	StartBuildMS = timer::now_ms();
+	CurrentBuildInfo = move(NextBuildInfos.front());
 	CurrentBuildInfoValid = true;
 	NextBuildInfos.pop_front();
 	CurrentBuildInfo.Stage = "Started";
@@ -561,14 +564,14 @@ oP4ChangelistBuilder::ChangeInfo* oP4ChangelistBuilderImpl::GetNextBuild()
 
 void oP4ChangelistBuilderImpl::UpdateBuildProgress(oP4ChangelistBuilder::ChangeInfo* _pBuild, const char* _Stage)
 {
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
+	lock_guard<shared_mutex> Lock(Mutex);
 	_pBuild->Stage = _Stage;
 }
 
 void oP4ChangelistBuilderImpl::FinishBuild(oP4ChangelistBuilder::ChangeInfo* _pBuild)
 {
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(Mutex);
-	LastBuildMS = (ouro::timer::now_ms() - StartBuildMS);
+	lock_guard<shared_mutex> Lock(Mutex);
+	LastBuildMS = (timer::now_ms() - StartBuildMS);
 
 	if (_pBuild->IsDaily)
 	{
@@ -624,7 +627,7 @@ void oP4ChangelistBuilderImpl::BuildNextBuild()
 
 	path Path(LogRoot);
 	Path /= results.BuildName;
-	ouro::filesystem::create_directories(Path.parent_path());
+	filesystem::create_directories(Path.parent_path());
 	results.OutputFolder = Path;
 
 	if (CancelEvent.is_set())
@@ -678,16 +681,16 @@ void oP4ChangelistBuilderImpl::BuildNextBuild()
 
 int oP4ChangelistBuilderImpl::GetCount() const
 {
-	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
+	shared_lock<shared_mutex> Lock(const_cast<shared_mutex&>(Mutex));
 	return static_cast<int>(NextBuildInfos.size() + (uint)CurrentBuildActive);
 }
 
-void oP4ChangelistBuilderImpl::ReportWorking(std::function<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const
+void oP4ChangelistBuilderImpl::ReportWorking(function<void(const oP4ChangelistBuilder::ChangeInfo& _Change, int _RemainingMS, int _PercentageDone)> _Reporter) const
 {
-	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
+	shared_lock<shared_mutex> Lock(const_cast<shared_mutex&>(Mutex));
 
 	// First calculate the time left for the current build
-	int TimePastMS = ouro::timer::now_ms() - StartBuildMS;
+	int TimePastMS = timer::now_ms() - StartBuildMS;
 	int RemainingMS = 0;
 	if (CurrentBuildInfoValid)
 		RemainingMS = (CurrentBuildInfo.IsDaily ? AverageDailyBuildTimeMS : AverageBuildTimeMS) - TimePastMS;
@@ -718,16 +721,16 @@ void oP4ChangelistBuilderImpl::ReportWorking(std::function<void(const oP4Changel
 	}
 }
 
-void oP4ChangelistBuilderImpl::ReportBuilt(std::function<void(const std::list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const
+void oP4ChangelistBuilderImpl::ReportBuilt(function<void(const list<oP4ChangelistBuilder::ChangeInfo> & _Changes)> _Reporter) const
 {
 	// TODO: Take ownership over the iteration like in ReportWorking, then FinishedBuildInfos doesn't need to be in reversed order anymore
-	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
+	shared_lock<shared_mutex> Lock(const_cast<shared_mutex&>(Mutex));
 	_Reporter(FinishedBuildInfos);
 }
 
-void oP4ChangelistBuilderImpl::ReportLastSpecialBuild(std::function<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const
+void oP4ChangelistBuilderImpl::ReportLastSpecialBuild(function<void(const char* _pName, bool _Success, const char* _pLastSuccesful)> _Reporter) const
 {
-	oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(Mutex);
+	shared_lock<shared_mutex> Lock(const_cast<shared_mutex&>(Mutex));
 	if (FinishedDailyBuildInfos.size())
 	{
 		_Reporter(FinishedDailyBuildInfos.front().UserName.c_str(), FinishedDailyBuildInfos.front().Succeeded, LastSuccesfulDailyBuildInfo.UserName.c_str());
@@ -754,7 +757,7 @@ bool oP4ChangelistBuilderImpl::ParseAutoBuildResults(const char* _pAbsolutePath,
 	_pInfo->TestTime = 0;
 	_pInfo->PackTime = 0;
 
-	std::shared_ptr<xml> XML = oXMLLoad(_pAbsolutePath);
+	shared_ptr<xml> XML = oXMLLoad(_pAbsolutePath);
 	if (!XML)
 		return false;
 

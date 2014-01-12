@@ -25,7 +25,7 @@
 #pragma  once
 #ifndef oBuildTool_h
 #define oBuildTool_h
-#include <oConcurrency/event.h>
+#include <oBase/event.h>
 
 struct oBUILD_TOOL_TESTING_SETTINGS
 {
@@ -67,7 +67,7 @@ struct oPackagingResults
 	float PackagingTimeSeconds;
 };
 
-bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const char* _BuildRoot, const oConcurrency::event& _CancelEvent, oUnitTestResults* _pResults);
+bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const char* _BuildRoot, const ouro::event& _CancelEvent, oUnitTestResults* _pResults);
 bool oRunPackagingStage(const oBUILD_TOOL_PACKAGING_SETTINGS& _Settings, oPackagingResults* _pResults);
 
 

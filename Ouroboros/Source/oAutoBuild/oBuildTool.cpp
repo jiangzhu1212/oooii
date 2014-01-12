@@ -49,7 +49,7 @@ oRTTI_COMPOUND_END_DESCRIPTION(oBUILD_TOOL_PACKAGING_SETTINGS)
 
 static std::regex TestErrorParse("(.+?)\\s*³\\s*(FAILURE|LEAKS)\\s*³(?:.+?)³\\s*(.+?)\\n", std::regex_constants::optimize); // @oooii-kevin: ok static (duplication won't affect correctness)
 
-bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const char* _BuildRoot, const oConcurrency::event& _CancelEvent, oUnitTestResults* _pResults)
+bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const char* _BuildRoot, const ouro::event& _CancelEvent, oUnitTestResults* _pResults)
 {
 	_pResults->TimePassedSeconds = 0.0f;
 
@@ -78,7 +78,7 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 			return oErrorSetLast(std::errc::operation_canceled);
 		}
 
-		Finished = TestProcess->wait_for(oStd::chrono::milliseconds(500));
+		Finished = TestProcess->wait_for(std::chrono::milliseconds(500));
 		Timer.UpdateTimeout();
 	}
 	// Always kill the process 
