@@ -33,7 +33,6 @@
 
 #include <oKinect/oKinect.h>
 #include <oSurface/surface.h>
-#include <oConcurrency/mutex.h>
 #include "oKinectSkeleton.h"
 #include <NuiApi.h>
 #include <vector>

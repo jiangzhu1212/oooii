@@ -28,8 +28,8 @@
 #include <oBase/algorithm.h>
 #include <oStd/for.h>
 #include <oBasis/oLockThis.h>
-#include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
+#include <mutex>
 #include <vector>
 
 #include <oPlatform/oFileSchemeHandler.h> // @tony: hacky, see ctor comment below
@@ -86,8 +86,8 @@ protected:
 	bool VisitURIReferenceInternal(const char* _URIReference, const std::function<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor);
 	bool VisitURIReference(const char* _URIReference, const std::function<bool(threadsafe oSchemeHandler* _pSchemeHandler, const oURIParts& _URIParts)>& _URIVisitor) threadsafe;
 
-	oConcurrency::shared_mutex URIBasesMutex;
-	oConcurrency::shared_mutex SchemeHandlersMutex;
+	ouro::shared_mutex URIBasesMutex;
+	ouro::shared_mutex SchemeHandlersMutex;
 
 	std::vector<intrusive_ptr<threadsafe oSchemeHandler>> SchemeHandlers;
 	std::vector<uri_string> URIBases;

@@ -31,6 +31,7 @@
 #include <windows.h>
 #include <NuiApi.h>
 #include <oCore/process_heap.h>
+#include <thread>
 
 class oWinKinect10
 {	
@@ -82,7 +83,7 @@ protected:
 	~oWinKinect10();
 
 	ouro::module::id hModule;
-	std::vector<oStd::thread::id, ouro::process_heap::std_allocator<oStd::thread::id>> TIDs;
+	std::vector<std::thread::id, ouro::process_heap::std_allocator<std::thread::id>> TIDs;
 	bool TIDsRecorded;
 	bool KinectThreadTerminated;
 	bool NuiSetDeviceStatusCallbackWasCalled;

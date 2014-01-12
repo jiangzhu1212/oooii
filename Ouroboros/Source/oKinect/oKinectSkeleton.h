@@ -32,13 +32,13 @@
 #ifdef oHAS_KINECT_SDK
 
 #include <oBasis/oRefCount.h>
-#include <oConcurrency/mutex.h>
 
 #undef interface
 #undef INTERFACE_DEFINED
 #include <windows.h>
 #include <NuiApi.h>
 #include <oCore/windows/win_skeleton.h>
+#include <oStd/shared_mutex.h>
 
 class oKinectSkeleton
 {
@@ -71,7 +71,7 @@ public:
 private:
 	double LastTrackedTimestamp;
 	oRefCount RefCount;
-	oConcurrency::shared_mutex Mutex;
+	ouro::shared_mutex Mutex;
 	ouro::windows::skeleton::bone_info Skeleton;
 };
 

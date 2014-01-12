@@ -27,8 +27,8 @@
 
 #ifdef oHAS_KINECT_SDK
 
-using namespace oConcurrency;
 using namespace ouro::windows::skeleton;
+using namespace std;
 
 static tracking_clipping oKinectGetClipping(const NUI_SKELETON_DATA& _NSD)
 {
@@ -60,7 +60,7 @@ oKinectSkeleton::~oKinectSkeleton()
 
 void oKinectSkeleton::Invalidate() threadsafe
 {
-	lock_guard<shared_mutex> lock(Mutex);
+	lock_guard<ouro::shared_mutex> lock(thread_cast<ouro::shared_mutex&>(Mutex));
 	oThreadsafe(this)->Skeleton = bone_info(oThreadsafe(this)->Skeleton.source_id);
 }
 
@@ -77,7 +77,7 @@ void oKinectSkeleton::Cache(HWND _hWnd, const NUI_SKELETON_DATA& _NSD) threadsaf
 		}
 
 		{
-			lock_guard<shared_mutex> lock(Mutex);
+			lock_guard<ouro::shared_mutex> lock(thread_cast<ouro::shared_mutex&>(Mutex));
 			oThreadsafe(Skeleton).clipping = oKinectGetClipping(_NSD);
 			std::copy((const float4*)_NSD.SkeletonPositions
 				, (const float4*)(_NSD.SkeletonPositions + NUI_SKELETON_POSITION_COUNT)
@@ -115,7 +115,7 @@ void oKinectSkeleton::CheckTrackingTimeout(HWND _hWnd, double _TimeoutThresholdI
 
 void oKinectSkeleton::GetSkeleton(bone_info* _pSkeleton) const threadsafe
 {
-	shared_lock<shared_mutex> lock(Mutex);
+	ouro::shared_lock<ouro::shared_mutex> lock(thread_cast<ouro::shared_mutex&>(Mutex));
 	*_pSkeleton = oThreadsafe(Skeleton);
 }
 

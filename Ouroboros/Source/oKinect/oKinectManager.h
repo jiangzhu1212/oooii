@@ -32,9 +32,9 @@
 #include <oKinect/oKinect.h>
 #include <oKinect/oKinectUtil.h>
 #include <oPlatform/oSingleton.h>
-#include <oConcurrency/mutex.h>
 #include <oBase/fixed_string.h>
 #include <oBase/fixed_vector.h>
+#include <mutex>
 
 struct oKinectManager : oProcessSingleton<oKinectManager>
 {
@@ -48,7 +48,7 @@ struct oKinectManager : oProcessSingleton<oKinectManager>
 
 private:
 
-	oConcurrency::mutex KinectsMutex;
+	std::mutex KinectsMutex;
 	ouro::fixed_vector<threadsafe oKinect*, 3> Kinects;
 
 	UINT WMInputDeviceChange;

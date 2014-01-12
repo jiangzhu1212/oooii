@@ -25,7 +25,6 @@
 #include <oPlatform/oFileCacheMonitoring.h>
 #include <oPlatform/oFileCache.h>
 #include <oPlatform/oStream.h>
-#include <oConcurrency/mutex.h>
 #include <oBasis/oLockThis.h>
 
 using namespace ouro;

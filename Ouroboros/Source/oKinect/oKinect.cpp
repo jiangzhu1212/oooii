@@ -71,6 +71,7 @@ oRTTI_COMPOUND_END_DESCRIPTION(oKINECT_DESC)
 #include <oCore/windows/win_util.h>
 
 using namespace ouro;
+using namespace std;
 
 static const NUI_IMAGE_RESOLUTION kResolution = NUI_IMAGE_RESOLUTION_640x480;
 
@@ -98,7 +99,7 @@ bool oKinectImpl::Reinitialize()
 	{
 		HRESULT hr = oWinKinect10::Singleton().SafeNuiCreateSensorByIndex(Desc.Index, &NUISensor); 
 		if (hr == E_NUI_BADIINDEX)
-			return oErrorSetLast(std::errc::no_such_device);
+			return oErrorSetLast(errc::no_such_device);
 		else if (FAILED(hr))
 			throw windows::error(hr);
 
@@ -109,11 +110,11 @@ bool oKinectImpl::Reinitialize()
 
 	else
 	{
-		static_assert(sizeof(wchar_t) == sizeof(std::remove_pointer<BSTR>::type), "BSTR size mismatch");
+		static_assert(sizeof(wchar_t) == sizeof(remove_pointer<BSTR>::type), "BSTR size mismatch");
 		swstring wID = Desc.ID;
 		HRESULT hr = oWinKinect10::Singleton().SafeNuiCreateSensorById(wID, &NUISensor); 
 		if (hr == E_NUI_BADIINDEX)
-			return oErrorSetLast(std::errc::no_such_device);
+			return oErrorSetLast(errc::no_such_device);
 		else if (FAILED(hr))
 			throw windows::error(hr);
 		Desc.Index = NUISensor->NuiInstanceIndex();
@@ -151,7 +152,7 @@ bool oKinectImpl::Reinitialize()
 			Skeletons.Initialize(NUISensor, Window, Desc.TrackingTimeoutSeconds, Desc.Features, hEvents[oKINECT_EVENT_SKELETON]);
 	}
 
-	catch (std::exception& e)
+	catch (exception& e)
 	{
 		return oErrorSetLast(e);
 	}
@@ -160,8 +161,8 @@ bool oKinectImpl::Reinitialize()
 	// with this style API... but it would alter some of the setup in the util 
 	// code. It's worth a look.
 	// DWORD dwEvent = MsgWaitForMultipleObjects(eventCount, hEvents, FALSE, INFINITE, QS_ALLINPUT);
-	EventThread = std::move(oStd::thread(&oKinectImpl::OnEvent, this));
-	PitchThread = std::move(oStd::thread(&oKinectImpl::OnPitch, this));
+	EventThread = move(thread(&oKinectImpl::OnEvent, this));
+	PitchThread = move(thread(&oKinectImpl::OnPitch, this));
 
 	oKinectImpl::SetPitch(Desc.PitchDegrees);
 
@@ -169,7 +170,7 @@ bool oKinectImpl::Reinitialize()
 	return true;
 }
 
-oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Window, bool* _pSuccess)
+oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const shared_ptr<window>& _Window, bool* _pSuccess)
 	: Desc(_Desc)
 	, Window(_Window)
 	, hColorStream(nullptr)
@@ -186,9 +187,9 @@ oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const std::shared_ptr<window
 		sstring v1, v2;
 
 		if (v.major == 0)
-			oErrorSetLast(std::errc::protocol_error, "oKinect requires the Kinect Runtime %s to be installed.", to_string2(v1, version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)));
+			oErrorSetLast(errc::protocol_error, "oKinect requires the Kinect Runtime %s to be installed.", to_string2(v1, version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)));
 		else
-			oErrorSetLast(std::errc::protocol_error, "oKinect requires %s. Version %s is currently installed.", to_string2(v1, version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)), to_string2(v2, v));
+			oErrorSetLast(errc::protocol_error, "oKinect requires %s. Version %s is currently installed.", to_string2(v1, version(oKINECT_SDK_MAJOR, oKINECT_SDK_MINOR)), to_string2(v2, v));
 		return;
 	}
 
@@ -205,7 +206,7 @@ oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const std::shared_ptr<window
 void oKinectImpl::Shutdown()
 {
 	Running = false;
-	oConcurrency::unique_lock<oConcurrency::mutex> Lock(PitchMutex);
+	unique_lock<mutex> Lock(PitchMutex);
 	PitchCV.notify_all();
 	Lock.unlock();
 
@@ -265,7 +266,7 @@ bool oKinectImpl::GetSkeletonByIndex(int _PlayerIndex, ouro::input::tracking_ske
 	{
 		_pSkeleton->source_id = Skeleton.source_id;
 		_pSkeleton->clipping = *(ouro::input::tracking_clipping*)&Skeleton.clipping;
-		std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->positions.size(), _pSkeleton->positions.begin());
+		copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->positions.size(), _pSkeleton->positions.begin());
 	}
 
 	return false;
@@ -278,7 +279,7 @@ bool oKinectImpl::GetSkeletonByID(unsigned int _ID, ouro::input::tracking_skelet
 	{
 		_pSkeleton->source_id = Skeleton.source_id;
 		_pSkeleton->clipping = *(ouro::input::tracking_clipping*)&Skeleton.clipping;
-		std::copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->positions.size(), _pSkeleton->positions.begin());
+		copy(Skeleton.positions.begin(), Skeleton.positions.begin() + _pSkeleton->positions.size(), _pSkeleton->positions.begin());
 	}
 
 	return false;
@@ -293,9 +294,9 @@ void oKinectImpl::SetPitch(int _Degrees) threadsafe
 {
 	if (_Degrees != oDEFAULT)
 	{
-		oConcurrency::lock_guard<oConcurrency::mutex> lock(PitchMutex);
+		lock_guard<mutex> lock(thread_cast<mutex&>(PitchMutex));
 		NewPitch = _Degrees;
-		PitchCV.notify_all();
+		thread_cast<condition_variable&>(PitchCV).notify_all();
 	}
 }
 
@@ -309,7 +310,7 @@ void oKinectImpl::OnPitch()
 
 	while (Running)
 	{
-		oConcurrency::unique_lock<oConcurrency::mutex> lock(PitchMutex);
+		unique_lock<mutex> lock(PitchMutex);
 		while (Running && (NewPitch < NUI_CAMERA_ELEVATION_MINIMUM || NewPitch > NUI_CAMERA_ELEVATION_MAXIMUM))
 			PitchCV.wait(lock);
 
@@ -345,18 +346,18 @@ bool oKinectImpl::MapRead(oKINECT_FRAME_TYPE _Type, surface::info* _pInfo, surfa
 	{
 		case oKINECT_FRAME_COLOR:
 			if (!pThis->Color)
-				return oErrorSetLast(std::errc::operation_not_supported, "color support not configured");
+				return oErrorSetLast(errc::operation_not_supported, "color support not configured");
 			*_pInfo = pThis->Color->get_info();
 			pThis->Color->map_const(0, _pMapped, &ByteDimensions);
 			break;
 		case oKINECT_FRAME_DEPTH:
 			if (!pThis->Depth)
-				return oErrorSetLast(std::errc::operation_not_supported, "depth support not configured");
+				return oErrorSetLast(errc::operation_not_supported, "depth support not configured");
 			*_pInfo = pThis->Depth->get_info();
 			pThis->Depth->map_const(0, _pMapped, &ByteDimensions);
 			break;
 		default:
-			return oErrorSetLast(std::errc::operation_not_supported, "_Type %d not supported", _Type);
+			return oErrorSetLast(errc::operation_not_supported, "_Type %d not supported", _Type);
 	}
 
 	return true;
@@ -379,7 +380,7 @@ void oKinectImpl::UnmapRead(oKINECT_FRAME_TYPE _Type) const threadsafe
 			pThis->Depth->unmap_const(0);
 			break;
 		default:
-			throw std::runtime_error("bad frame type");
+			throw runtime_error("bad frame type");
 	}
 }
 
@@ -410,7 +411,7 @@ void oKinectImpl::OnEvent()
 					Skeletons.CacheNextFrame(NUISensor);
 			}
 
-			catch (std::exception& e)
+			catch (exception& e)
 			{
 				oTRACE("oKinect[%d] ptr=0x%p exception caught: %s", Desc.Index, this, e.what());
 				oFORI(i, hEvents)
@@ -431,7 +432,7 @@ int oKinectGetCount()
 	return Count;
 }
 
-bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Window, threadsafe oKinect** _ppKinect)
+bool oKinectCreate(const oKINECT_DESC& _Desc, const shared_ptr<window>& _Window, threadsafe oKinect** _ppKinect)
 {
 	bool success = false;
 	oCONSTRUCT(_ppKinect, oKinectImpl(_Desc, _Window, &success));
@@ -442,13 +443,13 @@ bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Wi
 
 int oKinectGetCount()
 {
-	oErrorSetLast(std::errc::no_such_device, "library not compiled with Kinect support");
+	oErrorSetLast(errc::no_such_device, "library not compiled with Kinect support");
 	return ouro::invalid;
 }
 
-bool oKinectCreate(const oKINECT_DESC& _Desc, const std::shared_ptr<window>& _Window, threadsafe oKinect** _ppKinect)
+bool oKinectCreate(const oKINECT_DESC& _Desc, const shared_ptr<window>& _Window, threadsafe oKinect** _ppKinect)
 {
-	return oErrorSetLast(std::errc::no_such_device, "library not compiled with Kinect support");
+	return oErrorSetLast(errc::no_such_device, "library not compiled with Kinect support");
 }
 
 #endif // oHAS_KINECT_SDK

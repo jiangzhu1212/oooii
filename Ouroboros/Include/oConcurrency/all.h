@@ -32,14 +32,10 @@
 #include <oConcurrency/concurrent_queue.h>
 #include <oConcurrency/concurrent_queue_opt.h>
 #include <oConcurrency/concurrent_worklist.h>
-#include <oConcurrency/condition_variable.h>
 #include <oConcurrency/coroutine.h>
-#include <oConcurrency/countdown_latch.h>
-#include <oConcurrency/event.h>
 #include <oConcurrency/fixed_block_allocator.h>
 #include <oConcurrency/joinable_threadpool_base.h>
 #include <oConcurrency/lock_free_queue.h>
-#include <oConcurrency/mutex.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/tagged_pointer.h>
 #include <oConcurrency/task_group_threadpool.h>

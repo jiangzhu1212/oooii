@@ -36,7 +36,7 @@
 
 #define oCLOSE(hHandle) do { if (hHandle && hHandle != INVALID_HANDLE_VALUE) ::CloseHandle(hHandle); } while(false)
 
-using namespace oStd;
+using namespace std;
 using namespace std::placeholders;
 
 namespace ouro {
@@ -191,7 +191,7 @@ public:
 	~windows_process()
 	{
 		if (Suspended)
-			kill(std::errc::timed_out);
+			kill(errc::timed_out);
 		oCLOSE(ProcessInfo.hProcess);
 		oCLOSE(ProcessInfo.hThread);
 		oCLOSE(hOutputRead);
@@ -261,7 +261,7 @@ public:
 			oTHROW0(permission_denied);
 
 		if (_Size > UINT_MAX)
-			throw std::invalid_argument("Windows supports only 32-bit sized writes");
+			throw invalid_argument("Windows supports only 32-bit sized writes");
 
 		DWORD dwSizeofWritten = 0;
 		oVB(WriteFile(hInputWrite, _pSource, as_type<DWORD>(_Size), &dwSizeofWritten, 0));
@@ -279,7 +279,7 @@ public:
 			return 0;
 
 		if (_Size > UINT_MAX)
-			throw std::invalid_argument("Windows supports only 32-bit sized reads");
+			throw invalid_argument("Windows supports only 32-bit sized reads");
 
 		DWORD dwSizeofRead = 0;
 		oVB(ReadFile(hOutputRead, _pDestination, as_type<DWORD>(_Size), &dwSizeofRead, 0));
@@ -295,18 +295,18 @@ private:
 	HANDLE hInputRead;
 	HANDLE hInputWrite;
 	HANDLE hErrorWrite;
-	std::string CommandLine;
-	std::string EnvironmentString;
-	std::string InitialWorkingDirectory;
+	string CommandLine;
+	string EnvironmentString;
+	string InitialWorkingDirectory;
 	bool Suspended;
 };
 
-std::shared_ptr<process> process::make(const info& _Info)
+shared_ptr<process> process::make(const info& _Info)
 {
-	return std::make_shared<windows_process>(_Info);
+	return make_shared<windows_process>(_Info);
 }
 
-void process::enumerate(const std::function<bool(id _ID, id _ParentID, const path& _ProcessExePath)>& _Enumerator)
+void process::enumerate(const function<bool(id _ID, id _ParentID, const path& _ProcessExePath)>& _Enumerator)
 {
 	windows::scoped_handle hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
@@ -326,7 +326,7 @@ void process::enumerate(const std::function<bool(id _ID, id _ParentID, const pat
 	}
 }
 
-void enumerate_threads(process::id _ID, const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator)
+void enumerate_threads(process::id _ID, const function<bool(std::thread::id _ThreadID)>& _Enumerator)
 {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, GetCurrentProcessId());
 	oVB(hSnapshot != INVALID_HANDLE_VALUE);
@@ -342,7 +342,7 @@ void enumerate_threads(process::id _ID, const std::function<bool(oStd::thread::i
 	while (keepLooking)
 	{
 		if (asdword(_ID) == entry.th32OwnerProcessID)
-			if (!_Enumerator(*(oStd::thread::id*)&entry.th32ThreadID))
+			if (!_Enumerator(astid(entry.th32ThreadID)))
 				break;
 		keepLooking = Thread32Next(hSnapshot, &entry);
 	}
@@ -406,7 +406,7 @@ bool process::wait_for_ms(id _ID, unsigned int _TimeoutMS)
 static void terminate_internal(process::id _ID
 	, int _ExitCode
 	, bool _AllChildProcessesToo
-	, std::set<process::id>& _HandledProcessIDs);
+	, set<process::id>& _HandledProcessIDs);
 
 static bool terminate_child(process::id _ID
 	, process::id _ParentID
@@ -414,7 +414,7 @@ static bool terminate_child(process::id _ID
 	, process::id _TargetParentID
 	, int _ExitCode
 	, bool _AllChildProcessesToo
-	, std::set<process::id>& _HandledProcessIDs)
+	, set<process::id>& _HandledProcessIDs)
 {
 	if (_ParentID == _TargetParentID)
 		terminate_internal(_ID, _ExitCode, _AllChildProcessesToo, _HandledProcessIDs);
@@ -424,7 +424,7 @@ static bool terminate_child(process::id _ID
 static void terminate_internal(process::id _ID
 	, int _ExitCode
 	, bool _AllChildProcessesToo
-	, std::set<process::id>& _HandledProcessIDs)
+	, set<process::id>& _HandledProcessIDs)
 {
 	bool result = true;
 
@@ -435,8 +435,8 @@ static void terminate_internal(process::id _ID
 	_HandledProcessIDs.insert(_ID);
 
 	if (_AllChildProcessesToo)
-		process::enumerate(std::bind(terminate_child, _1, _2, _3, _ID, _ExitCode
-			, _AllChildProcessesToo, std::ref(_HandledProcessIDs)));
+		process::enumerate(bind(terminate_child, _1, _2, _3, _ID, _ExitCode
+			, _AllChildProcessesToo, ref(_HandledProcessIDs)));
 
 	windows::scoped_handle hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, asdword(_ID));
 	if (!hProcess)
@@ -449,15 +449,15 @@ static void terminate_internal(process::id _ID
 
 void process::terminate(id _ID, int _ExitCode, bool _AllChildProcessesToo)
 {
-	std::set<process::id> HandledProcessIDs;
+	set<process::id> HandledProcessIDs;
 	terminate_internal(_ID, _ExitCode, _AllChildProcessesToo, HandledProcessIDs);
 }
 
 void process::terminate_children(id _ID, int _ExitCode, bool _AllChildProcessesToo)
 {
-	std::set<process::id> HandledProcessIDs;
-	process::enumerate(std::bind(terminate_child, _1, _2, _3, _ID, _ExitCode
-		, _AllChildProcessesToo, std::ref(HandledProcessIDs)));
+	set<process::id> HandledProcessIDs;
+	process::enumerate(bind(terminate_child, _1, _2, _3, _ID, _ExitCode
+		, _AllChildProcessesToo, ref(HandledProcessIDs)));
 }
 
 path process::get_name(id _ID)
@@ -589,7 +589,7 @@ process::id get_parent_id()
 	return ParentID;
 }
 
-static bool find_oldest_and_thus_main_thread(oStd::thread::id _ThreadID, ULONGLONG* _pMinCreateTime, oStd::thread::id* _pOutMainThreadID)
+static bool find_oldest_and_thus_main_thread(thread::id _ThreadID, ULONGLONG* _pMinCreateTime, thread::id* _pOutMainThreadID)
 {
 	HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION, TRUE, asdword(_ThreadID));
 	if (hThread)
@@ -612,11 +612,11 @@ static bool find_oldest_and_thus_main_thread(oStd::thread::id _ThreadID, ULONGLO
 	return true;
 }
 
-oStd::thread::id get_main_thread_id()
+std::thread::id get_main_thread_id()
 {
-	oStd::thread::id id;
+	thread::id id;
 	ULONGLONG minCreateTime = MAXULONGLONG;
-	enumerate_threads(std::bind(find_oldest_and_thus_main_thread, std::placeholders::_1, &minCreateTime, &id));
+	enumerate_threads(bind(find_oldest_and_thus_main_thread, _1, &minCreateTime, &id));
 	return id;
 }
 
@@ -647,7 +647,7 @@ char* command_line(char* _StrDestination, size_t _SizeofStrDestination, bool _Pa
 	return _StrDestination;
 }
 
-void enumerate_children(const std::function<bool(process::id _ChildID, const path& _ProcessExePath)>& _Enumerator)
+void enumerate_children(const function<bool(process::id _ChildID, const path& _ProcessExePath)>& _Enumerator)
 {
 	process::id Parent = get_id();
 
@@ -659,7 +659,7 @@ void enumerate_children(const std::function<bool(process::id _ChildID, const pat
 	});
 }
 
-void enumerate_threads(const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator)
+void enumerate_threads(const function<bool(std::thread::id _ThreadID)>& _Enumerator)
 {
 	enumerate_threads(get_id(), _Enumerator);
 }

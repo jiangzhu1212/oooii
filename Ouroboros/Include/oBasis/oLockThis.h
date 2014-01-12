@@ -33,7 +33,7 @@
 #ifndef oLockThis_h
 #define oLockThis_h
 
-#include <oConcurrency/mutex.h>
+#include <mutex>
 
 template<typename MUTEX_TYPE, typename THIS_TYPE, template <typename> class LOCK_GUARD_TYPE> class oLockThisImpl
 {
@@ -58,9 +58,9 @@ private:
 	LOCK_GUARD_TYPE<mutex_t> Lock;
 };
 
-template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, oConcurrency::lock_guard> oLockThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)
+template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, std::lock_guard> oLockThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)
 {
-	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, oConcurrency::lock_guard>(_Mutex, _pThis);
+	return oLockThisImpl<MUTEX_TYPE,THIS_TYPE, std::lock_guard>(_Mutex, _pThis);
 }
 
 template<typename MUTEX_TYPE, typename THIS_TYPE> oLockThisImpl<MUTEX_TYPE, THIS_TYPE, ouro::shared_lock> oLockSharedThisAuto(MUTEX_TYPE& _Mutex, THIS_TYPE* _pThis)

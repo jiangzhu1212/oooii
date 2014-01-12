@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oSocket.h>
 #include <oBasis/oLockThis.h>
-#include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oScopedPartialTimeout.h>
 #include <oConcurrency/concurrent_queue.h>
@@ -235,7 +234,7 @@ struct oSocketImpl
 	//	and the proxy (proxy could be a socket pool) will delete us. but we will handle the refcounting for the proxy.
 	int Reference() threadsafe
 	{ 
-		oConcurrency::shared_lock<oConcurrency::shared_mutex> Lock(DescMutex);
+		ouro::shared_lock<ouro::shared_mutex> Lock(thread_cast<ouro::shared_mutex&>(DescMutex));
 		if ( pIOCP ) 
 			return pIOCP->Reference(); 
 		else
@@ -244,26 +243,26 @@ struct oSocketImpl
 
 	void Release() threadsafe 
 	{ 
-		DescMutex.lock_shared();
+		thread_cast<ouro::shared_mutex&>(DescMutex).lock_shared();
 		auto lockedThis = thread_cast<oSocketImpl*>(this); // Safe because of Mutex
 
 		if ( pIOCP ) 
 		{
 			// Unlock prior to releasing via IOCP in case it causes the destruction task
 			// to fire.
-			DescMutex.unlock_shared();
+			thread_cast<ouro::shared_mutex&>(DescMutex).unlock_shared();
 			pIOCP->Release(); //may inderectly trigger the proxyDeleter
 			return;
 		}
 		else if ( Refcount.Release())
 		{
 			// Unlock prior to deleting
-			DescMutex.unlock_shared();
+			thread_cast<ouro::shared_mutex&>(DescMutex).unlock_shared();
 			lockedThis->ProxyDeleter(); //This will either cause this object to be deleted as well, or this object may be returned to a pool instead
 			return;
 		}
 
-		DescMutex.unlock_shared(); 
+		thread_cast<ouro::shared_mutex&>(DescMutex).unlock_shared(); 
 	} 
 
 	bool Initialize(const oSocket::DESC& _Desc, oSocket* _Proxy, ProxyDeleterFn) threadsafe;
@@ -306,7 +305,7 @@ private:
 	void IOCPCallback(oIOCPOp* _pSocketOp);
 	void RunProxyDeleter() threadsafe;
 
-	oConcurrency::shared_mutex DescMutex;
+	ouro::shared_mutex DescMutex;
 	oRefCount Refcount;
 	oSocket::DESC Desc;
 	oSocket* Proxy;
@@ -421,10 +420,10 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 	// causes type problems with calling the member std::function RunProxyDeleter().
 	// Someone with more meta-magic fingers should take another look at this.
 	#if 1
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> Lock(DescMutex);
+		std::lock_guard<ouro::shared_mutex> Lock(thread_cast<ouro::shared_mutex&>(DescMutex));
 		auto lockedThis = thread_cast<oSocketImpl*>(this); // Safe because of Mutex
 	#else
-		auto lockedThis = oLockThis(DescMutex);
+		auto lockedThis = oLockThis(thread_cast<ouro::shared_mutex&>(DescMutex));
 	#endif
 
 	oASSERT(!Disabled, "Should never call functions on disabled sockets");
@@ -958,13 +957,13 @@ struct SocketServer_Impl : public oSocketServer
 	bool GetHostname(char* _pString, size_t _strLen)  const threadsafe override;
 
 private:
-	oConcurrency::shared_mutex Mutex;
+	ouro::shared_mutex Mutex;
 	oRefCount RefCount;
 	SOCKET hSocket;
 	WSAEVENT hConnectEvent;
 	char DebugName[64];
 	DESC Desc;
-	oConcurrency::mutex AcceptedSocketsMutex;
+	std::mutex AcceptedSocketsMutex;
 	std::vector<intrusive_ptr<oSocket>> AcceptedSockets;
 };
 
@@ -1025,16 +1024,16 @@ bool SocketServer_Impl::GetHostname(char* _pString, size_t _strLen) const thread
 
 static bool UNIFIED_WaitForConnection(
 	const char* _ServerDebugName
-	, threadsafe oConcurrency::shared_mutex& _Mutex
+	, threadsafe ouro::shared_mutex& _Mutex
 	, threadsafe WSAEVENT _hConnectEvent
 	, unsigned int _TimeoutMS
 	, SOCKET _hServerSocket
 	, oSocket::DESC _Desc
 	, std::function<oSocket*(const char* _DebugName, SOCKET _hTarget, oSocket::DESC SocketDesc, bool* _pSuccess)> _CreateClientSocket
-	, threadsafe oConcurrency::mutex& _AcceptedSocketsMutex
+	, threadsafe std::mutex& _AcceptedSocketsMutex
 	, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets)
 {
-	oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(_Mutex);
+	std::lock_guard<ouro::shared_mutex> lock(thread_cast<ouro::shared_mutex&>(_Mutex));
 	bool success = false;
 
 	oScopedPartialTimeout timeout = oScopedPartialTimeout(&_TimeoutMS);
@@ -1060,7 +1059,7 @@ static bool UNIFIED_WaitForConnection(
 
 		intrusive_ptr<oSocket> newSocket(_CreateClientSocket("", hTarget, _Desc, &success), false);
 		{
-			oConcurrency::lock_guard<oConcurrency::mutex> lock(_AcceptedSocketsMutex);
+			std::lock_guard<std::mutex> lock(thread_cast<std::mutex&>(_AcceptedSocketsMutex));
 			thread_cast<std::vector<intrusive_ptr<oSocket>>&>(_AcceptedSockets).push_back(newSocket); // safe because of lock above
 		}
 
@@ -1074,9 +1073,9 @@ static bool UNIFIED_WaitForConnection(
 	return success;
 }
 
-template<typename T> static inline bool FindTypedSocket(threadsafe oConcurrency::mutex& _AcceptedSocketsMutex, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
+template<typename T> static inline bool FindTypedSocket(threadsafe std::mutex& _AcceptedSocketsMutex, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
 {
-	oConcurrency::lock_guard<oConcurrency::mutex> lock(_AcceptedSocketsMutex);
+	std::lock_guard<std::mutex> lock(thread_cast<std::mutex&>(_AcceptedSocketsMutex));
 	std::vector<intrusive_ptr<oSocket>>& SafeSockets = thread_cast<std::vector<intrusive_ptr<oSocket>>&>(_AcceptedSockets);
 
 	if (!SafeSockets.empty())
