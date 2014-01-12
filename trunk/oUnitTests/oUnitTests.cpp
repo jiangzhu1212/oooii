@@ -410,7 +410,7 @@ bool TerminateDuplicateInstances(const char* _Name)
 			return false;
 
 		process::terminate(duplicatePID, ECANCELED);
-		if (!process::wait_for(duplicatePID, oSeconds(5)))
+		if (!process::wait_for(duplicatePID, std::chrono::seconds(5)))
 			msgbox(msg_type::yesno, nullptr, sTITLE, "Cannot terminate stale process %u, please end this process before continuing.", duplicatePID);
 
 		duplicatePID = process::id();

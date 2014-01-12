@@ -904,7 +904,7 @@ bool oTestManager_Impl::KillZombies(const char* _Name)
 			continue;
 
 		process::terminate(pids[i], std::errc::operation_canceled);
-		if (!process::wait_for(pids[i], oSeconds(5)))
+		if (!process::wait_for(pids[i], std::chrono::seconds(5)))
 		{
 			msgbox(msg_type::warn, nullptr, "OOOii Test Manager", "Cannot terminate stale process %u, please end this process before continuing.", pids[i]);
 			if (--retries == 0)
