@@ -23,13 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oFileSchemeHandler.h>
-#include <oConcurrency/mutex.h>
 #include "oDispatchQueueGlobalIOCP.h"
 #include "oIOCP.h"
 #include <oCore/windows/win_error.h>
 
 using namespace ouro;
-using namespace oConcurrency;
+using namespace std;
 
 #define oTRACE_MONITOR oTRACE
 
@@ -319,7 +318,7 @@ struct oFileReaderImpl : public oStreamReader
 		oSetHighLowOffset(offsetLow, offsetHigh, _StreamRead.Range.Offset);
 
 		// Need to lock since SetFilePointer/ReadFile are separate calls. And to play nice with close
-		lock_guard<mutex> lock(Mutex);
+		lock_guard<mutex> lock(thread_cast<mutex&>(Mutex));
 
 		if(hFile == INVALID_HANDLE_VALUE)
 		{
@@ -355,7 +354,7 @@ struct oFileReaderImpl : public oStreamReader
 
 	void Close() threadsafe override
 	{
-		lock_guard<mutex> lock(Mutex);
+		lock_guard<mutex> lock(thread_cast<mutex&>(Mutex));
 
 		if (hFile != INVALID_HANDLE_VALUE)
 			CloseHandle(hFile);
@@ -442,7 +441,7 @@ struct oFileWriterImpl : public oStreamWriter
 	bool Write(const oSTREAM_WRITE& _Write) threadsafe
 	{
 		// Need to lock since SetFilePointer/ReadFile are separate calls.
-		lock_guard<mutex> lock(Mutex);
+		lock_guard<mutex> lock(thread_cast<mutex&>(Mutex));
 
 		if(hFile == INVALID_HANDLE_VALUE)
 		{
@@ -474,7 +473,7 @@ struct oFileWriterImpl : public oStreamWriter
 
 	void Close() threadsafe override
 	{
-		lock_guard<mutex> lock(Mutex);
+		lock_guard<mutex> lock(thread_cast<mutex&>(Mutex));
 
 		if (hFile != INVALID_HANDLE_VALUE)
 			CloseHandle(hFile);

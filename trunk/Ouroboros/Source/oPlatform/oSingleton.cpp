@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oSingleton.h>
-#include <oConcurrency/mutex.h>
 #include <oCore/process_heap.h>
 #include <oBase/backoff.h>
 

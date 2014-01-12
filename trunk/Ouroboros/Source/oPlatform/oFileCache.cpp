@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oFileCache.h>
 #include <oPlatform/oStream.h>
-#include <oConcurrency/mutex.h>
 #include <oBasis/oLockThis.h>
 #include <oPlatform/oRegistry.h>
 

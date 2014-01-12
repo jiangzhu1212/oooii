@@ -35,7 +35,7 @@
 #include <oCore/windows/win_error.h>
 
 using namespace ouro;
-using namespace oConcurrency;
+using namespace std;
 
 // {1ECB3B76-4BB7-4B7A-B413-3BE946A44128}
 const oGUID oKinectManager::GUID = { 0x1ecb3b76, 0x4bb7, 0x4b7a, { 0xb4, 0x13, 0x3b, 0xe9, 0x46, 0xa4, 0x41, 0x28 } };

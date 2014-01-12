@@ -30,10 +30,10 @@
 #ifdef oHAS_KINECT_SDK
 
 #include <oKinect/oKinect.h>
-#include <oConcurrency/mutex.h>
-#include <oConcurrency/condition_variable.h>
 #include "oKinectSkeletonStream.h"
 #include <NuiApi.h>
+#include <condition_variable>
+#include <mutex>
 
 struct oKinectImpl : oKinect
 {
@@ -69,10 +69,10 @@ protected:
 	ouro::intrusive_ptr<INuiSensor> NUISensor;
 	std::shared_ptr<ouro::window> Window;
 	oKINECT_DESC Desc;
-	oConcurrency::condition_variable PitchCV;
-	oConcurrency::mutex PitchMutex;
-	oStd::thread PitchThread;
-	oStd::thread EventThread;
+	std::condition_variable PitchCV;
+	std::mutex PitchMutex;
+	std::thread PitchThread;
+	std::thread EventThread;
 	oRefCount RefCount;
 	bool Running;
 	int NewPitch;

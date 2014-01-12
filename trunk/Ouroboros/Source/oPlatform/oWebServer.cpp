@@ -267,7 +267,7 @@ private:
 
 	intrusive_ptr<threadsafe oFileCacheMonitoring> FileCache;
 
-	oConcurrency::mutex AddHandlerMutex;
+	std::mutex AddHandlerMutex;
 	bool Started;
 };
 

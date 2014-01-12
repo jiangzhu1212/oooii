@@ -99,7 +99,7 @@ oDispatchQueueConcurrentWTP::oDispatchQueueConcurrentWTP(const char* _DebugName,
 	SetThreadpoolCallbackPool(&TPEnvironment, hPool);
 	SetThreadpoolCallbackCleanupGroup(&TPEnvironment, TPCleanupGroup, nullptr);
 
-	DWORD dwNumThreads = oStd::thread::hardware_concurrency();
+	DWORD dwNumThreads = std::thread::hardware_concurrency();
 	if (dwNumThreads == 0)
 		dwNumThreads = 1;
 
@@ -139,7 +139,7 @@ bool oDispatchQueueConcurrentWTP::Dispatch(const oTASK& _Task) threadsafe
 {
 	if (AllowEnqueue)
 	{
-		if (oStd::thread::hardware_concurrency() <= 1)
+		if (std::thread::hardware_concurrency() <= 1)
 			_Task();
 		else
 		{

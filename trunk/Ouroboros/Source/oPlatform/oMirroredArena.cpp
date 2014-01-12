@@ -29,7 +29,6 @@
 #include <oBase/byte.h>
 #include <oBasis/oError.h>
 #include <oBasis/oLockedPointer.h>
-#include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
 
 #define WIN32_LEAN_AND_MEAN
@@ -39,6 +38,7 @@
 
 using namespace ouro;
 using namespace ouro::page_allocator;
+using namespace std;
 
 // @tony: Note on future/potential cross-platform support. I admit it, I 
 // don't know linux other than it does have virtual memory and it can do some
@@ -205,7 +205,7 @@ namespace detail {
 
 		bool RegisterArena(void* _pBase, size_t _Size) threadsafe
 		{
-			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+			lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(Mutex));
 			
 			threadsafe ARENA* pFreeArena = 0;
 			oFORI(i, RegisteredArenas)
@@ -234,7 +234,7 @@ namespace detail {
 
 		void UnregisterArena(void* _pBase) threadsafe
 		{
-			oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+			lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(Mutex));
 			oFORI(i, RegisteredArenas)
 				if (_pBase == RegisteredArenas[i].pBase)
 					RegisteredArenas[i].pBase = 0;
@@ -249,10 +249,10 @@ namespace detail {
 			return 0;
 		}
 
-		inline void Lock() threadsafe { Mutex.lock(); }
-		inline void Unlock() threadsafe { Mutex.unlock(); }
-		inline void LockRead() const threadsafe { Mutex.lock_shared(); }
-		inline void UnlockRead() const threadsafe { Mutex.unlock_shared(); }
+		inline void Lock() threadsafe { thread_cast<shared_mutex&>(Mutex).lock(); }
+		inline void Unlock() threadsafe { thread_cast<shared_mutex&>(Mutex).unlock(); }
+		inline void LockRead() const threadsafe { thread_cast<shared_mutex&>(Mutex).lock_shared(); }
+		inline void UnlockRead() const threadsafe { thread_cast<shared_mutex&>(Mutex).unlock_shared(); }
 
 		static LONG CALLBACK HandleAccessViolation(PEXCEPTION_POINTERS _pExceptionInfo)
 		{
@@ -295,7 +295,7 @@ namespace detail {
 		ARENA RegisteredArenas[MAX_NUM_ARENAS];
 
 		oRefCount RefCount;
-		oConcurrency::shared_mutex Mutex;
+		ouro::shared_mutex Mutex;
 	};
 
 } // namespace detail

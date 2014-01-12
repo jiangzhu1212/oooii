@@ -33,8 +33,6 @@
 #include <oCore/windows/win_iocp.h>
 #undef CreateProcess
 
-#include <oConcurrency/event.h>
-
 // Wouldn't it be nice if oTesting logic were oBasis so it can be used with
 // that lib too (without shims)...
 #include <oGUI/console.h>
@@ -1081,9 +1079,9 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	// a feature of the unit test, we should expose it through the DESC.
 	//ShowProgressBar = true;
 
-	oStd::thread ProgressBarThread;
+	std::thread ProgressBarThread;
 	bool ShouldStop = false;
-	oConcurrency::event Ready;
+	ouro::event Ready;
 	progress_bar* pProgressBar = nullptr;
 	finally StopProgressBar([&]
 	{
@@ -1093,12 +1091,13 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		if (pProgressBar)
 			pProgressBar->quit();
 		
-		ProgressBarThread.join();
+		if (ProgressBarThread.joinable())
+			ProgressBarThread.join();
 	});
 	
 	if (ShowProgressBar)
 	{
-		ProgressBarThread = std::move(oStd::thread([&]
+		ProgressBarThread = std::move(std::thread([&]
 		{
 			oConcurrency::begin_thread("Progress Bar Thread");
 			xlstring title;

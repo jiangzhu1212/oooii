@@ -42,24 +42,31 @@ static const char* sExportedAPIs[] =
 
 void oWinKinect10::RecordPreKinectThreads()
 {
-	this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
+	this_process::enumerate_threads([&](std::thread::id _ThreadID)->bool
 	{
-		TIDs.push_back(_ThreadID);
 		return true;
 	});
+
+
+
+	//ouro::this_process::enumerate_threads([&](std::thread::id _ThreadID)->bool
+	//{
+	//	TIDs.push_back(_ThreadID);
+	//	return true;
+	//});
 }
 
 void oWinKinect10::RecordKinectWorkerThreads()
 {
 	auto BeforeTIDs = TIDs;
 	TIDs.clear();
-	this_process::enumerate_threads([&](oStd::thread::id _ThreadID)->bool
-	{
-		TIDs.push_back(_ThreadID);
-		return true;
-	});
+	//this_process::enumerate_threads([&](std::thread::id _ThreadID)->bool
+	//{
+	//	TIDs.push_back(_ThreadID);
+	//	return true;
+	//});
 
-	oFOR(oStd::thread::id TID, BeforeTIDs)
+	oFOR(std::thread::id TID, BeforeTIDs)
 	{
 		auto it = find(TIDs, TID);
 		if (it != TIDs.end())
@@ -84,7 +91,7 @@ void oWinKinect10::SafeNuiShutdown(INuiSensor* _pSensor)
 		#if 0
 			_pSensor->NuiShutdown();
 		#else
-			oStd::thread Shutdown([&]{ _pSensor->NuiShutdown(); });
+			std::thread Shutdown([&]{ _pSensor->NuiShutdown(); });
 			HANDLE hThread = (HANDLE)Shutdown.native_handle();
 			if (WAIT_TIMEOUT == ::WaitForSingleObject(hThread, 1000))
 			{
@@ -109,7 +116,7 @@ oWinKinect10::~oWinKinect10()
 	if (KinectThreadTerminated)
 		oTRACE("A Kinect thread needed to be terminated. Kinect SDK may report errors. Ignore the errors or unplug/replug the Kinect to address this reporting.");
 
-	oFOR(oStd::thread::id TID, TIDs)
+	oFOR(std::thread::id TID, TIDs)
 	{
 		HANDLE hThread = OpenThread(THREAD_TERMINATE, FALSE, asdword(TID));
 		if (hThread)

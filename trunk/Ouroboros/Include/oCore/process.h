@@ -27,11 +27,11 @@
 #ifndef oCore_process_h
 #define oCore_process_h
 
-#include <oStd/chrono.h>
-#include <oStd/thread.h>
 #include <oBase/path.h>
-#include <functional>
 #include <chrono>
+#include <functional>
+#include <memory>
+#include <thread>
 
 namespace ouro {
 
@@ -69,20 +69,6 @@ public:
 		void set();
 		void reset();
 		void wait();
-
-		template <typename Clock, typename Duration>
-		bool wait_until1(const oStd::chrono::time_point<Clock, Duration>& _AbsoluteTime)
-		{
-			oStd::chrono::high_resolution_clock::duration duration = oStd::chrono::time_point_cast<oStd::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - oStd::chrono::high_resolution_clock::now();
-			return wait_for1(duration);
-		}
-
-		template <typename Rep, typename Period>
-		bool wait_for1(const oStd::chrono::duration<Rep, Period>& _RelativeTime)
-		{
-			oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_RelativeTime);
-			return wait_for_ms(static_cast<unsigned int>(ms.count()));
-		}
 
 		template <typename Clock, typename Duration>
 		bool wait_until(const std::chrono::time_point<Clock, Duration>& _AbsoluteTime)
@@ -179,13 +165,6 @@ public:
 
 	// returns false if the wait times out
 	template<typename Rep, typename Period>
-	inline bool wait_for1(const oStd::chrono::duration<Rep, Period>& _RelativeTime)
-	{
-		oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_RelativeTime);
-		return wait_for_ms(get_id(), static_cast<unsigned int>(ms.count()));
-	}
-
-	template<typename Rep, typename Period>
 	inline bool wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime)
 	{
 		std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
@@ -193,7 +172,7 @@ public:
 	}
 
 	virtual id get_id() const = 0;
-	virtual oStd::thread::id get_thread_id() const = 0;
+	virtual std::thread::id get_thread_id() const = 0;
 		
 	// Return exit code, if the process is finished. If not, this returns false.
 	virtual bool exit_code(int* _pExitCode) const = 0;
@@ -209,7 +188,7 @@ public:
 
 	// Calls the specified function on each thread associated with the specified
 	// process. Return false to exit early.
-	static void enumerate_threads(id _ID, const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator);
+	static void enumerate_threads(id _ID, const std::function<bool(std::thread::id _ThreadID)>& _Enumerator);
 
 	static id get_id(const char* _Name);
 	static inline bool exists(const char* _Name) { return process::id() != get_id(_Name); }
@@ -217,13 +196,6 @@ public:
 	static void wait(id _ID);
 
 	// returns false if the wait times out
-	template<typename Rep, typename Period>
-	static bool wait_for(id _ID, const oStd::chrono::duration<Rep, Period>& _RelativeTime)
-	{
-		oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_RelativeTime);
-		return wait_for_ms(_ID, static_cast<unsigned int>(ms.count()));
-	}
-
 	template<typename Rep, typename Period>
 	static bool wait_for(id _ID, const std::chrono::duration<Rep, Period>& _RelativeTime)
 	{
@@ -263,7 +235,7 @@ process::id get_parent_id();
 inline bool is_child() { return get_parent_id() != process::id(); }
 
 // Returns the id of the main thread of this process
-oStd::thread::id get_main_thread_id();
+std::thread::id get_main_thread_id();
 
 bool has_debugger_attached();
 
@@ -283,7 +255,7 @@ void enumerate_children(const std::function<bool(process::id _ChildID, const pat
 
 // Calls the specified function on each thread associated with this process.
 // Return false to exit early.
-void enumerate_threads(const std::function<bool(oStd::thread::id _ThreadID)>& _Enumerator);
+void enumerate_threads(const std::function<bool(std::thread::id _ThreadID)>& _Enumerator);
 
 	} // namespace this_process
 } // namespace ouro

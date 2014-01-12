@@ -50,7 +50,7 @@ static void exercise_thread(size_t _Index, int* _pResults, unsigned int _Runtime
 
 static bool exercise_all_threads()
 {
-	const int nTasks = 5 * oStd::thread::hardware_concurrency(); // ensure more work than the number of threads.
+	const int nTasks = 5 * std::thread::hardware_concurrency(); // ensure more work than the number of threads.
 	int* results = (int*)_alloca(nTasks * sizeof(int));
 	memset(results, -1, nTasks * sizeof(int));
 
