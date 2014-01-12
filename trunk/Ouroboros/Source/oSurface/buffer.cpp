@@ -27,8 +27,7 @@
 #include <oBase/memory.h>
 #include <oBase/throw.h>
 #include <oStd/shared_mutex.h>
-
-using namespace oStd;
+#include <mutex>
 
 namespace ouro {
 	namespace surface {
@@ -106,7 +105,7 @@ void buffer_impl::update_subresource(int _Subresource, const const_mapped_subres
 {
 	int2 ByteDimensions;
 	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	oStd::lock_guard<shared_mutex> lock(Mutex);
+	std::lock_guard<ouro::shared_mutex> lock(Mutex);
 	memcpy2d(Dest.data, Dest.row_pitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 
@@ -127,7 +126,7 @@ void buffer_impl::update_subresource(int _Subresource, const box& _Box, const co
 
 	const void* pSource = _Source.data;
 
-	oStd::lock_guard<shared_mutex> lock(Mutex);
+	std::lock_guard<ouro::shared_mutex> lock(Mutex);
 	for (uint slice = _Box.front; slice < _Box.back; slice++)
 	{
 		memcpy2d(Dest.data, Dest.row_pitch, pSource, _Source.row_pitch, RowSize, NumRows, _FlipVertically);
@@ -185,7 +184,7 @@ void buffer_impl::swizzle(format _NewFormat)
 
 void buffer_impl::generate_mips(filter::value _Filter)
 {
-	oStd::lock_guard<shared_mutex> lock(Mutex);
+	std::lock_guard<ouro::shared_mutex> lock(Mutex);
 
 	int nMips = num_mips(Info);
 
