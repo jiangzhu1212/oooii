@@ -44,27 +44,20 @@ void oWinKinect10::RecordPreKinectThreads()
 {
 	this_process::enumerate_threads([&](std::thread::id _ThreadID)->bool
 	{
+		TIDs.push_back(_ThreadID);
 		return true;
 	});
-
-
-
-	//ouro::this_process::enumerate_threads([&](std::thread::id _ThreadID)->bool
-	//{
-	//	TIDs.push_back(_ThreadID);
-	//	return true;
-	//});
 }
 
 void oWinKinect10::RecordKinectWorkerThreads()
 {
 	auto BeforeTIDs = TIDs;
 	TIDs.clear();
-	//this_process::enumerate_threads([&](std::thread::id _ThreadID)->bool
-	//{
-	//	TIDs.push_back(_ThreadID);
-	//	return true;
-	//});
+	this_process::enumerate_threads([&](std::thread::id _ThreadID)->bool
+	{
+		TIDs.push_back(_ThreadID);
+		return true;
+	});
 
 	oFOR(std::thread::id TID, BeforeTIDs)
 	{
