@@ -99,7 +99,7 @@ static const unsigned int max_num_thread_groups_per_dimension_mask = 0xffff;
 static const unsigned int max_num_thread_groups_per_dimension_shift = 16;
 
 namespace api
-{	oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, unsigned char) {
 
 	unknown,
 	d3d11,
