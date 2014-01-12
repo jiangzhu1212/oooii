@@ -27,8 +27,6 @@
 
 #include "../../test_services.h"
 
-using namespace oStd;
-
 namespace ouro {
 	namespace tests {
 

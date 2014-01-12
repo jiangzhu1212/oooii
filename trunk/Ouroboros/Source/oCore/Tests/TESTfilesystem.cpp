@@ -28,7 +28,6 @@
 
 #include "../../test_services.h"
 
-using namespace oStd;
 using namespace ouro::filesystem;
 
 namespace ouro {
