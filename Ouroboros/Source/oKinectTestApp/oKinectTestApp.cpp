@@ -37,13 +37,10 @@
 #include <oBase/color.h>
 #include "resource.h"
 
-#include <oConcurrency/mutex.h>
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 using namespace ouro;
-using namespace oConcurrency;
 
 typedef std::array<sstring, 2> head_messages_t;
 

@@ -224,6 +224,13 @@ public:
 		return wait_for_ms(_ID, static_cast<unsigned int>(ms.count()));
 	}
 
+	template<typename Rep, typename Period>
+	static bool wait_for(id _ID, const std::chrono::duration<Rep, Period>& _RelativeTime)
+	{
+		std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
+		return wait_for_ms(_ID, static_cast<unsigned int>(ms.count()));
+	}
+
 	static void terminate(id _ID, int _ExitCode, bool _AllChildProcessesToo = true);
 	static void terminate_children(id _ID, int _ExitCode, bool _AllChildProcessesToo = true);
 

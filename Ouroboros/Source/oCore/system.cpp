@@ -35,7 +35,7 @@
 #include <PowrProf.h>
 #include <Shellapi.h>
 
-using namespace oStd;
+using namespace std;
 
 namespace ouro {
 	namespace system {
@@ -309,7 +309,7 @@ bool wait_for_idle(unsigned int _TimeoutMS, const std::function<bool()>& _Contin
 	
 	while (true)
 	{
-		if (_TimeoutMS != INFINITE && (oSeconds(TimeCurrent - TimeStart) >= chrono::milliseconds(_TimeoutMS)))
+		if (_TimeoutMS != INFINITE && (chrono::seconds((TimeCurrent - TimeStart).count()) >= chrono::milliseconds(_TimeoutMS)))
 			break;
 		
 		if (windows_all_services_steady())
@@ -348,7 +348,7 @@ void enable_gpu_compositing(bool _Enable, bool _Force)
 		if (_Enable && _Force && !uses_gpu_compositing())
 		{
 			::system("%SystemRoot%\\system32\\rundll32.exe %SystemRoot%\\system32\\shell32.dll,Control_RunDLL %SystemRoot%\\system32\\desk.cpl desk,@Themes /Action:OpenTheme /file:\"C:\\Windows\\Resources\\Themes\\aero.theme\"");
-			this_thread::sleep_for(oSeconds(31)); // Windows takes about 30 sec to settle after doing this.
+			std::this_thread::sleep_for(std::chrono::seconds(31)); // Windows takes about 30 sec to settle after doing this.
 		}
 		else	
 			oVB(DwmEnableComposition(_Enable ? DWM_EC_ENABLECOMPOSITION : DWM_EC_DISABLECOMPOSITION));
@@ -536,7 +536,7 @@ int spawn_for(const char* _CommandLine
 
 		TimeSoFar = t.seconds();
 
-	} while (TimeSoFar < Timeout && !P->wait_for(std::chrono::milliseconds(kTimeoutPerFlushMS)));
+	} while (TimeSoFar < Timeout && !P->wait_for(chrono::milliseconds(kTimeoutPerFlushMS)));
 	
 	// get any remaining text from stdout
 	size_t offset = 0;
