@@ -47,7 +47,7 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 	sstring memsize;
 
 	release_delay();
-	if (oStd::cv_status::timeout == DelayLatch.wait_for(oStd::chrono::milliseconds(Info.expected_delay_ms))) // some delayed frees might be in threads that get stomped on (thus no exit code runs) during static deinit, so don't wait forever
+	if (oStd::cv_status::timeout == DelayLatch.wait_for(std::chrono::milliseconds(Info.expected_delay_ms))) // some delayed frees might be in threads that get stomped on (thus no exit code runs) during static deinit, so don't wait forever
 		oTRACE("WARNING: a delay on the leak report count was added, but has yet to be released. The timeout has been reached, so this report will include delayed releases that haven't (yet) occurred.");
 
 	// Some 3rd party task systems (TBB) may not have good API for ensuring they
@@ -133,6 +133,13 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 
 void leak_tracker::on_allocate(unsigned int _AllocationID, size_t _Size, const char* _Path, unsigned int _Line, unsigned int _OldAllocationID)
 {
+	// This is a work-around for a tracked allocation that shouldn't be tracked inside crt
+	// http://connect.microsoft.com/VisualStudio/feedback/details/757212
+	static const int kIgnoreStdThreadBootstrapMallocs = 1; // at_thread_exit_mutex's allocation
+	thread_local static int sThreadMallocsSoFar = 0;
+	if (++sThreadMallocsSoFar <= kIgnoreStdThreadBootstrapMallocs) // skip at_thread_exit_mutex's allocation
+		return;
+
 	lock_t Lock(Mutex);
 	if (!Internal) // prevent infinite recursion
 	{
