@@ -25,11 +25,10 @@
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oError.h>
 #include <oBasis/oRefCount.h>
-#include <oConcurrency/mutex.h>
 #include <array>
 
 using namespace ouro;
-using namespace oConcurrency;
+using namespace std;
 
 class oActionHookHelper
 {
@@ -41,26 +40,26 @@ public:
 
 	inline int Hook(const input::action_hook& _Hook) threadsafe
 	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lockB(Mutex);
+		std::lock_guard<ouro::shared_mutex> lockB(oThreadsafe(Mutex));
 		size_t index = sparse_set(oThreadsafe(Hooks), _Hook);
 		return as_int(index);
 	}
 
 	inline void Unhook(int _HookID) threadsafe
 	{
-		oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+		std::lock_guard<ouro::shared_mutex> lock(oThreadsafe(Mutex));
 		ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 	}
 
 	void Call(const input::action& _Action) threadsafe
 	{
-		oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
+		ouro::shared_lock<ouro::shared_mutex> lock(oThreadsafe(Mutex));
 		oFOR(const auto& h, oThreadsafe(Hooks))
 			h(_Action);
 	}
 
 private:
-	oConcurrency::shared_mutex Mutex;
+	ouro::shared_mutex Mutex;
 	std::vector<input::action_hook> Hooks;
 };
 
@@ -459,7 +458,7 @@ struct oInputMapperImpl : oInputMapper
 
 	intrusive_ptr<threadsafe oInputSet> InputSet;
 	oInputHistory InputHistory;
-	oConcurrency::shared_mutex Mutex;
+	ouro::shared_mutex Mutex;
 	oRefCount RefCount;
 	oActionHookHelper Hooks;
 };
@@ -479,7 +478,7 @@ bool oInputMapperCreate(threadsafe oInputMapper** _ppInputMapper)
 
 void oInputMapperImpl::SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+	lock_guard<ouro::shared_mutex> lock(oThreadsafe(Mutex));
 	InputSet = _pInputSet;
 };
 
@@ -490,7 +489,7 @@ void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 		case input::key_down:
 		case input::key_up:
 		{
-			oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
+			ouro::shared_lock<ouro::shared_mutex> lock(oThreadsafe(Mutex));
 			if (InputSet)
 			{
 				oInputSetImpl* pInputSet = oThreadsafe(static_cast<threadsafe oInputSetImpl*>(InputSet.c_ptr()));
@@ -536,7 +535,7 @@ void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 
 void oInputMapperImpl::OnLostCapture() threadsafe
 {
-	oConcurrency::shared_lock<oConcurrency::shared_mutex> lock(Mutex);
+	ouro::shared_lock<ouro::shared_mutex> lock(oThreadsafe(Mutex));
 	if (InputSet)
 	{
 		oInputSetImpl* pInputSet = oThreadsafe(static_cast<threadsafe oInputSetImpl*>(InputSet.c_ptr()));

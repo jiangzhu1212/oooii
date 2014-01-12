@@ -25,11 +25,9 @@
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oXMLSerialize.h>
-#include <oConcurrency/mutex.h>
-#include <oConcurrency/thread_safe.h>
 
 using namespace ouro;
-using namespace oConcurrency;
+using namespace std;
 
 oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oAIR_KEY)
 	oRTTI_COMPOUND_ABSTRACT(oAIR_KEY)
@@ -134,14 +132,14 @@ struct oAirKeyboardImpl : oAirKeyboard
 	void Trigger(const ouro::input::action& _Action) threadsafe override;
 
 private:
-	oConcurrency::shared_mutex KeySetMutex;
+	ouro::shared_mutex KeySetMutex;
 	intrusive_ptr<threadsafe oAirKeySet> KeySet;
 	std::vector<ouro::input::action_type> KeyAction;
 
-	oConcurrency::shared_mutex SkeletonsMutex;
+	ouro::shared_mutex SkeletonsMutex;
 	std::map<int, ouro::input::tracking_skeleton> Skeletons;
 
-	oConcurrency::shared_mutex HooksMutex;
+	ouro::shared_mutex HooksMutex;
 	std::vector<ouro::input::action_hook> Hooks;
 
 	oRefCount RefCount;
@@ -165,7 +163,7 @@ bool oAirKeyboardCreate(threadsafe oAirKeyboard** _ppAirKeyboard)
 
 void oAirKeyboardImpl::SetKeySet(threadsafe oAirKeySet* _pKeySet) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lock(KeySetMutex);
+	lock_guard<ouro::shared_mutex> lock(oThreadsafe(KeySetMutex));
 	KeySet = _pKeySet;
 	if (KeySet)
 	{
@@ -178,7 +176,7 @@ void oAirKeyboardImpl::SetKeySet(threadsafe oAirKeySet* _pKeySet) threadsafe
 
 void oAirKeyboardImpl::VisitKeys(const oAIR_KEY_VISITOR& _Visitor) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lock(KeySetMutex);
+	lock_guard<ouro::shared_mutex> lock(oThreadsafe(KeySetMutex));
 	if (KeySet)
 	{
 		auto& Keys = oThreadsafe(static_cast<threadsafe oAirKeySetImpl*>(KeySet.c_ptr())->Keys);
@@ -190,33 +188,33 @@ void oAirKeyboardImpl::VisitKeys(const oAIR_KEY_VISITOR& _Visitor) threadsafe
 
 bool oAirKeyboardImpl::AddSkeleton(int _ID) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lock(SkeletonsMutex);
+	lock_guard<ouro::shared_mutex> lock(oThreadsafe(SkeletonsMutex));
 	return unique_set(oThreadsafe(Skeletons), _ID, ouro::input::tracking_skeleton());
 }
 
 void oAirKeyboardImpl::RemoveSkeleton(int _ID) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lock(SkeletonsMutex);
+	lock_guard<ouro::shared_mutex> lock(oThreadsafe(SkeletonsMutex));
 	find_and_erase(oThreadsafe(Skeletons), _ID);
 }
 
 int oAirKeyboardImpl::HookActions(const ouro::input::action_hook& _Hook) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lockB(HooksMutex);
+	lock_guard<ouro::shared_mutex> lockB(oThreadsafe(HooksMutex));
 	size_t index = sparse_set(oThreadsafe(Hooks), _Hook);
 	return static_cast<int>(index);
 }
 
 void oAirKeyboardImpl::UnhookActions(int _HookID) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lock(HooksMutex);
+	lock_guard<ouro::shared_mutex> lock(oThreadsafe(HooksMutex));
 	ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 }
 
 void oAirKeyboardImpl::Update(const ouro::input::tracking_skeleton& _Skeleton, unsigned int _TimestampMS) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lockB(KeySetMutex);
-	lock_guard<oConcurrency::shared_mutex> lockS(SkeletonsMutex);
+	lock_guard<ouro::shared_mutex> lockB(oThreadsafe(KeySetMutex));
+	lock_guard<ouro::shared_mutex> lockS(oThreadsafe(SkeletonsMutex));
 	oThreadsafe(this)->UpdateInternal(_Skeleton, _TimestampMS);
 }
 
@@ -282,6 +280,6 @@ void oAirKeyboardImpl::TriggerInternal(const ouro::input::action& _Action)
 
 void oAirKeyboardImpl::Trigger(const ouro::input::action& _Action) threadsafe
 {
-	lock_guard<oConcurrency::shared_mutex> lock(HooksMutex);
+	lock_guard<ouro::shared_mutex> lock(oThreadsafe(HooksMutex));
 	oThreadsafe(this)->TriggerInternal(_Action);
 }

@@ -65,7 +65,7 @@ public:
 	explicit duration(const Rep2& _Duration)
 		: Value(chrono_static_cast<Rep>(_Duration))
 	{
-		static_assert((std::tr1::is_convertible<Rep2, rep>::value) && (treat_as_floating_point<rep>::value || !treat_as_floating_point<Rep2>::value), "Incompatible duration type conversion (if you're trying to use oStd::chrono::seconds, consider using oSeconds instead)");
+		static_assert((std::tr1::is_convertible<Rep2, rep>::value) && (treat_as_floating_point<rep>::value || !treat_as_floating_point<Rep2>::value), "incompatible duration type conversion");
 	}
 
 	//template<typename Rep2, typename Period2, typename = typename enable_if<treat_as_floating_point<rep>::value || (ratio_divide<Period2, period>::type::den == 1 && !treat_as_floating_point<Rep2>::value)>::type>
@@ -211,13 +211,5 @@ namespace std {
 		> type;
 	};
 }
-
-// The C++11 standard ignores conversion with rounding but defines seconds as 
-// unsigned long long, so you can't really work with milli and microseconds in 
-// terms of fractions of a second. Anyway those in the pre- and final proposals 
-// recommending spinning your own duration type based on double, so here it is. 
-// What is really lame is the errors given don't indicate at all where your 
-// error comes from if you use chrono::seconds with a double.
-typedef oStd::chrono::duration<double> oSeconds;
 
 #endif
