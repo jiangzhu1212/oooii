@@ -574,7 +574,7 @@ void AppendKey(short int _Key, bool _KeyUp, INPUT** _ppInput)
 void oWinKeySend(HWND _hWnd, ouro::input::key _Key, bool _IsDown, const int2& _MousePosition)
 {
 	INPUT Input;
-	oStd::thread::id tid = oWinGetWindowThread(_hWnd);
+	std::thread::id tid = oWinGetWindowThread(_hWnd);
 	AttachThreadInput(GetCurrentThreadId(), asdword(tid), true);
 	
 	switch (ouro::input::get_type(_Key))

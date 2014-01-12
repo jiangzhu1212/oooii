@@ -496,7 +496,7 @@ void oWinEnumWindows(const std::function<bool(HWND _hWnd)>& _Enumerator)
 
 bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
 	, HWND* _pHWND
-	, oStd::thread::id* _pThreadID
+	, std::thread::id* _pThreadID
 	, const char* _pWindowName)
 {
 	HWND Hwnd = 0;
@@ -546,7 +546,7 @@ bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
 		return oErrorSetLast(std::errc::no_such_process);
 
 	*_pHWND = Hwnd;
-	*((unsigned int*)_pThreadID) = ThreadID;
+	*_pThreadID = astid(ThreadID);
 	return true;
 }
 
@@ -932,11 +932,9 @@ UINT oWinTranslateMessage(HWND _hWnd, UINT _uMsg)
 	return p ? p->Translate(_uMsg) : _uMsg;
 }
 
-oStd::thread::id oWinGetWindowThread(HWND _hWnd)
+std::thread::id oWinGetWindowThread(HWND _hWnd)
 {
-	oStd::thread::id ID;
-	(uint&)ID = GetWindowThreadProcessId(_hWnd, nullptr);
-	return ID;
+	return astid(GetWindowThreadProcessId(_hWnd, nullptr));
 }
 
 bool oWinIsOpaque(HWND _hWnd)

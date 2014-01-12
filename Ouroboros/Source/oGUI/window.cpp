@@ -158,8 +158,8 @@ class HookManager
 public:
 	typedef HookT hook_type;
 	typedef ParamT param_type;
-	typedef oStd::recursive_mutex mutex_t;
-	typedef oStd::lock_guard<mutex_t> lock_t;
+	typedef std::recursive_mutex mutex_t;
+	typedef std::lock_guard<mutex_t> lock_t;
 
 	HookManager() { Hooks.reserve(8); }
 
