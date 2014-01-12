@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oCore/windows/win_skeleton.h>
 #include <oCore/process_heap.h>
-#include <oStd/mutex.h>
 
 using namespace oStd;
 

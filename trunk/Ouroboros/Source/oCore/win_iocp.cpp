@@ -30,13 +30,13 @@
 #include <oCore/process_heap.h>
 #include <oCore/reporting.h>
 #include <oCore/windows/win_error.h>
-#include <oStd/thread.h>
+#include <thread>
 #include <vector>
 
 #define oSHUTDOWN 1
 #define oCOMPLETION 2
 
-using namespace oStd;
+using namespace std;
 
 namespace ouro {
 	namespace windows {
@@ -77,7 +77,7 @@ private:
 	void work();
 
 	HANDLE hIoPort;
-	std::vector<oStd::thread> Workers;
+	std::vector<std::thread> Workers;
 	std::atomic<size_t> NumRunningThreads;
 	size_t NumAssociations;
 
@@ -89,7 +89,7 @@ private:
 
 unsigned int iocp_threadpool::concurrency()
 {
-	return oStd::thread::hardware_concurrency();
+	return std::thread::hardware_concurrency();
 }
 
 void iocp_threadpool::work()

@@ -29,10 +29,11 @@
 #include <oCore/system.h>
 #include <oBase/guid.h>
 #include <oBase/fnv1a.h>
-#include <oStd/mutex.h>
+#include <oCore/windows/win_util.h>
+#include <mutex>
+#include <thread>
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+using namespace std;
 
 namespace ouro {
 	namespace process_heap {
@@ -42,8 +43,8 @@ inline size_t hash(const char* _Name, process_heap::scope _Scope)
 	size_t h = fnv1a<size_t>(_Name);
 	if (_Scope == process_heap::per_thread)
 	{
-		oStd::thread::id id = oStd::this_thread::get_id();
-		h = fnv1a<size_t>(&id, sizeof(oStd::thread::id), h);
+		thread::id id = this_thread::get_id();
+		h = fnv1a<size_t>(&id, sizeof(thread::id), h);
 	}
 	return h;
 }
@@ -85,7 +86,7 @@ private:
 
 	HANDLE hHeap;
 	size_t DtorOrdinal;
-	oStd::recursive_mutex Mutex;
+	recursive_mutex Mutex;
 	int RefCount;
 
 	struct mapped_file
@@ -118,7 +119,7 @@ private:
 
 		// thread id of pointer initialization and where deinitialization will 
 		// probably take place
-		oStd::thread::id init;
+		thread::id init;
 		sstring name;
 		enum scope scope;
 		enum tracking tracking;
@@ -234,7 +235,7 @@ void context::deallocate(void* _Pointer)
 {
 	bool DoRelease = false;
 	{
-		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
+		lock_guard<recursive_mutex> lock(Mutex);
 
 		if (valid)
 		{
@@ -271,8 +272,8 @@ void context::exit_thread()
 {
 	fixed_vector<void*, 32> allocs;
 	{
-		oStd::thread::id tid = oStd::this_thread::get_id();
-		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
+		thread::id tid = this_thread::get_id();
+		lock_guard<recursive_mutex> lock(Mutex);
 		for (container_t::const_iterator it = Pointers.begin(); it != Pointers.end(); ++it)
 			if (it->second.scope == process_heap::per_thread && tid == it->second.init)
 				allocs.push_back(it->second.pointer);
@@ -301,13 +302,13 @@ bool context::find_or_allocate(size_t _Size
 	// lock before constructing the new object and lock a shared mutex just for 
 	// that entry.
 	{
-		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
+		lock_guard<recursive_mutex> lock(Mutex);
 		auto it = Pointers.find(h);
 		if (it == Pointers.end())
 		{
 			entry& e = Pointers[h];
 			*_pPointer = e.pointer = allocate(_Size);
-			e.init = oStd::this_thread::get_id();
+			e.init = this_thread::get_id();
 			e.name = _Name;
 			e.scope = _Scope;
 			e.tracking = _Tracking;
@@ -338,7 +339,7 @@ bool context::find_or_allocate(size_t _Size
 
 		// unlock the entry - how else can I do this!? I can't keep a pointer to the
 		// entry because it can be moved around, so I need to safely reevaluate it.
-		oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
+		lock_guard<recursive_mutex> lock(Mutex);
 		auto it = Pointers.find(h);
 		ReleaseSRWLockExclusive(&it->second.mutex);
 	}
@@ -352,7 +353,7 @@ bool context::find(const char* _Name, scope _Scope, void** _pPointer)
 		throw std::invalid_argument("invalid argument");
 	*_pPointer = nullptr;
 	size_t h = hash(_Name, _Scope);
-	oStd::lock_guard<oStd::recursive_mutex> lock(Mutex);
+	lock_guard<recursive_mutex> lock(Mutex);
 	auto it = Pointers.find(h);
 	if (it != Pointers.end())
 		*_pPointer = it->second.pointer;
@@ -398,7 +399,7 @@ void context::report()
 				if (e.scope == process_heap::per_thread)
 				{
 					snprintf(TLBuf, " (thread_local in thread 0x%x%s)"
-						, *(unsigned int*)&e.init
+						, asdword(e.init)
 						, this_process::get_main_thread_id() == e.init ? " (main)" : "");
 				}
 
