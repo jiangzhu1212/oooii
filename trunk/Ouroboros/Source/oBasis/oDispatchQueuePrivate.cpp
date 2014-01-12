@@ -38,13 +38,13 @@ struct oDispatchQueuePrivate_Impl : oDispatchQueuePrivate
 
 	bool Dispatch(const oTASK& _Task) threadsafe override
 	{
-		try { Threadpool.dispatch(_Task); }
+		try { thread_cast<oDispatchQueuePrivate_Impl*>(this)->Threadpool.dispatch(_Task); }
 		catch (...) { return false; }
 		return true;
 	}
-	void Flush() threadsafe override { Threadpool.flush(); }
-	bool Joinable() const threadsafe override { return Threadpool.joinable(); }
-	void Join() threadsafe override { Threadpool.join(); }
+	void Flush() threadsafe override { thread_cast<oDispatchQueuePrivate_Impl*>(this)->Threadpool.flush(); }
+	bool Joinable() const threadsafe override { return thread_cast<oDispatchQueuePrivate_Impl*>(this)->Threadpool.joinable(); }
+	void Join() threadsafe override { thread_cast<oDispatchQueuePrivate_Impl*>(this)->Threadpool.join(); }
 	const char* GetDebugName() const threadsafe override { return DebugName; }
 
 protected:

@@ -25,12 +25,13 @@
 #include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oError.h>
 #include <oBase/finally.h>
-#include <oStd/condition_variable.h>
-#include <oStd/mutex.h>
 #include "oBasisTestCommon.h"
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 using namespace ouro;
-using namespace oStd;
+using namespace std;
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 {

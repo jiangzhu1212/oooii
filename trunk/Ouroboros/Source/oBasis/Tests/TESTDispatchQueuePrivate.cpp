@@ -25,12 +25,13 @@
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBasis/oError.h>
 #include <oBase/finally.h>
-#include <oStd/condition_variable.h>
-#include <oStd/mutex.h>
 #include "oBasisTestCommon.h"
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 using namespace ouro;
-using namespace oStd;
+using namespace std;
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 {
@@ -38,7 +39,7 @@ static void SetLocation(size_t _Index, size_t _Start, int* _Array)
 	_Array[_Index] = startValue + static_cast<int>(_Index + 1 - _Start);
 }
 
-static void FillArray(int* _Array, size_t _Start, size_t _End, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
+static void FillArray(int* _Array, size_t _Start, size_t _End, std::thread::id* _pExecutionThreadID, bool* _pWrongThreadError)
 {
 	if (*_pExecutionThreadID == thread::id()) // this command should execute before any others.
 		*_pExecutionThreadID = this_thread::get_id();

@@ -27,9 +27,9 @@
 #include <oBase/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oLockedPointer.h>
-#include <oConcurrency/mutex.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oURI.h>
+#include <mutex>
 
 using namespace ouro;
 
@@ -37,10 +37,14 @@ struct oBuffer_Impl : public oBuffer
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oBuffer);
-	oDEFINE_LOCKABLE_INTERFACE(RWMutex);
 
 	oBuffer_Impl(const char* _Name, void* _Allocation, size_t _Size, DeallocateFn _DeallocateFn, bool* _pSuccess);
 	~oBuffer_Impl();
+
+	void Lock() threadsafe { thread_cast<ouro::shared_mutex&>(RWMutex).lock();} \
+	void LockRead() const threadsafe { thread_cast<ouro::shared_mutex&>(RWMutex).lock_shared(); } \
+	void Unlock() threadsafe { thread_cast<ouro::shared_mutex&>(RWMutex).unlock(); } \
+	void UnlockRead() const threadsafe { thread_cast<ouro::shared_mutex&>(RWMutex).unlock_shared(); } 
 
 	void* GetData() override;
 	const void* GetData() const override;
@@ -52,7 +56,7 @@ struct oBuffer_Impl : public oBuffer
 	oInitOnce<uri_string> Name;
 	size_t Size;
 	DeallocateFn Deallocate;
-	mutable oConcurrency::shared_mutex RWMutex;
+	mutable ouro::shared_mutex RWMutex;
 	oRefCount RefCount;
 };
 
