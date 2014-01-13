@@ -28,7 +28,7 @@
 #ifndef oBase_backoff_h
 #define oBase_backoff_h
 
-#include <oStd/thread.h>
+#include <thread>
 
 namespace ouro {
 
@@ -74,7 +74,7 @@ inline void backoff::pause()
 	}
 
 	else
-		oStd::this_thread::yield();
+		std::this_thread::yield();
 }
 
 inline bool backoff::try_pause()

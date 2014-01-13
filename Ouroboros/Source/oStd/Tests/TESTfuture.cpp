@@ -81,7 +81,7 @@ static void test_workstealing(ouro::test_services& _Services)
 	{
 		float CPUpeak2 = 0.0f;
 		_Services.reset_cpu_utilization();
-		oStd::this_thread::sleep_for(oStd::chrono::seconds(10));
+		std::this_thread::sleep_for(std::chrono::seconds(10));
 		_Services.get_cpu_utilization(&CPUavg, &CPUpeak2);
 		if (CPUpeak2 > 5.0f)
 			oSTD_THROW(permission_denied, "There is too much CPU activity currently on the system to properly judge oStdFuture's workstealing capabilities.");

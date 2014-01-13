@@ -176,7 +176,7 @@ struct PLATFORM_oSocketAsync : public oTest
 		{
 			Socket->SendTo(TESTSocketMessage, sizeof(TESTSocketMessage), Addr);
 		}
-		oStd::this_thread::sleep_for(oStd::chrono::seconds(1));
+		std::this_thread::sleep_for(std::chrono::seconds(1));
 		oTESTB(Sender->SendCount.fetch_add(0) == SocketDesc.AsyncSettings.MaxSimultaneousMessages, "UDPSender: Failed to account for all sends");
 
 		return SUCCESS;

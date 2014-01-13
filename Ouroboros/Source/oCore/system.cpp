@@ -391,7 +391,7 @@ char* workgroup_name(char* _StrDestination, size_t _SizeofStrDestination)
 char* exec_path(char* _StrDestination, size_t _SizeofStrDestination)
 {
 	sstring hostname;
-	if (-1 == snprintf(_StrDestination, _SizeofStrDestination, "[%s.%u.%u]", host_name(hostname), ouro::this_process::get_id(), oStd::this_thread::get_id()))
+	if (-1 == snprintf(_StrDestination, _SizeofStrDestination, "[%s.%u.%u]", host_name(hostname), ouro::this_process::get_id(), asdword(std::this_thread::get_id())))
 		oTHROW0(no_buffer_space);
 	return _StrDestination;
 }

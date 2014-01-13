@@ -75,12 +75,12 @@ enum oUS_USAGE
 
 #define oWIN_CHECK(_hWnd) do \
 	{	if (!oWinExists(_hWnd)) return oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); \
-		if (!oWinIsWindowThread(_hWnd)) return oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", asdword(oStd::this_thread::get_id()), _hWnd); \
+		if (!oWinIsWindowThread(_hWnd)) return oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", asdword(std::this_thread::get_id()), _hWnd); \
 	} while (false)
 
 #define oWIN_CHECK0(_hWnd) do \
 	{	if (!oWinExists(_hWnd)) { oErrorSetLast(std::errc::invalid_argument, "Invalid HWND 0x%x specified", _hWnd); return 0; } \
-		if (!oWinIsWindowThread(_hWnd)) { oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", asdword(oStd::this_thread::get_id()), _hWnd); return 0; } \
+		if (!oWinIsWindowThread(_hWnd)) { oErrorSetLast(std::errc::operation_not_permitted, "This function must be called on the window thread %d for HWND 0x%x", asdword(std::this_thread::get_id()), _hWnd); return 0; } \
 	} while (false)
 
 static const char* kRegisteredWindowMessages[] = 
@@ -557,7 +557,7 @@ bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
 #define oWINVP(_hWnd) \
 	if (!oWinExists(_hWnd)) \
 		{ oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); return nullptr; } \
-	oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", asdword(oStd::this_thread::get_id()), _hWnd)
+	oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", asdword(std::this_thread::get_id()), _hWnd)
 
 inline bool oErrorSetLastBadType(HWND _hControl, ouro::control_type::value _Type) { return oErrorSetLast(std::errc::invalid_argument, "The specified %s %p (%d) is not valid for this operation", as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
 
@@ -714,8 +714,8 @@ HWND oWinCreate(HWND _hParent
 	oTRACE("HWND 0x%x '%s' running on thread %d (0x%x)"
 		, hWnd
 		, oSAFESTRN(_Title)
-		, asdword(oStd::this_thread::get_id())
-		, asdword(oStd::this_thread::get_id()));
+		, asdword(std::this_thread::get_id())
+		, asdword(std::this_thread::get_id()));
 
 	oVERIFY(oWinRegisterDeviceChangeEvents(hWnd));
 
