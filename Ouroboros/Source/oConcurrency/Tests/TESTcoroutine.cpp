@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/coroutine.h>
 #include <oStd/future.h>
+#include <thread>
 
 namespace oConcurrency {
 	namespace tests {
@@ -37,7 +38,7 @@ public:
 		, Counter(0)
 	{}
 
-	oStd::future<void> Future;
+	ouro::future<void> Future;
 	bool Flag;
 	bool Done;
 	int Counter;
@@ -47,7 +48,7 @@ void MyExecute(MyContext& _MyContext)
 {
 	_MyContext.Counter++;
 	oCOROUTINE_BEGIN(&_MyContext);
-	_MyContext.Future = oStd::async([&](){ _MyContext.Flag = true; });
+	_MyContext.Future = ouro::async([&](){ _MyContext.Flag = true; });
 	oCOROUTINE_SLEEP(); // this causes MyExecute to return, but it has marked where it has left off
 	if (!_MyContext.Future.is_ready())
 		return;
@@ -62,7 +63,7 @@ void TESTcoroutine()
 	while (!myContext.Done)
 	{
 		MyExecute(myContext);
-		oStd::this_thread::sleep_for(oStd::chrono::milliseconds(1));
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
 

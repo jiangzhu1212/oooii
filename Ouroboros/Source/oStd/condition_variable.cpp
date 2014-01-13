@@ -84,5 +84,5 @@ static void InternalNotify(ctx* _pContext)
 void oStd::notify_all_at_thread_exit(oStd::condition_variable& _ConditionVariable, oStd::unique_lock<oStd::mutex> _Lock)
 {
 	oCRTASSERT(_Lock.owns_lock(), "Lock must own the mutex lock");
-	condition_variable_requirements::thread_at_exit(std::bind(InternalNotify, new ctx(_ConditionVariable, std::move(_Lock))));
+	ouro::condition_variable_requirements::thread_at_exit(std::bind(InternalNotify, new ctx(_ConditionVariable, std::move(_Lock))));
 }

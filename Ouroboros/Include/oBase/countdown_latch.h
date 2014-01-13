@@ -30,9 +30,9 @@
 #ifndef oBase_countdown_latch_h
 #define oBase_countdown_latch_h
 
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
-#include <chrono>
 #include <stdexcept>
 
 namespace ouro {

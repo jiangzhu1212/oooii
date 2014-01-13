@@ -26,7 +26,6 @@
 #ifndef oIOCP_h
 #define oIOCP_h
 
-#include <oStd/chrono.h>
 #include <oBasis/oInterface.h>
 
 #define WIN32_LEAN_AND_MEAN

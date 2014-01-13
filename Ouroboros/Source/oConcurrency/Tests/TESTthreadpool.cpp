@@ -112,7 +112,7 @@ template<typename ThreadpoolT> static void test_parallel_for(ThreadpoolT& _Threa
 template<typename ThreadpoolT> static void TestT()
 {
 	ThreadpoolT t;
-	ouro::finally OSE([&] { t.join(); });
+	ouro::finally OSE([&] { if (t.joinable()) t.join(); });
 
 	test_basics(t);
 	t.join();
@@ -132,7 +132,7 @@ void TESTthreadpool()
 void TESTtask_group()
 {
 	threadpool<std::allocator<oTASK>> t;
-	ouro::finally OSE([&] { t.join(); });
+	ouro::finally OSE([&] { if (t.joinable()) t.join(); });
 
 	detail::task_group<std::allocator<oTASK>> g(t);
 	test_task_group(g);
@@ -263,28 +263,28 @@ void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool&
 struct basic_threadpool_impl : test_threadpool
 {
 	basic_threadpool<std::allocator<oTASK>> t;
-	~basic_threadpool_impl() { t.join(); }
-	const char* name() const threadsafe override { return "basic_threadpool"; }
-	void dispatch(const oTASK& _Task) threadsafe override { return thread_cast<basic_threadpool_impl*>(this)->t.dispatch(_Task); }
-	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) threadsafe override { return false; }
-	void flush() threadsafe override { thread_cast<basic_threadpool_impl*>(this)->t.flush(); }
-	void release() threadsafe override { thread_cast<basic_threadpool_impl*>(this)->t.join(); }
+	~basic_threadpool_impl() { if (t.joinable()) t.join(); }
+	const char* name() const override { return "basic_threadpool"; }
+	void dispatch(const oTASK& _Task) override { return t.dispatch(_Task); }
+	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) override { return false; }
+	void flush() override { t.flush(); }
+	void release() override { if (t.joinable()) t.join(); }
 };
 
 struct threadpool_impl : test_threadpool
 {
 	threadpool<std::allocator<oTASK>> t;
-	~threadpool_impl() { t.join(); }
-	const char* name() const threadsafe override { return "threadpool"; }
-	void dispatch(const oTASK& _Task) threadsafe override { return thread_cast<threadpool_impl*>(this)->t.dispatch(_Task); }
-	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) threadsafe override
+	~threadpool_impl() { if (t.joinable()) t.join(); }
+	const char* name() const override { return "threadpool"; }
+	void dispatch(const oTASK& _Task) override { return t.dispatch(_Task); }
+	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) override
 	{
-		oConcurrency::detail::parallel_for<16>(oThreadsafe(t), _Begin, _End, _Task);
+		oConcurrency::detail::parallel_for<16>(t, _Begin, _End, _Task);
 		return true;
 	}
 
-	void flush() threadsafe override { thread_cast<threadpool_impl*>(this)->t.flush(); }
-	void release() threadsafe override { thread_cast<threadpool_impl*>(this)->t.join(); }
+	void flush() override { t.flush(); }
+	void release() override { if (t.joinable()) t.join(); }
 };
 
 namespace {

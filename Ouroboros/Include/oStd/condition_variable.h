@@ -44,12 +44,15 @@
 	#error Unsupported platform (oCONDITION_VARIABLE_FOOTPRINT)
 #endif
 
-namespace oStd {
+namespace ouro {
 	namespace condition_variable_requirements
 	{
 		void thread_at_exit(const std::function<void()>& _AtExit);
 
 	} // namespace condition_variable_requirements
+} // namespace ouro
+
+namespace oStd {
 
 namespace detail { class promised_base; }
 

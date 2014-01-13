@@ -29,11 +29,11 @@
 	#define oHAS_SLIM_TRY_LOCK
 #endif
 
-static_assert(sizeof(oStd::recursive_mutex) == sizeof(CRITICAL_SECTION), "");
+static_assert(sizeof(oStd::recursive_mutex) == sizeof(CRITICAL_SECTION), "size mismatch");
 #ifdef _DEBUG
-	static_assert(sizeof(oStd::mutex) == sizeof(SRWLOCK) + sizeof(size_t), "");
+	static_assert(sizeof(oStd::mutex) == sizeof(SRWLOCK) + sizeof(std::thread::id), "size mismatch");
 #else
-	static_assert(sizeof(oStd::mutex) == sizeof(SRWLOCK), "");
+	static_assert(sizeof(oStd::mutex) == sizeof(SRWLOCK), "size mismatch");
 #endif
 
 class std_backoff
@@ -78,7 +78,7 @@ inline void std_backoff::pause()
 	}
 
 	else
-		oStd::this_thread::yield();
+		std::this_thread::yield();
 }
 
 inline bool std_backoff::try_pause()
@@ -102,14 +102,13 @@ namespace oStd {
 	const adopt_lock_t adopt_lock;
 	const defer_lock_t defer_lock;
 	const try_to_lock_t try_to_lock;
-} // namespace oStd
 
-oStd::mutex::mutex()
+mutex::mutex()
 {
 	InitializeSRWLock((PSRWLOCK)&Footprint);
 }
 
-oStd::mutex::~mutex()
+mutex::~mutex()
 {
 	#ifdef oHAS_SLIM_TRY_LOCK
 		if (!try_lock())
@@ -117,23 +116,23 @@ oStd::mutex::~mutex()
 	#endif
 }
 
-oStd::mutex::native_handle_type oStd::mutex::native_handle()
+mutex::native_handle_type mutex::native_handle()
 {
 	return (PSRWLOCK)&Footprint;
 }
 
-void oStd::mutex::lock()
+void mutex::lock()
 {
 	// @tony: Based on what I've observed, the low bit of the word that is
 	// the slim RW lock is 1 when locked and 0 when not locked, so test for that...
-	oCRTASSERT(!Footprint || ThreadID != oStd::this_thread::get_id(), "mutex is non-recursive and already locked on this thread. This could result in a deadlock.");
+	oCRTASSERT(!Footprint || ThreadID != std::this_thread::get_id(), "mutex is non-recursive and already locked on this thread. This could result in a deadlock.");
 	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
 	#ifdef _DEBUG
-		ThreadID = oStd::this_thread::get_id();
+		ThreadID = std::this_thread::get_id();
 	#endif
 }
 
-bool oStd::mutex::try_lock()
+bool mutex::try_lock()
 {
 	#ifdef oHAS_SLIM_TRY_LOCK
 		return !!TryAcquireSRWLockExclusive((PSRWLOCK)&Footprint);
@@ -142,20 +141,20 @@ bool oStd::mutex::try_lock()
 	#endif
 }
 
-void oStd::mutex::unlock()
+void mutex::unlock()
 {
 	#ifdef _DEBUG
-		ThreadID = oStd::thread::id();
+		ThreadID = std::thread::id();
 	#endif
 	ReleaseSRWLockExclusive((PSRWLOCK)&Footprint);
 }
 
-oStd::recursive_mutex::recursive_mutex()
+recursive_mutex::recursive_mutex()
 {
 	InitializeCriticalSection((LPCRITICAL_SECTION)Footprint);
 }
 
-oStd::recursive_mutex::~recursive_mutex()
+recursive_mutex::~recursive_mutex()
 {
 	if (!try_lock())
 	{
@@ -166,27 +165,27 @@ oStd::recursive_mutex::~recursive_mutex()
 	DeleteCriticalSection((LPCRITICAL_SECTION)Footprint);
 }
 
-oStd::recursive_mutex::native_handle_type oStd::recursive_mutex::native_handle()
+recursive_mutex::native_handle_type recursive_mutex::native_handle()
 {
 	return (LPCRITICAL_SECTION)Footprint;
 }
 
-void oStd::recursive_mutex::lock()
+void recursive_mutex::lock()
 {
 	EnterCriticalSection((LPCRITICAL_SECTION)Footprint);
 }
 
-bool oStd::recursive_mutex::try_lock()
+bool recursive_mutex::try_lock()
 {
 	return !!TryEnterCriticalSection((LPCRITICAL_SECTION)Footprint);
 }
 
-void oStd::recursive_mutex::unlock()
+void recursive_mutex::unlock()
 {
 	LeaveCriticalSection((LPCRITICAL_SECTION)Footprint);
 }
 
-bool oStd::timed_mutex::try_lock_for(unsigned int _TimeoutMS)
+bool timed_mutex::try_lock_for(unsigned int _TimeoutMS)
 {
 	// Based on:
 	// http://software.intel.com/en-us/blogs/2008/09/17/pondering-timed-mutex/
@@ -200,7 +199,7 @@ bool oStd::timed_mutex::try_lock_for(unsigned int _TimeoutMS)
 
 		if (!bo.try_pause())
 		{
-			oStd::this_thread::sleep_for(oStd::chrono::milliseconds(10));
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
 			_TimeoutMS -= 10;
 			bo.reset();
 		}
@@ -210,7 +209,7 @@ bool oStd::timed_mutex::try_lock_for(unsigned int _TimeoutMS)
 	return false;
 }
 
-oStd::once_flag::once_flag()
+once_flag::once_flag()
 	: Footprint(0)
 {
 	InitOnceInitialize((PINIT_ONCE)Footprint);
@@ -223,7 +222,9 @@ BOOL CALLBACK InitOnceCallback(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Cont
 	return TRUE;
 }
 
-void oStd::call_once(oStd::once_flag& _Flag, std::function<void()> _Function)
+void call_once(once_flag& _Flag, std::function<void()> _Function)
 {
 	InitOnceExecuteOnce(*(PINIT_ONCE*)&_Flag, InitOnceCallback, &_Function, nullptr);
 }
+
+} // namespace oStd

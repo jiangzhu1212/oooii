@@ -29,7 +29,6 @@
 #include <oBase/finally.h>
 #include <oBase/assert.h>
 #include <oStd/for.h>
-#include <oStd/thread.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <atomic>
@@ -313,7 +312,7 @@ static void test_nontrivial_contents(const char* _QueueName)
 	oCHECK(q.empty() && numDeleted == kNumBuffers, "Queue is retaining a reference to an element though it's supposed to be empty.");
 }
 
-template<typename IntQueueT, typename oTestBufferRefQueueT> bool TestQueueT(const char* _QueueName)
+template<typename IntQueueT, typename oTestBufferRefQueueT> void TestQueueT(const char* _QueueName)
 {
 	test_queue_basics<int, IntQueueT>(_QueueName);
 	test_concurrent_pushes<int, IntQueueT>(_QueueName);
@@ -327,8 +326,6 @@ template<typename IntQueueT, typename oTestBufferRefQueueT> bool TestQueueT(cons
 		double time = test_performance<int, IntQueueT>(_QueueName);
 		oTRACE("%s perf test: %.03fs", _QueueName, time);
 	#endif
-	
-	return true;
 }
 
 #define oTEST_QUEUET(_QueueType) TestQueueT<_QueueType<int>, _QueueType<std::shared_ptr<threadsafe oTestBuffer>>>(#_QueueType)

@@ -574,7 +574,7 @@ int main(int argc, const char* argv[])
 		}
 
 		// After the specified timeout try to build the next build
-		uint CurrentTimeMS = ouro::timer::now_ms();
+		uint CurrentTimeMS = ouro::timer::nowmsi();
 		if ((CurrentTimeMS - LastP4CheckMS) > (Settings.NewBuildCheckSeconds * 1000))
 		{
 			LastP4CheckMS = CurrentTimeMS;

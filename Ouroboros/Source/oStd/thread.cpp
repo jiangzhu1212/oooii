@@ -25,6 +25,7 @@
 #include <oStd/thread.h>
 #include <process.h> // _beginthread/_endthread
 #include "crt_assert.h"
+#include <stdexcept>
 
 oStd::thread::id oStd::this_thread::get_id()
 {
@@ -154,6 +155,8 @@ void oStd::thread::join()
 			}
 		}
 	}
+	else
+		throw std::invalid_argument("invalid argument (join called on a non-joinable thread)"); // this is what VS2012 does if join is called on a non-joinable thread
 }
 
 bool oStd::thread::joinable() const

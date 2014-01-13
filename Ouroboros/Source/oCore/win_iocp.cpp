@@ -203,7 +203,7 @@ bool iocp_threadpool::wait_for(unsigned int _TimeoutMS)
 {
 	backoff bo;
 
-	unsigned int start = timer::now_ms();
+	unsigned int start = timer::nowmsi();
 
 	#ifdef _DEBUG
 		local_timeout to(5.0);
@@ -211,7 +211,7 @@ bool iocp_threadpool::wait_for(unsigned int _TimeoutMS)
 
 	while (NumAssociations > 0)
 	{ 
-		if (_TimeoutMS != infinite && timer::now_ms() >= (start + _TimeoutMS))
+		if (_TimeoutMS != infinite && timer::nowmsi() >= (start + _TimeoutMS))
 			return false;
 
 		bo.pause();

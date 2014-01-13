@@ -26,7 +26,7 @@
 
 oScopedPartialTimeout::oScopedPartialTimeout(unsigned int* _pTimeoutMSCountdown)
 	: pTimeoutMSCountdown(_pTimeoutMSCountdown)
-	, Start(ouro::timer::now_ms())
+	, Start(ouro::timer::nowmsi())
 {
 }
 
@@ -39,7 +39,7 @@ void oScopedPartialTimeout::UpdateTimeout()
 {
 	if (*pTimeoutMSCountdown != ouro::infinite)
 	{
-		unsigned int CurrentTime = ouro::timer::now_ms();
+		unsigned int CurrentTime = ouro::timer::nowmsi();
 		unsigned int diff = CurrentTime - Start;
 		unsigned int OldCountdown = *pTimeoutMSCountdown;
 		*pTimeoutMSCountdown = OldCountdown < diff ? 0 :  OldCountdown - diff;

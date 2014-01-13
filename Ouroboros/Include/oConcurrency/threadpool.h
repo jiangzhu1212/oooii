@@ -72,7 +72,7 @@ protected:
 
 	std::mutex LocalQueuesMutex;
 	std::vector<concurrent_worklist<oTASK, allocator_type>*> LocalQueues;
-	std::vector<oStd::thread::id> WorkerIDs;
+	std::vector<std::thread::id> WorkerIDs;
 	static thread_local concurrent_worklist<oTASK, allocator_type>* pLocalQueue;
 
 	// @tony: Due to a bug in VS2010, instead of declaring work() with a 
@@ -125,7 +125,7 @@ void threadpool<Alloc>::begin()
 	{
 		if (!LocalQueues[i])
 		{
-			WorkerIDs[i] = oStd::this_thread::get_id();
+			WorkerIDs[i] = std::this_thread::get_id();
 			LocalQueues[i] = pNewQueue;
 			pLocalQueue = pNewQueue;
 			break;
@@ -276,7 +276,7 @@ void threadpool<Alloc>::patch_local_queue()
 {
 	for (size_t i = 0; i < WorkerIDs.size(); i++)
 	{
-		if (WorkerIDs[i] == oStd::this_thread::get_id())
+		if (WorkerIDs[i] == std::this_thread::get_id())
 		{
 			pLocalQueue = LocalQueues[i];
 			return;

@@ -891,7 +891,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 			case WM_WINDOWPOSCHANGED:
 			{
 				if (IsWindowVisible(_hWnd))
-					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)ouro::timer::now_ms());
+					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)ouro::timer::nowmsi());
 				else
 					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)-1);
 				break;
@@ -946,7 +946,7 @@ bool oWinIsOpaque(HWND _hWnd)
 	intptr_t LastShowTimestamp = (intptr_t)GetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP);
 	if (LastShowTimestamp < 0)
 		return false;
-	intptr_t Now = ouro::timer::now_ms();
+	intptr_t Now = ouro::timer::nowmsi();
 	return (LastShowTimestamp + kFadeInTime) < Now;
 }
 

@@ -74,12 +74,12 @@ public:
 	void Close() override { Running = false; }
 	bool WaitUntilClosed(unsigned int _TimeoutMS = ouro::infinite)
 	{
-		unsigned int TimedOut = ouro::timer::now_ms() + _TimeoutMS;
+		unsigned int TimedOut = ouro::timer::nowmsi() + _TimeoutMS;
 		bool IsTimedOut = false;
 		while (Running && !IsTimedOut)
 		{
 			thread_cast<oWebAppWindowImpl*>(this)->Window->flush_messages();
-			IsTimedOut = (_TimeoutMS != ouro::infinite) && (ouro::timer::now_ms() > TimedOut);
+			IsTimedOut = (_TimeoutMS != ouro::infinite) && (ouro::timer::nowmsi() > TimedOut);
 		}
 
 		return !IsTimedOut;
@@ -134,7 +134,7 @@ public:
 	void trigger(const ouro::input::action& _Action) override { return Window->trigger(_Action); }
 	void post(int _CustomEventCode, uintptr_t _Context) override { return Window->post(_CustomEventCode, _Context); }
 	void dispatch(const oTASK& _Task) override { return Window->dispatch(_Task); }
-	oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override { return Window->snapshot(_Frame, _IncludeBorder); }
+	ouro::future<std::shared_ptr<ouro::surface::buffer>> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override { return Window->snapshot(_Frame, _IncludeBorder); }
 	void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) override { Window->start_timer(_Context, _RelativeTimeMS); }
 	void stop_timer(uintptr_t _Context) override { return Window->stop_timer(_Context); }
 	void flush_messages(bool _WaitForNext = false) override { return Window->flush_messages(_WaitForNext); }

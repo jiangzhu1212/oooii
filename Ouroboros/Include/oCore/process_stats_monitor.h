@@ -33,7 +33,7 @@
 #include <oBase/backoff.h>
 #include <oBase/moving_average.h>
 #include <oStd/shared_mutex.h>
-#include <oStd/thread.h>
+#include <thread>
 
 namespace ouro {
 
@@ -54,7 +54,7 @@ public:
 	};
 
 	inline process_stats_monitor(process::id _ProcessID = process::id()
-		, oStd::chrono::milliseconds _PollRate = oStd::chrono::milliseconds(1000))
+		, std::chrono::milliseconds _PollRate = std::chrono::milliseconds(1000))
 			: PID(_ProcessID == process::id() ? this_process::get_id() : _ProcessID)
 			, Done(true)
 			, PollRate(_PollRate)
@@ -117,11 +117,11 @@ private:
 		process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 		do
 		{
-			oStd::this_thread::sleep_for(PollRate);
+			std::this_thread::sleep_for(PollRate);
 			double usage = process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 			float usagef = static_cast<float>(usage);
 			float avg = static_cast<float>(MA.calculate(usage));
-			oStd::lock_guard<shared_mutex> lock(StatsMutex);
+			std::lock_guard<shared_mutex> lock(StatsMutex);
 			Stats.average_usage = avg;
 			Stats.low_usage = __min(Stats.low_usage, usagef);
 			Stats.high_usage = __max(Stats.high_usage, usagef);
@@ -148,7 +148,7 @@ private:
 	unsigned long long PreviousSystemTime;
 	unsigned long long PreviousProcessTime;
 	moving_average<double> MA;
-	oStd::chrono::milliseconds PollRate;
+	std::chrono::milliseconds PollRate;
 	process::id PID;
 	bool Done;
 	std::thread Thread;

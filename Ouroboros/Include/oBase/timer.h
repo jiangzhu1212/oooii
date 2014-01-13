@@ -28,22 +28,24 @@
 #define oBase_timer_h
 
 #include <oBase/assert.h>
-#include <oStd/chrono.h>
+#include <chrono>
 
 namespace ouro {
 
 class timer
 {
 	// Encapsulates marking a starting point and using time since that 
-	// starting point.
+	// starting point. Statics can be used to wrap lengthy std api.
 public:
+	template<typename T, typename Ratio> static T nowT() { return std::chrono::duration_cast<std::chrono::duration<T, Ratio>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); }
+	template<typename T> static T nowT() { return std::chrono::duration_cast<std::chrono::duration<T, std::ratio<1>>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); }
 
-	// Convenience wrapper around the lengthy std API - returns system ticks as 
-	// seconds since the std (Unix) epoch.
-	static inline double now() { return oStd::chrono::high_resolution_clock::now().time_since_epoch().count(); }
-	static inline float nowf() { return static_cast<float>(now()); }
-	static inline float nowf_ms() { return nowf() * 1000.0f; }
-	static inline unsigned int now_ms() { return static_cast<unsigned int>(nowf_ms()); }
+	static inline long long nowus() { return nowT<long long, std::micro>(); }
+	static inline double now() { return nowT<double>(); }
+	static inline float nowf() { return nowT<float>(); }
+	static inline double nowms() { return nowT<double, std::milli>(); }
+	static inline float nowmsf() { return nowT<float, std::milli>(); }
+	static inline unsigned int nowmsi() { return nowT<unsigned int, std::milli>(); }
 
 	timer() { reset(); }
 	inline void reset() { Start = now(); }

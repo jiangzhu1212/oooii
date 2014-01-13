@@ -180,12 +180,12 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 	_pResults->CleanTimeSeconds = 0.0f;
 	if (_Settings.CleanAlways)
 	{
-		float StartCleanTimeMS = ouro::timer::nowf_ms();
+		float StartCleanTimeMS = ouro::timer::nowmsf();
 		_pResults->CleanSucceeded = MSBuild(_Settings, "/t:Clean", [&](const uri_string& _CommandName, const char* _pLog)->bool
 		{
 			return true;
 		});
-		_pResults->CleanTimeSeconds = (ouro::timer::nowf_ms() - StartCleanTimeMS ) / 1000.0f;
+		_pResults->CleanTimeSeconds = (ouro::timer::nowmsf() - StartCleanTimeMS ) / 1000.0f;
 
 		if (!_pResults->CleanSucceeded)
 			return oErrorSetLast(std::errc::invalid_argument);
@@ -197,7 +197,7 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 	uint TimeoutMS = _Settings.TimeoutSeconds * 1000;
 	oScopedPartialTimeout Timer(&TimeoutMS);
 
-	float StartBuildTimeMS = ouro::timer::nowf_ms();
+	float StartBuildTimeMS = ouro::timer::nowmsf();
 	_pResults->BuildTimeSeconds = 0.0f;
 	_pResults->BuildSucceeded = MSBuild(_Settings, "", [&](const uri_string& _CommandName, const char* _pLog)->bool
 	{
@@ -207,7 +207,7 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 		Timer.UpdateTimeout();
 		return !BuildLogs[_CommandName].ContainsError(_pLog);
 	});
-	_pResults->BuildTimeSeconds = (ouro::timer::nowf_ms() - StartBuildTimeMS ) / 1000.0f;
+	_pResults->BuildTimeSeconds = (ouro::timer::nowmsf() - StartBuildTimeMS ) / 1000.0f;
 	_pResults->BuildTimedOut = !_pResults->BuildSucceeded && (0 == TimeoutMS);
 
 	if(_CancelEvent.is_set())

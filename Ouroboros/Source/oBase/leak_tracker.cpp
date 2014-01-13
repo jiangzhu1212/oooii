@@ -182,7 +182,7 @@ void leak_tracker::on_deallocate(unsigned int _AllocationID)
 
 void leak_tracker::thread_local_tracking(bool _Enabled)
 {
-	lock_guard<recursive_mutex> Lock(Mutex);
+	lock_t Lock(Mutex);
 	Internal = true;
 	Info.thread_local_tracking_enabled() = _Enabled;
 	Internal = false;

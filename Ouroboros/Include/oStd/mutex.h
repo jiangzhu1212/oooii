@@ -22,14 +22,16 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Approximation of the upcoming C++11 oStd::mutex interface.
+// Approximation of the upcoming C++11 std::mutex interface.
 
 #pragma once
 #ifndef oStd_mutex_h
 #define oStd_mutex_h
 
 #include <cassert>
-#include <oStd/thread.h>
+#include <chrono>
+#include <thread>
+#include <oStd/callable.h>
 
 // To keep the main classes neat, collect all the platform-specific forward
 // declaration here. This is done in this vague manner to avoid including 
@@ -66,7 +68,7 @@ namespace oStd {
 	{
 		oMUTEX_FOOTPRINT();
 		#ifdef _DEBUG
-			oStd::thread::id ThreadID;
+			std::thread::id ThreadID;
 		#endif
 		mutex(const mutex&); /* = delete */
 		mutex& operator=(const mutex&); /* = delete */
@@ -103,7 +105,7 @@ namespace oStd {
 	{
 		mutex Mutex;
 		#ifdef _DEBUG
-			oStd::thread::id ThreadID;
+			std::thread::id ThreadID;
 		#endif
 		timed_mutex(timed_mutex const&); /* = delete */
 		timed_mutex& operator=(timed_mutex const&); /* = delete */
@@ -119,18 +121,18 @@ namespace oStd {
 		bool try_lock() { return Mutex.try_lock(); }
 
 		template<typename Rep, typename Period>
-		bool try_lock_for(chrono::duration<Rep,Period> const& _RelativeTime)
+		bool try_lock_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
-			chrono::milliseconds ms = chrono::duration_cast<chrono::milliseconds>(_RelativeTime);
+			std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
 			Rep count = ms.count();
 			assert(Rep(count) == count && "RelativeTime is too large");
 			return try_lock_for(static_cast<unsigned int>(ms.count()));
 		}
 
 		template<typename Clock, typename Duration>
-		bool try_lock_until(chrono::time_point<Clock,Duration> const& _AbsoluteTime)
+		bool try_lock_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
 		{
-			chrono::high_resolution_clock::duration duration = time_point_cast<chrono::high_resolution_clock::time_point>(_AbsoluteTime) - chrono::high_resolution_clock::now();
+			std::chrono::high_resolution_clock::duration duration = time_point_cast<std::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - chrono::high_resolution_clock::now();
 			return try_lock_until(duration);
 		}
 
@@ -191,13 +193,13 @@ namespace oStd {
 		{}
 
 		template<typename Clock,typename Duration>
-		unique_lock(mutex_type& _Mutex, oStd::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
+		unique_lock(mutex_type& _Mutex, std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
 			: pMutex(&_Mutex)
 			, OwnsLock(pMutex->try_lock_until(_AbsoluteTime))
 		{}
 
 		template<typename Rep,typename Period>
-		unique_lock(mutex_type& _Mutex, oStd::chrono::duration<Rep,Period> const& _RelativeTime)
+		unique_lock(mutex_type& _Mutex, std::chrono::duration<Rep,Period> const& _RelativeTime)
 			: pMutex(&_Mutex)
 			, OwnsLock(pMutex->try_lock_for(_RelativeTime))
 		{}
@@ -225,8 +227,8 @@ namespace oStd {
 
 		void swap(unique_lock&& _That)
 		{
-			oStd::swap(pMutex, _That.pMutex);
-			oStd::swap(OwnsLock, _That.OwnsLock);
+			std::swap(pMutex, _That.pMutex);
+			std::swap(OwnsLock, _That.OwnsLock);
 		}
 
 		void lock()
@@ -243,14 +245,14 @@ namespace oStd {
 			return OwnsLock;
 		}
 
-		template<typename Rep, typename Period> bool try_lock_for(oStd::chrono::duration<Rep,Period> const& _RelativeTime)
+		template<typename Rep, typename Period> bool try_lock_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
 			assert_not_owner();
 			OwnsLock = pMutex->try_lock_for(_RelativeTime);
 			return OwnsLock;
 		}
 
-		template<typename Clock, typename Duration> bool try_lock_until(oStd::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
+		template<typename Clock, typename Duration> bool try_lock_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
 		{
 			assert_not_owner();
 			OwnsLock = pMutex->try_lock_until(_AbsoluteTime);
