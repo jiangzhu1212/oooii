@@ -124,84 +124,6 @@ oSingletonRegister::oSingletonRegister(const char* _SingletonName, const oGUID& 
 	}
 }
 
-#if 0
-class oThreadlocalRegistry
-{
-public:
-
-	oThreadlocalRegistry();
-
-	~oThreadlocalRegistry()
-	{
-		EndThread(); // for main thread case
-	}
-
-	static oThreadlocalRegistry* Singleton()
-	{
-		oThreadlocalRegistry* p = nullptr;
-		sstring StrGUID;
-		process_heap::find_or_allocate(
-			sizeof(oThreadlocalRegistry)
-			, to_string(StrGUID, GUID)
-			, process_heap::per_process
-			, process_heap::leak_tracked
-			, ouro::type_info<oThreadlocalRegistry>::default_construct
-			, nullptr
-			, (void**)&p);
-		return p;
-	}
-
-	static void Destroy()
-	{
-		oThreadlocalRegistry* p = nullptr;
-		sstring StrGUID;
-		if (process_heap::find(to_string(StrGUID, GUID), process_heap::per_process, (void**)&p))
-		{
-			p->~oThreadlocalRegistry();
-			process_heap::deallocate(p);
-		}
-	}
-
-	void RegisterThreadlocalSingleton(oSingletonBase* _pSingleton) threadsafe;
-	void RegisterAtExit(const oTASK& _AtExit);
-	void EndThread();
-
-protected:
-	static const oGUID GUID;
-	oConcurrency::recursive_mutex Mutex;
-
-	typedef fixed_vector<oSingletonBase*, 32> thread_singletons_t;
-	typedef std::unordered_map<std::thread::id, thread_singletons_t, std::hash<std::thread::id>, std::equal_to<std::thread::id>, std_user_allocator<std::pair<const std::thread::id, thread_singletons_t>>> singletons_t;
-	singletons_t Singletons;
-
-	typedef fixed_vector<std::function<void()>, 32> atexitlist_t;
-	typedef std::unordered_map<std::thread::id, atexitlist_t, std::hash<std::thread::id>, std::equal_to<std::thread::id>, std_user_allocator<std::pair<const std::thread::id, atexitlist_t>>> atexits_t;
-	atexits_t AtExits;
-};
-
-// {CBC5C6D4-7C46-4D05-9143-A043418C0B3A}
-const oGUID oThreadlocalRegistry::GUID = { 0xcbc5c6d4, 0x7c46, 0x4d05, { 0x91, 0x43, 0xa0, 0x43, 0x41, 0x8c, 0xb, 0x3a } };
-
-static void* untracked_malloc(size_t _Size) { return process_heap::allocate(_Size); }
-static void untracked_free(void* _Pointer) { process_heap::deallocate(_Pointer); }
-
-oThreadlocalRegistry::oThreadlocalRegistry()
-	: Singletons(0, singletons_t::hasher(), singletons_t::key_equal(), std_user_allocator<singletons_t::value_type>(untracked_malloc, untracked_free))
-	, AtExits(0, atexits_t::hasher(), atexits_t::key_equal(), std_user_allocator<atexits_t::value_type>(untracked_malloc, untracked_free))
-{}
-
-// @tony: External declared elsewhere for some lifetime timing hackin'
-void oThreadlocalRegistryCreate()
-{
-	oThreadlocalRegistry::Singleton();
-}
-
-void oThreadlocalRegistryDestroy()
-{
-	oThreadlocalRegistry::Destroy();
-}
-#endif
-
 oSingletonBase::oSingletonBase(int _InitialRefCount)
 	: Name("")
 	, RefCount(_InitialRefCount)
@@ -276,53 +198,6 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 
 	return p;
 }
-
-#if 0
-void oThreadlocalRegistry::RegisterThreadlocalSingleton(oSingletonBase* _pSingleton) threadsafe
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-	thread_singletons_t& ts = thread_cast<singletons_t&>(Singletons)[oStd::this_thread::get_id()]; // protected by mutex above
-	ts.push_back(_pSingleton);
-	_pSingleton->Reference();
-}
-
-void oThreadlocalRegistry::RegisterAtExit(const oTASK& _AtExit)
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-	atexitlist_t& list = AtExits[oStd::this_thread::get_id()];
-	list.push_back(_AtExit);
-}
-
-void oThreadlocalRegistry::EndThread()
-{
-	oConcurrency::lock_guard<oConcurrency::recursive_mutex> Lock(Mutex);
-	oThreadlocalRegistry* pThis = thread_cast<oThreadlocalRegistry*>(this); // protected by mutex above
-
-	// Call all atexit functions while threadlocal singletons are still up
-	{
-		atexits_t::iterator it = pThis->AtExits.find(oStd::this_thread::get_id());
-		if (it != pThis->AtExits.end())
-		{
-			oFOR(std::function<void()>& AtExit, it->second)
-				AtExit();
-
-			it->second.clear();
-		}
-	}
-
-	// Now tear down the singletons
-	{
-		singletons_t::iterator it = pThis->Singletons.find(oStd::this_thread::get_id());
-		if (it != pThis->Singletons.end())
-		{
-			oFOR(oSingletonBase* s, it->second)
-				s->Release();
-
-			it->second.clear();
-		}
-	}
-}
-#endif
 
 void oConcurrency::thread_at_exit(const std::function<void()>& _AtExit)
 {

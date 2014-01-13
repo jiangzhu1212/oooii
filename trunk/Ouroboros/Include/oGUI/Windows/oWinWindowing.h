@@ -39,10 +39,10 @@
 #define oWinWindowing_h
 
 #include <oBase/invalid.h>
-#include <oStd/thread.h>
 #include <oCore/display.h>
 #include <oCore/process.h>
 #include <oGUI/oGUI.h>
+#include <thread>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

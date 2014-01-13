@@ -203,7 +203,7 @@ struct PLATFORM_oHTTP : public oTest
 
 		// In development mode run the server forever and server up responses to http requests
 		while (bDevelopmentMode)
-			oStd::this_thread::sleep_for(oStd::chrono::seconds(1));
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 
 		return SUCCESS;
 	}
@@ -303,7 +303,7 @@ struct PLATFORM_oHTTPLarge : public oTest
 
 		// In development mode run the server forever and server up responses to http requests
 		while (bDevelopmentMode)
-			oStd::this_thread::sleep_for(oStd::chrono::seconds(1));
+			std::this_thread::sleep_for(std::chrono::seconds(1));
 
 		return SUCCESS;
 	}
