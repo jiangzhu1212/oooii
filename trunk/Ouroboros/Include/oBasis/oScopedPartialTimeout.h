@@ -36,7 +36,6 @@
 #define oScopedPartialTimeout_h
 
 #include <oBase/assert.h>
-#include <oStd/chrono.h>
 
 class oScopedPartialTimeout
 {

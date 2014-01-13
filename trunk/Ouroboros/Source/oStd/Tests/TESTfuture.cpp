@@ -70,7 +70,7 @@ static bool fail_and_report()
 static void test_workstealing(ouro::test_services& _Services)
 {
 	float CPUavg = 0.0f, CPUpeak = 0.0f;
-	oStd::future<bool> Result = oStd::async(exercise_all_threads);
+	ouro::future<bool> Result = ouro::async(exercise_all_threads);
 
 	oTRACE("Waiting for result...");
 	bool r = Result.get();
@@ -98,7 +98,7 @@ void TESTfuture(ouro::test_services& _Services)
 {
 	// Test packaged_task with void return type
 	{
-		oStd::packaged_task<void(int, int, char*)> test_no_return([&](int _Param1, int _Param2, char*_Param3){});
+		ouro::packaged_task<void(int, int, char*)> test_no_return([&](int _Param1, int _Param2, char*_Param3){});
 		test_no_return(1,2,"t");
 		test_no_return.get_future().get();
 		
@@ -110,9 +110,9 @@ void TESTfuture(ouro::test_services& _Services)
 
 	// Test packaged_task with a return type
 	{
-		oStd::packaged_task<int(int, const char*, int)> hmmm([&](int _Param1, const char* _Param2, int _Param3)->int{ return _Param1 + _Param3; });
+		ouro::packaged_task<int(int, const char*, int)> hmmm([&](int _Param1, const char* _Param2, int _Param3)->int{ return _Param1 + _Param3; });
 		// Get future before execution
-		oStd::future<int> hmmfuture = hmmm.get_future();
+		ouro::future<int> hmmfuture = hmmm.get_future();
 		hmmm(10, "a", 20);
 		oCHECK(hmmfuture.get() == 30, "Unexpected result1");
 
@@ -126,18 +126,18 @@ void TESTfuture(ouro::test_services& _Services)
 
 	// Test swapping packaged_tasks
 	{
-		oStd::packaged_task<int(int,int)> tasktest1([&](int _Param1, int _Param2)->int{ return _Param1 + _Param2; });
-		oStd::packaged_task<int(int,int)> tasktest2([&](int _Param1, int _Param2)->int{ return _Param1 - _Param2; });
+		ouro::packaged_task<int(int,int)> tasktest1([&](int _Param1, int _Param2)->int{ return _Param1 + _Param2; });
+		ouro::packaged_task<int(int,int)> tasktest2([&](int _Param1, int _Param2)->int{ return _Param1 - _Param2; });
 
 		oCHECK(tasktest1.valid() && tasktest2.valid(), "oStd::packaged_task should have been valid");
 
 		tasktest1.swap(tasktest2);
 
-		oStd::future<int> tasktest1_future = tasktest1.get_future();
+		ouro::future<int> tasktest1_future = tasktest1.get_future();
 		tasktest1(20, 10);
 
 		tasktest2(20, 10);
-		oStd::future<int> tasktest2_future = tasktest2.get_future();
+		ouro::future<int> tasktest2_future = tasktest2.get_future();
 
 		// tasktest1 should subtract
 		oCHECK(tasktest1_future.get() == 10, "Unexpected result3");
@@ -149,7 +149,7 @@ void TESTfuture(ouro::test_services& _Services)
 	// Test a packaged_task through async with maximum number of arguments
 	// (std::bind is apparently limited to 10)
 	{
-		oStd::future<bool> Result2 = oStd::async((std::function<bool(int,int,int,int,int,int,int,int,int,int)>)[&](int _Param1,int _Param2,int _Param3,int _Param4,int _Param5,int _Param6,int _Param7,int _Param8,int _Param9,int _Param10)->bool
+		ouro::future<bool> Result2 = ouro::async((std::function<bool(int,int,int,int,int,int,int,int,int,int)>)[&](int _Param1,int _Param2,int _Param3,int _Param4,int _Param5,int _Param6,int _Param7,int _Param8,int _Param9,int _Param10)->bool
 		{ 
 			if (_Param10 == 10)
 				return true; 
@@ -164,7 +164,7 @@ void TESTfuture(ouro::test_services& _Services)
 	{
 		oTRACE("Testing graceful failure - there should be some std::system_error \"not supported\" that come through.");
 
-		oStd::future<bool> FutureToFail = oStd::async(fail_and_report);
+		ouro::future<bool> FutureToFail = ouro::async(fail_and_report);
 
 		bool ThisShouldFail = true;
 		try { ThisShouldFail = FutureToFail.get(); }

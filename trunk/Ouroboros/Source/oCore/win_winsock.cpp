@@ -481,7 +481,7 @@ static bool wait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEvent
 {
 	bool eventFired = true;
 	_pNetEvents->lNetworkEvents = 0;
-	unsigned int Start = timer::now_ms();
+	unsigned int Start = timer::nowmsi();
 	while (!_pNetEvents->lNetworkEvents && eventFired)
 	{
 		eventFired = wait(_hEvent, _TimeoutMS);
@@ -491,7 +491,7 @@ static bool wait(SOCKET _hSocket, WSAEVENT _hEvent, WSANETWORKEVENTS* _pNetEvent
 			if (_pNetEvents->lNetworkEvents)
 				break;
 
-			unsigned int Now = timer::now_ms();
+			unsigned int Now = timer::nowmsi();
 			unsigned int Diff = Now - Start;
 			if (Diff < _TimeoutMS)
 				_TimeoutMS -= Diff;

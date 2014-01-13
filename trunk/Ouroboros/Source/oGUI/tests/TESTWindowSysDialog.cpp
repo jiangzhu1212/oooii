@@ -422,7 +422,7 @@ void TESTSysDialog(test_services& _Services)
 
 	if (!kInteractiveMode)
 	{
-		oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
+		ouro::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
 		test.GetWindow()->flush_messages();
 
 		std::shared_ptr<ouro::surface::buffer> s = snapshot.get();

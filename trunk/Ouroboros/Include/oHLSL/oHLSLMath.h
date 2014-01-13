@@ -418,7 +418,7 @@ template<typename T> TVEC2<T> smoothstep(const TVEC2<T>& minimum, const TVEC2<T>
 template<typename T> TVEC3<T> smoothstep(const TVEC3<T>& minimum, const TVEC3<T>& maximum, const TVEC3<T>& x) { return TVEC3<T>(smoothstep(minimum.x, maximum.x, x.x), smoothstep(minimum.y, maximum.y, x.y), smoothstep(minimum.z, maximum.z, x.z)); }
 template<typename T> TVEC4<T> smoothstep(const TVEC4<T>& minimum, const TVEC4<T>& maximum, const TVEC4<T>& x) { return TVEC4<T>(smoothstep(minimum.x, maximum.x, x.x), smoothstep(minimum.y, maximum.y, x.y), smoothstep(minimum.z, maximum.z, x.z), smoothstep(minimum.w, maximum.w, x.w)); }
 template<typename T> T smoothstep(const T& minimum, const T& maximum, const T& x) { T t = saturate((x - minimum)/(maximum-minimum)); return t*t*(T(3) - T(2)*t); } // http://http.developer.nvidia.com/Cg/smoothstep.html
-template<typename T> T clamp(const T& x, const T& minimum, const T& maximum) { return max(min(x, maximum), minimum); }
+template<typename T> T clamp(const T& x, const T& minimum, const T& maximum) { return ::max(::min(x, maximum), minimum); }
 template<typename T, typename vectorT> vectorT clamp(const vectorT& x, const T& minimum, const T& maximum) { return clamp<vectorT>(x, vectorT(minimum), vectorT(maximum)); }
 template<typename T> T saturate(const T& x) { return clamp<T>(x, T(0.0), T(1.0)); }
 

@@ -26,7 +26,7 @@
 
 #ifndef oHAS_WORKSTEALING_FUTURE
 
-namespace oStd
+namespace ouro
 {
 	namespace future_detail
 	{

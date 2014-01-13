@@ -27,6 +27,7 @@
 #include <oStd/for.h>
 #include <oStd/future.h>
 #include <oBase/throw.h>
+#include <thread>
 #include <vector>
 
 namespace ouro {
@@ -45,13 +46,13 @@ static bool test(int _Count)
 	// and test countdown_latch, thus sync'ing on the futures wouldn't do much 
 	// good.
 
-	std::vector<oStd::future<void>> Futures;
+	std::vector<ouro::future<void>> Futures;
 
 	for (int i = 0; i < _Count; i++)
 	{
-		oStd::future<void> f = oStd::async([&,i]
+		ouro::future<void> f = ouro::async([&,i]
 		{
-			oStd::this_thread::sleep_for(oStd::chrono::milliseconds(100 * (i + 1))); // stagger the sleeps to simulate doing work that takes a variable amount of time
+			std::this_thread::sleep_for(std::chrono::milliseconds(100 * (i + 1))); // stagger the sleeps to simulate doing work that takes a variable amount of time
 			count++;
 			latch.release();
 		});
@@ -61,7 +62,7 @@ static bool test(int _Count)
 
 	latch.wait();
 
-	oFOR(oStd::future<void>& f, Futures)
+	oFOR(ouro::future<void>& f, Futures)
 		f.wait();
 
 	return count == latchCount;

@@ -518,7 +518,7 @@ void TESTWindowControls(test_services& _Services)
 
 	} while (ouro::timer::now() < WaitForSettle);
 
-	oStd::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
+	ouro::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
 		
 	do
 	{

@@ -261,7 +261,7 @@ struct window_impl : window
 	void trigger(const input::action& _Action) override;
 	void post(int _CustomEventCode, uintptr_t _Context) override;
 	void dispatch(const oTASK& _Task) override;
-	oStd::future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override;
+	future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override;
 	void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) override;
 	void stop_timer(uintptr_t _Context) override;
 
@@ -799,12 +799,12 @@ void window_impl::dispatch(const oTASK& _Task)
 static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 {
 	backoff bo;
-	unsigned int Now = timer::now_ms();
+	unsigned int Now = timer::nowmsi();
 	unsigned int Then = Now + _TimeoutMS;
 	while (!oWinIsOpaque(_hWnd))
 	{
 		bo.pause();
-		Now = timer::now_ms();
+		Now = timer::nowmsi();
 		if (_TimeoutMS != ouro::infinite && Now > Then)
 			return oErrorSetLast(std::errc::timed_out);
 	}
@@ -812,9 +812,9 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 	return true;
 }
 
-oStd::future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame, bool _IncludeBorder) const
+future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame, bool _IncludeBorder) const
 {
-	auto PromisedSnap = std::make_shared<oStd::promise<std::shared_ptr<surface::buffer>>>();
+	auto PromisedSnap = std::make_shared<ouro::promise<std::shared_ptr<surface::buffer>>>();
 	auto Image = PromisedSnap->get_future();
 
 	const_cast<window_impl*>(this)->dispatch([=]() mutable

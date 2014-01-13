@@ -84,11 +84,11 @@ static void test_concurrency()
 	void* ptr[nAllocs];
 	memset(ptr, 0, nAllocs);
 
-	std::vector<oStd::future<size_t*>> FuturePointers;
+	std::vector<ouro::future<size_t*>> FuturePointers;
 	
 	for (int i = 0; i < nAllocs; i++)
 	{
-		oStd::future<size_t*> f = oStd::async(AllocAndAssign, &Allocator, i);
+		ouro::future<size_t*> f = ouro::async(AllocAndAssign, &Allocator, i);
 		FuturePointers.push_back(std::move(f));
 	}
 

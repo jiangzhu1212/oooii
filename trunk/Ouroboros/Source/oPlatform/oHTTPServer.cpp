@@ -49,11 +49,11 @@ namespace
 		~CallbackHandler() {}
 		void InitiateReceive(threadsafe oSocket* _pSocket)
 		{
-			LastTimeStamp = ouro::timer::now_ms();
+			LastTimeStamp = ouro::timer::nowmsi();
 			_pSocket->Recv(&ReceiveBuffer[0], static_cast<int>(oCOUNTOF(ReceiveBuffer)));
 		}
 
-		bool ShouldCloseSocket(const threadsafe oSocket* _pSocket) { return bCloseSocket || ouro::timer::now_ms() - LastTimeStamp > HTTPRequestTimeoutMS; }
+		bool ShouldCloseSocket(const threadsafe oSocket* _pSocket) { return bCloseSocket || ouro::timer::nowmsi() - LastTimeStamp > HTTPRequestTimeoutMS; }
 
 	private:
 		virtual void ProcessSocketReceive(void* _pData, oSocket::size_t _SizeData, const oNetAddr& _Addr, interface oSocket* _pSocket) threadsafe;

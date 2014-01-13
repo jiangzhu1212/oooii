@@ -304,7 +304,7 @@ private:
 	int StartBuildMS; // time stamp
 	bool CurrentBuildInfoValid;
 	ChangeInfo CurrentBuildInfo;
-	oStd::future<void> CurrentBuild;
+	ouro::future<void> CurrentBuild;
 	bool CurrentBuildActive; // For tracking the CurrentBuild future
 
 	// Finished
@@ -443,7 +443,7 @@ bool oP4ChangelistBuilderImpl::WasChangelistAlreadyAdded(int _Changelist, bool _
 {
 	if (_IsDaily)
 	{
-		uint CurrentTimeMS = timer::now_ms();
+		uint CurrentTimeMS = timer::nowmsi();
 		return (0 != LastDailyBuildMS && ((CurrentTimeMS - LastDailyBuildMS) < (2 * 60 * 60 * 1000/*2 hours ms*/)));
 	}
 	else
@@ -500,7 +500,7 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 
 		lock_guard<shared_mutex> Lock(Mutex);
 		NextBuildInfos.push_back(NextBuild);
-		LastDailyBuildMS = timer::now_ms();
+		LastDailyBuildMS = timer::nowmsi();
 	}
 	else
 	{
@@ -545,7 +545,7 @@ void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 
 	if (!CurrentBuildActive && NextBuildInfos.size() > 0)
 	{
-		CurrentBuild = oStd::async(bind(&oP4ChangelistBuilderImpl::BuildNextBuild, this));
+		CurrentBuild = ouro::async(bind(&oP4ChangelistBuilderImpl::BuildNextBuild, this));
 		CurrentBuildActive = true;
 	}
 }
@@ -554,7 +554,7 @@ oP4ChangelistBuilder::ChangeInfo* oP4ChangelistBuilderImpl::GetNextBuild()
 {
 	lock_guard<shared_mutex> Lock(Mutex);
 	oASSERT(!NextBuildInfos.empty(), "Popping an empty list");
-	StartBuildMS = timer::now_ms();
+	StartBuildMS = timer::nowmsi();
 	CurrentBuildInfo = move(NextBuildInfos.front());
 	CurrentBuildInfoValid = true;
 	NextBuildInfos.pop_front();
@@ -571,7 +571,7 @@ void oP4ChangelistBuilderImpl::UpdateBuildProgress(oP4ChangelistBuilder::ChangeI
 void oP4ChangelistBuilderImpl::FinishBuild(oP4ChangelistBuilder::ChangeInfo* _pBuild)
 {
 	lock_guard<shared_mutex> Lock(Mutex);
-	LastBuildMS = (timer::now_ms() - StartBuildMS);
+	LastBuildMS = (timer::nowmsi() - StartBuildMS);
 
 	if (_pBuild->IsDaily)
 	{
@@ -690,7 +690,7 @@ void oP4ChangelistBuilderImpl::ReportWorking(function<void(const oP4ChangelistBu
 	shared_lock<shared_mutex> Lock(const_cast<shared_mutex&>(Mutex));
 
 	// First calculate the time left for the current build
-	int TimePastMS = timer::now_ms() - StartBuildMS;
+	int TimePastMS = timer::nowmsi() - StartBuildMS;
 	int RemainingMS = 0;
 	if (CurrentBuildInfoValid)
 		RemainingMS = (CurrentBuildInfo.IsDaily ? AverageDailyBuildTimeMS : AverageBuildTimeMS) - TimePastMS;

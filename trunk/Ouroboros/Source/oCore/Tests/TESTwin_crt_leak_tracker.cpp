@@ -56,15 +56,15 @@ void TESTwin_crt_leak_tracker(test_services& _Services)
 		oCHECK(report(), "Tracker failed to detect char leak");
 		delete pCharAlloc;
 
-		oStd::future<void> check = oStd::async([=] {});
+		ouro::future<void> check = ouro::async([=] {});
 		check.wait();
-		check = oStd::future<void>(); // zero-out the future because it makes an alloc
+		check = ouro::future<void>(); // zero-out the future because it makes an alloc
 
 		oCHECK(!report(), "Tracker erroneously detected leak from a different thread");
 
 		char* pCharAllocThreaded = nullptr;
 
-		check = oStd::async([&]() { pCharAllocThreaded = new char; });
+		check = ouro::async([&]() { pCharAllocThreaded = new char; });
 
 		check.wait();
 		oCHECK(report(), "Tracker failed to detect char leak from different thread");

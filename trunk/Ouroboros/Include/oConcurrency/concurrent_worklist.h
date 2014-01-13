@@ -33,8 +33,21 @@
 #define oConcurrency_concurrent_worklist_h
 
 #include <atomic>
+#include <chrono>
 #include <memory>
-#include <mutex>
+
+// @tony: VS2012's mutex is way slower and causes deadlocks
+// when used in low-level code (leak tracking), so don't use
+// it here.
+#if 0
+	#include <mutex>
+	#define oCONCURRENT_WORKLIST_MUTEX_TYPE std::timed_mutex
+	#define oCONCURRENT_WORKLIST_LOCK_TYPE std::unique_lock
+#else
+	#include <oStd/mutex.h>
+	#define oCONCURRENT_WORKLIST_MUTEX_TYPE oStd::timed_mutex
+	#define oCONCURRENT_WORKLIST_LOCK_TYPE oStd::unique_lock
+#endif
 
 namespace oConcurrency {
 
@@ -136,7 +149,11 @@ private:
 	size_type Mask;
 	std::atomic<size_type> Head;
 	std::atomic<size_type> Tail;
-	std::timed_mutex Mutex;
+
+	typedef oCONCURRENT_WORKLIST_MUTEX_TYPE mutex_t;
+	typedef oCONCURRENT_WORKLIST_LOCK_TYPE <mutex_t> lock_t;
+	mutex_t Mutex;
+
 	Alloc Allocator;
 
 	static const size_t InitialCapacity = 1<<16; // must be pow-of-2
@@ -242,7 +259,7 @@ void concurrent_worklist<T, Alloc>::internal_push_safe(value_type&& _Element, si
 template<typename T, typename Alloc>
 void concurrent_worklist<T, Alloc>::push(const_reference _Element)
 {
-	std::unique_lock<std::timed_mutex> Lock(Mutex);
+	lock_t lock(Mutex);
 	size_type t = Tail;
 	oThreadsafe(this)->internal_push(_Element, t);
 }
@@ -250,7 +267,7 @@ void concurrent_worklist<T, Alloc>::push(const_reference _Element)
 template<typename T, typename Alloc>
 void concurrent_worklist<T, Alloc>::push(value_type&& _Element)
 {
-	std::unique_lock<std::timed_mutex> Lock(Mutex);
+	lock_t lock(Mutex);
 	size_type t = Tail;
 	oThreadsafe(this)->internal_push(std::move(_Element), t);
 }
@@ -263,7 +280,7 @@ void concurrent_worklist<T, Alloc>::push_local(const_reference _Element)
 		internal_push(_Element, t);
 	else
 	{
-		std::unique_lock<std::timed_mutex> Lock(Mutex);
+		lock_t lock(Mutex);
 		internal_push_safe(_Element, t);
 	}
 }
@@ -276,7 +293,7 @@ void concurrent_worklist<T, Alloc>::push_local(value_type&& _Element)
 		internal_push(std::move(_Element), t);
 	else
 	{
-		std::unique_lock<std::timed_mutex> Lock(Mutex);
+		lock_t lock(Mutex);
 		internal_push_safe(std::move(_Element), t);
 	}
 }
@@ -297,7 +314,7 @@ bool concurrent_worklist<T, Alloc>::try_pop_internal(reference _Element, size_ty
 template<typename T, typename Alloc>
 bool concurrent_worklist<T, Alloc>::try_pop(reference _Element)
 {
-	std::unique_lock<std::timed_mutex> Lock(Mutex);
+	lock_t lock(Mutex);
 	if (Head >= Tail)
 		return false;
 	return oThreadsafe(this)->try_pop_internal(_Element, --Tail);
@@ -319,7 +336,7 @@ bool concurrent_worklist<T, Alloc>::try_pop_local(reference _Element)
 		return true;
 	}
 
-	std::unique_lock<std::timed_mutex> Lock(Mutex);
+	lock_t lock(Mutex);
 	return try_pop_internal(_Element, t);
 }
 

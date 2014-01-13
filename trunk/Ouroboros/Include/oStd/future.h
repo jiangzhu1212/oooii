@@ -48,32 +48,33 @@
 #ifndef oHAS_WORKSTEALING_FUTURE
 
 #include <oStd/callable.h>
-#include <oStd/condition_variable.h>
-#include <oStd/mutex.h>
+
 #include <atomic>
 #include <cassert>
 #include <chrono>
+#include <condition_variable>
 #include <exception>
 #include <memory>
+#include <mutex>
 #include <system_error>
 #include <utility>
 
-namespace oStd {
+namespace ouro {
 	namespace future_requirements {
 		// Platform requirements. The following interfaces are required to properly 
-		// support oStd::future (I notice that gcc punts on the on-thread-exit APIs
+		// support future (I notice that gcc punts on the on-thread-exit APIs
 		// because there's no well-defined API exposed in C++ for implementing such API,
 		// which is why it's here as a platform dependency).
 		void thread_at_exit(const std::function<void()>& _AtExit);
 
 		// To better accommodate middlewares and platform-specific implementations
 		// like PPL and TBB (TBB's headers are polluted with platform headers), 
-		// declare an API for use in oStdFuture, but not its implementation. There 
+		// declare an API for use in future, but not its implementation. There 
 		// must be a platform implementation of the factory for waitable_task for
-		// oStd::future to be usable. For most systems, a task_group is the 
+		// ouro::future to be usable. For most systems, a task_group is the 
 		// appropriate implementation to ensure proper work-stealing with the 
 		// overall scheduler is enabled. This is not public API; just an 
-		// implementation detail of oStd::future.
+		// implementation detail of future.
 		struct waitable_task
 		{
 			// Waits for the task to finish
@@ -166,7 +167,7 @@ namespace future_detail {
 		bool is_deferred() const { return State.IsDeferred; }
 		bool work_steals() const { return !!Task; }
 
-		void wait_adopt(unique_lock<mutex>& _Lock)
+		void wait_adopt(std::unique_lock<std::mutex>& _Lock)
 		{
 			if (!is_ready())
 			{
@@ -185,7 +186,7 @@ namespace future_detail {
 					Task->wait();
 				else
 				{
-					unique_lock<mutex> lock(Mutex);
+					std::unique_lock<std::mutex> lock(Mutex);
 					wait_adopt(lock);
 				}
 			}
@@ -195,7 +196,7 @@ namespace future_detail {
 		future_status::value wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
 			oFUTURE_ASSERT(!work_steals(), "wait_for cannot be called on a work-stealing future");
-			unique_lock<mutex> lock(Mutex);
+			std::unique_lock<std::mutex> lock(Mutex);
 			if (is_deferred())
 				return future_status::deferred;
 			while (!is_ready()) // Guarded Suspension
@@ -207,7 +208,7 @@ namespace future_detail {
 
 		void set_exception(std::exception_ptr _pException)
 		{
-			unique_lock<mutex> lock(Mutex);
+			std::unique_lock<std::mutex> lock(Mutex);
 			oFUTURE_THROW(!is_ready(), promise_already_satisfied);
 			pException = _pException;
 			State.HasException = true;
@@ -217,7 +218,7 @@ namespace future_detail {
 
 		void set_exception_at_thread_exit(std::exception_ptr _pException)
 		{
-			unique_lock<mutex> lock(Mutex);
+			std::unique_lock<std::mutex> lock(Mutex);
 			oFUTURE_THROW(!is_ready() && !State.HasExceptionAtThreadExit, promise_already_satisfied);
 			pException = _pException;
 			State.HasExceptionAtThreadExit = true;
@@ -254,19 +255,19 @@ namespace future_detail {
 		// so if work_steals(), it's all on Task->wait(). if !work_steals(), then
 		// unique locks and conditions are responsible.
 		std::shared_ptr<future_requirements::waitable_task> Task;
-		mutable condition_variable CV;
-		mutable mutex Mutex;
+		mutable std::condition_variable CV;
+		mutable std::mutex Mutex;
 		STATE State;
 		std::atomic<int> RefCount;
 		std::exception_ptr pException;
 
 		void set_future_attached()
 		{
-			unique_lock<mutex> lock(Mutex);
+			std::unique_lock<std::mutex> lock(Mutex);
 			State.HasFuture = true;
 		}
 
-		void notify(unique_lock<mutex>& _Lock)
+		void notify(std::unique_lock<std::mutex>& _Lock)
 		{
 			State.IsReady = true;
 			_Lock.unlock();
@@ -276,7 +277,7 @@ namespace future_detail {
 
 		void notify_value_set()
 		{
-			unique_lock<mutex> lock(Mutex);
+			std::unique_lock<std::mutex> lock(Mutex);
 			oFUTURE_THROW(!is_ready(), promise_already_satisfied);
 			State.HasValue = true;
 			State.HasValueAtThreadExit = true;
@@ -284,7 +285,7 @@ namespace future_detail {
 			notify(lock);
 		}
 
-		void notify_value_set_at_thread_exit(unique_lock<mutex>& _Lock, std::function<void()>& _NotifyValueSetAndRelease)
+		void notify_value_set_at_thread_exit(std::unique_lock<std::mutex>& _Lock, std::function<void()>& _NotifyValueSetAndRelease)
 		{
 			if (!has_value()) // don't override a fulfilled promise
 			{
@@ -306,7 +307,7 @@ namespace future_detail {
 				// This doesn't require a lock since the instant a future sees this flag 
 				// (i.e. in a pre-block check or even in a spurious wakeup) it can be
 				// unblocked.
-				//unique_lock<mutex> lock(Mutex);
+				//std::unique_lock<std::mutex> lock(Mutex);
 				State.IsReady = true;
 				//lock.unlock();
 				CV.notify_all();
@@ -346,7 +347,7 @@ namespace future_detail {
 				internal_set_value_intrusive_ptr<T>(_pValueMemory, _Value);
 			else
 			{
-				unique_lock<mutex> lock(Mutex);
+				std::unique_lock<std::mutex> lock(Mutex);
 				internal_set_value_intrusive_ptr<T>(_pValueMemory, _Value);
 				lock.unlock();
 				CV.notify_all();
@@ -359,7 +360,7 @@ namespace future_detail {
 				internal_set_value<T>(_pValueMemory, _Value);
 			else
 			{
-				unique_lock<mutex> lock(Mutex);
+				std::unique_lock<std::mutex> lock(Mutex);
 				internal_set_value<T>(_pValueMemory, _Value);
 				lock.unlock();
 				CV.notify_all();
@@ -372,7 +373,7 @@ namespace future_detail {
 				internal_set_value<T>(_pValueMemory, std::move(_Value));
 			else
 			{
-				unique_lock<mutex> lock(Mutex);
+				std::unique_lock<std::mutex> lock(Mutex);
 				internal_set_value<T>(_pValueMemory, std::move(_Value));
 				lock.unlock();
 				CV.notify_all();
@@ -381,7 +382,7 @@ namespace future_detail {
 
 		template <typename T, typename U> void set_value_at_thread_exit(void* _pValueMemory, U&& _Value, std::function<void()>&& _NotifyValueSetAndRelease)
 		{
-			unique_lock<mutex> lock(Mutex);
+			std::unique_lock<std::mutex> lock(Mutex);
 			oFUTURE_ASSERT(!work_steals(), "packaged_task won't call this");
 			oFUTURE_THROW(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
 			::new(_pValueMemory) T(std::forward<U>(_Value));
@@ -391,7 +392,7 @@ namespace future_detail {
 
 		template <typename T, typename U> void set_value_at_thread_exit_ref(void* _pValueMemory, const U& _Value, std::function<void()>&& _NotifyValueSetAndRelease)
 		{
-			unique_lock<mutex> lock(Mutex);
+			std::unique_lock<std::mutex> lock(Mutex);
 			oFUTURE_ASSERT(!work_steals(), "packaged_task won't call this");
 			oFUTURE_THROW(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
 			*(T**)_pValueMemory = &const_cast<U&>(_Value);
@@ -819,7 +820,7 @@ namespace future_detail {
 	oCALLABLE_PROPAGATE(oASYNC)
 #endif
 
-} // namespace oStd
+} // namespace ouro
 
 #endif
 #endif

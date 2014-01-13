@@ -60,23 +60,23 @@ namespace oConcurrency {
 		public:
 
 			// returns the name used to identify this threadpool for test's report.
-			virtual const char* name() const threadsafe = 0;
+			virtual const char* name() const = 0;
 
 			// dispatches a single task for execution on any thread. There is no execution
 			// order guarantee.
-			virtual void dispatch(const oTASK& _Task) threadsafe = 0;
+			virtual void dispatch(const oTASK& _Task) = 0;
 
 			// parallel_for basically breaks up some dispatch calls to be executed on 
 			// worker threads. If the underlying threadpool does not support parallel_for,
 			// this should return false.
-			virtual bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) threadsafe = 0;
+			virtual bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) = 0;
 
 			// waits for the threadpool to be empty. The threadpool must be reusable after
 			// this call (this is not join()).
-			virtual void flush() threadsafe = 0;
+			virtual void flush() = 0;
 
 			// Release the threadpool reference obtained by enumerate_threadpool below.
-			virtual void release() threadsafe = 0;
+			virtual void release() = 0;
 		};
 
 		// This can be used to do an apples-to-apples benchmark with various 

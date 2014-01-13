@@ -171,11 +171,11 @@ protected:
 	oConcurrency::recursive_mutex Mutex;
 
 	typedef fixed_vector<oSingletonBase*, 32> thread_singletons_t;
-	typedef std::unordered_map<oStd::thread::id, thread_singletons_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, std_user_allocator<std::pair<const oStd::thread::id, thread_singletons_t>>> singletons_t;
+	typedef std::unordered_map<std::thread::id, thread_singletons_t, std::hash<std::thread::id>, std::equal_to<std::thread::id>, std_user_allocator<std::pair<const std::thread::id, thread_singletons_t>>> singletons_t;
 	singletons_t Singletons;
 
 	typedef fixed_vector<std::function<void()>, 32> atexitlist_t;
-	typedef std::unordered_map<oStd::thread::id, atexitlist_t, std::hash<oStd::thread::id>, std::equal_to<oStd::thread::id>, std_user_allocator<std::pair<const oStd::thread::id, atexitlist_t>>> atexits_t;
+	typedef std::unordered_map<std::thread::id, atexitlist_t, std::hash<std::thread::id>, std::equal_to<std::thread::id>, std_user_allocator<std::pair<const std::thread::id, atexitlist_t>>> atexits_t;
 	atexits_t AtExits;
 };
 

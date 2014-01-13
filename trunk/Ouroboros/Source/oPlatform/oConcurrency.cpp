@@ -333,11 +333,14 @@ void oConcurrency::begin_thread(const char* _DebuggerName)
 	#if oHAS_TBB
 		// Issuing a NOP task causes TBB to allocate bookkeeping for this thread's 
 		// memory which otherwise reports as a false-positive memory leak.
-		oStd::future<void> f = oStd::async(noop_fn);
-		f.wait();
+	
+		// @tony: this is causing a race condition when called from std::thread... why?
+		// all the locks are deep within stdc, so this will be a problem!
+		//ouro::future<void> f = ouro::async(noop_fn);
+		//f.wait();
 	#endif
 }
-namespace oStd {
+namespace ouro {
 	namespace future_requirements {
 
 		void thread_at_exit(const oTASK& _AtExit)
@@ -373,7 +376,7 @@ namespace oStd {
 
 	} // namespace condition_variable_requirements
 
-} // namespace oStd
+} // namespace ouro
 
 #include <oCore/windows/win_crt_leak_tracker.h>
 void oConcurrency::enable_leak_tracking_threadlocal(bool _Enabled)

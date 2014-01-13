@@ -35,6 +35,8 @@
 #include <oBase/macros.h>
 #include <atomic>
 
+#include <oStd/mutex.h>
+
 namespace ouro {
 
 class leak_tracker
@@ -163,8 +165,13 @@ public:
 	void on_deallocate(unsigned int _AllocationID);
 
 private:
-	typedef std::recursive_mutex mutex_t;
-	typedef std::lock_guard<mutex_t> lock_t;
+
+	// @tony: Wow, every std::mutex in VS2012 goes out to the concrt dll and references it
+	// and calls GetModuleFileNameW each time (hopefully only on first-init)? Anyway if malloc
+	// is holding a mutex, then this goes to call more mutex-protected API there can be deadlocks.
+	// so keep this a simple mutex.
+	typedef oStd::recursive_mutex mutex_t;
+	typedef oStd::lock_guard<mutex_t> lock_t;
 
 	static struct hasher { size_t operator()(unsigned int _AllocationID) const { return _AllocationID; } };
 	typedef std::pair<const unsigned int, entry> pair_t;

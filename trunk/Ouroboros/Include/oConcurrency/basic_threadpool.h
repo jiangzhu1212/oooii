@@ -38,6 +38,7 @@
 #include <deque>
 #include <exception>
 #include <mutex>
+#include <thread>
 #include <vector>
 
 namespace oConcurrency {
@@ -66,7 +67,7 @@ public:
 	void join();
 
 protected:
-	std::vector<oStd::thread> Workers;
+	std::vector<std::thread> Workers;
 	std::deque<task_type, allocator_type> GlobalQueue;
 	std::mutex Mutex;
 	std::condition_variable WorkAvailable;
@@ -90,7 +91,7 @@ protected:
 template<typename Alloc>
 size_t basic_threadpool_base<Alloc>::calc_num_workers(size_t _NumWorkersRequested) const
 {
-	return _NumWorkersRequested ? _NumWorkersRequested : oStd::thread::hardware_concurrency();
+	return _NumWorkersRequested ? _NumWorkersRequested : std::thread::hardware_concurrency();
 }
 
 template<typename Alloc>
@@ -99,10 +100,8 @@ inline void basic_threadpool_base<Alloc>::construct_workers(const task_type& _Do
 	NumWorking = calc_num_workers(_NumWorkers);
 	Workers.resize(NumWorking);
 	oFOR(auto& w, Workers)
-		w = oStd::thread(_DoWork);
-
-	// wait until all have settled and thus ensure all have initialized
-	flush();
+		w = std::move(std::thread(_DoWork));
+	flush(); // wait until all have settled and thus ensure all have initialized
 }
 
 template<typename Alloc>
