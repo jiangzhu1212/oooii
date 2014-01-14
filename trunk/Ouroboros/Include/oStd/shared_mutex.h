@@ -38,7 +38,7 @@ namespace ouro {
 		#if defined(_WIN32) || defined(_WIN64)
 			void* Footprint;
 		#else
-			#error Unsupported platform (oSHARED_MUTEX_FOOTPRINT)
+			#error Unsupported platform (shared_mutex)
 		#endif
 		#ifdef _DEBUG
 			std::thread::id ThreadID;
