@@ -65,6 +65,24 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 	}
 
 	lock_t Lock(Mutex);
+
+	// There is a bug in VS2012 where a static alloc in mutex bootstrap isn't marked
+	// as a CRT alloc, so it flags as a leak when it isn't. Blacklist that now...
+	oFOR(allocations_t::value_type& pair, Allocations)
+	{
+		entry& e = pair.second;
+		if (e.tracked && (!_CurrentContextOnly || e.context == CurrentContext))
+		{
+			for (size_t i = 0; i < e.num_stack_entries; i++)
+			{
+				bool IsStdBind = false;
+				Info.format(buf, buf.capacity(), e.stack[i], "  ", &IsStdBind);
+				if (strstr(buf, "Mtx_init"))
+					e.tracked = false;
+			}
+		}
+	}
+
 	size_t nLeaks = 0;
 	bool headerPrinted = false;
 	size_t totalLeakBytes = 0;
@@ -135,16 +153,9 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 
 void leak_tracker::on_allocate(unsigned int _AllocationID, size_t _Size, const char* _Path, unsigned int _Line, unsigned int _OldAllocationID)
 {
-	// This is a work-around for a tracked allocation that shouldn't be tracked inside crt
-	// http://connect.microsoft.com/VisualStudio/feedback/details/757212
-	static const int kIgnoreStdThreadBootstrapMallocs = 1; // at_thread_exit_mutex's allocation
-	thread_local static int sThreadMallocsSoFar = 0;
-	if (++sThreadMallocsSoFar <= kIgnoreStdThreadBootstrapMallocs) // skip at_thread_exit_mutex's allocation
-		return;
-
-	lock_t Lock(Mutex);
 	if (!Internal) // prevent infinite recursion
 	{
+		lock_t Lock(Mutex);
 		Internal = true;
 
 		#if oENABLE_RELEASE_ASSERTS == 1 || oENABLE_ASSERTS == 1
@@ -169,9 +180,9 @@ void leak_tracker::on_allocate(unsigned int _AllocationID, size_t _Size, const c
 
 void leak_tracker::on_deallocate(unsigned int _AllocationID)
 {
-	lock_t Lock(Mutex);
 	if (!Internal)
 	{
+		lock_t Lock(Mutex);
 		Internal = true;
 		// there may be existing allocs before tracking was enabled, so we're going 
 		// to have to ignore those since they weren't captured

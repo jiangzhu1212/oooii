@@ -170,7 +170,7 @@ private:
 	// and calls GetModuleFileNameW each time (hopefully only on first-init)? Anyway if malloc
 	// is holding a mutex, then this goes to call more mutex-protected API there can be deadlocks.
 	// so keep this a simple mutex.
-	typedef oStd::recursive_mutex mutex_t;
+	typedef oStd::mutex mutex_t;
 	typedef oStd::lock_guard<mutex_t> lock_t;
 
 	static struct hasher { size_t operator()(unsigned int _AllocationID) const { return _AllocationID; } };
