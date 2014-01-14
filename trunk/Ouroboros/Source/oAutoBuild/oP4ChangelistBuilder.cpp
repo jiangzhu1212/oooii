@@ -121,7 +121,7 @@ public:
 	}
 	void Terminate()
 	{
-		lock_guard<mutex> Lock(Mutex);
+		lock_t Lock(Mutex);
 		process::terminate_children(ProcessID, 0, true);
 	}
 
@@ -137,7 +137,10 @@ public:
 		Mutex.unlock();
 	}
 private:
-	mutex Mutex;
+	typedef mutex mutex_t;
+	typedef lock_guard<mutex_t> lock_t;
+	typedef shared_lock<mutex_t> lock_shared_t;
+	mutex_t Mutex;
 	process::id ProcessID;
 
 	void AssertIsMain()
@@ -284,6 +287,9 @@ private:
 	oRefCount Refcount;
 	oChildProcessTerminator Terminator;
 	event CancelEvent;
+	typedef shared_mutex mutex_t;
+	typedef lock_guard<mutex_t> lock_t;
+	typedef shared_lock<mutex_t> lock_shared_t;
 	shared_mutex Mutex;
 	int ServerPort;
 
@@ -498,7 +504,7 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 
 		snprintf(NextBuild.UserName, "%s_%s_%d", oAUTO_BUILD_SPECIAL_PREFIX, DateStr.c_str(), _Changelist);
 
-		lock_guard<shared_mutex> Lock(Mutex);
+		lock_t Lock(Mutex);
 		NextBuildInfos.push_back(NextBuild);
 		LastDailyBuildMS = timer::nowmsi();
 	}
@@ -506,7 +512,7 @@ void oP4ChangelistBuilderImpl::TryAddingChangelist(int _Changelist, bool _IsDail
 	{
 		oP4GetChangelistUser(NextBuild.UserName.c_str(), NextBuild.UserName.capacity(), _Changelist);
 	
-		lock_guard<shared_mutex> Lock(Mutex);
+		lock_t Lock(Mutex);
 		if (!WasChangelistAlreadyBuilt(_Changelist))
 			NextBuildInfos.push_back(NextBuild);
 		LastCL = _Changelist;
@@ -552,7 +558,7 @@ void oP4ChangelistBuilderImpl::TryNextBuild(int _DailyBuildHour)
 
 oP4ChangelistBuilder::ChangeInfo* oP4ChangelistBuilderImpl::GetNextBuild()
 {
-	lock_guard<shared_mutex> Lock(Mutex);
+	lock_t Lock(Mutex);
 	oASSERT(!NextBuildInfos.empty(), "Popping an empty list");
 	StartBuildMS = timer::nowmsi();
 	CurrentBuildInfo = move(NextBuildInfos.front());
@@ -564,13 +570,13 @@ oP4ChangelistBuilder::ChangeInfo* oP4ChangelistBuilderImpl::GetNextBuild()
 
 void oP4ChangelistBuilderImpl::UpdateBuildProgress(oP4ChangelistBuilder::ChangeInfo* _pBuild, const char* _Stage)
 {
-	lock_guard<shared_mutex> Lock(Mutex);
+	lock_t Lock(Mutex);
 	_pBuild->Stage = _Stage;
 }
 
 void oP4ChangelistBuilderImpl::FinishBuild(oP4ChangelistBuilder::ChangeInfo* _pBuild)
 {
-	lock_guard<shared_mutex> Lock(Mutex);
+	lock_t Lock(Mutex);
 	LastBuildMS = (timer::nowmsi() - StartBuildMS);
 
 	if (_pBuild->IsDaily)

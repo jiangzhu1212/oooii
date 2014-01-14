@@ -205,7 +205,7 @@ namespace detail {
 
 		bool RegisterArena(void* _pBase, size_t _Size) threadsafe
 		{
-			lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(Mutex));
+			lock_t lock(thread_cast<shared_mutex&>(Mutex));
 			
 			threadsafe ARENA* pFreeArena = 0;
 			oFORI(i, RegisteredArenas)
@@ -234,7 +234,7 @@ namespace detail {
 
 		void UnregisterArena(void* _pBase) threadsafe
 		{
-			lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(Mutex));
+			lock_t lock(thread_cast<shared_mutex&>(Mutex));
 			oFORI(i, RegisteredArenas)
 				if (_pBase == RegisteredArenas[i].pBase)
 					RegisteredArenas[i].pBase = 0;
@@ -295,7 +295,10 @@ namespace detail {
 		ARENA RegisteredArenas[MAX_NUM_ARENAS];
 
 		oRefCount RefCount;
-		ouro::shared_mutex Mutex;
+		typedef ouro::shared_mutex mutex_t;
+		typedef lock_guard<mutex_t> lock_t;
+		typedef ouro::shared_lock<mutex_t> lock_shared_t;
+		mutable mutex_t Mutex;
 	};
 
 } // namespace detail
