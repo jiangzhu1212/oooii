@@ -47,7 +47,7 @@ template<typename Alloc>
 class basic_threadpool_base
 {
 public:
-	typedef oTASK task_type;
+	typedef std::function<void()> task_type;
 	typedef Alloc allocator_type;
 
 	// Call construct_workers in most-derived ctor to initialize values.
