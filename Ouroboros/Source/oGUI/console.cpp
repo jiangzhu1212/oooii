@@ -136,7 +136,9 @@ public:
 	void clear() { ::system("cls"); }
   int vfprintf(FILE* _pStream, color _Foreground, color _Background, const char* _Format, va_list _Args);
 private:
-	recursive_mutex Mutex;
+	typedef recursive_mutex mutex_t;
+	typedef lock_guard<mutex_t> lock_t;
+	mutable mutex_t Mutex;
 	function<bool()> Handlers[5];
 	bool CtrlHandlerSet;
 
@@ -151,7 +153,7 @@ oDEFINE_PROCESS_SINGLETON("ouro::gui::console", context);
 
 console::info context::get_info() const
 {
-	lock_guard<recursive_mutex> lock(const_cast<recursive_mutex&>(Mutex));
+	lock_t lock(Mutex);
 	CONSOLE_SCREEN_BUFFER_INFO sbi;
 	oASSERT(GetStdHandle(STD_OUTPUT_HANDLE) != INVALID_HANDLE_VALUE, "");
 
@@ -172,7 +174,7 @@ console::info context::get_info() const
 
 void context::set_info(const info& _Info)
 {
-	lock_guard<recursive_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 
 	info i = get_info();
 	#define DEF(x) if (_Info.x != use_default) i.x = _Info.x
@@ -246,7 +248,7 @@ void context::set_log(const path& _Path)
 
 path context::get_log() const
 {
-	lock_guard<recursive_mutex> lock(const_cast<recursive_mutex&>(Mutex));
+	lock_t lock(Mutex);
 	return LogPath;
 }
 
@@ -275,7 +277,7 @@ int context::vfprintf(FILE* _pStream, color _Foreground, color _Background, cons
 	HANDLE hConsole = 0;
 	WORD wOriginalAttributes = 0;
 
-	lock_guard<recursive_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 
 	if (_pStream == stdout || _pStream == stderr)
 	{
@@ -317,7 +319,7 @@ BOOL context::ctrl_handler(DWORD fdwCtrlType)
 
 void context::set_handler(signal _Signal, const function<bool()>& _Handler)
 {
-	lock_guard<recursive_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 	Handlers[_Signal] = _Handler;
 	if (!CtrlHandlerSet)
 	{

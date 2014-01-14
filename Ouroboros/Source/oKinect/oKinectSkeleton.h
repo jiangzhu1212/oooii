@@ -71,7 +71,9 @@ public:
 private:
 	double LastTrackedTimestamp;
 	oRefCount RefCount;
-	ouro::shared_mutex Mutex;
+	typedef ouro::shared_mutex mutex_t;
+	typedef std::lock_guard<mutex_t> lock_t;
+	mutable mutex_t Mutex;
 	ouro::windows::skeleton::bone_info Skeleton;
 };
 

@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/shared_mutex.h>
-#include "crt_assert.h"
+#include <stdexcept>
 
 #if NTDDI_VERSION >= NTDDI_WIN7
 	#define oHAS_SLIM_TRY_LOCK
@@ -45,9 +45,9 @@ shared_mutex::shared_mutex()
 
 shared_mutex::~shared_mutex()
 {
-	#ifdef oHAS_SLIM_TRY_LOCK
+	#if defined(oHAS_SLIM_TRY_LOCK) && defined(_DEBUG)
 		if (!try_lock())
-			oCRTASSERT(false, "shared_mutex is locked on destruction: this could result in a deadlock or race condition.");
+			throw std::logic_error("mutex locked on destruction");
 	#endif
 }
 
@@ -58,13 +58,12 @@ shared_mutex::native_handle_type shared_mutex::native_handle()
 
 void shared_mutex::lock()
 {
-	// @tony: Based on what I've observed, the low bit of the word that is
-	// the slim RW lock is 1 when locked and 0 when not locked, so test for that...
-	oCRTASSERT(!Footprint || ThreadID != this_thread::get_id(), "shared_mutex is non-recursive and already read/shared locked on this thread. This could result in a deadlock.");
-	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
 	#ifdef _DEBUG
-		ThreadID = this_thread::get_id();
+		if (Footprint && ThreadID == std::this_thread::get_id())
+			throw std::logic_error("non-recursive already locked on this thread");
+		ThreadID = std::this_thread::get_id();
 	#endif
+	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
 }
 
 bool shared_mutex::try_lock()
@@ -86,13 +85,12 @@ void shared_mutex::unlock()
 
 void shared_mutex::lock_shared()
 {
-	// @tony: Based on what I've observed, the low bit of the word that is
-	// the slim RW lock is 1 when locked and 0 when not locked, so test for that...
-	oCRTASSERT(!Footprint || ThreadID != this_thread::get_id(), "shared_mutex is non-recursive and already read/shared locked on this thread. This could result in a deadlock.");
-	AcquireSRWLockShared((PSRWLOCK)&Footprint);
 	#ifdef _DEBUG
-		ThreadID = this_thread::get_id();
+		if (Footprint && ThreadID == std::this_thread::get_id())
+			throw std::logic_error("non-recursive already locked on this thread");
+		ThreadID = std::this_thread::get_id();
 	#endif
+	AcquireSRWLockShared((PSRWLOCK)&Footprint);
 }
 
 bool shared_mutex::try_lock_shared()

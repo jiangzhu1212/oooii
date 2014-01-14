@@ -305,7 +305,10 @@ protected:
 	intrusive_ptr<IAMStreamConfig> StreamConfig;
 
 	mode Mode;
-	shared_mutex Mutex;
+	typedef shared_mutex mutex_t;
+	typedef lock_guard<mutex_t> lock_t;
+	typedef shared_lock<mutex_t> lock_shared_t;
+	mutable mutex_t Mutex;
 	std::atomic<uint> RingBufferReadIndex;
 	unsigned int MonotonicCounter;
 	unsigned int ID;
@@ -435,7 +438,7 @@ float directshow_camera::fps() const
 
 camera::mode directshow_camera::get_mode() const
 {
-	shared_lock<shared_mutex> lock(const_cast<shared_mutex&>(Mutex));
+	lock_shared_t lock(Mutex);
 	return Mode;
 }
 
@@ -449,7 +452,7 @@ void directshow_camera::set_mode(const mode& _Mode)
 	if (memcmp(&closest, &_Mode, sizeof(mode)))
 		oTHROW(not_supported, "Unsupported mode specified: %s %dx%d", as_string(_Mode.format), _Mode.dimensions.x, _Mode.dimensions.y);
 
-	lock_guard<shared_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 
 	intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
@@ -484,7 +487,7 @@ bool directshow_camera::capturing() const
 
 void directshow_camera::capturing(bool _Capturing)
 {
-	lock_guard<shared_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 
 	intrusive_ptr<IMediaControl> MediaControl;
 	oV(GraphBuilder->QueryInterface(IID_PPV_ARGS(&MediaControl)));
@@ -664,7 +667,7 @@ bool directshow_camera::map_const(const_mapped* _pMapped) const
 {
 	if (Running)
 	{
-		const_cast<shared_mutex&>(Mutex).lock_shared();
+		Mutex.lock_shared();
 		unsigned int index = RingBufferReadIndex;
 		
 		surface::info si;
@@ -680,7 +683,7 @@ bool directshow_camera::map_const(const_mapped* _pMapped) const
 
 void directshow_camera::unmap_const() const
 {
-	const_cast<shared_mutex&>(Mutex).unlock_shared();
+	Mutex.unlock_shared();
 }
 
 HRESULT DSSampleGrabberCB::BufferCB(double SampleTime, BYTE* pBuffer, long BufferLen)
@@ -699,7 +702,7 @@ bool directshow_camera::BufferCB(double _SampleTime, void* _pBuffer, size_t _Siz
 {
 	if (Running && _SizeofBuffer > 0)
 	{
-		shared_lock<shared_mutex> lock(Mutex);
+		lock_shared_t lock(Mutex);
 
 		int WriteIndex = (RingBufferReadIndex + 1) % oCOUNTOF(RingBuffer);
 	
