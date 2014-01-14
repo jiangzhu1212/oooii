@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oStd/mutex.h>
-#include "crt_assert.h"
+#include <stdexcept>
 
 #if NTDDI_VERSION >= NTDDI_WIN7
 	#define oHAS_SLIM_TRY_LOCK
@@ -110,9 +110,9 @@ mutex::mutex()
 
 mutex::~mutex()
 {
-	#ifdef oHAS_SLIM_TRY_LOCK
+	#if defined(oHAS_SLIM_TRY_LOCK) && defined(_DEBUG)
 		if (!try_lock())
-			oCRTASSERT(false, "mutex is locked on destruction: this could result in a deadlock or race condition.");
+			throw std::logic_error("mutex locked on destruction");
 	#endif
 }
 
@@ -123,13 +123,12 @@ mutex::native_handle_type mutex::native_handle()
 
 void mutex::lock()
 {
-	// @tony: Based on what I've observed, the low bit of the word that is
-	// the slim RW lock is 1 when locked and 0 when not locked, so test for that...
-	oCRTASSERT(!Footprint || ThreadID != std::this_thread::get_id(), "mutex is non-recursive and already locked on this thread. This could result in a deadlock.");
-	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
 	#ifdef _DEBUG
+		if (Footprint && ThreadID == std::this_thread::get_id())
+			throw std::logic_error("non-recursive already locked on this thread");
 		ThreadID = std::this_thread::get_id();
 	#endif
+	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
 }
 
 bool mutex::try_lock()
@@ -156,12 +155,10 @@ recursive_mutex::recursive_mutex()
 
 recursive_mutex::~recursive_mutex()
 {
-	if (!try_lock())
-	{
-		oCRTASSERT(false, "recursive_mutex is locked on destruction: this could result in a deadlock or race condition.");
-		unlock();
-	}
-
+	#if defined(oHAS_SLIM_TRY_LOCK) && defined(_DEBUG)
+		if (!try_lock())
+			throw std::logic_error("mutex locked on destruction");
+	#endif
 	DeleteCriticalSection((LPCRITICAL_SECTION)Footprint);
 }
 
@@ -194,7 +191,7 @@ bool timed_mutex::try_lock_for(unsigned int _TimeoutMS)
 
 	do 
 	{
-		if (Mutex.try_lock())
+		if (try_lock())
 			return true;
 
 		if (!bo.try_pause())
@@ -222,9 +219,9 @@ BOOL CALLBACK InitOnceCallback(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Cont
 	return TRUE;
 }
 
-void call_once(once_flag& _Flag, std::function<void()> _Function)
+void call_once(once_flag& _Flag, const std::function<void()>& _Function)
 {
-	InitOnceExecuteOnce(*(PINIT_ONCE*)&_Flag, InitOnceCallback, &_Function, nullptr);
+	InitOnceExecuteOnce(*(PINIT_ONCE*)&_Flag, InitOnceCallback, (PVOID)&_Function, nullptr);
 }
 
 } // namespace oStd
