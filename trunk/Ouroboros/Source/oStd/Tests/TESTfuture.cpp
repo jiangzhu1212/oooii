@@ -33,16 +33,18 @@
 
 namespace oStd {
 	namespace tests {
+	
+static double now_ms() { return std::chrono::duration_cast<std::chrono::duration<double, std::milli>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); }
 
 static void exercise_thread(size_t _Index, int* _pResults, unsigned int _RuntimeMS)
 {
 	int n = 0;
-	double t = oStd::chrono::high_resolution_clock::now().time_since_epoch().count();
+	double t = now_ms();
 	double timeout = t + _RuntimeMS / 1000.0;
 	while (t < timeout)
 	{
 		n += rand();
-		t = oStd::chrono::high_resolution_clock::now().time_since_epoch().count();
+		t = now_ms();
 	}
 
 	_pResults[_Index] = n;
