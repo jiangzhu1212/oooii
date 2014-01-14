@@ -157,9 +157,9 @@ template<typename Rep, typename Period>
 int spawn_for(const char* _CommandLine
 	, const std::function<void(char* _Line)>& _GetLine
 	, bool _ShowWindow
-	, const oStd::chrono::duration<Rep, Period>& _Timeout)
+	, const std::chrono::duration<Rep, Period>& _Timeout)
 {
-	oStd::chrono::milliseconds ms = oStd::chrono::duration_cast<oStd::chrono::milliseconds>(_Timeout);
+	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_Timeout);
 	return spawn_for(_CommandLine, _GetLine, _ShowWindow, static_cast<unsigned int>(ms.count()));
 }
 

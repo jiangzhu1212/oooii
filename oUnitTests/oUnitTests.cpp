@@ -368,7 +368,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	desc.NameColumnWidth = 40;
 	desc.TimeColumnWidth = 5;
 	desc.StatusColumnWidth = 9;
-	desc.RandomSeed = _pParameters->RandomSeed ? _pParameters->RandomSeed : (unsigned int)oStd::chrono::high_resolution_clock::now().time_since_epoch().count();
+	desc.RandomSeed = _pParameters->RandomSeed ? _pParameters->RandomSeed : timer::nowmsi();
 	desc.NumRunIterations = _pParameters->RepeatNumber ? _pParameters->RepeatNumber : 1;
 	desc.EnableSpecialTestTimeouts = _pParameters->EnableTimeouts;
 	desc.CaptureCallstackForTestLeaks = _pParameters->CaptureCallstackForTestLeaks;
