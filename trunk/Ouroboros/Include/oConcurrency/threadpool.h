@@ -39,6 +39,7 @@
 #include <oConcurrency/concurrent_worklist.h>
 #include <oBase/backoff.h>
 #include <oBase/countdown_latch.h>
+#include <oStd/shared_mutex.h>
 #include <stdexcept>
 #include <vector>
 
@@ -65,15 +66,16 @@ public:
 
 	// The task will execute on any given worker thread. There is no order-of-
 	// execution guarantee.
-	void dispatch(const oTASK& _Task);
+	void dispatch(const std::function<void()>& _Task);
 
 protected:
 	template<typename Alloc> friend class detail::task_group;
 
 	std::mutex LocalQueuesMutex;
-	std::vector<concurrent_worklist<oTASK, allocator_type>*> LocalQueues;
+	ouro::shared_mutex WorkingMutex;
+	std::vector<concurrent_worklist<std::function<void()>, allocator_type>*> LocalQueues;
 	std::vector<std::thread::id> WorkerIDs;
-	static thread_local concurrent_worklist<oTASK, allocator_type>* pLocalQueue;
+	static thread_local concurrent_worklist<std::function<void()>, allocator_type>* pLocalQueue;
 
 	// @tony: Due to a bug in VS2010, instead of declaring work() with a 
 	// task group as a parameter and passing null for worker threads and this for
@@ -97,7 +99,7 @@ protected:
 	void end();
 };
 
-template<typename Alloc> thread_local concurrent_worklist<oTASK, Alloc>* threadpool<Alloc>::pLocalQueue;
+template<typename Alloc> thread_local concurrent_worklist<std::function<void()>, Alloc>* threadpool<Alloc>::pLocalQueue;
 template<typename Alloc> thread_local oConcurrency::detail::task_group<Alloc>* oConcurrency::threadpool<Alloc>::pTaskGroup;
 
 template<typename Alloc>
@@ -116,7 +118,7 @@ void threadpool<Alloc>::begin()
 	// queue as the valid flag itself.
 
 	begin_thread("threadpool Worker");
-	auto pNewQueue = new concurrent_worklist<oTASK, allocator_type>(GlobalQueue.get_allocator());
+	auto pNewQueue = new concurrent_worklist<std::function<void()>, allocator_type>(GlobalQueue.get_allocator());
 
 	// don't use push_back so we can skip any validity checks when iterating 
 	// through LocalQueues in the main proc loop.
@@ -131,11 +133,17 @@ void threadpool<Alloc>::begin()
 			break;
 		}
 	}
+
+	WorkingMutex.lock_shared();
 }
 
 template<typename Alloc>
 void threadpool<Alloc>::end()
 {
+	WorkingMutex.unlock_shared(); // release shared lock to indicate out of work
+	WorkingMutex.lock(); // wait for all others to get out of work
+	WorkingMutex.unlock(); // that's it - just needed to ensure no work stealing will occur during teardown
+
 	// null pointer immediately so its validity can be determined more easily in
 	// the main proc loop.
 
@@ -157,7 +165,7 @@ void threadpool<Alloc>::end()
 }
 
 template<typename Alloc>
-void threadpool<Alloc>::dispatch(const oTASK& _Task)
+void threadpool<Alloc>::dispatch(const std::function<void()>& _Task)
 {
 	if (Running)
 	{
@@ -208,7 +216,7 @@ void threadpool<Alloc>::work()
 		// 2. Check global queue
 		// 3. Steal from another queue
 
-		oTASK task;
+		std::function<void()> task;
 		if (!pLocalQueue->try_pop_local(task))
 		{
 			bool AlreadyTriedStealing = false;
@@ -300,7 +308,7 @@ public:
 	task_group(threadpool<allocator_type>& _Threadpool);
 
 	// Run a task as part of this task group
-	void run(const oTASK& _Task);
+	void run(const std::function<void()>& _Task);
 
 	// blocks until all tasks associated with this task group are finished. While
 	// waiting, this work steals.
@@ -323,7 +331,7 @@ task_group<Alloc>::task_group(threadpool<Alloc>& _Threadpool)
 }
 
 template<typename Alloc>
-void task_group<Alloc>::run(const oTASK& _Task)
+void task_group<Alloc>::run(const std::function<void()>& _Task)
 {
 	Latch.reference();
 	Threadpool.dispatch([&,_Task] { _Task(); Latch.release(); });
