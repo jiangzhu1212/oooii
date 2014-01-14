@@ -36,22 +36,90 @@
 // To keep the main classes neat, collect all the platform-specific forward
 // declaration here. This is done in this vague manner to avoid including 
 // platform headers in this file.
-#if defined(_WIN32) || defined(_WIN64)
-	#ifdef _WIN64
-		#define oRECURSIVE_MUTEX_FOOTPRINT() mutable unsigned long long Footprint[5] // RTL_CRITICAL_SECTION
-	#elif defined(_WIN32)
-		#define oRECURSIVE_MUTEX_FOOTPRINT() mutable unsigned int Footprint[6]
-	#endif
-
-	#define oMUTEX_FOOTPRINT() void* Footprint
-
-	#define oONCEFLAG_FOOTPRINT() void* Footprint
-
-#else
-	#error Unsupported platform (oRECURSIVE_MUTEX_FOOTPRINT, oMUTEX_FOOTPRINT, oSHARED_MUTEX_FOOTPRINT)
-#endif
-
 namespace oStd {
+
+	class mutex
+	{
+	public:
+		mutex();
+		~mutex();
+
+		void lock();
+		bool try_lock();
+		void unlock();
+
+		typedef void* native_handle_type;
+		native_handle_type native_handle();
+
+	private:
+		#if defined(_WIN32) || defined(_WIN64)
+			void* Footprint;
+		#else
+			#error unsupported platform (mutex)
+		#endif
+		#ifdef _DEBUG
+			std::thread::id ThreadID;
+		#endif
+		mutex(const mutex&); /* = delete */
+		mutex& operator=(const mutex&); /* = delete */
+	};
+
+	class recursive_mutex
+	{
+	public:
+		recursive_mutex();
+		~recursive_mutex();
+
+		void lock();
+		bool try_lock();
+		void unlock();
+
+		typedef void* native_handle_type;
+		native_handle_type native_handle();
+
+	private:
+		#ifdef _WIN64
+			mutable unsigned long long Footprint[5]; // RTL_CRITICAL_SECTION
+		#elif defined(_WIN32)
+			mutable unsigned int Footprint[6];
+		#else
+			#error unsupported platform (recursive_mutex)
+		#endif
+
+		recursive_mutex(const recursive_mutex&); /* = delete */
+		recursive_mutex& operator=(const recursive_mutex&); /* = delete */
+	};
+
+	class timed_mutex : public mutex
+	{
+	public:
+		timed_mutex() {}
+		~timed_mutex() {}
+
+		template<typename Rep, typename Period>
+		bool try_lock_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
+		{
+			std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
+			Rep count = ms.count();
+			if (Rep(count) != count)
+				throw std::range_error("_RelativeTime is too large");
+			return try_lock_for(static_cast<unsigned int>(ms.count()));
+		}
+
+		template<typename Clock, typename Duration>
+		bool try_lock_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
+		{
+			std::chrono::high_resolution_clock::duration duration = 
+				time_point_cast<std::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - 
+				std::chrono::high_resolution_clock::now();
+			return try_lock_until(duration);
+		}
+
+	private:
+		timed_mutex(timed_mutex const&); /* = delete */
+		timed_mutex& operator=(timed_mutex const&); /* = delete */
+		bool try_lock_for(unsigned int _TimeoutMS);
+	};
 
 	// Do not acquire ownership of the mutex.
 	struct defer_lock_t {};
@@ -63,82 +131,6 @@ namespace oStd {
 	extern const adopt_lock_t adopt_lock;
 	extern const defer_lock_t defer_lock;
 	extern const try_to_lock_t try_to_lock;
-
-	class mutex
-	{
-		oMUTEX_FOOTPRINT();
-		#ifdef _DEBUG
-			std::thread::id ThreadID;
-		#endif
-		mutex(const mutex&); /* = delete */
-		mutex& operator=(const mutex&); /* = delete */
-	public:
-		mutex();
-		~mutex();
-
-		void lock();
-		bool try_lock();
-		void unlock();
-
-		typedef void* native_handle_type;
-		native_handle_type native_handle();
-	};
-
-	class recursive_mutex
-	{
-		oRECURSIVE_MUTEX_FOOTPRINT();
-		recursive_mutex(const recursive_mutex&); /* = delete */
-		recursive_mutex& operator=(const recursive_mutex&); /* = delete */
-	public:
-		recursive_mutex();
-		~recursive_mutex();
-
-		void lock();
-		bool try_lock();
-		void unlock();
-
-		typedef void* native_handle_type;
-		native_handle_type native_handle();
-	};
-
-	class timed_mutex
-	{
-		mutex Mutex;
-		#ifdef _DEBUG
-			std::thread::id ThreadID;
-		#endif
-		timed_mutex(timed_mutex const&); /* = delete */
-		timed_mutex& operator=(timed_mutex const&); /* = delete */
-
-		bool try_lock_for(unsigned int _TimeoutMS);
-
-	public:
-		timed_mutex() {}
-		~timed_mutex() {}
-
-		void lock() { Mutex.lock(); }
-		void unlock() { Mutex.unlock(); }
-		bool try_lock() { return Mutex.try_lock(); }
-
-		template<typename Rep, typename Period>
-		bool try_lock_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
-		{
-			std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
-			Rep count = ms.count();
-			assert(Rep(count) == count && "RelativeTime is too large");
-			return try_lock_for(static_cast<unsigned int>(ms.count()));
-		}
-
-		template<typename Clock, typename Duration>
-		bool try_lock_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
-		{
-			std::chrono::high_resolution_clock::duration duration = time_point_cast<std::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - chrono::high_resolution_clock::now();
-			return try_lock_until(duration);
-		}
-
-		typedef mutex::native_handle_type native_handle_type;
-		inline native_handle_type native_handle() { return Mutex.native_handle(); }
-	};
 
 	template <class Mutex> class lock_guard
 	{
@@ -281,14 +273,20 @@ namespace oStd {
 
 	class once_flag
 	{
-		oONCEFLAG_FOOTPRINT();
-		once_flag(const once_flag&);
-		once_flag& operator=(const once_flag&);
 	public:
 		/*constexpr*/ once_flag();
+
+	private:
+		#if defined(_WIN32) || defined(_WIN64)
+			void* Footprint;
+		#else
+			#error unsupported platform (once_flag)
+		#endif
+		once_flag(const once_flag&);
+		once_flag& operator=(const once_flag&);
 	};
 
-	void call_once(once_flag& _Flag, oCALLABLE _Function);
+	void call_once(once_flag& _Flag, const std::function<void>& _Function);
 	#ifndef oHAS_VARIADIC_TEMPLATES
 		#define oDEFINE_CALLABLE_call_once(_nArgs) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE,_nArgs) void call_once(once_flag& _Flag, oCALLABLE_CONCAT(oCALLABLE_PARAMS,_nArgs)) { call_once(_Flag, oCALLABLE_CONCAT(oCALLABLE_BIND,_nArgs)); }
 		oCALLABLE_PROPAGATE(oDEFINE_CALLABLE_call_once);
