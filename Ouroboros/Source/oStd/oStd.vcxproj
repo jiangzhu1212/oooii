@@ -19,8 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="chrono.cpp" />
-    <ClCompile Include="condition_variable.cpp" />
     <ClCompile Include="future.cpp" />
     <ClCompile Include="mutex.cpp" />
     <ClCompile Include="pch.cpp">
@@ -34,13 +32,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oStd\all.h" />
-    <ClInclude Include="..\..\Include\oStd\chrono.h" />
-    <ClInclude Include="..\..\Include\oStd\condition_variable.h" />
     <ClInclude Include="..\..\Include\oStd\for.h" />
     <ClInclude Include="..\..\Include\oStd\future.h" />
     <ClInclude Include="..\..\Include\oStd\make_unique.h" />
     <ClInclude Include="..\..\Include\oStd\mutex.h" />
-    <ClInclude Include="..\..\Include\oStd\ratio.h" />
     <ClInclude Include="..\..\Include\oStd\shared_mutex.h" />
     <ClInclude Include="..\..\Include\oStd\thread.h" />
     <ClInclude Include="crt_assert.h" />

@@ -28,13 +28,10 @@
 #ifndef oStd_all_h
 #define oStd_all_h
 #include <oStd/callable.h>
-#include <oStd/chrono.h>
-#include <oStd/condition_variable.h>
 #include <oStd/for.h>
 #include <oStd/future.h>
 #include <oStd/make_unique.h>
 #include <oStd/mutex.h>
-#include <oStd/ratio.h>
 #include <oStd/shared_mutex.h>
 #include <oStd/thread.h>
 #endif

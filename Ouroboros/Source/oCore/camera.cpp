@@ -33,7 +33,7 @@
 #include <DShow.h>
 #include "winqedit.h"
 
-using namespace oStd;
+using namespace std;
 
 namespace ouro {
 
