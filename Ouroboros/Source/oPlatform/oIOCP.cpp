@@ -39,7 +39,6 @@
 #include <oCore/windows/win_error.h>
 
 using namespace ouro;
-using namespace oStd;
 
 #define IOCPKEY_SHUTDOWN 1
 #define IOCPKEY_USER_TASK 2

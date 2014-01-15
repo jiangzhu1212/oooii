@@ -43,7 +43,7 @@ inline size_t hash(const char* _Name, process_heap::scope _Scope)
 	size_t h = fnv1a<size_t>(_Name);
 	if (_Scope == process_heap::per_thread)
 	{
-		thread::id id = this_thread::get_id();
+		std::thread::id id = std::this_thread::get_id();
 		h = fnv1a<size_t>(&id, sizeof(thread::id), h);
 	}
 	return h;
@@ -119,7 +119,7 @@ private:
 
 		// thread id of pointer initialization and where deinitialization will 
 		// probably take place
-		thread::id init;
+		std::thread::id init;
 		sstring name;
 		enum scope scope;
 		enum tracking tracking;
@@ -272,7 +272,7 @@ void context::exit_thread()
 {
 	fixed_vector<void*, 32> allocs;
 	{
-		thread::id tid = this_thread::get_id();
+		std::thread::id tid = std::this_thread::get_id();
 		lock_guard<recursive_mutex> lock(Mutex);
 		for (container_t::const_iterator it = Pointers.begin(); it != Pointers.end(); ++it)
 			if (it->second.scope == process_heap::per_thread && tid == it->second.init)
@@ -308,7 +308,7 @@ bool context::find_or_allocate(size_t _Size
 		{
 			entry& e = Pointers[h];
 			*_pPointer = e.pointer = allocate(_Size);
-			e.init = this_thread::get_id();
+			e.init = std::this_thread::get_id();
 			e.name = _Name;
 			e.scope = _Scope;
 			e.tracking = _Tracking;

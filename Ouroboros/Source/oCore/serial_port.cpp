@@ -31,8 +31,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-using namespace oStd;
-
 namespace ouro {
 
 const char* as_string(const serial_port::port& _Port)

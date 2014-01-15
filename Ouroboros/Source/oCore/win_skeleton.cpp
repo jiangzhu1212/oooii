@@ -25,8 +25,6 @@
 #include <oCore/windows/win_skeleton.h>
 #include <oCore/process_heap.h>
 
-using namespace oStd;
-
 namespace ouro {
 	namespace windows {
 		namespace skeleton {

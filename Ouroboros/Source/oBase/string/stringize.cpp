@@ -33,8 +33,6 @@
 #include <oBase/date.h>
 #include <half.h>
 
-using namespace oStd;
-
 oDEFINE_WHITESPACE_PARSING();
 namespace ouro {
 

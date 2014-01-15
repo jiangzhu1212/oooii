@@ -54,11 +54,6 @@ const char* as_string(const ouro::cpu::support::value& _Support)
 	}
 }
 
-} // namespace ouro
-
-using namespace oStd;
-
-namespace ouro {
 	namespace cpu {
 		namespace detail {
 

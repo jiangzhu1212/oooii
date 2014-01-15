@@ -30,7 +30,6 @@
 #include <mutex>
 #include <thread>
 
-using namespace ouro;
 using namespace std;
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)
@@ -77,9 +76,9 @@ static void NotifyAll(mutex& _Mutex, condition_variable& _ConditionVariable, thr
 
 bool oBasisTest_oDispatchQueuePrivate()
 {
-	intrusive_ptr<threadsafe oDispatchQueuePrivate> q;
+	ouro::intrusive_ptr<threadsafe oDispatchQueuePrivate> q;
 	oTESTB(oDispatchQueueCreatePrivate("TESTDispatchQueuePrivate", 100, &q), "Failed to create private dispatch queue");
-	finally JoinQueue([&] { q->Join(); });
+	ouro::finally JoinQueue([&] { q->Join(); });
 
 	static const size_t TestSize = 4096;
 	int TestArray[TestSize];

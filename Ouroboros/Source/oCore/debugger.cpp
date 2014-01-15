@@ -49,7 +49,7 @@ typedef struct tagTHREADNAME_INFO
 namespace ouro {
 	namespace debugger {
 
-void thread_name(const char* _Name, thread::id _ID)
+void thread_name(const char* _Name, std::thread::id _ID)
 {
 	if (_Name && *_Name && IsDebuggerPresent())
 	{
