@@ -30,7 +30,6 @@
 #include <mutex>
 #include <thread>
 
-using namespace ouro;
 using namespace std;
 
 static void SetLocation(size_t _Index, size_t _Start, int* _Array)
@@ -67,9 +66,9 @@ static void NotifyAll(condition_variable& _ConditionVariable, mutex& _Mutex, thr
 
 bool oBasisTest_oDispatchQueueGlobal()
 {
-	intrusive_ptr<threadsafe oDispatchQueueGlobal> q;
+	ouro::intrusive_ptr<threadsafe oDispatchQueueGlobal> q;
 	oTESTB(oDispatchQueueCreateGlobal("TESTDispatchQueueGlobal", 100, &q), "Failed to create global dispatch queue");
-	finally JoinQueue([&] { q->Join(); });
+	ouro::finally JoinQueue([&] { q->Join(); });
 
 	static const size_t TestSize = 4096;
 	int TestArray[TestSize];

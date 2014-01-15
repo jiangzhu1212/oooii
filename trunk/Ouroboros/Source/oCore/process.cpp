@@ -234,10 +234,9 @@ public:
 		return ID;
 	}
 
-	thread::id get_thread_id() const override
+	std::thread::id get_thread_id() const override
 	{
-		thread::id ID;
-		*(DWORD*)&ID = ProcessInfo.dwThreadId;
+		std::thread::id ID = astid(ProcessInfo.dwThreadId);
 		return ID;
 	}
 
@@ -589,7 +588,7 @@ process::id get_parent_id()
 	return ParentID;
 }
 
-static bool find_oldest_and_thus_main_thread(thread::id _ThreadID, ULONGLONG* _pMinCreateTime, thread::id* _pOutMainThreadID)
+static bool find_oldest_and_thus_main_thread(std::thread::id _ThreadID, ULONGLONG* _pMinCreateTime, std::thread::id* _pOutMainThreadID)
 {
 	HANDLE hThread = OpenThread(THREAD_QUERY_INFORMATION, TRUE, asdword(_ThreadID));
 	if (hThread)
@@ -614,7 +613,7 @@ static bool find_oldest_and_thus_main_thread(thread::id _ThreadID, ULONGLONG* _p
 
 std::thread::id get_main_thread_id()
 {
-	thread::id id;
+	std::thread::id id;
 	ULONGLONG minCreateTime = MAXULONGLONG;
 	enumerate_threads(bind(find_oldest_and_thus_main_thread, _1, &minCreateTime, &id));
 	return id;

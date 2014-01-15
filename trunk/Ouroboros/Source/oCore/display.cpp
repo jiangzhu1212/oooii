@@ -29,8 +29,6 @@
 #include <windows.h>
 #include <Shellapi.h>
 
-using namespace oStd;
-
 namespace ouro {
 	namespace display {
 

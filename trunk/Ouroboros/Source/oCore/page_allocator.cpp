@@ -28,8 +28,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-using namespace oStd;
-
 namespace ouro {
 	namespace page_allocator {
 

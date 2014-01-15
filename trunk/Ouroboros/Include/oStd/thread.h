@@ -22,8 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Approximation of the upcoming C++11 std::thread interface. There has been no
-// attention paid to proper exception behavior.
+// Approximation of C++11 std::thread.
 #pragma once
 #ifndef oStd_thread_h
 #define oStd_thread_h
@@ -33,7 +32,7 @@
 #include <functional>
 #include <memory>
 
-namespace oStd {
+namespace ouro {
 
 	namespace detail {
 
@@ -122,11 +121,11 @@ namespace oStd {
 
 	} // namespace this_thread
 
-} // namespace oStd
+} // namespace ouro
 
 namespace std
 {
-	void swap(oStd::thread& _This, oStd::thread& _That);
+	void swap(ouro::thread& _This, ouro::thread& _That);
 
 } // namespace std
 

@@ -29,8 +29,6 @@
 #include <oBase/backoff.h>
 #include <atomic>
 
-using namespace oStd;
-
 namespace ouro {
 
 	const char* as_string(const filesystem::file_event::value& _Event)

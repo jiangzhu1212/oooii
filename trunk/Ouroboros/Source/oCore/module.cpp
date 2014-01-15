@@ -61,11 +61,6 @@ const char* as_string(const module::type::value& _Type)
 	return "?";
 }
 
-} // namespace ouro
-
-using namespace oStd;
-
-namespace ouro {
 	namespace module {
 
 id open(const path& _Path)

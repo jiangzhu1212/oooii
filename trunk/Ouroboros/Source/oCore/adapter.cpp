@@ -46,8 +46,6 @@
 #define oAMDVER_MAJOR 8
 #define oAMDVER_MINOR 982
 
-using namespace oStd;
-
 namespace ouro {
 	namespace adapter {
 		namespace detail {

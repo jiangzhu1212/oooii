@@ -28,8 +28,6 @@
 #include <oBase/stringize.h>
 #include <oBase/throw.h>
 
-using namespace oStd;
-
 namespace ouro {
 	namespace detail {
 
