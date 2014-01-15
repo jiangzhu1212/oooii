@@ -71,11 +71,12 @@ public:
 protected:
 	template<typename Alloc> friend class detail::task_group;
 
-	std::mutex LocalQueuesMutex;
-	ouro::shared_mutex WorkingMutex;
-	std::vector<concurrent_worklist<std::function<void()>, allocator_type>*> LocalQueues;
+	typedef concurrent_worklist<std::function<void()>, allocator_type> queue_t;
+
+	std::vector<std::unique_ptr<queue_t>> LocalQueues;
 	std::vector<std::thread::id> WorkerIDs;
-	static thread_local concurrent_worklist<std::function<void()>, allocator_type>* pLocalQueue;
+	std::atomic<int> LocalQueueIndex;
+	static thread_local queue_t* pLocalQueue;
 
 	// @tony: Due to a bug in VS2010, instead of declaring work() with a 
 	// task group as a parameter and passing null for worker threads and this for
@@ -94,74 +95,20 @@ protected:
 
 	threadpool(const threadpool&); /* = delete */
 	const threadpool& operator=(const threadpool&); /* = delete */
-
-	void begin();
-	void end();
 };
 
-template<typename Alloc> thread_local concurrent_worklist<std::function<void()>, Alloc>* threadpool<Alloc>::pLocalQueue;
+template<typename Alloc> thread_local typename threadpool<Alloc>::queue_t* threadpool<Alloc>::pLocalQueue;
 template<typename Alloc> thread_local oConcurrency::detail::task_group<Alloc>* oConcurrency::threadpool<Alloc>::pTaskGroup;
 
 template<typename Alloc>
 threadpool<Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
+	: LocalQueueIndex(0)
 {
 	LocalQueues.resize(calc_num_workers(_NumWorkers));
 	WorkerIDs.resize(LocalQueues.size());
-	construct_workers(std::bind(&threadpool::worker_proc, this), _NumWorkers);
-}
-
-template<typename Alloc>
-void threadpool<Alloc>::begin()
-{
-	// assign pLocalQueue as last step otherwise the main proc loop needs to check
-	// for a separate initialized state rather than use its access to the local
-	// queue as the valid flag itself.
-
-	begin_thread("threadpool Worker");
-	auto pNewQueue = new concurrent_worklist<std::function<void()>, allocator_type>(GlobalQueue.get_allocator());
-
-	// don't use push_back so we can skip any validity checks when iterating 
-	// through LocalQueues in the main proc loop.
-	std::lock_guard<std::mutex> Lock(LocalQueuesMutex);
 	for (size_t i = 0; i < LocalQueues.size(); i++)
-	{
-		if (!LocalQueues[i])
-		{
-			WorkerIDs[i] = std::this_thread::get_id();
-			LocalQueues[i] = pNewQueue;
-			pLocalQueue = pNewQueue;
-			break;
-		}
-	}
-
-	WorkingMutex.lock_shared();
-}
-
-template<typename Alloc>
-void threadpool<Alloc>::end()
-{
-	WorkingMutex.unlock_shared(); // release shared lock to indicate out of work
-	WorkingMutex.lock(); // wait for all others to get out of work
-	WorkingMutex.unlock(); // that's it - just needed to ensure no work stealing will occur during teardown
-
-	// null pointer immediately so its validity can be determined more easily in
-	// the main proc loop.
-
-	LocalQueuesMutex.lock();
-	auto p = pLocalQueue;
-	pLocalQueue = nullptr;
-
-	for (auto q = std::begin(LocalQueues); q != std::end(LocalQueues); ++q)
-	{
-		if (*q == p)
-		{
-			*q = nullptr;
-			break;
-		}
-	}
-	LocalQueuesMutex.unlock();
-	delete p;
-	end_thread();
+		LocalQueues[i] = std::move(std::unique_ptr<queue_t>(new queue_t(_Alloc)));
+	construct_workers(std::bind(&threadpool::worker_proc, this), _NumWorkers);
 }
 
 template<typename Alloc>
@@ -195,9 +142,14 @@ void threadpool<Alloc>::dispatch(const std::function<void()>& _Task)
 template<typename Alloc>
 void threadpool<Alloc>::worker_proc()
 {
-	begin();
+	// assign pLocalQueue as last step before work() so main loop 
+	// doesn't need to check for a separate initialized state.
+	begin_thread("threadpool Worker");
+	int i = LocalQueueIndex++;
+	WorkerIDs[i] = std::this_thread::get_id();
+	pLocalQueue = LocalQueues[i].get();
 	work();
-	end();
+	end_thread();
 }
 
 template<typename Alloc>
@@ -261,7 +213,7 @@ void threadpool<Alloc>::work()
 				// would skip actually running the task. Leave this for loop as-is.
 				for (auto q = std::begin(LocalQueues); q != std::end(LocalQueues); ++q)
 				{ 
-					if (*q && *q != pLocalQueue && (*q)->try_steal_for(task, std::chrono::milliseconds(200)))
+					if (q->get() != pLocalQueue && q->get()->try_steal_for(task, std::chrono::milliseconds(200)))
 					{
 						StoleTask = true;
 						break;
@@ -286,7 +238,7 @@ void threadpool<Alloc>::patch_local_queue()
 	{
 		if (WorkerIDs[i] == std::this_thread::get_id())
 		{
-			pLocalQueue = LocalQueues[i];
+			pLocalQueue = LocalQueues[i].get();
 			return;
 		}
 	}
