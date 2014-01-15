@@ -66,23 +66,6 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 
 	lock_t Lock(Mutex);
 
-	// There is a bug in VS2012 where a static alloc in mutex bootstrap isn't marked
-	// as a CRT alloc, so it flags as a leak when it isn't. Blacklist that now...
-	oFOR(allocations_t::value_type& pair, Allocations)
-	{
-		entry& e = pair.second;
-		if (e.tracked && (!_CurrentContextOnly || e.context == CurrentContext))
-		{
-			for (size_t i = 0; i < e.num_stack_entries; i++)
-			{
-				bool IsStdBind = false;
-				Info.format(buf, buf.capacity(), e.stack[i], "  ", &IsStdBind);
-				if (strstr(buf, "Mtx_init"))
-					e.tracked = false;
-			}
-		}
-	}
-
 	size_t nLeaks = 0;
 	bool headerPrinted = false;
 	size_t totalLeakBytes = 0;
@@ -91,6 +74,10 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 		const entry& e = pair.second;
 		if (e.tracked && (!_CurrentContextOnly || e.context == CurrentContext))
 		{
+			// known MS leak - alloc not properly marked as CRT
+			if (CheckedNumLeaks == 1 && e.size == 72)
+				continue;
+
 			if (!headerPrinted)
 			{
 				mstring Header;
