@@ -26,7 +26,6 @@
 #ifndef oManipulatorBase_h
 #define oManipulatorBase_h
 
-#include <oStd/for.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oManipulator.h>
 #include <oCompute/linear_algebra.h>
@@ -75,7 +74,7 @@ protected:
 	bool Project(std::vector<float4> &_vertices)
 	{
 		bool retval = false;
-		oFOR(float4 &_temp,_vertices)
+		for (float4 &_temp : _vertices)
 		{
 			if(Project(_temp))
 				retval = true;

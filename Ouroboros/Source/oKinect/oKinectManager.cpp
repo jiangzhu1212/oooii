@@ -60,7 +60,7 @@ void oKinectManager::Register(threadsafe oKinect* _pKinect)
 {
 	oKINECT_DESC kd;
 	_pKinect->GetDesc(&kd);
-	lock_guard<mutex> lock(KinectsMutex);
+	lock_t lock(KinectsMutex);
 	oASSERT(find(Kinects, _pKinect) == std::end(Kinects), "");
 	Kinects.push_back(_pKinect);
 }
@@ -69,7 +69,7 @@ void oKinectManager::Unregister(threadsafe oKinect* _pKinect)
 {
 	oKINECT_DESC kd;
 	_pKinect->GetDesc(&kd);
-	lock_guard<mutex> lock(KinectsMutex);
+	lock_t lock(KinectsMutex);
 	find_and_erase(Kinects, _pKinect);
 }
 
@@ -95,7 +95,7 @@ void oKinectManager::OnStatus(ouro::input::status _Status, const char* _Instance
 	intrusive_ptr<threadsafe oKinect> StatusChanger;
 	oKINECT_DESC kd;
 	{
-		lock_guard<mutex> lock(KinectsMutex);
+		lock_t lock(KinectsMutex);
 		for (auto it = std::begin(Kinects); it != std::end(Kinects); ++it)
 		{
 			(*it)->GetDesc(&kd);

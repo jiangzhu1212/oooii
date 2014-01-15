@@ -26,7 +26,6 @@
 #include <oPlatform/oSingleton.h>
 
 #include <oBase/algorithm.h>
-#include <oStd/for.h>
 #include <oBasis/oLockThis.h>
 #include <oBasis/oRefCount.h>
 #include <mutex>
@@ -109,7 +108,7 @@ bool oStreamContext::QueryInterface(const oGUID& _InterfaceID, threadsafe void**
 	else
 	{
 		auto pThis = oLockSharedThis(SchemeHandlersMutex);
-		oFOR(auto& sh, pThis->SchemeHandlers)
+		for (auto& sh : pThis->SchemeHandlers)
 		{
 			if (sh->QueryInterface(_InterfaceID, _ppInterface))
 				break;
@@ -145,7 +144,7 @@ char* oStreamContext::GetURIBaseSearchPath(char* _StrDestination, size_t _Sizeof
 	bool once = false;
 	*_StrDestination = 0;
 	auto pThis = oLockSharedThis(URIBasesMutex);
-	oFOR(auto& p, pThis->URIBases)
+	for (auto& p : pThis->URIBases)
 	{
 		sncatf(_StrDestination, _SizeofStrDestination, "%s%s", once ? ";" : "");
 		once = true;
@@ -160,7 +159,7 @@ bool oStreamContext::RegisterSchemeHandler(threadsafe oSchemeHandler* _pSchemeHa
 
 	// First check that we're the one and only scheme handler for a scheme and 
 	// that our sort order number is also unique
-	oFOR(auto& sh, pThis->SchemeHandlers)
+	for (auto& sh : pThis->SchemeHandlers)
 	{
 		if (!_stricmp(sh->GetScheme(), _pSchemeHandler->GetScheme()))
 			return oErrorSetLast(std::errc::operation_in_progress, "There is already a scheme handler for scheme %s", sh->GetScheme());
@@ -207,7 +206,7 @@ bool oStreamContext::FindSchemeHandler(const char* _Scheme, threadsafe oSchemeHa
 
 threadsafe oSchemeHandler* oStreamContext::GetSchemeHandler(const char* _Scheme)
 {
-	oFOR(auto& sh, SchemeHandlers)
+	for (auto& sh : SchemeHandlers)
 		if (!_stricmp(_Scheme, sh->GetScheme()))
 			return sh;
 	return nullptr;
@@ -254,7 +253,7 @@ bool oStreamContext::VisitURIReference(const char* _URIReference, const std::fun
 	if (oErrorGetLast() == std::errc::not_supported)
 	{
 		auto pThis2 = oLockThis(URIBasesMutex);
-		oFOR(auto& base, pThis->URIBases)
+		for (auto& base : pThis->URIBases)
 		{
 			if (0 > snprintf(URI, "%s/%s", base.c_str(), _URIReference))
 				oASSERT(false, "Error in snprintf (URI too long?)");

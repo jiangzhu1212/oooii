@@ -43,7 +43,7 @@ void oStd::this_thread::yield()
 	#endif
 }
 
-void oStd::this_thread::__sleep_for(unsigned int _Milliseconds)
+void oStd::detail::thread_context::sleep_for(unsigned int _Milliseconds)
 {
 	::Sleep(_Milliseconds);
 }
@@ -70,7 +70,7 @@ static void __cdecl ostd_thread_proc(void* lpdwThreadParam)
 	_endthread();
 }
 
-void oStd::thread::initialize(const oCALLABLE& _ThreadProc)
+void oStd::thread::initialize(const std::function<void()>& _ThreadProc)
 {
 	Context = std::unique_ptr<oStd::detail::thread_context>(new (_malloc_dbg(sizeof(oStd::detail::thread_context), _CRT_BLOCK, __FILE__, __LINE__)) oStd::detail::thread_context());
 	Context->Callable = _ThreadProc;

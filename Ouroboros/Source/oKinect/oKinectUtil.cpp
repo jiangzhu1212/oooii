@@ -288,7 +288,7 @@ int oKinectCalcScreenSpacePositions(
 void oKinectCalcBoneSpacePositions(input::skeleton_bone _OriginBone, input::tracking_skeleton& _Skeleton)
 {
 	const float3 Offset = _Skeleton.positions[_OriginBone].xyz();
-	oFOR(auto& P, _Skeleton.positions)
+	for (auto& P : _Skeleton.positions)
 	{
 		float3 NewPos = P.xyz() - Offset;
 		P.x = NewPos.x;

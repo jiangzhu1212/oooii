@@ -200,14 +200,14 @@ void context::collect_garbage()
 	std::vector<void*> frees;
 	frees.reserve(Pointers.size());
 
-	oFOR(auto& pair, Pointers)
+	for (auto& pair : Pointers)
 		if (pair.second.tracking == process_heap::garbage_collected)
 			frees.push_back(pair.second.pointer);
 
 	// in LIFO order
 	std::sort(std::begin(frees), std::end(frees));
 
-	oFOR(void* p, frees)
+	for (void* p : frees)
 		deallocate(p);
 }
 
@@ -279,7 +279,7 @@ void context::exit_thread()
 				allocs.push_back(it->second.pointer);
 	}
 
-	oFOR(void* p, allocs)
+	for (void* p : allocs)
 		context::deallocate(p);
 }
 

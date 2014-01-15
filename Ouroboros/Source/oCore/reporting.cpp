@@ -32,7 +32,6 @@
 #include <oCore/process_heap.h>
 #include <oCore/system.h>
 #include <oCore/windows/win_exception_handler.h>
-#include <oStd/for.h>
 #include <mutex>
 
 #include <oGUI/msgbox.h>
@@ -299,7 +298,7 @@ assert_action::value context::vformatf(const assert_context& _Assertion
 	{
 		LOCK();
 
-		oFOR(auto& e, Emitters)
+		for (auto& e : Emitters)
 			if (e) e(_Assertion, msg);
 
 		if (Prompter)

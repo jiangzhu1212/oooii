@@ -127,7 +127,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 		std::vector<oGeometry::CONST_MAPPED> ExtraGeoMapped;
 		ExtraGeos.resize(_NumAdditionalTextureSets);
 		ExtraGeoMapped.resize(_NumAdditionalTextureSets);
-		finally OSEGeoUnmap([&] { oFOR(auto geo, ExtraGeos) geo->UnmapConst(); });
+		finally OSEGeoUnmap([&] { for (auto geo : ExtraGeos) geo->UnmapConst(); });
 
 		for (int i = 0; i < _NumAdditionalTextureSets; i++)
 		{

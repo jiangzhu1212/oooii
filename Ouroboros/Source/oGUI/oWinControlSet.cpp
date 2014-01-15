@@ -61,7 +61,7 @@ bool oWinControlSet::Initialize(HWND _hParent, const int2& _ParentClientSize, co
 
 void oWinControlSet::Deinitialize()
 {
-	oFOR(HWND hWnd, Controls)
+	for (HWND hWnd : Controls)
 		if (IsWindow(hWnd))
 			DestroyWindow(hWnd);
 

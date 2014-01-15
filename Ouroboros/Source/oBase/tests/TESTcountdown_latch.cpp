@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBase/countdown_latch.h>
 #include <oBase/finally.h>
-#include <oStd/for.h>
 #include <oStd/future.h>
 #include <oBase/throw.h>
 #include <thread>
@@ -62,7 +61,7 @@ static bool test(int _Count)
 
 	latch.wait();
 
-	oFOR(ouro::future<void>& f, Futures)
+	for (ouro::future<void>& f : Futures)
 		f.wait();
 
 	return count == latchCount;

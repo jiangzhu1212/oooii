@@ -1622,7 +1622,7 @@ protected:
 
 oD3DInclude::~oD3DInclude()
 {
-	oFOR(auto& pair, Cache)
+	for (auto& pair : Cache)
 		free((void*)pair.second.pData);
 }
 
@@ -1650,7 +1650,7 @@ HRESULT oD3DInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOI
 		Path = pFileName;
 	else
 	{
-		oFOR(const char* p, HeaderSearchPaths)
+		for (const char* p : HeaderSearchPaths)
 		{
 			snprintf(Path, "%s/%s", p, pFileName);
 			exists = oStreamExists(Path);

@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oD3D11Device.h"
 #include "oD3D11CommandList.h"
-#include <oStd/for.h>
 #include <oCore/windows/win_util.h>
 #include <oGUI/Windows/oWinWindowing.h>
 
@@ -312,7 +311,7 @@ bool oD3D11Device::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _
 
 	else if (_InterfaceID == (const oGUID&)__uuidof(IDXGISwapChain))
 	{
-		oStd::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(SwapChainMutex));
+		ouro::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(SwapChainMutex));
 		SwapChain->AddRef();
 		*_ppInterface = SwapChain;
 	}
@@ -467,7 +466,7 @@ void oD3D11Device::DrawCommandLists() threadsafe
 
 	std::lock_guard<shared_mutex> lock2(thread_cast<shared_mutex&>(CommandListsBeginEndMutex));
 
-	oFOR(oGPUCommandList* pGPUCommandList, pThis->CommandLists)
+	for (oGPUCommandList* pGPUCommandList : pThis->CommandLists)
 	{
 		oD3D11CommandList* c = static_cast<oD3D11CommandList*>(pGPUCommandList);
 		if (c->CommandList)
@@ -480,7 +479,7 @@ void oD3D11Device::DrawCommandLists() threadsafe
 
 void oD3D11Device::RTReleaseSwapChain() threadsafe
 {
-	oStd::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(SwapChainMutex));
+	ouro::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(SwapChainMutex));
 	SwapChain = nullptr;
 }
 
@@ -553,7 +552,7 @@ bool oD3D11Device::IsFullscreenExclusive() const
 
 bool oD3D11Device::SetFullscreenExclusive(bool _Fullscreen)
 {
-	oStd::lock_guard<shared_mutex> lock(SwapChainMutex);
+	ouro::lock_guard<shared_mutex> lock(SwapChainMutex);
 	if (!SwapChain)
 		return oErrorSetLast(std::errc::protocol_error, "no primary render target has been created");
 
@@ -576,7 +575,7 @@ bool oD3D11Device::SetFullscreenExclusive(bool _Fullscreen)
 
 bool oD3D11Device::Present(int _SyncInterval)
 {
-	oStd::lock_guard<shared_mutex> lock(SwapChainMutex);
+	ouro::lock_guard<shared_mutex> lock(SwapChainMutex);
 
 	if (!SwapChain)
 		return oErrorSetLast(std::errc::operation_not_permitted, "Present() must only be called on the primary render target");

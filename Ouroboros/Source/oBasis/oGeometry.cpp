@@ -26,7 +26,6 @@
 #include <oBase/algorithm.h>
 #include <oBase/invalid.h>
 #include <oBasis/oError.h>
-#include <oStd/for.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMeshUtil.h>
 #include <oBasis/oOBJ.h>
@@ -1167,7 +1166,7 @@ static void tcs(std::vector<float3>& tc, const std::vector<float3>& positions, b
 	tc.clear();
 	tc.reserve(positions.size());
 
-	oFOR(const float3& p, positions)
+	for (const float3& p : positions)
 	{
 		float phi = acosf(p.z);
 		float v = 1.0f - (phi / oPIf);
@@ -1459,7 +1458,7 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 			pGeometry->Normals[i] = normalize(pGeometry->Positions[i]);
 	}
 
-	oFOR(float3& v, pGeometry->Positions)
+	for (float3& v : pGeometry->Positions)
 		v = (normalize(v) * _Desc.Bounds.radius()) + _Desc.Bounds.xyz();
 
 	pGeometry->Finalize(_Layout, _Desc.Color);

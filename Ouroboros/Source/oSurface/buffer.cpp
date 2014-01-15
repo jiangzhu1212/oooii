@@ -26,7 +26,6 @@
 #include <oSurface/convert.h>
 #include <oBase/memory.h>
 #include <oBase/throw.h>
-#include <oStd/shared_mutex.h>
 #include <mutex>
 
 namespace ouro {

@@ -119,7 +119,7 @@ public:
 		while (1)
 		{
 			int count = 0;
-			oFOR(auto& w, KinectWindows)
+			for (auto& w : KinectWindows)
 			{
 				if (w.Window && w.Running)
 				{
@@ -203,7 +203,7 @@ private:
 	void BroadcastActions(const input::action& _Action)
 	{
 		// pass through to oWindows.
-		oFOR(auto& w, KinectWindows)
+		for (auto& w : KinectWindows)
 			if (w.Window)
 			w.Window->trigger(_Action);
 	}
@@ -285,7 +285,7 @@ oKinectTestApp::oKinectTestApp()
 			kd.Index++;
 		}
 
-		oFOR(auto& w, KinectWindows)
+		for (auto& w : KinectWindows)
 			if (w.Window)
 				w.Window->show();
 	}
@@ -310,7 +310,7 @@ oKinectTestApp::oKinectTestApp()
 	}
 
 	{
-		oFOR(auto& w, KinectWindows)
+		for (auto& w : KinectWindows)
 		{
 			oVERIFY(oInputMapperCreate(&w.InputMapper));
 			w.InputMapper->HookActions(std::bind(&oKinectTestApp::BroadcastActions, this, std::placeholders::_1));
@@ -556,7 +556,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 					#endif
 					, &InputSet))
 				{
-					oFOR(auto& w, KinectWindows)
+					for (auto& w : KinectWindows)
 						w.InputMapper->SetInputSet(InputSet);
 					oTRACE("%s reloaded successfully.", _ChangedURI.c_str());
 				}

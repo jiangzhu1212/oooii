@@ -33,7 +33,6 @@
 
 #include <oConcurrency/oConcurrency.h>
 #include <oBase/backoff.h>
-#include <oStd/for.h>
 #include <condition_variable>
 #include <deque>
 #include <exception>
@@ -99,7 +98,7 @@ inline void basic_threadpool_base<Alloc>::construct_workers(const task_type& _Do
 {
 	NumWorking = calc_num_workers(_NumWorkers);
 	Workers.resize(NumWorking);
-	oFOR(auto& w, Workers)
+	for(auto& w : Workers)
 		w = std::move(std::thread(_DoWork));
 	flush(); // wait until all have settled and thus ensure all have initialized
 }
@@ -145,7 +144,7 @@ inline void basic_threadpool_base<Alloc>::join()
 	Running = false;
 	WorkAvailable.notify_all();
 	Lock.unlock();
-	oFOR(auto& w, Workers)
+	for (auto& w : Workers)
 		w.join();
 }
 

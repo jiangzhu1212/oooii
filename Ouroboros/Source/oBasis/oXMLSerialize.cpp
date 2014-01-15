@@ -219,7 +219,7 @@ bool oXMLReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _
 	{
 		xxlstring ErrorString;
 		snprintf(ErrorString, "Error parsing the following type(s):");
-		oFOR(sstring& item, FromStringFailed)
+		for (sstring& item : FromStringFailed)
 		{
 			sncatf(ErrorString, " '%s'", item.c_str());
 		}

@@ -45,8 +45,8 @@
 	#define oCONCURRENT_WORKLIST_LOCK_TYPE std::unique_lock
 #else
 	#include <oStd/mutex.h>
-	#define oCONCURRENT_WORKLIST_MUTEX_TYPE oStd::timed_mutex
-	#define oCONCURRENT_WORKLIST_LOCK_TYPE oStd::unique_lock
+	#define oCONCURRENT_WORKLIST_MUTEX_TYPE ouro::timed_mutex
+	#define oCONCURRENT_WORKLIST_LOCK_TYPE ouro::unique_lock
 #endif
 
 namespace oConcurrency {
@@ -71,7 +71,7 @@ public:
 	typedef value_type* pointer;
 	typedef const value_type* const_pointer;
 
-	// This implementation auto-grows capacity in a manner if the 
+	// This implementation auto-grows capacity in a threadsafe manner if the 
 	// initial capacity is inadequate. Capacity must always be a power of two.
 	concurrent_worklist(const allocator_type& _Allocator = allocator_type());
 	~concurrent_worklist();

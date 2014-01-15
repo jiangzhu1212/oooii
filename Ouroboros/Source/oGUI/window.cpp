@@ -178,7 +178,7 @@ public:
 	void Visit(const param_type& _Param)
 	{
 		lock_t lock(HooksMutex);
-		oFOR(hook_type& hook, Hooks)
+		for (hook_type& hook : Hooks)
 			if (hook)
 				hook(_Param);
 	}

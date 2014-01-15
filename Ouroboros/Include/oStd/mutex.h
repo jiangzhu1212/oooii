@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Approximation of the upcoming C++11 std::mutex interface.
+// Approximation of the upcoming C++1x std::mutex objects.
 
 #pragma once
 #ifndef oStd_mutex_h
@@ -36,7 +36,7 @@
 // To keep the main classes neat, collect all the platform-specific forward
 // declaration here. This is done in this vague manner to avoid including 
 // platform headers in this file.
-namespace oStd {
+namespace ouro {
 
 	class mutex
 	{
@@ -51,7 +51,7 @@ namespace oStd {
 		typedef void* native_handle_type;
 		native_handle_type native_handle();
 
-	private:
+	protected:
 		#if defined(_WIN32) || defined(_WIN64)
 			void* Footprint;
 		#else
@@ -60,8 +60,24 @@ namespace oStd {
 		#ifdef _DEBUG
 			std::thread::id ThreadID;
 		#endif
+	
+	private:
 		mutex(const mutex&); /* = delete */
 		mutex& operator=(const mutex&); /* = delete */
+	};
+
+	class shared_mutex : public mutex
+	{
+	public:
+		shared_mutex() {}
+
+		void lock_shared();
+		bool try_lock_shared();
+		void unlock_shared();
+
+	private:
+		shared_mutex(const shared_mutex&); /* = delete */
+		shared_mutex& operator=(const shared_mutex&); /* = delete */
 	};
 
 	class recursive_mutex
@@ -99,7 +115,7 @@ namespace oStd {
 		template<typename Rep, typename Period>
 		bool try_lock_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
-			std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
+			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
 			Rep count = ms.count();
 			if (Rep(count) != count)
 				throw std::range_error("_RelativeTime is too large");
@@ -109,8 +125,7 @@ namespace oStd {
 		template<typename Clock, typename Duration>
 		bool try_lock_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
 		{
-			std::chrono::high_resolution_clock::duration duration = 
-				time_point_cast<std::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - 
+			auto duration = time_point_cast<std::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - 
 				std::chrono::high_resolution_clock::now();
 			return try_lock_until(duration);
 		}
@@ -134,15 +149,29 @@ namespace oStd {
 
 	template <class Mutex> class lock_guard
 	{
-		Mutex& m;
-		lock_guard(const lock_guard&); /* = delete */
-		lock_guard& operator=(const lock_guard&); /* = delete */
 	public:
 		typedef Mutex mutex_type;
 
 		explicit lock_guard(mutex_type& _Mutex) : m(_Mutex) { m.lock(); }
 		lock_guard(mutex_type& _Mutex, adopt_lock_t) : m(_Mutex) {}
 		~lock_guard() { m.unlock(); }
+	private:
+		Mutex& m;
+		lock_guard(const lock_guard&); /* = delete */
+		lock_guard& operator=(const lock_guard&); /* = delete */
+	};
+
+	template<class Mutex> class shared_lock
+	{
+	public:
+		typedef Mutex mutex_type;
+		explicit shared_lock(mutex_type& _Mutex) : m(_Mutex) { m.lock_shared(); }
+		shared_lock(mutex_type& _Mutex, adopt_lock_t) : m(_Mutex) {}
+		~shared_lock() { m.unlock_shared(); }
+	private:
+		Mutex& m;
+		shared_lock(const shared_lock&); /* = delete */
+		shared_lock& operator=(const shared_lock&); /* = delete */
 	};
 
 #define assert_not_owner() \
@@ -151,8 +180,6 @@ namespace oStd {
 
 	template <class Mutex> class unique_lock
 	{
-		unique_lock(unique_lock const&); /* = delete */
-		unique_lock& operator=(unique_lock const&); /* = delete */
 	public:
 		typedef Mutex mutex_type;
 
@@ -269,6 +296,9 @@ namespace oStd {
 	private:
 		mutex_type* pMutex;
 		bool OwnsLock;
+
+		unique_lock(unique_lock const&); /* = delete */
+		unique_lock& operator=(unique_lock const&); /* = delete */
 	};
 
 	class once_flag
@@ -291,6 +321,6 @@ namespace oStd {
 		#define oDEFINE_CALLABLE_call_once(_nArgs) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE,_nArgs) void call_once(once_flag& _Flag, oCALLABLE_CONCAT(oCALLABLE_PARAMS,_nArgs)) { call_once(_Flag, oCALLABLE_CONCAT(oCALLABLE_BIND,_nArgs)); }
 		oCALLABLE_PROPAGATE(oDEFINE_CALLABLE_call_once);
 	#endif
-} // namespace oStd
+} // namespace ouro
 
 #endif

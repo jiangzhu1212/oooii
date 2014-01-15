@@ -184,19 +184,19 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	~oIOCP_Singleton()
 	{
-		oFOR(thread& Thread, WorkerThreads)
+		for (thread& Thread : WorkerThreads)
 		{
 			// Post a shutdown message for each worker to unblock and disable it.
 			PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, nullptr);
 		}
 
-		oFOR(thread& Thread, WorkerThreads)
+		for (thread& Thread : WorkerThreads)
 			Thread.join();
 
 		if (INVALID_HANDLE_VALUE != hIOCP)
 			CloseHandle(hIOCP);
 
-		oFOR(oIOCPOrphan& orphan, OrphanedContexts)
+		for (oIOCPOrphan& orphan : OrphanedContexts)
 		{
 			delete orphan.pContext;
 		}

@@ -87,7 +87,6 @@
 		#define oHAS_DXSDK 1
 	#elif _MSC_VER < 1800
 		#define oHAS_MEMBER_DELETE 1
-		#define oHAS_NOEXCEPT 1
 		#define oHAS_MAKE_EXCEPTION_PTR 1
 	#else
 		#define oHAS_MEMBER_DELETE 1
@@ -104,8 +103,10 @@
 	#define nullptr NULL
 #endif
 
-#ifndef oHAS_NOEXCEPT
-	#define noexcept
+#ifdef oHAS_NOEXCEPT
+	#define oNOEXCEPT noexcept
+#else
+	#define oNOEXCEPT
 #endif
 
 #ifndef oASSUME

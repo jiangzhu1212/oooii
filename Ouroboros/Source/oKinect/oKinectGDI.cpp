@@ -202,7 +202,7 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 				{
 					oKinectCalcScreenSpacePositions(Skeleton, oWinRectPosition(_rTarget), oWinRectSize(_rTarget), DepthDimensions, ScreenSpaceBonePositions);
 					// clip positions so that a thick line doesn't draw outside the bounds.
-					oFOR(auto& p, ScreenSpaceBonePositions)
+					for (auto& p : ScreenSpaceBonePositions)
 						p = oWinClip(rInset, p);
 				}
 

@@ -206,7 +206,7 @@ oKinectImpl::oKinectImpl(const oKINECT_DESC& _Desc, const shared_ptr<window>& _W
 void oKinectImpl::Shutdown()
 {
 	Running = false;
-	unique_lock<mutex> Lock(PitchMutex);
+	lock_unique_t Lock(PitchMutex);
 	PitchCV.notify_all();
 	Lock.unlock();
 
@@ -294,7 +294,7 @@ void oKinectImpl::SetPitch(int _Degrees) threadsafe
 {
 	if (_Degrees != oDEFAULT)
 	{
-		lock_guard<mutex> lock(thread_cast<mutex&>(PitchMutex));
+		lock_t lock(thread_cast<mutex_t&>(PitchMutex));
 		NewPitch = _Degrees;
 		thread_cast<condition_variable&>(PitchCV).notify_all();
 	}
@@ -310,7 +310,7 @@ void oKinectImpl::OnPitch()
 
 	while (Running)
 	{
-		unique_lock<mutex> lock(PitchMutex);
+		lock_unique_t lock(PitchMutex);
 		while (Running && (NewPitch < NUI_CAMERA_ELEVATION_MINIMUM || NewPitch > NUI_CAMERA_ELEVATION_MAXIMUM))
 			PitchCV.wait(lock);
 

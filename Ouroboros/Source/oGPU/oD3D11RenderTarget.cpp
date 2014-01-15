@@ -139,7 +139,7 @@ void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
 
 void oD3D11RenderTarget::SetClearDesc(const gpu::clear_info& _ClearInfo) threadsafe
 {
-	oStd::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(DescMutex));
+	ouro::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(DescMutex));
 	oD3D11RenderTarget* pThis = thread_cast<oD3D11RenderTarget*>(this);
 
 	pThis->Desc.clear = _ClearInfo;
@@ -179,7 +179,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 
 void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 {
-	oStd::lock_guard<shared_mutex> lock(DescMutex);
+	ouro::lock_guard<shared_mutex> lock(DescMutex);
 
 	int3 New = _NewDimensions;
 	if (SwapChain)

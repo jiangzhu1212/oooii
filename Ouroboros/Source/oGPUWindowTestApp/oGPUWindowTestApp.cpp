@@ -452,10 +452,10 @@ void oGPUWindowTestApp::ToggleFullscreenCooperative(window* _pWindow)
 
 bool oGPUWindowTestApp::CreateMenus(const window::create_event& _CreateEvent)
 {
-	oFOR(auto& m, Menus)
+	for (auto& m : Menus)
 		m = oGUIMenuCreate();
 
-	oFOR(const auto& h, sMenuHier)
+	for (const auto& h : sMenuHier)
 	{
 		oGUIMenuAppendSubmenu(
 			h.Parent == oWMENU_TOPLEVEL ? _CreateEvent.menu : Menus[h.Parent]

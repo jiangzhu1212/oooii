@@ -48,7 +48,9 @@ struct oKinectManager : oProcessSingleton<oKinectManager>
 
 private:
 
-	std::mutex KinectsMutex;
+	typedef std::mutex mutex_t;
+	typedef std::lock_guard<mutex_t> lock_t;
+	mutex_t KinectsMutex;
 	ouro::fixed_vector<threadsafe oKinect*, 3> Kinects;
 
 	UINT WMInputDeviceChange;
@@ -60,7 +62,6 @@ private:
 	void OnStatus(ouro::input::status _Status, const char* _InstanceName, const char* _UniqueDeviceName);
 	void NotifyStatus(const char* _InstanceName, ouro::input::status _Status);
 	static void CALLBACK StatusProc(HRESULT _hrStatus, const OLECHAR* _InstanceName, const OLECHAR* _UniqueDeviceName, void* _pThis);
-
 };
 
 #endif // oHAS_KINECT_SDK

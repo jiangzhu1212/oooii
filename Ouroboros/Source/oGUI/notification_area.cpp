@@ -26,7 +26,6 @@
 #include <oGUI/windows/oWinWindowing.h>
 #include <oBase/assert.h>
 #include <oBase/throw.h>
-#include <oStd/for.h>
 
 #include <oCore/reporting.h>
 #include <oCore/windows/win_error.h>
@@ -105,7 +104,7 @@ public:
 	void unregister_thread(const thread::id& _DeferredHideIconThreadID)
 	{
 		lock_guard<shared_mutex> lock(Mutex);
-		oFOR(auto& t, DeferredHideIconThreads)
+		for (auto& t : DeferredHideIconThreads)
 		{
 			if (_DeferredHideIconThreadID == t.get_id())
 			{
@@ -129,7 +128,7 @@ private:
 			AllowInteraction = false;
 		}
 
-		oFOR(auto& t, DeferredHideIconThreads)
+		for (auto& t : DeferredHideIconThreads)
 			t.join();
 
 		if (!Removes.empty())

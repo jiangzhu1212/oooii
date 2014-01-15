@@ -155,7 +155,7 @@ static bool oTestTerminateInterferingProcesses(bool _PromptUser = true)
 TryAgain:
 		if (r == msg_result::yes && retries)
 		{
-			oFOR(auto PID, ActiveProcesses)
+			for (auto PID : ActiveProcesses)
 			{
 				try { process::terminate(PID, 0x0D1EC0DE); }
 				catch (std::system_error& e)
@@ -841,7 +841,7 @@ void oTestManager_Impl::PrintDesc()
 
 void oTestManager_Impl::RegisterSpecialModeTests()
 {
-	oFOR(auto pRTB, Tests)
+	for (auto pRTB : Tests)
 	{
 		if (!pRTB->IsSpecialTest())
 			continue;
@@ -854,7 +854,7 @@ void oTestManager_Impl::RegisterSpecialModeTests()
 
 void oTestManager_Impl::RegisterZombies()
 {
-	oFOR(auto pRTB, Tests)
+	for(auto pRTB : Tests)
 	{
 		const char* TestPotentialZombies = pRTB->GetPotentialZombieProcesses();
 		if (TestPotentialZombies && *TestPotentialZombies)
@@ -920,7 +920,7 @@ bool oTestManager_Impl::KillZombies(const char* _Name)
 
 bool oTestManager_Impl::KillZombies()
 {
-	oFOR(const auto& z, PotentialZombies)
+	for (const auto& z : PotentialZombies)
 		if (!KillZombies(z.c_str()))
 			return false;
 	return true;
@@ -979,7 +979,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 size_t oTestManager_Impl::CalculateNumTests(const oTestManager::DESC& _Desc, threadsafe oFilterChain* _pFilterChain)
 {
 	size_t nTests = 0;
-	oFOR(auto pRTB, Tests)
+	for (auto pRTB : Tests)
 	{
 		if (pRTB && !pRTB->IsSpecialTest())
 		{
@@ -1168,7 +1168,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 		}
 
 		double totalTestStartTime = timer::now();
-		oFOR(auto pRTB, Tests)
+		for (auto pRTB : Tests)
 		{
 			if (pRTB && !pRTB->IsSpecialTest())
 			{

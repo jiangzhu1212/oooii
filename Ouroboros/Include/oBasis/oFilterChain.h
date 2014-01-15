@@ -35,7 +35,6 @@
 
 #include <oBase/algorithm.h>
 #include <oBasis/oError.h>
-#include <oStd/for.h>
 #include <oBasis/oInitOnce.h>
 #include <oConcurrency/thread_safe.h>
 #include <vector>
@@ -74,7 +73,7 @@ public:
 		// filters will reduce.
 		bool passes = (*Filters)[0].first == EXCLUDE1 || (*Filters)[0].first == EXCLUDE2;
 		
-		oFOR(const auto& pair, *Filters)
+		for (const auto& pair : *Filters)
 		{
 			const char* s = _Symbol1;
 			if (pair.first == INCLUDE2 || pair.first == EXCLUDE2) s = _Symbol2;

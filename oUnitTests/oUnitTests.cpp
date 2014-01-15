@@ -140,7 +140,7 @@ static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathPar
 	for (size_t i = 0; i < _NumPathParts; i++)
 	{
 		snprintf(LibWithSeps, "/%s/", _pPathParts[i]);
-		oFOR(const auto& f, ModifiedFiles)
+		for (const auto& f : ModifiedFiles)
 		{
 			if (strstr(f.path, LibWithSeps))
 			{

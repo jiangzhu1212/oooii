@@ -190,7 +190,7 @@ namespace
 			}
 		}
 
-		oFOR(auto& _entry, LiteralChildren)
+		for (auto& _entry : LiteralChildren)
 		{
 			if(strcmp(_entry.Value, _parsedURI[_keyIndex]) == 0)
 			{
