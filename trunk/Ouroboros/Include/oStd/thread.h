@@ -29,7 +29,7 @@
 #define oStd_thread_h
 
 #include <oStd/callable.h>
-#include <oStd/chrono.h>
+#include <chrono>
 #include <functional>
 #include <memory>
 
@@ -40,7 +40,7 @@ namespace oStd {
 		struct thread_context
 		{
 			void* hThread;
-			oCALLABLE Callable;
+			std::function<void()> Callable;
 		};
 
 	} // namespace detail
@@ -87,7 +87,7 @@ namespace oStd {
 
 		std::unique_ptr<detail::thread_context> Context;
 
-		void initialize(const oCALLABLE& _ThreadProc);
+		void initialize(const std::function<void()>& _ThreadProc);
 		void move(thread& _That);
 
 		thread(const thread&)/* = delete*/;
@@ -114,9 +114,9 @@ namespace oStd {
 		void yield();
 		void __sleep_for(unsigned int _Milliseconds);
 
-		template<typename Rep, typename Period> void sleep_for(const chrono::duration<Rep, Period>& _Duration)
+		template<typename Rep, typename Period> void sleep_for(const std::chrono::duration<Rep, Period>& _Duration)
 		{
-			chrono::milliseconds s = chrono::duration_cast<chrono::milliseconds>(_Duration);
+			std::chrono::milliseconds s = std::chrono::duration_cast<std::chrono::milliseconds>(_Duration);
 			__sleep_for(static_cast<unsigned int>(s.count()));
 		}
 

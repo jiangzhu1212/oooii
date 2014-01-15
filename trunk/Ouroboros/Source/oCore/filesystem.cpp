@@ -37,6 +37,8 @@
 #include <windows.h>
 #include <Shlobj.h>
 
+using namespace std;
+
 namespace ouro {
 
 const char* as_string(const filesystem::file_type::value& _Type)
@@ -62,25 +64,23 @@ const char* as_string(const filesystem::file_type::value& _Type)
 
 } // namespace ouro
 
-using namespace oStd;
-
-#define oFSTHROW0(_ErrCode) throw filesystem_error(make_error_code(std::errc::_ErrCode))
-#define oFSTHROW01(_ErrCode, _Path1) throw filesystem_error(_Path1, make_error_code(std::errc::_ErrCode))
-#define oFSTHROW02(_ErrCode, _Path1, _Path2) throw filesystem_error(_Path1, _Path2, make_error_code(std::errc::_ErrCode))
+#define oFSTHROW0(_ErrCode) throw filesystem_error(make_error_code(errc::_ErrCode))
+#define oFSTHROW01(_ErrCode, _Path1) throw filesystem_error(_Path1, make_error_code(errc::_ErrCode))
+#define oFSTHROW02(_ErrCode, _Path1, _Path2) throw filesystem_error(_Path1, _Path2, make_error_code(errc::_ErrCode))
 
 #define oFSTHROW(_ErrCode, _Format, ...) do \
 {	lstring msg; vsnprintf(msg, _Format, # __VA_ARGS__ ); \
-	throw filesystem_error(msg, make_error_code(std::errc::_ErrCode)); \
+	throw filesystem_error(msg, make_error_code(errc::_ErrCode)); \
 } while (false)
 
 #define oFSTHROW1(_ErrCode, _Path1, _Format, ...) do \
 {	lstring msg; vsnprintf(msg, _Format, # __VA_ARGS__ ); \
-	throw filesystem_error(msg, _Path1, make_error_code(std::errc::_ErrCode)); \
+	throw filesystem_error(msg, _Path1, make_error_code(errc::_ErrCode)); \
 } while (false)
 
 #define oFSTHROW2(_ErrCode, _Path1, _Path2, _Format, ...) do \
 {	lstring msg; vsnprintf(msg, _Format, # __VA_ARGS__ ); \
-	throw filesystem_error(msg, _Path1, _Path2, make_error_code(std::errc::_ErrCode)); \
+	throw filesystem_error(msg, _Path1, _Path2, make_error_code(errc::_ErrCode)); \
 } while (false)
 
 #define oFSTHROWLAST() throw windows::error()
@@ -90,7 +90,7 @@ using namespace oStd;
 #define oFSTHROW_FOPEN(err, _Path) do \
 {	char strerr[256]; \
 	strerror_s(strerr, err); \
-	throw filesystem_error(strerr, _Path, make_error_code((std::errc::errc)err)); \
+	throw filesystem_error(strerr, _Path, make_error_code((errc::errc)err)); \
 } while (false)
 
 #define oFSTHROW_FOPEN0() do \
@@ -98,26 +98,26 @@ using namespace oStd;
 	_get_errno(&err); \
 	char strerr[256]; \
 	strerror_s(strerr, err); \
-	throw filesystem_error(strerr, make_error_code((std::errc::errc)err)); \
+	throw filesystem_error(strerr, make_error_code((errc::errc)err)); \
 } while (false)
 
 namespace ouro {
 	namespace filesystem {
 		namespace detail {
 
-class filesystem_category_impl : public std::error_category
+class filesystem_category_impl : public error_category
 {
 public:
 	const char* name() const override { return "filesystem"; }
-	std::string message(int _ErrCode) const override
+	string message(int _ErrCode) const override
 	{
-		return std::generic_category().message(_ErrCode);
+		return generic_category().message(_ErrCode);
 	}
 };
 
 		} // namespace detail
 
-const std::error_category& filesystem_category()
+const error_category& filesystem_category()
 {
 	static detail::filesystem_category_impl sSingleton;
 	return sSingleton;
@@ -567,7 +567,7 @@ space_info space(const path& _Path)
 
 // Enumerates all entries matching _WildcardPath
 void enumerate(const path& _WildcardPath
-	, const std::function<bool(const path& _FullPath
+	, const function<bool(const path& _FullPath
 		, const file_status& _Status
 		, unsigned long long _Size)>& _Enumerator)
 {
@@ -665,7 +665,7 @@ file_handle open(const path& _Path, open_option::value _OpenOption)
 void close(file_handle _hFile)
 {
 	if (!_hFile)
-		throw filesystem_error(make_error_code(std::errc::invalid_argument));
+		throw filesystem_error(make_error_code(errc::invalid_argument));
 	if (0 != fclose((FILE*)_hFile))
 		oFSTHROW_FOPEN0();
 }
@@ -768,7 +768,7 @@ void delete_buffer(char* _pBuffer)
 	delete [] _pBuffer;
 }
 
-std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, size_t* _pSize)
+shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, size_t* _pSize)
 {
 	unsigned long long FileSize = file_size(_Path);
 
@@ -776,7 +776,7 @@ std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, si
 	size_t AllocSize = as_size_t(FileSize) + (_LoadOption == load_option::text_read ? 4 : 0);
 
 	char* p = new char[AllocSize];
-	std::shared_ptr<char> buffer(p, delete_buffer);
+	shared_ptr<char> buffer(p, delete_buffer);
 
 	if (_LoadOption == load_option::text_read)
 	{

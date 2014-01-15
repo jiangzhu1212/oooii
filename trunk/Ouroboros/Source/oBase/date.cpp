@@ -388,8 +388,8 @@ template<> date date_cast<date>(const time_t& _Date)
 template<> ntp_timestamp date_cast<ntp_timestamp>(const file_time_t& _Date)
 {
 	long long usec = (long long)_Date / 10;
-	fractional_second32 fractional = duration_cast<fractional_second32>(microseconds(usec % oStd::micro::den));
-	long long s = (usec / oStd::micro::den) - kSecondsFrom1601To1900;
+	fractional_second32 fractional = duration_cast<fractional_second32>(microseconds(usec % std::micro::den));
+	long long s = (usec / std::micro::den) - kSecondsFrom1601To1900;
 	if (s < 0 || ((s & ~0u) != s))
 		oDATE_OUT_OF_RANGE(ntp_timestamp);
 	return (s << 32) | fractional.count();
@@ -399,7 +399,7 @@ template<> ntp_date date_cast<ntp_date>(const file_time_t& _Date)
 {
 	long long usec = (long long)_Date / 10;
 	ntp_date d;
-	d.DataMS = (usec / oStd::micro::den) - kSecondsFrom1601To1900;
+	d.DataMS = (usec / std::micro::den) - kSecondsFrom1601To1900;
 	d.DataLS = file_time((long long)_Date % file_time::period::den).count() * (ULLONG_MAX / file_time_ratio::den);
 	return d;
 }
