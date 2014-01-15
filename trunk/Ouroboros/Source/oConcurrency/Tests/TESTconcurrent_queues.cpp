@@ -28,7 +28,6 @@
 #include <oBase/event.h>
 #include <oBase/finally.h>
 #include <oBase/assert.h>
-#include <oStd/for.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <atomic>
@@ -443,7 +442,7 @@ static void test_stealing(const std::function<void(worklist_t& _WorkParam, std::
 
 	t.join();
 
-	oFOR(auto& th, thieves)
+	for (auto& th : thieves)
 		th.join();
 	
 	*_pWorkIsEmpty = _Work.empty();

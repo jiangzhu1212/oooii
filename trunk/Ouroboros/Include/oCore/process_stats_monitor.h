@@ -32,7 +32,7 @@
 #include <oCore/process.h>
 #include <oBase/backoff.h>
 #include <oBase/moving_average.h>
-#include <oStd/shared_mutex.h>
+#include <oStd/mutex.h>
 #include <thread>
 
 namespace ouro {

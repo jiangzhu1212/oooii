@@ -197,7 +197,7 @@ bool oJSONReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& 
 	{
 		xxlstring ErrorString;
 		snprintf(ErrorString, "Error parsing the following type(s):");
-		oFOR(sstring& item, FromStringFailed)
+		for (sstring& item : FromStringFailed)
 		{
 			sncatf(ErrorString, " '%s'", item.c_str());
 		}

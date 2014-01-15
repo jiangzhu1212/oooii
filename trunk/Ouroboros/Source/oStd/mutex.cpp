@@ -29,12 +29,29 @@
 	#define oHAS_SLIM_TRY_LOCK
 #endif
 
-static_assert(sizeof(oStd::recursive_mutex) == sizeof(CRITICAL_SECTION), "size mismatch");
+static_assert(sizeof(ouro::recursive_mutex) == sizeof(CRITICAL_SECTION), "size mismatch");
 #ifdef _DEBUG
-	static_assert(sizeof(oStd::mutex) == sizeof(SRWLOCK) + sizeof(std::thread::id), "size mismatch");
+	static_assert(sizeof(ouro::mutex) == sizeof(SRWLOCK) + sizeof(std::thread::id), "size mismatch");
 #else
-	static_assert(sizeof(oStd::mutex) == sizeof(SRWLOCK), "size mismatch");
+	static_assert(sizeof(ouro::mutex) == sizeof(SRWLOCK), "size mismatch");
 #endif
+
+#ifdef _DEBUG
+	#define ASSIGN_TID() ThreadID = std::this_thread::get_id()
+	#define ASSIGN_TID_CHECKED() do { if (Footprint && ThreadID == std::this_thread::get_id()) { throw std::logic_error("non-recursive already locked on this thread"); } ThreadID = std::this_thread::get_id(); } while(false)
+	#define CLEAR_TID()	ThreadID = std::thread::id()
+	#ifdef oHAS_SLIM_TRY_LOCK
+		#define CHECK_UNLOCKED() if (!try_lock()) throw std::logic_error("mutex locked on destruction")
+	#else
+		#define CHECK_UNLOCKED()
+	#endif
+#else
+	#define ASSIGN_TID()
+	#define ASSIGN_TID_CHECKED()
+	#define CLEAR_TID()
+	#define CHECK_UNLOCKED()
+#endif
+
 
 class std_backoff
 {
@@ -98,7 +115,7 @@ inline void std_backoff::reset()
 	SpinCount = 1;
 }
 
-namespace oStd {
+namespace ouro {
 	const adopt_lock_t adopt_lock;
 	const defer_lock_t defer_lock;
 	const try_to_lock_t try_to_lock;
@@ -110,10 +127,7 @@ mutex::mutex()
 
 mutex::~mutex()
 {
-	#if defined(oHAS_SLIM_TRY_LOCK) && defined(_DEBUG)
-		if (!try_lock())
-			throw std::logic_error("mutex locked on destruction");
-	#endif
+	CHECK_UNLOCKED();
 }
 
 mutex::native_handle_type mutex::native_handle()
@@ -123,11 +137,7 @@ mutex::native_handle_type mutex::native_handle()
 
 void mutex::lock()
 {
-	#ifdef _DEBUG
-		if (Footprint && ThreadID == std::this_thread::get_id())
-			throw std::logic_error("non-recursive already locked on this thread");
-		ThreadID = std::this_thread::get_id();
-	#endif
+	ASSIGN_TID_CHECKED();
 	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
 }
 
@@ -142,10 +152,29 @@ bool mutex::try_lock()
 
 void mutex::unlock()
 {
-	#ifdef _DEBUG
-		ThreadID = std::thread::id();
-	#endif
+	CLEAR_TID();
 	ReleaseSRWLockExclusive((PSRWLOCK)&Footprint);
+}
+
+void shared_mutex::lock_shared()
+{
+	ASSIGN_TID_CHECKED();
+	AcquireSRWLockShared((PSRWLOCK)&Footprint);
+}
+
+bool shared_mutex::try_lock_shared()
+{
+	#ifdef oHAS_SLIM_TRY_LOCK
+		return !!TryAcquireSRWLockShared((PSRWLOCK)&Footprint);
+	#else
+		return false;
+	#endif
+}
+
+void shared_mutex::unlock_shared()
+{
+	CLEAR_TID();
+	ReleaseSRWLockShared((PSRWLOCK)&Footprint);
 }
 
 recursive_mutex::recursive_mutex()
@@ -155,10 +184,7 @@ recursive_mutex::recursive_mutex()
 
 recursive_mutex::~recursive_mutex()
 {
-	#if defined(oHAS_SLIM_TRY_LOCK) && defined(_DEBUG)
-		if (!try_lock())
-			throw std::logic_error("mutex locked on destruction");
-	#endif
+	CHECK_UNLOCKED();
 	DeleteCriticalSection((LPCRITICAL_SECTION)Footprint);
 }
 

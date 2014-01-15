@@ -296,7 +296,7 @@ namespace detail {
 
 		oRefCount RefCount;
 		typedef ouro::shared_mutex mutex_t;
-		typedef lock_guard<mutex_t> lock_t;
+		typedef ouro::lock_guard<mutex_t> lock_t;
 		typedef ouro::shared_lock<mutex_t> lock_shared_t;
 		mutable mutex_t Mutex;
 	};

@@ -76,7 +76,7 @@ static void FormatMSBuildResults(const oMSBuildResults& _Results, std::string& _
 	snprintf(BuildTimeString, "<p>Build %s, taking %.2f seconds.  Here are the logs:</p>", BuildStatus.c_str(), _Results.BuildTimeSeconds);
 	_LogHTML.append(BuildTimeString);
 
-	oFOR(auto& BuildLogfile, _Results.BuildLogfiles)
+	for (auto& BuildLogfile : _Results.BuildLogfiles)
 	{
 		sstring BuildName = path(BuildLogfile).basename().c_str();
 		_LogHTML.append("<p>");
@@ -138,7 +138,7 @@ static void FormatUnitTestResults(const oUnitTestResults& results, std::string& 
 		if (results.FailedTests.size())
 			_LogHTML.append("<p>Testing failed the following tests:</p><p><table border=\"1\" cellpadding=\"2\"><tr><th>TEST NAME</th><th>STATUS</th><th>STATUS MESSAGE</th></tr>");
 
-		oFOR(auto& item, results.FailedTests)
+		for (auto& item : results.FailedTests)
 		{
 			lstring message;
 			ampersand_encode(message.c_str(), message.capacity(), item.Message.c_str());
@@ -325,7 +325,7 @@ void oAutoBuildOutputResults(const oAutoBuildEmailSettings& _EmailSettings, int 
 				else
 					snprintf(EmailSubject, "%s %s broke the build with CL %d", oBUILD_TOOL_STANDARD_SUBJECT, User, _Results.ChangeList);
 			auto EmailList = _EmailSettings.UserEmails;
-			oFOR(auto Email, EmailList)
+			for (auto Email : EmailList)
 			{
 				Mail->Send(Email, _EmailSettings.FromAddress, _EmailSettings.FromPasswordBase64, EmailSubject, (const char*)&EmailHTML[0], true, true);
 			}
@@ -352,7 +352,7 @@ void oEmailAdminAndStop(const oAutoBuildEmailSettings& _EmailSettings, const cha
 	if (Mail)
 	{
 		auto EmailList = _EmailSettings.AdminEmails;
-		oFOR(auto Email, EmailList)
+		for (auto Email : EmailList)
 		{
 			Mail->Send(Email, _EmailSettings.FromAddress, _EmailSettings.FromPasswordBase64, Subject, _pMessage, true, _HTML);
 		}

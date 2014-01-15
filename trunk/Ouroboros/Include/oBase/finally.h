@@ -41,7 +41,7 @@ class finally
 {
 public:
 	finally() {}
-	explicit finally(oCALLABLE&& _Callable) : OnScopeExit(std::move(_Callable)) {}
+	explicit finally(std::function<void()>&& _Callable) : OnScopeExit(std::move(_Callable)) {}
 
 	#ifndef oHAS_VARIADIC_TEMPLATES
 		#define oSTD_FINALLY_CTOR(_nArgs) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE, _nArgs) \
@@ -63,20 +63,20 @@ public:
 	}
 
 	// allow this to be explicitly called in client code in a way that it's not
-	// doubly code on scope exit (including if the function itself throws).
+	// doubly called on scope exit (including if the function itself throws).
 	void operator()()
 	{
-		oCALLABLE c = std::move(OnScopeExit);
-		c();
+		OnScopeExit();
+		OnScopeExit = nullptr;
 	}
 
 	operator bool() const { return !!OnScopeExit; }
 
 private:
-	oCALLABLE OnScopeExit;
+	std::function<void()> OnScopeExit;
 
-	finally(const finally&);
-	const finally& operator=(const finally&);
+	finally(const finally&); /* = delete */
+	const finally& operator=(const finally&); /* = delete */
 };
 
 } // namespace ouro

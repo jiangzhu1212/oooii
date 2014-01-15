@@ -10,7 +10,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>_NDEBUG;_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_NDEBUG;NDEBUG;_WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
     </ClCompile>
     <Link>

@@ -39,7 +39,7 @@
 #include <oConcurrency/concurrent_worklist.h>
 #include <oBase/backoff.h>
 #include <oBase/countdown_latch.h>
-#include <oStd/shared_mutex.h>
+#include <oStd/mutex.h>
 #include <stdexcept>
 #include <vector>
 

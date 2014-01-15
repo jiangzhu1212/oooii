@@ -30,7 +30,7 @@
 #include <oBase/assert.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oInitOnce.h>
-#include <oStd/shared_mutex.h>
+#include <oStd/mutex.h>
 #include <list>
 #include <thread>
 

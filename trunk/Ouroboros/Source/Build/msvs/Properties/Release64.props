@@ -10,7 +10,7 @@
   <ItemDefinitionGroup>
     <ClCompile>
       <Optimization>Full</Optimization>
-      <PreprocessorDefinitions>_NDEBUG;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_NDEBUG;NDEBUG;_WIN64;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Lib>
       <TargetMachine>MachineX64</TargetMachine>

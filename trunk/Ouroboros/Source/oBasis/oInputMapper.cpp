@@ -40,26 +40,29 @@ public:
 
 	inline int Hook(const input::action_hook& _Hook) threadsafe
 	{
-		std::lock_guard<ouro::shared_mutex> lockB(oThreadsafe(Mutex));
+		lock_t lockB(oThreadsafe(Mutex));
 		size_t index = sparse_set(oThreadsafe(Hooks), _Hook);
 		return as_int(index);
 	}
 
 	inline void Unhook(int _HookID) threadsafe
 	{
-		std::lock_guard<ouro::shared_mutex> lock(oThreadsafe(Mutex));
+		lock_t lock(oThreadsafe(Mutex));
 		ranged_set(oThreadsafe(Hooks), _HookID, nullptr);
 	}
 
 	void Call(const input::action& _Action) threadsafe
 	{
-		ouro::shared_lock<ouro::shared_mutex> lock(oThreadsafe(Mutex));
-		oFOR(const auto& h, oThreadsafe(Hooks))
+		lock_shared_t lock(oThreadsafe(Mutex));
+		for (const auto& h : oThreadsafe(Hooks))
 			h(_Action);
 	}
 
 private:
-	ouro::shared_mutex Mutex;
+	typedef ouro::shared_mutex mutex_t;
+	typedef ouro::lock_guard<mutex_t> lock_t;
+	typedef ouro::shared_lock<mutex_t> lock_shared_t;
+	mutex_t Mutex;
 	std::vector<input::action_hook> Hooks;
 };
 
@@ -75,7 +78,7 @@ public:
 	inline void Clear()
 	{
 		StateValidMask = State = 0;
-		oFOR(auto& k, Keys)
+		for (auto& k : Keys)
 			k.fill(input::none);
 	}
 
@@ -145,7 +148,7 @@ bool oInput::OnKey(input::key _Key, bool _IsDown, bool* _pInputIsDown)
 {
 	const bool WasDown = IsDown();
 	int StateMask = 1;
-	oFOR(const auto& K, Keys)
+	for (const auto& K : Keys)
 	{
 		for (int i = 0; i < 4; i++)
 		{
@@ -458,7 +461,10 @@ struct oInputMapperImpl : oInputMapper
 
 	intrusive_ptr<threadsafe oInputSet> InputSet;
 	oInputHistory InputHistory;
-	ouro::shared_mutex Mutex;
+	typedef ouro::shared_mutex mutex_t;
+	typedef ouro::lock_guard<mutex_t> lock_t;
+	typedef ouro::shared_lock<mutex_t> lock_shared_t;
+	mutex_t Mutex;
 	oRefCount RefCount;
 	oActionHookHelper Hooks;
 };
@@ -478,7 +484,7 @@ bool oInputMapperCreate(threadsafe oInputMapper** _ppInputMapper)
 
 void oInputMapperImpl::SetInputSet(threadsafe oInputSet* _pInputSet) threadsafe
 {
-	lock_guard<ouro::shared_mutex> lock(oThreadsafe(Mutex));
+	lock_t lock(oThreadsafe(Mutex));
 	InputSet = _pInputSet;
 };
 
@@ -489,7 +495,7 @@ void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 		case input::key_down:
 		case input::key_up:
 		{
-			ouro::shared_lock<ouro::shared_mutex> lock(oThreadsafe(Mutex));
+			lock_shared_t lock(oThreadsafe(Mutex));
 			if (InputSet)
 			{
 				oInputSetImpl* pInputSet = oThreadsafe(static_cast<threadsafe oInputSetImpl*>(InputSet.c_ptr()));
@@ -535,11 +541,11 @@ void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 
 void oInputMapperImpl::OnLostCapture() threadsafe
 {
-	ouro::shared_lock<ouro::shared_mutex> lock(oThreadsafe(Mutex));
+	lock_shared_t lock(oThreadsafe(Mutex));
 	if (InputSet)
 	{
 		oInputSetImpl* pInputSet = oThreadsafe(static_cast<threadsafe oInputSetImpl*>(InputSet.c_ptr()));
-		oFOR(auto& Input, pInputSet->Inputs)
+		for (auto& Input : pInputSet->Inputs)
 			Input.Clear();
 	}
 }

@@ -38,7 +38,6 @@
 // pattern seems to be emerging from C++11 APIs, so support it ahead of compiler
 // support in this way.
 #ifndef oHAS_VARIADIC_TEMPLATES
-	typedef std::function<void()> oCALLABLE;
 
 	#define oARG_TYPENAMES0
 	#define oARG_TYPENAMES1 typename Arg0

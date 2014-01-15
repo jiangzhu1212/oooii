@@ -318,7 +318,7 @@ struct oFileReaderImpl : public oStreamReader
 		oSetHighLowOffset(offsetLow, offsetHigh, _StreamRead.Range.Offset);
 
 		// Need to lock since SetFilePointer/ReadFile are separate calls. And to play nice with close
-		lock_guard<mutex> lock(thread_cast<mutex&>(Mutex));
+		lock_t lock(thread_cast<mutex_t&>(Mutex));
 
 		if(hFile == INVALID_HANDLE_VALUE)
 		{
@@ -354,7 +354,7 @@ struct oFileReaderImpl : public oStreamReader
 
 	void Close() threadsafe override
 	{
-		lock_guard<mutex> lock(thread_cast<mutex&>(Mutex));
+		lock_t lock(thread_cast<mutex_t&>(Mutex));
 
 		if (hFile != INVALID_HANDLE_VALUE)
 			CloseHandle(hFile);
@@ -364,7 +364,9 @@ struct oFileReaderImpl : public oStreamReader
 
 	oInitOnce<oSTREAM_DESC> Desc;
 	intrusive_ptr<threadsafe oDispatchQueueGlobal> ReadQueue;
-	mutex Mutex;
+	typedef std::mutex mutex_t;
+	typedef std::lock_guard<mutex_t> lock_t;
+	mutex_t Mutex;
 	oInitOnce<oURIParts> URIParts;
 	HANDLE hFile;
 	oRefCount RefCount;
@@ -441,7 +443,7 @@ struct oFileWriterImpl : public oStreamWriter
 	bool Write(const oSTREAM_WRITE& _Write) threadsafe
 	{
 		// Need to lock since SetFilePointer/ReadFile are separate calls.
-		lock_guard<mutex> lock(thread_cast<mutex&>(Mutex));
+		lock_t lock(thread_cast<mutex_t&>(Mutex));
 
 		if(hFile == INVALID_HANDLE_VALUE)
 		{
@@ -473,7 +475,7 @@ struct oFileWriterImpl : public oStreamWriter
 
 	void Close() threadsafe override
 	{
-		lock_guard<mutex> lock(thread_cast<mutex&>(Mutex));
+		lock_t lock(thread_cast<mutex_t&>(Mutex));
 
 		if (hFile != INVALID_HANDLE_VALUE)
 			CloseHandle(hFile);
@@ -485,7 +487,9 @@ struct oFileWriterImpl : public oStreamWriter
 	oInitOnce<path_string> ResolvedPath;
 	oHandle hFile;
 	intrusive_ptr<threadsafe oDispatchQueueGlobal> WriteQueue;
-	mutex Mutex;
+	typedef std::mutex mutex_t;
+	typedef std::lock_guard<mutex_t> lock_t;
+	mutex_t Mutex;
 	oRefCount RefCount;
 };
 

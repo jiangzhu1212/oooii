@@ -34,11 +34,6 @@
 #include <array>
 #include <stdexcept>
 
-// @tony: the idea is to make this api similar to std::vector, which has a lot of noexcepts but
-// the underlying usage of std::array doesn't provide for that, so reconsider this once the vs2012
-// upgrade is done.
-#define FV_NOEXCEPT
-
 namespace ouro {
 
 template<typename T, size_t N>
@@ -84,22 +79,26 @@ public:
 	const_reference at(size_type _Index) const { return Array.at(_Index); }
 	reference operator[](size_type _Index) { return Array[_Index]; }
 	const_reference operator[](size_type _Index) const { return Array[_Index]; }
-	value_type* data() FV_NOEXCEPT { return Array.data(); }
-	const value_type* data() const FV_NOEXCEPT { return Array.data(); }
+	value_type* data() oNOEXCEPT { return Array.data(); }
+	const value_type* data() const oNOEXCEPT { return Array.data(); }
 
 	reference front() { return Array.front(); }
 	reference back() { return Array.at(Size-1); }
 	const_reference front() const { return Array.front(); }
 	const_reference back() const { return Array.at(Size-1); }
 
-	iterator begin() FV_NOEXCEPT { return Array.begin(); }
-	iterator end() FV_NOEXCEPT { return begin() + Size; }
-	const_iterator cbegin() const FV_NOEXCEPT { return Array.cbegin(); }
-	const_iterator cend() const FV_NOEXCEPT { return cbegin() + Size; }
-	reverse_iterator rbegin() FV_NOEXCEPT{ return rend() + Size; }
-	reverse_iterator rend() FV_NOEXCEPT{ return Array.rend(); }
-	const_reverse_iterator crbegin() const FV_NOEXCEPT { return crend() + Size; }
-	const_reverse_iterator crend() const FV_NOEXCEPT { return Array.crend(); }
+	iterator begin() oNOEXCEPT { return Array.begin(); }
+	iterator end() oNOEXCEPT { return begin() + Size; }
+	const_iterator begin() const oNOEXCEPT { return Array.cbegin(); }
+	const_iterator end() const oNOEXCEPT { return cbegin() + Size; }
+	const_iterator cbegin() const oNOEXCEPT { return Array.cbegin(); }
+	const_iterator cend() const oNOEXCEPT { return cbegin() + Size; }
+	reverse_iterator rbegin() oNOEXCEPT { return rend() + Size; }
+	reverse_iterator rend() oNOEXCEPT { return Array.rend(); }
+	const_reverse_iterator rbegin() const oNOEXCEPT { return rend() + Size; }
+	const_reverse_iterator rend() const oNOEXCEPT { return Array.rend(); }
+	const_reverse_iterator crbegin() const oNOEXCEPT { return crend() + Size; }
+	const_reverse_iterator crend() const oNOEXCEPT { return Array.crend(); }
 
 	void resize(size_type _NewSize, value_type _InitialValue = value_type())
 	{
@@ -110,11 +109,11 @@ public:
 		Size = _NewSize;
 	}
 
-	void clear() FV_NOEXCEPT { resize(0); }
-	bool empty() const FV_NOEXCEPT { return Size == 0; }
-	size_type max_size() const FV_NOEXCEPT { return Array.max_size(); }
-	size_type size() const FV_NOEXCEPT { return Size; }
-	size_type capacity() const FV_NOEXCEPT { return Array.max_size(); }
+	void clear() oNOEXCEPT { resize(0); }
+	bool empty() const oNOEXCEPT { return Size == 0; }
+	size_type max_size() const oNOEXCEPT { return Array.max_size(); }
+	size_type size() const oNOEXCEPT { return Size; }
+	size_type capacity() const oNOEXCEPT { return Array.max_size(); }
 
 	void push_back(const value_type& _Value)
 	{

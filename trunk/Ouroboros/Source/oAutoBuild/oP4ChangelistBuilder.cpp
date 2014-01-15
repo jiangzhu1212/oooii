@@ -230,7 +230,7 @@ public:
 		RootPatcher(TestSettings.FailedImageCompares);
 		RootPatcher(TestSettingsDaily.CommandLine);
 		RootPatcher(TestSettingsDaily.FailedImageCompares);
-		oFOR(auto& command_line, PackagingSettings.CommandLines)
+		for (auto& command_line : PackagingSettings.CommandLines)
 		{
 			RootPatcher(command_line);
 		}
@@ -360,7 +360,7 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 	reverse(SuccesfulBuildPaths.begin(), SuccesfulBuildPaths.end());
 
 	bool foundLastSuccessful = false;
-	oFOR(auto& _Path, SuccesfulBuildPaths)
+	for (auto& _Path : SuccesfulBuildPaths)
 	{
 		path_string TempPath = _Path;
 		strchr(TempPath.c_str(), '/')[0] = 0;
@@ -393,7 +393,7 @@ void oP4ChangelistBuilderImpl::ScanBuildLogsFolder()
 	reverse(SpecialBuildPaths.begin(), SpecialBuildPaths.end());
 
 	foundLastSuccessful = false;
-	oFOR(auto& _Path, SpecialBuildPaths)
+	for (auto& _Path : SpecialBuildPaths)
 	{
 		path_string TempPath = _Path;
 		strchr(TempPath.c_str(), '/')[0] = 0;
@@ -466,7 +466,7 @@ bool oP4ChangelistBuilderImpl::WasChangelistAlreadyBuilt(int _Changelist, bool _
 	if (!_IsDaily)
 	{
 		// This function assumes the Mutex was locked by the caller
-		oFOR(auto BuildInfo, FinishedBuildInfos)
+		for (auto BuildInfo : FinishedBuildInfos)
 		{
 			if (BuildInfo.CL == _Changelist)
 				return true;

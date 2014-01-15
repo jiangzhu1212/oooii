@@ -51,7 +51,7 @@ static void oKinectFindClosestSkeletons(const NUI_SKELETON_FRAME& _NSF, std::arr
 
 	_OutClosestIndices.fill(0);
 	USHORT NearestDepth[NUI_SKELETON_MAX_TRACKED_COUNT];
-	oFOR(auto& i, NearestDepth)
+	for (auto& i : NearestDepth)
 		i = NUI_IMAGE_DEPTH_MAXIMUM;
 
 	for (int i = 0; i < NUI_SKELETON_COUNT; i++)
@@ -103,7 +103,7 @@ bool oKinectSkeletonStream::Initialize(INuiSensor* _pSensor, const std::shared_p
 
 	oThreadsafe(ClosestSkeletonIndices).fill(0);
 
-	oFOR(auto& s, oThreadsafe(Skeletons))
+	for (auto& s : oThreadsafe(Skeletons))
 	{
 		if (!s && !oKinectSkeletonCreate(&s))
 			return false; // pass through error
@@ -112,7 +112,7 @@ bool oKinectSkeletonStream::Initialize(INuiSensor* _pSensor, const std::shared_p
 	if (_pSensor->NuiInitializationFlags() & NUI_INITIALIZE_FLAG_USES_SKELETON)
 		oV(_pSensor->NuiSkeletonTrackingEnable(_hEvent, oKinectGetSkeletonInitFlags(_KinectFeatures)));
 
-	oFOR(auto& s, oThreadsafe(Skeletons))
+	for (auto& s : oThreadsafe(Skeletons))
 		s->Invalidate();
 
 	return true;
@@ -158,7 +158,7 @@ void oKinectSkeletonStream::CheckTrackingTimeouts() threadsafe
 	ouro::window_handle hWnd = nullptr;
 	if (oThreadsafe(this)->Window)
 	{
-		oFOR(auto& S, oThreadsafe(this)->Skeletons)
+		for (auto& S : oThreadsafe(this)->Skeletons)
 			S->CheckTrackingTimeout((HWND)oThreadsafe(this)->Window->native_handle(), TrackingTimeoutSeconds);
 	}
 }

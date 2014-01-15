@@ -41,6 +41,7 @@ namespace oStd {
 		{
 			void* hThread;
 			std::function<void()> Callable;
+			static void sleep_for(unsigned int _Milliseconds);
 		};
 
 	} // namespace detail
@@ -56,8 +57,8 @@ namespace oStd {
 		thread();
 		oDEFINE_CALLABLE_CTOR_WRAPPERS(explicit, thread, initialize);
 
-		// All threads must be join()'ed before allowing the thread to exit or, 
-		// according to the C++11 standard, std::terminate will be called thus 
+		// All threads must be join()'ed before allowing the thread to exit or 
+		// according to the C++11 standard std::terminate will be called thus 
 		// exiting the application.
 		~thread();
 
@@ -112,12 +113,11 @@ namespace oStd {
 	{
 		thread::id get_id();
 		void yield();
-		void __sleep_for(unsigned int _Milliseconds);
 
 		template<typename Rep, typename Period> void sleep_for(const std::chrono::duration<Rep, Period>& _Duration)
 		{
 			std::chrono::milliseconds s = std::chrono::duration_cast<std::chrono::milliseconds>(_Duration);
-			__sleep_for(static_cast<unsigned int>(s.count()));
+			detail::thread_context::sleep_for(static_cast<unsigned int>(s.count()));
 		}
 
 	} // namespace this_thread

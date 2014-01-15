@@ -76,7 +76,7 @@ private:
 		std::set<const ouro::intrusive_ptr<threadsafe oSocket>> socketsToRemove;
 
 		{
-			oStd::lock_guard<ouro::shared_mutex> lock(ConnectedSocketsMutex);
+			ouro::lock_guard<ouro::shared_mutex> lock(ConnectedSocketsMutex);
 			ConnectedSockets.push_back(_Socket);
 		}
 
@@ -85,7 +85,7 @@ private:
 		// often.
 		{
 			ouro::shared_lock<ouro::shared_mutex> lock(ConnectedSocketsMutex);
-			oFOR(const auto& _socket, ConnectedSockets)
+			for (const auto& _socket : ConnectedSockets)
 			{
 				oSocket::DESC desc;
 				_socket->GetDesc(&desc);

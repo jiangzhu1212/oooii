@@ -32,7 +32,7 @@
 
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/basic_threadpool.h>
-#include <oStd/shared_mutex.h>
+#include <oStd/mutex.h>
 
 namespace oConcurrency {
 

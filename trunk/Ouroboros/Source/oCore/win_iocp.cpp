@@ -48,7 +48,7 @@ struct iocp_overlapped : public OVERLAPPED
 	inline void clear() { memset(this, 0, sizeof(OVERLAPPED)); hFile = nullptr; Task = nullptr; }
 
 	HANDLE hFile;
-	std::function<void(size_t _NumBytes)> Task;
+	function<void(size_t _NumBytes)> Task;
 };
 
 class iocp_threadpool
@@ -64,21 +64,21 @@ public:
 	bool wait_for(unsigned int _TimeoutMS);
 	void join();
 
-	OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion);
+	OVERLAPPED* associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _OnCompletion);
 	void disassociate(OVERLAPPED* _pOverlapped);
 
 private:
 	iocp_threadpool() : hIoPort(nullptr), NumRunningThreads(0), NumAssociations(0) {}
 	iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers = 0);
 	~iocp_threadpool();
-	iocp_threadpool(iocp_threadpool&& _That) { operator=(std::move(_That)); }
+	iocp_threadpool(iocp_threadpool&& _That) { operator=(move(_That)); }
 	iocp_threadpool& operator=(iocp_threadpool&& _That);
 
 	void work();
 
 	HANDLE hIoPort;
-	std::vector<std::thread> Workers;
-	std::atomic<size_t> NumRunningThreads;
+	vector<thread> Workers;
+	atomic<size_t> NumRunningThreads;
 	size_t NumAssociations;
 
 	concurrent_object_pool<iocp_overlapped> pool;
@@ -89,7 +89,7 @@ private:
 
 unsigned int iocp_threadpool::concurrency()
 {
-	return std::thread::hardware_concurrency();
+	return thread::hardware_concurrency();
 }
 
 void iocp_threadpool::work()
@@ -159,10 +159,10 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 	oVB(hIoPort);
 
 	Workers.resize(NumWorkers);
-	auto worker = std::bind(&iocp_threadpool::work, this);
+	auto worker = bind(&iocp_threadpool::work, this);
 	NumRunningThreads = 0;
-	oFOR(auto& w, Workers)
-		w = std::move(thread(worker));
+	for (auto& w : Workers)
+		w = move(thread(worker));
 
 	backoff bo;
 	while (NumRunningThreads != Workers.size())
@@ -172,12 +172,12 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 iocp_threadpool::~iocp_threadpool()
 {
 	if (!wait_for(20000))
-		throw std::runtime_error("timed out waiting for iocp completion");
+		throw runtime_error("timed out waiting for iocp completion");
 
-	oFOR(auto& w, Workers)
+	for (auto& w : Workers)
 		PostQueuedCompletionStatus(hIoPort, 0, oSHUTDOWN, nullptr);
 
-	oFOR(auto& w, Workers)
+	for (auto& w : Workers)
 		w.join();
 
 	if (INVALID_HANDLE_VALUE != hIoPort)
@@ -191,10 +191,10 @@ iocp_threadpool& iocp_threadpool::operator=(iocp_threadpool&& _That)
 	if (this != &_That)
 	{
 		hIoPort = _That.hIoPort; _That.hIoPort = INVALID_HANDLE_VALUE;
-		Workers = std::move(_That.Workers);
+		Workers = move(_That.Workers);
 		NumRunningThreads.store(_That.NumRunningThreads); _That.NumRunningThreads = 0;
 		NumAssociations = _That.NumAssociations; _That.NumAssociations = 0;
-		pool = std::move(_That.pool);
+		pool = move(_That.pool);
 	}
 	return *this;
 }
@@ -235,7 +235,7 @@ void iocp_threadpool::join()
 		process_heap::deallocate(pInstance);
 }
 
-OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion)
+OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _OnCompletion)
 {
 	NumAssociations++;
 	iocp_overlapped* ol = pool.allocate();
@@ -277,7 +277,7 @@ void ensure_initialized()
 	iocp_threadpool::singleton();
 }
 
-OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion)
+OVERLAPPED* associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _OnCompletion)
 {
 	return iocp_threadpool::singleton().associate(_Handle, _OnCompletion);
 }

@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBase/leak_tracker.h>
 #include <oBase/assert.h>
-#include <oStd/for.h>
 
 using namespace std;
 
@@ -34,7 +33,7 @@ size_t leak_tracker::num_outstanding_allocations(bool _CurrentContextOnly)
 {
 	size_t n = 0;
 	lock_t Lock(Mutex);
-	oFOR(const allocations_t::value_type& pair, Allocations)
+	for (const allocations_t::value_type& pair : Allocations)
 	{
 		const entry& e = pair.second;
 		if (e.tracked && (!_CurrentContextOnly || e.context == CurrentContext))
@@ -69,7 +68,7 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 	size_t nLeaks = 0;
 	bool headerPrinted = false;
 	size_t totalLeakBytes = 0;
-	oFOR(const allocations_t::value_type& pair, Allocations)
+	for (const allocations_t::value_type& pair : Allocations)
 	{
 		const entry& e = pair.second;
 		if (e.tracked && (!_CurrentContextOnly || e.context == CurrentContext))

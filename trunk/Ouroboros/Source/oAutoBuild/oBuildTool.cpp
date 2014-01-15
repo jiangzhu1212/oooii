@@ -135,7 +135,7 @@ bool oRunPackagingStage(const oBUILD_TOOL_PACKAGING_SETTINGS& _Settings, oPackag
 	{
 		// FIXME: With CL 23502 the process will hang because of /S on Xcopy. Not capturing STDOUT fixes it
 		// xxlstring PackageResponse;
-		oFOR(auto& command_line, _Settings.CommandLines)
+		for (auto& command_line : _Settings.CommandLines)
 		{
 			int ExitCode = ouro::system::spawn_for(command_line, nullptr, false, _Settings.TimeoutSeconds * 1000);
 			if (ExitCode)

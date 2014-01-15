@@ -30,7 +30,6 @@
 #include <oBase/assert.h>
 #include <oBase/macros.h>
 #include <oBase/macros.h>
-#include <oStd/for.h>
 #include <oBase/timer.h>
 #include <oBase/unordered_map.h>
 #include <oBasis/oContainer.h>
@@ -306,7 +305,7 @@ static void ReduceElements(const oOBJ_INIT& _Init
 	_pSinglyIndexedElements->MTLPath = _SourceElements.MTLPath;
 	unsigned int LastGroupIndex = invalid;
 
-	oFOR(const oOBJ_FACE& Face, _SourceElements.Faces)
+	for (const oOBJ_FACE& Face : _SourceElements.Faces)
 	{
 		oOBJ_GROUP& Group = _pSinglyIndexedElements->Groups[Face.GroupIndex];
 
@@ -391,7 +390,7 @@ static void ReduceElements(const oOBJ_INIT& _Init
 	r.num_primitives = as_uint(_pIndices->size() / 3) - r.start_primitive;
 
 	// Go back through groups and calc min/max verts
-	oFOR(oOBJ_GROUP& g, _pSinglyIndexedElements->Groups)
+	for (oOBJ_GROUP& g : _pSinglyIndexedElements->Groups)
 		oCalcMinMaxVertices(data(*_pIndices), g.Range.start_primitive*3, g.Range.num_primitives*3, as_uint(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
 }
 

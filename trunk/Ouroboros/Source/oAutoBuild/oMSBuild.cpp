@@ -79,11 +79,11 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, s
 
 	o_msbuild_stdout_t StdOutDrain;
 	std::unordered_map<uri_string, std::shared_ptr<ouro::process>, oStdHash<uri_string>, ouro::same<uri_string>> BuildProcesses;
-	oFOR(auto& Config, _Settings.Configurations)
+	for (auto& Config : _Settings.Configurations)
 	{
 		int PlatformHead = ConfigHead + snprintf(CommandLine.c_str() + ConfigHead, CommandLine.capacity() - ConfigHead, "%s /p:Platform=", Config);
 
-		oFOR(auto& Platform, _Settings.Platforms)
+		for (auto& Platform : _Settings.Platforms)
 		{
 			snprintf(CommandLine.c_str() + PlatformHead, CommandLine.capacity() - PlatformHead, "%s %s", Platform, _pCommand);
 
@@ -113,7 +113,7 @@ static bool MSBuild(const oMSBUILD_SETTINGS& _Settings, const char* _pCommand, s
 			StdOutDrain[SuccessRead] = 0;
 			if( SuccessRead > 0 && !_CommandLogger(BuildProcess->first, StdOutDrain) )
 			{
-				oFOR(auto ProcessToTerminate, BuildProcesses )
+				for (auto ProcessToTerminate : BuildProcesses )
 				{
 					ProcessToTerminate.second->kill(0);
 				}
@@ -217,7 +217,7 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 		return oErrorSetLast(std::errc::invalid_argument);
 
 	_pResults->SavingLogfilesSucceeded = true;
-	oFOR(auto& BuildLog, BuildLogs)
+	for (auto& BuildLog : BuildLogs)
 	{
 		// Save out the file
 		path FilePath = _LogFolder;

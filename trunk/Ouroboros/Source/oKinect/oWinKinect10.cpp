@@ -59,7 +59,7 @@ void oWinKinect10::RecordKinectWorkerThreads()
 		return true;
 	});
 
-	oFOR(std::thread::id TID, BeforeTIDs)
+	for (std::thread::id TID : BeforeTIDs)
 	{
 		auto it = find(TIDs, TID);
 		if (it != TIDs.end())
@@ -109,7 +109,7 @@ oWinKinect10::~oWinKinect10()
 	if (KinectThreadTerminated)
 		oTRACE("A Kinect thread needed to be terminated. Kinect SDK may report errors. Ignore the errors or unplug/replug the Kinect to address this reporting.");
 
-	oFOR(std::thread::id TID, TIDs)
+	for (std::thread::id TID : TIDs)
 	{
 		HANDLE hThread = OpenThread(THREAD_TERMINATE, FALSE, asdword(TID));
 		if (hThread)

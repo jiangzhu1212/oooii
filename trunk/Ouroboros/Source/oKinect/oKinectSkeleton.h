@@ -38,7 +38,7 @@
 #include <windows.h>
 #include <NuiApi.h>
 #include <oCore/windows/win_skeleton.h>
-#include <oStd/shared_mutex.h>
+#include <oStd/mutex.h>
 
 class oKinectSkeleton
 {

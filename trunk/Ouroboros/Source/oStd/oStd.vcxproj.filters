@@ -13,15 +13,9 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="shared_mutex.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oStd\thread.h">
-      <Filter>oStd</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\for.h">
       <Filter>oStd</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\future.h">
@@ -42,7 +36,7 @@
     <ClInclude Include="crt_assert.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\shared_mutex.h">
+    <ClInclude Include="..\..\Include\oStd\callable.h">
       <Filter>oStd</Filter>
     </ClInclude>
   </ItemGroup>

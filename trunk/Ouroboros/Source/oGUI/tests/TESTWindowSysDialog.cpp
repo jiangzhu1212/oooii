@@ -28,7 +28,6 @@
 #include <oGUI/Windows/oGDI.h>
 #include <oCore/filesystem.h>
 #include <oCore/system.h>
-#include <oStd/for.h>
 
 #include "../../test_services.h"
 
@@ -403,7 +402,7 @@ static void OverwriteVariableColors(ouro::surface::buffer* _pBuffer)
 
 	ouro::surface::subresource_info sri = ouro::surface::subresource(_pBuffer->get_info(), 0);
 	ouro::surface::lock_guard lock(_pBuffer);
-	oFOR(const int2& c, VarCoords)
+	for (const int2& c : VarCoords)
 		ouro::surface::put(sri, &lock.mapped, c, ouro::Red);
 }
 

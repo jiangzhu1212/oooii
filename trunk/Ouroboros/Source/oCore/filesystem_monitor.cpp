@@ -414,7 +414,7 @@ void monitor_impl::check_accessibility()
 		}
 	}
 
-	oFOR(const auto& a, Accessibles)
+	for (const auto& a : Accessibles)
 		if (OnEvent)
 			OnEvent(file_event::accessible, a);
 
@@ -454,7 +454,7 @@ void monitor_impl::unwatch(const path& _Path)
 void monitor_impl::unwatch_all()
 {
 	lock_guard<mutex> lock(WatchesMutex);
-	oFOR(auto w, Watches)
+	for (auto w : Watches)
 		w->unwatch_changes();
 	Watches.clear();
 }

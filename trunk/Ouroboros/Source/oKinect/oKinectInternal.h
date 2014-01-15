@@ -69,8 +69,11 @@ protected:
 	ouro::intrusive_ptr<INuiSensor> NUISensor;
 	std::shared_ptr<ouro::window> Window;
 	oKINECT_DESC Desc;
+	typedef std::mutex mutex_t;
+	typedef std::lock_guard<mutex_t> lock_t;
+	typedef std::unique_lock<mutex_t> lock_unique_t;
 	std::condition_variable PitchCV;
-	std::mutex PitchMutex;
+	mutex_t PitchMutex;
 	std::thread PitchThread;
 	std::thread EventThread;
 	oRefCount RefCount;
