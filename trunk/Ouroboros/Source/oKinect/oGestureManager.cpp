@@ -35,7 +35,7 @@
 #include "resource.h"
 
 using namespace ouro;
-using namespace oStd;
+using namespace std;
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGESTURE_VISUALIZATION)
 	oRTTI_ENUM_BEGIN_VALUES(oGESTURE_VISUALIZATION)
@@ -108,7 +108,10 @@ private:
 	intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
 	intrusive_ptr<threadsafe oInputMapper> InputMapper;
 
-	shared_mutex KinectMutex;
+	typedef ouro::shared_mutex mutex_t;
+	typedef ouro::lock_guard<mutex_t> lock_t;
+	typedef ouro::shared_lock<mutex_t> lock_shared_t;
+	mutex_t KinectMutex;
 
 	oGESTURE_MANAGER_DESC Desc;
 	oGESTURE_VISUALIZATION_DESC VizDesc;
@@ -132,7 +135,7 @@ private:
 
 	// GDI-specific elements
 
-	shared_mutex DeviceIconMutex;
+	mutex_t DeviceIconMutex;
 
 	oGDIScopedObject<HFONT> hFont;
 	oGDIScopedObject<HPEN> hBonePen;
@@ -290,7 +293,7 @@ void oGestureManagerImpl::HookWindow(bool _Hooked)
 
 void oGestureManagerImpl::AttachKinect(bool _Attached, const char* _InstanceName)
 {
-	lock_guard<shared_mutex> lock(KinectMutex);
+	lock_t lock(KinectMutex);
 
 	if (_Attached)
 	{
@@ -324,7 +327,7 @@ void oGestureManagerImpl::AttachKinect(bool _Attached, const char* _InstanceName
 				oTRACE("GMGR: connection failed Kinect %s: %s", kd.ID.c_str(), oErrorGetLastString());
 
 			{
-				lock_guard<shared_mutex> lock2(KinectMutex);
+				lock_t lock2(KinectMutex);
 				
 				if (Result)
 				{
@@ -379,7 +382,7 @@ void oGestureManagerImpl::SetDesc(const oGESTURE_MANAGER_DESC& _Desc)
 
 	if (CHANGED(GestureCameraPitchDegrees))
 	{
-		lock_guard<shared_mutex> lock(KinectMutex);
+		lock_t lock(KinectMutex);
 		if (Kinect && _Desc.GestureCameraPitchDegrees != oDEFAULT)
 			Kinect->SetPitch(_Desc.GestureCameraPitchDegrees);
 	}
@@ -405,7 +408,7 @@ void oGestureManagerImpl::GetDeviceVisualizationDesc(oGESTURE_DEVICE_VISUALIZATI
 
 void oGestureManagerImpl::SetDeviceVisualizationDesc(const oGESTURE_DEVICE_VISUALIZATION_DESC& _Desc)
 {
-	lock_guard<shared_mutex> lock(DeviceIconMutex);
+	lock_t lock(DeviceIconMutex);
 
 	if (DeviceVizDesc.hGestureDevice && DeviceVizDesc.hGestureDevice != _Desc.hGestureDevice)
 		DestroyIcon((HICON)DeviceVizDesc.hGestureDevice);
@@ -429,7 +432,7 @@ bool oGestureManagerImpl::SetCurrentGestureSet(const char* _KeySetName, const oR
 
 bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const int2& _ClientSize)
 {
-	shared_lock<shared_mutex> lock(KinectMutex);
+	lock_shared_t lock(KinectMutex);
 
 	if (Kinect)
 	{
