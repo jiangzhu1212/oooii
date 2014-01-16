@@ -31,6 +31,8 @@
 
 #include "../../test_services.h"
 
+#include "SystemProperties_xml.h"
+
 namespace ouro {
 	namespace tests {
 
@@ -299,12 +301,7 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 		std::shared_ptr<char> buffer = ouro::filesystem::load(p, ouro::filesystem::load_option::text_read);
 		XML = std::make_shared<ouro::xml>(p, buffer.get(), nullptr);
 	#else
-		void GetDescSystemProperties_xml(const char** ppBufferName, const void** ppBuffer, size_t* pSize);
-		const char* pBufferName = nullptr;
-		const void* pBuffer = nullptr;
-		size_t Size = 0;
-		GetDescSystemProperties_xml(&pBufferName, &pBuffer, &Size);
-		XML = std::make_shared<ouro::xml>(pBufferName, (char*)pBuffer, nullptr);
+		XML = std::make_shared<ouro::xml>("cpp:///SystemProperties.xml", (char*)SystemProperties_xml, nullptr);
 	#endif
 
 	ControlSet.Deinitialize();

@@ -5,7 +5,7 @@
       <Control Type="Label" Text="Windows uses the following information to identify your computer on the network." Pos="64 37" Size="310 30" ID="ID_COMPUTER_LABEL" />
       <Control Type="Label" Text="Computer description:" Pos="15 79" Size="106 16" ID="ID_COMPUTER_DESC_LABEL" />
       <Control Type="Textbox" Text="" Pos="139 76" Size="233 20" ID="ID_COMPUTER_DESC_TEXTBOX" />
-      <Control Type="Label" Text="For example: &quot;Kitchen Computer&quot; or &quot;Mary's Computer&quot;." Pos="139 103" Size="220 30" ID="ID_COMPUTER_DESC_EXAMPLE" />
+      <Control Type="Label" Text="For example: &quot;Kitchen Computer&quot; or &quot;Mary&apos;s Computer&quot;." Pos="139 103" Size="220 30" ID="ID_COMPUTER_DESC_EXAMPLE" />
       <Control Type="Label" Text="Full computer name:" Pos="15 136" Size="106 16" ID="ID_COMPUTER_NAME_LABEL" />
       <Control Type="Label" Text="" Pos="139 136" Size="106 16" ID="ID_COMPUTER_NAME_VALUE" />
       <Control Type="Label" Text="Workgroup:" Pos="15 160" Size="106 16" ID="ID_COMPUTER_WORKGROUP_LABEL" />
@@ -20,11 +20,11 @@
       <Control Type="Group" Text="Device Manager" Pos="15 42" Size="363 101" ID="ID_HARDWARE_DEVICE_MANAGER_GROUP">
         <Control Type="Icon" Pos="-5 -32" ID="ID_HARDWARE_DEVICE_MANAGER_ICON" Visible="false" />
         <Control Type="Label" Text="The Device Manager lists all the hardware devices installed on your computer. Use the Device Manager to change the properties of any device." Pos="42 -23" Size="280 38" ID="ID_HARDWARE_DEVICE_MANAGER_LABEL" />
-        <Control Type="Button" Text="Device Manager" Align="BottomRight" Pos="-26 -54" Size="177 23" ID="ID_HARDWARE_DEVICE_MANAGER_BUTTON" />
+        <Control Type="Button" Text="Device Manager" Align="bottom_right" Pos="-26 -54" Size="177 23" ID="ID_HARDWARE_DEVICE_MANAGER_BUTTON" />
       </Control>
       <Control Type="Group" Text="Device Installation Settings" Pos="15 150" Size="363 106" ID="ID_HARDWARE_DEVICE_INSTALL_GROUP">
         <Control Type="Label" Text="Choose whether Windows downloads driver software for your devices and detailed information about them." Pos="42 -130" Size="290 38" ID="ID_HARDWARE_DEVICE_INSTALL_LABEL" />
-        <Control Type="Button" Text="Device Installation Settings" Align="BottomRight" Pos="-26 -161" Size="177 23" ID="ID_HARDWARE_DEVICE_INSTALL_BUTTON" />
+        <Control Type="Button" Text="Device Installation Settings" Align="bottom_right" Pos="-26 -161" Size="177 23" ID="ID_HARDWARE_DEVICE_INSTALL_BUTTON" />
       </Control>
     </RefPoint>
     <RefPoint Name="Advanced Page" Pos="-6 -7" Visible="false">
@@ -32,22 +32,22 @@
       <Control Type="Group" Text="Performance" Pos="15 58" Size="363 86" ID="ID_ADVANCED_PERFORMANCE_GROUP">
         <RefPoint Name="Correction" Pos="-15 -58" Visible="false">
           <Control Type="Label" Text="Visual effects, processor scheduling, memory usage, and virtual memory" Pos="10 19" Size="340 17" ID="ID_ADVANCED_PERFORMANCE_LABEL"/>
-          <Control Type="Button" Text="Settings..." Align="BottomRight" Pos="-10 -11" Size="74 23" ID="ID_ADVANCED_PERFORMANCE_SETTINGS" />
+          <Control Type="Button" Text="Settings..." Align="bottom_right" Pos="-10 -11" Size="74 23" ID="ID_ADVANCED_PERFORMANCE_SETTINGS" />
         </RefPoint>
       </Control>
       <Control Type="Group" Text="User Profiles" Pos="15 150" Size="363 86" ID="ID_ADVANCED_USER_PROFILES_GROUP">
         <RefPoint Name="Correction" Pos="-15 -150" Visible="false">
           <Control Type="Label" Text="Desktop settings related to your logon" Pos="10 20" Size="340 17" ID="ID_ADVANCED_USER_PROFILES_LABEL"/>
-          <Control Type="Button" Text="Settings..." Align="BottomRight" Pos="-10 -11" Size="74 23" ID="ID_ADVANCED_USER_PROFILES_SETTINGS" />
+          <Control Type="Button" Text="Settings..." Align="bottom_right" Pos="-10 -11" Size="74 23" ID="ID_ADVANCED_USER_PROFILES_SETTINGS" />
         </RefPoint>
       </Control>
       <Control Type="Group" Text="Startup and Recovery" Pos="15 243" Size="363 86" ID="ID_ADVANCED_STARTUP_GROUP">
         <RefPoint Name="Correction" Pos="-15 -243" Visible="false">
           <Control Type="Label" Text="System startup, system failure, and debugging information" Pos="10 20" Size="340 17" ID="ID_ADVANCED_STARTUP_LABEL"/>
-          <Control Type="Button" Text="Settings..." Align="BottomRight" Pos="-10 -11" Size="74 23" ID="ID_ADVANCED_STARTUP_SETTINGS" />
+          <Control Type="Button" Text="Settings..." Align="bottom_right" Pos="-10 -11" Size="74 23" ID="ID_ADVANCED_STARTUP_SETTINGS" />
         </RefPoint>
       </Control>
-      <Control Type="Button" Text="Environment Variables..." Align="BottomRight" Pos="-20 -29" Size="128 23" ID="ID_ADVANCED_ENVIRONMENT_VARIABLES" />
+      <Control Type="Button" Text="Environment Variables..." Align="bottom_right" Pos="-20 -29" Size="128 23" ID="ID_ADVANCED_ENVIRONMENT_VARIABLES" />
     </RefPoint>
     <RefPoint Name="System Protection Page" Pos="-6 -7" Visible="false">
       <Control Type="Hyperlabel" Text="Use system protection to undo unwanted system changes and restore previous versions of files. &lt;a id=&quot;ID_SYSPROT_LABEL&quot;&gt;What is system protection?&lt;/a&gt;" Pos="57 33" Size="300 30" ID="ID_SYSPROT_LABEL" />
@@ -66,24 +66,24 @@
         <RefPoint Name="Correction" Pos="-13 -32" Visible="false">
           <Control Type="Checkbox" Text="Allow Remote Assistance connections to this computer" Pos="9 29" Size="300 20" ID="ID_ALLOW_REMOTE_ASSISTANCE" />
           <Control Type="Hyperlabel" Text="&lt;a id=&quot;ID_REMOTE_ASSISTANCE_WHAT_HAPPENS&quot;&gt;What happens when I enable Remote Assistance?&lt;/a&gt;" Pos="9 63" Size="300 20" ID="ID_REMOTE_ASSISTANCE_WHAT_HAPPENS"/>
-          <Control Type="Button" Text="Advanced..." Align="BottomRight" Pos="-11 -13" Size="92 23" ID="ID_REMOTE_ADVANCED"/>
+          <Control Type="Button" Text="Advanced..." Align="bottom_right" Pos="-11 -13" Size="92 23" ID="ID_REMOTE_ADVANCED"/>
         </RefPoint>
       </Control>
       <Control Type="Group" Text="Remote Desktop" Pos="13 173" Size="366 202" ID="ID_REMOTE_DESKTOP_GROUP">
         <RefPoint Name="Correction" Pos="-13 -173" Visible="false">
           <Control Type="Label" Text="Click an option, and then specify who can connect, if needed." Pos="9 29" Size="300 20" ID="ID_REMOTE_DESKTOP_CLICK"/>
-          <Control Type="Radio" Text="Don't allow connections to this computer" Pos="9 60" Size="300 20" ID="ID_REMOTE_DESKTOP_RADIO1" StartNewGroup="true" />
+          <Control Type="Radio" Text="Don&apos;t allow connections to this computer" Pos="9 60" Size="300 20" ID="ID_REMOTE_DESKTOP_RADIO1" StartNewGroup="true" />
           <Control Type="Radio" Text="Allow connections from computers running any version of Remote Desktop (less secure)" Pos="9 90" Size="300 30" ID="ID_REMOTE_DESKTOP_RADIO2" />
           <Control Type="Radio" Text="Allow connections only from computers running Remote Desktop with Network Level Authentication (more secure)" Pos="9 129" Size="300 30" ID="ID_REMOTE_DESKTOP_RADIO3" />
-          <Control Type="Hyperlabel" Text="&lt;a ID=&quot;ID_REMOTE_DESKTOP_HELP_ME_CHOOSE&quot;&gt;Help me choose&lt;/a&gt;" Align="BottomLeft" Pos="9 -8" Size="100 20" ID="ID_REMOTE_DESKTOP_HELP_ME_CHOOSE" StartNewGroup="true" />
-          <Control Type="Button" Text="Select Users..." Align="BottomRight" Pos="-10 -11" Size="93 23" ID="ID_REMOTE_DESKTOP_SELECT_USERS" />
+          <Control Type="Hyperlabel" Text="&lt;a ID=&quot;ID_REMOTE_DESKTOP_HELP_ME_CHOOSE&quot;&gt;Help me choose&lt;/a&gt;" Align="bottom_left" Pos="9 -8" Size="100 20" ID="ID_REMOTE_DESKTOP_HELP_ME_CHOOSE" StartNewGroup="true" />
+          <Control Type="Button" Text="Select Users..." Align="bottom_right" Pos="-10 -11" Size="93 23" ID="ID_REMOTE_DESKTOP_SELECT_USERS" />
         </RefPoint>
       </Control>
     </RefPoint>
   </Control>
   <RefPoint Name="Bottom Buttons">
-    <Control Type="Button" Text="OK" Align="BottomRight" Pos ="-168 -7" ID="ID_OK" />
-    <Control Type="Button" Text="Cancel" Align="BottomRight" Pos ="-87 -7" ID="ID_CANCEL" />
-    <Control Type="Button" Text="Apply" Enabled="false" Align="BottomRight" Pos ="-6 -7" ID="ID_APPLY" />
+    <Control Type="Button" Text="OK" Align="bottom_right" Pos ="-168 -7" ID="ID_OK" />
+    <Control Type="Button" Text="Cancel" Align="bottom_right" Pos ="-87 -7" ID="ID_CANCEL" />
+    <Control Type="Button" Text="Apply" Enabled="false" Align="bottom_right" Pos ="-6 -7" ID="ID_APPLY" />
   </RefPoint>
 </oUI>

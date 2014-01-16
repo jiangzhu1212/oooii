@@ -106,7 +106,7 @@ ouro::surface::format oGDIGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader)
 	}
 }
 
-bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow)
+bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow, bool _FlipV)
 {
 	RECT r;
 	if (_pRect)
@@ -141,24 +141,27 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	if (size.x == 0 || size.y == 0)
 		return false;
 
-	WORD bitdepth = 0;
+	WORD BitDepth = 0;
 	{
 		ouro::display::info di = ouro::display::get_info(oWinGetDisplayId(_hWnd));
-		bitdepth = static_cast<WORD>(di.mode.depth);
-		if (bitdepth == 32) bitdepth = 24;
+		BitDepth = static_cast<WORD>(di.mode.depth);
+		if (BitDepth == 32) BitDepth = 24;
 	}
 
 	if (!_pBitmapInfo)
 		return oErrorSetLast(std::errc::invalid_argument);
+	const int BytesPerPixel = BitDepth / 8;
+	const int AlignedWidth = byte_align(size.x, 4);
+	const int RowPitch = AlignedWidth * BytesPerPixel;
 
 	memset(_pBitmapInfo, 0, sizeof(BITMAPINFO));
 	_pBitmapInfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 	_pBitmapInfo->bmiHeader.biWidth = size.x;
 	_pBitmapInfo->bmiHeader.biHeight = size.y;
 	_pBitmapInfo->bmiHeader.biPlanes = 1;
-	_pBitmapInfo->bmiHeader.biBitCount = bitdepth;
+	_pBitmapInfo->bmiHeader.biBitCount = BitDepth;
 	_pBitmapInfo->bmiHeader.biCompression = BI_RGB;
-	_pBitmapInfo->bmiHeader.biSizeImage = byte_align(size.x, 4) * size.y * bitdepth / 8;
+	_pBitmapInfo->bmiHeader.biSizeImage = RowPitch * size.y;
 
 	if (_pImageBuffer)
 	{
@@ -174,7 +177,26 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 			oVB(RedrawWindow(_hWnd, 0, 0, RDW_INVALIDATE|RDW_UPDATENOW));
 
 		BitBlt(hMemDC, 0, 0, size.x, size.y, hDC, r.left, r.top, SRCCOPY);
-		GetDIBits(hMemDC, hBMP, 0, size.y, _pImageBuffer, _pBitmapInfo, DIB_RGB_COLORS);
+
+		if (AlignedWidth == size.x)
+			GetDIBits(hMemDC, hBMP, 0, _FlipV ? -size.y : size.y, _pImageBuffer, _pBitmapInfo, DIB_RGB_COLORS);
+		else
+		{
+			const int PadSize = AlignedWidth - size.x;
+			for (int y = 0; y < size.y; y++)
+			{
+				GetDIBits(hMemDC, hBMP, _FlipV ? (size.y - 1 - y) : y, 1, byte_add(_pImageBuffer, y * RowPitch), _pBitmapInfo, DIB_RGB_COLORS);
+				char* pad = (char*)byte_add(_pImageBuffer, (y*RowPitch) + (size.x*BytesPerPixel));
+				switch (PadSize)
+				{
+					// Duff's device
+					case 3: pad[2] = 0;
+					case 2: pad[1] = 0;
+					case 1: pad[0] = 0;
+					default: break;
+				}
+			}
+		}
 
 		SelectObject(hMemDC, hOld);
 		DeleteDC(hMemDC);
@@ -184,7 +206,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	return true;
 }
 
-bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow)
+bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow, bool _FlipV)
 {
 	if (!_Allocate || !_ppBuffer || !_pBufferSize)
 		return oErrorSetLast(std::errc::invalid_argument);
@@ -201,7 +223,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void
 	if (_IncludeBorder)
 		pRect = nullptr;
 
-	if (oGDIScreenCaptureWindow(_hWnd, pRect, nullptr, 0, &bmi, _RedrawWindow))
+	if (oGDIScreenCaptureWindow(_hWnd, pRect, nullptr, 0, &bmi, _RedrawWindow, _FlipV))
 	{
 		BITMAPFILEHEADER bmfh;
 		memset(&bmfh, 0, sizeof(bmfh));
@@ -213,7 +235,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void
 		*_ppBuffer = _Allocate(*_pBufferSize);
 		memcpy(*_ppBuffer, &bmfh, sizeof(bmfh));
 		memcpy(byte_add(*_ppBuffer, sizeof(bmfh)), &bmi, sizeof(bmi));
-		return oGDIScreenCaptureWindow(_hWnd, pRect, byte_add(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow);
+		return oGDIScreenCaptureWindow(_hWnd, pRect, byte_add(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow, _FlipV);
 	}
 
 	return false;

@@ -48,7 +48,7 @@ static inline int safe_array_size(const info& _Info) { return ::max(1, _Info.arr
 #define oCHECK_NOT_PLANAR(_Format) if (is_planar(_Format)) throw invalid_argument("Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
 
 struct bit_size { unsigned char r,g,b,a; };
-struct subformats { format_e format[4]; };
+struct subformats { enum format format[4]; };
 
 namespace traits
 {	enum value {

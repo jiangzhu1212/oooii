@@ -833,7 +833,7 @@ future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame, bool 
 		void* buf = nullptr;
 		size_t size = 0;
 		oWinSetFocus(hWnd); // Windows doesn't do well with hidden contents.
-		if (oGDIScreenCaptureWindow(hWnd, _IncludeBorder, malloc, &buf, &size, false))
+		if (oGDIScreenCaptureWindow(hWnd, _IncludeBorder, malloc, &buf, &size, false, true))
 		{
 			snap = surface::decode(buf, size);
 			free(buf);

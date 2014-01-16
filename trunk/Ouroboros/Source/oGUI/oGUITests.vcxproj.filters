@@ -12,15 +12,15 @@
     <ClInclude Include="..\..\Include\oGUI\tests\oGUITests.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="tests\SystemProperties_xml.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\TESTWindowControls.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTWindowSysDialog.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTWindowSysDialog_UI.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

@@ -241,8 +241,6 @@ oDECLARE_SMALL_ENUM(format, unsigned char)
 	format_count,
 };
 
-typedef format format_e;
-
 oDECLARE_SMALL_ENUM(layout, unsigned char)
 {
 	// image: no mip chain, so RowSize == RowPitch
@@ -284,8 +282,6 @@ oDECLARE_SMALL_ENUM(layout, unsigned char)
 
 };
 
-typedef layout layout_e;
-
 struct info
 {
 	info()
@@ -305,8 +301,8 @@ struct info
 			&& array_size == _That.array_size;
 	}
 
-	layout_e layout;
-	format_e format;
+	enum layout layout;
+	enum format format;
 	int3 dimensions;
 	int array_size;
 };
@@ -355,7 +351,7 @@ struct subresource_info
 	{}
 
 	int3 dimensions;
-	format_e format;
+	enum format format;
 	int mip_level;
 	int array_slice;
 	int subsurface;
@@ -606,7 +602,7 @@ inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _Subsurface
 inline void unpack_subresource(int _Subresource, int _NumMips, int _NumArraySlices, int* _pMipLevel, int* _pArraySliceIndex, int* _pSubsurfaceIndex) { int as = max(1, _NumArraySlices); *_pMipLevel = _Subresource % _NumMips; *_pArraySliceIndex = (_Subresource / _NumMips) % as; *_pSubsurfaceIndex = _Subresource / (_NumMips * as); }
 
 // Returns the number of all subresources described by the info.
-inline int num_subresources(const info& _SurfaceInfo) { return num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions) * _SurfaceInfo.array_size; }
+inline int num_subresources(const info& _SurfaceInfo) { return num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions) * max(1, _SurfaceInfo.array_size); }
 
 // Returns the info for a given subresource.
 subresource_info subresource(const info& _SurfaceInfo, int _Subresource);
