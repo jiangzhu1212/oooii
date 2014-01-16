@@ -161,8 +161,8 @@ bool oKinectImpl::Reinitialize()
 	// with this style API... but it would alter some of the setup in the util 
 	// code. It's worth a look.
 	// DWORD dwEvent = MsgWaitForMultipleObjects(eventCount, hEvents, FALSE, INFINITE, QS_ALLINPUT);
-	EventThread = move(thread(&oKinectImpl::OnEvent, this));
-	PitchThread = move(thread(&oKinectImpl::OnPitch, this));
+	EventThread = move(std::thread(&oKinectImpl::OnEvent, this));
+	PitchThread = move(std::thread(&oKinectImpl::OnPitch, this));
 
 	oKinectImpl::SetPitch(Desc.PitchDegrees);
 
