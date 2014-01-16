@@ -29,6 +29,7 @@
 #define oSurface_codec_h
 
 #include <oSurface/buffer.h>
+#include <oSurface/surface.h>
 
 namespace ouro {
 	namespace surface {

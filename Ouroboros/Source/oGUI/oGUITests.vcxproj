@@ -20,11 +20,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oGUI\tests\oGUITests.h" />
+    <ClInclude Include="tests\SystemProperties_xml.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\TESTWindowControls.cpp" />
     <ClCompile Include="tests\TESTWindowSysDialog.cpp" />
-    <ClCompile Include="tests\TESTWindowSysDialog_UI.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3982DDF0-20F5-4181-97B7-CD20212ECDF4}</ProjectGuid>
