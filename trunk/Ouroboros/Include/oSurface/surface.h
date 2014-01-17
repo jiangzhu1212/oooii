@@ -595,7 +595,7 @@ int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex = 0);
 // To simplify the need for much of the above API, interfaces should be 
 // developed that take a subresource id and internally use these API to
 // translate that into the proper byte locations and sizes. 
-inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _SubsurfaceIndex, int _NumMips, int _NumArraySlices) { return _MipLevel + (_ArraySliceIndex * _NumMips) + (_SubsurfaceIndex * _NumMips * max(1, _NumArraySlices)); }
+inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _SubsurfaceIndex, int _NumMips, int _NumArraySlices) { int nMips = max(1, _NumMips); return _MipLevel + (_ArraySliceIndex * nMips) + (_SubsurfaceIndex * nMips * max(1, _NumArraySlices)); }
 
 // Converts _Subresource back to its mip level and slice as long as the num mips
 // in the mip chain is specified.

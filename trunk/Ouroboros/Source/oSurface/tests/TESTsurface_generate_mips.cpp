@@ -74,6 +74,35 @@ static std::shared_ptr<surface::buffer> make_test_1d(int _Width)
 	return s;
 }
 
+static std::shared_ptr<surface::buffer> load_test_cube(test_services& _Services)
+{
+	const char* face_paths[6] =
+	{
+		"Test/Textures/CubePosX.png",
+		"Test/Textures/CubeNegX.png",
+		"Test/Textures/CubePosY.png",
+		"Test/Textures/CubeNegY.png",
+		"Test/Textures/CubePosZ.png",
+		"Test/Textures/CubeNegZ.png",
+	};
+
+	auto image = surface_load(_Services, face_paths[0]);
+
+	auto si = image->get_info();
+	si.array_size = oCOUNTOF(face_paths);
+	auto cube_image = surface::buffer::make(si);
+	cube_image->copy_from(0, image.get(), 0);
+
+	for (int i = 1; i < oCOUNTOF(face_paths); i++)
+	{
+		image = surface_load(_Services, face_paths[i]);
+		int subresource = surface::calc_subresource(0, i, 0, 0, si.array_size);
+		cube_image->copy_from(subresource, image.get(), 0);
+	}
+
+	return cube_image;
+}
+
 static void test_mipchain(test_services& _Services, const surface::buffer* _pImage, surface::filter::value _Filter, surface::layout _Layout, int _StartIndex)
 {
 	auto si = _pImage->get_info();
@@ -106,8 +135,9 @@ static void test_mipchain(test_services& _Services, const surface::buffer* _pIma
 		int nSlices = max(1, si.array_size);
 		for (int i = 0; i < nSlices; i++)
 		{
-			int subresource = surface::calc_subresource(0, 0, 0, nMips, nSlices);
-			mipchain->copy_from(0, _pImage, subresource);
+			int DstSubresource = surface::calc_subresource(0, i, 0, nMips, nSlices);
+			int SrcSubresource = surface::calc_subresource(0, i, 0, 0, nSlices);
+			mipchain->copy_from(DstSubresource, _pImage, SrcSubresource);
 		}
 	}
 
@@ -159,6 +189,9 @@ void TESTsurface_generate_mips(test_services& _Services)
 		copy_array_into_depth_slices(image3d.get(), images);
 		test_mipchain_layouts(_Services, image3d.get(), kFilter, 15);
 	}
+
+	image = load_test_cube(_Services);
+	test_mipchain_layouts(_Services, image.get(), kFilter, 18);
 }
 
 	} // namespace tests
