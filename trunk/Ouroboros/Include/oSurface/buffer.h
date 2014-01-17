@@ -42,7 +42,10 @@ public:
 	static std::shared_ptr<buffer> make(const info& _Info, void* _pData);
 
 	virtual info get_info() const = 0;
-	inline size_t size() const { return total_size(get_info()); }
+	inline size_t size() const { return total_size(get_info()); }\
+
+	// Sets all subresources to 0
+	virtual void clear() = 0;
 
 	// Without modifying the data, this updates the Info to be an image layout 
 	// with an array_size of 0. This basically means that saving the buffer to a 

@@ -39,6 +39,7 @@ public:
 	~buffer_impl();
 
 	info get_info() const override;
+	void clear() override;
 	void flatten() override;
 	void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
 	void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
@@ -86,6 +87,12 @@ std::shared_ptr<buffer> buffer::make(const info& _Info, void* _pData)
 info buffer_impl::get_info() const
 {
 	return Info;
+}
+
+void buffer_impl::clear()
+{
+	ouro::lock_guard<shared_mutex> lock(Mutex);
+	memset(Data, 0, total_size(Info));
 }
 
 void buffer_impl::flatten()
