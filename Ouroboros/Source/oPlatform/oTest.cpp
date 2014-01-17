@@ -525,7 +525,7 @@ bool oTest::TestImage(const surface::buffer* _pTestImage
 		diffPath.replace_extension_with_suffix("_diff.png");
 		const char* dPath = diffPath.c_str() + commonPathLength;
 
-		try { surface_save(diffs, ao, diffPath); }
+		try { surface_save(diffs, surface::alpha_option::preserve, diffPath); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Diff)...%s", dPath); }
 
 		if (_OutputGoldenImage)

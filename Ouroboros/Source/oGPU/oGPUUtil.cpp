@@ -523,6 +523,8 @@ static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const surface::buf
 
 bool oGPUGenerateMips(oGPUDevice* _pDevice, const surface::buffer** _pMip0Images, uint _NumImages, surface::info& _SurfaceInfo, ouro::gpu::texture_type::value _Type, surface::buffer* _pMipBuffer)
 {
+	_pMipBuffer->clear();
+
 	oGPUTexture::DESC rbd;
 	rbd.dimensions = _SurfaceInfo.dimensions;
 	rbd.format = _SurfaceInfo.format;
