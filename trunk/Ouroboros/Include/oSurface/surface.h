@@ -607,7 +607,7 @@ inline int num_subresources(const info& _SurfaceInfo) { return num_mips(_Surface
 // Returns the info for a given subresource.
 subresource_info subresource(const info& _SurfaceInfo, int _Subresource);
 
-// Returns a surface_info for the nth subsurfaces miplevel. Optionally also 
+// Returns a surface::info for the nth subsurfaces miplevel. Optionally also 
 // calculate the byte dimensions for the specified subresource. i.e. the width 
 // in bytes to copy (different than pitch) and number of rows of that width to 
 // copy.
