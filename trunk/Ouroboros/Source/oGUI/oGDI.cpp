@@ -178,23 +178,18 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 
 		BitBlt(hMemDC, 0, 0, size.x, size.y, hDC, r.left, r.top, SRCCOPY);
 
-		if (AlignedWidth == size.x)
-			GetDIBits(hMemDC, hBMP, 0, _FlipV ? -size.y : size.y, _pImageBuffer, _pBitmapInfo, DIB_RGB_COLORS);
-		else
+		const int PadSize = AlignedWidth - size.x;
+		for (int y = 0; y < size.y; y++)
 		{
-			const int PadSize = AlignedWidth - size.x;
-			for (int y = 0; y < size.y; y++)
+			GetDIBits(hMemDC, hBMP, _FlipV ? (size.y - 1 - y) : y, 1, byte_add(_pImageBuffer, y * RowPitch), _pBitmapInfo, DIB_RGB_COLORS);
+			char* pad = (char*)byte_add(_pImageBuffer, (y*RowPitch) + (size.x*BytesPerPixel));
+			switch (PadSize)
 			{
-				GetDIBits(hMemDC, hBMP, _FlipV ? (size.y - 1 - y) : y, 1, byte_add(_pImageBuffer, y * RowPitch), _pBitmapInfo, DIB_RGB_COLORS);
-				char* pad = (char*)byte_add(_pImageBuffer, (y*RowPitch) + (size.x*BytesPerPixel));
-				switch (PadSize)
-				{
-					// Duff's device
-					case 3: pad[2] = 0;
-					case 2: pad[1] = 0;
-					case 1: pad[0] = 0;
-					default: break;
-				}
+				// Duff's device
+				case 3: pad[2] = 0;
+				case 2: pad[1] = 0;
+				case 1: pad[0] = 0;
+				default: break;
 			}
 		}
 
