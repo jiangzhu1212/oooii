@@ -62,6 +62,9 @@ public:
 	virtual void unmap_const(int _Subresource) const = 0;
 
 	virtual void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const = 0;
+	inline void copy_from(int _Subresource, const_mapped_subresource& _Source, bool _FlipVertically = false) { update_subresource(_Subresource, _Source, _FlipVertically); }
+
+	inline void copy_from(int _DstSubresource, const buffer* _pBuffer, int _SrcSubresource, bool _FlipVertically = false);
 
 	virtual std::shared_ptr<buffer> convert(const info& _ConvertedInfo) const = 0;
 	inline std::shared_ptr<buffer> convert(format _NewFormat) const { info si = get_info(); si.format = _NewFormat; return convert(si); }
@@ -119,6 +122,12 @@ private:
 	int Subresource;
 	const buffer* pBuffer;
 };
+
+inline void buffer::copy_from(int _DstSubresource, const buffer* _pBuffer, int _SrcSubresource, bool _FlipVertically)
+{
+	shared_lock locked(_pBuffer, _SrcSubresource);
+	copy_from(_DstSubresource, locked.mapped, _FlipVertically);
+}
 
 // Returns the root mean square of the difference between the two surfaces. If
 // the formats or sizes are different, this throws an exception.

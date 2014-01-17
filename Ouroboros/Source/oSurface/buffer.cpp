@@ -54,7 +54,7 @@ public:
 private:
 	void* Data;
 	info Info;
-	shared_mutex Mutex; // todo: separate locking mechanism to be per-subresource
+	mutable shared_mutex Mutex; // todo: separate locking mechanism to be per-subresource
 };
 
 buffer_impl::buffer_impl(const surface::info& _SurfaceInfo, void* _pData)
@@ -154,20 +154,20 @@ void buffer_impl::unmap(int _Subresource)
 
 void buffer_impl::map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
 {
-	const_cast<shared_mutex&>(Mutex).lock_shared();
+	Mutex.lock_shared();
 	*_pMapped = get_const_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
 }
 
 void buffer_impl::unmap_const(int _Subresource) const
 {
-	const_cast<shared_mutex&>(Mutex).unlock_shared();
+	Mutex.unlock_shared();
 }
 
 void buffer_impl::copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically) const
 {
 	int2 ByteDimensions;
 	const_mapped_subresource Source = get_const_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	ouro::shared_lock<shared_mutex> lock(const_cast<shared_mutex&>(Mutex));
+	ouro::shared_lock<shared_mutex> lock(Mutex);
 	memcpy2d(_pMapped->data, _pMapped->row_pitch, Source.data, Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 
@@ -193,8 +193,9 @@ void buffer_impl::generate_mips(filter::value _Filter)
 	std::lock_guard<ouro::shared_mutex> lock(Mutex);
 
 	int nMips = num_mips(Info);
+	int nSlices = max(1, Info.array_size);
 
-	for (int slice = 0; slice < Info.array_size; slice++)
+	for (int slice = 0; slice < nSlices; slice++)
 	{
 		int mip0subresource = calc_subresource(0, slice, 0, nMips, Info.array_size);
 		const_mapped_subresource mip0 = get_const_mapped_subresource(Info, mip0subresource, 0, Data);

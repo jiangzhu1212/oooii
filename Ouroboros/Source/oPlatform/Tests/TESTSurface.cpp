@@ -36,4 +36,5 @@ using namespace ouro::tests;
 oTEST_REGISTER_SURFACE_TEST0(surface);
 oTEST_REGISTER_SURFACE_TEST(surface_codec);
 oTEST_REGISTER_SURFACE_TEST(surface_fill);
+oTEST_REGISTER_SURFACE_TEST(surface_generate_mips);
 oTEST_REGISTER_SURFACE_TEST(surface_resize);

@@ -327,6 +327,7 @@ void resize_internal(const info& _SourceInfo, const const_mapped_subresource& _S
 		{
 			info tempInfo = _SourceInfo;
 			tempInfo.dimensions.x = _DestinationInfo.dimensions.x;
+			tempInfo.layout = surface::layout::tight;
 			std::vector<char> tempImage;
 			tempImage.resize(total_size(tempInfo));
 
@@ -339,6 +340,7 @@ void resize_internal(const info& _SourceInfo, const const_mapped_subresource& _S
 		{
 			info tempInfo = _SourceInfo;
 			tempInfo.dimensions.y = _DestinationInfo.dimensions.y;
+			tempInfo.layout = surface::layout::tight;
 			std::vector<char> tempImage;
 			tempImage.resize(total_size(tempInfo));
 
