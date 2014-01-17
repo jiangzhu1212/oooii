@@ -128,7 +128,7 @@ void buffer_impl::update_subresource(int _Subresource, const box& _Box, const co
 	int RowSize = PixelSize * _Box.width();
 
 	// Dest points at start of subresource, so offset to subrect of first slice
-	Dest.data = byte_add(Dest.data, (_Box.top * Dest.row_pitch) + _Box.left * PixelSize);
+	Dest.data = byte_add(Dest.data, _Box.front * Dest.depth_pitch + _Box.top * Dest.row_pitch + _Box.left * PixelSize);
 
 	const void* pSource = _Source.data;
 
@@ -203,12 +203,15 @@ void buffer_impl::generate_mips(filter::value _Filter)
 		for (int mip = 1; mip < nMips; mip++)
 		{
 			int subresource = calc_subresource(mip, slice, 0, nMips, Info.array_size);
-			mapped_subresource dst = get_mapped_subresource(Info, subresource, 0, Data);
 			subresource_info subinfo = surface::subresource(Info, subresource);
 
-			info di = Info;
-			di.dimensions = subinfo.dimensions;
-			resize(Info, mip0, di, &dst, _Filter);
+			for (int DepthIndex = 0; DepthIndex < subinfo.dimensions.z; DepthIndex++)
+			{
+				mapped_subresource dst = get_mapped_subresource(Info, subresource, DepthIndex, Data);
+				info di = Info;
+				di.dimensions = subinfo.dimensions;
+				resize(Info, mip0, di, &dst, _Filter);
+			}
 		}
 	}
 }
