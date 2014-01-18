@@ -547,6 +547,7 @@ bool oTest::TestImage(const surface::buffer* _pTestImage
 struct DriverPaths
 {
 	path Generic;
+	path OperatingSystemSpecific;
 	path VendorSpecific;
 	path CardSpecific;
 	path DriverSpecific;
@@ -555,10 +556,13 @@ struct DriverPaths
 static bool oInitialize(const char* _RootPath, const char* _Filename, const adapter::info& _DriverDesc, DriverPaths* _pDriverPaths)
 {
 	_pDriverPaths->Generic = _RootPath;
-	_pDriverPaths->VendorSpecific = _pDriverPaths->Generic / as_string(_DriverDesc.vendor);
+	sstring OSName;
+	_pDriverPaths->OperatingSystemSpecific = _pDriverPaths->Generic / system::operating_system_name(OSName);
+	
+	_pDriverPaths->VendorSpecific = _pDriverPaths->OperatingSystemSpecific / as_string(_DriverDesc.vendor);
 
 	path_string tmp, tmp2;
-	tmp = _pDriverPaths->VendorSpecific / _DriverDesc.description.c_str();
+	tmp = _pDriverPaths->OperatingSystemSpecific / _DriverDesc.description.c_str();
 	replace(tmp2, tmp, " ", "_");
 	_pDriverPaths->CardSpecific = tmp2; 
 
@@ -566,6 +570,7 @@ static bool oInitialize(const char* _RootPath, const char* _Filename, const adap
 	_pDriverPaths->DriverSpecific = _pDriverPaths->CardSpecific / to_string(driverVer, _DriverDesc.version);
 
 	_pDriverPaths->Generic /= _Filename;
+	_pDriverPaths->OperatingSystemSpecific /= _Filename;
 	_pDriverPaths->VendorSpecific /= _Filename;
 	_pDriverPaths->CardSpecific /= _Filename;
 	_pDriverPaths->DriverSpecific /= _Filename;
@@ -600,6 +605,9 @@ bool oTest::TestImage(const surface::buffer* _pTestImage, unsigned int _NthImage
 
 	else if (filesystem::exists(GoldenPaths.CardSpecific))
 		return TestImage(_pTestImage, GoldenPaths.CardSpecific, FailurePaths.CardSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+
+	else if (filesystem::exists(GoldenPaths.OperatingSystemSpecific))
+		return TestImage(_pTestImage, GoldenPaths.OperatingSystemSpecific, FailurePaths.OperatingSystemSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
 
 	else if (filesystem::exists(GoldenPaths.Generic))
 		return TestImage(_pTestImage, GoldenPaths.Generic, FailurePaths.Generic, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);

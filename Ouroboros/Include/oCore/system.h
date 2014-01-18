@@ -116,6 +116,10 @@ bool is_remote_session();
 // If the system is logged out, GUI draw commands will fail
 bool gui_is_drawable();
 
+char* operating_system_name(char* _StrDestination, size_t _SizeofStrDestination);
+template<size_t size> char* operating_system_name(char (&_StrDestination)[size]) { return operating_system_name(_StrDestination, size); }
+template<size_t capacity> char* operating_system_name(fixed_string<char, capacity>& _StrDestination) { return operating_system_name(_StrDestination, _StrDestination.capacity()); }
+
 char* host_name(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> char* host_name(char (&_StrDestination)[size]) { return host_name(_StrDestination, size); }
 template<size_t capacity> char* host_name(fixed_string<char, capacity>& _StrDestination) { return host_name(_StrDestination, _StrDestination.capacity()); }

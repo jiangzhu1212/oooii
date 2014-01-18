@@ -367,6 +367,14 @@ bool gui_is_drawable()
 	return !!GetForegroundWindow();
 }
 
+char* operating_system_name(char* _StrDestination, size_t _SizeofStrDestination)
+{
+	const char* OSName = as_string(windows::get_version());
+	if (strlcpy(_StrDestination, OSName, _SizeofStrDestination) >= _SizeofStrDestination)
+		oTHROW0(no_buffer_space);
+	return _StrDestination;
+}
+
 char* host_name(char* _StrDestination, size_t _SizeofStrDestination)
 {
 	DWORD nElements = as_type<DWORD>(_SizeofStrDestination);
