@@ -23,6 +23,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/uri.h>
+#include <oBase/timer.h>
+#include <exception>
+#include <stdexcept>
+#include <thread>
+#include <vector>
+
+#pragma warning(disable:4505)
 
 namespace ouro {
 	namespace tests {
@@ -210,6 +217,7 @@ static const URI_RESOLVE sTESTuri_make_absolute[] =
 	{ "g#s/./x", "http://a/b/c/g#s/./x" },
 	{ "g#s/../x", "http://a/b/c/g#s/../x" },
 };
+static_assert((oCOUNTOF(sTESTuri_make_absolute) % 2) == 0, "sTESTuri_make_absolute must be even so it can be divided into two threads");
 
 static const uri sTESTuri_make_absolute_base2("file://DATA/Test/Scenes/TestTextureSet.xml");
 static const URI_RESOLVE sTESTuri_make_absolute2[] = 
@@ -255,16 +263,39 @@ static const URI_REPLACE sTESTuri_replace[] =
 	{ "file://USER/desktop/test.xml", nullptr, nullptr, nullptr, "test", nullptr, "file://USER/desktop/test.xml?test" },
 };
 
-static void TESTuri_make_absolute()
+typedef void (*fn_t)();
+static void thread_proc(const char* _Name, fn_t _Test, std::exception_ptr* _pException)
 {
-	oFORI(i, sTESTuri_make_absolute)
+	*_pException = std::exception_ptr();
+	try { _Test(); }
+	catch (...) { *_pException = std::current_exception(); }
+	oTRACE("%s %s", _Name, *_pException == std::exception_ptr() ? "succeeded" : "failed");
+}
+
+static void TESTuri_make_absolute(int _Start, size_t _NumResolves)
+{
+	for (int i = _Start; i < _NumResolves; i++)
 	{
 		const auto& t = sTESTuri_make_absolute[i];
 		uri u(sTESTuri_make_absolute_base, t.Ref); 
 		uri r(t.Resolved);
 		oCHECK(u == r, "fail(%d) (absolute): %s + %s != %s", i, sTESTuri_make_absolute_base.c_str(), t.Ref, t.Resolved);
 	}
+}
 
+static void TESTuri_make_absolute1a()
+{
+	TESTuri_make_absolute(0, oCOUNTOF(sTESTuri_make_absolute) / 2);
+}
+
+static void TESTuri_make_absolute1b()
+{
+	const size_t count = oCOUNTOF(sTESTuri_make_absolute) / 2;
+	TESTuri_make_absolute(count, count);
+}
+
+static void TESTuri_make_absolute2()
+{
 	oFORI(i, sTESTuri_make_absolute2)
 	{
 		const auto& t = sTESTuri_make_absolute2[i];
@@ -272,7 +303,10 @@ static void TESTuri_make_absolute()
 		uri r(t.Resolved);
 		oCHECK(u == r, "fail(%d) (absolute2): %s + %s != %s", i, sTESTuri_make_absolute_base2.c_str(), t.Ref, t.Resolved);
 	}
+}
 
+static void TESTuri_make_absolute3()
+{
 	oFORI(i, sTESTuri_make_absolute3)
 	{
 		const auto& t = sTESTuri_make_absolute3[i];
@@ -325,12 +359,60 @@ static void TESTuri_replace()
 
 void TESTuri()
 {
-	TESTuri_parts();
-	TESTuri_absolute();
-	TESTuri_same_document();
-	TESTuri_make_absolute();
-	TESTuri_make_relative();
-	TESTuri_replace();
+//
+//Tests\TESTuri.cpp(333): Trace: TESTuri_parts in 5.677 s
+//Tests\TESTuri.cpp(335): Trace: TESTuri_absolute in 1.550 s
+//Tests\TESTuri.cpp(337): Trace: TESTuri_same_document in 5.043 s
+//Tests\TESTuri.cpp(339): Trace: TESTuri_make_absolute in 16.682 s
+//Tests\TESTuri.cpp(341): Trace: TESTuri_make_relative in 3.158 s
+//Tests\TESTuri.cpp(343): Trace: TESTuri_replace in 1.023 s
+
+	const char* Names[] = 
+	{
+		"TESTuri_parts",
+		"TESTuri_absolute",
+		"TESTuri_same_document",
+		"TESTuri_make_absolute1a",
+		"TESTuri_make_absolute1b",
+		"TESTuri_make_absolute2",
+		"TESTuri_make_absolute3",
+		"TESTuri_make_relative",
+		"TESTuri_replace",
+	};
+
+	const fn_t Functions[] = 
+	{
+		TESTuri_parts,
+		TESTuri_absolute,
+		TESTuri_same_document,
+		TESTuri_make_absolute1a,
+		TESTuri_make_absolute1b,
+		TESTuri_make_absolute2, // 7
+		TESTuri_make_absolute3,
+		TESTuri_make_relative,
+		TESTuri_replace,
+	};
+	static_assert(oCOUNTOF(Names) == oCOUNTOF(Functions), "array mismatch");
+
+	timer t;
+
+	std::vector<std::thread> Threads;
+	Threads.resize(oCOUNTOF(Names));
+
+	std::vector<std::exception_ptr> Exceptions;
+	Exceptions.resize(oCOUNTOF(Names));
+
+	for (int i = 0; i < Threads.size(); i++)
+		Threads[i] = std::thread(thread_proc, Names[i], Functions[i], &Exceptions[i]);
+
+	for (auto& t : Threads)
+		t.join();
+
+	for (auto& e : Exceptions)
+		if (e != std::exception_ptr())
+			std::rethrow_exception(e);
+
+	oTRACE("all tests completed in %.03fs", t.seconds());
 }
 
 	} // namespace tests
