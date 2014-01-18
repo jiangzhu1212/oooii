@@ -451,11 +451,6 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const surface::buffer* const* _ppSo
 		}
 	}
 
-//
-//#error need answer
-//	if (gpu::is_mipped(_Type) && !oGPUGenerateMips(_pDevice, Texture))
-//		return false; // pass through error
-
 	*_ppTexture = Texture;
 	(*_ppTexture)->Reference();
 	return true;
