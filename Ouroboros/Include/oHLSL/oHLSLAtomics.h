@@ -47,7 +47,18 @@ inline void InterlockedCompareExchange(unsigned int& dest, unsigned int compare_
 inline void InterlockedCompareExchange(unsigned long& dest, unsigned long compare_value, unsigned long value, unsigned long& original_value) { long v = _InterlockedCompareExchange((volatile long*)&dest, *(long*)&value, *(long*)&compare_value); original_value = *(unsigned long*)&v; }
 inline void InterlockedCompareExchange(unsigned long long& dest, unsigned long long compare_value, unsigned long long value, unsigned long long& original_value) { long long v = _InterlockedCompareExchange64((volatile long long*)&dest, *(long long*)&value, *(long long*)&compare_value); original_value = *(unsigned long long*)&v; }
 
-//void InterlockedCompareStore(R& dest, T compare_value, T value);
+inline void InterlockedCompareStore(bool& dest, bool compare_value, bool value) { _InterlockedCompareExchange8((volatile char*)&dest, *(char*)&value, *(char*)&compare_value); }
+inline void InterlockedCompareStore(char& dest, char compare_value, char value) { _InterlockedCompareExchange8(&dest, value, compare_value); }
+inline void InterlockedCompareStore(short& dest, short compare_value, short value) { _InterlockedCompareExchange16(&dest, value, compare_value); }
+inline void InterlockedCompareStore(int& dest, int compare_value, int value) { _InterlockedCompareExchange((volatile long*)&dest, (long)value, (long)compare_value); }
+inline void InterlockedCompareStore(long& dest, long compare_value, long value) { _InterlockedCompareExchange(&dest, value, compare_value); }
+inline void InterlockedCompareStore(long long& dest, long long compare_value, long long value) { _InterlockedCompareExchange64(&dest, value, compare_value); }
+
+inline void InterlockedCompareStore(unsigned char& dest, unsigned char compare_value, unsigned char value) { char v = _InterlockedCompareExchange8((volatile char*)&dest, *(char*)&value, *(char*)&compare_value); }
+inline void InterlockedCompareStore(unsigned short& dest, unsigned short compare_value, unsigned short value) { short v = _InterlockedCompareExchange16((volatile short*)&dest, *(short*)&value, *(short*)&compare_value); }
+inline void InterlockedCompareStore(unsigned int& dest, unsigned int compare_value, unsigned int value) { long v = _InterlockedCompareExchange((volatile long*)&dest, *(long*)&value, *(long*)&compare_value); }
+inline void InterlockedCompareStore(unsigned long& dest, unsigned long compare_value, unsigned long value) { long v = _InterlockedCompareExchange((volatile long*)&dest, *(long*)&value, *(long*)&compare_value); }
+inline void InterlockedCompareStore(unsigned long long& dest, unsigned long long compare_value, unsigned long long value) { _InterlockedCompareExchange64((volatile long long*)&dest, *(long long*)&value, *(long long*)&compare_value); }
 
 inline void InterlockedExchange(bool& dest, bool value, bool& original_value) { char v = _InterlockedExchange8((volatile char*)&dest, *(char*)&value); original_value = *(bool*)&v; }
 inline void InterlockedExchange(char& dest, char value, char& original_value) { original_value = _InterlockedExchange8(&dest, value); }
