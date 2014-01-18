@@ -411,7 +411,11 @@ void oKinectImpl::OnEvent()
 					Skeletons.CacheNextFrame(NUISensor);
 			}
 
-			catch (exception& e)
+			#if oENABLE_ASSERTS
+				catch (exception& e)
+			#else
+				catch (exception&)
+			#endif
 			{
 				oTRACE("oKinect[%d] ptr=0x%p exception caught: %s", Desc.Index, this, e.what());
 				oFORI(i, hEvents)
