@@ -50,10 +50,6 @@ struct TestObj
 
 void TESTblock_allocator()
 {
-#if defined(_MSC_VER) && _MSC_VER >= 1600 && o32BIT
-	oTHROW(permission_denied, "Crashes in VS2012");
-#else
-
 	static const int NumBlocks = 2000;
 	static const int NumBlocksPerChunk = 10;
 	std::unique_ptr<oConcurrency::block_allocator_t<TestObj>> pAllocator(new oConcurrency::block_allocator_t<TestObj>(NumBlocksPerChunk));
@@ -129,8 +125,6 @@ void TESTblock_allocator()
 	{
 		pAllocator->clear();
 	}
-
-#endif
 }
 
 	} // namespace test

@@ -167,13 +167,13 @@ void concurrent_queue<T>::internal_push(node_t* _pNode)
 	pointer_t t, next;
 	while (1)
 	{
-		t = thread_cast<pointer_t&>(Tail);
+		t = Tail;
 		next = t.ptr()->next;
 		if (t == Tail)
 		{
 			if (!next.ptr())
 			{
-				if (pointer_t::CAS(&thread_cast<pointer_t&>(Tail).ptr()->next, pointer_t(_pNode, next.tag()+1), next))
+				if (pointer_t::CAS(&Tail.ptr()->next, pointer_t(_pNode, next.tag()+1), next))
 					break;
 			}
 
@@ -203,8 +203,8 @@ bool concurrent_queue<T>::try_pop(reference _Element)
 	pointer_t h, t, next;
 	while (1)
 	{
-		h = thread_cast<pointer_t&>(Head);
-		t = thread_cast<pointer_t&>(Tail);
+		h = Head;
+		t = Tail;
 		next = h.ptr()->next;
 		if (h == Head)
 		{

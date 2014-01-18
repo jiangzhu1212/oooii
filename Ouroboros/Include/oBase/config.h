@@ -60,6 +60,7 @@
 	#else
 		#define o32BIT 1
 		#define oDEFAULT_MEMORY_ALIGNMENT 4
+		#define oHAS_DOUBLE_WIDE_ATOMIC_BUG 1
 	#endif
 
 	#ifdef _WIN32
