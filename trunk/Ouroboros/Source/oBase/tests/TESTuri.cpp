@@ -272,9 +272,9 @@ static void thread_proc(const char* _Name, fn_t _Test, std::exception_ptr* _pExc
 	oTRACE("%s %s", _Name, *_pException == std::exception_ptr() ? "succeeded" : "failed");
 }
 
-static void TESTuri_make_absolute(int _Start, size_t _NumResolves)
+static void TESTuri_make_absolute(size_t _Start, size_t _NumResolves)
 {
-	for (int i = _Start; i < _NumResolves; i++)
+	for (size_t i = _Start; i < _NumResolves; i++)
 	{
 		const auto& t = sTESTuri_make_absolute[i];
 		uri u(sTESTuri_make_absolute_base, t.Ref); 
@@ -402,7 +402,7 @@ void TESTuri()
 	std::vector<std::exception_ptr> Exceptions;
 	Exceptions.resize(oCOUNTOF(Names));
 
-	for (int i = 0; i < Threads.size(); i++)
+	for (size_t i = 0; i < Threads.size(); i++)
 		Threads[i] = std::thread(thread_proc, Names[i], Functions[i], &Exceptions[i]);
 
 	for (auto& t : Threads)
