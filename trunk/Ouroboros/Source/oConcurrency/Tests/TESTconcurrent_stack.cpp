@@ -82,7 +82,7 @@ static void test_basics()
 
 static void test_concurrency()
 {
-	Node nodes[4000];
+	Node nodes[40];
 	memset(nodes, 0xaa, sizeof(nodes));
 
 	concurrent_stack<Node> s;

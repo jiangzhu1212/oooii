@@ -30,8 +30,14 @@
 #ifndef oConcurrency_concurrent_stack_h
 #define oConcurrency_concurrent_stack_h
 
+#include <oBase/config.h>
 #include <oConcurrency/oConcurrency.h> // for is_fifo
-#include <atomic>
+
+#ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
+	#include <oHLSL/oHLSLAtomics.h>
+#else
+	#include <atomic>
+#endif
 
 namespace oConcurrency {
 
@@ -87,7 +93,25 @@ private:
 		};
 	};
 
-	std::atomic<unsigned long long> Head;
+	// @tony: there's a warning about not handling registers correctly in the 32-bit std::atomic implementation
+	// in VS2012 that results in registers being corrupt, so fall back on basic atomics until the lib gets fixed
+	#ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
+		unsigned long long Head;
+		bool head_compare_exchange_strong(unsigned long long& _Expected, unsigned long long _Desired)
+		{
+			unsigned long long Orig = 0;
+			InterlockedCompareExchange(Head, _Expected, _Desired, Orig);
+			bool Exchanged = Orig == _Expected;
+			_Expected = Orig;
+			return Exchanged;
+		}
+	#else
+		std::atomic<unsigned long long> Head;
+		bool head_compare_exchange_strong(unsigned long long& _Expected, unsigned long long _Desired)
+		{
+			return Head.compare_exchange_strong(_Expected, _Desired);
+		}
+	#endif
 };
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
@@ -123,23 +147,21 @@ void concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::push(pointer _pElem
 		if (reinterpret_cast<pointer>(New.pHead) != _pElement)
 			throw std::overflow_error("the specified pointer is too large to be used in conjunction with tagging or other concurrency/ABA solutions");
 
-	} while (!Head.compare_exchange_strong(Old.All, New.All));
+	} while (!head_compare_exchange_strong(Old.All, New.All));
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
 typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::peek() const
 {
-	header_t Old;
-	Old.All = Head;
+	header_t Old; Old.All = Head;
 	return reinterpret_cast<pointer>(Old.pHead);
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
 typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pop()
 {
-	header_t New, Old;
+	header_t New, Old; Old.All = Head;
 	pointer pElement = nullptr;
-	Old.All = Head;
 	do 
 	{
 		if (!Old.pHead)
@@ -148,7 +170,7 @@ typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurr
 		New.Size = Old.Size - 1;
 		pElement = reinterpret_cast<pointer>(Old.pHead);
 		New.pHead = reinterpret_cast<uintptr_t>(pElement->pNext);
-	} while (!Head.compare_exchange_strong(Old.All, New.All));
+	} while (!head_compare_exchange_strong(Old.All, New.All));
 
 	return pElement;
 }
@@ -156,7 +178,7 @@ typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurr
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
 bool concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::empty() const
 {
-	header_t h; h.All = Head.load();
+	header_t h; h.All = Head;
 	return !h.pHead;
 }
 
@@ -172,15 +194,14 @@ typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurr
 	{
 		New.Tag = Old.Tag + 1;
 		pElement = reinterpret_cast<pointer>(Old.pHead);
-	} while (!Head.compare_exchange_strong(Old.All, New.All));
-
+	} while (!head_compare_exchange_strong(Old.All, New.All));
 	return pElement;
 }
 
 template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
 typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::size_type concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::size() const
 {
-	header_t h; h.All = Head.load();
+	header_t h; h.All = Head;
 	return h.Size;
 }
 
