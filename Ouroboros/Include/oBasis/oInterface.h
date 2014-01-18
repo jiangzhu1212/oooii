@@ -107,7 +107,7 @@ interface oInterface
 
 inline void intrusive_ptr_add_ref(threadsafe oInterface* p)
 {
-	#ifdef oENABLE_ASSERTS
+	#if oENABLE_ASSERTS
 		int count = 
 	#endif
 	p->Reference();

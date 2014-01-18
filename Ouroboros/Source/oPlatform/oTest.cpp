@@ -830,7 +830,7 @@ void oTestManager_Impl::PrintDesc()
 		catch (std::exception& e)
 		{
 			snprintf(CLStr, "%d + ???", CL);
-			oTRACE("scc failure: %s", e.what());
+			oTRACEA("scc failure: %s", e.what());
 		}
 	}
 	else
@@ -1097,7 +1097,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	
 	if (ShowProgressBar)
 	{
-		ProgressBarThread = std::move(std::thread([&]
+		ProgressBarThread = std::thread([&]
 		{
 			oConcurrency::begin_thread("Progress Bar Thread");
 			xlstring title;
@@ -1108,7 +1108,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 			ProgressBar->flush_messages(true);
 			pProgressBar = nullptr;
 			oConcurrency::end_thread();
-		}));
+		});
 
 		Ready.wait();
 	}

@@ -184,7 +184,7 @@ window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const in
 	Parent = _Parent;
 	OnAction = _OnAction;
 	OnThreadExit = _OnThreadExit;
-	Thread = std::move(std::thread(&oGPUWindowThread::Run, this));
+	Thread = std::thread(&oGPUWindowThread::Run, this);
 
 	backoff bo;
 	while (!pGPUWindow)

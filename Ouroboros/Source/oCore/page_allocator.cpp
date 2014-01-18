@@ -68,7 +68,7 @@ size_t large_page_size()
 range get_range(void* _Base)
 {
 	MEMORY_BASIC_INFORMATION mbi;
-	#ifdef oENABLE_ASSERTS
+	#if oENABLE_ASSERTS
 		size_t returnSize = 
 	#endif
 	VirtualQuery(_Base, &mbi, sizeof(mbi));

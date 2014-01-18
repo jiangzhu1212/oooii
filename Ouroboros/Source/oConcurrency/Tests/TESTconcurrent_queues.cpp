@@ -438,7 +438,7 @@ static void test_stealing(const std::function<void(worklist_t& _WorkParam, std::
 
 	std::vector<std::thread> thieves;
 	for (unsigned int i = 0; i < std::thread::hardware_concurrency() + 5; i++)
-		thieves.push_back(std::move(std::thread(try_steal, std::ref(_Work), Results, &Done)));
+		thieves.push_back(std::thread(try_steal, std::ref(_Work), Results, &Done));
 
 	t.join();
 

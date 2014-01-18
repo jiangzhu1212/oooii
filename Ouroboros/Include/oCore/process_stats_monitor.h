@@ -60,7 +60,7 @@ public:
 			, PollRate(_PollRate)
 	{
 		reset();
-		Thread = std::move(std::thread(&process_stats_monitor::thread_proc, this));
+		Thread = std::thread(&process_stats_monitor::thread_proc, this);
 		backoff bo;
 		while (Done)
 			bo.pause();

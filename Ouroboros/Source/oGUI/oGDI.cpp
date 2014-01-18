@@ -389,6 +389,34 @@ bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1)
 	return true;
 }
 
+static BITMAPINFOHEADER oGDIMakeBitmapHeader(int _Width, int _Height, int _ColorDepth = 32)
+{
+	BITMAPINFOHEADER h;
+	h.biSize = sizeof(BITMAPINFOHEADER);
+	h.biWidth = _Width;
+	h.biHeight = -_Height; // top-down
+	h.biPlanes = 1; 
+	h.biBitCount = static_cast<WORD>(_ColorDepth);
+	h.biCompression = BI_RGB;
+	return h;
+}
+
+#if 0 // do I need this to make translucent icons show up?
+static BITMAPV4HEADER oGDIMakeBitmapHeaderV4(int _Width, int _Height, int _ColorDepth = 32)
+{
+	BITMAPV4HEADER v4;
+	BITMAPINFOHEADER v3 = oGDIMakeBitmapHeader(_Width, _Height, _ColorDepth);
+	memset(v4, 0, sizeof(v4));
+  memcpy(v4, &v3, sizeof(v3));
+	v4->bV4Size = sizeof(v4);
+	v4->bV4RedMask = 0x00ff0000;
+	v4->bV4GreenMask = 0x0000ff00;
+	v4->bV4BlueMask = 0x000000ff;
+	v4->bV4AlphaMask = 0xff000000;
+	return v3;
+}
+#endif
+
 bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 {
 	if (ouro::equal(_Alpha, 1.0f))
@@ -402,12 +430,7 @@ bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 
 	// Copy the contents out (is there no way to access things directly?)
 	BITMAPINFO bmi = {0};
-	bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	bmi.bmiHeader.biWidth = oWinRectW(_rBox);
-	bmi.bmiHeader.biHeight = oWinRectH(_rBox);
-	bmi.bmiHeader.biPlanes = 1; 
-	bmi.bmiHeader.biBitCount = 32;
-	bmi.bmiHeader.biCompression = BI_RGB;
+	bmi.bmiHeader = oGDIMakeBitmapHeader(oWinRectW(_rBox), oWinRectH(_rBox));
 	if (!bmi.bmiHeader.biWidth || !bmi.bmiHeader.biHeight)
 		return true;
 	
