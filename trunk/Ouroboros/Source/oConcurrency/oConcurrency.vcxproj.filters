@@ -68,5 +68,8 @@
     <ClInclude Include="..\..\Include\oConcurrency\oConcurrency.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack.h">
+      <Filter>oConcurrency</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
