@@ -38,11 +38,26 @@ namespace ouro {
 class buffer
 {
 public:
+
+	enum make_type
+	{
+		image, // only reads first image, sets array_size to 0
+		image_array, // whether 1 or more images, array_size is set to 1 or more, never 0
+		mips, // image with mips
+		mips_array, // image_array with mips
+		image3d, // reads array of images as slices of a 3d image
+		mips3d, // image3d with mips
+	};
+
 	static std::shared_ptr<buffer> make(const info& _Info);
 	static std::shared_ptr<buffer> make(const info& _Info, void* _pData);
 
+	// Given an array of same-formatted 2D buffers of the same size and image layout,
+	// form either an array or 3D buffer and optionally calculate mips for it.
+	static std::shared_ptr<buffer> make(const buffer* const* _ppSourceBuffers, size_t _NumBuffers, make_type _Type);
+
 	virtual info get_info() const = 0;
-	inline size_t size() const { return total_size(get_info()); }\
+	inline size_t size() const { return total_size(get_info()); }
 
 	// Sets all subresources to 0
 	virtual void clear() = 0;

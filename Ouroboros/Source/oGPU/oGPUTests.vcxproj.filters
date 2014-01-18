@@ -25,9 +25,6 @@
     <ClCompile Include="Tests\TESTGPUDevice.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTGPUGenerateMips.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTGPUInstancedTriangle.cpp">
       <Filter>Source</Filter>
     </ClCompile>

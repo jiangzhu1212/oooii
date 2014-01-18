@@ -41,21 +41,6 @@ static std::shared_ptr<surface::buffer> surface_load(test_services& _Services, c
 	return surface::decode(b.get(), size, _Option);
 }
 
-static void copy_array_into_depth_slices(surface::buffer* _pDstImage3d, const surface::buffer** _ppSrcImages2d)
-{
-	const surface::info si = _pDstImage3d->get_info();
-	surface::box region;
-	region.right = si.dimensions.x;
-	region.bottom = si.dimensions.y;
-	for (int i = 0; i < si.dimensions.z; i++)
-	{
-		region.front = i;
-		region.back = i + 1;
-		surface::shared_lock lock(_ppSrcImages2d[i]);
-		_pDstImage3d->update_subresource(0, region, lock.mapped);
-	}
-}
-
 static std::shared_ptr<surface::buffer> make_test_1d(int _Width)
 {
 	surface::info si;
@@ -170,23 +155,13 @@ void TESTsurface_generate_mips(test_services& _Services)
 	{
 		image = surface_load(_Services, "Test/Textures/lena_npot.png"); // 2D NPOT
 		const surface::buffer* images[5] = { image.get(), image.get(), image.get(), image.get(), image.get() };
-
-		auto si = images[0]->get_info();
-		si.dimensions.z = oCOUNTOF(images);
-		si.layout = surface::layout::tight;
-		auto image3d = ouro::surface::buffer::make(si);
-		copy_array_into_depth_slices(image3d.get(), images);
-
+		auto image3d = surface::buffer::make(images, oCOUNTOF(images), surface::buffer::image3d);
 		test_mipchain_layouts(_Services, image3d.get(), kFilter, 12);
 	}
 	{
 		image = surface_load(_Services, "Test/Textures/lena_1.png"); // 2D POT
 		const surface::buffer* images[5] = { image.get(), image.get(), image.get(), image.get(), image.get() };
-
-		auto si = images[0]->get_info();
-		si.dimensions.z = oCOUNTOF(images);
-		auto image3d = ouro::surface::buffer::make(si);
-		copy_array_into_depth_slices(image3d.get(), images);
+		auto image3d = surface::buffer::make(images, oCOUNTOF(images), surface::buffer::image3d);
 		test_mipchain_layouts(_Services, image3d.get(), kFilter, 15);
 	}
 

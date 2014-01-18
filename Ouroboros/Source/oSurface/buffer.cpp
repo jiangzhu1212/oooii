@@ -29,6 +29,22 @@
 #include <mutex>
 
 namespace ouro {
+
+const char* as_string(const surface::buffer::make_type& _Type)
+{
+	switch (_Type)
+	{
+		case surface::buffer::image: return "image";
+		case surface::buffer::image_array: return "image_array";
+		case surface::buffer::mips: return "mips";
+		case surface::buffer::mips_array: return "mips_array";
+		case surface::buffer::image3d: return "image3d";
+		case surface::buffer::mips3d: return "mips3d";
+		default: break;
+	}
+	return "?";
+}
+
 	namespace surface {
 
 class buffer_impl : public buffer
@@ -84,6 +100,55 @@ std::shared_ptr<buffer> buffer::make(const info& _Info, void* _pData)
 	return std::make_shared<buffer_impl>(_Info, _pData);
 }
 
+std::shared_ptr<buffer> buffer::make(const buffer* const* _ppSourceBuffers, size_t _NumBuffers, make_type _Type)
+{
+	info si = _ppSourceBuffers[0]->get_info();
+	if (si.layout != layout::image)
+		oTHROW_INVARG("all images in the specified array must be simple types and the same 2D dimensions");
+	if (si.dimensions.z != 1)
+		oTHROW_INVARG("all images in the specified array must be simple types and the same 2D dimensions");
+
+	const bool Is3D = _Type == image3d || _Type == mips3d;
+	const bool HasMips = _Type == mips || _Type == mips_array || _Type == mips3d;
+	const bool IsArray = _Type == image_array || _Type == mips_array;
+
+	si.layout = HasMips ? layout::tight : layout::image;
+	si.dimensions.z = Is3D ? static_cast<int>(_NumBuffers) : 1;
+	si.array_size = Is3D || !IsArray ? 0 : static_cast<int>(_NumBuffers);
+
+	auto NewBuffer = buffer::make(si);
+
+	if (Is3D)
+	{
+		box region;
+		region.right = si.dimensions.x;
+		region.bottom = si.dimensions.y;
+		for (int i = 0; i < si.dimensions.z; i++)
+		{
+			region.front = i;
+			region.back = i + 1;
+			shared_lock lock(_ppSourceBuffers[i]);
+			NewBuffer->update_subresource(0, region, lock.mapped);
+		}
+	}
+
+	else
+	{
+		const int nMips = num_mips(HasMips, si.dimensions);
+		const int nSlices = max(1, si.array_size);
+		for (int i = 0; i < nSlices; i++)
+		{
+			int DstSubresource = calc_subresource(0, i, 0, nMips, nSlices);
+			int SrcSubresource = calc_subresource(0, i, 0, 0, nSlices);
+			NewBuffer->copy_from(DstSubresource, _ppSourceBuffers[i], SrcSubresource);
+		}
+	}
+
+	if (HasMips)
+		NewBuffer->generate_mips();
+	return NewBuffer;
+}
+
 info buffer_impl::get_info() const
 {
 	return Info;
@@ -102,7 +167,7 @@ void buffer_impl::flatten()
 
 	int rp = row_pitch(Info);
 	size_t sz = size();
-	Info.layout = image;
+	Info.layout = surface::image;
 	Info.dimensions = int3(rp / element_size(Info.format), int(sz / rp), 1);
 	Info.array_size = 0;
 }

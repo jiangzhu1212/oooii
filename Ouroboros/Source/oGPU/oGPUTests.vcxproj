@@ -144,7 +144,6 @@
     <ClCompile Include="Tests\TESTGPUBuffer.cpp" />
     <ClCompile Include="Tests\TESTGPUClear.cpp" />
     <ClCompile Include="Tests\TESTGPUDevice.cpp" />
-    <ClCompile Include="Tests\TESTGPUGenerateMips.cpp" />
     <ClCompile Include="Tests\TESTGPUInstancedTriangle.cpp" />
     <ClCompile Include="Tests\TESTGPULineList.cpp" />
     <ClCompile Include="Tests\TESTGPUQuery.cpp" />
