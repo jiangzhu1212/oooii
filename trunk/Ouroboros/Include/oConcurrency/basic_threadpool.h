@@ -98,8 +98,8 @@ inline void basic_threadpool_base<Alloc>::construct_workers(const task_type& _Do
 {
 	NumWorking = calc_num_workers(_NumWorkers);
 	Workers.resize(NumWorking);
-	for(auto& w : Workers)
-		w = std::move(std::thread(_DoWork));
+	for (auto& w : Workers)
+		w = std::thread(_DoWork);
 	flush(); // wait until all have settled and thus ensure all have initialized
 }
 

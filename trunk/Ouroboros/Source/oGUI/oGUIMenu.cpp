@@ -56,7 +56,7 @@ static int oGUIMenuFindPosition(ouro::menu_handle _hParentMenu, ouro::menu_handl
 	return -1;
 }
 
-#ifdef oENABLE_ASSERTS
+#if oENABLE_ASSERTS
 // Returns true if the specified menu contains all IDs [first,last]
 static bool oGUIMenuContainsRange(ouro::menu_handle _hMenu, int _ItemIDRangeFirst, int _ItemIDRangeLast)
 {
