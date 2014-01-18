@@ -365,33 +365,6 @@ bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, surface::mapped_
 	return true;
 }
 
-bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture)
-{
-	oGPUTexture::DESC td;
-	_pTexture->GetDesc(&td);
-
-	intrusive_ptr<oGPURenderTarget> RT;
-	oGPURenderTarget::DESC RTDesc;
-	RTDesc.dimensions = td.dimensions;
-	RTDesc.array_size = td.array_size;
-	RTDesc.mrt_count = 1;
-	RTDesc.format[0] = td.format;
-	RTDesc.type = gpu::remove_readback(gpu::add_mipped(td.type));
-	oVERIFY(_pDevice->CreateRenderTarget("oGPUGenerateMips.TempRT", RTDesc, &RT));
-
-	intrusive_ptr<oGPUTexture> RTTexture;
-	RT->GetTexture(0, &RTTexture);
-
-	intrusive_ptr<oGPUCommandList> ICL;
-	_pDevice->GetImmediateCommandList(&ICL);
-
-	ICL->Copy(RTTexture, _pTexture);
-	ICL->GenerateMips(RT);
-	ICL->Copy(_pTexture, RTTexture);
-
-	return true;
-}
-
 bool oGPUCreateTexture(oGPUDevice* _pDevice, const surface::buffer* const* _ppSourceImages, uint _NumImages, ouro::gpu::texture_type::value _Type, oGPUTexture** _ppTexture)
 {
 	if (!_NumImages)
@@ -430,138 +403,61 @@ bool oGPUCreateTexture(oGPUDevice* _pDevice, const surface::buffer* const* _ppSo
 
 	const int NumMips = surface::num_mips(gpu::is_mipped(_Type), td.dimensions);
 
-	for (uint i = 0; i < _NumImages; i++)
+	if (NumMips)
 	{
-		surface::info sislice = _ppSourceImages[i]->get_info();
-		if (any(sislice.dimensions != si.dimensions) || sislice.format != si.format)
-			return oErrorSetLast(std::errc::invalid_argument, "Source images don't have the same dimensions and/or format");
+		auto mipped = surface::buffer::make(_ppSourceImages, _NumImages, gpu::is_3d(_Type) ? surface::buffer::mips3d : surface::buffer::image3d);
 
-		int RegionFront = gpu::is_3d(_Type) ? i : 0;
-
-		surface::box region;
-		region.right = sislice.dimensions.x;
-		region.bottom = sislice.dimensions.y;
-		region.front = RegionFront;
-		region.back = region.front + 1;
-
-		int ArraySlice = gpu::is_3d(_Type) ? 0 : i;
-
-		int subresource = surface::calc_subresource(0, ArraySlice, 0, NumMips, td.array_size);
-		surface::shared_lock lock(_ppSourceImages[i]);
-		ICL->Commit(Texture, subresource, lock.mapped, region);
-	}
-
-	if (gpu::is_mipped(_Type) && !oGPUGenerateMips(_pDevice, Texture))
-		return false; // pass through error
-
-	*_ppTexture = Texture;
-	(*_ppTexture)->Reference();
-	return true;
-}
-
-static bool DEPRECATED_oGPUGenerateMips(oGPUDevice* _pDevice, const surface::buffer** _pMip0Images, uint _NumImages, oGPUTexture* _pOutputTexture)
-{
-	oGPUTexture::DESC td;
-	_pOutputTexture->GetDesc(&td);
-
-	if ((gpu::is_3d(td.type) && td.dimensions.z != static_cast<unsigned short>(_NumImages)) ||
-		(gpu::is_cube(td.type) && td.array_size != static_cast<unsigned short>(_NumImages)))
-		return oErrorSetLast(std::errc::invalid_argument, "Number of mip0 images doesn't match the amount needed in the output texture");
-
-#ifdef _DEBUG
-	surface::info si = _pMip0Images[0]->get_info();
-
-	for (uint imageIndex=0; imageIndex<_NumImages; ++imageIndex)
-	{
-		surface::info sislice = _pMip0Images[imageIndex]->get_info();
-
-		if (any(sislice.dimensions != si.dimensions) || sislice.format != si.format)
-			return oErrorSetLast(std::errc::invalid_argument, "Source images don't have the same dimensions and/or format");
-	}
-#endif
-
-	intrusive_ptr<oGPURenderTarget> SurfaceRenderTarget;
-	oGPURenderTarget::DESC rtDesc;
-	rtDesc.dimensions = td.dimensions;
-	rtDesc.array_size = td.array_size;
-	rtDesc.mrt_count = 1;
-	rtDesc.format[0] = td.format;
-	rtDesc.type = gpu::remove_readback(gpu::add_mipped(gpu::add_render_target(td.type)));
-	oVERIFY(_pDevice->CreateRenderTarget("oGPUGenerateMips temporary render target", rtDesc, &SurfaceRenderTarget));
-
-	intrusive_ptr<oGPUTexture> Mip0Texture;
-	SurfaceRenderTarget->GetTexture(0, &Mip0Texture);
-
-	intrusive_ptr<oGPUCommandList> ICL;
-	_pDevice->GetImmediateCommandList(&ICL);
-
-	int numMipLevels = surface::num_mips(surface::tight, td.dimensions);
-	for (uint imageIndex = 0; imageIndex < _NumImages; imageIndex++)
-	{
-		uint sliceIndex = gpu::is_3d(td.type) ? 0 : imageIndex;
-		uint depthIndex = gpu::is_3d(td.type) ? imageIndex : 0;
-
-		int subresource = surface::calc_subresource(0, sliceIndex, 0, numMipLevels, td.array_size);
-		surface::mapped_subresource msrImage;
-		
-		surface::box region;
-		region.right = td.dimensions.x;
-		region.bottom = td.dimensions.y;
-		region.front = depthIndex;
-		region.back = depthIndex + 1;
-
-		surface::shared_lock lock(_pMip0Images[imageIndex]);
-		ICL->Commit(Mip0Texture, subresource, lock.mapped, region);
-	}
-
-	ICL->GenerateMips(SurfaceRenderTarget);
-
-	ICL->Copy(_pOutputTexture, Mip0Texture);
-
-	return true;
-}
-
-bool oGPUGenerateMips(oGPUDevice* _pDevice, const surface::buffer** _pMip0Images, uint _NumImages, surface::info& _SurfaceInfo, ouro::gpu::texture_type::value _Type, surface::buffer* _pMipBuffer)
-{
-	_pMipBuffer->clear();
-
-	oGPUTexture::DESC rbd;
-	rbd.dimensions = _SurfaceInfo.dimensions;
-	rbd.format = _SurfaceInfo.format;
-	rbd.array_size = (ushort)_SurfaceInfo.array_size;
-	rbd.type = gpu::add_readback(gpu::add_mipped(_Type));
-	intrusive_ptr<oGPUTexture> ReadbackTexture;
-	_pDevice->CreateTexture("oGPUGenerateMips temporary readback texture", rbd, &ReadbackTexture);
-
-	DEPRECATED_oGPUGenerateMips(_pDevice, _pMip0Images, _NumImages, ReadbackTexture);
-
-	// Copy from readback texture to the output buffer
-
-	int numMipLevels = surface::num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
-	for (int mipLevel=0; mipLevel<numMipLevels; ++mipLevel)
-	{
-		uint numIterations = gpu::is_3d(_Type) ? surface::dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, mipLevel).z : _NumImages;
-		for (uint i=0; i<numIterations; ++i)
+		auto si = mipped->get_info();
+		const int nSubresources = surface::num_subresources(si);
+		for (int subresource = 0; subresource < nSubresources; subresource++)
 		{
-			uint sliceIndex = gpu::is_3d(_Type) ? 0 : i;
-			uint depthIndex = gpu::is_3d(_Type) ? i : 0;
-
-			int subresource = surface::calc_subresource(mipLevel, sliceIndex, 0, numMipLevels, _SurfaceInfo.array_size);
-
-			surface::mapped_subresource msrMipDest;
-			surface::lock_guard lock(_pMipBuffer, subresource);
-			void* dst_data = depth_index_offset(lock.mapped, depthIndex);
-			
-			surface::mapped_subresource msrMipSrc;
-			_pDevice->MapRead(ReadbackTexture, subresource, &msrMipSrc, true);
-			msrMipSrc.data = surface::depth_index_offset(msrMipSrc, depthIndex);
-
-			memcpy2d(dst_data, lock.mapped.row_pitch, msrMipSrc.data, msrMipSrc.row_pitch, lock.byte_dimensions.x, lock.byte_dimensions.y, false);
-
-			_pDevice->UnmapRead(ReadbackTexture, subresource);
+			auto sri = surface::subresource(si, subresource);
+			surface::box region;
+			region.right = sri.dimensions.x;
+			region.bottom = sri.dimensions.y;
+			surface::shared_lock lock(mipped, subresource);
+			for (int slice = 0; slice < sri.dimensions.z; slice++)
+			{
+				region.front = slice;
+				region.back = slice + 1;
+				ICL->Commit(Texture, subresource, lock.mapped, region);
+			}
 		}
 	}
 
+	else
+	{
+		// copy directly into texture
+
+		for (uint i = 0; i < _NumImages; i++)
+		{
+			surface::info sislice = _ppSourceImages[i]->get_info();
+			if (any(sislice.dimensions != si.dimensions) || sislice.format != si.format)
+				return oErrorSetLast(std::errc::invalid_argument, "Source images don't have the same dimensions and/or format");
+
+			int RegionFront = gpu::is_3d(_Type) ? i : 0;
+
+			surface::box region;
+			region.right = sislice.dimensions.x;
+			region.bottom = sislice.dimensions.y;
+			region.front = RegionFront;
+			region.back = region.front + 1;
+
+			int ArraySlice = gpu::is_3d(_Type) ? 0 : i;
+
+			int subresource = surface::calc_subresource(0, ArraySlice, 0, NumMips, td.array_size);
+			surface::shared_lock lock(_ppSourceImages[i]);
+			ICL->Commit(Texture, subresource, lock.mapped, region);
+		}
+	}
+
+//
+//#error need answer
+//	if (gpu::is_mipped(_Type) && !oGPUGenerateMips(_pDevice, Texture))
+//		return false; // pass through error
+
+	*_ppTexture = Texture;
+	(*_ppTexture)->Reference();
 	return true;
 }
 

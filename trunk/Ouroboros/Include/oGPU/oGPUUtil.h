@@ -145,13 +145,6 @@ oAPI bool oGPURead(oGPUResource* _pSourceResource, int _Subresource, ouro::surfa
 // specified. NOTE: render target and readback not tested.
 oAPI bool oGPUCreateTexture(oGPUDevice* _pDevice, const ouro::surface::buffer* const* _ppSourceImages, uint _NumImages, ouro::gpu::texture_type::value _Type, oGPUTexture** _ppTexture);
 
-// Fill in the rest of the mip chain for the specified texture. It's mip0 level
-// should be fully initialized.
-oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, oGPUTexture* _pTexture);
-
-// Generate mips with the GPU from source image(s) to a preallocated oBuffer with oSURFACE_DESC and oGPU_TEXTURE_TYPE
-oAPI bool oGPUGenerateMips(oGPUDevice* _pDevice, const ouro::surface::buffer** _pMip0Images, uint _NumImages, ouro::surface::info& _SurfaceInfo, ouro::gpu::texture_type::value _Type, ouro::surface::buffer* _pMipBuffer);
-
 // Creates a texture with mips from the specified oBuffer, described by an ouro::surface::info.
 oAPI bool oGPUCreateTexture1DMip(oGPUDevice* _pDevice, const ouro::surface::info& _SurfaceInfo, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);
 oAPI bool oGPUCreateTexture2DMip(oGPUDevice* _pDevice, const ouro::surface::info& _SurfaceInfo, const oBuffer* _pBuffer, oGPUTexture** _ppTexture);

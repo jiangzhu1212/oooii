@@ -129,7 +129,7 @@ public:
 	{
 		AssertIsMain();
 		Mutex.unlock();
-		this_thread::sleep_for(chrono::milliseconds(_YieldMS));
+		std::this_thread::sleep_for(chrono::milliseconds(_YieldMS));
 		Mutex.lock();
 	}
 	void MainThreadRelease()
@@ -137,9 +137,8 @@ public:
 		Mutex.unlock();
 	}
 private:
-	typedef mutex mutex_t;
-	typedef lock_guard<mutex_t> lock_t;
-	typedef shared_lock<mutex_t> lock_shared_t;
+	typedef ouro::mutex mutex_t;
+	typedef ouro::lock_guard<mutex_t> lock_t;
 	mutex_t Mutex;
 	process::id ProcessID;
 
@@ -287,9 +286,9 @@ private:
 	oRefCount Refcount;
 	oChildProcessTerminator Terminator;
 	event CancelEvent;
-	typedef shared_mutex mutex_t;
-	typedef lock_guard<mutex_t> lock_t;
-	typedef shared_lock<mutex_t> lock_shared_t;
+	typedef ouro::shared_mutex mutex_t;
+	typedef ouro::lock_guard<mutex_t> lock_t;
+	typedef ouro::shared_lock<mutex_t> lock_shared_t;
 	shared_mutex Mutex;
 	int ServerPort;
 
