@@ -28,6 +28,7 @@
 #ifndef oConcurrency_tagged_pointer_h
 #define oConcurrency_tagged_pointer_h
 
+#include <oBase/config.h>
 #include <atomic>
 #include <stdexcept>
 

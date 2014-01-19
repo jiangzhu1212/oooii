@@ -305,7 +305,7 @@ void oKinectImpl::OnPitch()
 	{
 		mstring Name;
 		snprintf(Name, "oKinect[%d].SetPitch", Desc.Index);
-		oConcurrency::begin_thread(Name);
+		core_thread_traits::begin_thread(Name);
 	}
 
 	while (Running)
@@ -333,7 +333,7 @@ void oKinectImpl::OnPitch()
 			oTRACE("Kinect[%d] set pitch to %d degrees ignored because Kinect is not ready.", Desc.Index, Pitch);
 	}
 
-	oConcurrency::end_thread();
+	core_thread_traits::end_thread();
 }
 
 bool oKinectImpl::MapRead(oKINECT_FRAME_TYPE _Type, surface::info* _pInfo, surface::const_mapped_subresource* _pMapped) const threadsafe
@@ -389,7 +389,7 @@ void oKinectImpl::OnEvent()
 	{
 		mstring Name;
 		snprintf(Name, "oKinect[%d]", Desc.Index);
-		oConcurrency::begin_thread(Name);
+		core_thread_traits::begin_thread(Name);
 	}
 
 	while (Running)
@@ -426,7 +426,7 @@ void oKinectImpl::OnEvent()
 		Skeletons.CheckTrackingTimeouts();
 	}
 
-	oConcurrency::end_thread();
+	core_thread_traits::end_thread();
 }
 
 int oKinectGetCount()
