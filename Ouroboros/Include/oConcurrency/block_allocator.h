@@ -121,7 +121,7 @@ public:
 private:
 	struct chunk_t
 	{
-		chunk_t* pNext;
+		chunk_t* next;
 		// In the runtime case (Alloc/Dealloc) this is a-specified access
 		// from methods. However to support growable methods, we must 
 		// operate on these sometimes from non-threadsafe methods. So this pointer 
