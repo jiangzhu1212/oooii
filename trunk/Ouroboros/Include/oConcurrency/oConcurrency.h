@@ -89,36 +89,25 @@ void enable_leak_tracking_threadlocal(bool _Enabled);
 // blocking (no slow file io) and synchronization should be kept to a minimum.
 // There are no guarantees for order of execution or when the specified task is
 // finished.
-void dispatch(const oTASK& _Task);
+void dispatch(const std::function<void()>& _Task);
 
 // Runs the specified task on [_Begin, _End), passing the index of the counter 
 // to the client code task.
-void parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task);
-
-// This should be called as the first line of a thread proc that will put a more
-// useful name in the debugger amongst anything else that might be required. For
-// example a task system may need a certain amount of memory for the thread to
-// function properly. Calling this ensures the memory is allocated at a known 
-// time so such memory can be properly leak tracked.
-void begin_thread(const char* _DebuggerName);
-
-// This should be called as the last line of a thread proc that will flush 
-// any per-thread operations (such as thread_at_exit).
-void end_thread();
+void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
 
 // Registers the specified function to be run just before the current thread 
 // exits. More than one function can be registered and each will be executed in 
 // order of registration.
-void thread_at_exit(const oTASK& _AtExit);
+void thread_at_exit(const std::function<void()>& _AtExit);
 oDEFINE_CALLABLE_WRAPPERS(thread_at_exit,, thread_at_exit);
 
 // _____________________________________________________________________________
 // Basic utilities
 
 // Runs the specified task (a drop-in debug replacement for oConcurrency::dispatch)
-inline void dispatch_serial(const oTASK& _Task) { _Task(); }
+inline void dispatch_serial(const std::function<void()>& _Task) { _Task(); }
 
-inline void serial_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task)
+inline void serial_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 {
 	for (size_t i = _Begin; i < _End; i++)
 		_Task(i);
