@@ -74,7 +74,7 @@ struct concurrent_stack_traits64
 	{
 		#ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
 			unsigned long long Orig = 0;
-			InterlockedCompareExchange(Head, _Expected, _Desired, Orig);
+			InterlockedCompareExchange(_Head, _Expected, _Desired, Orig);
 			bool Exchanged = Orig == _Expected;
 			_Expected = Orig;
 			return Exchanged;
