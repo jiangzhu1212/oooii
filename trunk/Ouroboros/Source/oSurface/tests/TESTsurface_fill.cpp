@@ -31,10 +31,10 @@
 
 #include "../../test_services.h"
 
-void PlatformFillGridNumbers(ouro::surface::buffer* _pBuffer
-	, const int2& _GridDimensions, ouro::color _NumberColor);
-
 namespace ouro { 
+
+void core_fill_grid_numbers(surface::buffer* _pBuffer, const int2& _GridDimensions, color _NumberColor);
+
 	namespace tests {
 
 #define SETUP_AND_MAKE() \
@@ -60,7 +60,7 @@ std::shared_ptr<surface::buffer> make_numbered_grid(
 		surface::fill_grid_lines(c, lock.mapped.row_pitch, si.dimensions.xy(), _GridDimensions, _GridColor);
 	}
 	
-	PlatformFillGridNumbers(s.get(), _GridDimensions, _NumberColor);
+	core_fill_grid_numbers(s.get(), _GridDimensions, _NumberColor);
 	return s;
 }
 

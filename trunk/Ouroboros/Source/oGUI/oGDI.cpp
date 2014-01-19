@@ -29,6 +29,148 @@
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oBasis/oError.h> // @tony fixme
 
+namespace ouro {
+	namespace windows {
+		namespace gdi {
+		
+BITMAPINFOHEADER make_header(const surface::info& _SurfaceInfo, bool _TopDown)
+{
+	switch (_SurfaceInfo.format)
+	{
+		case surface::format::b8g8r8a8_unorm:
+		case surface::format::b8g8r8_unorm:
+		case surface::format::r8_unorm:
+			break;
+		default:
+			throw std::invalid_argument("unsupported format");
+	}
+
+	if (_SurfaceInfo.array_size != 0 || _SurfaceInfo.dimensions.z != 1)
+		throw std::invalid_argument("no support for 3D or array surfaces");
+
+	if (_SurfaceInfo.dimensions.x <= 0 || _SurfaceInfo.dimensions.y <= 0)
+		throw std::invalid_argument("invalid dimensions");
+
+	BITMAPINFOHEADER h;
+	h.biSize = sizeof(BITMAPINFOHEADER);
+	h.biWidth = _SurfaceInfo.dimensions.x;
+	h.biHeight = _TopDown ? -_SurfaceInfo.dimensions.y : _SurfaceInfo.dimensions.y;
+	h.biPlanes = 1; 
+	h.biBitCount = static_cast<WORD>(surface::bits(_SurfaceInfo.format));
+	h.biCompression = BI_RGB;
+	h.biSizeImage = surface::element_size(_SurfaceInfo.format) * _SurfaceInfo.dimensions.y;
+	h.biXPelsPerMeter = 0;
+	h.biYPelsPerMeter = 0;
+	h.biClrUsed = 0;
+	h.biClrImportant = 0;
+	return h;
+}
+
+BITMAPV4HEADER make_headerv4(const surface::info& _SurfaceInfo, bool _TopDown)
+{
+	BITMAPV4HEADER v4;
+	BITMAPINFOHEADER v3 = make_header(_SurfaceInfo, _TopDown);
+	memset(&v4, 0, sizeof(v4));
+  memcpy(&v4, &v3, sizeof(v3));
+	v4.bV4Size = sizeof(v4);
+	v4.bV4RedMask = 0x00ff0000;
+	v4.bV4GreenMask = 0x0000ff00;
+	v4.bV4BlueMask = 0x000000ff;
+	v4.bV4AlphaMask = 0xff000000;
+	return v4;
+}
+
+void fill_monochrone_palette(RGBQUAD* _pColors, color _Color0, color _Color1)
+{
+	float4 c0;
+	_Color0.decompose(&c0.x, &c0.x, &c0.z, &c0.w);
+
+	float4 c1;
+	_Color1.decompose(&c1.x, &c1.y, &c1.z, &c1.w);
+
+	for (size_t i = 0; i < 256; i++)
+	{
+		float4 c = ::lerp(c0, c1, ubyte_to_unorm(i));
+		RGBQUAD& q = _pColors[i];
+		q.rgbRed = unorm_to_ubyte(c.x);
+		q.rgbGreen = unorm_to_ubyte(c.y);
+		q.rgbBlue = unorm_to_ubyte(c.z);
+		q.rgbReserved = unorm_to_ubyte(c.w);
+	}
+}
+
+surface::info get_info(const BITMAPINFOHEADER& _Header)
+{
+	surface::info si;
+	si.dimensions.x = _Header.biWidth;
+	si.dimensions.y = abs(_Header.biHeight); // ignore top v. bottom up here
+	si.dimensions.z = 1;
+	si.layout = surface::layout::image;
+	si.array_size = 0;
+
+	switch (_Header.biBitCount)
+	{
+		case 1: si.format = surface::r1_unorm; break;
+		case 16: si.format = surface::b5g5r5a1_unorm; break;
+		case 8: si.format = surface::format::r8_unorm; break;
+		case 24: case 0: si.format = surface::format::b8g8r8_unorm; break;
+		case 32: si.format = surface::format::b8g8r8a8_unorm; break;
+		default: si.format = surface::format::unknown; break;
+	}
+
+	return si;
+}
+
+surface::info get_info(const BITMAPV4HEADER& _Header)
+{
+	return get_info((const BITMAPINFOHEADER&)_Header);
+}
+
+static size_t get_bitmapinfo_size(surface::format _Format)
+{
+	return surface::bits(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
+}
+
+oGDIScopedObject<HBITMAP> make_bitmap(const surface::buffer* _pBuffer)
+{
+	ouro::surface::info si = _pBuffer->get_info();
+
+	if (si.format != ouro::surface::b8g8r8a8_unorm)
+		throw std::invalid_argument("only b8g8r8a8_unorm currently supported");
+
+	surface::shared_lock lock(_pBuffer);
+	return CreateBitmap(si.dimensions.x, si.dimensions.y, 1, 32, lock.mapped.data);
+}
+
+void memcpy2d(void* _pDestination, size_t _DestinationPitch, HBITMAP _hBmp, size_t _NumRows, bool _FlipVertically)
+{
+	oGDIScopedGetDC hDC(nullptr);
+
+	struct BITMAPINFO_FULL
+	{
+		BITMAPINFOHEADER bmiHeader;
+		RGBQUAD bmiColors[256];
+	};
+
+	BITMAPINFO_FULL bmif;
+	memset(&bmif, 0, sizeof(bmif));
+	bmif.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	GetDIBits(hDC, _hBmp, 0, 1, nullptr, (BITMAPINFO*)&bmif, DIB_RGB_COLORS);
+
+	for (size_t y = 0; y < _NumRows; y++)
+	{
+		int nScanlinesRead = GetDIBits(hDC, _hBmp, static_cast<unsigned int>(_FlipVertically ? (_NumRows - 1 - y) : y), 1, byte_add(_pDestination, y * _DestinationPitch), (BITMAPINFO*)&bmif, DIB_RGB_COLORS);
+		if (nScanlinesRead == ERROR_INVALID_PARAMETER)
+			throw std::invalid_argument("invalid argument passed to GetDIBtis");
+		else if (!nScanlinesRead)
+			oTHROW(io_error, "GetDIBits failed");
+	}
+}
+
+		} // namespace gdi
+	} // namespace windows
+} // namespace ouro
+
 using namespace ouro;
 
 int oGDIPointToLogicalHeight(HDC _hDC, int _Point)
@@ -49,61 +191,6 @@ float oGDILogicalHeightToPointF(HDC _hDC, int _Height)
 int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
 {
 	return oGDIPointToLogicalHeight(_hDC, static_cast<int>(_Point + 0.5f));
-}
-
-void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI)
-{
-	const int kPitch = _Desc.RowPitch > 0 ? _Desc.RowPitch : ouro::surface::row_size(_Desc.Format, byte_align(_Desc.Dimensions.x, 4));
-
-	_pBMI->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-	_pBMI->bmiHeader.biBitCount = static_cast<WORD>(ouro::surface::bits(_Desc.Format));
-	_pBMI->bmiHeader.biClrImportant = 0;
-	_pBMI->bmiHeader.biClrUsed = 0;
-	_pBMI->bmiHeader.biCompression = BI_RGB;
-	_pBMI->bmiHeader.biHeight = (_Desc.FlipVertically ? -1 : 1) * (LONG)_Desc.Dimensions.y;
-	_pBMI->bmiHeader.biWidth = _Desc.Dimensions.x;
-	_pBMI->bmiHeader.biPlanes = 1;
-	_pBMI->bmiHeader.biSizeImage = kPitch * _Desc.Dimensions.y;
-	_pBMI->bmiHeader.biXPelsPerMeter = 0;
-	_pBMI->bmiHeader.biYPelsPerMeter = 0;
-
-	if (_pBMI->bmiHeader.biBitCount == 8)
-	{
-		// BMI doesn't understand 8-bit monochrome, so create a monochrome palette
-		float4 c0;
-		_Desc.ARGBMonochrome8Zero.decompose(&c0.x, &c0.x, &c0.z, &c0.w);
-
-		float4 c1;
-		_Desc.ARGBMonochrome8One.decompose(&c1.x, &c1.y, &c1.z, &c1.w);
-
-		for (size_t i = 0; i < 256; i++)
-		{
-			float4 c = lerp(c0, c1, ouro::ubyte_to_unorm(i));
-			RGBQUAD& q = _pBMI->bmiColors[i];
-			q.rgbRed = ouro::unorm_to_ubyte(c.x);
-			q.rgbGreen = ouro::unorm_to_ubyte(c.y);
-			q.rgbBlue = ouro::unorm_to_ubyte(c.z);
-			q.rgbReserved = ouro::unorm_to_ubyte(c.w);
-		}
-	}
-}
-
-size_t oGDIGetBMISize(ouro::surface::format _Format)
-{
-	return ouro::surface::bits(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
-}
-
-ouro::surface::format oGDIGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader)
-{
-	switch (_BitmapInfoHeader.biBitCount)
-	{
-		case 1: return ouro::surface::r1_unorm;
-		case 16: return ouro::surface::b5g5r5a1_unorm; // not sure if alpha is respected/but there is no B5G5R5X1_UNORM currently
-		case 0:
-		case 24: return ouro::surface::b8g8r8_unorm;
-		case 32: return ouro::surface::b8g8r8x8_unorm;
-		default: return ouro::surface::unknown; // no FORMAT for paletted types currently
-	}
 }
 
 bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow, bool _FlipV)
@@ -325,22 +412,25 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 	return bResult;
 }
 
-bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
 {
-	oBMI_DESC bmid;
-	bmid.Dimensions = _SourceSize;
-	bmid.Format = _SourceFormat;
-	bmid.FlipVertically = _FlipVertically;
-	bmid.RowPitch = _SourceRowPitch;
-	BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(oGDIGetBMISize(bmid.Format)); // size might be bigger than sizeof(BITMAPINFO) if a palette is required
-	oGDIInitializeBMI(bmid, pBMI);
+	surface::info si;
+	si.dimensions = int3(_SourceSize, 1);
+	si.format = _SourceFormat;
+
+	const size_t bitmapinfoSize = windows::gdi::get_bitmapinfo_size(si.format);
+
+	BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(bitmapinfoSize);
+	pBMI->bmiHeader = windows::gdi::make_header(si, !_FlipVertically);
+	if (bitmapinfoSize != sizeof(BITMAPINFO))
+		windows::gdi::fill_monochrone_palette(pBMI->bmiColors);
 
 	oGDIScopedBltMode Mode(_hDC, HALFTONE);
 	oVB(StretchDIBits(_hDC, _DestRect.left, _DestRect.top, oWinRectW(_DestRect), oWinRectH(_DestRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY));
 	return true;
 }
 
-bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
 {
 	RECT destRect;
 	if (_DestRect.bottom == ouro::invalid || _DestRect.top == ouro::invalid ||
@@ -354,10 +444,10 @@ bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize,
 		destRect = _DestRect;
 
 	oGDIScopedGetDC hDC(_hWnd);
-	return oGDIStretchBits(hDC, destRect, _SourceSize, _SourceFormat, _pSourceBits, _SourceRowPitch, _FlipVertically);
+	return oGDIStretchBits(hDC, destRect, _SourceSize, _SourceFormat, _pSourceBits, _FlipVertically);
 }
 
-bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically)
+bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
 {
 	RECT destRect;
 	destRect.bottom = ouro::invalid;
@@ -365,7 +455,7 @@ bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format 
 	destRect.right = ouro::invalid;
 	destRect.top = ouro::invalid;
 
-	return oGDIStretchBits(_hWnd, destRect, _SourceSize, _SourceFormat, _pSourceBits, _SourceRowPitch, _FlipVertically);
+	return oGDIStretchBits(_hWnd, destRect, _SourceSize, _SourceFormat, _pSourceBits, _FlipVertically);
 }
 
 int2 oGDIGetDimensions(HDC _hDC)
@@ -389,34 +479,6 @@ bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1)
 	return true;
 }
 
-static BITMAPINFOHEADER oGDIMakeBitmapHeader(int _Width, int _Height, int _ColorDepth = 32)
-{
-	BITMAPINFOHEADER h;
-	h.biSize = sizeof(BITMAPINFOHEADER);
-	h.biWidth = _Width;
-	h.biHeight = -_Height; // top-down
-	h.biPlanes = 1; 
-	h.biBitCount = static_cast<WORD>(_ColorDepth);
-	h.biCompression = BI_RGB;
-	return h;
-}
-
-#if 0 // do I need this to make translucent icons show up?
-static BITMAPV4HEADER oGDIMakeBitmapHeaderV4(int _Width, int _Height, int _ColorDepth = 32)
-{
-	BITMAPV4HEADER v4;
-	BITMAPINFOHEADER v3 = oGDIMakeBitmapHeader(_Width, _Height, _ColorDepth);
-	memset(v4, 0, sizeof(v4));
-  memcpy(v4, &v3, sizeof(v3));
-	v4->bV4Size = sizeof(v4);
-	v4->bV4RedMask = 0x00ff0000;
-	v4->bV4GreenMask = 0x0000ff00;
-	v4->bV4BlueMask = 0x000000ff;
-	v4->bV4AlphaMask = 0xff000000;
-	return v3;
-}
-#endif
-
 bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 {
 	if (ouro::equal(_Alpha, 1.0f))
@@ -430,7 +492,11 @@ bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 
 	// Copy the contents out (is there no way to access things directly?)
 	BITMAPINFO bmi = {0};
-	bmi.bmiHeader = oGDIMakeBitmapHeader(oWinRectW(_rBox), oWinRectH(_rBox));
+	surface::info si;
+	si.dimensions = int3(oWinRectW(_rBox), oWinRectH(_rBox), 1);
+	si.format = surface::format::b8g8r8a8_unorm;
+
+	bmi.bmiHeader = windows::gdi::make_header(si);
 	if (!bmi.bmiHeader.biWidth || !bmi.bmiHeader.biHeight)
 		return true;
 	

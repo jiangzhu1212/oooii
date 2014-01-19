@@ -27,35 +27,35 @@
 #include <oPlatform/oTest.h>
 #include <oGUI/Windows/oWinRect.h>
 
-void PlatformFillGridNumbers(ouro::surface::buffer* _pBuffer
-	, const int2& _GridDimensions, ouro::color _NumberColor)
+namespace ouro
 {
-	ouro::surface::info si = _pBuffer->get_info();
 
-	if (si.format != ouro::surface::b8g8r8a8_unorm)
+void core_fill_grid_numbers(surface::buffer* _pBuffer, const int2& _GridDimensions, color _NumberColor)
+{
+	surface::info si = _pBuffer->get_info();
+
+	if (si.format != surface::b8g8r8a8_unorm)
 		throw std::invalid_argument("only b8g8r8a8_unorm currently supported");
 
-	oGDIScopedObject<HBITMAP> hBmp = CreateBitmap(si.dimensions.x, si.dimensions.y, 1, 32, nullptr);
-
+	oGDIScopedObject<HBITMAP> hBmp = windows::gdi::make_bitmap(_pBuffer);
 	oGDIScopedGetDC hScreenDC(0);
 	oGDIScopedDC hDC(CreateCompatibleDC(hScreenDC));
 
-	ouro::font_info fd;
+	font_info fd;
 	fd.name = "Tahoma";
 	fd.point_size = (oGDILogicalHeightToPoint(hDC, _GridDimensions.y) * 0.33f);
 	fd.bold = fd.point_size < 15;
-
 	oGDIScopedObject<HFONT> hFont(oGDICreateFont(fd));
 
 	oGDIScopedSelect ScopedSelectBmp(hDC, hBmp);
 	oGDIScopedSelect ScopedSelectFont(hDC, hFont);
 
-	ouro::text_info td;
-	td.alignment = ouro::alignment::middle_center;
-	td.shadow = ouro::color(0);
+	text_info td;
+	td.alignment = alignment::middle_center;
+	td.shadow = color(0);
 	td.single_line = true;
 
-	ouro::surface::fill_grid_numbers(si.dimensions.xy(), _GridDimensions,
+	surface::fill_grid_numbers(si.dimensions.xy(), _GridDimensions,
 		[&](const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)->bool
 	{
 		td.position = _DrawBoxPosition;
@@ -64,21 +64,8 @@ void PlatformFillGridNumbers(ouro::surface::buffer* _pBuffer
 		return oGDIDrawText(hDC, td, _Text);
 	});
 
-	oBMI_DESC bmid;
-	bmid.Dimensions = si.dimensions.xy();
-	bmid.Format = si.format;
-
-	BITMAPINFO bmi;
-	oGDIInitializeBMI(bmid, &bmi);
-
-	std::vector<char> temp;
-	temp.resize(bmi.bmiHeader.biSizeImage);
-
-	if (!GetDIBits(hScreenDC, hBmp, 0, si.dimensions.y, temp.data(), &bmi, DIB_RGB_COLORS))
-		oTHROW(io_error, "GetDIBits failed");
-
-	ouro::surface::const_mapped_subresource msr;
-	msr.data = temp.data();
-	msr.row_pitch = bmi.bmiHeader.biSizeImage / bmi.bmiHeader.biHeight;
-	_pBuffer->update_subresource(0, msr, true);
+	surface::lock_guard lock(_pBuffer);
+	windows::gdi::memcpy2d(lock.mapped.data, lock.mapped.row_pitch, hBmp, si.dimensions.y, true);
 }
+
+} // namespace ouro
