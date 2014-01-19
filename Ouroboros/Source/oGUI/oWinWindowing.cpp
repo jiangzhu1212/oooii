@@ -607,7 +607,7 @@ struct oWndExtra
 	LONG_PTR PreviousStyle; // ouro::window_style::value
 	LONG_PTR ExtraFlags;
 	intptr_t TempCallCounter;
-	intptr_t LastShowTimestamp;
+	uintptr_t LastShowTimestamp;
 };
 
 // This is set when the handler should ignore the event because its about to be 
@@ -893,7 +893,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				if (IsWindowVisible(_hWnd))
 					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)ouro::timer::nowmsi());
 				else
-					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)-1);
+					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)0);
 				break;
 			}
 
@@ -942,11 +942,11 @@ bool oWinIsOpaque(HWND _hWnd)
 	// @tony: I can't find API to ask about the opacity of an HWND, so just wait 
 	// for a while.
 	oWIN_CHECK(_hWnd);
-	static const intptr_t kFadeInTime = 200;
-	intptr_t LastShowTimestamp = (intptr_t)GetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP);
-	if (LastShowTimestamp < 0)
+	static const uintptr_t kFadeInTime = 200;
+	uintptr_t LastShowTimestamp = (uintptr_t)GetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP);
+	if (LastShowTimestamp == 0)
 		return false;
-	intptr_t Now = ouro::timer::nowmsi();
+	uintptr_t Now = ouro::timer::nowmsi();
 	return (LastShowTimestamp + kFadeInTime) < Now;
 }
 
