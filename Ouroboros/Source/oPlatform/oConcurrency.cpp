@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
 #include <oBasis/oDispatchQueueConcurrent.h>
-#include <oCore/process_heap.h>
+#include <oCore/thread_traits.h>
 #include <oPlatform/oSingleton.h>
 
 // NOTE: Some of the concurrency requirements are actually requirements on the
@@ -245,8 +245,8 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 			{
 			public:
 				Observer() { observe(); }
-				void on_scheduler_entry(bool is_worker) override { if (is_worker) ouro::debugger::thread_name("TBB Worker"); }
-				void on_scheduler_exit(bool is_worker) override { if (is_worker) oConcurrency::end_thread(); }
+				void on_scheduler_entry(bool is_worker) override { if (is_worker) ouro::core_thread_traits::begin_thread("TBB Worker"); }
+				void on_scheduler_exit(bool is_worker) override { if (is_worker) ouro::core_thread_traits::end_thread(); }
 			};
 
 			class TaskAdapter : public task
@@ -327,19 +327,6 @@ void oConcurrency::parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK&
 
 void noop_fn() {}
 
-void oConcurrency::begin_thread(const char* _DebuggerName)
-{
-	ouro::debugger::thread_name(_DebuggerName);
-	#if oHAS_TBB
-		// Issuing a NOP task causes TBB to allocate bookkeeping for this thread's 
-		// memory which otherwise reports as a false-positive memory leak.
-	
-		// @tony: this is causing a race condition when called from std::thread... why?
-		// all the locks are deep within stdc, so this will be a problem!
-		//ouro::future<void> f = ouro::async(noop_fn);
-		//f.wait();
-	#endif
-}
 namespace ouro {
 	namespace future_requirements {
 

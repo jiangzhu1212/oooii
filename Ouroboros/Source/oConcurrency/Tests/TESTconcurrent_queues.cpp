@@ -25,6 +25,7 @@
 #include <oConcurrency/concurrent_queue.h>
 #include <oConcurrency/concurrent_queue_opt.h>
 #include <oConcurrency/concurrent_worklist.h>
+#include <oConcurrency/basic_threadpool.h> // for basic_threadpool_default_traits
 #include <oBase/event.h>
 #include <oBase/finally.h>
 #include <oBase/assert.h>
@@ -347,20 +348,22 @@ static const int kValueMask = 0x3fffffff;
 
 typedef concurrent_worklist<int, std::allocator<int>> worklist_t;
 
+typedef basic_threadpool_default_traits thread_traits_t;
+
 static void push_local(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDone)
 {
-	begin_thread("push_local");
+	thread_traits_t::begin_thread("push_local");
 
 	for (int i = 0; i < kNumTasks; i++)
 		_Work.push_local(i);
 
 	*_pDone = true;
-	end_thread();
+	thread_traits_t::end_thread();
 }
 
 static void pop_local(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDone)
 {
-	begin_thread("pop_local");
+	thread_traits_t::begin_thread("pop_local");
 
 	for (int i = 0; i < kNumTasks; i++)
 	{
@@ -373,12 +376,12 @@ static void pop_local(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDon
 	}
 	
 	*_pDone = true;
-	end_thread();
+	thread_traits_t::end_thread();
 }
 
 static void push_pop_local(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDone)
 {
-	begin_thread("push_pop_local");
+	thread_traits_t::begin_thread("push_pop_local");
 
 	for (int i = 0; i < kNumTasks; i++)
 		_Work.push_local(i);
@@ -394,12 +397,12 @@ static void push_pop_local(worklist_t& _Work, std::atomic<int>* _Results, bool* 
 	}
 
 	*_pDone = true;
-	end_thread();
+	thread_traits_t::end_thread();
 }
 
 static void try_steal(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDone)
 {
-	begin_thread("thief");
+	thread_traits_t::begin_thread("thief");
 	timer timer;
 
 	while (timer.seconds() < 5.0)
@@ -414,7 +417,7 @@ static void try_steal(worklist_t& _Work, std::atomic<int>* _Results, bool* _pDon
 			break;
 	}
 
-	end_thread();
+	thread_traits_t::end_thread();
 }
 
 static void test_stealing(const std::function<void(worklist_t& _WorkParam, std::atomic<int>* _Results, bool* _pDone)>& _Function

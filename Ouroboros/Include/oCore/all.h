@@ -41,4 +41,5 @@
 #include <oCore/process_stats_monitor.h>
 #include <oCore/reporting.h>
 #include <oCore/system.h>
+#include <oCore/thread_traits.h>
 #endif

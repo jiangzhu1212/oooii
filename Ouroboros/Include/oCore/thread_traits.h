@@ -22,49 +22,20 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oDispatchQueuePrivate.h>
-#include <oBase/fixed_string.h>
-#include <oBasis/oRefCount.h>
-#include <oCore/thread_traits.h>
-#include <oConcurrency/threadpool.h>
+// Use oCore functionality for more robust threads. Pass this to basic_threadpool 
+// and derivatives.
+#pragma once
+#ifndef oCore_thread_traits_h
+#define oCore_thread_traits_h
 
-using namespace ouro;
+namespace ouro {
 
-struct oDispatchQueuePrivate_Impl : oDispatchQueuePrivate
+struct core_thread_traits
 {
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE2(oDispatchQueue, oDispatchQueuePrivate);
-
-	oDispatchQueuePrivate_Impl(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess);
-
-	bool Dispatch(const oTASK& _Task) threadsafe override
-	{
-		try { thread_cast<oDispatchQueuePrivate_Impl*>(this)->Threadpool.dispatch(_Task); }
-		catch (...) { return false; }
-		return true;
-	}
-	void Flush() threadsafe override { thread_cast<oDispatchQueuePrivate_Impl*>(this)->Threadpool.flush(); }
-	bool Joinable() const threadsafe override { return thread_cast<oDispatchQueuePrivate_Impl*>(this)->Threadpool.joinable(); }
-	void Join() threadsafe override { thread_cast<oDispatchQueuePrivate_Impl*>(this)->Threadpool.join(); }
-	const char* GetDebugName() const threadsafe override { return DebugName; }
-
-protected:
-	oConcurrency::threadpool<core_thread_traits> Threadpool;
-	oRefCount RefCount;
-	sstring DebugName;
+	static void begin_thread(const char* _ThreadName);
+	static void end_thread();
 };
 
-// _DebugName must be a constant string
-oDispatchQueuePrivate_Impl::oDispatchQueuePrivate_Impl(const char* _DebugName, size_t _InitialTaskCapacity, bool* _pSuccess)
-	: Threadpool(1)
-	, DebugName(_DebugName)
-{
-	*_pSuccess = true;
-}
+} // namespace ouro
 
-bool oDispatchQueueCreatePrivate(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueuePrivate** _ppDispatchQueue)
-{
-	bool success = false;
-	oCONSTRUCT(_ppDispatchQueue, oDispatchQueuePrivate_Impl(_DebugName, _InitialTaskCapacity, &success));
-	return !!*_ppDispatchQueue;
-}
+#endif

@@ -96,6 +96,9 @@
     <ClCompile Include="win_com.cpp">
       <Filter>Source\windows</Filter>
     </ClCompile>
+    <ClCompile Include="thread_traits.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">
@@ -181,6 +184,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\windows\win_com.h">
       <Filter>oCore\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\thread_traits.h">
+      <Filter>oCore</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

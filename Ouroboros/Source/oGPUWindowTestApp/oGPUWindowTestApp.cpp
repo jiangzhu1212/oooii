@@ -219,7 +219,7 @@ void oGPUWindowThread::OnEvent(const window::basic_event& _Event)
 
 void oGPUWindowThread::Run()
 {
-	oConcurrency::begin_thread("Window Render Target Thread");
+	core_thread_traits::begin_thread("Window Render Target Thread");
 	{
 		std::shared_ptr<window> GPUWindow;
 
@@ -264,7 +264,7 @@ void oGPUWindowThread::Run()
 	}
 	if (OnThreadExit)
 		OnThreadExit();
-	oConcurrency::end_thread();
+	core_thread_traits::end_thread();
 }
 
 void oGPUWindowThread::Render()
