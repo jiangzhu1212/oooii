@@ -139,6 +139,15 @@ struct GPU_BCEncodeDecode : public oTest
 			#endif
 		}
 
+		oGPUDevice::DESC desc;
+		Device->GetDesc(&desc);
+
+		if (desc.vendor != vendor::nvidia && desc.vendor != vendor::amd)
+		{
+			snprintf(_StrStatus, _SizeofStrStatus, "%s gpu device not trusted to run the DXSDK BC7 sample code correctly, so skip this test.", as_string(desc.vendor));
+			return SKIPPED;
+		}
+
 		RESULT res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, ouro::surface::bc7_unorm, "_BC7", 0);
 		if (SUCCESS != res)
 			return res;
