@@ -45,9 +45,9 @@
 
 namespace oConcurrency {
 
-namespace detail { template<typename Alloc> class task_group; }
+namespace detail { template<typename ThreadpoolTraits, typename ThreadpoolAlloc = std::allocator<std::function<void()>>> class task_group; }
 
-template<typename Alloc>
+template<typename Traits, typename Alloc = std::allocator<std::function<void()>>>
 class threadpool : public basic_threadpool_base<Alloc>
 {
 	/** <citation
@@ -69,7 +69,7 @@ public:
 	void dispatch(const std::function<void()>& _Task);
 
 protected:
-	template<typename Alloc> friend class detail::task_group;
+	template<typename ThreadpoolTraits, typename ThreadpoolAlloc> friend class detail::task_group;
 
 	typedef concurrent_worklist<std::function<void()>, allocator_type> queue_t;
 
@@ -84,7 +84,7 @@ protected:
 	// 'global' variable. The bug has to do with std::bind and seems to affect
 	// 2 or more parameters bound by functions, be they methods of functions. 
 	// Revisit this in VS11.
-	static thread_local detail::task_group<allocator_type>* pTaskGroup;
+	static thread_local detail::task_group<Traits, allocator_type>* pTaskGroup;
 
 	void worker_proc();
 	void work();
@@ -97,11 +97,11 @@ protected:
 	const threadpool& operator=(const threadpool&); /* = delete */
 };
 
-template<typename Alloc> thread_local typename threadpool<Alloc>::queue_t* threadpool<Alloc>::pLocalQueue;
-template<typename Alloc> thread_local oConcurrency::detail::task_group<Alloc>* oConcurrency::threadpool<Alloc>::pTaskGroup;
+template<typename Traits, typename Alloc> thread_local typename threadpool<Traits, Alloc>::queue_t* threadpool<Traits, Alloc>::pLocalQueue;
+template<typename Traits, typename Alloc> thread_local oConcurrency::detail::task_group<Traits, Alloc>* oConcurrency::threadpool<Traits, Alloc>::pTaskGroup;
 
-template<typename Alloc>
-threadpool<Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
+template<typename Traits, typename Alloc>
+threadpool<Traits, Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
 	: LocalQueueIndex(0)
 {
 	LocalQueues.resize(calc_num_workers(_NumWorkers));
@@ -111,8 +111,8 @@ threadpool<Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
 	construct_workers(std::bind(&threadpool::worker_proc, this), _NumWorkers);
 }
 
-template<typename Alloc>
-void threadpool<Alloc>::dispatch(const std::function<void()>& _Task)
+template<typename Traits, typename Alloc>
+void threadpool<Traits, Alloc>::dispatch(const std::function<void()>& _Task)
 {
 	if (Running)
 	{
@@ -139,21 +139,21 @@ void threadpool<Alloc>::dispatch(const std::function<void()>& _Task)
 		throw std::out_of_range("threadpool call after join");
 }
 
-template<typename Alloc>
-void threadpool<Alloc>::worker_proc()
+template<typename Traits, typename Alloc>
+void threadpool<Traits, Alloc>::worker_proc()
 {
 	// assign pLocalQueue as last step before work() so main loop 
 	// doesn't need to check for a separate initialized state.
-	begin_thread("threadpool Worker");
+	Traits::begin_thread("threadpool Worker");
 	int i = LocalQueueIndex++;
 	WorkerIDs[i] = std::this_thread::get_id();
 	pLocalQueue = LocalQueues[i].get();
 	work();
-	end_thread();
+	Traits::end_thread();
 }
 
-template<typename Alloc>
-void threadpool<Alloc>::work()
+template<typename Traits, typename Alloc>
+void threadpool<Traits, Alloc>::work()
 {
 	// NOTE: pLocalQueue is always guaranteed to be valid even across modules 
 	// because initialization of the worker thread and thus the pLocalQueue's TLS 
@@ -231,8 +231,8 @@ void threadpool<Alloc>::work()
 	}
 }
 
-template<typename Alloc>
-void threadpool<Alloc>::patch_local_queue()
+template<typename Traits, typename Alloc>
+void threadpool<Traits, Alloc>::patch_local_queue()
 {
 	for (size_t i = 0; i < WorkerIDs.size(); i++)
 	{
@@ -246,18 +246,19 @@ void threadpool<Alloc>::patch_local_queue()
 
 namespace detail {
 
-template<typename Alloc>
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
 class task_group
 {
 public:
-	typedef Alloc allocator_type;
+	typedef ThreadpoolAlloc allocator_type;
+	typedef threadpool<ThreadpoolTraits, ThreadpoolAlloc> threadpool_type;
 
 	// The challenge is that a task group must have access to its threadpool 
 	// because it may be running tasks from non-worker threads, so even a 
 	// thread_local pointer kept to the thread pool will not help. TBB and PPL 
 	// assume a singleton scheduler, but this implementation does not and leaves
 	// it explicit.
-	task_group(threadpool<allocator_type>& _Threadpool);
+	task_group(threadpool_type& _Threadpool);
 
 	// Run a task as part of this task group
 	void run(const std::function<void()>& _Task);
@@ -267,13 +268,13 @@ public:
 	void wait();
 
 protected:
-	threadpool<allocator_type>& Threadpool;
+	threadpool_type& Threadpool;
 	ouro::countdown_latch Latch;
-	friend threadpool<allocator_type>;
+	friend threadpool_type;
 };
 
-template<typename Alloc>
-task_group<Alloc>::task_group(threadpool<Alloc>& _Threadpool)
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+task_group<ThreadpoolTraits, ThreadpoolAlloc>::task_group(threadpool_type& _Threadpool)
 	: Threadpool(_Threadpool)
 	, Latch(1)
 {
@@ -282,15 +283,15 @@ task_group<Alloc>::task_group(threadpool<Alloc>& _Threadpool)
 		Threadpool.patch_local_queue();
 }
 
-template<typename Alloc>
-void task_group<Alloc>::run(const std::function<void()>& _Task)
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+void task_group<ThreadpoolTraits, ThreadpoolAlloc>::run(const std::function<void()>& _Task)
 {
 	Latch.reference();
 	Threadpool.dispatch([&,_Task] { _Task(); Latch.release(); });
 }
 
-template<typename Alloc>
-void task_group<Alloc>::wait()
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+void task_group<ThreadpoolTraits, ThreadpoolAlloc>::wait()
 {
 	// only block the calling thread if it's not a worker. If a worker, work
 	if (!Threadpool.pLocalQueue)
@@ -302,7 +303,7 @@ void task_group<Alloc>::wait()
 
 	else
 	{
-		task_group<Alloc>* pOldTaskGroup = Threadpool.pTaskGroup;
+		auto pOldTaskGroup = Threadpool.pTaskGroup;
 		Threadpool.pTaskGroup = this;
 		Threadpool.work();
 		Threadpool.pTaskGroup = pOldTaskGroup;
@@ -310,23 +311,23 @@ void task_group<Alloc>::wait()
 	}
 }
 
-template<typename Alloc>
-inline void thread_local_parallel_for(task_group<Alloc>& _TaskGroup, size_t _Begin, size_t _End, oINDEXED_TASK _Task)
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+inline void thread_local_parallel_for(task_group<ThreadpoolTraits, ThreadpoolAlloc>& _TaskGroup, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 {
 	for (; _Begin < _End; _Begin++)
 		_TaskGroup.run(std::bind(_Task, _Begin));
 }
 
-template<size_t WorkChunkSize /* = 16*/, typename Alloc>
-inline void parallel_for(threadpool<Alloc>& _Threadpool, size_t _Begin, size_t _End, const oINDEXED_TASK& _Task)
+template<size_t WorkChunkSize /* = 16*/, typename Traits, typename Alloc>
+inline void parallel_for(threadpool<Traits, Alloc>& _Threadpool, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 {
-	task_group<Alloc> g(_Threadpool);
+	task_group<Traits, Alloc> g(_Threadpool);
 	const size_t kNumSteps = (_End - _Begin) / WorkChunkSize;
 	for (size_t i = 0; i < kNumSteps; i++, _Begin += WorkChunkSize)
-		g.run(std::bind(thread_local_parallel_for<Alloc>, std::ref(g), _Begin, _Begin + WorkChunkSize, _Task));
+		g.run(std::bind(thread_local_parallel_for<Traits, Alloc>, std::ref(g), _Begin, _Begin + WorkChunkSize, _Task));
 
 	if (_Begin < _End)
-		g.run(std::bind(thread_local_parallel_for<Alloc>, std::ref(g), _Begin, _End, _Task));
+		g.run(std::bind(thread_local_parallel_for<Traits, Alloc>, std::ref(g), _Begin, _End, _Task));
 
 	g.wait();
 }

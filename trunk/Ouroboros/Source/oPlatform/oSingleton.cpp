@@ -203,8 +203,3 @@ void oConcurrency::thread_at_exit(const std::function<void()>& _AtExit)
 {
 	oASSERT(false, "not supported");
 }
-
-void oConcurrency::end_thread()
-{
-	process_heap::exit_thread();
-}

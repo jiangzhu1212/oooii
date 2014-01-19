@@ -24,11 +24,12 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueueConcurrent.h>
 #include <oBasis/oDispatchQueueConcurrentT.h>
+#include <oCore/thread_traits.h>
 #include <oConcurrency/threadpool.h>
 
 using namespace ouro;
 
-typedef oConcurrency::threadpool<std::allocator<oTASK>> threadpool_t;
+typedef oConcurrency::threadpool<core_thread_traits> threadpool_t;
 
 const oGUID& oGetGUID(threadsafe const oDispatchQueueConcurrentT<threadpool_t>* threadsafe const*)
 {

@@ -42,6 +42,12 @@
 
 namespace oConcurrency {
 
+struct basic_threadpool_default_traits
+{
+	static void begin_thread(const char* _ThreadName) {}
+	static void end_thread() {}
+};
+
 template<typename Alloc>
 class basic_threadpool_base
 {
@@ -148,7 +154,7 @@ inline void basic_threadpool_base<Alloc>::join()
 		w.join();
 }
 
-template<typename Alloc = std::allocator<TaskT>>
+template<typename Traits, typename Alloc = std::allocator<std::function<void()>>>
 class basic_threadpool : public basic_threadpool_base<Alloc>
 {
 public:
@@ -172,15 +178,15 @@ private:
 	basic_threadpool& operator=(basic_threadpool&&); /* = delete */
 };
 
-template<typename Alloc>
-inline basic_threadpool<Alloc>::basic_threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
+template<typename Traits, typename Alloc>
+inline basic_threadpool<Traits, Alloc>::basic_threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
 	: basic_threadpool_base(_Alloc)
 {
 	construct_workers(std::bind(&basic_threadpool::work, this), _NumWorkers);
 }
 
-template<typename Alloc>
-inline void basic_threadpool<Alloc>::dispatch(const task_type& _Task)
+template<typename Traits, typename Alloc>
+inline void basic_threadpool<Traits, Alloc>::dispatch(const task_type& _Task)
 {
 	if (Running)
 	{
@@ -194,10 +200,10 @@ inline void basic_threadpool<Alloc>::dispatch(const task_type& _Task)
 		throw std::out_of_range("threadpool call after join");
 }
 
-template<typename Alloc>
-inline void basic_threadpool<Alloc>::work()
+template<typename Traits, typename Alloc>
+inline void basic_threadpool<Traits, Alloc>::work()
 {
-	begin_thread("basic_threadpool Worker");
+	Traits::begin_thread("basic_threadpool Worker");
 	while (true)
 	{
 		std::unique_lock<std::mutex> Lock(Mutex);
@@ -217,7 +223,7 @@ inline void basic_threadpool<Alloc>::work()
 		Lock.unlock();
 		task();
 	}
-	end_thread();
+	Traits::end_thread();
 }
 
 } // namespace oConcurrency

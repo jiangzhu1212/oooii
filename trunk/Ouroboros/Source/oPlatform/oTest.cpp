@@ -30,6 +30,7 @@
 #include <oBase/scc.h>
 #include <oCore/process.h>
 #include <oCore/reporting.h>
+#include <oCore/thread_traits.h>
 #include <oCore/windows/win_iocp.h>
 #undef CreateProcess
 
@@ -1107,7 +1108,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	{
 		ProgressBarThread = std::thread([&]
 		{
-			oConcurrency::begin_thread("Progress Bar Thread");
+			core_thread_traits::begin_thread("Progress Bar Thread");
 			xlstring title;
 			console::get_title(title);
 			std::shared_ptr<progress_bar> ProgressBar = progress_bar::make(title, console::icon(), [&] { ShouldStop = true; });
@@ -1115,7 +1116,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 			Ready.set();
 			ProgressBar->flush_messages(true);
 			pProgressBar = nullptr;
-			oConcurrency::end_thread();
+			core_thread_traits::end_thread();
 		});
 
 		Ready.wait();

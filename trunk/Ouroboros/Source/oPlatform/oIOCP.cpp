@@ -26,6 +26,7 @@
 #include <oBase/concurrent_index_allocator.h>
 #include <oBase/backoff.h>
 #include <oBase/fixed_string.h>
+#include <oCore/thread_traits.h>
 #include <oBasis/oRefCount.h>
 #include <oPlatform/oSingleton.h>
 #include <oCore/reporting.h>
@@ -101,7 +102,7 @@ void IOCPThread(HANDLE	_hIOCP, unsigned int _Index, ouro::countdown_latch* _pLat
 {
 	_pLatch->release();
 	_pLatch = nullptr; // Drop the latch as it's not valid after releasing
-	oConcurrency::begin_thread("oIOCP Worker"); //This deadlocks if called before the latch is released. See bug 1999.
+	core_thread_traits::begin_thread("oIOCP Worker"); //This deadlocks if called before the latch is released. See bug 1999.
 
 	while(1)
 	{
@@ -113,7 +114,7 @@ void IOCPThread(HANDLE	_hIOCP, unsigned int _Index, ouro::countdown_latch* _pLat
 	// code the thread is being aborted before the dtor below properly shuts down
 	// this thread. Is this some setup oversight in oIOCP? Is this expected 
 	// behavior?
-	oConcurrency::end_thread();
+	core_thread_traits::end_thread();
 }
 
 struct oIOCP_Impl : public oIOCP
