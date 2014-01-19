@@ -31,7 +31,7 @@ namespace oConcurrency {
 
 struct Node
 {
-	Node* pNext;
+	Node* next;
 	size_t Value;
 };
 
@@ -76,7 +76,7 @@ static void test_basics()
 	while (v)
 	{
 		oCHECK(v->Value == --i, "Stack value is not correct (pop_all)");
-		v = v->pNext;
+		v = v->next;
 	}
 }
 
@@ -97,7 +97,7 @@ static void test_concurrency()
 	while (n)
 	{
 		n->Value = 0xc001c0de;
-		n = n->pNext;
+		n = n->next;
 	}
 
 	oFORI(i, nodes)

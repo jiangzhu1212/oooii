@@ -22,30 +22,21 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Similar to Microsoft's InterlockedSList, this provides for a 
+// Similar to Microsoft's InterlockedSList, this provides for a concurrent 
 // singly linked list whose insertion has the behavior of a stack (LIFO).
-// NOTE: The type T must include a member pointer pNext. All allocation of nodes 
-// is the responsibility of the user because this data structure is often used 
-// in very low-level implementations such as allocations themselves.
+// This is an intrusive data structure and expects the stored type to have a 
+// member pointer "next". all allocation of nodes is the responsibility of 
+// the user because this data structure is often used in very low-level 
+// implementations such as allocations themselves.
 #ifndef oConcurrency_concurrent_stack_h
 #define oConcurrency_concurrent_stack_h
 
-#include <oBase/config.h>
-#include <oConcurrency/oConcurrency.h> // for is_fifo
-
-#ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
-	#include <oHLSL/oHLSLAtomics.h>
-#else
-	#include <atomic>
-#endif
+#include <oConcurrency/concurrent_stack_traits.h>
+#include <stdexcept>
 
 namespace oConcurrency {
 
-template<typename T
-		, size_t nTagBits = 4
-		, size_t nSizeBits = 12
-		, size_t nPointerBits = 48
->
+template<typename T, typename traits = concurrent_stack_traits64>
 class concurrent_stack
 {
 public:
@@ -53,8 +44,9 @@ public:
 	typedef T value_type;
 	typedef value_type* pointer;
 	typedef const value_type* const_pointer;
-
-	static const size_type capacity = (1 << nSizeBits) - 1;
+	typedef value_type& reference;
+	typedef const value_type& const_reference;
+	static const size_type capacity = (1 << traits::size_bits) - 1;
 
 	concurrent_stack();
 	~concurrent_stack();
@@ -82,127 +74,99 @@ public:
 	size_type size() const;
 
 private:
-	union header_t
-	{
-		unsigned long long All;
-		struct
-		{
-			unsigned long long Tag : nTagBits;
-			unsigned long long Size : nSizeBits;
-			unsigned long long pHead : nPointerBits;
-		};
-	};
-
-	// @tony: there's a warning about not handling registers correctly in the 32-bit std::atomic implementation
-	// in VS2012 that results in registers being corrupt, so fall back on basic atomics until the lib gets fixed
-	#ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
-		unsigned long long Head;
-		bool head_compare_exchange_strong(unsigned long long& _Expected, unsigned long long _Desired)
-		{
-			unsigned long long Orig = 0;
-			InterlockedCompareExchange(Head, _Expected, _Desired, Orig);
-			bool Exchanged = Orig == _Expected;
-			_Expected = Orig;
-			return Exchanged;
-		}
-	#else
-		std::atomic<unsigned long long> Head;
-		bool head_compare_exchange_strong(unsigned long long& _Expected, unsigned long long _Desired)
-		{
-			return Head.compare_exchange_strong(_Expected, _Desired);
-		}
-	#endif
+	typedef typename traits::head_type head_t;
+	typename traits::atomic_type Head;
+	inline bool head_cas(unsigned long long& _Expected, unsigned long long _Desired) { return traits::cas(Head, _Expected, _Desired); }
 };
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-struct is_fifo<concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>> : std::false_type {};
+template<typename T, typename traits>
+struct is_fifo<concurrent_stack<T, traits>> : std::false_type {};
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::concurrent_stack()
+template<typename T, typename traits>
+concurrent_stack<T, traits>::concurrent_stack()
 {
 	Head = 0;
 }
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::~concurrent_stack()
+template<typename T, typename traits>
+concurrent_stack<T, traits>::~concurrent_stack()
 {
 	if (!empty())
 		throw std::length_error("container not empty");
 }
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-void concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::push(pointer _pElement)
+template<typename T, typename traits>
+void concurrent_stack<T, traits>::push(pointer _pElement)
 {
-	header_t New, Old;
-	Old.All = Head;
+	head_t New, Old;
+	Old.all = Head;
 	do 
 	{
-		if (Old.Size >= capacity)
+		if (Old.size >= capacity)
 			throw std::overflow_error("concurrent_stack cannot hold any more elements");
-		_pElement->pNext = reinterpret_cast<pointer>(Old.pHead);
-		New.Tag = Old.Tag + 1;
-		New.Size = Old.Size + 1;
-		New.pHead = reinterpret_cast<uintptr_t>(_pElement);
+		_pElement->next = reinterpret_cast<pointer>(Old.head);
+		New.tag = Old.tag + 1;
+		New.size = Old.size + 1;
+		New.head = reinterpret_cast<uintptr_t>(_pElement);
 
-		if (reinterpret_cast<pointer>(New.pHead) != _pElement)
+		if (reinterpret_cast<pointer>(New.head) != _pElement)
 			throw std::overflow_error("the specified pointer is too large to be used in conjunction with tagging or other concurrency/ABA solutions");
 
-	} while (!head_compare_exchange_strong(Old.All, New.All));
+	} while (!head_cas(Old.all, New.all));
 }
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::peek() const
+template<typename T, typename traits>
+typename concurrent_stack<T, traits>::pointer concurrent_stack<T, traits>::peek() const
 {
-	header_t Old; Old.All = Head;
-	return reinterpret_cast<pointer>(Old.pHead);
+	head_t Old; Old.all = Head;
+	return reinterpret_cast<pointer>(Old.head);
 }
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pop()
+template<typename T, typename traits>
+typename concurrent_stack<T, traits>::pointer concurrent_stack<T, traits>::pop()
 {
-	header_t New, Old; Old.All = Head;
+	head_t New, Old; Old.all = Head;
 	pointer pElement = nullptr;
 	do 
 	{
-		if (!Old.pHead)
+		if (!Old.head)
 			return nullptr;
-		New.Tag = Old.Tag + 1;
-		New.Size = Old.Size - 1;
-		pElement = reinterpret_cast<pointer>(Old.pHead);
-		New.pHead = reinterpret_cast<uintptr_t>(pElement->pNext);
-	} while (!head_compare_exchange_strong(Old.All, New.All));
+		New.tag = Old.tag + 1;
+		New.size = Old.size - 1;
+		pElement = reinterpret_cast<pointer>(Old.head);
+		New.head = reinterpret_cast<uintptr_t>(pElement->next);
+	} while (!head_cas(Old.all, New.all));
 
 	return pElement;
 }
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-bool concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::empty() const
+template<typename T, typename traits>
+bool concurrent_stack<T, traits>::empty() const
 {
-	header_t h; h.All = Head;
-	return !h.pHead;
+	head_t h; h.all = Head;
+	return !h.head;
 }
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pointer concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::pop_all()
+template<typename T, typename traits>
+typename concurrent_stack<T, traits>::pointer concurrent_stack<T, traits>::pop_all()
 {
 	pointer pElement = nullptr;
-	header_t New, Old;
-	New.Size = 0;
-	New.pHead = 0;
-	Old.All = Head;
+	head_t New, Old;
+	New.size = New.head = 0;
+	Old.all = Head;
 	do 
 	{
-		New.Tag = Old.Tag + 1;
-		pElement = reinterpret_cast<pointer>(Old.pHead);
-	} while (!head_compare_exchange_strong(Old.All, New.All));
+		New.tag = Old.tag + 1;
+		pElement = reinterpret_cast<pointer>(Old.head);
+	} while (!head_cas(Old.all, New.all));
 	return pElement;
 }
 
-template<typename T, size_t nTagBits, size_t nSizeBits, size_t nPointerBits>
-typename concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::size_type concurrent_stack<T, nTagBits, nSizeBits, nPointerBits>::size() const
+template<typename T, typename traits>
+typename concurrent_stack<T, traits>::size_type concurrent_stack<T, traits>::size() const
 {
-	header_t h; h.All = Head;
-	return h.Size;
+	head_t h; h.all = Head;
+	return h.size;
 }
 
 } // namespace oConcurrency

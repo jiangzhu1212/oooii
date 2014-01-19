@@ -73,7 +73,7 @@ void* block_allocator::allocate()
 				break;
 			}
 
-			c = c->pNext;
+			c = c->next;
 		}
 
 		// still no memory? add another chunk
@@ -110,7 +110,7 @@ block_allocator::chunk_t* block_allocator::allocate_chunk()
 {
 	chunk_t* c = reinterpret_cast<chunk_t*>(thread_cast<block_allocator*>(this)->PlatformAllocate(ChunkSize));
 	c->pAllocator = ::new (c+1) fixed_block_allocator(BlockSize, NumBlocksPerChunk);
-	c->pNext = nullptr;
+	c->next = nullptr;
 	return c;
 }
 
@@ -132,7 +132,7 @@ fixed_block_allocator* block_allocator::find_chunk_allocator(void* _Pointer) con
 	{
 		if (in_range(_Pointer, c->pAllocator, ChunkSize))
 			return c->pAllocator;
-		c = c->pNext;
+		c = c->next;
 	}
 
 	return nullptr;
@@ -144,7 +144,7 @@ void block_allocator::clear()
 	while (c)
 	{
 		c->pAllocator = ::new (c->pAllocator) fixed_block_allocator(BlockSize, NumBlocksPerChunk);
-		c = c->pNext;
+		c = c->next;
 	}
 }
 
@@ -173,13 +173,13 @@ void block_allocator::shrink(size_t _KeepCount)
 	while (c)
 	{
 		chunk_t* tmp = c;
-		c = c->pNext;
+		c = c->next;
 
 		if (tmp->pAllocator->count_available(BlockSize) != NumBlocksPerChunk)
 			Chunks.push(tmp);
 		else
 		{
-			tmp->pNext = toFree;
+			tmp->next = toFree;
 			toFree = tmp;
 		}
 	}
@@ -190,7 +190,7 @@ void block_allocator::shrink(size_t _KeepCount)
 	while (c && nChunks < _KeepCount)
 	{
 		chunk_t* tmp = c;
-		c = c->pNext;
+		c = c->next;
 		Chunks.push(tmp);
 		nChunks++;
 	}
@@ -198,7 +198,7 @@ void block_allocator::shrink(size_t _KeepCount)
 	while (c)
 	{
 		chunk_t* tmp = c;
-		c = c->pNext;
+		c = c->next;
 		PlatformDeallocate(tmp);
 	}
 
@@ -216,7 +216,7 @@ bool block_allocator::valid(void* _Pointer) const
 	{
 		if (c->pAllocator->valid(BlockSize, NumBlocksPerChunk, _Pointer))
 			return true;
-		c = c->pNext;
+		c = c->next;
 	}
 	return false;
 }
@@ -228,7 +228,7 @@ bool block_allocator::has_outstanding_allocations() const
 	{
 		if (c->pAllocator->count_available(BlockSize) != NumBlocksPerChunk)
 			return true;
-		c = c->pNext;
+		c = c->next;
 	}
 	return false;
 }
@@ -240,7 +240,7 @@ size_t block_allocator::count_available() const
 	while (c)
 	{
 		n += c->pAllocator->count_available(BlockSize);
-		c = c->pNext;
+		c = c->next;
 	}
 	return n;
 }

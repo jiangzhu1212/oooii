@@ -35,6 +35,7 @@
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_opt.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack_traits.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_worklist.h" />
     <ClInclude Include="..\..\Include\oConcurrency\coroutine.h" />
     <ClInclude Include="..\..\Include\oConcurrency\fixed_block_allocator.h" />
