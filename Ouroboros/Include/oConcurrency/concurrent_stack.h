@@ -60,7 +60,7 @@ public:
 	// If there are no elements, this return nullptr.
 	pointer pop();
 
-	// Returns true if no elements are in the stack
+	// Returns true if no elements are in the stack.
 	bool empty() const;
 
 	// Returns the head that is thus a linked list of all items that were in the 
