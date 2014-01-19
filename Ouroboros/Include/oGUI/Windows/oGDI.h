@@ -395,36 +395,28 @@ public:
 // _____________________________________________________________________________
 // Bitmap APIs
 
-struct oBMI_DESC
-{
-	oBMI_DESC()
-		: Dimensions(ouro::invalid, ouro::invalid)
-		, Format(ouro::surface::unknown)
-		, RowPitch(ouro::invalid)
-		, FlipVertically(true)
-		, ARGBMonochrome8Zero(ouro::Black)
-		, ARGBMonochrome8One(ouro::White)
-	{}
+namespace ouro {
+	namespace windows {
+		namespace gdi {
 
-	int2 Dimensions;
-	ouro::surface::format Format;
-	int RowPitch;
-	bool FlipVertically;
-	ouro::color ARGBMonochrome8Zero;
-	ouro::color ARGBMonochrome8One;
-};
+// Supported formats: b8g8r8_unorm b8g8r8a8_unorm r8_unorm. Must be 2D non-array
+BITMAPINFOHEADER make_header(const surface::info& _SurfaceInfo, bool _TopDown = true);
+BITMAPV4HEADER make_headerv4(const surface::info& _SurfaceInfo, bool _TopDown = true);
+void fill_monochrone_palette(RGBQUAD* _pColors, color _Color0 = Black, color _Color1 = White);
 
-// Initialize a BITMAPINFO with information from the specified oBMI_DESC. The 
-// specified _pBMI should be allocated to the number of bytes returned by 
-// oGDIGetBMISize. If an 8-bit format is specified, palette data will be 
-// initialized with a gradient going from zero to one as specified in the desc.
-void oGDIInitializeBMI(const oBMI_DESC& _Desc, BITMAPINFO* _pBMI);
+surface::info get_info(const BITMAPINFOHEADER& _Header);
+surface::info get_info(const BITMAPV4HEADER& _Header);
+inline surface::info get_info(const BITMAPINFO& _Info) { return get_info(_Info.bmiHeader); }
 
-// 8 bit formats won't render correctly because BITMAPINFO infers palette data 
-// from 8-bit, so allocate enough room for the palette.
-size_t oGDIGetBMISize(ouro::surface::format _Format);
+// Copy the contents of a bitmap to the specified buffer.
+void memcpy2d(void* _pDestination, size_t _DestinationPitch, HBITMAP _hBmp, size_t _NumRows, bool _FlipVertically = false);
 
-ouro::surface::format oGDIGetFormat(const BITMAPINFOHEADER& _BitmapInfoHeader);
+// Creates a bitmap with the contents of the specified buffer.
+oGDIScopedObject<HBITMAP> make_bitmap(const surface::buffer* _pBuffer);
+
+		} // namespace gdi
+	} // namespace windows
+} // namespace ouro
 
 // Captures image data of the specified window and fills _pImageBuffer.
 // pImageBuffer can be NULL, in which case only _pBitmapInfo is filled out.
@@ -457,13 +449,13 @@ BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, H
 
 // This stretches the source bits directly to fill the specified rectangle in
 // the specified device context.
-bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
+bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
 
 // This stretches the source bits directly to fill the specified HWND's client
 // area. This is a nice shortcut when working with cameras that will fill some
 // UI element, or a top-level window.
-bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
-bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, int _SourceRowPitch, bool _FlipVertically = true);
+bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
+bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
 
 // _____________________________________________________________________________
 // Other APIs
