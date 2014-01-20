@@ -35,7 +35,6 @@
 // @tony: Use of std types was causing a deadlock on shutdown, 
 // so keep using oStd stuff until I can figure out why.
 #include <oStd/mutex.h>
-#include <oStd/thread.h>
 
 #include <oCore/windows/win_error.h>
 
@@ -177,20 +176,20 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 		WorkerThreads.resize(NumThreads);
 		for(unsigned int i = 0; i < NumThreads; i++)
 		{
-			WorkerThreads[i] = std::move(thread(&IOCPThread, hIOCP, i, &InitLatch));
+			WorkerThreads[i] = std::move(std::thread(&IOCPThread, hIOCP, i, &InitLatch));
 		}
 		InitLatch.wait();
 	}
 
 	~oIOCP_Singleton()
 	{
-		for (thread& Thread : WorkerThreads)
+		for (std::thread& Thread : WorkerThreads)
 		{
 			// Post a shutdown message for each worker to unblock and disable it.
 			PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, nullptr);
 		}
 
-		for (thread& Thread : WorkerThreads)
+		for (std::thread& Thread : WorkerThreads)
 			Thread.join();
 
 		if (INVALID_HANDLE_VALUE != hIOCP)
@@ -314,7 +313,7 @@ private:
 	};
 
 	typedef fixed_vector<oIOCPOrphan,oKB(16)> tOrphanList;
-	typedef std::vector<thread> tThreadList;			
+	typedef std::vector<std::thread> tThreadList;			
 
 	HANDLE			hIOCP;
 	tOrphanList		OrphanedContexts;

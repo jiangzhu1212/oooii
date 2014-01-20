@@ -35,8 +35,8 @@
 #define oConcurrencyRequirements_h
 
 #include <oStd/callable.h>
-#include <oStd/thread.h>
 #include <oConcurrency/thread_safe.h>
+#include <memory>
 #include <system_error>
 
 typedef std::function<void()> oTASK;
