@@ -24,8 +24,6 @@
  **************************************************************************/
 #include <oSurface/fill.h>
 #include <oGUI/Windows/oGDI.h>
-#include <oPlatform/oTest.h>
-#include <oGUI/Windows/oWinRect.h>
 
 namespace ouro
 {
