@@ -31,5 +31,4 @@
 #include <oStd/future.h>
 #include <oStd/make_unique.h>
 #include <oStd/mutex.h>
-#include <oStd/thread.h>
 #endif

@@ -31,6 +31,7 @@
 #include <oGUI/oGUI.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oGUI/Windows/oWinRect.h>
+#include <oSurface/buffer.h>
 #include <atomic>
 
 // For functions that take logical height. Point size is like what appears in 
