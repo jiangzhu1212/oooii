@@ -33,9 +33,11 @@
 
 #include <oConcurrency/oConcurrency.h>
 #include <oBase/backoff.h>
+#include <oBase/countdown_latch.h>
 #include <condition_variable>
 #include <deque>
 #include <exception>
+#include <functional>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -47,6 +49,8 @@ struct basic_threadpool_default_traits
 	static void begin_thread(const char* _ThreadName) {}
 	static void end_thread() {}
 };
+
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc = std::allocator<std::function<void()>>> class basic_task_group;
 
 template<typename Alloc>
 class basic_threadpool_base
@@ -72,6 +76,7 @@ public:
 	void join();
 
 protected:
+	template<typename ThreadpoolTraits, typename ThreadpoolAlloc> friend class basic_task_group;
 	std::vector<std::thread> Workers;
 	std::deque<task_type, allocator_type> GlobalQueue;
 	std::mutex Mutex;
@@ -225,6 +230,91 @@ inline void basic_threadpool<Traits, Alloc>::work()
 	}
 	Traits::end_thread();
 }
+
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+class basic_task_group
+{
+public:
+	typedef ThreadpoolAlloc allocator_type;
+	typedef basic_threadpool<ThreadpoolTraits, ThreadpoolAlloc> threadpool_type;
+	basic_task_group(threadpool_type& _Threadpool);
+
+	// Run a task as part of this task group
+	void run(const std::function<void()>& _Task);
+
+	// blocks until all tasks associated with this task group are finished. While
+	// waiting, this work steals.
+	void wait();
+
+private:
+	threadpool_type& Threadpool;
+	ouro::countdown_latch Latch;
+};
+
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+basic_task_group<ThreadpoolTraits, ThreadpoolAlloc>::basic_task_group(threadpool_type& _Threadpool)
+	: Threadpool(_Threadpool)
+	, Latch(1)
+{}
+
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+void basic_task_group<ThreadpoolTraits, ThreadpoolAlloc>::run(const std::function<void()>& _Task)
+{
+	Latch.reference();
+	Threadpool.dispatch([&,_Task] { _Task(); Latch.release(); });
+}
+
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+void basic_task_group<ThreadpoolTraits, ThreadpoolAlloc>::wait()
+{
+	Latch.release();
+	while (Latch.outstanding())
+	{
+		std::unique_lock<std::mutex> Lock(Threadpool.Mutex);
+
+		if (!Threadpool.Running)
+			throw std::exception("threadpool shut down before task group could complete");
+
+		if (Threadpool.GlobalQueue.empty())
+		{
+			Lock.unlock();
+			Latch.wait();
+		}
+
+		else
+		{
+			auto task = std::move(Threadpool.GlobalQueue.front());
+			Threadpool.GlobalQueue.pop_front();
+			Lock.unlock();
+			task();
+		}
+	}
+}
+
+namespace detail {
+
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+inline void basic_thread_local_parallel_for(basic_task_group<ThreadpoolTraits, ThreadpoolAlloc>& _TaskGroup, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
+{
+	for (; _Begin < _End; _Begin++)
+		_TaskGroup.run(std::bind(_Task, _Begin));
+}
+
+template<size_t WorkChunkSize /* = 16*/, typename ThreadpoolTraits, typename ThreadpoolAlloc>
+inline void basic_parallel_for(basic_threadpool<ThreadpoolTraits, ThreadpoolAlloc>& _Threadpool, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
+{
+	basic_task_group<ThreadpoolTraits, ThreadpoolAlloc> g(_Threadpool);
+	const size_t kNumSteps = (_End - _Begin) / WorkChunkSize;
+	for (size_t i = 0; i < kNumSteps; i++, _Begin += WorkChunkSize)
+		g.run(std::bind(basic_thread_local_parallel_for<ThreadpoolTraits, ThreadpoolAlloc>, std::ref(g), _Begin, _Begin + WorkChunkSize, _Task));
+
+	if (_Begin < _End)
+		g.run(std::bind(basic_thread_local_parallel_for<ThreadpoolTraits, ThreadpoolAlloc>, std::ref(g), _Begin, _End, _Task));
+
+	g.wait();
+}
+
+} // namespace detail
 
 } // namespace oConcurrency
 

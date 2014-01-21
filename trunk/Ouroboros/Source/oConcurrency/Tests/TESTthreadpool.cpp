@@ -267,7 +267,12 @@ struct basic_threadpool_impl : test_threadpool
 	~basic_threadpool_impl() { if (t.joinable()) t.join(); }
 	const char* name() const override { return "basic_threadpool"; }
 	void dispatch(const std::function<void()>& _Task) override { return t.dispatch(_Task); }
-	bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override { return false; }
+	bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override
+	{
+		oConcurrency::detail::basic_parallel_for<16>(t, _Begin, _End, _Task);
+		return true;
+	}
+
 	void flush() override { t.flush(); }
 	void release() override { if (t.joinable()) t.join(); }
 };
