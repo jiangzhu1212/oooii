@@ -48,9 +48,6 @@
     <ClInclude Include="oDispatchQueueGlobalIOCP.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="oDispatchQueueConcurrentWTP.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
@@ -111,9 +108,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oDispatchQueueConcurrentWTP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oDispatchQueueGlobalIOCP.cpp">

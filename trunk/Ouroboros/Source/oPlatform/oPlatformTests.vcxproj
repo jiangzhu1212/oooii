@@ -133,7 +133,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Tests\TESTDispatchQueueConcurrent.cpp" />
-    <ClCompile Include="Tests\TESTDispatchQueueConcurrentWTP.cpp" />
     <ClCompile Include="Tests\TESTFileAsync.cpp" />
     <ClCompile Include="Tests\TESTFileSync.cpp" />
     <ClCompile Include="Tests\TESTHTTP.cpp" />
