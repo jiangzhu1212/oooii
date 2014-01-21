@@ -145,7 +145,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oP4.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
-    <ClInclude Include="oDispatchQueueConcurrentWTP.h" />
     <ClInclude Include="oDispatchQueueGlobalIOCP.h" />
     <ClInclude Include="oHTTPInternal.h" />
     <ClInclude Include="oIOCP.h" />
@@ -154,7 +153,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oConcurrency.cpp" />
-    <ClCompile Include="oDispatchQueueConcurrentWTP.cpp" />
     <ClCompile Include="oDispatchQueueGlobalIOCP.cpp" />
     <ClCompile Include="oEMail.cpp" />
     <ClCompile Include="oFileCache.cpp" />
