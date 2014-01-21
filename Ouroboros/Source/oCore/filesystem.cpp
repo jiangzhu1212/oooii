@@ -768,7 +768,7 @@ void delete_buffer(char* _pBuffer)
 	delete [] _pBuffer;
 }
 
-shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, size_t* _pSize)
+shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value _LoadOption)
 {
 	unsigned long long FileSize = file_size(_Path);
 
