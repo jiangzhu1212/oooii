@@ -57,7 +57,7 @@ int main(int argc, const char* argv[])
 	try
 	{
 		size_t size = 0;
-		auto b = filesystem::load(infile, filesystem::load_option::binary_read, &size);
+		auto b = filesystem::load(infile, &size);
 
 		std::string s;
 		s.reserve(size * 2 / 3);
