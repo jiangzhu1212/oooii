@@ -59,7 +59,7 @@ public:
 	std::shared_ptr<char> load_buffer(const char* _Path, size_t* _pSize = nullptr) override
 	{
 		path FullPath = filesystem::data_path() / _Path;
-		return filesystem::load(FullPath, filesystem::load_option::binary_read, _pSize);
+		return filesystem::load(FullPath, _pSize);
 	}
 
 	bool is_debugger_attached() const override { return this_process::has_debugger_attached(); }

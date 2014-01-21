@@ -177,23 +177,24 @@ void convert(const info& _SourceInfo
 
 	pixel_convert cv = get_pixel_convert(_SourceInfo.format, _DestinationInfo.format);
 
-	const int NumMips = num_mips(_SourceInfo);
-
-	for (int mip = 0; mip < NumMips; mip++)
+	const int nSubresources = surface::num_subresources(_SourceInfo);
+	for (int subresource = 0; subresource < nSubresources; subresource++)
 	{
-		for (int slice = 0; slice < _SourceInfo.array_size; slice++)
+		auto srcSri = surface::subresource(_SourceInfo, subresource);
+		auto dstSri = surface::subresource(_DestinationInfo, subresource);
+
+		if (any(srcSri.dimensions != dstSri.dimensions))
+			throw std::invalid_argument("dimensions mismatch");
+
+		const_mapped_subresource Source = get_const_mapped_subresource(_SourceInfo, subresource, 0, _Source.data);
+		mapped_subresource Destination = get_mapped_subresource(_DestinationInfo, subresource, 0, _pDestination->data);
+
+		for (int slice = 0; slice < srcSri.dimensions.z; slice++)
 		{
-			const int Subresource = calc_subresource(mip, slice, 0, NumMips, _SourceInfo.array_size);
+			convert_subresource(cv, srcSri, Source, _DestinationInfo.format, &Destination, _FlipVertically);
 
-			subresource_info SourceSubresourceInfo = subresource(_SourceInfo, Subresource);
-			subresource_info DestinationSubresourceInfo = subresource(_DestinationInfo, Subresource);
-
-			oASSERT(all(SourceSubresourceInfo.dimensions == DestinationSubresourceInfo.dimensions), "dimensions mismatch");
-		
-			const_mapped_subresource Source = get_const_mapped_subresource(_SourceInfo, Subresource, 0, _Source.data);
-			mapped_subresource Destination = get_mapped_subresource(_DestinationInfo, Subresource, 0, _pDestination->data);
-		
-			convert_subresource(cv, SourceSubresourceInfo, Source, _DestinationInfo.format, &Destination, _FlipVertically);
+			Source.data = byte_add(Source.data, Source.depth_pitch);
+			Destination.data = byte_add(Destination.data, Source.depth_pitch);
 		}
 	}
 }

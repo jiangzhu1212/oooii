@@ -472,7 +472,7 @@ bool oTest::TestImage(const surface::buffer* _pTestImage
 	{
 		size_t bSize = 0;
 		std::shared_ptr<char> b;
-		try { b = filesystem::load(_GoldenImagePath, filesystem::load_option::binary_read, &bSize); }
+		try { b = filesystem::load(_GoldenImagePath, &bSize); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Load failed: (Golden)...%s", gPath); }
 
 		try { GoldenImage = surface::decode(b.get(), bSize, ao); }

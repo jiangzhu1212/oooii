@@ -196,7 +196,7 @@ bool oGPUTextureTestApp::Render()
 std::shared_ptr<surface::buffer> surface_load(const path& _Path, surface::alpha_option::value _Option)
 {
 	size_t size = 0;
-	auto b = filesystem::load(_Path, filesystem::load_option::binary_read, &size);
+	auto b = filesystem::load(_Path, &size);
 	return surface::decode(b.get(), size, _Option);
 }
 

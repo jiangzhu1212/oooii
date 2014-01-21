@@ -104,14 +104,14 @@ static void test_mipchain(test_services& _Services, const surface::buffer* _pIma
 		surface::box region;
 		region.right = si.dimensions.x;
 		region.bottom = si.dimensions.y;
+		surface::shared_lock lock(_pImage, subresource);
 		for (int i = 0; i < nSlices; i++)
 		{
 			region.front = i;
 			region.back = i + 1;
 
-			surface::shared_lock lock(_pImage);
-			lock.mapped.data = byte_add(lock.mapped.data, i * lock.mapped.depth_pitch);
 			mipchain->update_subresource(subresource, region, lock.mapped);
+			lock.mapped.data = byte_add(lock.mapped.data, lock.mapped.depth_pitch);
 		}
 	}
 

@@ -353,12 +353,12 @@ unsigned long long write(file_handle _hFile
 
 // Writes the entire buffer to the specified file. Open is specified to allow 
 // text and write v. append specification.
-void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_option::value _SaveOption);
+void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_option::value _SaveOption = save_option::binary_write);
 
 // Allocates the size of the file, reads it into memory and returns that buffer.
 // If loaded as text, the allocation will be padded and a nul terminator will be
 // added so the buffer can immediately be used as a string.
-std::shared_ptr<char> load(const path& _Path, load_option::value _LoadOption, size_t* _pSize = nullptr);
+std::shared_ptr<char> load(const path& _Path, size_t* _pSize = nullptr, load_option::value _LoadOption = load_option::binary_read);
 
 class scoped_file
 {
