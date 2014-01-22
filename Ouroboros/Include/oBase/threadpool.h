@@ -53,7 +53,7 @@ struct threadpool_default_traits
 	static void end_thread() {}
 };
 
-template<typename ThreadpoolTraits, typename ThreadpoolAlloc = std::allocator<std::function<void()>>> class task_group;
+namespace detail { template<typename ThreadpoolTraits, typename ThreadpoolAlloc = std::allocator<std::function<void()>>> class task_group; }
 
 template<typename Alloc>
 class threadpool_base
@@ -79,7 +79,7 @@ public:
 	void join();
 
 protected:
-	template<typename ThreadpoolTraits, typename ThreadpoolAlloc> friend class task_group;
+	template<typename ThreadpoolTraits, typename ThreadpoolAlloc> friend class detail::task_group;
 	std::vector<std::thread> Workers;
 	std::deque<task_type, allocator_type> GlobalQueue;
 	std::mutex Mutex;
@@ -236,6 +236,12 @@ inline void threadpool<Traits, Alloc>::work()
 	Traits::end_thread();
 }
 
+// task_group and parallel_for need to know the instance of a threadpool to work with, but 
+// there should be only one threadpool in a system. oBase is not the place to solidify that
+// policy, so provide the implementation here, but use it to implement a ouro-namespaced 
+// task_group and parallel_for elsewhere.
+	namespace detail {
+
 template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
 class task_group
 {
@@ -318,6 +324,8 @@ inline void parallel_for(threadpool<ThreadpoolTraits, ThreadpoolAlloc>& _Threadp
 		g.run(std::bind(thread_local_parallel_for<ThreadpoolTraits, ThreadpoolAlloc>, std::ref(g), _Begin, _End, _Task));
 	g.wait();
 }
+
+	} // namespace detail
 
 } // namespace ouro
 

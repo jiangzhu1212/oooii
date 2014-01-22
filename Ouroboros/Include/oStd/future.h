@@ -48,6 +48,7 @@
 #ifndef oHAS_WORKSTEALING_FUTURE
 
 #include <oStd/callable.h>
+#include <oBase/task_group.h>
 
 #include <atomic>
 #include <cassert>
@@ -66,23 +67,6 @@ namespace ouro {
 		// because there's no well-defined API exposed in C++ for implementing such API,
 		// which is why it's here as a platform dependency).
 		void thread_at_exit(const std::function<void()>& _AtExit);
-
-		// To better accommodate middlewares and platform-specific implementations
-		// like PPL and TBB (TBB's headers are polluted with platform headers), 
-		// declare an API for use in future, but not its implementation. There 
-		// must be a platform implementation of the factory for waitable_task for
-		// ouro::future to be usable. For most systems, a task_group is the 
-		// appropriate implementation to ensure proper work-stealing with the 
-		// overall scheduler is enabled. This is not public API; just an 
-		// implementation detail of future.
-		struct waitable_task
-		{
-			// Waits for the task to finish
-			virtual void wait() = 0;
-		};
-
-		// This is not public API, use promise, packaged_task, or async.
-		std::shared_ptr<waitable_task> make_waitable_task(const std::function<void()>& _Task);
 
 	} // namespace future_requirements
 
@@ -227,7 +211,8 @@ namespace future_detail {
 
 		void commit_to_task(const std::function<void()>& _Task)
 		{
-			Task = future_requirements::make_waitable_task(_Task);
+			Task = task_group::make();
+			Task->run(_Task);
 		}
 
 	private:
@@ -252,7 +237,7 @@ namespace future_detail {
 		// stealing can be done. This means the CV/Mutex aren't use to synchronize,
 		// so if work_steals() it's all on Task->wait(). If !work_steals() then
 		// unique locks and conditions are responsible.
-		std::shared_ptr<future_requirements::waitable_task> Task;
+		std::shared_ptr<task_group> Task;
 		mutable std::condition_variable CV;
 		mutable std::mutex Mutex;
 		STATE State;
@@ -780,7 +765,7 @@ namespace future_detail {
 		{ \
 			std::function<result_type()> function1 = std::tr1::bind(Function oCALLABLE_CONCAT(oARG_COMMA_PASS,_nArgs)); \
 			std::function<void()> function2 = std::tr1::bind(packaged_task::fulfill_promise, std::move(promise<result_type>(Commitment)), function1); \
-			Commitment.get()->commit_to_task(std::move(function2)); \
+			Commitment.get()->commit_to_task(function2); \
 		} \
 		\
 		void reset() { packaged_task(std::move(Function)).swap(*this); } \

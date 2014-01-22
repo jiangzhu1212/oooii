@@ -438,6 +438,9 @@
     <ClInclude Include="..\..\Include\oBase\threadpool.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\task_group.h">
+      <Filter>oBase\concurrency</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
