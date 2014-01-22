@@ -22,229 +22,219 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A simple thread pool that runs tasks on any thread at any time (no order 
-// guarantees). Most likely client code should prefer parallel_for over using 
-// this simple thread pool directly. This is a custom implementation that has
-// 3 tiers of execution: 1. Look to a thread-local queue for work, 2. Look to a 
-// global queue for work and 3. Look at other workers and steal work if 
-// available. The intent here is not to replace robust solutions like TBB, but
-// rather aid in platform porting by providing a semantically similar, simpler
-// version.
+// A trivial thread pool that runs tasks on any thread at any time (no order 
+// guarantees).
 #pragma once
-#ifndef oConcurrency_threadpool_h
-#define oConcurrency_threadpool_h
+#ifndef oBase_threadpool_h
+#define oBase_threadpool_h
 
-#include <oConcurrency/oConcurrency.h>
-#include <oConcurrency/basic_threadpool.h>
-#include <oConcurrency/concurrent_worklist.h>
 #include <oBase/backoff.h>
 #include <oBase/countdown_latch.h>
-#include <oStd/mutex.h>
-#include <stdexcept>
+#include <condition_variable>
+#include <deque>
+#include <exception>
+#include <functional>
+#include <mutex>
+#include <thread>
 #include <vector>
 
-namespace oConcurrency {
+namespace ouro {
 
-namespace detail { template<typename ThreadpoolTraits, typename ThreadpoolAlloc = std::allocator<std::function<void()>>> class task_group; }
+struct threadpool_default_traits
+{
+	// called once before worker thread main loop
+	static void begin_thread(const char* _ThreadName) {}
+
+	// called after each call to a dispatched user task()
+	// (intended for RCU callouts)
+	static void update_thread() {}
+
+	// called once after worker thread main loop exits
+	static void end_thread() {}
+};
+
+template<typename ThreadpoolTraits, typename ThreadpoolAlloc = std::allocator<std::function<void()>>> class task_group;
+
+template<typename Alloc>
+class threadpool_base
+{
+public:
+	typedef std::function<void()> task_type;
+	typedef Alloc allocator_type;
+
+	// Call construct_workers in most-derived ctor to initialize values.
+	threadpool_base(const allocator_type& _Alloc = allocator_type());
+
+	// Calls std::terminate() if join() wasn't explicitly called in client code,
+	// the same as the behavior of std::thread.
+	virtual ~threadpool_base();
+
+	// Block until all workers are idle.
+	void flush();
+
+	// Returns true if the thread pool can still be joined.
+	bool joinable() const;
+
+	// Blocks until all workers are joined.
+	void join();
+
+protected:
+	template<typename ThreadpoolTraits, typename ThreadpoolAlloc> friend class task_group;
+	std::vector<std::thread> Workers;
+	std::deque<task_type, allocator_type> GlobalQueue;
+	std::mutex Mutex;
+	std::condition_variable WorkAvailable;
+	size_t NumWorking;
+	bool Running;
+
+	// Returns hardware_concurrency() if the specified number of workers is zero.
+	size_t calc_num_workers(size_t _NumWorkersRequested) const;
+
+	// To ensure all members are constructed at time of worker instantiation, 
+	// separate out a call to be called from the most-derived constructor.
+	void construct_workers(const task_type& _DoWork, size_t _NumWorkers = 0);
+
+	threadpool_base(const threadpool_base&); /* = delete */
+	const threadpool_base& operator=(const threadpool_base&); /* = delete */
+
+	threadpool_base(threadpool_base&&); /* = delete */
+	threadpool_base& operator=(threadpool_base&&); /* = delete */
+};
+
+template<typename Alloc>
+size_t threadpool_base<Alloc>::calc_num_workers(size_t _NumWorkersRequested) const
+{
+	return _NumWorkersRequested ? _NumWorkersRequested : std::thread::hardware_concurrency();
+}
+
+template<typename Alloc>
+inline void threadpool_base<Alloc>::construct_workers(const task_type& _DoWork, size_t _NumWorkers)
+{
+	NumWorking = calc_num_workers(_NumWorkers);
+	Workers.resize(NumWorking);
+	for (auto& w : Workers)
+		w = std::thread(_DoWork);
+	flush(); // wait until all have settled and thus ensure all have initialized
+}
+
+template<typename Alloc>
+inline threadpool_base<Alloc>::threadpool_base(const allocator_type& _Alloc)
+	: GlobalQueue(_Alloc)
+	, NumWorking(0)
+	, Running(true)
+{}
+
+template<typename Alloc>
+inline threadpool_base<Alloc>::~threadpool_base()
+{
+	if (joinable())
+		std::terminate();
+}
+
+template<typename Alloc>
+inline void threadpool_base<Alloc>::flush()
+{
+	ouro::backoff bo;
+	while (Running)
+	{
+		// GlobalQueue.empty() is true before Task() is done, so don't use queue 
+		// emptiness as an indicator of flushed-ness.
+		if (GlobalQueue.empty() && NumWorking == 0)
+			break;
+		bo.pause();
+	}
+}
+
+template<typename Alloc>
+inline bool threadpool_base<Alloc>::joinable() const
+{
+	return Running && Workers.front().joinable();
+}
+
+template<typename Alloc>
+inline void threadpool_base<Alloc>::join()
+{
+	std::unique_lock<std::mutex> Lock(Mutex);
+	Running = false;
+	WorkAvailable.notify_all();
+	Lock.unlock();
+	for (auto& w : Workers)
+		w.join();
+}
 
 template<typename Traits, typename Alloc = std::allocator<std::function<void()>>>
-class threadpool : public basic_threadpool_base<Alloc>
+class threadpool : public threadpool_base<Alloc>
 {
-	/** <citation
-		usage="Paper" 
-		reason="Synchronized basic_threadpool is slow" 
-		author="Joe Duffy"
-		description="http://www.bluebytesoftware.com/blog/2008/09/17/BuildingACustomThreadPoolSeriesPart3IncorporatingWorkStealingQueues.aspx"
-		modifications="C++ version from the paper's C#; share common code with basic_threadpool_base."
-	/>*/
-
 public:
-	typedef typename basic_threadpool_base<Alloc>::allocator_type allocator_type;
+	typedef typename threadpool_base<Alloc>::task_type task_type;
+	typedef typename threadpool_base<Alloc>::allocator_type allocator_type;
 
 	// Pass 0 to allocate a worker thread for each hardware process found.
 	threadpool(size_t _NumWorkers = 0, const allocator_type& _Alloc = allocator_type());
 
 	// The task will execute on any given worker thread. There is no order-of-
 	// execution guarantee.
-	void dispatch(const std::function<void()>& _Task);
+	void dispatch(const task_type& _Task);
 
-protected:
-	template<typename ThreadpoolTraits, typename ThreadpoolAlloc> friend class detail::task_group;
-
-	typedef concurrent_worklist<std::function<void()>, allocator_type> queue_t;
-
-	std::vector<std::unique_ptr<queue_t>> LocalQueues;
-	std::vector<std::thread::id> WorkerIDs;
-	std::atomic<int> LocalQueueIndex;
-	static thread_local queue_t* pLocalQueue;
-
-	// @tony: Due to a bug in VS2010, instead of declaring work() with a 
-	// task group as a parameter and passing null for worker threads and this for
-	// task-stealing task groups, I had to work around the issue by setting up a 
-	// 'global' variable. The bug has to do with std::bind and seems to affect
-	// 2 or more parameters bound by functions, be they methods of functions. 
-	// Revisit this in VS11.
-	static thread_local detail::task_group<Traits, allocator_type>* pTaskGroup;
-
-	void worker_proc();
+private:
 	void work();
-
-	// If threadpool is initialized in one module and used in another, the TLS may
-	// not be initialized to the same thing, so fix it.
-	void patch_local_queue();
 
 	threadpool(const threadpool&); /* = delete */
 	const threadpool& operator=(const threadpool&); /* = delete */
+
+	threadpool(threadpool&&); /* = delete */
+	threadpool& operator=(threadpool&&); /* = delete */
 };
 
-template<typename Traits, typename Alloc> thread_local typename threadpool<Traits, Alloc>::queue_t* threadpool<Traits, Alloc>::pLocalQueue;
-template<typename Traits, typename Alloc> thread_local oConcurrency::detail::task_group<Traits, Alloc>* oConcurrency::threadpool<Traits, Alloc>::pTaskGroup;
-
 template<typename Traits, typename Alloc>
-threadpool<Traits, Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
-	: LocalQueueIndex(0)
+inline threadpool<Traits, Alloc>::threadpool(size_t _NumWorkers, const allocator_type& _Alloc)
+	: threadpool_base(_Alloc)
 {
-	LocalQueues.resize(calc_num_workers(_NumWorkers));
-	WorkerIDs.resize(LocalQueues.size());
-	for (size_t i = 0; i < LocalQueues.size(); i++)
-		LocalQueues[i] = std::move(std::unique_ptr<queue_t>(new queue_t(_Alloc)));
-	construct_workers(std::bind(&threadpool::worker_proc, this), _NumWorkers);
+	construct_workers(std::bind(&threadpool::work, this), _NumWorkers);
 }
 
 template<typename Traits, typename Alloc>
-void threadpool<Traits, Alloc>::dispatch(const std::function<void()>& _Task)
+inline void threadpool<Traits, Alloc>::dispatch(const task_type& _Task)
 {
 	if (Running)
 	{
-		if (pLocalQueue)
-		{
-			pLocalQueue->push_local(_Task);
-			if (NumWorking == 0)
-			{
-				std::unique_lock<std::mutex> Lock(Mutex);
-				WorkAvailable.notify_one();
-			}
-		}
-
-		else
-		{
-			std::unique_lock<std::mutex> Lock(Mutex);
-			GlobalQueue.push_back(_Task);
-			if (NumWorking == 0)
-				WorkAvailable.notify_one();
-		}
+		std::unique_lock<std::mutex> Lock(Mutex);
+		GlobalQueue.push_back(_Task);
+		if (NumWorking == 0)
+			WorkAvailable.notify_one();
 	}
 
 	else
-		throw std::out_of_range("threadpool call after join");
+		throw std::system_error(std::make_error_code(std::errc::invalid_argument), "dispatch called after join");
 }
 
 template<typename Traits, typename Alloc>
-void threadpool<Traits, Alloc>::worker_proc()
+inline void threadpool<Traits, Alloc>::work()
 {
-	// assign pLocalQueue as last step before work() so main loop 
-	// doesn't need to check for a separate initialized state.
 	Traits::begin_thread("threadpool Worker");
-	int i = LocalQueueIndex++;
-	WorkerIDs[i] = std::this_thread::get_id();
-	pLocalQueue = LocalQueues[i].get();
-	work();
+	while (true)
+	{
+		std::unique_lock<std::mutex> Lock(Mutex);
+
+		while (Running && GlobalQueue.empty())
+		{
+			NumWorking--;
+			WorkAvailable.wait(Lock);
+			NumWorking++;
+		}
+
+		if (!Running && GlobalQueue.empty())
+			break;
+
+		task_type task = std::move(GlobalQueue.front());
+		GlobalQueue.pop_front();
+		Lock.unlock();
+		task();
+
+		Traits::update_thread();
+	}
 	Traits::end_thread();
 }
-
-template<typename Traits, typename Alloc>
-void threadpool<Traits, Alloc>::work()
-{
-	// NOTE: pLocalQueue is always guaranteed to be valid even across modules 
-	// because initialization of the worker thread and thus the pLocalQueue's TLS 
-	// happens at the same time this function is bound to the worker thread, so it
-	// all happens at the same time and no one else calls this function... except
-	// task_group, so see that for where protection against TLS's-per-module
-	// happens.
-
-	while (!pTaskGroup || pTaskGroup->Latch.outstanding() > 1)
-	{
-		// 1. Check local queue
-		// 2. Check global queue
-		// 3. Steal from another queue
-
-		std::function<void()> task;
-		if (!pLocalQueue->try_pop_local(task))
-		{
-			bool AlreadyTriedStealing = false;
-			while (true)
-			{
-				{
-					std::unique_lock<std::mutex> Lock(Mutex);
-
-					if (!Running && pLocalQueue->empty() && GlobalQueue.empty())
-						return;
-
-					if (!GlobalQueue.empty())
-					{
-						task = std::move(GlobalQueue.front());
-						GlobalQueue.pop_front();
-						break;
-					}
-
-					else if (AlreadyTriedStealing)
-					{
-						// don't block the thread if this is being called from a work-
-						// stealing task_group.
-						if (pTaskGroup)
-							return;
-
-						NumWorking--;
-						WorkAvailable.wait(Lock);
-						NumWorking++;
-
-						if (!Running && pLocalQueue->empty() && GlobalQueue.empty())
-							return;
-
-						AlreadyTriedStealing = false;
-						continue;
-					}
-				}
-
-				bool StoleTask = false;
-
-				// oFOR macro usage here confused release builds, so this first break 
-				// was skipping the while loop, NOT the for loop just here, so it 
-				// would skip actually running the task. Leave this for loop as-is.
-				for (auto q = std::begin(LocalQueues); q != std::end(LocalQueues); ++q)
-				{ 
-					if (q->get() != pLocalQueue && q->get()->try_steal_for(task, std::chrono::milliseconds(200)))
-					{
-						StoleTask = true;
-						break;
-					}
-				}
-
-				if (StoleTask)
-					break;
-
-				AlreadyTriedStealing = true;
-			}
-		}
-
-		task();
-	}
-}
-
-template<typename Traits, typename Alloc>
-void threadpool<Traits, Alloc>::patch_local_queue()
-{
-	for (size_t i = 0; i < WorkerIDs.size(); i++)
-	{
-		if (WorkerIDs[i] == std::this_thread::get_id())
-		{
-			pLocalQueue = LocalQueues[i].get();
-			return;
-		}
-	}
-}
-
-namespace detail {
 
 template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
 class task_group
@@ -252,12 +242,6 @@ class task_group
 public:
 	typedef ThreadpoolAlloc allocator_type;
 	typedef threadpool<ThreadpoolTraits, ThreadpoolAlloc> threadpool_type;
-
-	// The challenge is that a task group must have access to its threadpool 
-	// because it may be running tasks from non-worker threads, so even a 
-	// thread_local pointer kept to the thread pool will not help. TBB and PPL 
-	// assume a singleton scheduler, but this implementation does not and leaves
-	// it explicit.
 	task_group(threadpool_type& _Threadpool);
 
 	// Run a task as part of this task group
@@ -267,21 +251,16 @@ public:
 	// waiting, this work steals.
 	void wait();
 
-protected:
+private:
 	threadpool_type& Threadpool;
 	ouro::countdown_latch Latch;
-	friend threadpool_type;
 };
 
 template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
 task_group<ThreadpoolTraits, ThreadpoolAlloc>::task_group(threadpool_type& _Threadpool)
 	: Threadpool(_Threadpool)
 	, Latch(1)
-{
-	// Fix if we're being called for the first time from another module
-	if (!Threadpool.pLocalQueue)
-		Threadpool.patch_local_queue();
-}
+{}
 
 template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
 void task_group<ThreadpoolTraits, ThreadpoolAlloc>::run(const std::function<void()>& _Task)
@@ -293,22 +272,32 @@ void task_group<ThreadpoolTraits, ThreadpoolAlloc>::run(const std::function<void
 template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
 void task_group<ThreadpoolTraits, ThreadpoolAlloc>::wait()
 {
-	// only block the calling thread if it's not a worker. If a worker, work
-	if (!Threadpool.pLocalQueue)
+	// should this do a NumWorking++ somewhere?
+
+	Latch.release();
+	while (Latch.outstanding())
 	{
-		Latch.release();
-		Latch.wait();
-		Latch.reset(1); // reset to initial state so the task group can be reused
+		std::unique_lock<std::mutex> Lock(Threadpool.Mutex);
+
+		if (!Threadpool.Running)
+			throw std::system_error(std::make_error_code(std::errc::invalid_argument), "threadpool shut down before task group could complete");
+
+		if (Threadpool.GlobalQueue.empty())
+		{
+			Lock.unlock();
+			Latch.wait();
+		}
+
+		else
+		{
+			auto task = std::move(Threadpool.GlobalQueue.front());
+			Threadpool.GlobalQueue.pop_front();
+			Lock.unlock();
+			task();
+		}
 	}
 
-	else
-	{
-		auto pOldTaskGroup = Threadpool.pTaskGroup;
-		Threadpool.pTaskGroup = this;
-		Threadpool.work();
-		Threadpool.pTaskGroup = pOldTaskGroup;
-		Latch.release();
-	}
+	Latch.reset(1); // allow task group to be resued
 }
 
 template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
@@ -318,22 +307,18 @@ inline void thread_local_parallel_for(task_group<ThreadpoolTraits, ThreadpoolAll
 		_TaskGroup.run(std::bind(_Task, _Begin));
 }
 
-template<size_t WorkChunkSize /* = 16*/, typename Traits, typename Alloc>
-inline void parallel_for(threadpool<Traits, Alloc>& _Threadpool, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
+template<size_t WorkChunkSize /* = 16*/, typename ThreadpoolTraits, typename ThreadpoolAlloc>
+inline void parallel_for(threadpool<ThreadpoolTraits, ThreadpoolAlloc>& _Threadpool, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 {
-	task_group<Traits, Alloc> g(_Threadpool);
+	task_group<ThreadpoolTraits, ThreadpoolAlloc> g(_Threadpool);
 	const size_t kNumSteps = (_End - _Begin) / WorkChunkSize;
 	for (size_t i = 0; i < kNumSteps; i++, _Begin += WorkChunkSize)
-		g.run(std::bind(thread_local_parallel_for<Traits, Alloc>, std::ref(g), _Begin, _Begin + WorkChunkSize, _Task));
-
+		g.run(std::bind(thread_local_parallel_for<ThreadpoolTraits, ThreadpoolAlloc>, std::ref(g), _Begin, _Begin + WorkChunkSize, _Task));
 	if (_Begin < _End)
-		g.run(std::bind(thread_local_parallel_for<Traits, Alloc>, std::ref(g), _Begin, _End, _Task));
-
+		g.run(std::bind(thread_local_parallel_for<ThreadpoolTraits, ThreadpoolAlloc>, std::ref(g), _Begin, _End, _Task));
 	g.wait();
 }
 
-} // namespace detail
-
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

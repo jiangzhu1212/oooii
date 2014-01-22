@@ -42,7 +42,7 @@ void ensure_initialized();
 // Retrieve an OVERLAPPED structure configured for an async call using IO 
 // completion ports (IOCP). This should be used for all async operations on the
 // handle until the handle is closed. The specified completion function and 
-// anything it references will live as long as the association does. One the 
+// anything it references will live as long as the association does. Once the 
 // file is closed call disassociate to free the OVERLAPPED object.
 OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion);
 void disassociate(OVERLAPPED* _pOverlapped);
@@ -54,7 +54,7 @@ bool wait_for(unsigned int _TimeoutMS);
 // returns if IO threads are running
 bool joinable();
 
-// waits for all associated IO operations to complete then joins all IO threads.
+// waits for all associated IO operations to complete then joins all IO threads
 void join();
 
 		} // namespace iocp

@@ -355,7 +355,7 @@ process::id process::get_id(const char* _Name)
 	id pid;
 	enumerate([&](id _ID, id _ParentID, const path& _ProcessExePath)->bool
 	{
-		if (Find == _ProcessExePath)
+		if (!Find.compare(_ProcessExePath))
 		{
 			pid = _ID;
 			return false;

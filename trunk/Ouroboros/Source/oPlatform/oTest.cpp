@@ -128,18 +128,18 @@ static bool oTestTerminateInterferingProcesses(bool _PromptUser = true)
 		"fraps64.dat",
 		"FahCore_a4.exe",
 	};
-
 	fixed_vector<process::id, oCOUNTOF(sExternalProcessNames)> ActiveProcesses;
+
 
 	xlstring Message;
 	snprintf(Message, "The following active processes will interfere with tests either by using resources during benchmark tests or by altering image compares.\n");
 
-	oFORI(i, sExternalProcessNames)
+	for (auto name : sExternalProcessNames)
 	{
-		process::id PID = process::get_id(sExternalProcessNames[i]);
+		process::id PID = process::get_id(name);
 		if (PID)
 		{
-			sncatf(Message, "%s\n", sExternalProcessNames[i]);
+			sncatf(Message, "%s\n", name);
 			ActiveProcesses.push_back(PID);
 		}
 	}

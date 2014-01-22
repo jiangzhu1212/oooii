@@ -55,6 +55,10 @@ public:
 	virtual void vreport(const char* _Format, va_list _Args) = 0;
 	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
 
+	virtual void begin_thread(const char* _Name) = 0;
+	virtual void update_thread() = 0;
+	virtual void end_thread() = 0;
+
 	// Returns the root path from which any test data should be loaded.
 	virtual char* test_root_path(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 	template<size_t size> char* test_root_path(char (&_StrDestination)[size]) const { return test_root_path(_StrDestination, size); }

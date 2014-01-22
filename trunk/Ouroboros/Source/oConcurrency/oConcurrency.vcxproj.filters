@@ -47,12 +47,6 @@
     <ClInclude Include="..\..\Include\oConcurrency\tagged_pointer.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\basic_threadpool.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\threadpool.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\joinable_threadpool_base.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
@@ -72,6 +66,9 @@
       <Filter>oConcurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack_traits.h">
+      <Filter>oConcurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oConcurrency\threadpool.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
   </ItemGroup>

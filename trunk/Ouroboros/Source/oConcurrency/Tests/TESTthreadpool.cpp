@@ -29,7 +29,6 @@
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <oCore/thread_traits.h>
-#include <oConcurrency/basic_threadpool.h>
 #include <oConcurrency/threadpool.h>
 #include <oConcurrency/tests/oConcurrencyTests.h>
 #include <atomic>
@@ -99,7 +98,7 @@ template<typename ThreadpoolT> static void test_parallel_for(ThreadpoolT& _Threa
 	size_t Results[kFullRange];
 	memset(Results, 0, kFullRange * sizeof(size_t));
 
-	oConcurrency::detail::parallel_for<16>(_Threadpool, 10, kFullRange - 10, std::bind(set_value, std::placeholders::_1, Results));
+	ouro::parallel_for<16>(_Threadpool, 10, kFullRange - 10, std::bind(set_value, std::placeholders::_1, Results));
 	for (size_t i = 0; i < 10; i++)
 		oCHECK(Results[i] == 0, "wrote out of range at beginning");
 
@@ -120,11 +119,6 @@ template<typename ThreadpoolT> static void TestT()
 	oCHECK(!t.joinable(), "Threadpool was joined, but remains joinable()");
 }
 
-void TESTbasic_threadpool()
-{
-	TestT<basic_threadpool<core_thread_traits>>();
-}
-
 void TESTthreadpool()
 {
 	TestT<threadpool<core_thread_traits>>();
@@ -135,7 +129,7 @@ void TESTtask_group()
 	threadpool<core_thread_traits> t;
 	ouro::finally OSE([&] { if (t.joinable()) t.join(); });
 
-	detail::task_group<core_thread_traits> g(t);
+	task_group<core_thread_traits> g(t);
 	test_task_group(g);
 	
 	test_parallel_for(t);
@@ -261,31 +255,15 @@ void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool&
 		, DebuggerDisclaimer, n, et.c_str(), st.c_str(), DidParallelFor ? pt.c_str() : "not supported");
 }
 
-struct basic_threadpool_impl : test_threadpool
-{
-	basic_threadpool<core_thread_traits> t;
-	~basic_threadpool_impl() { if (t.joinable()) t.join(); }
-	const char* name() const override { return "basic_threadpool"; }
-	void dispatch(const std::function<void()>& _Task) override { return t.dispatch(_Task); }
-	bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override
-	{
-		oConcurrency::detail::basic_parallel_for<16>(t, _Begin, _End, _Task);
-		return true;
-	}
-
-	void flush() override { t.flush(); }
-	void release() override { if (t.joinable()) t.join(); }
-};
-
 struct threadpool_impl : test_threadpool
 {
-	threadpool<basic_threadpool_default_traits> t;
+	threadpool<threadpool_default_traits> t;
 	~threadpool_impl() { if (t.joinable()) t.join(); }
 	const char* name() const override { return "threadpool"; }
 	void dispatch(const std::function<void()>& _Task) override { return t.dispatch(_Task); }
-	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) override
+	bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override
 	{
-		oConcurrency::detail::parallel_for<16>(t, _Begin, _End, _Task);
+		ouro::parallel_for<16>(t, _Begin, _End, _Task);
 		return true;
 	}
 
@@ -301,11 +279,6 @@ namespace {
 		ouro::finally Release([&] { tp.release(); });
 		TESTthreadpool_performance(_Services, tp);
 	}
-}
-
-void TESTbasic_threadpool_perf(test_services& _Services)
-{
-	TESTthreadpool_performance_impl1<basic_threadpool_impl>(_Services);
 }
 
 void TESTthreadpool_perf(test_services& _Services)
