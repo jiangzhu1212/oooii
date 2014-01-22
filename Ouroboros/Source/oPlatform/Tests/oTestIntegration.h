@@ -37,6 +37,7 @@
 #include <oCore/process.h>
 #include <oCore/process_stats_monitor.h>
 #include <oCore/system.h>
+#include <oCore/thread_traits.h>
 
 namespace ouro {
 	
@@ -49,6 +50,21 @@ public:
 	{
 		oErrorSetLastV(0, _Format, _Args);
 		oTRACEA("%s", oErrorGetLastString());
+	}
+
+	void begin_thread(const char* _Name) override
+	{
+		core_thread_traits::begin_thread(_Name);
+	}
+
+	void update_thread() override
+	{
+		core_thread_traits::update_thread();
+	}
+
+	void end_thread() override
+	{
+		core_thread_traits::end_thread();
 	}
 
 	char* test_root_path(char* _StrDestination, size_t _SizeofStrDestination) const override

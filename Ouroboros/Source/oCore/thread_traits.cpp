@@ -33,6 +33,10 @@ void core_thread_traits::begin_thread(const char* _ThreadName)
 	debugger::thread_name(_ThreadName);
 }
 
+void core_thread_traits::update_thread()
+{
+}
+
 void core_thread_traits::end_thread()
 {
 	process_heap::exit_thread();

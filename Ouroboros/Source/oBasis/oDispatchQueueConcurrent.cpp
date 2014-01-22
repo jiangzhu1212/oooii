@@ -29,7 +29,7 @@
 
 using namespace ouro;
 
-typedef oConcurrency::threadpool<core_thread_traits> threadpool_t;
+typedef threadpool<core_thread_traits> threadpool_t;
 
 const oGUID& oGetGUID(threadsafe const oDispatchQueueConcurrentT<threadpool_t>* threadsafe const*)
 {

@@ -35,15 +35,12 @@ namespace ouro { class test_services; }
 namespace oConcurrency {
 	namespace tests {
 
-		void TESTbasic_threadpool();
-		void TESTbasic_threadpool_perf(ouro::test_services& _Services);
 		void TESTblock_allocator();
 		void TESTconcurrent_queue();
 		void TESTconcurrent_queue_concrt();
 		void TESTconcurrent_queue_opt();
 		void TESTconcurrent_queue_tbb();
 		void TESTconcurrent_stack();
-		void TESTconcurrent_worklist();
 		void TESTcoroutine();
 		void TESTcountdown_latch();
 		void TESTfixed_block_allocator();
@@ -64,12 +61,12 @@ namespace oConcurrency {
 
 			// dispatches a single task for execution on any thread. There is no execution
 			// order guarantee.
-			virtual void dispatch(const oTASK& _Task) = 0;
+			virtual void dispatch(const std::function<void()>& _Task) = 0;
 
 			// parallel_for basically breaks up some dispatch calls to be executed on 
 			// worker threads. If the underlying threadpool does not support parallel_for,
 			// this should return false.
-			virtual bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) = 0;
+			virtual bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) = 0;
 
 			// waits for the threadpool to be empty. The threadpool must be reusable after
 			// this call (this is not join()).

@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Use oCore functionality for more robust threads. Pass this to basic_threadpool 
+// Use oCore functionality for more robust threads. Pass this to threadpool 
 // and derivatives.
 #pragma once
 #ifndef oCore_thread_traits_h
@@ -33,6 +33,7 @@ namespace ouro {
 struct core_thread_traits
 {
 	static void begin_thread(const char* _ThreadName);
+	static void update_thread();
 	static void end_thread();
 };
 

@@ -49,7 +49,7 @@ struct oDispatchQueuePrivate_Impl : oDispatchQueuePrivate
 	const char* GetDebugName() const threadsafe override { return DebugName; }
 
 protected:
-	oConcurrency::threadpool<core_thread_traits> Threadpool;
+	threadpool<core_thread_traits> Threadpool;
 	oRefCount RefCount;
 	sstring DebugName;
 };
