@@ -26,10 +26,10 @@
 #include <oBase/byte.h>
 #include <oBase/finally.h>
 #include <oBase/fixed_string.h>
+#include <oBase/threadpool.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <oCore/thread_traits.h>
-#include <oConcurrency/threadpool.h>
 #include <oConcurrency/tests/oConcurrencyTests.h>
 #include <atomic>
 

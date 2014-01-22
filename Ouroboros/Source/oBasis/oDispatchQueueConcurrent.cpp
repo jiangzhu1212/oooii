@@ -24,8 +24,8 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueueConcurrent.h>
 #include <oBasis/oDispatchQueueConcurrentT.h>
+#include <oBase/threadpool.h>
 #include <oCore/thread_traits.h>
-#include <oConcurrency/threadpool.h>
 
 using namespace ouro;
 

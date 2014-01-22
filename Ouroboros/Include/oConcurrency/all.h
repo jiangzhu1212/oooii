@@ -35,6 +35,5 @@
 #include <oConcurrency/lock_free_queue.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oConcurrency/tagged_pointer.h>
-#include <oConcurrency/threadpool.h>
 #include <oConcurrency/thread_safe.h>
 #endif
