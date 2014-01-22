@@ -55,12 +55,12 @@ class task_group
 {
 public:
 	// dispatches the task while flagging it as part of this task group.
-	virtual void run(const oTASK& _Task) threadsafe = 0;
+	virtual void run(const oTASK& _Task) = 0;
 
 	// blocks until all dispatches associated with this task_group are complete.
 	// In this way one scheduler can be used while dependencies on only a subset
 	// of the work can be described and flushed.
-	virtual void wait() threadsafe = 0;
+	virtual void wait() = 0;
 };
 
 // Create a task_group
@@ -75,15 +75,6 @@ void init_task_scheduler();
 // Returns the name of the middleware or algorithm used to implement dispatch()
 // and parallel_for().
 const char* task_scheduler_name();
-
-// When integrating concurrency middleware such as TBB or PPL, client code does 
-// not have control over where or when memory is allocated. Often this can 
-// manifest as false-positives in a memory leak detector. To enable memory leak 
-// tracking without extra and intermittent noise, wrap certain concurrency with 
-// this API. This should be implemented to set the leak tracking state of some
-// client code tool per-thread, so that changing the state remains threadsafe
-// throughout the system.
-void enable_leak_tracking_threadlocal(bool _Enabled);
 
 // Inserts a task to be executed by the task scheduler. Tasks should be non-
 // blocking (no slow file io) and synchronization should be kept to a minimum.
