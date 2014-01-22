@@ -98,7 +98,7 @@ template<typename ThreadpoolT> static void test_parallel_for(ThreadpoolT& _Threa
 	size_t Results[kFullRange];
 	memset(Results, 0, kFullRange * sizeof(size_t));
 
-	ouro::parallel_for<16>(_Threadpool, 10, kFullRange - 10, std::bind(set_value, std::placeholders::_1, Results));
+	ouro::detail::parallel_for<16>(_Threadpool, 10, kFullRange - 10, std::bind(set_value, std::placeholders::_1, Results));
 	for (size_t i = 0; i < 10; i++)
 		oCHECK(Results[i] == 0, "wrote out of range at beginning");
 
@@ -129,7 +129,7 @@ void TESTtask_group()
 	threadpool<core_thread_traits> t;
 	ouro::finally OSE([&] { if (t.joinable()) t.join(); });
 
-	task_group<core_thread_traits> g(t);
+	detail::task_group<core_thread_traits> g(t);
 	test_task_group(g);
 	
 	test_parallel_for(t);
@@ -263,7 +263,7 @@ struct threadpool_impl : test_threadpool
 	void dispatch(const std::function<void()>& _Task) override { return t.dispatch(_Task); }
 	bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override
 	{
-		ouro::parallel_for<16>(t, _Begin, _End, _Task);
+		ouro::detail::parallel_for<16>(t, _Begin, _End, _Task);
 		return true;
 	}
 

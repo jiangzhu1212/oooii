@@ -57,7 +57,7 @@ const char* oConcurrency::task_scheduler_name()
 {
 	return 
 		#if oHAS_oCONCURRENCY
-			"oConcurrency::threadpool";
+			"ouro::threadpool";
 		#elif oHAS_TBB
 			"TBB";
 		#elif oHAS_CONCRT
@@ -74,8 +74,8 @@ typedef ouro::process_heap::std_allocator<std::function<void()>> allocator_t;
 
 #if oHAS_oCONCURRENCY
 	#include <oBase/threadpool.h>
-	using namespace oConcurrency;
-	typedef oConcurrency::detail::task_group<allocator_t> task_group_t;
+	using namespace ouro;
+	typedef ouro::detail::task_group<allocator_t> task_group_t;
 #elif oHAS_TBB
 	#ifdef oHAS_MAKE_EXCEPTION_PTR
 		#define copy_exception make_exception_ptr
@@ -91,7 +91,7 @@ typedef ouro::process_heap::std_allocator<std::function<void()>> allocator_t;
 	typedef Concurrency::task_group task_group_t;
 #else
 	
-	class task_group_impl: public oConcurrency::task_group
+	class task_group_impl : public ouro::task_group
 	{
 	public:
 		void run(const std::function<void()>& _Task) override { _Task(); }
@@ -125,7 +125,7 @@ typedef ouro::process_heap::std_allocator<std::function<void()>> allocator_t;
 		return IID_oDispatchQueueConcurrentT;
 	}
 
-	class task_group_impl : public oConcurrency::task_group
+	class task_group_impl : public ouro::task_group
 	{
 		task_group_t g;
 	public:
@@ -135,12 +135,6 @@ typedef ouro::process_heap::std_allocator<std::function<void()>> allocator_t;
 		void run(const std::function<void()>& _Task) override { g.run(_Task); }
 		void wait() override { g.wait(); }
 	};
-
-	std::shared_ptr<oConcurrency::task_group> oConcurrency::make_task_group()
-	{
-		std::shared_ptr<oConcurrency::task_group> g = std::move(std::make_shared<task_group_impl>());
-		return g;
-	}
 
 	bool oDispatchQueueCreateConcurrent(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppQueue)
 	{
@@ -308,6 +302,13 @@ void oConcurrency::parallel_for(size_t _Begin, size_t _End, const std::function<
 void noop_fn() {}
 
 namespace ouro {
+
+		std::shared_ptr<task_group> task_group::make()
+		{
+			std::shared_ptr<task_group> p = std::move(std::make_shared<task_group_impl>());
+			return p;
+		}
+
 	namespace future_requirements {
 
 		void thread_at_exit(const std::function<void()>& _AtExit)
@@ -315,30 +316,6 @@ namespace ouro {
 			oConcurrency::thread_at_exit(_AtExit);
 		}
 
-		class waitable_task_impl : public waitable_task
-		{
-			task_group_t g;
-		public:
-			waitable_task_impl(const std::function<void()>& _Task) { g.run(_Task); }
-			~waitable_task_impl() { wait(); }
-			void wait() override { g.wait(); }
-		};
-
-		std::shared_ptr<waitable_task> make_waitable_task(const std::function<void()>& _Task)
-		{
-			std::shared_ptr<waitable_task> p = std::move(std::make_shared<waitable_task_impl>(_Task));
-			return p;
-		}
-
 	} // namespace future_requirements
-
-	namespace condition_variable_requirements {
-
-		void thread_at_exit(const std::function<void()>& _AtExit)
-		{
-			oConcurrency::thread_at_exit(_AtExit);
-		}
-
-	} // namespace condition_variable_requirements
 
 } // namespace ouro

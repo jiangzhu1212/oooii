@@ -63,9 +63,6 @@ public:
 	virtual void wait() = 0;
 };
 
-// Create a task_group
-std::shared_ptr<task_group> make_task_group();
-
 // Initialize the global task scheduler and its memory. Some schedules allocate
 // memory that could be detected as a leak. Exposing this API allows client code
 // to allocate that memory at a known time so that a leak tracker can be 

@@ -22,65 +22,32 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
+// Allows client code to wait on a subset of tasks submitted to a threadpool.
+// The assumption is that there is one singleton threadpool in the system,
+// but that is not implemented in oBase, so neither the task_group 
+// implementation nor its factory are implemented. Client code should 
+// implement these interfaces or there will be a link error.
 #pragma once
-#ifndef oBase_all_h
-#define oBase_all_h
-#include <oBase/algorithm.h>
-#include <oBase/assert.h>
-#include <oBase/atof.h>
-#include <oBase/byte.h>
-#include <oBase/color.h>
-#include <oBase/compression.h>
-#include <oBase/concurrent_index_allocator.h>
-#include <oBase/concurrent_linear_allocator.h>
-#include <oBase/concurrent_object_pool.h>
-#include <oBase/countdown_latch.h>
-#include <oBase/date.h>
-#include <oBase/djb2.h>
-#include <oBase/endian.h>
-#include <oBase/equal.h>
-#include <oBase/event.h>
-#include <oBase/finally.h>
-#include <oBase/fixed_string.h>
-#include <oBase/fixed_vector.h>
-#include <oBase/fnv1a.h>
-#include <oBase/fourcc.h>
-#include <oBase/guid.h>
-#include <oBase/gzip.h>
-#include <oBase/index_allocator.h>
-#include <oBase/index_allocator_base.h>
-#include <oBase/ini.h>
-#include <oBase/input.h>
-#include <oBase/intrusive_ptr.h>
-#include <oBase/invalid.h>
-#include <oBase/leak_tracker.h>
-#include <oBase/linear_allocator.h>
-#include <oBase/lzma.h>
-#include <oBase/macros.h>
-#include <oBase/memory.h>
-#include <oBase/moving_average.h>
-#include <oBase/murmur3.h>
-#include <oBase/operators.h>
-#include <oBase/opttok.h>
-#include <oBase/path.h>
-#include <oBase/path_traits.h>
-#include <oBase/scc.h>
-#include <oBase/snappy.h>
-#include <oBase/string.h>
-#include <oBase/string_traits.h>
-#include <oBase/task_group.h>
-#include <oBase/text_document.h>
-#include <oBase/throw.h>
-#include <oBase/threadpool.h>
-#include <oBase/timer.h>
-#include <oBase/tlsf_allocator.h>
-#include <oBase/type_id.h>
-#include <oBase/type_info.h>
-#include <oBase/types.h>
-#include <oBase/uint128.h>
-#include <oBase/unordered_map.h>
-#include <oBase/uri.h>
-#include <oBase/xml.h>
+#ifndef oBase_task_group_h
+#define oBase_task_group_h
+
+#include <functional>
+#include <memory>
+
+namespace ouro {
+
+class task_group
+{
+public:
+	static std::shared_ptr<ouro::task_group> make();
+
+	// dispatches a task flagged as part of this group
+	virtual void run(const std::function<void()>& _Task) = 0;
+
+	// waits for only tasks dispatched with run() to finish
+	virtual void wait() = 0;
+};
+
+} // namespace ouro
+
 #endif
