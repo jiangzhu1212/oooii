@@ -593,13 +593,11 @@ namespace future_detail {
 		const BaseT* This() const { return static_cast<const BaseT*>(this); }
 	};
 
-	// @tony: The spec says there are no copy-constructors... but I really
-	// need to pass this to a std::bind. There is a bug in MSVC2010 that disallows 
-	// std::move through std::bind:
+	// The spec says there are no copy-constructors... but I really need to pass this to a std::bind. 
+	// There is a bug in MSVC2010 that disallows std::move through std::bind:
 	// http://connect.microsoft.com/VisualStudio/feedback/details/649274/std-bind-and-std-function-are-not-move-aware 
-	// So until then, use a loophole in the spec: There are no copy-ctors for future
-	// or promise objects. Thus USE a copy ctor, const_cast it away and eviscerate 
-	// the source.
+	// So until then, use a loophole in the spec: There are no copy-ctors for future or promise objects. 
+	// Thus USE a copy ctor, const_cast it away and eviscerate the source.
 #define oDEFINE_FUTURE_MOVE_CTOR(_Classname) \
 	_Classname(const _Classname& _That) : Commitment(std::move(const_cast<_Classname&>(_That).Commitment)) {} \
 	_Classname& operator=(const _Classname& _That) { if (this != &_That) { Commitment = std::move(const_cast<_Classname&>(_That).Commitment); } return *this; } \
@@ -629,12 +627,10 @@ namespace future_detail {
 #define oDEFINE_FUTURE_CTORS() future() {} ~future() {} oDEFINE_FUTURE_MOVE_CTOR(future)
 #define oDEFINE_PROMISE_CTORS() ~promise() { oFUTURE_THROW(!Commitment || Commitment->is_ready() || !Commitment->has_future(), broken_promise); } oDEFINE_FUTURE_MOVE_CTOR(promise)
 
-	// @oooii-jeff: The spec says there are no copy-constructors for 
-	// packaged_task, but MSVC2010 casting packaged_task to a std::function 
+	// The spec says there are no copy-constructors for packaged_task but MSVC2010 casting packaged_task to a std::function 
 	// is not move aware (and uses the copy constructor):
 	// http://connect.microsoft.com/VisualStudio/feedback/details/649274/std-bind-and-std-function-are-not-move-aware 
-	// So for now enable the copy constructor that's needed, but let it behave 
-	// like a move constructor.
+	// So for now enable the copy constructor that's needed, but let it behave like a move constructor.
 #define oDEFINE_PACKAGED_TASK_MOVE_CTORS() \
 	public: packaged_task(packaged_task&& _That) : Commitment(std::move(_That.Commitment)), Function(std::move(_That.Function)) {} \
 	public: packaged_task(const packaged_task& _That) : Commitment(std::move(const_cast<packaged_task&>(_That).Commitment)), Function(std::move(const_cast<packaged_task&>(_That).Function)) {} \
@@ -652,9 +648,6 @@ template<typename T> class future : public future_detail::future_state_interface
 	oFUTURE_FRIEND_INTERFACE(T);
 public:
 	oDEFINE_FUTURE_CTORS();
-	// Sets last error if this fails, but then continues to move the commitment
-	// value as the return value. @tony: This is not elegant as throwing an 
-	// exception, but the codebase isn't quite there.
 	T get() { oFUTURE_THROW(valid(), no_state); return Commitment->move_value(); }
 };
 
@@ -803,10 +796,6 @@ namespace future_detail {
 	};
 	oCALLABLE_PROPAGATE(oPACKAGEDTASK)
 #endif
-
-// @tony: I don't quite understand the launch policies yet because 
-// current implementations are very poor, so punt on that interface for now and
-// always do the right thing, which is to hand the task over to the scheduler.
 
 // future<result_of(callable)> async(callable, args...);
 #ifdef oHAS_VARIADIC_TEMPLATES
