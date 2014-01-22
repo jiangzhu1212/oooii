@@ -435,6 +435,9 @@
     <ClInclude Include="..\..\Include\oBase\invalid.h">
       <Filter>oBase</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\threadpool.h">
+      <Filter>oBase\concurrency</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

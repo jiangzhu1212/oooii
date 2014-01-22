@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oConcurrency/concurrent_queue.h>
 #include <oConcurrency/concurrent_queue_opt.h>
-#include <oConcurrency/threadpool.h> // for threadpool_default_traits
+#include <oBase/threadpool.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>
 #include <oBase/assert.h>

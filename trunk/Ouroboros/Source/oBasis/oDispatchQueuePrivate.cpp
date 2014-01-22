@@ -25,8 +25,8 @@
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oRefCount.h>
+#include <oBase/threadpool.h>
 #include <oCore/thread_traits.h>
-#include <oConcurrency/threadpool.h>
 
 using namespace ouro;
 

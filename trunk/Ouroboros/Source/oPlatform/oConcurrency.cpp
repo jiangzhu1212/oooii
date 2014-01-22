@@ -74,7 +74,7 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 #undef INTERFACE_DEFINED
 
 #if oHAS_oCONCURRENCY
-	#include <oConcurrency/threadpool.h>
+	#include <oBase/threadpool.h>
 	using namespace oConcurrency;
 	typedef oConcurrency::detail::task_group<allocator_t> task_group_t;
 #elif oHAS_TBB
