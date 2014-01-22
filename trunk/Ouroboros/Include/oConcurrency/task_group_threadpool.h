@@ -63,9 +63,7 @@ template<typename TaskGroupT>
 void task_group_threadpool<TaskGroupT>::dispatch(const oTASK& _Task) threadsafe
 { 
 	oThreadsafe(this)->begin_dispatch();
-	enable_leak_tracking_threadlocal(false);
 	oThreadsafe(TaskGroup).run(_Task);
-	enable_leak_tracking_threadlocal(true);
 	oThreadsafe(this)->end_dispatch();
 }
 

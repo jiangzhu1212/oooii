@@ -37,7 +37,7 @@ struct oDQC_impl : oConcurrency::tests::test_threadpool
 	~oDQC_impl() { if (t) t->Join(); }
 	const char* name() const override { return oConcurrency::task_scheduler_name(); }
 	void dispatch(const oTASK& _Task) override { t->Dispatch(_Task); }
-	bool parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task) override { return false; }
+	bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override { return false; }
 	void flush() override { t->Flush(); }
 	void release() override { if (t->Joinable()) t->Join(); t = nullptr; }
 };

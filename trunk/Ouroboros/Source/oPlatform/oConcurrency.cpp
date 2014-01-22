@@ -33,7 +33,6 @@
 // management rather than here because they are cross-concurrency 
 // implementations. They include:
 
-// enable_leak_tracking_threadlocal
 // end_thread
 // thread_at_exit
 
@@ -68,7 +67,7 @@ const char* oConcurrency::task_scheduler_name()
 		#endif
 }
 
-typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
+typedef ouro::process_heap::std_allocator<std::function<void()>> allocator_t;
 
 #undef interface
 #undef INTERFACE_DEFINED
@@ -95,8 +94,8 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 	class task_group_impl: public oConcurrency::task_group
 	{
 	public:
-		void run(const oTASK& _Task) threadsafe override { _Task(); }
-		void wait() threadsafe override {}
+		void run(const std::function<void()>& _Task) override { _Task(); }
+		void wait() override {}
 	};
 
 	typedef task_group_impl task_group_t;
@@ -133,15 +132,13 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 		#if oHAS_oCONCURRENCY
 			task_group() : oConcurrency::detail::task_group<oScheduler::allocator_type>(oScheduler::Singleton()->Threadpool) {}
 		#endif
-		void run(const oTASK& _Task) threadsafe override { oThreadsafe(g).run(_Task); }
-		void wait() threadsafe override { oThreadsafe(g).wait(); }
+		void run(const std::function<void()>& _Task) override { g.run(_Task); }
+		void wait() override { g.wait(); }
 	};
 
 	std::shared_ptr<oConcurrency::task_group> oConcurrency::make_task_group()
 	{
-		oConcurrency::enable_leak_tracking_threadlocal(false);
 		std::shared_ptr<oConcurrency::task_group> g = std::move(std::make_shared<task_group_impl>());
-		oConcurrency::enable_leak_tracking_threadlocal(true);
 		return g;
 	}
 
@@ -179,14 +176,12 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 			oScheduler() {}
 			~oScheduler() { Threadpool.join(); }
 
-			inline void dispatch(const oTASK& _Task)
+			inline void dispatch(const std::function<void()>& _Task)
 			{
-				enable_leak_tracking_threadlocal(false);
 				Threadpool.dispatch(_Task);
-				enable_leak_tracking_threadlocal(true);
 			}
 
-			inline void parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task)
+			inline void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 			{
 				oConcurrency::detail::parallel_for<16>(Threadpool, _Begin, _End, _Task);
 			}
@@ -197,10 +192,8 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 		
 			oScheduler()
 			{
-				oConcurrency::enable_leak_tracking_threadlocal(false);
 				observer = new Observer;
 				init = new task_scheduler_init;
-				oConcurrency::enable_leak_tracking_threadlocal(true);
 			}
 
 			~oScheduler()
@@ -209,7 +202,7 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 				delete observer;
 			}
 
-			inline void dispatch(const oTASK& _Task)
+			inline void dispatch(const std::function<void()>& _Task)
 			{
 				// @oooii-kevin: For tasks with no dependency we use task::enqueue this 
 				// ensures the main thread never has to participate in TBB threading and 
@@ -225,18 +218,7 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 				// is important, such as in situations where latency of response is more 
 				// important than efficient throughput.
 
-				// @tony: This can report a false-positive leak with the Microsoft CRT 
-				// leak reporter if task::allocate_root() is called in the middle of a memory
-				// state check block. (working with _CrtMemState elsewhere). See oBug_1856
-				// for more information.
-				// NOTE: I tried to wrap this in a disable-tracking, reenable-after block, but
-				// that can cause deadlocks as all of CRT it seems shares the same mutex. Also
-				// just setting the state allows for any number of threads to have their 
-				// allocs ignored during the disabled period. I tried having 
-
-				oConcurrency::enable_leak_tracking_threadlocal(false);
 				task& taskToSpawn = *new(task::allocate_root()) TaskAdapter(_Task);
-				oConcurrency::enable_leak_tracking_threadlocal(true);
 				task::enqueue(taskToSpawn);
 			}
 
@@ -252,12 +234,12 @@ typedef ouro::process_heap::std_allocator<oTASK> allocator_t;
 			class TaskAdapter : public task
 			{
 			public:
-				TaskAdapter(const oTASK& _TaskAdapter) : Task(_TaskAdapter) {}
-				TaskAdapter(oTASK&& _TaskAdapter) { operator=(std::move(_TaskAdapter)); }
+				TaskAdapter(const std::function<void()>& _TaskAdapter) : Task(_TaskAdapter) {}
+				TaskAdapter(std::function<void()>&& _TaskAdapter) { operator=(std::move(_TaskAdapter)); }
 				TaskAdapter& operator=(TaskAdapter&& _That) { if (this != &_That) Task = std::move(_That.Task); return *this; }
 				task* execute() { Task(); return nullptr; }
 			private:
-				oTASK Task;
+				std::function<void()> Task;
 				TaskAdapter(const TaskAdapter&);
 				const TaskAdapter& operator=(const TaskAdapter&);
 			};
@@ -284,21 +266,19 @@ void oConcurrency::init_task_scheduler()
 #if oHAS_CONCRT
 	static void oConCRT_TaskAdapter(void* _pTask)
 	{
-		oTASK* task = static_cast<oTASK*>(_pTask);
+		std::function<void()>* task = static_cast<std::function<void()>*>(_pTask);
 		(*task)();
 		delete task;
 	}
 
-	static void oConCRT_Dispatch(const oTASK& _Task)
+	static void oConCRT_Dispatch(const std::function<void()>& _Task)
 	{
-		oConcurrency::enable_leak_tracking_threadlocal(false);
-		oTASK* task = new oTASK(std::move(_Task));
-		oConcurrency::enable_leak_tracking_threadlocal(true);
+		std::function<void()>* task = new std::function<void()>(std::move(_Task));
 		CurrentScheduler::ScheduleTask(oConCRT_TaskAdapter, task);
 	}
 #endif
 
-void oConcurrency::dispatch(const oTASK& _Task)
+void oConcurrency::dispatch(const std::function<void()>& _Task)
 {
 	#if oHAS_SCHEDULER
 		oScheduler::Singleton()->dispatch(_Task);
@@ -310,13 +290,13 @@ void oConcurrency::dispatch(const oTASK& _Task)
 }
 
 #if oHAS_oCONCURRENCY
-	static void parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task)
+	static void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 	{
 		oScheduler::Singleton()->parallel_for(_Begin, _End, _Task);
 	}
 #endif
 
-void oConcurrency::parallel_for(size_t _Begin, size_t _End, const oINDEXED_TASK& _Task)
+void oConcurrency::parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 {
 	#if oIS_TBB_COMPATIBLE
 		::parallel_for(_Begin, _End, _Task);
@@ -330,7 +310,7 @@ void noop_fn() {}
 namespace ouro {
 	namespace future_requirements {
 
-		void thread_at_exit(const oTASK& _AtExit)
+		void thread_at_exit(const std::function<void()>& _AtExit)
 		{
 			oConcurrency::thread_at_exit(_AtExit);
 		}
@@ -339,16 +319,14 @@ namespace ouro {
 		{
 			task_group_t g;
 		public:
-			waitable_task_impl(const oTASK& _Task) { g.run(_Task); }
+			waitable_task_impl(const std::function<void()>& _Task) { g.run(_Task); }
 			~waitable_task_impl() { wait(); }
 			void wait() override { g.wait(); }
 		};
 
-		std::shared_ptr<waitable_task> make_waitable_task(const oTASK& _Task)
+		std::shared_ptr<waitable_task> make_waitable_task(const std::function<void()>& _Task)
 		{
-			oConcurrency::enable_leak_tracking_threadlocal(false);
 			std::shared_ptr<waitable_task> p = std::move(std::make_shared<waitable_task_impl>(_Task));
-			oConcurrency::enable_leak_tracking_threadlocal(true);
 			return p;
 		}
 
@@ -356,7 +334,7 @@ namespace ouro {
 
 	namespace condition_variable_requirements {
 
-		void thread_at_exit(const oTASK& _AtExit)
+		void thread_at_exit(const std::function<void()>& _AtExit)
 		{
 			oConcurrency::thread_at_exit(_AtExit);
 		}
@@ -364,9 +342,3 @@ namespace ouro {
 	} // namespace condition_variable_requirements
 
 } // namespace ouro
-
-#include <oCore/windows/win_crt_leak_tracker.h>
-void oConcurrency::enable_leak_tracking_threadlocal(bool _Enabled)
-{
-	ouro::windows::crt_leak_tracker::thread_local_tracking(_Enabled);
-}

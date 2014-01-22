@@ -37,7 +37,7 @@
 
 // NOTE: There are now 3 ways to call a function: no return (void) return by 
 // value and return by reference, so each concept in this header: 
-// future_detail::oCommitment, promise, future, and packaged_task each have 3
+// future_detail::commitment, promise, future, and packaged_task each have 3
 // template implementations: <T>, <void>, and <T&>. async can call a function
 // that returns a value, or has no return so there's permutations for that too.
 
@@ -86,6 +86,7 @@ namespace ouro {
 
 	} // namespace future_requirements
 
+/*enum class*/ namespace launch { enum value { async, deferred }; };
 /*enum class*/ namespace future_status { enum value { ready, timeout, deferred }; };
 /*enum class*/ namespace future_errc { enum value { broken_promise, future_already_retrieved, promise_already_satisfied, no_state }; };
 
@@ -99,8 +100,8 @@ template<typename T> class promise;
 
 namespace future_detail {
 
-	void* oCommitmentAllocate(size_t _CommitmentSize);
-	void oCommitmentDeallocate(void* _pPointer);
+	void* commitmentAllocate(size_t _CommitmentSize);
+	void commitmentDeallocate(void* _pPointer);
 
 	class future_error : public std::logic_error
 	{
@@ -108,19 +109,19 @@ namespace future_detail {
 		future_error(future_errc::value _Errc) : logic_error(future_category().message(_Errc)) {}
 	};
 
-	#define oCOMMITMENT_COPY_MOVE_CTORS() \
-		oCommitment(const oCommitment&)/* = delete*/; \
-		const oCommitment& operator=(const oCommitment&)/* = delete*/; \
-		oCommitment(oCommitment&&)/* = delete*/; \
-		oCommitment& operator=(oCommitment&&)/* = delete*/;
+	#define commitment_COPY_MOVE_CTORS() \
+		commitment(const commitment&)/* = delete*/; \
+		const commitment& operator=(const commitment&)/* = delete*/; \
+		commitment(commitment&&)/* = delete*/; \
+		commitment& operator=(commitment&&)/* = delete*/;
 
-	#define oCOMMITMENT_NEW_DEL()
+	#define commitment_NEW_DEL()
 		inline void* operator new(size_t size, void* memory) { return memory; } \
 		inline void operator delete(void* p, void* memory) {} \
-		inline void* operator new(size_t size) { return oCommitmentAllocate(size); } \
-		inline void* operator new[](size_t size) { return oCommitmentAllocate(size); } \
-		inline void operator delete(void* p) { oCommitmentDeallocate(p); } \
-		inline void operator delete[](void* p) { oCommitmentDeallocate(p); }
+		inline void* operator new(size_t size) { return commitmentAllocate(size); } \
+		inline void* operator new[](size_t size) { return commitmentAllocate(size); } \
+		inline void operator delete(void* p) { commitmentDeallocate(p); } \
+		inline void operator delete[](void* p) { commitmentDeallocate(p); }
 
 	#define oFUTURE_ASSERT(_Expr, _Text) assert(_Expr && _Text)
 	#define oFUTURE_THROW(_Expr, _Errc) do { if (!(_Expr)) throw future_detail::future_error(future_errc::_Errc); } while(false)
@@ -131,29 +132,29 @@ namespace future_detail {
 		if (has_exception()) std::rethrow_exception(pException); \
 	} while(false)
 
-	class oCommitmentState
+	class commitmentState
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
 		// Common state between a promise and a future OR a packaged_task and a 
 		// future. CV/Mutex synchronize promises with futures, but packaged_task are
-		// the only ones meeting an oCommitment, and use the underlying system task
+		// the only ones meeting an commitment, and use the underlying system task
 		// scheduler to enable work stealing, so there's a lot of if work_steals()
 		// code to either ignore the mutex and use the schedule OR use the mutex.
 		
 		// This base class encapsulates all the state that is not the actual value,
 		// since that requires a templated type.
 
-		oCommitmentState(const oCommitmentState&)/* = delete*/;
-		const oCommitmentState& operator=(const oCommitmentState&)/* = delete*/;
-		oCommitmentState(oCommitmentState&&)/* = delete*/;
-		oCommitmentState& operator=(oCommitmentState&&)/* = delete*/;
+		commitmentState(const commitmentState&)/* = delete*/;
+		const commitmentState& operator=(const commitmentState&)/* = delete*/;
+		commitmentState(commitmentState&&)/* = delete*/;
+		commitmentState& operator=(commitmentState&&)/* = delete*/;
 
 	public:
-		oCommitmentState() 
+		commitmentState() 
 			: RefCount(1)
 		{}
-		~oCommitmentState() {}
+		~commitmentState() {}
 
 		void reference() { ++RefCount; }
 		// release() must exist only in templated derivations because it must also
@@ -224,16 +225,13 @@ namespace future_detail {
 			State.HasExceptionAtThreadExit = true;
 		}
 
-		// @tony: packaged_task needs to schedule the task, so expose this, 
-		// though it is an implementation detail. (but then all of oCommitment is an 
-		// implementation detail of promise/future/packaged_task)
 		void commit_to_task(const std::function<void()>& _Task)
 		{
 			Task = future_requirements::make_waitable_task(_Task);
 		}
 
 	private:
-		template<typename> friend class oCommitment;
+		template<typename> friend class commitment;
 		template<typename> friend class future;
 		template<typename> friend class promise;
 
@@ -249,10 +247,10 @@ namespace future_detail {
 			bool IsReady:1;
 		};
 
-		// NOTE: When a task is associated with this commitment, it's wait/blocking
+		// NOTE: When a task is associated with this commitment it wait/blocking
 		// system is used to delegate context to the task's scheduler so work 
 		// stealing can be done. This means the CV/Mutex aren't use to synchronize,
-		// so if work_steals(), it's all on Task->wait(). if !work_steals(), then
+		// so if work_steals() it's all on Task->wait(). If !work_steals() then
 		// unique locks and conditions are responsible.
 		std::shared_ptr<future_requirements::waitable_task> Task;
 		mutable std::condition_variable CV;
@@ -401,19 +399,19 @@ namespace future_detail {
 		}
 	};
 
-	template<typename T> class oCommitment : public oCommitmentState
+	template<typename T> class commitment : public commitmentState
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
 		// Stores both state and a typed value. This is not public API, use 
 		// promise, packaged_task, or async.
 
-		oCOMMITMENT_COPY_MOVE_CTORS();
+		commitment_COPY_MOVE_CTORS();
 	public:
-		oCOMMITMENT_NEW_DEL();
+		commitment_NEW_DEL();
 
-		oCommitment() {}
-		~oCommitment() {}
+		commitment() {}
+		~commitment() {}
 
 		void release()
 		{
@@ -438,12 +436,12 @@ namespace future_detail {
 
 		template <typename U> void set_value_at_thread_exit(const U& _Value)
 		{
-			set_value_at_thread_exit<T>(&Value, Value, std::bind(&oCommitment<T>::notify_value_set_and_release, this));
+			set_value_at_thread_exit<T>(&Value, Value, std::bind(&commitment<T>::notify_value_set_and_release, this));
 		}
 
 		template <typename U> void set_value_at_thread_exit(U&& _Value)
 		{
-			set_value_at_thread_exit<T>(&Value, std::move(_Value), std::bind(&oCommitment<T>::notify_value_set_and_release, this));
+			set_value_at_thread_exit<T>(&Value, std::move(_Value), std::bind(&commitment<T>::notify_value_set_and_release, this));
 		}
 
 	private:
@@ -474,16 +472,16 @@ namespace future_detail {
 		}
 	};
 
-	template<typename T> class oCommitment<T&> : public oCommitmentState
+	template<typename T> class commitment<T&> : public commitmentState
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
-		oCOMMITMENT_COPY_MOVE_CTORS();
+		commitment_COPY_MOVE_CTORS();
 	public:
-		oCOMMITMENT_NEW_DEL();
+		commitment_NEW_DEL();
 
-		oCommitment() {}
-		~oCommitment() {}
+		commitment() {}
+		~commitment() {}
 
 		void release()
 		{
@@ -501,7 +499,7 @@ namespace future_detail {
 
 		template <typename U> void set_value_at_thread_exit(const U& _Value)
 		{
-			set_value_at_thread_exit_intrusive_ptr<T>(&Value, _Value, std::bind(&oCommitment<T&>::notify_value_set_and_release, this));
+			set_value_at_thread_exit_intrusive_ptr<T>(&Value, _Value, std::bind(&commitment<T&>::notify_value_set_and_release, this));
 		}
 
 	private:
@@ -532,16 +530,16 @@ namespace future_detail {
 		}
 	};
 
-	template<> class oCommitment<void> : public oCommitmentState
+	template<> class commitment<void> : public commitmentState
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
-		oCOMMITMENT_COPY_MOVE_CTORS();
+		commitment_COPY_MOVE_CTORS();
 	public:
-		oCOMMITMENT_NEW_DEL();
+		commitment_NEW_DEL();
 
-		oCommitment() {}
-		~oCommitment() {}
+		commitment() {}
+		~commitment() {}
 
 		void release()
 		{
@@ -608,17 +606,17 @@ namespace future_detail {
 	// interfaces need direct access to the commitment, or act as a factor for a 
 	// future, so centralize this access here between the template types for future.
 #define oFUTURE_FRIEND_INTERFACE(_CommitmentType) \
-	std::shared_ptr<future_detail::oCommitment<_CommitmentType>> Commitment; \
+	std::shared_ptr<future_detail::commitment<_CommitmentType>> Commitment; \
 	template <typename> friend class future_detail::future_state_interface; \
 	template <typename> friend class promise; \
 	template <typename> friend class shared_future; \
 	template <typename> friend class packaged_task; \
-	future(const std::shared_ptr<future_detail::oCommitment<_CommitmentType>>& _pCommitment) \
+	future(const std::shared_ptr<future_detail::commitment<_CommitmentType>>& _pCommitment) \
 	: Commitment(_pCommitment) \
 	{	oFUTURE_THROW(!Commitment->has_future(), future_already_retrieved); \
 	Commitment->set_future_attached(); \
 	} \
-	future_detail::oCommitmentState* get_commitment_state() { return Commitment.get(); }
+	future_detail::commitmentState* get_commitment_state() { return Commitment.get(); }
 
 #define oDEFINE_PROMISE_SET_ERROR() \
 	void set_exception(std::exception_ptr _pException) { oFUTURE_THROW(Commitment, no_state); Commitment->set_exception(_pException); } \
@@ -670,11 +668,11 @@ public:
 template<typename T> class promise
 {
 public:
-	promise(const std::shared_ptr<future_detail::oCommitment<T>>& _pCommitment)
+	promise(const std::shared_ptr<future_detail::commitment<T>>& _pCommitment)
 		: Commitment(_pCommitment)
 	{}
 
-	promise() { Commitment = std::make_shared<future_detail::oCommitment<T>>(); }
+	promise() { Commitment = std::make_shared<future_detail::commitment<T>>(); }
 	oDEFINE_PROMISE_CTORS();
 	oDEFINE_PROMISE_SET_ERROR();
 
@@ -690,17 +688,17 @@ public:
 	void set_value_at_thread_exit(T&& _Value) { oFUTURE_THROW(Commitment, no_state); Commitment->set_value_at_thread_exit(std::move(_Value)); }
 
 private:
-	std::shared_ptr<future_detail::oCommitment<T>> Commitment;
+	std::shared_ptr<future_detail::commitment<T>> Commitment;
 };
 
 template <class T> class promise<T&>
 {
 public:
-	promise(const std::shared_ptr<future_detail::oCommitment<T&>>& _pCommitment)
+	promise(const std::shared_ptr<future_detail::commitment<T&>>& _pCommitment)
 		: Commitment(_pCommitment)
 	{}
 
-	promise() { future_detail::oCommitmentCreate(&Commitment); }
+	promise() { future_detail::commitmentCreate(&Commitment); }
 	oDEFINE_PROMISE_CTORS();
 	oDEFINE_PROMISE_SET_ERROR();
 
@@ -714,17 +712,17 @@ public:
 	void set_value_at_thread_exit(const T& _Value) { oFUTURE_THROW(Commitment, no_state); Commitment->set_value_at_thread_exit(_Value); }
 
 private:
-	std::shared_ptr<future_detail::oCommitment<T&>> Commitment;
+	std::shared_ptr<future_detail::commitment<T&>> Commitment;
 };
 
 template<> class promise<void>
 {
 public:
-	promise(const std::shared_ptr<future_detail::oCommitment<void>>& _pCommitment)
+	promise(const std::shared_ptr<future_detail::commitment<void>>& _pCommitment)
 		: Commitment(_pCommitment)
 	{}
 
-	promise() { Commitment = std::make_shared<future_detail::oCommitment<void>>(); }
+	promise() { Commitment = std::make_shared<future_detail::commitment<void>>(); }
 	oDEFINE_PROMISE_CTORS();
 	oDEFINE_PROMISE_SET_ERROR();
 
@@ -737,7 +735,7 @@ public:
 	void set_value() { Commitment->set_no_value(); }
 
 private:
-	std::shared_ptr<future_detail::oCommitment<void>> Commitment;
+	std::shared_ptr<future_detail::commitment<void>> Commitment;
 };
 
 namespace future_detail {
@@ -763,7 +761,7 @@ namespace future_detail {
 		\
 		explicit packaged_task(oCALLABLE_PARAMS0) \
 		{ \
-			Commitment = std::make_shared<future_detail::oCommitment<result_type>>(); \
+			Commitment = std::make_shared<future_detail::commitment<result_type>>(); \
 			Function = std::move(oCALLABLE_PASS0); \
 		} \
 		\
@@ -788,7 +786,7 @@ namespace future_detail {
 		void reset() { packaged_task(std::move(Function)).swap(*this); } \
 		\
 	private: \
-		std::shared_ptr<future_detail::oCommitment<result_type>> Commitment; \
+		std::shared_ptr<future_detail::commitment<result_type>> Commitment; \
 		Callable Function; \
 		\
 		static void fulfill_promise(promise<result_type> _Promise, std::function<result_type(void)> Function__) \
