@@ -25,6 +25,7 @@
 #include <oConcurrency/oConcurrency.h>
 #include <oStd/future.h>
 #include <oCore/process_stats_monitor.h>
+#include <oBase/timer.h>
 
 #include "../../test_services.h"
 
@@ -158,6 +159,16 @@ void TESTfuture(ouro::test_services& _Services)
 		}, 1,2,3,4,5,6,7,8,9,10);
 
 		oCHECK(Result2.get(), "Unexpected result5");
+	}
+
+	// test void async()
+	{
+		std::atomic_int value;
+		value.store(0);
+		ouro::async([&] { value++; });
+		ouro::timer t;
+		while (t.seconds() < 2.0) { if (value.load() != 0) break; }
+		oCHECK(value != 0, "timed out waiting for void async() to finish");
 	}
 
 	// test failure
