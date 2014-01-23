@@ -203,23 +203,25 @@ public:
 
 	basic_path& remove_basename_suffix(const char_type* _Suffix)
 	{
-		if (has_basename())
+		if (has_basename() && _Suffix)
 		{
-			const char_type* ext = has_extension() ? &p[ExtensionOffset] : nullptr;
-			const char_type* suf = ext ? ext : &p[BasenameOffset];
-			while (*suf) suf++; // move to end of basename
-			suf -= Length;
+			string_type s = _Suffix;
+			char_type* ext = has_extension() ? &p[ExtensionOffset] : nullptr;
+			if (ext) s += ext;
+			char_type* suf = ext ? ext : &p[BasenameOffset];
+			while (*suf && suf < ext) suf++; // move to end of basename
+			suf -= strlen(_Suffix);
 			if (suf >= p.c_str())
 			{
-				if (!traits::compare(suf, _Suffix))
+				if (!traits::compare(suf, s))
 				{
-					suf = 0;
+					*suf = 0;
 					p.append(ext);
 					parse();
 				}
 			}
 		}
-
+	
 		return *this;
 	}
 

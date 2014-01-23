@@ -111,11 +111,11 @@ typedef basic_path<char, boost_and_std_proposal_compliant<char>> test_path;
 
 static void TESTpath_standard_cases()
 {
-	oFORI(i, kCases)
+	int i = 0;
+	for (const auto& c : kCases)
 	{
 		try
 		{
-			const CASE<char>& c = kCases[i];
 			test_path P(c.CtorArgument);
 
 			#define TEST_CASE(_API, _Field) do \
@@ -153,6 +153,8 @@ static void TESTpath_standard_cases()
 		{
 			oTHROW(protocol_error, "path test %d failed: %s", i, e.what());
 		}
+
+		i++;
 	}
 }
 
