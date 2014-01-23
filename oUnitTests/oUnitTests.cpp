@@ -391,7 +391,7 @@ static bool FindDuplicateProcessInstanceByName(process::id _ProcessID, process::
 	return true;
 }
 
-bool TerminateDuplicateInstances(const char* _Name)
+bool TerminateDuplicateInstances(const char* _Name, bool _Prompt)
 {
 	process::id ThisID = this_process::get_id();
 	process::id duplicatePID;
@@ -405,7 +405,11 @@ bool TerminateDuplicateInstances(const char* _Name)
 
 	while (duplicatePID)
 	{
-		msg_result::value result = msgbox(msg_type::yesno, nullptr, sTITLE, "An instance of the unittest executable was found at process %u. Do you want to kill it now? (no means this application will exit)", duplicatePID);
+
+		msg_result::value result = msg_result::yes;
+		if (_Prompt)
+			result = msgbox(msg_type::yesno, nullptr, sTITLE, "An instance of the unittest executable was found at process %u. Do you want to kill it now? (no means this application will exit)", duplicatePID);
+
 		if (result == msg_result::no)
 			return false;
 
@@ -426,20 +430,20 @@ bool TerminateDuplicateInstances(const char* _Name)
 	return true;
 }
 
-bool EnsureOneInstanceIsRunning()
+bool EnsureOneInstanceIsRunning(bool _Prompt)
 {
 	// Scan for both release and debug builds already running
 	path tmp = filesystem::app_path(true);
 	path Path(tmp);
-	path relname = Path.basename();
-	relname.remove_basename_suffix(oMODULE_DEBUG_SUFFIX_A);
+	Path.remove_basename_suffix(oMODULE_DEBUG_SUFFIX_A);
+	path relname = Path.filename();
 
 	path dbgname(relname);
 	dbgname.insert_basename_suffix(oMODULE_DEBUG_SUFFIX_A);
 
-	if (!TerminateDuplicateInstances(dbgname))
+	if (!TerminateDuplicateInstances(dbgname, _Prompt))
 		return false;
-	if (!TerminateDuplicateInstances(relname))
+	if (!TerminateDuplicateInstances(relname, _Prompt))
 		return false;
 
 	return true;
@@ -447,12 +451,6 @@ bool EnsureOneInstanceIsRunning()
 
 int main(int argc, const char* argv[])
 {
-	#ifdef DEBUG_oCAMERA
-		extern int ShowAllCameras();
-		ShowAllCameras();
-		if (1) return 0;
-	#endif
-
 	InitEnv();
 
 	PARAMETERS parameters;
@@ -475,7 +473,7 @@ int main(int argc, const char* argv[])
 		result = oTestManager::Singleton()->RunSpecialMode(parameters.SpecialMode);
 	else
 	{
-		if (EnsureOneInstanceIsRunning())
+		if (EnsureOneInstanceIsRunning(true))
 			result = oTestManager::Singleton()->RunTests(parameters.Filters.empty() ? 0 : &parameters.Filters[0], parameters.Filters.size());
 		else
 			result = oTest::SKIPPED;
@@ -502,6 +500,10 @@ int main(int argc, const char* argv[])
 	else
 		oTRACE("Unit test exiting with result: %s", as_string((oTest::RESULT)result));
 
+	// Kill any hung special-mode instances
+	if (!parameters.SpecialMode)
+		EnsureOneInstanceIsRunning(false);
+	
 	// Final flush to ensure oBuildTool gets all our stdout
 	::_flushall();
 
