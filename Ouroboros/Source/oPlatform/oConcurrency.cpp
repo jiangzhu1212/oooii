@@ -130,10 +130,11 @@ typedef ouro::process_heap::std_allocator<std::function<void()>> allocator_t;
 		task_group_t g;
 	public:
 		#if oHAS_oCONCURRENCY
-			task_group() : oConcurrency::detail::task_group<oScheduler::allocator_type>(oScheduler::Singleton()->Threadpool) {}
+			task_group_impl() : oConcurrency::detail::task_group<oScheduler::allocator_type>(oScheduler::Singleton()->Threadpool) {}
 		#endif
 		void run(const std::function<void()>& _Task) override { g.run(_Task); }
 		void wait() override { g.wait(); }
+		~task_group_impl() { wait(); }
 	};
 
 	bool oDispatchQueueCreateConcurrent(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppQueue)

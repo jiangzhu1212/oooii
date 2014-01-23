@@ -41,6 +41,8 @@ class task_group
 public:
 	static std::shared_ptr<ouro::task_group> make();
 
+	virtual ~task_group() {}
+
 	// dispatches a task flagged as part of this group
 	virtual void run(const std::function<void()>& _Task) = 0;
 
