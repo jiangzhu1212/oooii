@@ -41,8 +41,6 @@ void dispatch(const std::function<void()>& _Task);
 
 void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
 
-std::shared_ptr<task_group> make_task_group();
-
 	} // namespace scheduler
 } // namespace ouro
 
