@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oCore/windows/win_crt_leak_tracker.h>
 #include <oCore/debugger.h>
+#include <oCore/mutex.h>
 #include <oCore/process_heap.h>
 #include <oCore/reporting.h>
 #include <oCore/windows/win_crt_heap.h>
@@ -67,20 +68,20 @@ public:
 	inline void enable_report(bool _Enable) { ReportEnabled = _Enable; }
 	inline bool enable_report() { return ReportEnabled; }
 
-	inline void new_context() { pLeakTracker->new_context(); }
+	inline void new_context() { lock_t lock(Mutex); pLeakTracker->new_context(); }
 
-	inline void capture_callstack(bool _Capture) { pLeakTracker->capture_callstack(_Capture); }
-	inline bool capture_callstack() const { return pLeakTracker->capture_callstack(); }
+	inline void capture_callstack(bool _Capture) { lock_t lock(Mutex); pLeakTracker->capture_callstack(_Capture); }
+	inline bool capture_callstack() const { lock_t lock(Mutex); return pLeakTracker->capture_callstack(); }
 
-	void thread_local_tracking(bool _Enable) { pLeakTracker->thread_local_tracking(_Enable); }
-	bool thread_local_tracking() { return pLeakTracker->thread_local_tracking(); }
+	void thread_local_tracking(bool _Enable) { lock_t lock(Mutex); pLeakTracker->thread_local_tracking(_Enable); }
+	bool thread_local_tracking() { lock_t lock(Mutex); return pLeakTracker->thread_local_tracking(); }
 
 	bool report(bool _CurrentContextOnly);
-	inline void reset() { pLeakTracker->reset(); }
-	inline void ignore(void* _Pointer) { pLeakTracker->on_deallocate(crt_heap::allocation_id(_Pointer)); }
+	inline void reset() { lock_t lock(Mutex); pLeakTracker->reset(); }
+	inline void ignore(void* _Pointer) { lock_t lock(Mutex); pLeakTracker->on_deallocate(crt_heap::allocation_id(_Pointer)); }
 	
-	inline void add_delay() { pLeakTracker->add_delay(); }
-	inline void release_delay() { pLeakTracker->release_delay(); }
+	inline void add_delay() { lock_t lock(Mutex); pLeakTracker->add_delay(); }
+	inline void release_delay() { lock_t lock(Mutex); pLeakTracker->release_delay(); }
 
 	int on_malloc_event(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
 
@@ -89,8 +90,14 @@ protected:
 	~context();
 
 	static int malloc_hook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
+	
+	// VS2012's std::mutex calls complex crt functions that grab a global mutex. If called
+	// from other crt functions that then call malloc then deadlocks occur, so use an ouro
+	// mutex to avoid that issue.
+	typedef ouro::mutex mutex_t;
+	typedef ouro::lock_guard<mutex_t> lock_t;
 
-	std::mutex Mutex;
+	mutable mutex_t Mutex;
 	ouro::leak_tracker* pLeakTracker;
 	size_t NonLinearBytes;
 	_CRT_ALLOC_HOOK OriginalAllocHook;
@@ -162,6 +169,7 @@ bool context::report(bool _CurrentContextOnly)
 	size_t nLeaks = 0;
 	if (ReportEnabled)
 	{
+		lock_t lock(Mutex);
 		bool OldValue = enabled();
 		enable(false);
 		nLeaks = pLeakTracker->report(_CurrentContextOnly);
@@ -181,6 +189,7 @@ int context::on_malloc_event(int _AllocationType, void* _UserData, size_t _Size,
 
 	if (allowAllocationToProceed && _BlockType != _IGNORE_BLOCK && _BlockType != _CRT_BLOCK)
 	{
+		lock_t lock(Mutex);
 		switch (_AllocationType)
 		{
 			case _HOOK_ALLOC: pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line); break;

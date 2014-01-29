@@ -25,8 +25,8 @@
 // Approximation of the upcoming C++1x std::mutex objects.
 
 #pragma once
-#ifndef oStd_mutex_h
-#define oStd_mutex_h
+#ifndef oCore_mutex_h
+#define oCore_mutex_h
 
 #include <cassert>
 #include <chrono>

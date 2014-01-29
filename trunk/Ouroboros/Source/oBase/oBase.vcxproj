@@ -127,6 +127,7 @@
     <ClInclude Include="..\..\Include\oBase\assert.h" />
     <ClInclude Include="..\..\Include\oBase\atof.h" />
     <ClInclude Include="..\..\Include\oBase\backoff.h" />
+    <ClInclude Include="..\..\Include\oBase\base_future_traits.h" />
     <ClInclude Include="..\..\Include\oBase\byte.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
     <ClInclude Include="..\..\Include\oBase\compression.h" />

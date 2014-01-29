@@ -24,7 +24,8 @@
  **************************************************************************/
 // An interface for hooking a malloc routine to report allocations unmatched by
 // deallocation and report the file line and callstack of where the allocation
-// occurred.
+// occurred. This is not threadsafe since usage of std::mutex at this level
+// can itself trigger C++ runtime calls that could deadlock on malloc.
 #pragma once
 #ifndef oBase_leak_tracker_h
 #define oBase_leak_tracker_h
@@ -34,8 +35,6 @@
 #include <oBase/fixed_string.h>
 #include <oBase/macros.h>
 #include <atomic>
-
-#include <oStd/mutex.h>
 
 namespace ouro {
 
@@ -148,7 +147,7 @@ public:
 	void new_context() { CurrentContext++; }
 
 	// Clears all allocation tracking.
-	void reset() { lock_t Lock(Mutex); Allocations.clear(); }
+	void reset() { Allocations.clear(); }
 
 	// Reports all allocations currently tracked to the debugger print function.
 	// If _CurrentContextOnly is true, then only the allocations since the last 
@@ -166,13 +165,6 @@ public:
 
 private:
 
-	// @tony: Wow, every std::mutex in VS2012 goes out to the concrt dll and references it
-	// and calls GetModuleFileNameW each time (hopefully only on first-init)? Anyway if malloc
-	// is holding a mutex, then this goes to call more mutex-protected API there can be deadlocks.
-	// so keep this a simple mutex.
-	typedef ouro::mutex mutex_t;
-	typedef ouro::lock_guard<mutex_t> lock_t;
-
 	static struct hasher { size_t operator()(unsigned int _AllocationID) const { return _AllocationID; } };
 	typedef std::pair<const unsigned int, entry> pair_t;
 	typedef std_user_allocator<pair_t> allocator_t;
@@ -180,7 +172,6 @@ private:
 		, std::equal_to<unsigned int>, std::less<unsigned int>, allocator_t> allocations_t;
 
 	info Info;
-	mutex_t Mutex;
 	allocations_t Allocations;
 	countdown_latch DelayLatch;
 	std::atomic<unsigned short> CurrentContext;

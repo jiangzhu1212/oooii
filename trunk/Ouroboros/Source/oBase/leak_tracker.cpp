@@ -32,7 +32,6 @@ namespace ouro {
 size_t leak_tracker::num_outstanding_allocations(bool _CurrentContextOnly)
 {
 	size_t n = 0;
-	lock_t Lock(Mutex);
 	for (const allocations_t::value_type& pair : Allocations)
 	{
 		const entry& e = pair.second;
@@ -62,8 +61,6 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 		this_thread::sleep_for(chrono::milliseconds(Info.unexpected_delay_ms));
 		RecoveredFromAsyncLeaks = true;
 	}
-
-	lock_t Lock(Mutex);
 
 	size_t nLeaks = 0;
 	bool headerPrinted = false;
@@ -141,7 +138,6 @@ void leak_tracker::on_allocate(unsigned int _AllocationID, size_t _Size, const c
 {
 	if (!Internal) // prevent infinite recursion
 	{
-		lock_t Lock(Mutex);
 		Internal = true;
 
 		#if oENABLE_RELEASE_ASSERTS == 1 || oENABLE_ASSERTS == 1
@@ -168,7 +164,6 @@ void leak_tracker::on_deallocate(unsigned int _AllocationID)
 {
 	if (!Internal)
 	{
-		lock_t Lock(Mutex);
 		Internal = true;
 		// there may be existing allocs before tracking was enabled, so we're going 
 		// to have to ignore those since they weren't captured
@@ -179,7 +174,6 @@ void leak_tracker::on_deallocate(unsigned int _AllocationID)
 
 void leak_tracker::thread_local_tracking(bool _Enabled)
 {
-	lock_t Lock(Mutex);
 	Internal = true;
 	Info.thread_local_tracking_enabled() = _Enabled;
 	Internal = false;

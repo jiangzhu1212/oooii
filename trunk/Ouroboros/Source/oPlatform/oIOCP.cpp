@@ -34,7 +34,7 @@
 
 // @tony: Use of std types was causing a deadlock on shutdown, 
 // so keep using oStd stuff until I can figure out why.
-#include <oStd/mutex.h>
+#include <oCore/mutex.h>
 
 #include <oCore/windows/win_error.h>
 
