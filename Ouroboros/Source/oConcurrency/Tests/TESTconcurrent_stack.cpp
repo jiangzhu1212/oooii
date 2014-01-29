@@ -25,6 +25,9 @@
 #include <oConcurrency/concurrent_stack.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
+#include <oCore/scheduler.h>
+
+using namespace ouro;
 
 namespace oConcurrency {
 	namespace tests {
@@ -87,7 +90,7 @@ static void test_concurrency()
 
 	concurrent_stack<Node> s;
 
-	parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
+	scheduler::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
 	{
 		nodes[_Index].Value = _Index;
 		s.push(&nodes[_Index]);
@@ -106,7 +109,7 @@ static void test_concurrency()
 		oCHECK(nodes[i].Value == 0xc001c0de, "Node %d was never inserted into stack", i);
 	}
 	
-	parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
+	scheduler::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
 	{
 		Node* popped = s.pop();
 		popped->Value = 0xdeaddead;

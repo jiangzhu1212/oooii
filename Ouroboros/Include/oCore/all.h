@@ -41,6 +41,7 @@
 #include <oCore/process_heap.h>
 #include <oCore/process_stats_monitor.h>
 #include <oCore/reporting.h>
+#include <oCore/scheduler.h>
 #include <oCore/system.h>
 #include <oCore/thread_traits.h>
 #endif

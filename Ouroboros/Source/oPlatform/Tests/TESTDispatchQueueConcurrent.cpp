@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
+#include <oCore/scheduler.h>
 #include <oBasis/oDispatchQueueConcurrent.h>
 #include "oTestIntegration.h"
 #include <oConcurrency/tests/oConcurrencyTests.h>
@@ -35,7 +36,7 @@ struct oDQC_impl : oConcurrency::tests::test_threadpool
 	}
 	ouro::intrusive_ptr<threadsafe oDispatchQueueConcurrent> t;
 	~oDQC_impl() { if (t) t->Join(); }
-	const char* name() const override { return oConcurrency::task_scheduler_name(); }
+	const char* name() const override { return ouro::scheduler::name(); }
 	void dispatch(const oTASK& _Task) override { t->Dispatch(_Task); }
 	bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override { return false; }
 	void flush() override { t->Flush(); }

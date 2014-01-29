@@ -53,7 +53,7 @@ struct threadpool_default_traits
 	static void end_thread() {}
 };
 
-namespace detail { template<typename ThreadpoolTraits, typename ThreadpoolAlloc = std::allocator<std::function<void()>>> class task_group; }
+namespace detail { template<typename Traits, typename Alloc = std::allocator<std::function<void()>>> class task_group; }
 
 template<typename Alloc>
 class threadpool_base
@@ -79,7 +79,7 @@ public:
 	void join();
 
 protected:
-	template<typename ThreadpoolTraits, typename ThreadpoolAlloc> friend class detail::task_group;
+	template<typename, typename> friend class detail::task_group;
 	std::vector<std::thread> Workers;
 	std::deque<task_type, allocator_type> GlobalQueue;
 	std::mutex Mutex;
@@ -242,12 +242,12 @@ inline void threadpool<Traits, Alloc>::work()
 // task_group and parallel_for elsewhere.
 	namespace detail {
 
-template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
+template<typename Traits, typename Alloc>
 class task_group
 {
 public:
-	typedef ThreadpoolAlloc allocator_type;
-	typedef threadpool<ThreadpoolTraits, ThreadpoolAlloc> threadpool_type;
+	typedef Alloc allocator_type;
+	typedef threadpool<Traits, Alloc> threadpool_type;
 	task_group(threadpool_type& _Threadpool);
 
 	// Run a task as part of this task group
@@ -262,21 +262,21 @@ private:
 	ouro::countdown_latch Latch;
 };
 
-template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
-task_group<ThreadpoolTraits, ThreadpoolAlloc>::task_group(threadpool_type& _Threadpool)
+template<typename Traits, typename Alloc>
+task_group<Traits, Alloc>::task_group(threadpool_type& _Threadpool)
 	: Threadpool(_Threadpool)
 	, Latch(1)
 {}
 
-template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
-void task_group<ThreadpoolTraits, ThreadpoolAlloc>::run(const std::function<void()>& _Task)
+template<typename Traits, typename Alloc>
+void task_group<Traits, Alloc>::run(const std::function<void()>& _Task)
 {
 	Latch.reference();
 	Threadpool.dispatch([&,_Task] { _Task(); Latch.release(); });
 }
 
-template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
-void task_group<ThreadpoolTraits, ThreadpoolAlloc>::wait()
+template<typename Traits, typename Alloc>
+void task_group<Traits, Alloc>::wait()
 {
 	// should this do a NumWorking++ somewhere?
 
@@ -306,22 +306,22 @@ void task_group<ThreadpoolTraits, ThreadpoolAlloc>::wait()
 	Latch.reset(1); // allow task group to be resued
 }
 
-template<typename ThreadpoolTraits, typename ThreadpoolAlloc>
-inline void thread_local_parallel_for(task_group<ThreadpoolTraits, ThreadpoolAlloc>& _TaskGroup, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
+template<typename Traits, typename Alloc>
+inline void thread_local_parallel_for(task_group<Traits, Alloc>& _TaskGroup, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 {
 	for (; _Begin < _End; _Begin++)
 		_TaskGroup.run(std::bind(_Task, _Begin));
 }
 
-template<size_t WorkChunkSize /* = 16*/, typename ThreadpoolTraits, typename ThreadpoolAlloc>
-inline void parallel_for(threadpool<ThreadpoolTraits, ThreadpoolAlloc>& _Threadpool, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
+template<size_t WorkChunkSize /* = 16*/, typename Traits, typename Alloc>
+inline void parallel_for(threadpool<Traits, Alloc>& _Threadpool, size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
 {
-	task_group<ThreadpoolTraits, ThreadpoolAlloc> g(_Threadpool);
+	task_group<Traits, Alloc> g(_Threadpool);
 	const size_t kNumSteps = (_End - _Begin) / WorkChunkSize;
 	for (size_t i = 0; i < kNumSteps; i++, _Begin += WorkChunkSize)
-		g.run(std::bind(thread_local_parallel_for<ThreadpoolTraits, ThreadpoolAlloc>, std::ref(g), _Begin, _Begin + WorkChunkSize, _Task));
+		g.run(std::bind(thread_local_parallel_for<Traits, Alloc>, std::ref(g), _Begin, _Begin + WorkChunkSize, _Task));
 	if (_Begin < _End)
-		g.run(std::bind(thread_local_parallel_for<ThreadpoolTraits, ThreadpoolAlloc>, std::ref(g), _Begin, _End, _Task));
+		g.run(std::bind(thread_local_parallel_for<Traits, Alloc>, std::ref(g), _Begin, _End, _Task));
 	g.wait();
 }
 

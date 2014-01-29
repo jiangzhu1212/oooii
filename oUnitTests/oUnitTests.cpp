@@ -4,6 +4,7 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStream.h>
 #include <oCore/reporting.h>
+#include <oCore/scheduler.h>
 #include <oCore/system.h>
 #include <oBase/opttok.h>
 #include <oBase/scc.h>
@@ -52,7 +53,7 @@ void InitEnv()
 	//
 	// @tony: TODO: FIND OUT - why can DllMain execute in a not-main thread?
 
-	oConcurrency::init_task_scheduler();
+	ouro::scheduler::ensure_initialized();
 
 	oTRACEA("Aero is %sactive", system::uses_gpu_compositing() ? "" : "in");
 	oTRACE("Remote desktop is %sactive", system::is_remote_session() ? "" : "in");

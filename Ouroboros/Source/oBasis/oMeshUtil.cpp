@@ -27,7 +27,7 @@
 #include <oBase/assert.h>
 #include <oBase/byte.h>
 #include <oBase/invalid.h>
-#include <oConcurrency/oConcurrency.h>
+#include <oCore/scheduler.h>
 #include <oBasis/oError.h>
 #include <oBasis/oMath.h>
 #include <vector>
@@ -132,7 +132,7 @@ template<typename T> bool oCalcFaceNormalsT(TVEC3<T>* _pFaceNormals, const unsig
 
 	bool success = true;
 	const T s = _CCW ? T(-1.0) : T(1.0);
-	oConcurrency::parallel_for( 0, _NumberOfIndices / 3, std::bind( &CalculateFace<T>, std::placeholders::_1, _pFaceNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfPositions, s, &success ));
+	scheduler::parallel_for( 0, _NumberOfIndices / 3, std::bind( &CalculateFace<T>, std::placeholders::_1, _pFaceNormals, _pIndices, _NumberOfIndices, _pPositions, _NumberOfPositions, s, &success ));
 	if( !success )
 		oErrorSetLast(std::errc::invalid_argument, "an index value indexes outside the range of vertices specified");
 

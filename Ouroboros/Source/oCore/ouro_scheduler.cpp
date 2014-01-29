@@ -22,44 +22,80 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/oConcurrency.h>
+#include "ouro_scheduler.h"
+#include <oCore/process_heap.h>
+#include <oCore/thread_traits.h>
+#include <oBase/task_group.h>
 
-#include <oBasis/oDispatchQueueConcurrentT.h>
-#include <oConcurrency/task_group_threadpool.h>
-
-#undef interface
-#undef INTERFACE_DEFINED
-
-#include <tbb/tbb.h>
-#include <tbb/task_scheduler_init.h>
-
-using namespace tbb;
-typedef task_group task_group_t;
-
-typedef oConcurrency::task_group_threadpool<task_group> threadpool_t;
-
-const oGUID& oGetGUID(threadsafe const oDispatchQueueConcurrentT<threadpool_t>* threadsafe const*)
+namespace ouro {
+	namespace ouro_scheduler {
+class context
 {
-	// {d912957c-a621-4960-833f-55572a1a4abb}
-	static const oGUID IID_oDispatchQueueConcurrentT = { 0xd912957c, 0xa621, 0x4960, { 0x83, 0x3f, 0x55, 0x57, 0x2a, 0x1a, 0x4a, 0xbb } };
-	return IID_oDispatchQueueConcurrentT;
+public:
+	typedef process_heap::std_allocator<std::function<void()>> allocator_type;
+	typedef threadpool<core_thread_traits, allocator_type> threadpool_type;
+	typedef detail::task_group<core_thread_traits, allocator_type> task_group_type;
+
+	static context& singleton();
+	context() {}
+	~context() { tp.join(); }
+	inline threadpool_type& get_threadpool() { return tp; }
+	inline void dispatch(const std::function<void()>& _Task) { tp.dispatch(_Task); }
+	inline void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) { ouro::detail::parallel_for<16>(tp, _Begin, _End, _Task); }
+private:
+	threadpool_type tp;
+};
+
+context& context::singleton()
+{
+	static context* sInstance = nullptr;
+	if (!sInstance)
+	{
+		process_heap::find_or_allocate(
+			"ouro::scheduler::context"
+			, process_heap::per_process
+			, process_heap::leak_tracked
+			, [=](void* _pMemory) { new (_pMemory) context(); }
+			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
+			, &sInstance);
+	}
+	return *sInstance;
 }
 
-class task_group_impl : public ouro::task_group
+const char* name()
 {
-	task_group_t g;
+	return "ouro";
+}
+
+void ensure_initialized()
+{
+	context::singleton();
+}
+
+void dispatch(const std::function<void()>& _Task)
+{
+	context::singleton().dispatch(_Task);
+}
+
+void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
+{
+	context::singleton().parallel_for(_Begin, _End, _Task);
+}
+
+class task_group_impl : public task_group
+{
+	context::task_group_type g;
 public:
-	#if oHAS_oCONCURRENCY
-		task_group_impl() : oConcurrency::detail::task_group<oScheduler::allocator_type>(oScheduler::Singleton()->Threadpool) {}
-	#endif
+	task_group_impl() : g(context::singleton().get_threadpool()) {}
 	void run(const std::function<void()>& _Task) override { g.run(_Task); }
 	void wait() override { g.wait(); }
 	~task_group_impl() { wait(); }
 };
 
-bool oDispatchQueueCreateConcurrent(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueConcurrent** _ppQueue)
+std::shared_ptr<ouro::task_group> make_task_group()
 {
-	bool success = false;
-	oCONSTRUCT(_ppQueue, oDispatchQueueConcurrentT<threadpool_t>(_DebugName, &success));
-	return success;
+	return std::make_shared<task_group_impl>();
 }
+
+	} // namespace ouro_scheduler
+} // namespace ouro

@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/oConcurrency.h>
+#include <oCore/scheduler.h> // FIXME
 #include <oBase/future.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
@@ -54,7 +54,7 @@ static bool exercise_all_threads()
 	int* results = (int*)_alloca(nTasks * sizeof(int));
 	memset(results, -1, nTasks * sizeof(int));
 
-	oConcurrency::parallel_for(0, size_t(nTasks), std::bind(exercise_thread, std::placeholders::_1, results, 2500));
+	scheduler::parallel_for(0, size_t(nTasks), std::bind(exercise_thread, std::placeholders::_1, results, 2500));
 	for (int i = 0; i < nTasks; i++)
 		oCHECK(results[i] != -1, "Invalid results from parallel_for");
 	return true;

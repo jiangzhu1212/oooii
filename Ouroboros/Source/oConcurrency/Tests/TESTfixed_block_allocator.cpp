@@ -25,7 +25,10 @@
 #include <oConcurrency/fixed_block_allocator.h>
 #include <oConcurrency/oConcurrency.h>
 #include <oBase/throw.h>
+#include <oCore/scheduler.h>
 #include <vector>
+
+using namespace ouro;
 
 namespace oConcurrency {
 	namespace tests {
@@ -113,7 +116,7 @@ static void test_fba_concurrency()
 	TestObj* tests[NumBlocks];
 	memset(tests, 0xaa, sizeof(tests));
 
-	parallel_for(0, NumBlocks, [&](size_t _Index)
+	scheduler::parallel_for(0, NumBlocks, [&](size_t _Index)
 	{
 		tests[_Index] = pAllocator->construct(&destroyed[_Index]);
 		tests[_Index]->Value = _Index;

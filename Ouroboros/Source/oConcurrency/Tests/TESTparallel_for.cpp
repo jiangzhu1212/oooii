@@ -22,9 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/oConcurrency.h>
+#include <oCore/scheduler.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
+
+using namespace ouro;
 
 namespace oConcurrency {
 	namespace tests {
@@ -60,7 +62,7 @@ void TESTparallel_for()
 	oFORI(i, mTestArrayA)
 		test_a(i, mTestArrayA);
 
-	oConcurrency::parallel_for(0, mArraySize, std::bind(test_a, std::placeholders::_1, mTestArrayB));
+	scheduler::parallel_for(0, mArraySize, std::bind(test_a, std::placeholders::_1, mTestArrayB));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0, 
 		"oConcurrency::parallel_for single param failed to compute singlethreaded result");
 
@@ -68,7 +70,7 @@ void TESTparallel_for()
 	oFORI(i, mTestArrayA)
 		test_ab(i, mTestArrayA, 2);
 
-	oConcurrency::parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
+	scheduler::parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
 		, "oConcurrency::parallel_for failed to compute singlethreaded result");
 
@@ -76,11 +78,11 @@ void TESTparallel_for()
 	oFORI(i, mTestArrayA)
 		test_abc(i, mTestArrayA, 2, 7);
 
-	oConcurrency::parallel_for(0, mArraySize, std::bind(test_abc, std::placeholders::_1, &mTestArrayB[0], 2, 7));
+	scheduler::parallel_for(0, mArraySize, std::bind(test_abc, std::placeholders::_1, &mTestArrayB[0], 2, 7));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
 		, "oConcurrency::parallel_for failed to compute singlethreaded result");
 
-	oConcurrency::parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
+	scheduler::parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
 };
 
 	} // namespace tests
