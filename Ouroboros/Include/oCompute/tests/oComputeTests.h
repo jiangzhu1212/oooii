@@ -22,8 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Declarations of oConcurrency unit tests. These throw an oStd::standard_error 
-// on failure.
+// Declarations of oCompute unit tests. These throw a standard_error on 
+// failure.
 #pragma once
 #ifndef oComputeTests_h
 #define oComputeTests_h

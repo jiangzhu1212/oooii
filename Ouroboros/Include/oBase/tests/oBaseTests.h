@@ -41,6 +41,7 @@ namespace ouro {
 		void TESTcsv();
 		void TESTdate(test_services& _Services);
 		void TESTfourcc();
+		void TESTfuture(test_services& _Services);
 		void TESTindex_allocator();
 		void TESTini();
 		void TESTjson();

@@ -54,6 +54,7 @@ static_assert(sizeof(ouro::recursive_mutex) == sizeof(CRITICAL_SECTION), "size m
 #endif
 
 namespace ouro {
+
 	const adopt_lock_t adopt_lock;
 	const defer_lock_t defer_lock;
 	const try_to_lock_t try_to_lock;
@@ -188,4 +189,4 @@ void call_once(once_flag& _Flag, const std::function<void()>& _Function)
 	InitOnceExecuteOnce(*(PINIT_ONCE*)&_Flag, InitOnceCallback, (PVOID)&_Function, nullptr);
 }
 
-} // namespace oStd
+} // namespace ouro

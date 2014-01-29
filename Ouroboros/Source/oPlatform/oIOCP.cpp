@@ -33,7 +33,7 @@
 #include <winsock2.h>
 
 // @tony: Use of std types was causing a deadlock on shutdown, 
-// so keep using oStd stuff until I can figure out why.
+// so keep using ouro stuff until I can figure out why.
 #include <oCore/mutex.h>
 
 #include <oCore/windows/win_error.h>

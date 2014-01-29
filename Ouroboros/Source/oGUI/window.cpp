@@ -260,7 +260,7 @@ struct window_impl : window
 	// Execution API
 	void trigger(const input::action& _Action) override;
 	void post(int _CustomEventCode, uintptr_t _Context) override;
-	void dispatch(const oTASK& _Task) override;
+	void dispatch(const std::function<void()>& _Task) override;
 	future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override;
 	void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) override;
 	void stop_timer(uintptr_t _Context) override;
@@ -296,7 +296,7 @@ private:
 
 private:
 
-	void dispatch_internal(oTASK&& _Task) const { PostMessage(hWnd, oWM_DISPATCH, 0, (LPARAM)const_cast<window_impl*>(this)->new_object<oTASK>(std::move(_Task))); }
+	void dispatch_internal(std::function<void()>&& _Task) const { PostMessage(hWnd, oWM_DISPATCH, 0, (LPARAM)const_cast<window_impl*>(this)->new_object<std::function<void()>>(std::move(_Task))); }
 
 	struct oScopedHeapLock
 	{
@@ -559,7 +559,7 @@ char* window_impl::get_status_text(char* _StrDestination, size_t _SizeofStrDesti
 {
 	size_t len = 0;
 	window_impl* w = const_cast<window_impl*>(this);
-	oTASK* pTask = w->new_object<oTASK>(std::move([=,&len]
+	std::function<void()>* pTask = w->new_object<std::function<void()>>(std::move([=,&len]
 	{
 		if (oWinStatusBarGetText(_StrDestination, _SizeofStrDestination, oWinGetStatusBar(hWnd), _StatusSectionIndex))
 			len = strlen(_StrDestination);
@@ -741,7 +741,7 @@ int window_impl::get_hotkeys(ouro::basic_hotkey_info* _pHotKeys, size_t _MaxNumH
 {
 	int N = 0;
 	window_impl* w = const_cast<window_impl*>(this);
-	oTASK* pTask = w->new_object<oTASK>(std::move([=,&N]
+	std::function<void()>* pTask = w->new_object<std::function<void()>>(std::move([=,&N]
 	{
 		if (hAccel && _pHotKeys && _MaxNumHotKeys)
 		{
@@ -790,9 +790,9 @@ void window_impl::post(int _CustomEventCode, uintptr_t _Context)
 	dispatch_internal(std::bind(&EventManager_t::Visit, &EventHooks, e)); // bind by copy
 }
 
-void window_impl::dispatch(const oTASK& _Task)
+void window_impl::dispatch(const std::function<void()>& _Task)
 {
-	oTASK* pTask = new_object<oTASK>(_Task);
+	std::function<void()>* pTask = new_object<std::function<void()>>(_Task);
 	PostMessage(hWnd, oWM_DISPATCH, 0, (LPARAM)pTask);
 }
 
@@ -996,7 +996,7 @@ bool window_impl::handle_misc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lP
 
 		case oWM_DISPATCH:
 		{
-			oTASK* pTask = (oTASK*)_lParam;
+			std::function<void()>* pTask = (std::function<void()>*)_lParam;
 			(*pTask)();
 			delete_object(pTask);
 			*_pLResult = 0;

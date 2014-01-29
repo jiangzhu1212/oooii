@@ -274,8 +274,6 @@ void resize_buffers(IDXGISwapChain* _pSwapChain, const int2& _NewSize)
 	HRESULT HR = _pSwapChain->ResizeBuffers(d.BufferCount, _NewSize.x, _NewSize.y, d.BufferDesc.Format, d.Flags);
 	if (HR == DXGI_ERROR_INVALID_CALL)
 		oTHROW(permission_denied, "Cannot resize DXGISwapChain buffers because there still are dependent resources in client code. Ensure all dependent resources are freed before resize occurs.");
-	//else if (FAILED(HR))
-		//throw oStd::windows::error(HR);
 }
 
 HDC get_dc(IDXGISwapChain* _pSwapChain)

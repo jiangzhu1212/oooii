@@ -24,7 +24,6 @@
  **************************************************************************/
 #pragma once
 #ifdef oPCH
-#include <oStd/all.h>
 #include <oBase/all.h>
 #include <oBase/all_libc.h>
 #define WIN32_LEAN_AND_MEAN

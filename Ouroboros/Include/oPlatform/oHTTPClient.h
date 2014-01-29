@@ -69,7 +69,7 @@ interface oHTTPClient : oInterface
 		if((_pResponse->Content.Length + 4) >= _MaxBufferSize)
 			return false;
 
-		memset(oStd::byte_add(_StrDestination, _pResponse->Content.Length), 0, 4);
+		memset(ouro::byte_add(_StrDestination, _pResponse->Content.Length), 0, 4);
 		return true;
 	}
 };

@@ -298,4 +298,4 @@ void TESTdate(test_services& _Services)
 }
 
 	} // namespace tests
-} // namespace oStd
+} // namespace ouro

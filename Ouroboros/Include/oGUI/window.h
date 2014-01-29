@@ -31,8 +31,7 @@
 #define oGUI_window_h
 
 #include <oGUI/oGUI.h>
-#include <oConcurrency/oConcurrency.h>
-#include <oStd/future.h>
+#include <oBase/future.h>
 #include <oCore/display.h>
 #include <oSurface/buffer.h>
 
@@ -377,7 +376,7 @@ public:
 	// Posts the specified task in the window's message queue and executes it in 
 	// order with other events. This is useful for wrapping platform-specific 
 	// window/control calls.
-	virtual void dispatch(const oTASK& _Task) = 0;
+	virtual void dispatch(const std::function<void()>& _Task) = 0;
 	oDEFINE_CALLABLE_WRAPPERS(,dispatch,, dispatch);
 
 	// Schedules an oImage to be generated from the window. In the simple case,

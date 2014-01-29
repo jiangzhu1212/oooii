@@ -24,14 +24,13 @@
  **************************************************************************/
 // This is an abstraction for the implementations required to run unit tests.
 // Libraries in Ouroboros are broken up into dependencies on each other and on 
-// system resources. For example oStd is dependent on the absence of C++11 
-// support, oBase is dependent on C++11/compiler features and oCore is dependent
-// on non-standard operating system API. To be able to test a library sometimes
-// requires extra features not available directly to the library, so to keep 
-// each library isolated to the point it can be used in a different library 
-// without other higher-level Ouroboros libraries, expose an abstract interface
-// for enabling the unit tests - it would be up to whatever other suite to 
-// implement these interfaces.
+// system resources. For example oBase is dependent on C++11/compiler features 
+// and oCore is dependent on non-standard operating system API. To be able to 
+// test a library sometimes requires extra features not available directly to 
+// the library so to keep each library isolated to the point it can be used in 
+// a different library without other higher-level Ouroboros libraries and expose 
+// an abstract interface for enabling the unit tests - it would be up to client 
+// code to implement these interfaces.
 #pragma once
 #ifndef Ouroboros_test_services_h
 #define Ouroboros_test_services_h

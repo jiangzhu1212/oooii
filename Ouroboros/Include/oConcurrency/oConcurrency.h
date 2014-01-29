@@ -34,7 +34,7 @@
 #ifndef oConcurrencyRequirements_h
 #define oConcurrencyRequirements_h
 
-#include <oStd/callable.h>
+#include <oBase/callable.h>
 #include <oConcurrency/thread_safe.h>
 #include <memory>
 #include <system_error>
@@ -55,7 +55,7 @@ class task_group
 {
 public:
 	// dispatches the task while flagging it as part of this task group.
-	virtual void run(const oTASK& _Task) = 0;
+	virtual void run(const std::function<void()>& _Task) = 0;
 
 	// blocks until all dispatches associated with this task_group are complete.
 	// In this way one scheduler can be used while dependencies on only a subset

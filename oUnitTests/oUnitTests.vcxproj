@@ -178,7 +178,6 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGUI.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTStd.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp" />
     <ClCompile Include="oooii_icon.cpp" />
@@ -249,12 +248,6 @@
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oPlatform\oPlatformTests.vcxproj">
       <Project>{86158613-24c5-4b25-a043-88dd2ead644c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Ouroboros\Source\oStd\oStd.vcxproj">
-      <Project>{6c467bdd-eea7-4ff6-b594-26a760df179f}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Ouroboros\Source\oStd\oStdTests.vcxproj">
-      <Project>{7cbfb2e5-2ba4-43a0-9a61-b45e7d7e8978}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oSurface\oSurface.vcxproj">
       <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>

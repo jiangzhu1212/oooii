@@ -27,7 +27,7 @@
 #define oGPUTestCommon_h
 
 #include <oPlatform/oTest.h>
-#include <oStd/future.h>
+#include <oBase/future.h>
 #include <oGPU/oGPUUtil.h>
 #include "oGPUTestPipelines.h"
 #include "oGPUTestHLSL.h"

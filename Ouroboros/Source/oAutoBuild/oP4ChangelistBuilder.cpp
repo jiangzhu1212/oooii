@@ -26,7 +26,7 @@
 #include "oMSBuild.h"
 #include "oAutoBuildOutput.h"
 #include <oBasis/oINISerialize.h>
-#include <oStd/future.h>
+#include <oBase/future.h>
 #include <oCore/system.h>
 #include <chrono>
 #include <mutex>
