@@ -24,12 +24,12 @@
  **************************************************************************/
 // Missing make_unique is considered an oversight in C++11, so here it is.
 #pragma once
-#ifndef oStd_make_unique_h
-#define oStd_make_unique_h
+#ifndef oBase_std_make_unique_h
+#define oBase_std_make_unique_h
 #include <memory>
 
-// Herb Sutter's implementation from http://herbsutter.com/gotw/_102/ should work 
-// with second update to Visual Studio 2012
+// Herb Sutter's implementation from http://herbsutter.com/gotw/_102/ should  
+// work with second update to Visual Studio 2012
 // template<typename T, typename ...Args>
 // unique_ptr<T> make_unique(Args&& ...args)
 // {

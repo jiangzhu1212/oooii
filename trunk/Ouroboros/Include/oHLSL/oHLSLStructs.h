@@ -154,8 +154,8 @@ template<typename T> struct ByteAddressBuffer
 	inline uint4 Load4(uint _Address) const { return *Ptr<uint4>(_Address); }
 
 protected:
-	template<typename T> T* Ptr(uint _Address) { assert(oStd::byte_aligned(_Address, 4) && "_Address must be 4-byte aligned"); return (T*)((unsigned char*)this + _Address); }
-	template<typename T> const T* Ptr(uint _Address) const { assert(oStd::byte_aligned(_Address, 4) && "_Address must be 4-byte aligned"); return (const T*)((unsigned char*)this + _Address); }
+	template<typename T> T* Ptr(uint _Address) { assert(ouro::byte_aligned(_Address, 4) && "_Address must be 4-byte aligned"); return (T*)((unsigned char*)this + _Address); }
+	template<typename T> const T* Ptr(uint _Address) const { assert(ouro::byte_aligned(_Address, 4) && "_Address must be 4-byte aligned"); return (const T*)((unsigned char*)this + _Address); }
 };
 
 template<typename T> struct RWByteAddressBuffer : ByteAddressBuffer<T>

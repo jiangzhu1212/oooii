@@ -47,6 +47,7 @@
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="date.cpp" />
+    <ClCompile Include="future.cpp" />
     <ClCompile Include="gzip.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="leak_tracker.cpp" />
@@ -127,8 +128,8 @@
     <ClInclude Include="..\..\Include\oBase\assert.h" />
     <ClInclude Include="..\..\Include\oBase\atof.h" />
     <ClInclude Include="..\..\Include\oBase\backoff.h" />
-    <ClInclude Include="..\..\Include\oBase\base_future_traits.h" />
     <ClInclude Include="..\..\Include\oBase\byte.h" />
+    <ClInclude Include="..\..\Include\oBase\callable.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
     <ClInclude Include="..\..\Include\oBase\compression.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h" />
@@ -147,6 +148,7 @@
     <ClInclude Include="..\..\Include\oBase\fixed_string.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
     <ClInclude Include="..\..\Include\oBase\fnv1a.h" />
+    <ClInclude Include="..\..\Include\oBase\future.h" />
     <ClInclude Include="..\..\Include\oBase\guid.h" />
     <ClInclude Include="..\..\Include\oBase\gzip.h" />
     <ClInclude Include="..\..\Include\oBase\index_allocator.h" />
@@ -171,6 +173,7 @@
     <ClInclude Include="..\..\Include\oBase\resized_type.h" />
     <ClInclude Include="..\..\Include\oBase\scc.h" />
     <ClInclude Include="..\..\Include\oBase\snappy.h" />
+    <ClInclude Include="..\..\Include\oBase\std_make_unique.h" />
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />
     <ClInclude Include="..\..\Include\oBase\string_traits.h" />

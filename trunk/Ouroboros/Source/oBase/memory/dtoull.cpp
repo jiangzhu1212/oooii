@@ -26,7 +26,7 @@
 
 // Visual Studio 2012 Win32 compiler's conversion (c-cast, static_cast) is 
 // bugged, so here's a software version.
-namespace oStd {
+namespace ouro {
 
 /** <citation
 	usage="Implementation" 
@@ -76,4 +76,4 @@ unsigned long long dtoull(double input)
 }
 // $(CitedCodeEnd)
 
-} // namespace oStd
+} // namespace ouro

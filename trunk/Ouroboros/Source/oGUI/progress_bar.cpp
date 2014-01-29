@@ -100,7 +100,7 @@ private:
 	void on_event(const window::basic_event& _Event);
 	void on_action(const ouro::input::action& _Action);
 	void make_controls(const window::create_event& _CreateEvent);
-	HWND get(PB_CONTROL _Control) const { return (HWND)oThreadsafe(this)->Controls[_Control]; }
+	HWND get(PB_CONTROL _Control) const { return (HWND)this->Controls[_Control]; }
 	void set_percentage_internal(HWND _hProgress, HWND _hMarquee, HWND _hPercent, int _Percentage);
 	void set_percentage_internal(int _Percentage) { set_percentage_internal(get(PB_PROGRESS), get(PB_MARQUEE), get(PB_PERCENT), _Percentage); }
 };

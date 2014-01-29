@@ -33,7 +33,7 @@
 #ifndef oBase_finally_h
 #define oBase_finally_h
 
-#include <oStd/callable.h>
+#include <oBase/callable.h>
 
 namespace ouro {
 
@@ -44,10 +44,10 @@ public:
 	explicit finally(std::function<void()>&& _Callable) : OnScopeExit(std::move(_Callable)) {}
 
 	#ifndef oHAS_VARIADIC_TEMPLATES
-		#define oSTD_FINALLY_CTOR(_nArgs) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE, _nArgs) \
+		#define oFINALLY_CTOR(_nArgs) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE, _nArgs) \
 			explicit finally(oCALLABLE_CONCAT(oCALLABLE_PARAMS, _nArgs)) \
 				{ OnScopeExit = std::move(oCALLABLE_CONCAT(oCALLABLE_BIND, _nArgs)); }
-		oCALLABLE_PROPAGATE(oSTD_FINALLY_CTOR);
+		oCALLABLE_PROPAGATE(oFINALLY_CTOR);
 	#else
 		#error Add variadic template support
 	#endif

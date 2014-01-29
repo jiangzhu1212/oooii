@@ -65,8 +65,8 @@ enum oWM
 		wParam
 			This parameter is not used.
 		lParam
-			oTASK* pointer to a task that will have delete called on it once 
-			execution is done.
+			std::function<void()>* pointer to a task that will have delete 
+			called on it once execution is done.
 		lResult
 			Returns 0.
 	*/

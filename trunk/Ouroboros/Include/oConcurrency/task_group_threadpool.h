@@ -24,7 +24,7 @@
  **************************************************************************/
 // A thread pool that mainly uses an underlying task group as specified in TBB
 // and PPL: basically providing the following APIs:
-//   void run(const oTASK& _Task);
+//   void run(const std::function<void()>& _Task);
 //   void wait();
 // This is primarily intended to ease integration of 3rd-party concurrency
 // solutions that support waitable tasks/task groups.
@@ -44,7 +44,7 @@ public:
 
 	// The task will execute on any given worker thread. There is no order-of-
 	// execution guarantee.
-	void dispatch(const oTASK& _Task) threadsafe;
+	void dispatch(const std::function<void()>& _Task) threadsafe;
 
 	// Block until all workers are idle.
 	void flush() threadsafe;
@@ -60,7 +60,7 @@ private:
 };
 
 template<typename TaskGroupT>
-void task_group_threadpool<TaskGroupT>::dispatch(const oTASK& _Task) threadsafe
+void task_group_threadpool<TaskGroupT>::dispatch(const std::function<void()>& _Task) threadsafe
 { 
 	oThreadsafe(this)->begin_dispatch();
 	oThreadsafe(TaskGroup).run(_Task);

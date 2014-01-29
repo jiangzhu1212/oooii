@@ -220,6 +220,9 @@
     <ClCompile Include="gzip.cpp">
       <Filter>Source\compression</Filter>
     </ClCompile>
+    <ClCompile Include="future.cpp">
+      <Filter>Source\concurrency</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\finally.h">
@@ -441,8 +444,14 @@
     <ClInclude Include="..\..\Include\oBase\task_group.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\base_future_traits.h">
+    <ClInclude Include="..\..\Include\oBase\future.h">
       <Filter>oBase\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\std_make_unique.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\callable.h">
+      <Filter>oBase</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

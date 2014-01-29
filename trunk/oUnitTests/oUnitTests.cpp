@@ -225,7 +225,6 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	{
 		const char* sLibNames[] =
 		{
-			"oStd",
 			"oCore",
 			"oHLSL",
 			"oCompute",
@@ -236,7 +235,6 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 		};
 		const char* sFilter[] =
 		{
-			"oStd_.*",
 			"oCore_.*",
 			"oHLSL.*",
 			"oCompute_.*",

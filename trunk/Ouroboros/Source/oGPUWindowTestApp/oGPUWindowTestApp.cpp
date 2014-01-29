@@ -125,7 +125,7 @@ public:
 	// owning/parent application windows since it is pretty much as child thread 
 	// and thus is created after the main thread (app window) and must be joined 
 	// before the app/thread exits.
-	window* Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const oTASK& _OnThreadExit);
+	window* Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const std::function<void()>& _OnThreadExit);
 	void Stop();
 
 	oGPUDevice* GetDevice() { return Device; }
@@ -148,7 +148,7 @@ private:
 	std::thread Thread;
 	bool Running;
 
-	oTASK OnThreadExit;
+	std::function<void()> OnThreadExit;
 	input::action_hook OnAction;
 };
 
@@ -179,7 +179,7 @@ oGPUWindowThread::~oGPUWindowThread()
 	Thread.join();
 }
 
-window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const oTASK& _OnThreadExit)
+window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const std::function<void()>& _OnThreadExit)
 {
 	Parent = _Parent;
 	OnAction = _OnAction;

@@ -58,7 +58,7 @@ struct oRTTI_DATA_ATOM // : oRTTI
 // have spaces or colons in it, e.g. "Type::SubClass" or "unsigned int"
 // So you can use this macro to declare an atom that's non canonical
 // for all the other RTTI macros then use the canonical compound type.
-// Example: oRTTI_ATOM_DECLARATION_NON_CANONICAL(RTTI_CAPS_NONE, oStd::type, oStd_type)
+// Example: oRTTI_ATOM_DECLARATION_NON_CANONICAL(RTTI_CAPS_NONE, ouro::type, ouro_type)
 #define oRTTI_ATOM_DECLARATION_NON_CANONICAL(rtti_add_caps, non_canonical_atom_type, atom_type) \
 	typedef non_canonical_atom_type atom_type; \
 	oRTTI_ATOM_DECLARATION(rtti_add_caps, atom_type)

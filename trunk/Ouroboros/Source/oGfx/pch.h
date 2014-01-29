@@ -24,7 +24,6 @@
  **************************************************************************/
 #pragma once
 #ifdef oPCH
-#include <oStd/all.h>
 #include <oBasis/all.h>
 #include <oBase/all_libc.h>
 #include <oPlatform/all.h>

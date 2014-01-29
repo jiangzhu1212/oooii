@@ -27,8 +27,8 @@
 // of wrapping the need for std::bind inside the calls to functions that take 
 // functors.
 #pragma once
-#ifndef oStd_callable_h
-#define oStd_callable_h
+#ifndef oBase_callable_h
+#define oBase_callable_h
 
 #include <functional>
 

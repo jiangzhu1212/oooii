@@ -87,7 +87,7 @@ bool from_string(oSpheref* _pValue, const char* _StrSource)
 bool from_string(oRGBf* _pValue, const char* _StrSource)
 {
 	color c;
-	// Valid forms are: 0xAABBGGRR, R G B [0,1], and an oStd::color
+	// Valid forms are: 0xAABBGGRR, R G B [0,1], and an ouro::color
 	if (*_StrSource == '0' && tolower(*_StrSource) == 'x')
 	{
 		unsigned int i;

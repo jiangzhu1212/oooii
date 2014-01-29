@@ -24,5 +24,5 @@
  **************************************************************************/
 #pragma once
 #ifdef oPCH
-#include <oStd/all.h>
+// add stable headers here
 #endif

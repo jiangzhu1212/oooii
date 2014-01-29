@@ -23,14 +23,14 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/oConcurrency.h>
-#include <oStd/future.h>
-#include <oCore/process_stats_monitor.h>
+#include <oBase/future.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
+#include <thread>
 
 #include "../../test_services.h"
 
-namespace oStd {
+namespace ouro {
 	namespace tests {
 
 static void exercise_thread(size_t _Index, int* _pResults, unsigned int _RuntimeMS)
@@ -84,7 +84,7 @@ static void test_workstealing(ouro::test_services& _Services)
 		std::this_thread::sleep_for(std::chrono::seconds(10));
 		_Services.get_cpu_utilization(&CPUavg, &CPUpeak2);
 		if (CPUpeak2 > 5.0f)
-			oTHROW(permission_denied, "There is too much CPU activity currently on the system to properly judge oStdFuture's workstealing capabilities.");
+			oTHROW(permission_denied, "There is too much CPU activity currently on the system to properly judge ouro::future's workstealing capabilities.");
 		else
 		{
 			char buf[128];
@@ -129,7 +129,7 @@ void TESTfuture(ouro::test_services& _Services)
 		ouro::packaged_task<int(int,int)> tasktest1([&](int _Param1, int _Param2)->int{ return _Param1 + _Param2; });
 		ouro::packaged_task<int(int,int)> tasktest2([&](int _Param1, int _Param2)->int{ return _Param1 - _Param2; });
 
-		oCHECK(tasktest1.valid() && tasktest2.valid(), "oStd::packaged_task should have been valid");
+		oCHECK(tasktest1.valid() && tasktest2.valid(), "ouro::packaged_task should have been valid");
 
 		tasktest1.swap(tasktest2);
 
@@ -192,4 +192,4 @@ void TESTfuture(ouro::test_services& _Services)
 };
 
 	} // namespace tests
-} // namespace oConcurrency
+} // namespace ouro
