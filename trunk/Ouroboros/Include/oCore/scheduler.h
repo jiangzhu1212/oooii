@@ -22,44 +22,28 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Interfaces for concurrent programming. NOTE: These declarations and this 
-// header exist at a very low level. Generic code and algorithms can leverage
-// concurrent techniques for performance and that idea is something that should
-// be encouraged. Alas efficient and robust concurrency handling remains very
-// platform-specific, so declare a minimal API and allow usage in generic 
-// libraries and leave the implementation to be downstream somewhere, so expect
-// link errors unless there is middleware or other platform implementation to 
-// implement these interfaces.
+// Asynchronous task scheduler.
 #pragma once
-#ifndef oConcurrencyRequirements_h
-#define oConcurrencyRequirements_h
+#ifndef oCore_scheduler_h
+#define oCore_scheduler_h
 
-#include <oBase/callable.h>
-#include <oConcurrency/thread_safe.h>
-#include <memory>
-#include <system_error>
+#include <oBase/task_group.h>
+#include <functional>
 
-typedef std::function<void()> oTASK;
-typedef std::function<void(size_t _Index)> oINDEXED_TASK;
+namespace ouro {
+	namespace scheduler {
 
-namespace oConcurrency {
+const char* name();
 
-// This function should be implemented for queue types since some "queues" have 
-// valid reasons for being LIFOs.
-template<typename T> struct is_fifo : std::true_type {};
+void ensure_initialized();
 
-// _____________________________________________________________________________
-// Basic utilities
+void dispatch(const std::function<void()>& _Task);
 
-// Runs the specified task (a drop-in debug replacement for oConcurrency::dispatch)
-inline void dispatch_serial(const std::function<void()>& _Task) { _Task(); }
+void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
 
-inline void serial_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
-{
-	for (size_t i = _Begin; i < _End; i++)
-		_Task(i);
-}
+std::shared_ptr<task_group> make_task_group();
 
-} // namespace oConcurrency
+	} // namespace scheduler
+} // namespace ouro
 
 #endif
