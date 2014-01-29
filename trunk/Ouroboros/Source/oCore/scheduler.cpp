@@ -55,11 +55,6 @@ void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _I
 	NAMESPACE::parallel_for(_Begin, _End, _Task);
 }
 
-std::shared_ptr<task_group> make_task_group()
-{
-	return NAMESPACE::make_task_group();
-}
-
 	} // namespace scheduler
 
 std::shared_ptr<task_group> task_group::make()
