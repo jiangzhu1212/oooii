@@ -22,24 +22,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This is a start toward implementing std::future.
-
-// NOTE: GCC Source, VS2010, just::thread, all these standards guys are 
-// implementing std::async as a right-now-alloc-a-thread-and-exec-task style
-// system. That is awful. RESOLVED: The foreseeable future is TBB. This 
-// codebase still tries to abstract interfacing with the scheduler (i.e. Grand 
-// Central Dispatch remains a contender on mac-y systems) but basically the idea
-// is that there is one system scheduler to avoid oversubscription and tasks can 
-// wait on child tasks. Allocation of a task is separate from dispatching it, 
-// and all tasks delete themselves and their dependency footprint after 
-// execution. This seems consistent with what is done in TBB and what can be 
-// done in Windows Thread Pools or Grand Central Dispatch.
-
-// NOTE: There are now 3 ways to call a function: no return (void) return by 
-// value and return by reference, so each concept in this header: 
-// future_detail::commitment, promise, future, and packaged_task each have 3
-// template implementations: <T>, <void>, and <T&>. async can call a function
-// that returns a value, or has no return so there's permutations for that too.
+// An approximation of C++11's std::future but with dangling calls for a client 
+// lib to implement. GCC Source, VS2010, just::thread: all implement std::async 
+// as a right-now-alloc-a-thread-and-exec-task style system. Such implementations 
+// have a lot more overhead than a threadpool so reimplement future here with 
+// some dangling interface usage so that a work-stealing threadpool can be 
+// implemented to improve performance.
 
 #pragma once
 #ifndef oBase_future_h
@@ -58,14 +46,6 @@
 #include <utility>
 
 namespace ouro {
-	namespace future_requirements {
-		// Platform requirements. The following interfaces are required to properly 
-		// support future (I notice that gcc punts on the on-thread-exit APIs
-		// because there's no well-defined API exposed in C++ for implementing such API,
-		// which is why it's here as a platform dependency).
-		void thread_at_exit(const std::function<void()>& _AtExit);
-
-	} // namespace future_requirements
 
 /*enum class*/ namespace launch { enum value { async, deferred }; };
 /*enum class*/ namespace future_status { enum value { ready, timeout, deferred }; };
@@ -89,6 +69,10 @@ namespace future_detail {
 
 	void* commitment_allocate(size_t _CommitmentSize);
 	void commitment_deallocate(void* _pPointer);
+
+	// This should be implemented by client code to register a function on the calling thread
+	// that will be executed in FIFO order upon thread termination.
+	void at_thread_exit(const std::function<void()>& _AtExit);
 
 	#define oCOMMITMENT_COPY_MOVE_CTORS() \
 		commitment(const commitment&)/* = delete*/; \
@@ -267,7 +251,7 @@ namespace future_detail {
 				State.HasValueAtThreadExit = true;
 				_Lock.unlock();
 				reference();
-				future_requirements::thread_at_exit(_NotifyValueSetAndRelease);
+				at_thread_exit(_NotifyValueSetAndRelease);
 			}
 		}
 

@@ -240,7 +240,7 @@
 	#define oCALLABLE_PROPAGATE(_Macro) _Macro(0) oCALLABLE_PROPAGATE_SKIP0(_Macro)
 
 	#define oDEFINE_CALLABLE_RETURN_WRAPPER(_Index, _PublicMethodReturnValue, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE, _Index) inline _PublicMethodReturnValue _PublicMethod(oCALLABLE_CONCAT(oCALLABLE_PARAMS, _Index)) _PublicMethodThreadsafety { return _ImplementationMethod(oCALLABLE_CONCAT(oCALLABLE_BIND, _Index)); }
-	#define oDEFINE_CALLABLE_WRAPPER(_Index, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE, _Index) inline void _PublicMethod(oCALLABLE_CONCAT(oCALLABLE_PARAMS, _Index)) _PublicMethodThreadsafety { _ImplementationMethod(oCALLABLE_CONCAT(oCALLABLE_BIND, _Index)); }
+	#define oDEFINE_CALLABLE_WRAPPER(_Index, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE, _Index) _Static inline void _PublicMethod(oCALLABLE_CONCAT(oCALLABLE_PARAMS, _Index)) _PublicMethodThreadsafety { _ImplementationMethod(oCALLABLE_CONCAT(oCALLABLE_BIND, _Index)); }
 	#define oDEFINE_CALLABLE_CTOR_WRAPPER(_Index, _PublicCtorExplicit, _PublicCtor, _ImplementationMethod) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE, _Index) _PublicCtorExplicit _PublicCtor(oCALLABLE_CONCAT(oCALLABLE_PARAMS, _Index)) { _ImplementationMethod(oCALLABLE_CONCAT(oCALLABLE_BIND, _Index)); }
 
 	#define oDEFINE_CALLABLE_RETURN_WRAPPERS(_PublicMethodReturnValue, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
@@ -255,17 +255,17 @@
 		oDEFINE_CALLABLE_RETURN_WRAPPER(9, _PublicMethodReturnValue, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
 		oDEFINE_CALLABLE_RETURN_WRAPPER(10, _PublicMethodReturnValue, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod)
 
-	#define oDEFINE_CALLABLE_WRAPPERS(_PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(1, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(2, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(3, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(4, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(5, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(6, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(7, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(8, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(9, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
-		oDEFINE_CALLABLE_WRAPPER(10, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod)
+	#define oDEFINE_CALLABLE_WRAPPERS(_Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(1, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(2, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(3, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(4, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(5, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(6, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(7, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(8, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(9, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod) \
+		oDEFINE_CALLABLE_WRAPPER(10, _Static, _PublicMethod, _PublicMethodThreadsafety, _ImplementationMethod)
 
 	#define oDEFINE_CALLABLE_CTOR_WRAPPERS(_PublicCtorExplicit, _PublicCtor, _ImplementationMethod) \
 		oDEFINE_CALLABLE_CTOR_WRAPPER(0, _PublicCtorExplicit, _PublicCtor, _ImplementationMethod) \
