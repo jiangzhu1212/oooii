@@ -29,7 +29,7 @@
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oURI.h>
-#include <mutex>
+#include <oCOre/mutex.h>
 
 using namespace ouro;
 

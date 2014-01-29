@@ -4,9 +4,6 @@
     <ClCompile Include="future.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="mutex.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -18,17 +15,11 @@
     <ClInclude Include="..\..\Include\oStd\make_unique.h">
       <Filter>oStd</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oStd\mutex.h">
-      <Filter>oStd</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\all.h">
       <Filter>oStd</Filter>
-    </ClInclude>
-    <ClInclude Include="crt_assert.h">
-      <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oStd\callable.h">
       <Filter>oStd</Filter>

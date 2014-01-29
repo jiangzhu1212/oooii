@@ -22,7 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oStd/mutex.h>
+#include <oCore/mutex.h>
+#include <oBase/backoff.h>
 #include <stdexcept>
 
 #if NTDDI_VERSION >= NTDDI_WIN7
@@ -51,69 +52,6 @@ static_assert(sizeof(ouro::recursive_mutex) == sizeof(CRITICAL_SECTION), "size m
 	#define CLEAR_TID()
 	#define CHECK_UNLOCKED()
 #endif
-
-
-class std_backoff
-{
-public:
-	std_backoff();
-
-	// A spin that degrades (spins longer) with each call until it makes more 
-	// sense to yield.
-	void pause();
-
-	// A spin that degrades (spins longer) with each call (returning true) until 
-	// it would yield, then it returns false without yielding.
-	bool try_pause();
-
-	// Resets the degradation of the spin loop.
-	void reset();
-
-private:
-	static const size_t SpinThreshold = 16;
-	size_t SpinCount;
-	void spin(size_t _Count);
-};
-
-inline std_backoff::std_backoff()
-	: SpinCount(1)
-{}
-
-#pragma optimize("", off)
-inline void std_backoff::spin(size_t _Count)
-{
-	for (size_t i = 0; i < _Count; i++) {}
-}
-#pragma optimize("", on)
-
-inline void std_backoff::pause()
-{
-	if (SpinCount <= SpinThreshold)
-	{
-		spin(SpinCount);
-		SpinCount *= 2;
-	}
-
-	else
-		std::this_thread::yield();
-}
-
-inline bool std_backoff::try_pause()
-{
-	if (SpinCount <= SpinThreshold)
-	{
-		spin(SpinCount);
-		SpinCount *= 2;
-		return true;
-	}
-
-	return false;
-}
-
-inline void std_backoff::reset()
-{
-	SpinCount = 1;
-}
 
 namespace ouro {
 	const adopt_lock_t adopt_lock;
@@ -213,7 +151,7 @@ bool timed_mutex::try_lock_for(unsigned int _TimeoutMS)
 	// Based on:
 	// http://software.intel.com/en-us/blogs/2008/09/17/pondering-timed-mutex/
 
-	std_backoff bo;
+	ouro::backoff bo;
 
 	do 
 	{

@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/windows/win_skeleton.h>
+#include <oCore/mutex.h>
 #include <oCore/process_heap.h>
 
 namespace ouro {

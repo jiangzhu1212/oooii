@@ -70,7 +70,14 @@ public:
 private:
 	void* Data;
 	info Info;
-	mutable shared_mutex Mutex; // todo: separate locking mechanism to be per-subresource
+
+	typedef std::mutex mutex_t;
+	typedef std::lock_guard<mutex_t> lock_t;
+	typedef std::lock_guard<mutex_t> lock_shared_t;
+
+	mutable mutex_t Mutex; // todo: separate locking mechanism to be per-subresource
+	inline void lock_shared() const { Mutex.lock(); }
+	inline void unlock_shared() const { Mutex.unlock(); }
 };
 
 buffer_impl::buffer_impl(const surface::info& _SurfaceInfo, void* _pData)
@@ -156,7 +163,7 @@ info buffer_impl::get_info() const
 
 void buffer_impl::clear()
 {
-	ouro::lock_guard<shared_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 	memset(Data, 0, total_size(Info));
 }
 
@@ -176,7 +183,7 @@ void buffer_impl::update_subresource(int _Subresource, const const_mapped_subres
 {
 	int2 ByteDimensions;
 	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	std::lock_guard<ouro::shared_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 	memcpy2d(Dest.data, Dest.row_pitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 
@@ -197,7 +204,7 @@ void buffer_impl::update_subresource(int _Subresource, const box& _Box, const co
 
 	const void* pSource = _Source.data;
 
-	std::lock_guard<ouro::shared_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 	for (uint slice = _Box.front; slice < _Box.back; slice++)
 	{
 		memcpy2d(Dest.data, Dest.row_pitch, pSource, _Source.row_pitch, RowSize, NumRows, _FlipVertically);
@@ -219,20 +226,20 @@ void buffer_impl::unmap(int _Subresource)
 
 void buffer_impl::map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
 {
-	Mutex.lock_shared();
+	lock_shared();
 	*_pMapped = get_const_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
 }
 
 void buffer_impl::unmap_const(int _Subresource) const
 {
-	Mutex.unlock_shared();
+	unlock_shared();
 }
 
 void buffer_impl::copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically) const
 {
 	int2 ByteDimensions;
 	const_mapped_subresource Source = get_const_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	ouro::shared_lock<shared_mutex> lock(Mutex);
+	lock_shared_t lock(Mutex);
 	memcpy2d(_pMapped->data, _pMapped->row_pitch, Source.data, Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
 }
 
@@ -255,7 +262,7 @@ void buffer_impl::swizzle(format _NewFormat)
 
 void buffer_impl::generate_mips(filter::value _Filter)
 {
-	std::lock_guard<ouro::shared_mutex> lock(Mutex);
+	lock_t lock(Mutex);
 
 	int nMips = num_mips(Info);
 	int nSlices = max(1, Info.array_size);

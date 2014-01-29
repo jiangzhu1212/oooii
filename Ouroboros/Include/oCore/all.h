@@ -35,6 +35,7 @@
 #include <oCore/filesystem.h>
 #include <oCore/filesystem_monitor.h>
 #include <oCore/module.h>
+#include <oCore/mutex.h>
 #include <oCore/page_allocator.h>
 #include <oCore/process.h>
 #include <oCore/process_heap.h>

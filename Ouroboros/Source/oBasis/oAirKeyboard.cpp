@@ -25,6 +25,7 @@
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oXMLSerialize.h>
+#include <oCore/mutex.h>
 
 using namespace ouro;
 using namespace std;

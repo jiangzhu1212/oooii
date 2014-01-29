@@ -39,7 +39,7 @@ namespace ouro {
 class task_group
 {
 public:
-	static std::shared_ptr<ouro::task_group> make();
+	static std::shared_ptr<task_group> make();
 
 	virtual ~task_group() {}
 

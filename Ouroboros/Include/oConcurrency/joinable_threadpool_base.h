@@ -31,7 +31,7 @@
 #define oConcurrency_joinable_threadpool_base_h
 
 #include <oConcurrency/oConcurrency.h>
-#include <oStd/mutex.h>
+#include <oCore/mutex.h>
 
 namespace oConcurrency {
 

@@ -29,10 +29,10 @@
 #define oCore_process_stats_monitor_h
 
 #include <oCore/debugger.h>
+#include <oCore/mutex.h>
 #include <oCore/process.h>
 #include <oBase/backoff.h>
 #include <oBase/moving_average.h>
-#include <oStd/mutex.h>
 #include <thread>
 
 namespace ouro {

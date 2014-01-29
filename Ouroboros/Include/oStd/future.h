@@ -42,16 +42,13 @@
 // that returns a value, or has no return so there's permutations for that too.
 
 #pragma once
-#ifndef oStd_future_h
-#define oStd_future_h
-
-#ifndef oHAS_WORKSTEALING_FUTURE
+#ifndef oBase_future_h
+#define oBase_future_h
 
 #include <oStd/callable.h>
 #include <oBase/task_group.h>
 
 #include <atomic>
-#include <cassert>
 #include <chrono>
 #include <condition_variable>
 #include <exception>
@@ -72,51 +69,45 @@ namespace ouro {
 
 /*enum class*/ namespace launch { enum value { async, deferred }; };
 /*enum class*/ namespace future_status { enum value { ready, timeout, deferred }; };
-/*enum class*/ namespace future_errc { enum value { broken_promise, future_already_retrieved, promise_already_satisfied, no_state }; };
+/*enum class*/ namespace future_errc { enum value { broken_promise, future_already_retrieved, promise_already_satisfied, no_state, not_work_stealing, no_implementation }; };
 
 const std::error_category& future_category();
 
 /*constexpr*/ inline std::error_code make_error_code(future_errc::value _Errc) { return std::error_code(static_cast<int>(_Errc), future_category()); }
 /*constexpr*/ inline std::error_condition make_error_condition(future_errc::value _Errc) { return std::error_condition(static_cast<int>(_Errc), future_category()); }
 
+class future_error : public std::logic_error
+{
+public:
+	future_error(future_errc::value _Errc) : logic_error(future_category().message(_Errc)) {}
+};
+
 template<typename T> class future;
 template<typename T> class promise;
 
 namespace future_detail {
 
-	void* commitmentAllocate(size_t _CommitmentSize);
-	void commitmentDeallocate(void* _pPointer);
+	void* commitment_allocate(size_t _CommitmentSize);
+	void commitment_deallocate(void* _pPointer);
 
-	class future_error : public std::logic_error
-	{
-	public:
-		future_error(future_errc::value _Errc) : logic_error(future_category().message(_Errc)) {}
-	};
-
-	#define commitment_COPY_MOVE_CTORS() \
+	#define oCOMMITMENT_COPY_MOVE_CTORS() \
 		commitment(const commitment&)/* = delete*/; \
 		const commitment& operator=(const commitment&)/* = delete*/; \
 		commitment(commitment&&)/* = delete*/; \
 		commitment& operator=(commitment&&)/* = delete*/;
 
-	#define commitment_NEW_DEL()
+	#define oCOMMITMENT_NEW_DEL()
 		inline void* operator new(size_t size, void* memory) { return memory; } \
 		inline void operator delete(void* p, void* memory) {} \
-		inline void* operator new(size_t size) { return commitmentAllocate(size); } \
-		inline void* operator new[](size_t size) { return commitmentAllocate(size); } \
-		inline void operator delete(void* p) { commitmentDeallocate(p); } \
-		inline void operator delete[](void* p) { commitmentDeallocate(p); }
+		inline void* operator new(size_t size) { return commitment_allocate(size); } \
+		inline void* operator new[](size_t size) { return commitment_allocate(size); } \
+		inline void operator delete(void* p) { commitment_deallocate(p); } \
+		inline void operator delete[](void* p) { commitment_deallocate(p); }
 
-	#define oFUTURE_ASSERT(_Expr, _Text) assert(_Expr && _Text)
-	#define oFUTURE_THROW(_Expr, _Errc) do { if (!(_Expr)) throw future_detail::future_error(future_errc::_Errc); } while(false)
-	#define oFUTURE_TRY try {
-	#define oFUTURE_ENDTRY } catch (...) { _Promise.set_exception(std::current_exception()); }
-	#define oFUTURE_WAIT_AND_CHECK_ERROR() do \
-	{ wait(); \
-		if (has_exception()) std::rethrow_exception(pException); \
-	} while(false)
+	#define oFUTURE_CHECK(_Expr, _Errc) do { if (!(_Expr)) throw future_error(future_errc::_Errc); } while(false)
+	#define oFUTURE_WAIT_AND_CHECK_ERROR() do { wait(); if (has_exception()) std::rethrow_exception(pException); } while(false)
 
-	class commitmentState
+	class commitment_state
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
@@ -129,16 +120,16 @@ namespace future_detail {
 		// This base class encapsulates all the state that is not the actual value,
 		// since that requires a templated type.
 
-		commitmentState(const commitmentState&)/* = delete*/;
-		const commitmentState& operator=(const commitmentState&)/* = delete*/;
-		commitmentState(commitmentState&&)/* = delete*/;
-		commitmentState& operator=(commitmentState&&)/* = delete*/;
+		commitment_state(const commitment_state&)/* = delete*/;
+		const commitment_state& operator=(const commitment_state&)/* = delete*/;
+		commitment_state(commitment_state&&)/* = delete*/;
+		commitment_state& operator=(commitment_state&&)/* = delete*/;
 
 	public:
-		commitmentState() 
+		commitment_state() 
 			: RefCount(1)
 		{}
-		~commitmentState() {}
+		~commitment_state() {}
 
 		void reference() { ++RefCount; }
 		// release() must exist only in templated derivations because it must also
@@ -156,8 +147,8 @@ namespace future_detail {
 		{
 			if (!is_ready())
 			{
-				oFUTURE_ASSERT(!work_steals(), "wait_adopt is incompatible with work stealing");
-				oFUTURE_ASSERT(!is_deferred(), "deferred launch policy not currently supported");
+				oFUTURE_CHECK(work_steals(), not_work_stealing);
+				oFUTURE_CHECK(is_deferred(), no_implementation);
 				while (!is_ready()) // Guarded Suspension
 					CV.wait(_Lock);
 			}
@@ -180,7 +171,7 @@ namespace future_detail {
 		template<typename Rep, typename Period>
 		future_status::value wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
-			oFUTURE_ASSERT(!work_steals(), "wait_for cannot be called on a work-stealing future");
+			oFUTURE_CHECK(work_steals(), not_work_stealing);
 			std::unique_lock<std::mutex> lock(Mutex);
 			if (is_deferred())
 				return future_status::deferred;
@@ -194,7 +185,7 @@ namespace future_detail {
 		void set_exception(std::exception_ptr _pException)
 		{
 			std::unique_lock<std::mutex> lock(Mutex);
-			oFUTURE_THROW(!is_ready(), promise_already_satisfied);
+			oFUTURE_CHECK(!is_ready(), promise_already_satisfied);
 			pException = _pException;
 			State.HasException = true;
 			State.HasExceptionAtThreadExit = true;
@@ -204,7 +195,7 @@ namespace future_detail {
 		void set_exception_at_thread_exit(std::exception_ptr _pException)
 		{
 			std::unique_lock<std::mutex> lock(Mutex);
-			oFUTURE_THROW(!is_ready() && !State.HasExceptionAtThreadExit, promise_already_satisfied);
+			oFUTURE_CHECK(!is_ready() && !State.HasExceptionAtThreadExit, promise_already_satisfied);
 			pException = _pException;
 			State.HasExceptionAtThreadExit = true;
 		}
@@ -261,7 +252,7 @@ namespace future_detail {
 		void notify_value_set()
 		{
 			std::unique_lock<std::mutex> lock(Mutex);
-			oFUTURE_THROW(!is_ready(), promise_already_satisfied);
+			oFUTURE_CHECK(!is_ready(), promise_already_satisfied);
 			State.HasValue = true;
 			State.HasValueAtThreadExit = true;
 			State.IsReady = true;
@@ -272,7 +263,7 @@ namespace future_detail {
 		{
 			if (!has_value()) // don't override a fulfilled promise
 			{
-				oFUTURE_THROW(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
+				oFUTURE_CHECK(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
 				State.HasValueAtThreadExit = true;
 				_Lock.unlock();
 				reference();
@@ -299,8 +290,8 @@ namespace future_detail {
 
 		template<typename T, typename U> void internal_set_value_ref(void* _pValueMemory, const U& _Value)
 		{
-			oFUTURE_THROW(!is_ready(), promise_already_satisfied);
-			oFUTURE_ASSERT(!State.HasValueAtThreadExit, "Should the value be destroyed before setting a new one?");
+			oFUTURE_CHECK(!is_ready(), promise_already_satisfied);
+			oFUTURE_CHECK(!State.HasValueAtThreadExit, no_implementation);
 			*(T**)_pValueMemory = &const_cast<U&>(_Value);
 			State.HasValue = true;
 			State.IsReady = true;
@@ -308,8 +299,8 @@ namespace future_detail {
 
 		template<typename T, typename U> void internal_set_value(void* _pValueMemory, const U& _Value)
 		{
-			oFUTURE_THROW(!is_ready(), promise_already_satisfied);
-			oFUTURE_ASSERT(!State.HasValueAtThreadExit, "Should the value be destroyed before setting a new one?");
+			oFUTURE_CHECK(!is_ready(), promise_already_satisfied);
+			oFUTURE_CHECK(!State.HasValueAtThreadExit, no_implementation);
 			::new(_pValueMemory) T(_Value);
 			State.HasValue = true;
 			State.IsReady = true;
@@ -317,8 +308,8 @@ namespace future_detail {
 
 		template<typename T, typename U> void internal_set_value(void* _pValueMemory, U&& _Value)
 		{
-			oFUTURE_THROW(!is_ready(), promise_already_satisfied);
-			oFUTURE_ASSERT(!State.HasValueAtThreadExit, "Should the value be destroyed before setting a new one?");
+			oFUTURE_CHECK(!is_ready(), promise_already_satisfied);
+			oFUTURE_CHECK(!State.HasValueAtThreadExit, no_implementation);
 			::new(_pValueMemory) T(std::forward<U>(_Value));
 			State.HasValue = true;
 			State.IsReady = true;
@@ -366,8 +357,8 @@ namespace future_detail {
 		template <typename T, typename U> void set_value_at_thread_exit(void* _pValueMemory, U&& _Value, std::function<void()>&& _NotifyValueSetAndRelease)
 		{
 			std::unique_lock<std::mutex> lock(Mutex);
-			oFUTURE_ASSERT(!work_steals(), "packaged_task won't call this");
-			oFUTURE_THROW(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
+			oFUTURE_CHECK(work_steals(), not_work_stealing);
+			oFUTURE_CHECK(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
 			::new(_pValueMemory) T(std::forward<U>(_Value));
 			reference();
 			notify_value_set_at_thread_exit(lock, std::move(_NotifyValueSetAndRelease));
@@ -376,24 +367,24 @@ namespace future_detail {
 		template <typename T, typename U> void set_value_at_thread_exit_ref(void* _pValueMemory, const U& _Value, std::function<void()>&& _NotifyValueSetAndRelease)
 		{
 			std::unique_lock<std::mutex> lock(Mutex);
-			oFUTURE_ASSERT(!work_steals(), "packaged_task won't call this");
-			oFUTURE_THROW(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
+			oFUTURE_CHECK(work_steals(), not_work_stealing);
+			oFUTURE_CHECK(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
 			*(T**)_pValueMemory = &const_cast<U&>(_Value);
 			reference();
 			notify_value_set_at_thread_exit(lock, std::move(_NotifyValueSetAndRelease));
 		}
 	};
 
-	template<typename T> class commitment : public commitmentState
+	template<typename T> class commitment : public commitment_state
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
 		// Stores both state and a typed value. This is not public API, use 
 		// promise, packaged_task, or async.
 
-		commitment_COPY_MOVE_CTORS();
+		oCOMMITMENT_COPY_MOVE_CTORS();
 	public:
-		commitment_NEW_DEL();
+		oCOMMITMENT_NEW_DEL();
 
 		commitment() {}
 		~commitment() {}
@@ -402,7 +393,7 @@ namespace future_detail {
 		{
 			if (--RefCount == 0)
 			{
-				oFUTURE_THROW(is_ready(), broken_promise);
+				oFUTURE_CHECK(is_ready(), broken_promise);
 				if (has_value() || State.HasValueAtThreadExit)
 					reinterpret_cast<T*>(&Value)->~T();
 				delete this;
@@ -457,13 +448,13 @@ namespace future_detail {
 		}
 	};
 
-	template<typename T> class commitment<T&> : public commitmentState
+	template<typename T> class commitment<T&> : public commitment_state
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
-		commitment_COPY_MOVE_CTORS();
+		oCOMMITMENT_COPY_MOVE_CTORS();
 	public:
-		commitment_NEW_DEL();
+		oCOMMITMENT_NEW_DEL();
 
 		commitment() {}
 		~commitment() {}
@@ -472,7 +463,7 @@ namespace future_detail {
 		{
 			if (--RefCount == 0)
 			{
-				oFUTURE_THROW(is_ready(), broken_promise);
+				oFUTURE_CHECK(is_ready(), broken_promise);
 				delete this;
 			}
 		}
@@ -515,13 +506,13 @@ namespace future_detail {
 		}
 	};
 
-	template<> class commitment<void> : public commitmentState
+	template<> class commitment<void> : public commitment_state
 	{
 		// This is not public API, use promise, packaged_task, or async.
 
-		commitment_COPY_MOVE_CTORS();
+		oCOMMITMENT_COPY_MOVE_CTORS();
 	public:
-		commitment_NEW_DEL();
+		oCOMMITMENT_NEW_DEL();
 
 		commitment() {}
 		~commitment() {}
@@ -530,7 +521,7 @@ namespace future_detail {
 		{
 			if (--RefCount == 0)
 			{
-				oFUTURE_THROW(is_ready(), broken_promise);
+				oFUTURE_CHECK(is_ready(), broken_promise);
 				delete this;
 			}
 		}
@@ -539,34 +530,31 @@ namespace future_detail {
 		template<typename> friend class future;
 		template<typename> friend class promise;
 
-		void no_value()
-		{
-			oFUTURE_WAIT_AND_CHECK_ERROR();
-		}
+		void no_value() { oFUTURE_WAIT_AND_CHECK_ERROR(); }
 	};
 
 	template<typename BaseT> class future_state_interface
 	{
 	public:
 		inline bool valid() const { return !!This()->Commitment; }
-		inline bool is_ready() const { oFUTURE_THROW(valid(), no_state); return This()->Commitment->is_ready(); }
-		inline bool has_value() const { oFUTURE_THROW(valid(), no_state); return This()->Commitment->has_value(); }
-		inline bool has_exception() const { oFUTURE_THROW(valid(), no_state); return This()->Commitment->has_exception(); }
-		inline bool is_deferred() const { oFUTURE_THROW(valid(), no_state); return This()->Commitment->is_deferred(); }
-		inline bool work_steals() const { oFUTURE_THROW(valid(), no_state); return This()->Commitment->work_steals(); }
-		inline void wait() { oFUTURE_THROW(valid(), no_state); This()->Commitment->wait(); }
+		inline bool is_ready() const { oFUTURE_CHECK(valid(), no_state); return This()->Commitment->is_ready(); }
+		inline bool has_value() const { oFUTURE_CHECK(valid(), no_state); return This()->Commitment->has_value(); }
+		inline bool has_exception() const { oFUTURE_CHECK(valid(), no_state); return This()->Commitment->has_exception(); }
+		inline bool is_deferred() const { oFUTURE_CHECK(valid(), no_state); return This()->Commitment->is_deferred(); }
+		inline bool work_steals() const { oFUTURE_CHECK(valid(), no_state); return This()->Commitment->work_steals(); }
+		inline void wait() { oFUTURE_CHECK(valid(), no_state); This()->Commitment->wait(); }
 
 		template<typename Rep, typename Period>
 		future_status::value wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
-			oFUTURE_THROW(valid(), no_state); 
+			oFUTURE_CHECK(valid(), no_state); 
 			return This()->Commitment->wait_for(_RelativeTime);
 		}
 
 		template<typename Clock, typename Duration>
 		future_status::value wait_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
 		{
-			oFUTURE_THROW(valid(), no_state); 
+			oFUTURE_CHECK(valid(), no_state); 
 			chrono::high_resolution_clock::duration duration = time_point_cast<chrono::high_resolution_clock::time_point>(_AbsoluteTime) - chrono::high_resolution_clock::now();
 			return wait_for(duration);
 		}
@@ -581,48 +569,56 @@ namespace future_detail {
 	// http://connect.microsoft.com/VisualStudio/feedback/details/649274/std-bind-and-std-function-are-not-move-aware 
 	// So until then, use a loophole in the spec: There are no copy-ctors for future or promise objects. 
 	// Thus USE a copy ctor, const_cast it away and eviscerate the source.
-#define oDEFINE_FUTURE_MOVE_CTOR(_Classname) \
-	_Classname(const _Classname& _That) : Commitment(std::move(const_cast<_Classname&>(_That).Commitment)) {} \
-	_Classname& operator=(const _Classname& _That) { if (this != &_That) { Commitment = std::move(const_cast<_Classname&>(_That).Commitment); } return *this; } \
-	_Classname(_Classname&& _That) : Commitment(std::move(_That.Commitment)) {} \
-	_Classname& operator=(_Classname&& _That) { if (this != &_That) { Commitment = std::move(_That.Commitment); } return *this; }
+	#define oFUTURE_MOVE_CTOR(_Classname) \
+		_Classname(const _Classname& _That) : Commitment(std::move(const_cast<_Classname&>(_That).Commitment)) {} \
+		_Classname& operator=(const _Classname& _That) { if (this != &_That) { Commitment = std::move(const_cast<_Classname&>(_That).Commitment); } return *this; } \
+		_Classname(_Classname&& _That) : Commitment(std::move(_That.Commitment)) {} \
+		_Classname& operator=(_Classname&& _That) { if (this != &_That) { Commitment = std::move(_That.Commitment); } return *this; }
 
-	// Certain base classes, permutations of the same concept, and special-case
-	// interfaces need direct access to the commitment, or act as a factor for a 
-	// future, so centralize this access here between the template types for future.
-#define oFUTURE_FRIEND_INTERFACE(_CommitmentType) \
-	std::shared_ptr<future_detail::commitment<_CommitmentType>> Commitment; \
-	template <typename> friend class future_detail::future_state_interface; \
-	template <typename> friend class promise; \
-	template <typename> friend class shared_future; \
-	template <typename> friend class packaged_task; \
-	future(const std::shared_ptr<future_detail::commitment<_CommitmentType>>& _pCommitment) \
-	: Commitment(_pCommitment) \
-	{	oFUTURE_THROW(!Commitment->has_future(), future_already_retrieved); \
-	Commitment->set_future_attached(); \
-	} \
-	future_detail::commitmentState* get_commitment_state() { return Commitment.get(); }
+		// Certain base classes, permutations of the same concept, and special-case
+		// interfaces need direct access to the commitment, or act as a factor for a 
+		// future, so centralize this access here between the template types for future.
+	#define oFUTURE_FRIEND_INTERFACE(_CommitmentType) \
+		std::shared_ptr<future_detail::commitment<_CommitmentType>> Commitment; \
+		template <typename> friend class future_detail::future_state_interface; \
+		template <typename> friend class promise; \
+		template <typename> friend class shared_future; \
+		template <typename> friend class packaged_task; \
+		future(const std::shared_ptr<future_detail::commitment<_CommitmentType>>& _pCommitment) \
+		: Commitment(_pCommitment) \
+		{	oFUTURE_CHECK(!Commitment->has_future(), future_already_retrieved); \
+		Commitment->set_future_attached(); \
+		} \
+		future_detail::commitment_state* get_commitment_state() { return Commitment.get(); }
 
-#define oDEFINE_PROMISE_SET_ERROR() \
-	void set_exception(std::exception_ptr _pException) { oFUTURE_THROW(Commitment, no_state); Commitment->set_exception(_pException); } \
-	void set_exception_at_thread_exit(std::exception_ptr _pException) { oFUTURE_THROW(Commitment, no_state); Commitment->set_exception_at_thread_exit(_pException); } \
+	#define oDEFINE_PROMISE_SET_ERROR() \
+		void set_exception(std::exception_ptr _pException) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_exception(_pException); } \
+		void set_exception_at_thread_exit(std::exception_ptr _pException) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_exception_at_thread_exit(_pException); } \
 
-#define oDEFINE_FUTURE_CTORS() future() {} ~future() {} oDEFINE_FUTURE_MOVE_CTOR(future)
-#define oDEFINE_PROMISE_CTORS() ~promise() { oFUTURE_THROW(!Commitment || Commitment->is_ready() || !Commitment->has_future(), broken_promise); } oDEFINE_FUTURE_MOVE_CTOR(promise)
+	#define oFUTURE_CTORS() future() {} ~future() {} oFUTURE_MOVE_CTOR(future)
+	#define oPROMISE_CTORS() ~promise() { oFUTURE_CHECK(!Commitment || Commitment->is_ready() || !Commitment->has_future(), broken_promise); } oFUTURE_MOVE_CTOR(promise)
 
 	// The spec says there are no copy-constructors for packaged_task but MSVC2010 casting packaged_task to a std::function 
 	// is not move aware (and uses the copy constructor):
 	// http://connect.microsoft.com/VisualStudio/feedback/details/649274/std-bind-and-std-function-are-not-move-aware 
 	// So for now enable the copy constructor that's needed, but let it behave like a move constructor.
-#define oDEFINE_PACKAGED_TASK_MOVE_CTORS() \
-	public: packaged_task(packaged_task&& _That) : Commitment(std::move(_That.Commitment)), Function(std::move(_That.Function)) {} \
-	public: packaged_task(const packaged_task& _That) : Commitment(std::move(const_cast<packaged_task&>(_That).Commitment)), Function(std::move(const_cast<packaged_task&>(_That).Function)) {} \
-	public: packaged_task& operator=(packaged_task&& _That) { if (this != &_That) { Commitment = std::move(_That.Commitment); Function = std::move(_That.Function); } return *this; }
+	#define oPACKAGED_TASK_MOVE_CTORS() \
+		public: packaged_task(packaged_task&& _That) : Commitment(std::move(_That.Commitment)), Function(std::move(_That.Function)) {} \
+		public: packaged_task(const packaged_task& _That) : Commitment(std::move(const_cast<packaged_task&>(_That).Commitment)), Function(std::move(const_cast<packaged_task&>(_That).Function)) {} \
+		public: packaged_task& operator=(packaged_task&& _That) { if (this != &_That) { Commitment = std::move(_That.Commitment); Function = std::move(_That.Function); } return *this; }
 
-#define oDEFINE_PACKAGED_TASK_CTORS() \
-	oDEFINE_PACKAGED_TASK_MOVE_CTORS() \
-	private: packaged_task& operator=(packaged_task const&)/* = delete*/; \
-	public: packaged_task() {} ~packaged_task() {}
+	#define oPACKAGED_TASK_CTORS() \
+		oPACKAGED_TASK_MOVE_CTORS() \
+		private: packaged_task& operator=(packaged_task const&)/* = delete*/; \
+		public: packaged_task() {} ~packaged_task() {}
+
+	#define oPROMISE_COMMON(_Type) \
+		private: std::shared_ptr<future_detail::commitment<_Type>> Commitment; \
+		public: promise(const std::shared_ptr<future_detail::commitment<_Type>>& _pCommitment) : Commitment(_pCommitment) {} \
+		public: promise() { Commitment = std::make_shared<future_detail::commitment<_Type>>(); } \
+		public: oPROMISE_CTORS(); \
+		public: oDEFINE_PROMISE_SET_ERROR(); \
+		public: future<_Type> get_future() { oFUTURE_CHECK(!Commitment->has_future(), future_already_retrieved); return future<_Type>(Commitment); }
 
 } // namespace detail
 
@@ -630,97 +626,50 @@ template<typename T> class future : public future_detail::future_state_interface
 {
 	oFUTURE_FRIEND_INTERFACE(T);
 public:
-	oDEFINE_FUTURE_CTORS();
-	T get() { oFUTURE_THROW(valid(), no_state); return Commitment->move_value(); }
+	oFUTURE_CTORS();
+	T get() { oFUTURE_CHECK(valid(), no_state); return Commitment->move_value(); }
 };
 
 template <class T> class future<T&> : public future_detail::future_state_interface<future<T&> >
 {
 	oFUTURE_FRIEND_INTERFACE(T&);
 public:
-	oDEFINE_FUTURE_CTORS();
-	T& get() { oFUTURE_THROW(valid(), no_state); return Commitment->copy_value(); }
+	oFUTURE_CTORS();
+	T& get() { oFUTURE_CHECK(valid(), no_state); return Commitment->copy_value(); }
 };
 
 template<> class future<void> : public future_detail::future_state_interface<future<void> >
 {
 	oFUTURE_FRIEND_INTERFACE(void);
 public:
-	oDEFINE_FUTURE_CTORS();
+	oFUTURE_CTORS();
 	void get() { Commitment->no_value(); }
 };
 
 template<typename T> class promise
 {
+	oPROMISE_COMMON(T);
 public:
-	promise(const std::shared_ptr<future_detail::commitment<T>>& _pCommitment)
-		: Commitment(_pCommitment)
-	{}
+	void set_value(const T& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(_Value); }
+	void set_value(T&& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(std::move(_Value)); }
+	void set_value_at_thread_exit(const T& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(_Value); }
+	void set_value_at_thread_exit(T&& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(std::move(_Value)); }
 
-	promise() { Commitment = std::make_shared<future_detail::commitment<T>>(); }
-	oDEFINE_PROMISE_CTORS();
-	oDEFINE_PROMISE_SET_ERROR();
-
-	future<T> get_future()
-	{
-		oFUTURE_THROW(!Commitment->has_future(), future_already_retrieved);
-		return std::move(future<T>(Commitment));
-	}
-
-	void set_value(const T& _Value) { oFUTURE_THROW(Commitment, no_state); Commitment->set_value(_Value); }
-	void set_value(T&& _Value) { oFUTURE_THROW(Commitment, no_state); Commitment->set_value(std::move(_Value)); }
-	void set_value_at_thread_exit(const T& _Value) { oFUTURE_THROW(Commitment, no_state); Commitment->set_value_at_thread_exit(_Value); }
-	void set_value_at_thread_exit(T&& _Value) { oFUTURE_THROW(Commitment, no_state); Commitment->set_value_at_thread_exit(std::move(_Value)); }
-
-private:
-	std::shared_ptr<future_detail::commitment<T>> Commitment;
 };
 
 template <class T> class promise<T&>
 {
+	oPROMISE_COMMON(T&);
 public:
-	promise(const std::shared_ptr<future_detail::commitment<T&>>& _pCommitment)
-		: Commitment(_pCommitment)
-	{}
-
-	promise() { future_detail::commitmentCreate(&Commitment); }
-	oDEFINE_PROMISE_CTORS();
-	oDEFINE_PROMISE_SET_ERROR();
-
-	future<T&> get_future()
-	{
-		oFUTURE_THROW(!Commitment->has_future(), future_already_retrieved);
-		return std::move(future<T&>(Commitment));
-	}
-
-	void set_value(const T& _Value) { oFUTURE_THROW(Commitment, no_state); Commitment->set_value(_Value); }
-	void set_value_at_thread_exit(const T& _Value) { oFUTURE_THROW(Commitment, no_state); Commitment->set_value_at_thread_exit(_Value); }
-
-private:
-	std::shared_ptr<future_detail::commitment<T&>> Commitment;
+	void set_value(const T& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(_Value); }
+	void set_value_at_thread_exit(const T& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(_Value); }
 };
 
 template<> class promise<void>
 {
+	oPROMISE_COMMON(void);
 public:
-	promise(const std::shared_ptr<future_detail::commitment<void>>& _pCommitment)
-		: Commitment(_pCommitment)
-	{}
-
-	promise() { Commitment = std::make_shared<future_detail::commitment<void>>(); }
-	oDEFINE_PROMISE_CTORS();
-	oDEFINE_PROMISE_SET_ERROR();
-
-	future<void> get_future()
-	{
-		oFUTURE_THROW(!Commitment->has_future(), future_already_retrieved);
-		return std::move(future<void>(Commitment));
-	}
-
 	void set_value() { Commitment->set_no_value(); }
-
-private:
-	std::shared_ptr<future_detail::commitment<void>> Commitment;
 };
 
 namespace future_detail {
@@ -741,7 +690,7 @@ namespace future_detail {
 	class packaged_task<result_type(oCALLABLE_CONCAT(oARG_PARTIAL_TYPENAMES,_nArgs))> \
 	{ \
 	public: \
-		oDEFINE_PACKAGED_TASK_CTORS() \
+		oPACKAGED_TASK_CTORS() \
 		typedef std::function<result_type(oCALLABLE_CONCAT(oARG_PARTIAL_TYPENAMES,_nArgs))> Callable; \
 		\
 		explicit packaged_task(oCALLABLE_PARAMS0) \
@@ -753,7 +702,7 @@ namespace future_detail {
 		bool valid() const { return Function; } \
 		void swap(packaged_task& _Other) { if (this != &_Other) { std::swap(Commitment, _Other.Commitment); std::swap(Function, _Other.Function); } } \
 		\
-		future<result_type> get_future() { oFUTURE_THROW(!Commitment->has_future(), future_already_retrieved); return std::move(future<result_type>(Commitment)); } \
+		future<result_type> get_future() { oFUTURE_CHECK(!Commitment->has_future(), future_already_retrieved); return std::move(future<result_type>(Commitment)); } \
 		\
 		void operator ()(oCALLABLE_CONCAT(oARG_DECL,_nArgs)) \
 		{ \
@@ -775,7 +724,7 @@ namespace future_detail {
 		Callable Function; \
 		\
 		static void fulfill_promise(promise<result_type> _Promise, std::function<result_type(void)> Function__) \
-		{ oFUTURE_TRY future_detail::fulfill_promise_helper(_Promise, Function__); oFUTURE_ENDTRY } \
+		{ try { future_detail::fulfill_promise_helper(_Promise, Function__); } catch (std::exception&) { _Promise.set_exception(std::current_exception()); } } \
 	};
 	oCALLABLE_PROPAGATE(oPACKAGEDTASK)
 #endif
@@ -794,5 +743,4 @@ namespace future_detail {
 
 } // namespace ouro
 
-#endif
 #endif

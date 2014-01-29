@@ -25,11 +25,10 @@
 #include <oConcurrency/oConcurrency.h>
 #include <oStd/future.h>
 #include <oCore/process_stats_monitor.h>
+#include <oBase/throw.h>
 #include <oBase/timer.h>
 
 #include "../../test_services.h"
-
-#define oSTD_THROW(_SystemError, _Message) do { std::error_code ec = std::make_error_code(std::errc::_SystemError); throw std::system_error(ec, _Message); } while(false)
 
 namespace oStd {
 	namespace tests {
@@ -64,7 +63,7 @@ static bool exercise_all_threads()
 static bool fail_and_report()
 {
 	if (1)
-		oSTD_THROW(not_supported, "not supported");
+		oTHROW(not_supported, "not supported");
 	return false;
 }
 
@@ -85,12 +84,12 @@ static void test_workstealing(ouro::test_services& _Services)
 		std::this_thread::sleep_for(std::chrono::seconds(10));
 		_Services.get_cpu_utilization(&CPUavg, &CPUpeak2);
 		if (CPUpeak2 > 5.0f)
-			oSTD_THROW(permission_denied, "There is too much CPU activity currently on the system to properly judge oStdFuture's workstealing capabilities.");
+			oTHROW(permission_denied, "There is too much CPU activity currently on the system to properly judge oStdFuture's workstealing capabilities.");
 		else
 		{
 			char buf[128];
 			snprintf(buf, "Failed to achieve 100%s CPU utilization. Peaked at %.01f%s", "%%", CPUpeak, "%%");
-			oSTD_THROW(protocol_error, buf);
+			oTHROW(protocol_error, buf);
 		}
 	}
 }

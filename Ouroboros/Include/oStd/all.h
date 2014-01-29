@@ -30,5 +30,4 @@
 #include <oStd/callable.h>
 #include <oStd/future.h>
 #include <oStd/make_unique.h>
-#include <oStd/mutex.h>
 #endif

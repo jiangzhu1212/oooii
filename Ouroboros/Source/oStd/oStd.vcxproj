@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="future.cpp" />
-    <ClCompile Include="mutex.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -33,8 +32,6 @@
     <ClInclude Include="..\..\Include\oStd\callable.h" />
     <ClInclude Include="..\..\Include\oStd\future.h" />
     <ClInclude Include="..\..\Include\oStd\make_unique.h" />
-    <ClInclude Include="..\..\Include\oStd\mutex.h" />
-    <ClInclude Include="crt_assert.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
