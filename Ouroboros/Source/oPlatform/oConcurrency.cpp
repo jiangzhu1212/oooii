@@ -27,15 +27,6 @@
 #include <oCore/thread_traits.h>
 #include <oPlatform/oSingleton.h>
 
-// NOTE: Some of the concurrency requirements are actually requirements on the
-// platform's memory management system, not on scheduling or other concurrency
-// concepts. Those requirements APIs are implemented in the modules of memory
-// management rather than here because they are cross-concurrency 
-// implementations. They include:
-
-// end_thread
-// thread_at_exit
-
 // Only one implementation can be enabled at a given time
 //#define oHAS_oCONCURRENCY 1
 #define oHAS_TBB 1
@@ -310,13 +301,13 @@ namespace ouro {
 			return p;
 		}
 
-	namespace future_requirements {
+	namespace future_details {
 
-		void thread_at_exit(const std::function<void()>& _AtExit)
+		void at_thread_exit(const std::function<void()>& _AtExit)
 		{
-			oConcurrency::thread_at_exit(_AtExit);
+			ouro::core_thread_traits::at_thread_exit(_AtExit);
 		}
 
-	} // namespace future_requirements
+	} // namespace future_details
 
 } // namespace ouro

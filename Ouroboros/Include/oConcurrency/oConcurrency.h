@@ -83,12 +83,6 @@ void dispatch(const std::function<void()>& _Task);
 // to the client code task.
 void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
 
-// Registers the specified function to be run just before the current thread 
-// exits. More than one function can be registered and each will be executed in 
-// order of registration.
-void thread_at_exit(const std::function<void()>& _AtExit);
-oDEFINE_CALLABLE_WRAPPERS(thread_at_exit,, thread_at_exit);
-
 // _____________________________________________________________________________
 // Basic utilities
 

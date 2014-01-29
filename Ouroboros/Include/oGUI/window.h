@@ -378,7 +378,7 @@ public:
 	// order with other events. This is useful for wrapping platform-specific 
 	// window/control calls.
 	virtual void dispatch(const oTASK& _Task) = 0;
-	oDEFINE_CALLABLE_WRAPPERS(dispatch,, dispatch);
+	oDEFINE_CALLABLE_WRAPPERS(,dispatch,, dispatch);
 
 	// Schedules an oImage to be generated from the window. In the simple case,
 	// _Frame is not used and the front buffer is captured. Due to platform rules

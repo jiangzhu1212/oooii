@@ -198,8 +198,3 @@ void* oSingletonBase::NewV(const char* _TypeInfoName, size_t _Size, type_info_de
 
 	return p;
 }
-
-void oConcurrency::thread_at_exit(const std::function<void()>& _AtExit)
-{
-	oASSERT(false, "not supported");
-}
