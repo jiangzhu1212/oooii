@@ -22,34 +22,66 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Allows client code to wait on a subset of tasks submitted to a threadpool.
-// The assumption is that there is one singleton threadpool in the system,
-// but that is not implemented in oBase, so neither the task_group 
-// implementation nor its factory are implemented. Client code should 
-// implement these interfaces or there will be a link error.
-#pragma once
-#ifndef oBase_task_group_h
-#define oBase_task_group_h
-
-#include <functional>
-#include <memory>
+#include <oBase/concurrency.h>
+#include <oBase/macros.h>
+#include <oBase/throw.h>
 
 namespace ouro {
+	namespace tests {
 
-class task_group
+static void test_a(size_t _Index, int* _pArray)
 {
-public:
-	static std::shared_ptr<task_group> make();
+	_pArray[_Index] = (int)(_Index);
+}
 
-	virtual ~task_group() {}
+static void test_ab(size_t _Index, int* _pArray, int _Loop)
+{
+	int final = (int)_Index;
+	for (int i = 0; i < _Loop; i++)
+		final *= final; 
+	_pArray[_Index] = final;
+}
 
-	// dispatches a task flagged as part of this group
-	virtual void run(const std::function<void()>& _Task) = 0;
+static void test_abc(size_t _Index, int* _pArray, int _Loop, int _Test)
+{
+	int final = (int)_Index;
+	for(int i = 0; i < _Loop; i++)
+		final *= final; 
+	_pArray[_Index] = _Index % _Test ? 42 : final;
+}
 
-	// waits for only tasks dispatched with run() to finish
-	virtual void wait() = 0;
+void TESTparallel_for()
+{
+	static const int mArraySize = 128;
+	int mTestArrayA[mArraySize];
+	int mTestArrayB[mArraySize];
+
+	// Test single parameter
+	oFORI(i, mTestArrayA)
+		test_a(i, mTestArrayA);
+
+	parallel_for(0, mArraySize, std::bind(test_a, std::placeholders::_1, mTestArrayB));
+	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0, 
+		"oConcurrency::parallel_for single param failed to compute singlethreaded result");
+
+	// Test two parameters
+	oFORI(i, mTestArrayA)
+		test_ab(i, mTestArrayA, 2);
+
+	parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
+	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
+		, "oConcurrency::parallel_for failed to compute singlethreaded result");
+
+	// Test three parameters
+	oFORI(i, mTestArrayA)
+		test_abc(i, mTestArrayA, 2, 7);
+
+	parallel_for(0, mArraySize, std::bind(test_abc, std::placeholders::_1, &mTestArrayB[0], 2, 7));
+	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
+		, "oConcurrency::parallel_for failed to compute singlethreaded result");
+
+	parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
 };
 
+	} // namespace tests
 } // namespace ouro
-
-#endif

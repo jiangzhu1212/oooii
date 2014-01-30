@@ -24,8 +24,8 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueuePrivate.h>
 #include <oBasis/oError.h>
+#include <oBase/concurrency.h>
 #include <oBase/finally.h>
-#include <oCore/scheduler.h>
 #include "oBasisTestCommon.h"
 #include <condition_variable>
 #include <mutex>
@@ -47,7 +47,7 @@ static void FillArray(int* _Array, size_t _Start, size_t _End, std::thread::id* 
 	if (*_pExecutionThreadID != this_thread::get_id())
 		*_pWrongThreadError = true;
 
-	ouro::scheduler::parallel_for(_Start, _End, std::bind(&SetLocation, std::placeholders::_1, _Start, _Array));
+	ouro::parallel_for(_Start, _End, std::bind(&SetLocation, std::placeholders::_1, _Start, _Array));
 }
 
 static void CheckTest(int* _Array, size_t _Size, bool* _pResult, thread::id* _pExecutionThreadID, bool* _pWrongThreadError)

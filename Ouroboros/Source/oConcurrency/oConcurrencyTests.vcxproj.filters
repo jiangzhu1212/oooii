@@ -24,12 +24,6 @@
     <ClCompile Include="Tests\TESTcoroutine.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTthreadpool.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTparallel_for.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oConcurrency\tests\oConcurrencyTests.h">

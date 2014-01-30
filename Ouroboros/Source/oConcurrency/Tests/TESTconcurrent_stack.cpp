@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/concurrent_stack.h>
+#include <oBase/concurrency.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
-#include <oCore/scheduler.h>
 
 using namespace ouro;
 
@@ -90,7 +90,7 @@ static void test_concurrency()
 
 	concurrent_stack<Node> s;
 
-	scheduler::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
+	ouro::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
 	{
 		nodes[_Index].Value = _Index;
 		s.push(&nodes[_Index]);
@@ -109,7 +109,7 @@ static void test_concurrency()
 		oCHECK(nodes[i].Value == 0xc001c0de, "Node %d was never inserted into stack", i);
 	}
 	
-	scheduler::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
+	ouro::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
 	{
 		Node* popped = s.pop();
 		popped->Value = 0xdeaddead;

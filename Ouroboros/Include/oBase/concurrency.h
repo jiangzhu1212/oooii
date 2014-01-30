@@ -22,28 +22,62 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Wrapper for Intel Thread Building Blocks (TBB).
+// Concurrent interfaces. These are not implemented in oBase but are used by 
+// oBase implementations since concurrency is such a big performance win and 
+// should be provided by the C++1x standard. Until then, client code must 
+// implement these interfaces.
 #pragma once
-#ifndef oCore_tbb_scheduler_h
-#define oCore_tbb_scheduler_h
+#ifndef oBase_concurrency_h
+#define oBase_concurrency_h
 
-#include <oBase/task_group.h>
 #include <functional>
+#include <memory>
 
 namespace ouro {
-	namespace tbb {
 
-const char* name();
+// defines a subset of functions that can be waited on.
+class task_group
+{
+public:
+	virtual ~task_group() {}
 
-void ensure_initialized();
+	// dispatches a task flagged as part of this group
+	virtual void run(const std::function<void()>& _Task) = 0;
 
-void dispatch(const std::function<void()>& _Task);
+	// waits for only tasks dispatched with run() to finish
+	virtual void wait() = 0;
 
-void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
+	// cancels all queued tasks (executed tasks will have already been completed). 
+	// This only flags tasks not to execution, but the threadpool still needs to 
+	// process them before wait() will be unblocked to guarantee any resources 
+	// bound in the run task are released.
+	virtual void cancel() = 0;
 
+	// returns true if cancel was called, but wait has not yet finished (or has 
+	// not yet been called)
+	virtual bool is_canceling() = 0;
+};
+
+// factory function for creating a task_group
 std::shared_ptr<task_group> make_task_group();
 
-	} // namespace tbb
+// Returns the name of the current job scheduler
+const char* scheduler_name();
+
+// Ensures all initial allocations are done and the system is ready.
+void ensure_scheduler_initialized();
+
+// issues a task for asynchronous execution on any thread in the underlying
+// threadpool.
+void dispatch(const std::function<void()>& _Task);
+
+// Implements the parallel for pattern, executing the specified task with the index
+// from _Begin to _End.
+void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
+
+// Runs a task when the calling thread exits.
+void at_thread_exit(const std::function<void()>& _Task);
+
 } // namespace ouro
 
 #endif

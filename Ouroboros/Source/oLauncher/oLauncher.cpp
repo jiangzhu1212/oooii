@@ -49,12 +49,12 @@ namespace ouro {
 
 #define oOPT_CASE(_ShortNameConstant, _Value, _Dest) case _ShortNameConstant: { if (!from_string(&(_Dest), value)) { return oErrorSetLast(std::errc::invalid_argument, "-%c %s cannot be interpreted as a(n) %s", (_ShortNameConstant), (_Value), typeid(_Dest).name()); } break; }
 #define oOPT_CASE_DEFAULT(_ShortNameVariable, _Value, _NthOption) \
-	case ' ': { return oErrorSetLast(std::errc::invalid_argument, "There should be no parameters that aren't switches passed"); break; } \
-	case '?': { return oErrorSetLast(std::errc::invalid_argument, "Parameter %d is not recognized", (_NthOption)); break; } \
-	case ':': { return oErrorSetLast(std::errc::invalid_argument, "Parameter %d is missing a value", (_NthOption)); break; } \
+	case ' ': { oTHROW_INVARG("There should be no parameters that aren't switches passed"); break; } \
+	case '?': { oTHROW_INVARG("Parameter %d is not recognized", (_NthOption)); break; } \
+	case ':': { oTHROW_INVARG("Parameter %d is missing a value", (_NthOption)); break; } \
 	default: { oTRACE("Unhandled option -%c %s", (_ShortNameVariable), oSAFESTR(_Value)); break; }
 #if 0
-bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc, bool* _pShowHelp)
+void oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc, bool* _pShowHelp)
 {
 	*_pShowHelp = false;
 	const char* value = 0;
@@ -77,44 +77,41 @@ bool oParseCmdLine(int argc, const char* argv[], oVERSIONED_LAUNCH_DESC* _pDesc,
 		ch = opttok(&value);
 		count++;
 	}
-
-	return true;
 }
 
-static bool oLauncherMain1(int argc, const char* argv[])
+static void oLauncherMain(int argc, const char* argv[])
 {
 	oVERSIONED_LAUNCH_DESC vld;
 
 	bool ShowHelp = false;
-	if (!oParseCmdLine(argc, argv, &vld, &ShowHelp))
-		return false; // pass through error
-
+	oParseCmdLine(argc, argv, &vld, &ShowHelp);
 	if (ShowHelp)
 	{
 		char help[1024];
-		if (optdoc(help, ouro::path(argv[0]).filename().c_str(), sCmdOptions))
+		if (optdoc(help, path(argv[0]).filename().c_str(), sCmdOptions))
 			printf(help);
-		return true;
+		return;
 	}
 
-	return oVURelaunch(vld);
+	oVURelaunch(vld);
 }
 #endif
-int oLauncherMain(int argc, const char* argv[])
-{
-	if (0 /*&& !oLauncherMain1(argc, argv)*/)
-	{
-		path ModuleName = ouro::this_module::get_path();
-		ouro::msgbox(ouro::msg_type::error, nullptr, ModuleName.filename(), "%s", oErrorGetLastString());
-		return oErrorGetLast();
-	}
-
-	return 0;
-}
 
 int main(int argc, const char* argv[])
 {
-	oASSERT(false, "Disabled until version update is resurrected");
+	oTHROW(not_supported, "Disabled until version update is resurrected");
 
-	return oLauncherMain(argc, argv);
+#if 0
+
+	try { oLauncherMain(argc, argv); }
+
+	catch (std::exception& e)
+	{
+		path ModuleName = this_module::get_path();
+		msgbox(msg_type::error, nullptr, ModuleName.filename(), "%s", e.what());
+		return -1;
+	}
+
+	return 0;
+#endif
 }

@@ -46,9 +46,7 @@
       <DelayLoadDLLs>comctl32.dll;d3d11.dll;d3dcompiler.dll;d3dx11_43.dll;d3dx10.dll;dbghelp.dll;dwmapi.dll;dxgi.dll;dxguid.dll;msimg32.dll;netapi32.dll;powrprof.dll;psapi.dll;setupapi.dll;shlwapi.dll;version.dll;winmm.dll;ws2_32.dll;mswsock.dll</DelayLoadDLLs>
       <SubSystem>Windows</SubSystem>
     </Link>
-    <ProjectReference>
-      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
-    </ProjectReference>
+    <ProjectReference />
     <PostBuildEvent>
       <Command>
       </Command>

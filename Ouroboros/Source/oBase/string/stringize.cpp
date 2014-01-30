@@ -31,7 +31,6 @@
 #include <oBase/guid.h>
 #include <oBase/string.h>
 #include <oBase/date.h>
-#include <half.h>
 
 oDEFINE_WHITESPACE_PARSING();
 namespace ouro {
@@ -70,7 +69,6 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const long 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long long& _Value) { return 0 == _ui64toa_s(unsigned long long(_Value), _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float& _Value) { if (-1 != snprintf(_StrDestination, _SizeofStrDestination, "%f", _Value)) { trim_right(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double& _Value) { if (-1 != snprintf(_StrDestination, _SizeofStrDestination, "%lf", _Value)) { trim_right(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const half& _Value) { if (to_string(_StrDestination, _SizeofStrDestination, static_cast<float>(_Value))) { trim_right(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const std::string& _Value) { return strlcpy(_StrDestination, _Value.c_str(), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr; }
 
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const fourcc& _Value)
@@ -118,7 +116,6 @@ bool from_string(long long* _pValue, const char* _StrSource) { return _FromStrin
 bool from_string(unsigned long long* _pValue, const char* _StrSource) { return _FromString(_pValue, "%llu", _StrSource); }
 bool from_string(float* _pValue, const char* _StrSource) { oCHK; return atof(_StrSource, _pValue); }
 bool from_string(double* _pValue, const char* _StrSource) { return _FromString(_pValue, "%lf", _StrSource); }
-bool from_string(half* _pValue, const char* _StrSource) { float v; if (!from_string(&v, _StrSource)) return false; *_pValue = v; return true; }
 bool from_string(fourcc* _pValue, const char* _StrSource) { oCHK; *_pValue = fourcc(_StrSource); return true; }
 bool from_string(guid* _pValue, const char* _StrSource) { oCHK; return 11 == sscanf_s(_StrSource, "{%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X}", &_pValue->Data1, &_pValue->Data2, &_pValue->Data3, &_pValue->Data4[0], &_pValue->Data4[1], &_pValue->Data4[2], &_pValue->Data4[3], &_pValue->Data4[4], &_pValue->Data4[5], &_pValue->Data4[6], &_pValue->Data4[7]); }
 

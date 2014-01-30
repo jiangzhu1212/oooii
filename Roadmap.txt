@@ -4,18 +4,19 @@ This is a brief discussion on the direction of Ouroboros in the foreseeable
 future.
 
 
-== oStd ==
-
-This is where things that get replaced by a full C++11 implementation will go.
-
-
-== Base == 
+== oBase == 
 
 This is where things that ought to be in C++ go such as POSIX elements, more 
-robust string and memory parsing, and simple ubiquitous file formats and types.
+robust string and memory parsing and simple ubiquitous file formats and types.
 
 
-== Surface ==
+== oCore == 
+
+This is where interfaces for basic/standard hardware exist, such as filesystem,
+virtual paging memory allocator, cpu, etc.
+
+
+== oSurface ==
 
 Everything to work with textures and images and all the advanced formats 
 supported by compute/GPU devices.
@@ -27,6 +28,7 @@ A dumping ground for all the Windows widgets needed during use of Ouroboros.
 There isn't an intent to be another QT or WxWidgets, but there also isn't enough 
 need for bringing in such large middlewares either, so leave stuff somewhat 
 unapologetically Windows-specific and have it all in this one lib for GUI stuff.
+
 
 == Computation (oHLSL, oCompute) ==
 
@@ -55,36 +57,10 @@ and swizzle operations) as part of the C++ standard library. All 4 languages
 should also have native quaternion and simple volume types.
 
 
-== oConcurrency ==
-
-This will be maintained and involves a basis for experimentation, learning and 
-twiddling. The intent is to use TBB whereever possible, but have a simple bring-
-up system for new hardware such as mobile devices, new consoles or other 
-experimental hardware. This library is also where an abstraction layer is defined
-to simplify platform porting so that code using oConcurrency remains as portable 
-as possible.
-
-At this time older constructs may seem trivial and bloaty wrappers such as 
-oDispatchQueue.*. This is true from the Ouroboros perspective, however much 
-internal code relies on those interfaces so it must remain until its usage is 
-refactored out. If something seems redundant, prefer the lower-level version of 
-the implementation.
-
-
 == oFramework ==
 
-Currently any refactor time is spent on simplifying oBasis, which had become 
-quite large and responsible for a wide array of solutions. Once it is paired 
-down to size, oPlatform will be the focus of any refactor. The intent is 
-basically to separate out any computer peripherals such as screens, cameras 
-and input devices to their own libraries or a library of devices (oDevices?)
-while moving any code that makes oPlatform calls, but no system calls 
-directly will be moved into a library called oFramework. There are internal
-pieces of code with ideas like quick UI setup and plugin-ability that are
-being developed and will probably find their way to be a more cohesive 
-anchor in what will become oFramework. Protocols as separate from socket-
-layer interfaces will either be promoted to oFramework or their own library.
-
+Does not exist yet. oFramework will be allowed to make more system-wide 
+assumptions as it ties more building blocks together.
 
 == Features ==
 
@@ -122,15 +98,10 @@ simple scenes. Because of our video product UI scenes will be the first to get
 attention. So basically we're building a big sprite engine with attention 
 towards moving to true 3D immediately afterwards.
 
-That's as far into Ouroboros's future as I can see right now. OOOii has many 
-divergent projects and there is also an internal technology roadmap driving this 
-one which I am not at liberty to share at present. OOOii projects may steer us 
-away from this roadmap, or may accelerate the execution of the roadmap greatly.
-Only future deliverables can tell!
-
-If you have a project you'd like to build using Ouroboros and there are 
-significant missing elements you'd like to see authored or wish to contribute 
-yourself, please contact me at  antony.arciuolo@oooii.com or arciuolo@gmail.com.
+That's as far into Ouroboros's future as I can see right now. If you have a 
+project you'd like to build using Ouroboros and there are significant missing 
+elements you'd like to see authored or wish to contribute yourself, please 
+contact me at arciuolo@gmail.com.
 
 Sincerely,
 Tony

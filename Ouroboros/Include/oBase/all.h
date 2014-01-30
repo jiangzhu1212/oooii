@@ -33,6 +33,7 @@
 #include <oBase/byte.h>
 #include <oBase/color.h>
 #include <oBase/compression.h>
+#include <oBase/concurrency.h>
 #include <oBase/concurrent_index_allocator.h>
 #include <oBase/concurrent_linear_allocator.h>
 #include <oBase/concurrent_object_pool.h>
@@ -70,7 +71,6 @@
 #include <oBase/snappy.h>
 #include <oBase/string.h>
 #include <oBase/string_traits.h>
-#include <oBase/task_group.h>
 #include <oBase/text_document.h>
 #include <oBase/throw.h>
 #include <oBase/threadpool.h>

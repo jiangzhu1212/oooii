@@ -30,6 +30,7 @@
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/mru.h>
 #include <oGUI/msgbox.h>
+#include <oGUI/msgbox_reporting.h>
 #include <oGUI/notification_area.h>
 #include <oGUI/progress_bar.h>
 #include <oGUI/window.h>

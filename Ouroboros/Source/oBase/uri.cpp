@@ -33,7 +33,7 @@ namespace ouro {
 		std::regex& uri_regex()
 		{
 			// don't use singleton because this allocates memory and can return a false
-			// positive.
+			// positive memory leak.
 			return reURI;
 		}
 

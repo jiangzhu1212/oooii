@@ -22,28 +22,27 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "tbb_scheduler.h"
+#include <oBase/concurrency.h>
+#include <oBase/throw.h>
 #include <oCore/process_heap.h>
 #include <oCore/thread_traits.h>
-#include <oBase/task_group.h>
 #include <tbb/tbb.h>
 #include <tbb/task_scheduler_init.h>
 
 namespace ouro {
-	namespace tbb {
 
-class context
+class tbb_context
 {
 public:
-	static context& singleton();
+	static tbb_context& singleton();
 
-	context()
+	tbb_context()
 	{
 		Observer = new observer();
 		Init = new ::tbb::task_scheduler_init();
 	}
 
-	~context()
+	~tbb_context()
 	{
 		delete Init;
 		delete Observer;
@@ -95,35 +94,54 @@ private:
 	observer* Observer;
 };
 
-context& context::singleton()
+template<typename T> T& get_singleton(T*& _pInstance, process_heap::scope _Scope = process_heap::per_process, process_heap::tracking _Tracking = process_heap::garbage_collected)
 {
-	static context* sInstance = nullptr;
-	if (!sInstance)
+	if (!_pInstance)
 	{
 		process_heap::find_or_allocate(
-			"tbb::context"
+			typeid(T).name()
 			, process_heap::per_process
-			, process_heap::leak_tracked
-			, [=](void* _pMemory) { new (_pMemory) context(); }
-			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
-			, &sInstance);
+			, process_heap::garbage_collected
+			, [=](void* _pMemory) { new (_pMemory) T(); }
+			, [=](void* _pMemory) { ((T*)_pMemory)->~T(); }
+			, &_pInstance);
 	}
-	return *sInstance;
+	return *_pInstance;
 }
 
-const char* name()
+#define oSINGLETON(_ClassName) _ClassName& _ClassName::singleton() { static _ClassName* sInstance = nullptr; return get_singleton(sInstance); }
+
+oSINGLETON(tbb_context);
+
+class task_group_tbb : public task_group
+{
+	::tbb::task_group g;
+public:
+	~task_group_tbb() { wait(); }
+	void run(const std::function<void()>& _Task) override { g.run(_Task); }
+	void wait() override { g.wait(); }
+	void cancel() override { g.cancel(); }
+	bool is_canceling() override { return g.is_canceling(); }
+};
+
+std::shared_ptr<task_group> make_task_group()
+{
+	return std::make_shared<task_group_tbb>();
+}
+
+const char* scheduler_name()
 {
 	return "tbb";
 }
 
-void ensure_initialized()
+void ensure_scheduler_initialized()
 {
-	context::singleton();
+	tbb_context::singleton();
 }
 
 void dispatch(const std::function<void()>& _Task)
 {
-	context::singleton().dispatch(_Task);
+	tbb_context::singleton().dispatch(_Task);
 }
 
 void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
@@ -131,19 +149,9 @@ void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _I
 	::tbb::parallel_for(_Begin, _End, _Task);
 }
 
-class task_group_impl : public ouro::task_group
+void at_thread_exit(const std::function<void()>& _Task)
 {
-	::tbb::task_group g;
-public:
-	void run(const std::function<void()>& _Task) override { g.run(_Task); }
-	void wait() override { g.wait(); }
-	~task_group_impl() { wait(); }
-};
-
-std::shared_ptr<ouro::task_group> make_task_group()
-{
-	return std::make_shared<task_group_impl>();
+	oTHROW0(operation_not_supported);
 }
 
-	} // namespace tbb
 } // namespace ouro

@@ -23,12 +23,12 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oCore/scheduler.h>
+#include <oBase/concurrency.h>
 #include <oBasis/oDispatchQueueConcurrent.h>
 #include "oTestIntegration.h"
-#include <oConcurrency/tests/oConcurrencyTests.h>
+#include <oBase/tests/oBaseTests.h>
 
-struct oDQC_impl : oConcurrency::tests::test_threadpool
+struct oDQC_impl : ouro::tests::test_threadpool
 {
 	oDQC_impl()
 	{
@@ -36,7 +36,7 @@ struct oDQC_impl : oConcurrency::tests::test_threadpool
 	}
 	ouro::intrusive_ptr<threadsafe oDispatchQueueConcurrent> t;
 	~oDQC_impl() { if (t) t->Join(); }
-	const char* name() const override { return ouro::scheduler::name(); }
+	const char* name() const override { return ouro::scheduler_name(); }
 	void dispatch(const oTASK& _Task) override { t->Dispatch(_Task); }
 	bool parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override { return false; }
 	void flush() override { t->Flush(); }
@@ -45,8 +45,8 @@ struct oDQC_impl : oConcurrency::tests::test_threadpool
 
 void TESToDispatchQueueConcurrent(ouro::test_services& _Services)
 {
-	oConcurrency::tests::TESTthreadpool_performance_impl<oDQC_impl>(_Services);
+	ouro::tests::TESTthreadpool_performance_impl<oDQC_impl>(_Services);
 }
 
-using namespace oConcurrency::tests; // @tony: macros should be more explicit but other refactor is going on right now
+using namespace ouro::tests; // @tony: macros should be more explicit but other refactor is going on right now
 oTEST_THROWS_REGISTER(oCONCAT(PLATFORM_, oDispatchQueueConcurrent), oCONCAT(TEST, oDispatchQueueConcurrent));

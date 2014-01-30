@@ -265,7 +265,7 @@ public:
 
 	// Returns true if in the canceling state. The state is set on a call to cancel()
 	// and is reset at the end of a wait.
-	bool is_canceling() { return Canceling; }
+	bool is_canceling();
 
 private:
 	threadpool_type& Threadpool;
@@ -325,6 +325,18 @@ void task_group<Traits, Alloc>::wait()
 
 	Latch.reset(1); // allow task group to be resued
 	Canceling.store(false);
+}
+
+template<typename Traits, typename Alloc>
+void task_group<Traits, Alloc>::cancel()
+{
+	Canceling.store(true);
+}
+
+template<typename Traits, typename Alloc>
+bool task_group<Traits, Alloc>::is_canceling()
+{
+	return Canceling;
 }
 
 template<typename Traits, typename Alloc>

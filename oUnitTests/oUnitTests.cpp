@@ -1,13 +1,14 @@
 // $(header)
-#include <oGUI/console.h>
-#include <oGUI/msgbox.h>
-#include <oPlatform/oTest.h>
-#include <oPlatform/oStream.h>
-#include <oCore/reporting.h>
-#include <oCore/scheduler.h>
-#include <oCore/system.h>
+#include <oBase/concurrency.h>
 #include <oBase/opttok.h>
 #include <oBase/scc.h>
+#include <oCore/reporting.h>
+#include <oCore/system.h>
+#include <oGUI/console.h>
+#include <oGUI/msgbox.h>
+#include <oGUI/msgbox_reporting.h>
+#include <oPlatform/oTest.h>
+#include <oPlatform/oStream.h>
 #include <oGUI/Windows/oGDI.h>
 #include "resource.h"
 
@@ -53,7 +54,7 @@ void InitEnv()
 	//
 	// @tony: TODO: FIND OUT - why can DllMain execute in a not-main thread?
 
-	ouro::scheduler::ensure_initialized();
+	ouro::ensure_scheduler_initialized();
 
 	oTRACEA("Aero is %sactive", system::uses_gpu_compositing() ? "" : "in");
 	oTRACE("Remote desktop is %sactive", system::is_remote_session() ? "" : "in");
@@ -450,6 +451,8 @@ bool EnsureOneInstanceIsRunning(bool _Prompt)
 
 int main(int argc, const char* argv[])
 {
+	reporting::set_prompter(prompt_msgbox);
+
 	InitEnv();
 
 	PARAMETERS parameters;

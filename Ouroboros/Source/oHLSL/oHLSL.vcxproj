@@ -34,6 +34,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\External\OpenEXR\Half\half.cpp" />
+    <ClCompile Include="half_stringize.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AAE3C7D9-8124-4B5A-856C-4C5BF23CDB09}</ProjectGuid>

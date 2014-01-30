@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oBase/backoff.h>
 #include <oGUI/msgbox.h>
+#include <oGUI/msgbox_reporting.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/oGUIMenu.h>
 #include <oPlatform/oStream.h>
@@ -640,6 +641,8 @@ void oGPUWindowTestApp::Run()
 
 int main(int argc, const char* argv[])
 {
+	reporting::set_prompter(prompt_msgbox);
+
 	oGPUWindowTestApp App;
 	App.Run();
 	return 0;

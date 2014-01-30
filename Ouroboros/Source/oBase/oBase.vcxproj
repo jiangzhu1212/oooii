@@ -132,6 +132,7 @@
     <ClInclude Include="..\..\Include\oBase\callable.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
     <ClInclude Include="..\..\Include\oBase\compression.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrency.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h" />
@@ -177,7 +178,6 @@
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />
     <ClInclude Include="..\..\Include\oBase\string_traits.h" />
-    <ClInclude Include="..\..\Include\oBase\task_group.h" />
     <ClInclude Include="..\..\Include\oBase\text_document.h" />
     <ClInclude Include="..\..\Include\oBase\threadpool.h" />
     <ClInclude Include="..\..\Include\oBase\throw.h" />

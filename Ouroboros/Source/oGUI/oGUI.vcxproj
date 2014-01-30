@@ -24,6 +24,7 @@
     <ClInclude Include="..\..\Include\oGUI\console.h" />
     <ClInclude Include="..\..\Include\oGUI\mru.h" />
     <ClInclude Include="..\..\Include\oGUI\msgbox.h" />
+    <ClInclude Include="..\..\Include\oGUI\msgbox_reporting.h" />
     <ClInclude Include="..\..\Include\oGUI\notification_area.h" />
     <ClInclude Include="..\..\Include\oGUI\oGUI.h" />
     <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h" />
@@ -46,6 +47,7 @@
     <ClCompile Include="console.cpp" />
     <ClCompile Include="mru.cpp" />
     <ClCompile Include="msgbox.cpp" />
+    <ClCompile Include="msgbox_reporting.cpp" />
     <ClCompile Include="notification_area.cpp" />
     <ClCompile Include="oGDI.cpp" />
     <ClCompile Include="oGUI.cpp" />
