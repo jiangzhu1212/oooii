@@ -58,6 +58,8 @@ public:
 	virtual void update_thread() = 0;
 	virtual void end_thread() = 0;
 
+	virtual void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) = 0;
+
 	// Returns the root path from which any test data should be loaded.
 	virtual char* test_root_path(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
 	template<size_t size> char* test_root_path(char (&_StrDestination)[size]) const { return test_root_path(_StrDestination, size); }

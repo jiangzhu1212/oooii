@@ -22,7 +22,6 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oCore/scheduler.h> // FIXME
 #include <oBase/future.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
@@ -48,13 +47,13 @@ static void exercise_thread(size_t _Index, int* _pResults, unsigned int _Runtime
 	_pResults[_Index] = n;
 }
 
-static bool exercise_all_threads()
+static bool exercise_all_threads(ouro::test_services& _Services)
 {
 	const int nTasks = 5 * std::thread::hardware_concurrency(); // ensure more work than the number of threads.
 	int* results = (int*)_alloca(nTasks * sizeof(int));
 	memset(results, -1, nTasks * sizeof(int));
 
-	scheduler::parallel_for(0, size_t(nTasks), std::bind(exercise_thread, std::placeholders::_1, results, 2500));
+	_Services.parallel_for(0, size_t(nTasks), std::bind(exercise_thread, std::placeholders::_1, results, 2500));
 	for (int i = 0; i < nTasks; i++)
 		oCHECK(results[i] != -1, "Invalid results from parallel_for");
 	return true;
@@ -70,7 +69,7 @@ static bool fail_and_report()
 static void test_workstealing(ouro::test_services& _Services)
 {
 	float CPUavg = 0.0f, CPUpeak = 0.0f;
-	ouro::future<bool> Result = ouro::async(exercise_all_threads);
+	ouro::future<bool> Result = ouro::async(exercise_all_threads, std::ref(_Services));
 
 	oTRACE("Waiting for result...");
 	bool r = Result.get();
