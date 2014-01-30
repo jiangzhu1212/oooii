@@ -441,9 +441,6 @@
     <ClInclude Include="..\..\Include\oBase\threadpool.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\task_group.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\future.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
@@ -452,6 +449,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\callable.h">
       <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\concurrency.h">
+      <Filter>oBase\concurrency</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

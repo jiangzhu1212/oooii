@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oConcurrency/block_allocator.h>
-#include <oCore/scheduler.h>
 #include <oBase/assert.h>
+#include <oBase/concurrency.h>
 #include <oBase/throw.h>
 #include <vector>
 
@@ -62,7 +62,7 @@ void TESTblock_allocator()
 		TestObj* tests[NumBlocks];
 		memset(tests, 0xaa, sizeof(tests));
 
-		ouro::scheduler::parallel_for(0, NumBlocks, [&](size_t _Index)
+		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
 			tests[_Index] = pAllocator->construct(&destroyed[_Index]);
 			tests[_Index]->Value = _Index;
@@ -84,7 +84,7 @@ void TESTblock_allocator()
 
 		oTRACE("oConcurrency::parallel_for { pAllocator->Destroy }");
 
-		ouro::scheduler::parallel_for(0, NumBlocks, [&](size_t _Index)
+		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
 			pAllocator->destroy(tests[_Index]);
 		});
@@ -100,7 +100,7 @@ void TESTblock_allocator()
 
 		oTRACE("oConcurrency::parallel_for { if (odd) Destroy }");
 
-		ouro::scheduler::parallel_for(0, NumBlocks, [&](size_t _Index)
+		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
 			tests[_Index] = pAllocator->construct(&destroyed[_Index]);
 			tests[_Index]->Value = _Index;
@@ -108,7 +108,7 @@ void TESTblock_allocator()
 				pAllocator->destroy(tests[_Index]);
 		});
 
-		oTRACE("oConcurrency::parallel_for { Destroy remaining evens }");
+		oTRACE("ouro::parallel_for { Destroy remaining evens }");
 
 		for (size_t i = 0; i < NumBlocks; i++)
 		{

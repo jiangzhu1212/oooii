@@ -22,29 +22,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Simple threadpool task scheduler meant as a benchmark standard as well as 
-// light dependencies for smaller tools where TBB would be overkill.
-#pragma once
-#ifndef oCore_ouro_scheduler_h
-#define oCore_ouro_scheduler_h
-
-#include <oBase/task_group.h>
-#include <functional>
+#include <half.h>
+#include <oBase/string.h>
+#include <oBase/stringize.h>
 
 namespace ouro {
-	namespace ouro_scheduler {
 
-const char* name();
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const half& _Value) { if (to_string(_StrDestination, _SizeofStrDestination, static_cast<float>(_Value))) { trim_right(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
+bool from_string(half* _pValue, const char* _StrSource) { float v; if (!from_string(&v, _StrSource)) return false; *_pValue = v; return true; }
 
-void ensure_initialized();
-
-void dispatch(const std::function<void()>& _Task);
-
-void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
-
-std::shared_ptr<task_group> make_task_group();
-
-	} // namespace ouro_scheduler
 } // namespace ouro
-
-#endif

@@ -31,6 +31,7 @@
 #include <oPlatform/oStream.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oGUI/msgbox.h>
+#include <oGUI/msgbox_reporting.h>
 #include <oGUI/window.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
@@ -603,6 +604,7 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 
 int main(int argc, const char* argv[])
 {
+	reporting::set_prompter(prompt_msgbox);
 	oKinectTestApp App;
 	App.Run();
 	return 0;

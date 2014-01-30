@@ -27,6 +27,7 @@
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/msgbox.h>
+#include <oGUI/msgbox_reporting.h>
 #include <oPlatform/oStream.h>
 #include <oGUI/window.h>
 #include "resource.h"
@@ -73,10 +74,10 @@ enum oWMI // menuitems
 	oWMI_FILE_EXIT,
 
 	oWMI_VIEW_STYLE_FIRST,
-	oWMI_VIEW_STYLE_LAST = oWMI_VIEW_STYLE_FIRST + ouro::window_style::count - 1,
+	oWMI_VIEW_STYLE_LAST = oWMI_VIEW_STYLE_FIRST + window_style::count - 1,
 
 	oWMI_VIEW_STATE_FIRST,
-	oWMI_VIEW_STATE_LAST = oWMI_VIEW_STATE_FIRST + ouro::window_state::count - 1,
+	oWMI_VIEW_STATE_LAST = oWMI_VIEW_STATE_FIRST + window_state::count - 1,
 
 	oWMI_HELP_ABOUT,
 };
@@ -87,11 +88,11 @@ enum oWHK // hotkeys
 	oWHK_TOGGLE_FULLSCREEN,
 };
 
-ouro::basic_hotkey_info HotKeys[] =
+basic_hotkey_info HotKeys[] =
 {
 	// reset style
-	{ ouro::input::f3, oWHK_DEFAULT_STYLE, false, false, false },
-	{ ouro::input::f11, oWHK_TOGGLE_FULLSCREEN, false, false, false },
+	{ input::f3, oWHK_DEFAULT_STYLE, false, false, false },
+	{ input::f11, oWHK_TOGGLE_FULLSCREEN, false, false, false },
 };
 
 struct oWindowTestAppPulseContext
@@ -114,11 +115,11 @@ public:
 
 private:
 	std::shared_ptr<window> Window;
-	std::shared_ptr<ouro::about> About;
-	ouro::menu_handle Menus[oWMENU_COUNT];
+	std::shared_ptr<about> About;
+	menu_handle Menus[oWMENU_COUNT];
 	oWindowTestAppPulseContext PulseContext;
 	oGUIMenuEnumRadioListHandler MERL; 
-	ouro::window_state::value PreFullscreenState;
+	window_state::value PreFullscreenState;
 	bool Running;
 
 	// This gets deleted by parent window automatically.
@@ -127,18 +128,18 @@ private:
 	std::shared_ptr<filesystem::monitor> DirWatcher;
 
 private:
-	void ActionHook(const ouro::input::action& _Action);
+	void ActionHook(const input::action& _Action);
 	void EventHook(const window::basic_event& _Event);
 	bool CreateMenu(const window::create_event& _CreateEvent);
 	bool CreateControls(const window::create_event& _CreateEvent);
-	void CheckState(ouro::window_state::value _State);
-	void CheckStyle(ouro::window_style::value _Style);
+	void CheckState(window_state::value _State);
+	void CheckStyle(window_style::value _Style);
 	void OnDirectoryEvent(filesystem::file_event::value _Event, const path& _Path);
 };
 
 oWindowTestApp::oWindowTestApp()
 	: Running(true)
-	, PreFullscreenState(ouro::window_state::hidden)
+	, PreFullscreenState(window_state::hidden)
 	, hButton(nullptr)
 {
 	{
@@ -157,14 +158,14 @@ oWindowTestApp::oWindowTestApp()
 	{
 		window::init i;
 		i.title = "oWindowTestApp";
-		i.icon = (ouro::icon_handle)oGDILoadIcon(IDI_APPICON);
+		i.icon = (icon_handle)oGDILoadIcon(IDI_APPICON);
 		i.on_action = std::bind(&oWindowTestApp::ActionHook, this, std::placeholders::_1);
 		i.on_event = std::bind(&oWindowTestApp::EventHook, this, std::placeholders::_1);
 		i.shape.client_size = int2(320, 240);
-		i.shape.state = ouro::window_state::hidden;
-		i.shape.style = ouro::window_style::sizable_with_menu_and_statusbar;
+		i.shape.state = window_state::hidden;
+		i.shape.style = window_style::sizable_with_menu_and_statusbar;
 		i.alt_f4_closes = true;
-		i.cursor_state = ouro::cursor_state::hand;
+		i.cursor_state = cursor_state::hand;
 		i.debug = true;
 
 		Window = window::make(i);
@@ -197,16 +198,16 @@ bool oWindowTestApp::CreateMenu(const window::create_event& _CreateEvent)
 
 	oGUIMenuAppendItem(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
 
-	oGUIMenuAppendEnumItems(ouro::window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.shape.style);
+	oGUIMenuAppendEnumItems(window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.shape.style);
 	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle)
 	{
-		Window->style((ouro::window_style::value)_BorderStyle);
+		Window->style((window_style::value)_BorderStyle);
 	});
 
-	oGUIMenuAppendEnumItems(ouro::window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.shape.state);
+	oGUIMenuAppendEnumItems(window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.shape.state);
 	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State)
 	{
-		Window->show((ouro::window_state::value)_State);
+		Window->show((window_state::value)_State);
 	});
 
 	oGUIMenuAppendItem(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "&About...");
@@ -217,9 +218,9 @@ bool oWindowTestApp::CreateMenu(const window::create_event& _CreateEvent)
 bool oWindowTestApp::CreateControls(const window::create_event& _CreateEvent)
 {
 	{
-		ouro::control_info d;
+		control_info d;
 		d.parent = _CreateEvent.window;
-		d.type = ouro::control_type::button;
+		d.type = control_type::button;
 		d.text = "&Easy";
 		d.position = int2(20, 20);
 		d.size = int2(80, 20);
@@ -231,13 +232,13 @@ bool oWindowTestApp::CreateControls(const window::create_event& _CreateEvent)
 	return true;
 }
 
-void oWindowTestApp::CheckState(ouro::window_state::value _State)
+void oWindowTestApp::CheckState(window_state::value _State)
 {
 	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STATE]
 	, oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oWMI_VIEW_STATE_FIRST + _State);
 }
 
-void oWindowTestApp::CheckStyle(ouro::window_style::value _Style)
+void oWindowTestApp::CheckStyle(window_style::value _Style)
 {
 	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STYLE]
 	, oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oWMI_VIEW_STYLE_FIRST + _Style);
@@ -263,48 +264,48 @@ void oWindowTestApp::EventHook(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::event_type::timer:
+		case event_type::timer:
 			if (_Event.as_timer().context == (uintptr_t)&PulseContext)
 			{
 				PulseContext.Count++;
 				Window->set_status_text(0, "Timer: %d", PulseContext.Count);
 			}
 			else
-				oTRACE("ouro::event_type::timer");
+				oTRACE("event_type::timer");
 			break;
-		case ouro::event_type::activated:
-			oTRACE("ouro::event_type::activated");
+		case event_type::activated:
+			oTRACE("event_type::activated");
 			break;
-		case ouro::event_type::deactivated:
-			oTRACE("ouro::event_type::deactivated");
+		case event_type::deactivated:
+			oTRACE("event_type::deactivated");
 			break;
-		case ouro::event_type::creating:
+		case event_type::creating:
 		{
-			oTRACE("ouro::event_type::creating");
+			oTRACE("event_type::creating");
 			if (!CreateMenu(_Event.as_create()))
 				oThrowLastError();
 			if (!CreateControls(_Event.as_create()))
 				oThrowLastError();
 			break;
 		}
-		case ouro::event_type::paint:
-			//oTRACE("ouro::event_type::paint");
+		case event_type::paint:
+			//oTRACE("event_type::paint");
 			break;
-		case ouro::event_type::display_changed:
-			oTRACE("ouro::event_type::display_changed");
+		case event_type::display_changed:
+			oTRACE("event_type::display_changed");
 			break;
-		case ouro::event_type::moving:
-			oTRACE("ouro::event_type::moving");
+		case event_type::moving:
+			oTRACE("event_type::moving");
 			break;
-		case ouro::event_type::moved:
-			oTRACE("ouro::event_type::moved %dx%d", _Event.as_shape().shape.client_position.x, _Event.as_shape().shape.client_position.y);
+		case event_type::moved:
+			oTRACE("event_type::moved %dx%d", _Event.as_shape().shape.client_position.x, _Event.as_shape().shape.client_position.y);
 			break;
-		case ouro::event_type::sizing:
-			oTRACE("ouro::event_type::sizing %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
+		case event_type::sizing:
+			oTRACE("event_type::sizing %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
 			break;
-		case ouro::event_type::sized:
+		case event_type::sized:
 		{
-			oTRACE("ouro::event_type::sized %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
+			oTRACE("event_type::sized %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
 			CheckState(_Event.as_shape().shape.state);
 			CheckStyle(_Event.as_shape().shape.style);
 
@@ -313,45 +314,45 @@ void oWindowTestApp::EventHook(const window::basic_event& _Event)
 				RECT rParent, rButton;
 				GetClientRect((HWND)_Event.window, &rParent);
 				GetClientRect(hButton, &rButton);
-				RECT Centered = oWinRect(ouro::resolve_rect(oRect(rParent), oRect(rButton), ouro::alignment::middle_center, false));
+				RECT Centered = oWinRect(resolve_rect(oRect(rParent), oRect(rButton), alignment::middle_center, false));
 				SetWindowPos(hButton, nullptr, Centered.left, Centered.top, oWinRectW(Centered), oWinRectH(Centered), SWP_SHOWWINDOW);
 			}
 			break;
 		}
-		case ouro::event_type::closing:
-			oTRACE("ouro::event_type::closing");
+		case event_type::closing:
+			oTRACE("event_type::closing");
 			Window->quit();
 			break;
-		case ouro::event_type::closed:
-			oTRACE("ouro::event_type::closed");
+		case event_type::closed:
+			oTRACE("event_type::closed");
 			break;
-		case ouro::event_type::to_fullscreen:
-			oTRACE("ouro::event_type::to_fullscreen");
+		case event_type::to_fullscreen:
+			oTRACE("event_type::to_fullscreen");
 			break;
-		case ouro::event_type::from_fullscreen:
-			oTRACE("ouro::event_type::from_fullscreen");
+		case event_type::from_fullscreen:
+			oTRACE("event_type::from_fullscreen");
 			break;
-		case ouro::event_type::lost_capture:
-			oTRACE("ouro::event_type::lost_capture");
+		case event_type::lost_capture:
+			oTRACE("event_type::lost_capture");
 			break;
-		case ouro::event_type::drop_files:
-			oTRACE("ouro::event_type::drop_files (at %d,%d starting with %s)", _Event.as_drop().client_drop_position.x, _Event.as_drop().client_drop_position.y, _Event.as_drop().paths[0]);
+		case event_type::drop_files:
+			oTRACE("event_type::drop_files (at %d,%d starting with %s)", _Event.as_drop().client_drop_position.x, _Event.as_drop().client_drop_position.y, _Event.as_drop().paths[0]);
 			break;
-		case ouro::event_type::input_device_changed:
-			oTRACE("ouro::event_type::input_device_changed %s %s %s", as_string(_Event.as_input_device().type), as_string(_Event.as_input_device().status), _Event.as_input_device().instance_name);
+		case event_type::input_device_changed:
+			oTRACE("event_type::input_device_changed %s %s %s", as_string(_Event.as_input_device().type), as_string(_Event.as_input_device().status), _Event.as_input_device().instance_name);
 			break;
 		oNODEFAULT;
 	}
 }
 
-void oWindowTestApp::ActionHook(const ouro::input::action& _Action)
+void oWindowTestApp::ActionHook(const input::action& _Action)
 {
 	switch (_Action.action_type)
 	{
-		case ouro::input::unknown:
-			oTRACE("ouro::input::unknown");
+		case input::unknown:
+			oTRACE("input::unknown");
 			break;
-		case ouro::input::menu:
+		case input::menu:
 			switch (_Action.device_id)
 			{
 				case oWMI_FILE_EXIT:
@@ -362,10 +363,10 @@ void oWindowTestApp::ActionHook(const ouro::input::action& _Action)
 					#if 1
 						oDECLARE_ABOUT_INFO(i, oGDILoadIcon(IDI_APPICON));
 						if (!About)
-							About = ouro::about::make(i);
+							About = about::make(i);
 						About->show_modal(Window);
 					#else
-						ouro::msgbox(ouro::msg_type::info, _Action.window, "About", "oWindowTestApp: a small program to show a basic window and its events and actions");
+						msgbox(msg_type::info, _Action.window, "About", "oWindowTestApp: a small program to show a basic window and its events and actions");
 					#endif
 					break;
 				}
@@ -374,7 +375,7 @@ void oWindowTestApp::ActionHook(const ouro::input::action& _Action)
 			}
 			break;
 
-		case ouro::input::control_activated:
+		case input::control_activated:
 			switch (_Action.device_id)
 			{
 				case oWCTL_EASY_BUTTON:
@@ -388,34 +389,34 @@ void oWindowTestApp::ActionHook(const ouro::input::action& _Action)
 					break;
 				}
 				default:
-					oTRACE("ouro::input::control_activated");
+					oTRACE("input::control_activated");
 					break;
 			}
 			break;
-		case ouro::input::control_deactivated:
-			oTRACE("ouro::input::control_deactivated");
+		case input::control_deactivated:
+			oTRACE("input::control_deactivated");
 			break;
-		case ouro::input::control_selection_changing:
-			oTRACE("ouro::input::control_selection_changing");
+		case input::control_selection_changing:
+			oTRACE("input::control_selection_changing");
 			break;
-		case ouro::input::control_selection_changed:
-			oTRACE("ouro::input::control_selection_changed");
+		case input::control_selection_changed:
+			oTRACE("input::control_selection_changed");
 			break;
-		case ouro::input::hotkey:
+		case input::hotkey:
 			switch (_Action.device_id)
 			{
 				case oWHK_DEFAULT_STYLE:
 				{
-					if (Window->state() == ouro::window_state::fullscreen)
-						Window->state(ouro::window_state::restored);
-					Window->style(ouro::window_style::sizable_with_menu_and_statusbar);
+					if (Window->state() == window_state::fullscreen)
+						Window->state(window_state::restored);
+					Window->style(window_style::sizable_with_menu_and_statusbar);
 					break;
 				}
 				case oWHK_TOGGLE_FULLSCREEN:
-					if (Window->state() != ouro::window_state::fullscreen)
+					if (Window->state() != window_state::fullscreen)
 					{
 						PreFullscreenState = Window->state();
-						Window->state(ouro::window_state::fullscreen);
+						Window->state(window_state::fullscreen);
 					}
 					else
 					{
@@ -423,28 +424,28 @@ void oWindowTestApp::ActionHook(const ouro::input::action& _Action)
 					}
 					break;
 				default:
-					oTRACE("ouro::input::hotkey");
+					oTRACE("input::hotkey");
 					break;
 			}
 			
 			break;
-		case ouro::input::key_down:
-			oTRACE("ouro::input::key_down %s", as_string(_Action.key));
+		case input::key_down:
+			oTRACE("input::key_down %s", as_string(_Action.key));
 			break;
-		case ouro::input::key_up:
-			oTRACE("ouro::input::key_up %s", as_string(_Action.key));
+		case input::key_up:
+			oTRACE("input::key_up %s", as_string(_Action.key));
 			break;
-		case ouro::input::pointer_move:
-			//oTRACE("ouro::input::pointer_move");
+		case input::pointer_move:
+			//oTRACE("input::pointer_move");
 			break;
-		case ouro::input::skeleton_update:
-			oTRACE("ouro::input::skeleton");
+		case input::skeleton_update:
+			oTRACE("input::skeleton");
 			break;
-		case ouro::input::skeleton_acquired:
-			oTRACE("ouro::input::skeleton_acquired");
+		case input::skeleton_acquired:
+			oTRACE("input::skeleton_acquired");
 			break;
-		case ouro::input::skeleton_lost:
-			oTRACE("ouro::input::skeleton_lost");
+		case input::skeleton_lost:
+			oTRACE("input::skeleton_lost");
 			break;
 		oNODEFAULT;
 	}
@@ -457,6 +458,7 @@ void oWindowTestApp::Run()
 
 int main(int argc, const char* argv[])
 {
+	reporting::set_prompter(prompt_msgbox);
 	oWindowTestApp App;
 	App.Run();
 	return 0;

@@ -28,6 +28,8 @@
 #ifndef oCore_thread_traits_h
 #define oCore_thread_traits_h
 
+#include <oBase/callable.h>
+
 namespace ouro {
 
 struct core_thread_traits

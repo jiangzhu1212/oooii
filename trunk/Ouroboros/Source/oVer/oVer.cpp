@@ -49,7 +49,7 @@ struct oVER_DESC
 	const char* InputPath;
 };
 
-bool ParseCommandLine(int argc, const char* argv[], oVER_DESC* _pDesc)
+void ParseCommandLine(int argc, const char* argv[], oVER_DESC* _pDesc)
 {
 	memset(_pDesc, 0, sizeof(oVER_DESC));
 
@@ -68,51 +68,45 @@ bool ParseCommandLine(int argc, const char* argv[], oVER_DESC* _pDesc)
 			case 'c': _pDesc->PrintCopyright = true; break;
 			case 'h': _pDesc->ShowHelp = true; break;
 			case ' ': _pDesc->InputPath = value; break;
-			case ':': return oErrorSetLast(std::errc::invalid_argument, "The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, ordinal(count));
+			case ':': oTHROW_INVARG("The %d%s option is missing a parameter (does it begin with '-' or '/'?)", count, ordinal(count));
 		}
 
 		ch = opttok(&value);
 		count++;
 	}
-
-	return true;
 }
 
-bool Main(int argc, const char* argv[])
+void Main(int argc, const char* argv[])
 {
 	if (argc <= 1)
 	{
 		char buf[1024];
-		printf("%s", optdoc(buf, ouro::path(argv[0]).filename().c_str(), sOptions));
-		return true;
+		printf("%s", optdoc(buf, path(argv[0]).filename().c_str(), sOptions));
+		return;
 	}
 
 	oVER_DESC opts;
-	if (!ParseCommandLine(argc, argv, &opts))
-	{
-		xlstring temp = oErrorGetLastString();
-		return oErrorSetLast(std::errc::invalid_argument, "bad command line: %s", temp.c_str());
-	}
+	ParseCommandLine(argc, argv, &opts);
 
 	if (opts.ShowHelp)
 	{
 		char buf[1024];
-		printf("%s", optdoc(buf, ouro::path(argv[0]).filename().c_str(), sOptions));
-		return true;
+		printf("%s", optdoc(buf, path(argv[0]).filename().c_str(), sOptions));
+		return;
 	}
 
 	if (!opts.InputPath)
-		return oErrorSetLast(std::errc::invalid_argument, "no input file specified.");
+		oTHROW_INVARG("no input file specified");
 
-	ouro::module::info mi = ouro::module::get_info(path(opts.InputPath));
+	module::info mi = module::get_info(path(opts.InputPath));
 	sstring FBuf, PBuf;
-	oVERIFY(to_string(FBuf, mi.version));
-	oVERIFY(to_string(PBuf, mi.version));
+	oCHECK0(to_string(FBuf, mi.version));
+	oCHECK0(to_string(PBuf, mi.version));
 
 	if (opts.PrintFileDescription)
 		printf("%s\n", mi.description.c_str());
 	if (opts.PrintType)
-		printf("%s\n", ouro::as_string(mi.type));
+		printf("%s\n", as_string(mi.type));
 	if (opts.PrintFileVersion)
 		printf("%s\n", FBuf.c_str());
 	if (opts.PrintProductName)
@@ -121,16 +115,15 @@ bool Main(int argc, const char* argv[])
 		printf("%s\n", PBuf.c_str());
 	if (opts.PrintCopyright)
 		printf("%s\n", mi.copyright.c_str());
-
-	return true;
 }
 
 int main(int argc, const char* argv[])
 {
 	int err = 0;
-	if (!Main(argc, argv))
+	try { Main(argc, argv); }
+	catch (std::exception& e)
 	{
-		printf("%s\n", oErrorGetLastString());
+		printf("%s\n", e.what());
 		err = -1;
 	}
 	return err;

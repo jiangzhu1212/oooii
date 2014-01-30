@@ -50,5 +50,8 @@
     <ClCompile Include="..\..\External\OpenEXR\Half\half.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="half_stringize.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

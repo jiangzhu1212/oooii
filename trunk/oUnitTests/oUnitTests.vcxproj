@@ -103,6 +103,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <PreBuildEvent />
@@ -126,6 +129,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <PreBuildEvent />
@@ -146,6 +152,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <PreBuildEvent />
@@ -170,6 +179,9 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
+    </ProjectReference>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBase.cpp" />
@@ -215,6 +227,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrency.vcxproj">
       <Project>{08ec5ea1-284b-4688-b14b-4bd9945061fb}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrencyTBB.vcxproj">
+      <Project>{d368fe7a-1375-4402-bdc6-955275b5e939}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrencyTests.vcxproj">
       <Project>{20a09cf6-97ce-4258-9f01-cfa2b1433df3}</Project>

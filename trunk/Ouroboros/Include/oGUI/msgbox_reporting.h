@@ -22,26 +22,15 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Asynchronous task scheduler.
+// Uses msgbox to report errors in a form that can be passed to reporting
 #pragma once
-#ifndef oCore_scheduler_h
-#define oCore_scheduler_h
-
-#include <oBase/task_group.h>
-#include <functional>
+#ifndef oGUI_msgbox_reporting_h
+#define oGUI_msgbox_reporting_h
 
 namespace ouro {
-	namespace scheduler {
 
-const char* name();
+assert_action::value prompt_msgbox(const assert_context& _Assertion, const char* _Message);
 
-void ensure_initialized();
-
-void dispatch(const std::function<void()>& _Task);
-
-void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
-
-	} // namespace scheduler
 } // namespace ouro
 
 #endif

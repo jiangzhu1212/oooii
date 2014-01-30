@@ -30,6 +30,7 @@
 #include <oPlatform/oHTTPHandler.h>
 #include <oPlatform/oWebServer.h>
 #include <oGUI/msgbox.h>
+#include <oGUI/msgbox_reporting.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -50,7 +51,7 @@ bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const ch
 	if(oStreamExists(_StrDestination))
 		return true;
 
-	path AppDir = ouro::filesystem::app_path();
+	path AppDir = filesystem::app_path();
 
 	snprintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
 	if(oStreamExists(_StrDestination))
@@ -67,7 +68,7 @@ bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const ch
 	return oErrorSetLast(std::errc::no_such_file_or_directory, "No ini file %s found.", _pININame);
 }
 template<size_t size> bool oINIFindPath(char (&_StrDestination)[size], const char* _pININame) { return oINIFindPath(_StrDestination, size, _pININame); }
-template<size_t CAPACITY> bool oINIFindPath(ouro::fixed_string<char, CAPACITY>& _StrDestination, const char* _pININame) { return oINIFindPath(_StrDestination, _StrDestination.capacity(), _pININame); }
+template<size_t CAPACITY> bool oINIFindPath(fixed_string<char, CAPACITY>& _StrDestination, const char* _pININame) { return oINIFindPath(_StrDestination, _StrDestination.capacity(), _pININame); }
 
 // @oooii-jeffrey: If other code needs these, move them to a better place
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oNetHost)
@@ -80,7 +81,7 @@ struct oBUILD_TOOL_SERVER_SETTINGS
 	oBUILD_TOOL_SERVER_SETTINGS()
 		: Port(80)
 		, StaticBaseURI("file://DATA/Apps/AutoBuild/")
-		, DailyBuildHour(ouro::invalid)
+		, DailyBuildHour(invalid)
 		, NewBuildCheckSeconds(60)
 	{}
 	unsigned short Port;
@@ -446,9 +447,11 @@ void OnNewVersion(oSTREAM_EVENT _Event, const uri_string& _ChangedURI, oWebAppWi
 
 int main(int argc, const char* argv[])
 {
+	reporting::set_prompter(prompt_msgbox);
+
 	if (!oP4IsAvailable()) 
 	{
-		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "SCC is not available.  Shutting down.");
+		msgbox(msg_type::warn, nullptr, nullptr, "SCC is not available.  Shutting down.");
 		return -1;
 	}
 
@@ -478,12 +481,12 @@ int main(int argc, const char* argv[])
 		return -1;
 
 	path logroot = uri(Settings.BuildLogsURI).path();
-	ouro::filesystem::create_directories(logroot.parent_path());
+	filesystem::create_directories(logroot.parent_path());
 	
 	intrusive_ptr<oP4ChangelistBuilder> CLManager;
 	if (!oChangelistManagerCreate(*INI, logroot.c_str(), Settings.Port, &CLManager))
 	{
-		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Invalid settings: %s", oErrorGetLastString());
+		msgbox(msg_type::warn, nullptr, nullptr, "Invalid settings: %s", oErrorGetLastString());
 		return -1;
 	}
 
@@ -507,7 +510,7 @@ int main(int argc, const char* argv[])
 	// 1) Create the web server that will handle all app specific requests
 	if (!oWebServerCreate(ServerDesc, &WebServer))
 	{
-		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Couldn't start build server: %s", oErrorGetLastString());
+		msgbox(msg_type::warn, nullptr, nullptr, "Couldn't start build server: %s", oErrorGetLastString());
 		return -1;
 	}
 
@@ -540,13 +543,13 @@ int main(int argc, const char* argv[])
 
 		if (!oHTTPServerCreate(HTTPServerDesc, &BuildServer))
 		{
-			ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Couldn't start build server: %s", oErrorGetLastString());
+			msgbox(msg_type::warn, nullptr, nullptr, "Couldn't start build server: %s", oErrorGetLastString());
 			return -1;
 		}
 	}
 
 	// 4) Auto updater
-	path MonitorPath = ouro::filesystem::app_path(true);
+	path MonitorPath = filesystem::app_path(true);
 	MonitorPath.replace_filename("../*.exe");
 
 	oSTREAM_MONITOR_DESC md;
@@ -556,7 +559,7 @@ int main(int argc, const char* argv[])
 
 	intrusive_ptr<threadsafe oStreamMonitor> NewVersionMonitor;
 	if (!oStreamMonitorCreate(md, std::bind(OnNewVersion, std::placeholders::_1, std::placeholders::_2, Window), &NewVersionMonitor))
-		ouro::msgbox(ouro::msg_type::warn, nullptr, nullptr, "Error starting OnNewVersion monitor.\n%s", oErrorGetLastString());
+		msgbox(msg_type::warn, nullptr, nullptr, "Error starting OnNewVersion monitor.\n%s", oErrorGetLastString());
 
 	int WorkCountUILast = -1;
 	uint LastP4CheckMS = 0;
@@ -574,7 +577,7 @@ int main(int argc, const char* argv[])
 		}
 
 		// After the specified timeout try to build the next build
-		uint CurrentTimeMS = ouro::timer::nowmsi();
+		uint CurrentTimeMS = timer::nowmsi();
 		if ((CurrentTimeMS - LastP4CheckMS) > (Settings.NewBuildCheckSeconds * 1000))
 		{
 			LastP4CheckMS = CurrentTimeMS;

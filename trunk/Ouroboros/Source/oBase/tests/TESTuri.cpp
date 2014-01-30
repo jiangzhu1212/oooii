@@ -169,7 +169,6 @@ struct URI_RESOLVE
 	const char* Resolved;
 };
 
-static const uri sTESTuri_make_absolute_base("http://a/b/c/d;p?q");
 static const URI_RESOLVE sTESTuri_make_absolute[] =
 {
 	// http://tools.ietf.org/html/rfc3986#section-5.4.1
@@ -219,7 +218,6 @@ static const URI_RESOLVE sTESTuri_make_absolute[] =
 };
 static_assert((oCOUNTOF(sTESTuri_make_absolute) % 2) == 0, "sTESTuri_make_absolute must be even so it can be divided into two threads");
 
-static const uri sTESTuri_make_absolute_base2("file://DATA/Test/Scenes/TestTextureSet.xml");
 static const URI_RESOLVE sTESTuri_make_absolute2[] = 
 {
 	{ "/test.xml", "file://DATA/test.xml" },
@@ -231,7 +229,6 @@ static const URI_RESOLVE sTESTuri_make_absolute2[] =
 	{ "http://DATA2/test.xml", "http://DATA2/test.xml" },
 };
 
-static const uri sTESTuri_make_absolute_base3("file:///c:/folder/file.ext");
 static const URI_RESOLVE sTESTuri_make_absolute3[] = 
 {
 	// http://tools.ietf.org/html/rfc3986#section-5.3
@@ -274,6 +271,8 @@ static void thread_proc(const char* _Name, fn_t _Test, std::exception_ptr* _pExc
 
 static void TESTuri_make_absolute(size_t _Start, size_t _NumResolves)
 {
+	const uri sTESTuri_make_absolute_base("http://a/b/c/d;p?q");
+
 	for (size_t i = _Start; i < _NumResolves; i++)
 	{
 		const auto& t = sTESTuri_make_absolute[i];
@@ -296,6 +295,8 @@ static void TESTuri_make_absolute1b()
 
 static void TESTuri_make_absolute2()
 {
+	const uri sTESTuri_make_absolute_base2("file://DATA/Test/Scenes/TestTextureSet.xml");
+
 	oFORI(i, sTESTuri_make_absolute2)
 	{
 		const auto& t = sTESTuri_make_absolute2[i];
@@ -307,6 +308,8 @@ static void TESTuri_make_absolute2()
 
 static void TESTuri_make_absolute3()
 {
+	const uri sTESTuri_make_absolute_base3("file:///c:/folder/file.ext");
+
 	oFORI(i, sTESTuri_make_absolute3)
 	{
 		const auto& t = sTESTuri_make_absolute3[i];
@@ -315,8 +318,6 @@ static void TESTuri_make_absolute3()
 		oCHECK(u == r, "fail(%d) (absolute3): %s + %s != %s", i, sTESTuri_make_absolute_base3.c_str(), t.Ref, t.Resolved);
 	}
 }
-
-static const uri sTESTuri_make_relative_base("file://DATA/Test/Scenes/TestTextureSet.xml");
 
 static const URI_RESOLVE sTESTuri_make_relative[] = 
 {
@@ -334,6 +335,8 @@ static const URI_RESOLVE sTESTuri_make_relative[] =
 
 static void TESTuri_make_relative()
 {
+	const uri sTESTuri_make_relative_base("file://DATA/Test/Scenes/TestTextureSet.xml");
+
 	oFORI(i, sTESTuri_make_relative)
 	{
 		const auto& t = sTESTuri_make_relative[i];
@@ -359,14 +362,6 @@ static void TESTuri_replace()
 
 void TESTuri()
 {
-//
-//Tests\TESTuri.cpp(333): Trace: TESTuri_parts in 5.677 s
-//Tests\TESTuri.cpp(335): Trace: TESTuri_absolute in 1.550 s
-//Tests\TESTuri.cpp(337): Trace: TESTuri_same_document in 5.043 s
-//Tests\TESTuri.cpp(339): Trace: TESTuri_make_absolute in 16.682 s
-//Tests\TESTuri.cpp(341): Trace: TESTuri_make_relative in 3.158 s
-//Tests\TESTuri.cpp(343): Trace: TESTuri_replace in 1.023 s
-
 	const char* Names[] = 
 	{
 		"TESTuri_parts",

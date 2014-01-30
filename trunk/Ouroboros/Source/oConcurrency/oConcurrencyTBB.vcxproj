@@ -19,31 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\TESTatof.cpp" />
-    <ClCompile Include="tests\TESTcompression.cpp" />
-    <ClCompile Include="tests\TESTconcurrent_index_allocator.cpp" />
-    <ClCompile Include="tests\TESTconcurrent_linear_allocator.cpp" />
-    <ClCompile Include="tests\TESTcountdown_latch.cpp" />
-    <ClCompile Include="Tests\TESTcsv.cpp" />
-    <ClCompile Include="tests\TESTdate.cpp" />
-    <ClCompile Include="Tests\TESTfourcc.cpp" />
-    <ClCompile Include="tests\TESTfuture.cpp" />
-    <ClCompile Include="Tests\TESTini.cpp" />
-    <ClCompile Include="Tests\TESTjson.cpp" />
-    <ClCompile Include="tests\TESTparallel_for.cpp" />
-    <ClCompile Include="Tests\TESTpath.cpp" />
-    <ClCompile Include="tests\TESTthreadpool.cpp" />
-    <ClCompile Include="tests\TESTtlsf_allocator.cpp" />
-    <ClCompile Include="Tests\TESTuri.cpp" />
-    <ClCompile Include="Tests\TESTxml.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\Include\oBase\tests\oBaseTests.h" />
+    <ClCompile Include="concurrency_tbb.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F02DF42C-54F3-4D80-B233-1D310B41917C}</ProjectGuid>
-    <RootNamespace>oBaseTests
-    </RootNamespace>
+    <ProjectGuid>{D368FE7A-1375-4402-BDC6-955275B5E939}</ProjectGuid>
+    <RootNamespace>oConcurrencyTBB</RootNamespace>
     <SccProjectName>
     </SccProjectName>
     <SccLocalPath>
@@ -69,6 +49,7 @@
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvs\Properties\Release32.props" />
@@ -143,4 +124,5 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

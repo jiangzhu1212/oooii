@@ -27,6 +27,4 @@
 #include <oBase/all.h>
 #include <oBase/all_libc.h>
 #include <oCore/all.h>
-#include <oBasis/all.h>
-#include <oPlatform/all.h>
 #endif

@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBasis/oDispatchQueueGlobal.h>
 #include <oBasis/oDispatchQueueGlobalT.h>
-#include <oCore/scheduler.h>
+#include <oBase/concurrency.h>
 
 struct oDispatchQueueGlobal_Impl
 {
@@ -45,7 +45,7 @@ struct oDispatchQueueGlobal_Impl
 
 	void Issue(const oTASK& _Task) threadsafe
 	{
-		ouro::scheduler::dispatch(_Task);
+		ouro::dispatch(_Task);
 	}
 private:
 	oRefCount RefCount;

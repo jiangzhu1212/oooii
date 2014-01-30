@@ -24,20 +24,19 @@
  **************************************************************************/
 #include <oBase/assert.h>
 #include <oBase/byte.h>
+#include <oBase/concurrency.h>
 #include <oBase/finally.h>
 #include <oBase/fixed_string.h>
 #include <oBase/threadpool.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <oCore/thread_traits.h>
-#include <oConcurrency/tests/oConcurrencyTests.h>
 #include <atomic>
+#include <oBase/tests/oBaseTests.h>
 
 #include "../../test_services.h"
 
-using namespace ouro;
-
-namespace oConcurrency {
+namespace ouro {
 	namespace tests {
 
 template<typename ThreadpoolT> void test_basics(ThreadpoolT& t)
@@ -291,4 +290,4 @@ void TESTthreadpool_perf(test_services& _Services)
 }
 
 	} // namespace tests
-} // namespace oConcurrency
+} // namespace ouro

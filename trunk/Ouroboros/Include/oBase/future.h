@@ -24,9 +24,9 @@
  **************************************************************************/
 // An approximation of C++11's std::future but with dangling calls for a client 
 // lib to implement. GCC Source, VS2010, just::thread: all implement std::async 
-// as a right-now-alloc-a-thread-and-exec-task style system. Such implementations 
-// have a lot more overhead than a threadpool so reimplement future here with 
-// some dangling interface usage so that a work-stealing threadpool can be 
+// as a right-now-alloc-a-thread-and-exec-task style system. Such implementa-
+// tions have a lot more overhead than a threadpool so reimplement future here 
+// with some dangling interface usage so that a work-stealing threadpool can be 
 // implemented to improve performance.
 
 #pragma once
@@ -34,7 +34,7 @@
 #define oBase_future_h
 
 #include <oBase/callable.h>
-#include <oBase/task_group.h>
+#include <oBase/concurrency.h>
 
 #include <atomic>
 #include <chrono>
@@ -186,7 +186,7 @@ namespace future_detail {
 
 		void commit_to_task(const std::function<void()>& _Task)
 		{
-			Task = task_group::make();
+			Task = make_task_group();
 			Task->run(_Task);
 		}
 

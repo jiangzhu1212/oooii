@@ -28,7 +28,6 @@
     <ClCompile Include="filesystem_monitor.cpp" />
     <ClCompile Include="module.cpp" />
     <ClCompile Include="mutex.cpp" />
-    <ClCompile Include="ouro_scheduler.cpp" />
     <ClCompile Include="page_allocator.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -39,10 +38,8 @@
     <ClCompile Include="process.cpp" />
     <ClCompile Include="process_heap.cpp" />
     <ClCompile Include="reporting.cpp" />
-    <ClCompile Include="scheduler.cpp" />
     <ClCompile Include="serial_port.cpp" />
     <ClCompile Include="system.cpp" />
-    <ClCompile Include="tbb_scheduler.cpp" />
     <ClCompile Include="thread_traits.cpp" />
     <ClCompile Include="winmain.cpp" />
     <ClCompile Include="win_com.cpp" />
@@ -73,7 +70,6 @@
     <ClInclude Include="..\..\Include\oCore\process_heap.h" />
     <ClInclude Include="..\..\Include\oCore\process_stats_monitor.h" />
     <ClInclude Include="..\..\Include\oCore\reporting.h" />
-    <ClInclude Include="..\..\Include\oCore\scheduler.h" />
     <ClInclude Include="..\..\Include\oCore\serial_port.h" />
     <ClInclude Include="..\..\Include\oCore\system.h" />
     <ClInclude Include="..\..\Include\oCore\thread_traits.h" />
@@ -88,9 +84,7 @@
     <ClInclude Include="..\..\Include\oCore\windows\win_util.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_version.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_winsock.h" />
-    <ClInclude Include="ouro_scheduler.h" />
     <ClInclude Include="pch.h" />
-    <ClInclude Include="tbb_scheduler.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{7DC758B0-32CF-4BBC-ABDE-0EB53B9EF93C}</ProjectGuid>

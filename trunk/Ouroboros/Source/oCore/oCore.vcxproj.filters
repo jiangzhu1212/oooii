@@ -102,15 +102,6 @@
     <ClCompile Include="mutex.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tbb_scheduler.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="ouro_scheduler.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="scheduler.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">
@@ -201,15 +192,6 @@
       <Filter>oCore</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\mutex.h">
-      <Filter>oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="ouro_scheduler.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="tbb_scheduler.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCore\scheduler.h">
       <Filter>oCore</Filter>
     </ClInclude>
   </ItemGroup>

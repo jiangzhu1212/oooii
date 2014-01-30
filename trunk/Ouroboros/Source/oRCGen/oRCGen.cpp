@@ -125,8 +125,8 @@ int main(int argc, const char* argv[])
 		unsigned int Revision = opt.Revision;
 		if (opt.AutoRevision)
 		{
-			auto scc = make_scc(scc_protocol::svn, std::bind(ouro::system::spawn_for, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
-			path DevPath = ouro::filesystem::dev_path();
+			auto scc = make_scc(scc_protocol::svn, std::bind(system::spawn_for, std::placeholders::_1, std::placeholders::_2, false, std::placeholders::_3));
+			path DevPath = filesystem::dev_path();
 			printf("scc");
 			lstring RevStr;
 			try { Revision = scc->revision(DevPath); }
@@ -157,7 +157,7 @@ int main(int argc, const char* argv[])
 		if (opt.Copyright) sncatf(s, "#define oRC_COPYRIGHT \"%s\"\n", opt.Copyright);
 		if (opt.Description) sncatf(s, "#define oRC_DESCRIPTION \"%s\"\n", opt.Description);
 
-		ouro::filesystem::save(opt.Output, s, s.length(), ouro::filesystem::save_option::text_write);
+		filesystem::save(opt.Output, s, s.length(), filesystem::save_option::text_write);
 	}
 
 	catch (std::exception& e)
