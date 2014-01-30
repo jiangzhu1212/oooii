@@ -36,6 +36,7 @@
 #include <oBase/assert.h>
 #include <oCore/process.h>
 #include <oCore/process_stats_monitor.h>
+#include <oCore/scheduler.h>
 #include <oCore/system.h>
 #include <oCore/thread_traits.h>
 
@@ -65,6 +66,11 @@ public:
 	void end_thread() override
 	{
 		core_thread_traits::end_thread();
+	}
+
+	void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task) override
+	{
+		scheduler::parallel_for(_Begin, _End, _Task);
 	}
 
 	char* test_root_path(char* _StrDestination, size_t _SizeofStrDestination) const override

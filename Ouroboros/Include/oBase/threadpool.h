@@ -30,6 +30,7 @@
 
 #include <oBase/backoff.h>
 #include <oBase/countdown_latch.h>
+#include <atomic>
 #include <condition_variable>
 #include <deque>
 #include <exception>
@@ -249,6 +250,7 @@ public:
 	typedef Alloc allocator_type;
 	typedef threadpool<Traits, Alloc> threadpool_type;
 	task_group(threadpool_type& _Threadpool);
+	~task_group();
 
 	// Run a task as part of this task group
 	void run(const std::function<void()>& _Task);
@@ -257,22 +259,40 @@ public:
 	// waiting, this work steals.
 	void wait();
 
+	// Cancels executing of all pending tasks in this group. If a task has already
+	// executed, then it will be complete.
+	void cancel();
+
+	// Returns true if in the canceling state. The state is set on a call to cancel()
+	// and is reset at the end of a wait.
+	bool is_canceling() { return Canceling; }
+
 private:
 	threadpool_type& Threadpool;
 	ouro::countdown_latch Latch;
+	std::atomic_bool Canceling;
 };
 
 template<typename Traits, typename Alloc>
 task_group<Traits, Alloc>::task_group(threadpool_type& _Threadpool)
 	: Threadpool(_Threadpool)
 	, Latch(1)
-{}
+{ Canceling = false; }
+
+template<typename Traits, typename Alloc>
+task_group<Traits, Alloc>::~task_group()
+{
+	wait();
+}
 
 template<typename Traits, typename Alloc>
 void task_group<Traits, Alloc>::run(const std::function<void()>& _Task)
 {
-	Latch.reference();
-	Threadpool.dispatch([&,_Task] { _Task(); Latch.release(); });
+	if (!Canceling)
+	{
+		Latch.reference();
+		Threadpool.dispatch([&,this,_Task] { if (!this->Canceling) { _Task(); } Latch.release(); });
+	}
 }
 
 template<typename Traits, typename Alloc>
@@ -304,6 +324,7 @@ void task_group<Traits, Alloc>::wait()
 	}
 
 	Latch.reset(1); // allow task group to be resued
+	Canceling.store(false);
 }
 
 template<typename Traits, typename Alloc>
