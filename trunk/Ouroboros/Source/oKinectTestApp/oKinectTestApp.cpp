@@ -42,6 +42,7 @@
 #include <windows.h>
 
 using namespace ouro;
+using namespace ouro::windows::gdi;
 
 typedef std::array<sstring, 2> head_messages_t;
 
@@ -178,7 +179,7 @@ private:
 		bool Playing;
 		bool Running;
 
-		oGDIScopedObject<HFONT> hFont;
+		scoped_hfont hFont;
 	private:
 		oKinectWindow(const oKinectWindow&);
 		const oKinectWindow& operator=(const oKinectWindow&);
@@ -186,8 +187,8 @@ private:
 
 	std::vector<oKinectWindow> KinectWindows;
 
-	oGDIScopedObject<HPEN> hKinectPen;
-	oGDIScopedObject<HBRUSH> hKinectBrush;
+	scoped_hpen hKinectPen;
+	scoped_hbrush hKinectBrush;
 
 	intrusive_ptr<threadsafe oStreamMonitor> StreamMonitor;
 	intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
@@ -360,14 +361,14 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 	, const head_messages_t& _HeadMessages)
 {
 	const RECT rTarget = oWinRectWH(int2(0,0), _ClientSize);
-	oGDIScopedOffscreen hDC(_hWnd);
-	oGDIScopedSelect ScopedSelectBrush(hDC, hKinectBrush);
-	oGDIScopedSelect ScopedSelectPen(hDC, hKinectPen);
+	scoped_offscreen hDC(_hWnd);
+	scoped_select ScopedSelectBrush(hDC, hKinectBrush);
+	scoped_select ScopedSelectPen(hDC, hKinectPen);
 	oGDIDrawKinect(hDC, rTarget, oKINECT_FRAME_COLOR, oGDI_KINECT_DRAW_SKELETON|oGDI_KINECT_DRAW_CLIPPING, _pKinect);
 
 	// Draw boxes and some HUD info
 	{
-		oGDIScopedSelect SelFont(hDC, _hFont);
+		scoped_select SelFont(hDC, _hFont);
 		ouro::font_info fd;
 		oGDIGetFontDesc(_hFont, &fd);
 

@@ -9,6 +9,7 @@
 #include <oGUI/msgbox_reporting.h>
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStream.h>
+#include <oGUI/Windows/win_gdi.h>
 #include <oGUI/Windows/oGDI.h>
 #include "resource.h"
 
@@ -54,7 +55,7 @@ void InitEnv()
 	//
 	// @tony: TODO: FIND OUT - why can DllMain execute in a not-main thread?
 
-	ouro::ensure_scheduler_initialized();
+	ensure_scheduler_initialized();
 
 	oTRACEA("Aero is %sactive", system::uses_gpu_compositing() ? "" : "in");
 	oTRACE("Remote desktop is %sactive", system::is_remote_session() ? "" : "in");
@@ -87,8 +88,8 @@ void InitEnv()
 	}
 
 #if defined(WIN64) || defined(WIN32)
-	oGDIScopedObject<HICON> hIcon = oGDILoadIcon(IDI_APPICON);
-	console::icon((ouro::icon_handle)(HICON)hIcon);
+	windows::gdi::scoped_hicon hIcon = oGDILoadIcon(IDI_APPICON);
+	console::icon((icon_handle)(HICON)hIcon);
 #endif
 }
 

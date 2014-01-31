@@ -401,7 +401,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 		case MENU_FILE_OPEN:
 		{
 			ouro::path path;
-			if (oWinDialogGetOpenPath(path, "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
+			if (windows::common_dialog::open_path(path, "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
 				oTRACE("Open %s", path.c_str());
 			else
 				oTRACE("Open dialog canceled.");
@@ -414,7 +414,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 		case MENU_FILE_SAVEAS:
 		{
 			ouro::path path;
-			if (oWinDialogGetSavePath(path, "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
+			if (windows::common_dialog::save_path(path, "TESTWindowUI", "Source Files|*.cpp|Header Files|*.h", _hWnd))
 				oTRACE("SaveAs %s", path.c_str());
 			else
 				oTRACE("SaveAs dialog canceled.");
@@ -435,7 +435,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 		{
 			ouro::color c = ouro::Red;
 
-			if (!oWinDialogGetColor(&c, _hWnd))
+			if (!windows::common_dialog::pick_color(&c, _hWnd))
 				ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "No color!");
 
 			else
@@ -452,7 +452,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			ouro::color c = ouro::Red;
 			LOGFONT lf = {0};
 			GetObject((HFONT)GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf);
-			if (!oWinDialogGetFont(&lf, &c, _hWnd))
+			if (!windows::common_dialog::pick_font(&lf, &c, _hWnd))
 				ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "No color!");
 
 			else

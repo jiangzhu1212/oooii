@@ -28,10 +28,12 @@
 #ifdef oHAS_KINECT_SDK
 
 #include <oCore/windows/win_error.h>
+#include <oGUI/windows/win_gdi.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <NuiApi.h>
 
 using namespace ouro;
+using namespace ouro::windows::gdi;
 
 static const int2 kNoDraw = int2(oDEFAULT, oDEFAULT);
 
@@ -91,10 +93,10 @@ static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const ouro::input::
 	const int2 Dimensions = oWinRectSize(_rTarget);
 	const int2 ClippingDimensions = int2(float2(Dimensions) * 0.04f);
 
-	oGDIScopedObject<HBRUSH> Hatch(CreateHatchBrush(HS_BDIAGONAL, oGDIGetBrushColor(oGDIGetBrush(_hDC))));
-	oGDIScopedSelect SelectHatch(_hDC, Hatch);
-	oGDIScopedBkMode TransparentBk(_hDC, TRANSPARENT);
-	oGDIScopedSelect SelectNoPen(_hDC, GetStockObject(NULL_PEN));
+	scoped_hbrush Hatch(CreateHatchBrush(HS_BDIAGONAL, oGDIGetBrushColor(oGDIGetBrush(_hDC))));
+	scoped_select SelectHatch(_hDC, Hatch);
+	scoped_bk_mode TransparentBk(_hDC, TRANSPARENT);
+	scoped_select SelectNoPen(_hDC, GetStockObject(NULL_PEN));
 
 	if (_Clipping.left)
 	{
@@ -297,7 +299,7 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	else
 	{
 		RECT r = oWinRect(SSMin, SSMax);
-		oGDIScopedSelect NoFill(_hDC, GetStockObject(NULL_BRUSH));
+		scoped_select NoFill(_hDC, GetStockObject(NULL_BRUSH));
 		oGDIDrawBox(_hDC, r);
 	}
 }

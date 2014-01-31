@@ -35,6 +35,7 @@
 #include "resource.h"
 
 using namespace ouro;
+using namespace ouro::windows::gdi;
 using namespace std;
 
 oRTTI_ENUM_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oGESTURE_VISUALIZATION)
@@ -137,10 +138,10 @@ private:
 
 	mutex_t DeviceIconMutex;
 
-	oGDIScopedObject<HFONT> hFont;
-	oGDIScopedObject<HPEN> hBonePen;
-	oGDIScopedObject<HBRUSH> hBoneBrush;
-	oGDIScopedObject<HBRUSH> hBlankBG;
+	scoped_hfont hFont;
+	scoped_hpen hBonePen;
+	scoped_hbrush hBoneBrush;
+	scoped_hbrush hBlankBG;
 
 	// timer only executes if the version matches expectation
 	oKINECT_STATUS_DRAW_STATE LastSetTimerState;
@@ -466,16 +467,16 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 		HDC hDC = (HDC)_hDC;
 		const RECT rTarget = oWinRect(ouro::resolve_rect(oRECT(oRECT::pos_size, int2(0,0), _ClientSize), VizDesc.Position, VizDesc.Size, VizDesc.Alignment, true));
 			
-		oGDIScopedSelect ScopedSelectBrush(hDC, hBoneBrush);
-		oGDIScopedSelect ScopedSelectPen(hDC, hBonePen);
+		scoped_select ScopedSelectBrush(hDC, hBoneBrush);
+		scoped_select ScopedSelectPen(hDC, hBonePen);
 
 		oGDIDrawBox(hDC, oWinRect(rTarget.left, rTarget.top, rTarget.right + 1, rTarget.bottom + 1));
-		oGDIScopedClipRegion SelectClipRegion(hDC, rTarget);
+		scoped_clip_region SelectClipRegion(hDC, rTarget);
 		oGDIDrawKinect(hDC, rTarget, FrameType, KinectDrawFlags, Kinect);
 
 		// Draw boxes and some HUD info
 		{
-			oGDIScopedSelect SelFont(hDC, hFont);
+			scoped_select SelFont(hDC, hFont);
 			ouro::font_info fd;
 			oGDIGetFontDesc(hFont, &fd);
 
@@ -517,14 +518,14 @@ void oGestureManagerImpl::GDIDrawNoKinect(ouro::draw_context_handle _hDC, const 
 	const RECT rTarget = oWinRect(ouro::resolve_rect(oRECT(oRECT::pos_size, int2(0,0), _ClientSize), VizDesc.Position, VizDesc.Size, VizDesc.Alignment, true));
 
 	{
-		oGDIScopedSelect ScopedSelectBrush(hDC, hBlankBG);
+		scoped_select ScopedSelectBrush(hDC, hBlankBG);
 		oGDIDrawBox(hDC, oWinRect(rTarget.left, rTarget.top, rTarget.right + 1, rTarget.bottom + 1));
 	}
 
-	oGDIScopedClipRegion SelectClipRegion(hDC, rTarget);
-	oGDIScopedSelect ScopedSelectBrush(hDC, hBoneBrush);
-	oGDIScopedSelect ScopedSelectPen(hDC, hBonePen);
-	oGDIScopedSelect ScopedSelFont(hDC, hFont);
+	scoped_clip_region SelectClipRegion(hDC, rTarget);
+	scoped_select ScopedSelectBrush(hDC, hBoneBrush);
+	scoped_select ScopedSelectPen(hDC, hBonePen);
+	scoped_select ScopedSelFont(hDC, hFont);
 
 	ouro::text_info td;
 	td.position = float2(oWinRectPosition(rTarget));

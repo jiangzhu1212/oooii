@@ -40,6 +40,7 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinStatusBar.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinWindowing.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\win_as_string.h" />
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -69,6 +70,7 @@
     <ClCompile Include="progress_bar.cpp" />
     <ClCompile Include="window.cpp" />
     <ClCompile Include="win_as_string.cpp" />
+    <ClCompile Include="win_gdi.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{5461DA23-F040-4979-A492-E23B26D87163}</ProjectGuid>

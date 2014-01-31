@@ -29,369 +29,9 @@
 
 #include <oBase/color.h>
 #include <oGUI/oGUI.h>
-#include <oGUI/Windows/oWinWindowing.h>
-#include <oGUI/Windows/oWinRect.h>
+#include <oGUI/Windows/win_gdi.h>
 #include <oSurface/buffer.h>
 #include <atomic>
-
-// For functions that take logical height. Point size is like what appears in 
-// most Windows API.
-int oGDIPointToLogicalHeight(HDC _hDC, int _Point);
-int oGDIPointToLogicalHeight(HDC _hDC, float _Point);
-
-// Goes the opposite way of oGDIPointToLogicalHeight() and returns point size
-int oGDILogicalHeightToPoint(HDC _hDC, int _Height);
-float oGDILogicalHeightToPointF(HDC _hDC, int _Height);
-
-// extra casting is here in case type is std::atomic<some_type>
-#define oDEFINE_GDI_BOOL_CAST_OPERATORS(_Type, _Member) \
-	operator bool() { return !!(_Type)_Member; } \
-	operator bool() const { return !!(_Type)_Member; } \
-	operator bool() volatile { return !!(_Type)_Member; } \
-	operator bool() const volatile { return !!(_Type)_Member; } \
-	operator _Type() { return (_Type)_Member; } \
-	operator _Type() const { return (_Type)_Member; } \
-	operator _Type() volatile { return (_Type)_Member; } \
-	operator _Type() const volatile { return (_Type)_Member; }
-
-#define oDEFINE_GDI_MOVE_PTR(_Name) do { _Name = _That._Name; _That._Name = nullptr; } while (false)
-
-class oGDIScopedSelect
-{
-	HDC hDC;
-	HGDIOBJ hOldObj;
-public:
-	oGDIScopedSelect() : hDC(nullptr), hOldObj(nullptr) {}
-	oGDIScopedSelect(HDC _hDC, HGDIOBJ _hObj) : hDC(_hDC) { hOldObj = SelectObject(hDC, _hObj); }
-	oGDIScopedSelect(oGDIScopedSelect&& _That) { operator=(std::move(_That)); }
-	~oGDIScopedSelect() { SelectObject(hDC, hOldObj); }
-	
-	oGDIScopedSelect& operator=(oGDIScopedSelect&& _That)
-	{
-		if (this != &_That)
-		{
-			if (hDC && hOldObj) SelectObject(hDC, hOldObj);
-			oDEFINE_GDI_MOVE_PTR(hDC);
-			oDEFINE_GDI_MOVE_PTR(hOldObj);
-		}
-		return *this;
-	}
-};
-
-class oGDIScopedIcon
-{
-	HICON hIcon;
-	
-	oGDIScopedIcon(const oGDIScopedIcon&);
-	const oGDIScopedIcon& operator=(const oGDIScopedIcon&);
-
-public:
-	oGDIScopedIcon() : hIcon(nullptr) {}
-	~oGDIScopedIcon() { if (hIcon) DestroyIcon(hIcon); }
-	oGDIScopedIcon(HICON _hIcon) : hIcon(_hIcon) {}
-	oGDIScopedIcon(oGDIScopedIcon&& _That) { operator=(_That); }
-	
-	const oGDIScopedIcon& operator=(HICON _hIcon)
-	{
-		if (hIcon) DestroyIcon(hIcon);
-		hIcon = _hIcon;
-		return *this;
-	}
-	
-	const oGDIScopedIcon& operator=(oGDIScopedIcon&& _That)
-	{
-		if (this != &_That)
-		{
-			if (hIcon) DestroyIcon(hIcon);
-			oDEFINE_GDI_MOVE_PTR(hIcon);
-		}
-
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HICON, hIcon);
-};
-
-class oGDIScopedCursor
-{
-	HCURSOR hCursor;
-
-	oGDIScopedCursor(const oGDIScopedCursor& _That);
-	const oGDIScopedCursor& operator=(const oGDIScopedCursor& _That);
-
-public:
-	oGDIScopedCursor() : hCursor(nullptr) {}
-	~oGDIScopedCursor() { if (hCursor) DestroyCursor(hCursor); }
-	oGDIScopedCursor(HCURSOR _hCursor) : hCursor(_hCursor) {}
-	oGDIScopedCursor(oGDIScopedCursor&& _That) { operator=(_That); }
-	
-	const oGDIScopedCursor& operator=(HCURSOR _hCursor)
-	{
-		if (hCursor) DestroyCursor(hCursor);
-		hCursor = _hCursor;
-		return *this;
-	}
-	
-	const oGDIScopedCursor& operator=(oGDIScopedCursor&& _That)
-	{
-		if (hCursor) DestroyCursor(hCursor);
-		oDEFINE_GDI_MOVE_PTR(hCursor);
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HCURSOR, hCursor);
-};
-
-class oGDIScopedGetDC
-{
-	HWND hWnd;
-	HDC hDC;
-
-	oGDIScopedGetDC(const oGDIScopedGetDC&);
-	const oGDIScopedGetDC& operator=(const oGDIScopedGetDC&);
-
-public:
-	oGDIScopedGetDC() : hWnd(nullptr), hDC(nullptr) {}
-	oGDIScopedGetDC(HWND _hWnd) : hWnd(_hWnd), hDC(GetDC(_hWnd)) {}
-	oGDIScopedGetDC(oGDIScopedGetDC&& _That) { operator=(_That); }
-	~oGDIScopedGetDC() { if (hWnd && hDC) ReleaseDC(hWnd, hDC); }
-
-	oGDIScopedGetDC& operator=(oGDIScopedGetDC&& _That)
-	{
-		if (this != &_That)
-		{
-			if (hWnd && hDC)
-				ReleaseDC(hWnd, hDC);
-			oDEFINE_GDI_MOVE_PTR(hWnd);
-			oDEFINE_GDI_MOVE_PTR(hDC);
-		}
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
-};
-
-class oGDIScopedDC
-{
-	HDC hDC;
-
-	oGDIScopedDC(const oGDIScopedDC& _That);
-	const oGDIScopedDC& operator=(const oGDIScopedDC& _That);
-
-public:
-	oGDIScopedDC() : hDC(nullptr) {}
-	~oGDIScopedDC() { if (hDC) DeleteDC(hDC); }
-	oGDIScopedDC(HDC _hDC) : hDC(_hDC) {}
-	oGDIScopedDC(oGDIScopedDC&& _That) { operator=(_That); }
-
-	const oGDIScopedDC& operator=(HDC _hDC)
-	{
-		if (hDC) DeleteDC(hDC);
-		hDC = _hDC;
-		return *this;
-	}
-
-	oGDIScopedDC& operator=(oGDIScopedDC&& _That)
-	{
-		if (this != &_That)
-		{
-			if (hDC) DeleteDC(hDC);
-			oDEFINE_GDI_MOVE_PTR(hDC);
-		}
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
-};
-
-class oGDIScopedBltMode
-{
-	HDC hDC;
-	int PrevMode;
-
-	oGDIScopedBltMode(const oGDIScopedBltMode& _That);
-	const oGDIScopedBltMode& operator=(const oGDIScopedBltMode& _That);
-
-public:
-	oGDIScopedBltMode() : hDC(nullptr) {}
-	~oGDIScopedBltMode() { if (hDC) SetStretchBltMode(hDC, PrevMode); }
-	oGDIScopedBltMode(HDC _hDC, int _Mode) : hDC(_hDC), PrevMode(SetStretchBltMode(hDC, _Mode)) {}
-	oGDIScopedBltMode(oGDIScopedBltMode&& _That) { operator=(_That); }
-
-	oGDIScopedBltMode& operator=(oGDIScopedBltMode&& _That)
-	{
-		if (this != &_That)
-		{
-			oDEFINE_GDI_MOVE_PTR(hDC);
-			PrevMode = _That.PrevMode;
-		}
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
-};
-
-class oGDIScopedBkMode
-{
-	HDC hDC;
-	int PrevMode;
-
-	oGDIScopedBkMode(const oGDIScopedBkMode& _That);
-	const oGDIScopedBkMode& operator=(const oGDIScopedBkMode& _That);
-
-public:
-	oGDIScopedBkMode() : hDC(nullptr) {}
-	~oGDIScopedBkMode() { if (hDC) SetStretchBltMode(hDC, PrevMode); }
-	oGDIScopedBkMode(HDC _hDC, int _Mode) : hDC(_hDC), PrevMode(SetBkMode(hDC, _Mode)) {}
-	oGDIScopedBkMode(oGDIScopedBkMode&& _That) { operator=(_That); }
-
-	oGDIScopedBkMode& operator=(oGDIScopedBkMode&& _That)
-	{
-		if (this != &_That)
-		{
-			oDEFINE_GDI_MOVE_PTR(hDC);
-			PrevMode = _That.PrevMode;
-		}
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
-};
-
-class oGDIScopedClipRegion
-{
-	HDC hDC;
-	HRGN PrevRegion;
-
-	oGDIScopedClipRegion(const oGDIScopedBkMode& _That);
-	const oGDIScopedClipRegion& operator=(const oGDIScopedClipRegion& _That);
-
-public:
-	oGDIScopedClipRegion() : hDC(nullptr), PrevRegion(nullptr) {}
-	~oGDIScopedClipRegion() 
-	{
-		// If there was no clip region set before our scoped one, resetting to 
-		// no clip region is done by calling the function with nullptr,
-		// which means we should always call this function (If hDC is valid).
-		if (hDC)
-			SelectClipRgn(hDC, PrevRegion); 
-		if (PrevRegion) 
-			DeleteObject(PrevRegion); 
-	}
-	oGDIScopedClipRegion(HDC _hDC, const RECT& _Region) : hDC(_hDC), PrevRegion(nullptr) 
-	{
-		// Unfortunately it seems that in order to get the currently set clip
-		// region, we first have to create one for GetClipRgn to copy into.
-		// Also see:
-		// http://stackoverflow.com/questions/3478180/correct-usage-of-getcliprgn
-		PrevRegion = CreateRectRgn(0,0,0,0);
-		if (1 != GetClipRgn(hDC, PrevRegion))
-		{
-			// If there was no clip region set, then we have to set PrevRegion
-			// to nullptr so that the destructor will do the correct thing.
-			// So we have to clean up the one we just created.
-			DeleteObject(PrevRegion);
-			PrevRegion = nullptr;
-		}
-		IntersectClipRect(hDC, _Region.left, _Region.top, _Region.right, _Region.bottom);
-	}
-	oGDIScopedClipRegion(oGDIScopedClipRegion&& _That) { operator=(_That); }
-
-	oGDIScopedClipRegion& operator=(oGDIScopedClipRegion&& _That)
-	{
-		if (this != &_That)
-		{
-			oDEFINE_GDI_MOVE_PTR(hDC);
-			oDEFINE_GDI_MOVE_PTR(PrevRegion);
-		}
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
-};
-
-template<typename HGDIOBJType> class oGDIScopedObject
-{
-	std::atomic<HGDIOBJType> hObject;
-
-	oGDIScopedObject(const oGDIScopedObject& _That);
-	const oGDIScopedObject& operator=(const oGDIScopedObject& _That);
-
-public:
-	oGDIScopedObject() : hObject(nullptr) {}
-	oGDIScopedObject(oGDIScopedObject&& _That) { operator=(std::move(_That)); }
-	oGDIScopedObject(HGDIOBJType _hObject) : hObject(_hObject) {}
-	~oGDIScopedObject() { if (hObject.load()) DeleteObject(hObject); }
-	
-	// in the sense that this swaps the internal value and then 
-	// after that's done cleans up the object. This way one thread can assign
-	// null and another thread can test for null and recreate the object as
-	// appropriate
-	const oGDIScopedObject& operator=(HGDIOBJType _hObject)
-	{
-		HGDIOBJType hTemp = (HGDIOBJType)hObject;
-		hObject = _hObject;
-		if (hTemp) DeleteObject(hTemp); 
-		return *this;
-	}
-
-	oGDIScopedObject& operator=(oGDIScopedObject&& _That)
-	{
-		if (this != &_That)
-		{
-			HGDIOBJType hTemp = (HGDIOBJType)_That.hObject;
-			_That.hObject = nullptr;
-			HGDIOBJType hThisTemp = hObject;
-			hObject.exchange(hTemp);
-			if (hThisTemp) DeleteObject(hThisTemp);
-		}
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HGDIOBJType, hObject);
-};
-
-class oGDIScopedOffscreen
-{
-	oGDIScopedGetDC hDCWin;
-	oGDIScopedDC hDCOffscreen;
-	oGDIScopedObject<HBITMAP> hOffscreen;
-	oGDIScopedSelect SelectOffscreen;
-	RECT rClient;
-
-public:
-	oGDIScopedOffscreen() {}
-	oGDIScopedOffscreen(HWND _hWnd)
-		: hDCWin(_hWnd)
-		, hDCOffscreen(CreateCompatibleDC(hDCWin))
-	{
-		oWinGetClientRect(_hWnd, &rClient);
-		hOffscreen = CreateCompatibleBitmap(hDCWin, oWinRectW(rClient), oWinRectH(rClient));
-		SelectOffscreen = std::move(oGDIScopedSelect(hDCOffscreen, hOffscreen));
-	}
-	oGDIScopedOffscreen(oGDIScopedOffscreen&& _That) { operator=(std::move(_That)); }
-	~oGDIScopedOffscreen() { BitBlt(hDCWin, 0, 0, oWinRectW(rClient), oWinRectH(rClient), hDCOffscreen, 0, 0, SRCCOPY); }
-
-	const oGDIScopedOffscreen& operator=(HWND _hWnd)
-	{
-		oGDIScopedOffscreen off(_hWnd);
-		*this = std::move(off);
-	}
-
-	oGDIScopedOffscreen& operator=(oGDIScopedOffscreen&& _That)
-	{
-		if (this != &_That)
-		{
-			hDCWin = std::move(_That.hDCWin);
-			hDCOffscreen = std::move(_That.hDCOffscreen);
-			hOffscreen = std::move(_That.hOffscreen);
-			rClient = std::move(_That.rClient);
-		}
-		return *this;
-	}
-
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDCOffscreen);
-};
 
 // _____________________________________________________________________________
 // Bitmap APIs
@@ -410,7 +50,7 @@ surface::info get_info(const BITMAPV4HEADER& _Header);
 inline surface::info get_info(const BITMAPINFO& _Info) { return get_info(_Info.bmiHeader); }
 
 // Creates a bitmap with the contents of the specified buffer.
-oGDIScopedObject<HBITMAP> make_bitmap(const surface::buffer* _pBuffer);
+scoped_hbitmap make_bitmap(const surface::buffer* _pBuffer);
 
 // Copy the contents of a bitmap to the specified buffer.
 void memcpy2d(void* _pDestination, size_t _DestinationPitch, HBITMAP _hBmp, size_t _NumRows, bool _FlipVertically = false);
@@ -433,6 +73,78 @@ void stretch_bits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, su
 
 // Returns the width and height of the bitmap in the _hDC
 int2 get_bitmap_dimensions(HDC _hDC);
+
+		} // namespace gdi
+	} // namespace windows
+} // namespace ouro
+
+namespace ouro {
+	namespace windows {
+		namespace gdi {
+
+class selection_box
+{
+	// Like when you drag to select several files in Windows Explorer. This uses
+	// SetCapture() and ReleaseCapture() on hParent to retain mouse control while
+	// drawing the selection box.
+
+	selection_box(const selection_box&);
+	const selection_box& operator=(const selection_box&);
+
+public:
+	struct DESC
+	{
+		DESC()
+			: hParent(nullptr)
+			, Fill(color(DodgerBlue, 0.33f))
+			, Border(DodgerBlue)
+			, EdgeRoundness(0)
+			, UseOffscreenRender(false)
+		{}
+
+		HWND hParent;
+		color Fill; // can have alpha value
+		color Border;
+		int EdgeRoundness;
+
+		// DXGI back-buffers don't like rounded edge rendering, so copy contents
+		// to an offscreen HBITMAP, draw the rect and resolve it back to the main
+		// target. Even if this is true, offscreen render only occurs if there is
+		// edge roundness.
+		bool UseOffscreenRender;
+	};
+
+	selection_box();
+	selection_box(selection_box&& _That) { operator=(_That); }
+	const selection_box& operator=(selection_box&& _That);
+
+	void SetDesc(const DESC& _Desc);
+	void GetDesc(DESC* _pDesc);
+
+	// returns true if drawing is required by the state (between mouse down and 
+	// mouse up events). This is useful if there's non-trivial effort in 
+	// extracting the HDC that draw will use.
+	bool IsSelecting() const;
+
+	void Draw(HDC _hDC);
+	void OnResize(const int2& _NewParentSize);
+	void OnMouseDown(const int2& _MousePosition);
+	void OnMouseMove(const int2& _MousePosition);
+	void OnMouseUp();
+
+private:
+	scoped_hpen hPen;
+	scoped_hbrush hBrush;
+	scoped_hbrush hNullBrush;
+	scoped_hbitmap hOffscreenBMP;
+
+	int2 MouseDownAt;
+	int2 MouseAt;
+	float Opacity;
+	bool Selecting;
+
+	DESC Desc;
+};
 
 		} // namespace gdi
 	} // namespace windows
@@ -464,11 +176,6 @@ inline HICON oGDILoadIcon(int _ResourceID) { return (HICON)LoadImage(GetModuleHa
 
 // _____________________________________________________________________________
 // Other APIs
-
-inline float oPointToDIP(float _Point) { return 96.0f * _Point / 72.0f; }
-inline float oDIPToPoint(float _DIP) { return 72.0f * _DIP / 96.0f; }
-
-float2 oGDIGetDPIScale(HDC _hDC);
 
 bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1);
 
@@ -513,70 +220,5 @@ const char* oGDIGetCharSet(BYTE _tmCharSet);
 
 // _____________________________________________________________________________
 // More complex utilities
-
-class oGDISelectionBox
-{
-	// Like when you drag to select several files in Windows Explorer. This uses
-	// SetCapture() and ReleaseCapture() on hParent to retain mouse control while
-	// drawing the selection box.
-
-	oGDISelectionBox(const oGDISelectionBox&);
-	const oGDISelectionBox& operator=(const oGDISelectionBox&);
-
-public:
-	struct DESC
-	{
-		DESC()
-			: hParent(nullptr)
-			, Fill(ouro::color(ouro::DodgerBlue, 0.33f))
-			, Border(ouro::DodgerBlue)
-			, EdgeRoundness(0)
-			, UseOffscreenRender(false)
-		{}
-
-		HWND hParent;
-		ouro::color Fill; // can have alpha value
-		ouro::color Border;
-		int EdgeRoundness;
-
-		// DXGI back-buffers don't like rounded edge rendering, so copy contents
-		// to an offscreen HBITMAP, draw the rect and resolve it back to the main
-		// target. Even if this is true, offscreen render only occurs if there is
-		// edge roundness.
-		bool UseOffscreenRender;
-	};
-
-	oGDISelectionBox();
-	oGDISelectionBox(oGDISelectionBox&& _That) { operator=(_That); }
-	const oGDISelectionBox& operator=(oGDISelectionBox&& _That);
-
-	void SetDesc(const DESC& _Desc);
-	void GetDesc(DESC* _pDesc);
-
-	// returns true if drawing is required by the state (between mouse down and 
-	// mouse up events). This is useful if there's non-trivial effort in 
-	// extracting the HDC that draw will use.
-	bool IsSelecting() const;
-
-	void Draw(HDC _hDC);
-	void OnResize(const int2& _NewParentSize);
-	void OnMouseDown(const int2& _MousePosition);
-	void OnMouseMove(const int2& _MousePosition);
-	void OnMouseUp();
-
-private:
-	oGDIScopedObject<HPEN> hPen;
-	oGDIScopedObject<HBRUSH> hBrush;
-	oGDIScopedObject<HBRUSH> hNullBrush;
-	oGDIScopedObject<HBITMAP> hOffscreenBMP;
-
-	int2 MouseDownAt;
-	int2 MouseAt;
-	float Opacity;
-	bool Selecting;
-
-	DESC Desc;
-};
-
 
 #endif

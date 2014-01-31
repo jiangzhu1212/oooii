@@ -32,28 +32,6 @@ namespace ouro {
 	namespace windows {
 		namespace gdi {
 		
-class scoped_bitmap_dc
-{
-	HDC hDC;
-	HBITMAP hOldBitmap;
-public:
-	scoped_bitmap_dc() : hDC(nullptr), hOldBitmap(nullptr) {}
-	scoped_bitmap_dc(HDC _hDC, HBITMAP _hBitmap) : hDC(CreateCompatibleDC(_hDC)) { hOldBitmap = (HBITMAP)SelectObject(hDC, _hBitmap); }
-	scoped_bitmap_dc(scoped_bitmap_dc&& _That) { operator=(std::move(_That)); }
-	~scoped_bitmap_dc() { if (hDC) { SelectObject(hDC, hOldBitmap); DeleteDC(hDC); } }
-	scoped_bitmap_dc& operator=(scoped_bitmap_dc&& _That)
-	{
-		if (this != &_That)
-		{
-			if (hDC && hOldBitmap) SelectObject(hDC, hOldBitmap);
-			oDEFINE_GDI_MOVE_PTR(hDC);
-			oDEFINE_GDI_MOVE_PTR(hOldBitmap);
-		}
-		return *this;
-	}
-	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
-};
-
 BITMAPINFOHEADER make_header(const surface::info& _SurfaceInfo, bool _TopDown)
 {
 	switch (_SurfaceInfo.format)
@@ -152,7 +130,7 @@ static size_t get_bitmapinfo_size(surface::format _Format)
 	return surface::bits(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
 }
 
-oGDIScopedObject<HBITMAP> make_bitmap(const surface::buffer* _pBuffer)
+scoped_hbitmap make_bitmap(const surface::buffer* _pBuffer)
 {
 	ouro::surface::info si = _pBuffer->get_info();
 
@@ -165,7 +143,7 @@ oGDIScopedObject<HBITMAP> make_bitmap(const surface::buffer* _pBuffer)
 
 void memcpy2d(void* _pDestination, size_t _DestinationPitch, HBITMAP _hBmp, size_t _NumRows, bool _FlipVertically)
 {
-	oGDIScopedGetDC hDC(nullptr);
+	scoped_getdc hDC(nullptr);
 
 	struct BITMAPINFO_FULL
 	{
@@ -194,7 +172,8 @@ void draw_bitmap(HDC _hDC, int _X, int _Y, HBITMAP _hBitmap, DWORD _dwROP)
 	if (!_hDC || !_hBitmap)
 		oTHROW_INVARG0();
 	GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
-	scoped_bitmap_dc hDCBitmap(_hDC, _hBitmap);
+	scoped_compat hDCBitmap(_hDC);
+	scoped_select sel(hDCBitmap, _hBitmap);
 	oVB(BitBlt(_hDC, _X, _Y, Bitmap.bmWidth, Bitmap.bmHeight, hDCBitmap, 0, 0, _dwROP));
 }
 
@@ -204,7 +183,8 @@ void stretch_bitmap(HDC _hDC, int _X, int _Y, int _Width, int _Height, HBITMAP _
 	if (!_hDC || !_hBitmap)
 		oTHROW_INVARG0();
 	GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
-	scoped_bitmap_dc hDCBitmap(_hDC, _hBitmap);
+	scoped_compat hDCBitmap(_hDC);
+	scoped_select sel(hDCBitmap, _hBitmap);
 	oVB(StretchBlt(_hDC, _X, _Y, _Width, _Height, hDCBitmap, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, _dwROP));
 }
 
@@ -215,7 +195,8 @@ void stretch_blend_bitmap(HDC _hDC, int _X, int _Y, int _Width, int _Height, HBI
 	if (!_hDC || !_hBitmap)
 		oTHROW_INVARG0();
 	GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
-	scoped_bitmap_dc hDCBitmap(_hDC, _hBitmap);
+	scoped_compat hDCBitmap(_hDC);
+	scoped_select sel(hDCBitmap, _hBitmap);
 	oVB(AlphaBlend(_hDC, _X, _Y, _Width, _Height, hDCBitmap, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, kBlend));
 }
 
@@ -229,7 +210,7 @@ void stretch_bits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, surf
 	pBMI->bmiHeader = make_header(si, !_FlipVertically);
 	if (bitmapinfoSize != sizeof(BITMAPINFO))
 		fill_monochrone_palette(pBMI->bmiColors);
-	oGDIScopedBltMode Mode(_hDC, HALFTONE);
+	scoped_blt_mode Mode(_hDC, HALFTONE);
 	oVB(StretchDIBits(_hDC, _DestRect.left, _DestRect.top, oWinRectW(_DestRect), oWinRectH(_DestRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY));
 }
 
@@ -246,7 +227,7 @@ void stretch_bits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, su
 	else
 		destRect = _DestRect;
 
-	oGDIScopedGetDC hDC(_hWnd);
+	scoped_getdc hDC(_hWnd);
 	stretch_bits(hDC, destRect, _SourceSize, _SourceFormat, _pSourceBits, _FlipVertically);
 }
 
@@ -274,26 +255,7 @@ int2 get_bitmap_dimensions(HDC _hDC)
 } // namespace ouro
 
 using namespace ouro;
-
-int oGDIPointToLogicalHeight(HDC _hDC, int _Point)
-{
-	return -MulDiv(_Point, GetDeviceCaps(_hDC, LOGPIXELSY), 72);
-}
-
-int oGDILogicalHeightToPoint(HDC _hDC, int _Height)
-{
-	return MulDiv(_Height, 72, GetDeviceCaps(_hDC, LOGPIXELSY));
-}
-
-float oGDILogicalHeightToPointF(HDC _hDC, int _Height)
-{
-	return (_Height * 72.0f) / (float)GetDeviceCaps(_hDC, LOGPIXELSY);
-}
-
-int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
-{
-	return oGDIPointToLogicalHeight(_hDC, static_cast<int>(_Point + 0.5f));
-}
+using namespace ouro::windows::gdi;
 
 void oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow, bool _FlipV)
 {
@@ -450,11 +412,6 @@ HICON oGDIBitmapToIcon(HBITMAP _hBmp)
 	return hIcon;
 }
 
-float2 oGDIGetDPIScale(HDC _hDC)
-{
-	return float2(GetDeviceCaps(_hDC, LOGPIXELSX) / 96.0f, GetDeviceCaps(_hDC, LOGPIXELSY) / 96.0f);
-}
-
 bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1)
 {
 	oVB(MoveToEx(_hDC, _P0.x, _P0.y, nullptr));
@@ -484,11 +441,11 @@ bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness, float _Alpha)
 		return true;
 	
 	HDC hDCBitmap = CreateCompatibleDC(_hDC);
-	oGDIScopedObject<HBITMAP> hBmp(CreateDIBSection(hDCBitmap, (BITMAPINFO*)&bmi, DIB_RGB_COLORS, nullptr, nullptr, 0));
+	scoped_hbitmap hBmp(CreateDIBSection(hDCBitmap, (BITMAPINFO*)&bmi, DIB_RGB_COLORS, nullptr, nullptr, 0));
 
-	oGDIScopedSelect ScopedSelectBmp(hDCBitmap, hBmp);
-	oGDIScopedSelect ScopedSelectPen(hDCBitmap, oGDIGetPen(_hDC));
-	oGDIScopedSelect ScopedSelectBrush(hDCBitmap, oGDIGetBrush(_hDC));
+	scoped_select ScopedSelectBmp(hDCBitmap, hBmp);
+	scoped_select ScopedSelectPen(hDCBitmap, oGDIGetPen(_hDC));
+	scoped_select ScopedSelectBrush(hDCBitmap, oGDIGetBrush(_hDC));
 
 	// Resolve areas around the curved corners so we can to the blend directly
 	// later on. But just do the minimum necessary, don't copy the interior that
@@ -521,28 +478,6 @@ bool oGDIDrawEllipse(HDC _hDC, const RECT& _rBox)
 	oVB(Ellipse(_hDC, _rBox.left, _rBox.top, _rBox.right, _rBox.bottom));
 	return true;
 }
-
-class oGDIScopedTextColor
-{
-	HDC hDC;
-	COLORREF OldTextColor;
-	COLORREF OldBkColor;
-	int OldBkMode;
-public:
-	oGDIScopedTextColor(HDC _hDC, COLORREF _Foreground, COLORREF _Background, int _Alpha)
-		: hDC(_hDC)
-		, OldTextColor(SetTextColor(_hDC, _Foreground))
-		, OldBkColor(SetBkColor(_hDC, _Background))
-		, OldBkMode(SetBkMode(_hDC, _Alpha != 0 ? OPAQUE : TRANSPARENT))
-	{}
-
-	~oGDIScopedTextColor()
-	{
-		SetBkMode(hDC, OldBkMode);
-		SetBkColor(hDC, OldBkColor);
-		SetTextColor(hDC, OldTextColor);
-	}
-};
 
 RECT oGDICalcTextRect(HDC _hDC, const char* _Text)
 {
@@ -613,12 +548,12 @@ static bool oGDIDrawText(HDC _hDC, const ouro::text_info& _Desc, const char* _Te
 	if (sa && any(_Desc.shadow_offset != int2(0,0)))
 	{
 		// If the background is opaque, cast an opaque shadow
-		oGDIScopedTextColor ShadowState(_hDC, RGB(sr,sg,sb), RGB(sr,sg,sb), ba);
+		scoped_text_color ShadowState(_hDC, RGB(sr,sg,sb), RGB(sr,sg,sb), ba);
 		RECT rShadow = oWinRectTranslate(*_pActual, _Desc.shadow_offset);
 		DrawText(_hDC, _Text, -1, &rShadow, uFormat);
 	}
 	
-	oGDIScopedTextColor TextState(_hDC, RGB(r,g,b), RGB(br,bg,bb), ba);
+	scoped_text_color TextState(_hDC, RGB(r,g,b), RGB(br,bg,bb), ba);
 	DrawText(_hDC, _Text, -1, _pActual, uFormat);
 	return true;
 }
@@ -696,9 +631,9 @@ int2 oGDIGetIconSize(HICON _hIcon)
 
 HFONT oGDICreateFont(const ouro::font_info& _Desc)
 {
-	oGDIScopedGetDC hDC(GetDesktopWindow());
+	scoped_getdc hDC(GetDesktopWindow());
 	HFONT hFont = CreateFont(
-		oGDIPointToLogicalHeight(hDC, _Desc.point_size)
+		point_to_logical_heightf(hDC, _Desc.point_size)
 		, 0
 		, 0
 		, 0
@@ -725,8 +660,8 @@ void oGDIGetFontDesc(HFONT _hFont, ouro::font_info* _pDesc)
 	_pDesc->underline = !!lf.lfUnderline;
 	_pDesc->strikeout = !!lf.lfStrikeOut;
 	_pDesc->antialiased = lf.lfQuality != NONANTIALIASED_QUALITY;
-	oGDIScopedGetDC hDC(GetDesktopWindow());
-	_pDesc->point_size = oGDILogicalHeightToPointF(hDC, lf.lfHeight);
+	scoped_getdc hDC(GetDesktopWindow());
+	_pDesc->point_size = logical_height_to_pointf(hDC, lf.lfHeight);
 }
 
 const char* oGDIGetFontFamily(BYTE _tmPitchAndFamily)
@@ -812,7 +747,7 @@ int oGDIEstimatePointSize(int _PixelHeight)
 	return static_cast<int>((_PixelHeight * 36.0f / 48.0f) + 0.5f);
 }
 
-oGDISelectionBox::oGDISelectionBox()
+selection_box::selection_box()
 	: MouseDownAt(0,0)
 	, MouseAt(0,0)
 	, Opacity(0.0f)
@@ -821,7 +756,7 @@ oGDISelectionBox::oGDISelectionBox()
 {
 }
 
-const oGDISelectionBox& oGDISelectionBox::operator=(oGDISelectionBox&& _That)
+const selection_box& selection_box::operator=(selection_box&& _That)
 {
 	if (this != &_That)
 	{
@@ -838,7 +773,7 @@ const oGDISelectionBox& oGDISelectionBox::operator=(oGDISelectionBox&& _That)
 	return *this;
 }
 
-void oGDISelectionBox::SetDesc(const DESC& _Desc)
+void selection_box::SetDesc(const DESC& _Desc)
 {
 	oASSERT(_Desc.hParent, "A valid HWND for a parent window must be specified");
 
@@ -856,17 +791,17 @@ void oGDISelectionBox::SetDesc(const DESC& _Desc)
 	Desc = _Desc;
 }
 
-void oGDISelectionBox::GetDesc(DESC* _pDesc)
+void selection_box::GetDesc(DESC* _pDesc)
 {
 	*_pDesc = Desc;
 }
 
-bool oGDISelectionBox::IsSelecting() const
+bool selection_box::IsSelecting() const
 {
 	return Selecting;	
 }
 
-void oGDISelectionBox::Draw(HDC _hDC)
+void selection_box::Draw(HDC _hDC)
 {
 	if (!Selecting)
 		return;
@@ -892,13 +827,13 @@ void oGDISelectionBox::Draw(HDC _hDC)
 		BitBlt(hTargetDC, SelRect.left, SelRect.top, SelSize.x, SelSize.y, hResolveDC, SelRect.left, SelRect.top, SRCCOPY);
 
 	{
-		oGDIScopedSelect B(hTargetDC, hBrush);
+		scoped_select B(hTargetDC, hBrush);
 		oGDIDrawBox(hTargetDC, SelRect, Desc.EdgeRoundness, Opacity);
 	}
 	
 	{
-		oGDIScopedSelect P(hTargetDC, hPen);
-		oGDIScopedSelect B(hTargetDC, hNullBrush);
+		scoped_select P(hTargetDC, hPen);
+		scoped_select B(hTargetDC, hNullBrush);
 		oGDIDrawBox(hTargetDC, SelRect, Desc.EdgeRoundness, 1.0f);
 	}
 
@@ -906,25 +841,25 @@ void oGDISelectionBox::Draw(HDC _hDC)
 		BitBlt(hResolveDC, SelRect.left, SelRect.top, SelSize.x, SelSize.y, hTargetDC, SelRect.left, SelRect.top, SRCCOPY);
 }
 
-void oGDISelectionBox::OnResize(const int2& _NewParentSize)
+void selection_box::OnResize(const int2& _NewParentSize)
 {
 	// pick up realloc in Draw()
 	hOffscreenBMP = nullptr;
 }
 
-void oGDISelectionBox::OnMouseDown(const int2& _MousePosition)
+void selection_box::OnMouseDown(const int2& _MousePosition)
 {
 	MouseDownAt = MouseAt = _MousePosition;
 	Selecting = true;
 	SetCapture(Desc.hParent);
 }
 
-void oGDISelectionBox::OnMouseMove(const int2& _MousePosition)
+void selection_box::OnMouseMove(const int2& _MousePosition)
 {
 	MouseAt = _MousePosition;
 }
 
-void oGDISelectionBox::OnMouseUp()
+void selection_box::OnMouseUp()
 {
 	Selecting = false;
 	ReleaseCapture();
