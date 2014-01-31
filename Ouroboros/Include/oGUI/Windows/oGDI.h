@@ -409,11 +409,30 @@ surface::info get_info(const BITMAPINFOHEADER& _Header);
 surface::info get_info(const BITMAPV4HEADER& _Header);
 inline surface::info get_info(const BITMAPINFO& _Info) { return get_info(_Info.bmiHeader); }
 
+// Creates a bitmap with the contents of the specified buffer.
+oGDIScopedObject<HBITMAP> make_bitmap(const surface::buffer* _pBuffer);
+
 // Copy the contents of a bitmap to the specified buffer.
 void memcpy2d(void* _pDestination, size_t _DestinationPitch, HBITMAP _hBmp, size_t _NumRows, bool _FlipVertically = false);
 
-// Creates a bitmap with the contents of the specified buffer.
-oGDIScopedObject<HBITMAP> make_bitmap(const surface::buffer* _pBuffer);
+// Draws the specified bitmap to the device context using the ROP operation
+// as described in BitBlt documentation.
+void draw_bitmap(HDC _hDC, int _X, int _Y, HBITMAP _hBitmap, DWORD _dwROP);
+void stretch_bitmap(HDC _hDC, int _X, int _Y, int _Width, int _Height, HBITMAP _hBitmap, DWORD _dwROP);
+void stretch_blend_bitmap(HDC _hDC, int _X, int _Y, int _Width, int _Height, HBITMAP _hBitmap);
+
+// This stretches the source bits directly to fill the specified rectangle in
+// the specified device context.
+void stretch_bits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
+
+// This stretches the source bits directly to fill the specified HWND's client
+// area. This is a nice shortcut when working with cameras that will fill some
+// UI element, or a top-level window.
+void stretch_bits(HWND _hWnd, const int2& _SourceSize, surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
+void stretch_bits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
+
+// Returns the width and height of the bitmap in the _hDC
+int2 get_bitmap_dimensions(HDC _hDC);
 
 		} // namespace gdi
 	} // namespace windows
@@ -423,16 +442,16 @@ oGDIScopedObject<HBITMAP> make_bitmap(const surface::buffer* _pBuffer);
 // pImageBuffer can be NULL, in which case only _pBitmapInfo is filled out.
 // For RECT, either specify a client-space rectangle, or NULL to capture the 
 // window including the frame.
-bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow, bool _FlipV);
+void oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow, bool _FlipV);
 
 // Given an allocator, this will allocate the properly-sized buffer and fill it
 // with the captured window image using the above oGDIScreenCaptureWindow() API.
 // If the buffer is fwritten to a file, it would be a .bmp. This function 
 // internally set *_ppBuffer to nullptr. Later when the allocation happens, 
-// there is still a chance of failure, so whether this succeeds or fails, check
-// *_ppBuffer and if not nullptr, then ensure it is freed to prevent a memory 
+// there is still a chance of failure so if this throws an exception check 
+// *_ppBuffer and if not nullptr then ensure it is freed to prevent a memory 
 // leak.
-bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow, bool _FlipV);
+void oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow, bool _FlipV);
 
 // Use DeleteObject when finished with the returned handle
 HBITMAP oGDIIconToBitmap(HICON _hIcon);
@@ -443,28 +462,11 @@ HICON oGDIBitmapToIcon(HBITMAP _hBmp);
 // Use DestroyIcon when finished with the return handle
 inline HICON oGDILoadIcon(int _ResourceID) { return (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(_ResourceID), IMAGE_ICON, 0, 0, 0); }
 
-// _dwROP is one of the raster operations from BitBlt()
-BOOL oGDIDrawBitmap(HDC _hDC, INT _X, INT _Y, HBITMAP _hBitmap, DWORD _dwROP);
-BOOL oGDIStretchBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap, DWORD _dwROP);
-BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap);
-
-// This stretches the source bits directly to fill the specified rectangle in
-// the specified device context.
-bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
-
-// This stretches the source bits directly to fill the specified HWND's client
-// area. This is a nice shortcut when working with cameras that will fill some
-// UI element, or a top-level window.
-bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
-bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically = true);
-
 // _____________________________________________________________________________
 // Other APIs
 
 inline float oPointToDIP(float _Point) { return 96.0f * _Point / 72.0f; }
 inline float oDIPToPoint(float _DIP) { return 72.0f * _DIP / 96.0f; }
-
-int2 oGDIGetDimensions(HDC _hDC);
 
 float2 oGDIGetDPIScale(HDC _hDC);
 

@@ -27,12 +27,33 @@
 #include <oBase/byte.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinWindowing.h>
-#include <oBasis/oError.h> // @tony fixme
 
 namespace ouro {
 	namespace windows {
 		namespace gdi {
 		
+class scoped_bitmap_dc
+{
+	HDC hDC;
+	HBITMAP hOldBitmap;
+public:
+	scoped_bitmap_dc() : hDC(nullptr), hOldBitmap(nullptr) {}
+	scoped_bitmap_dc(HDC _hDC, HBITMAP _hBitmap) : hDC(CreateCompatibleDC(_hDC)) { hOldBitmap = (HBITMAP)SelectObject(hDC, _hBitmap); }
+	scoped_bitmap_dc(scoped_bitmap_dc&& _That) { operator=(std::move(_That)); }
+	~scoped_bitmap_dc() { if (hDC) { SelectObject(hDC, hOldBitmap); DeleteDC(hDC); } }
+	scoped_bitmap_dc& operator=(scoped_bitmap_dc&& _That)
+	{
+		if (this != &_That)
+		{
+			if (hDC && hOldBitmap) SelectObject(hDC, hOldBitmap);
+			oDEFINE_GDI_MOVE_PTR(hDC);
+			oDEFINE_GDI_MOVE_PTR(hOldBitmap);
+		}
+		return *this;
+	}
+	oDEFINE_GDI_BOOL_CAST_OPERATORS(HDC, hDC);
+};
+
 BITMAPINFOHEADER make_header(const surface::info& _SurfaceInfo, bool _TopDown)
 {
 	switch (_SurfaceInfo.format)
@@ -167,6 +188,87 @@ void memcpy2d(void* _pDestination, size_t _DestinationPitch, HBITMAP _hBmp, size
 	}
 }
 
+void draw_bitmap(HDC _hDC, int _X, int _Y, HBITMAP _hBitmap, DWORD _dwROP)
+{
+	BITMAP Bitmap;
+	if (!_hDC || !_hBitmap)
+		oTHROW_INVARG0();
+	GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
+	scoped_bitmap_dc hDCBitmap(_hDC, _hBitmap);
+	oVB(BitBlt(_hDC, _X, _Y, Bitmap.bmWidth, Bitmap.bmHeight, hDCBitmap, 0, 0, _dwROP));
+}
+
+void stretch_bitmap(HDC _hDC, int _X, int _Y, int _Width, int _Height, HBITMAP _hBitmap, DWORD _dwROP)
+{
+	BITMAP Bitmap;
+	if (!_hDC || !_hBitmap)
+		oTHROW_INVARG0();
+	GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
+	scoped_bitmap_dc hDCBitmap(_hDC, _hBitmap);
+	oVB(StretchBlt(_hDC, _X, _Y, _Width, _Height, hDCBitmap, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, _dwROP));
+}
+
+void stretch_blend_bitmap(HDC _hDC, int _X, int _Y, int _Width, int _Height, HBITMAP _hBitmap)
+{
+	static const BLENDFUNCTION kBlend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
+	BITMAP Bitmap;
+	if (!_hDC || !_hBitmap)
+		oTHROW_INVARG0();
+	GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
+	scoped_bitmap_dc hDCBitmap(_hDC, _hBitmap);
+	oVB(AlphaBlend(_hDC, _X, _Y, _Width, _Height, hDCBitmap, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, kBlend));
+}
+
+void stretch_bits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
+{
+	surface::info si;
+	si.dimensions = int3(_SourceSize, 1);
+	si.format = _SourceFormat;
+	const size_t bitmapinfoSize = get_bitmapinfo_size(si.format);
+	BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(bitmapinfoSize);
+	pBMI->bmiHeader = make_header(si, !_FlipVertically);
+	if (bitmapinfoSize != sizeof(BITMAPINFO))
+		fill_monochrone_palette(pBMI->bmiColors);
+	oGDIScopedBltMode Mode(_hDC, HALFTONE);
+	oVB(StretchDIBits(_hDC, _DestRect.left, _DestRect.top, oWinRectW(_DestRect), oWinRectH(_DestRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY));
+}
+
+void stretch_bits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
+{
+	RECT destRect;
+	if (_DestRect.bottom == invalid || _DestRect.top == invalid ||
+		_DestRect.left == invalid || _DestRect.right == invalid)
+	{
+		RECT rClient;
+		GetClientRect(_hWnd, &rClient);
+		destRect = rClient;
+	}
+	else
+		destRect = _DestRect;
+
+	oGDIScopedGetDC hDC(_hWnd);
+	stretch_bits(hDC, destRect, _SourceSize, _SourceFormat, _pSourceBits, _FlipVertically);
+}
+
+void stretch_bits(HWND _hWnd, const int2& _SourceSize, surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
+{
+	RECT destRect;
+	destRect.bottom = invalid;
+	destRect.left = invalid;
+	destRect.right = invalid;
+	destRect.top = invalid;
+	stretch_bits(_hWnd, destRect, _SourceSize, _SourceFormat, _pSourceBits, _FlipVertically);
+}
+
+int2 get_bitmap_dimensions(HDC _hDC)
+{
+	BITMAP BI;
+	memset(&BI, 0, sizeof(BI));
+	HGDIOBJ hBitmap = oGDIGetBitmap(_hDC);
+	GetObject(hBitmap, sizeof(BITMAP), &BI);
+	return int2(BI.bmWidth, BI.bmHeight);
+}
+
 		} // namespace gdi
 	} // namespace windows
 } // namespace ouro
@@ -193,7 +295,7 @@ int oGDIPointToLogicalHeight(HDC _hDC, float _Point)
 	return oGDIPointToLogicalHeight(_hDC, static_cast<int>(_Point + 0.5f));
 }
 
-bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow, bool _FlipV)
+void oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow, bool _FlipV)
 {
 	RECT r;
 	if (_pRect)
@@ -226,7 +328,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	int2 size = oWinRectSize(r);
 
 	if (size.x == 0 || size.y == 0)
-		return false;
+		throw std::invalid_argument("invalid size");
 
 	WORD BitDepth = 0;
 	{
@@ -236,7 +338,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	}
 
 	if (!_pBitmapInfo)
-		return oErrorSetLast(std::errc::invalid_argument);
+		oTHROW_INVARG0();
 	const int BytesPerPixel = BitDepth / 8;
 	const int AlignedWidth = byte_align(size.x, 4);
 	const int RowPitch = AlignedWidth * BytesPerPixel;
@@ -253,7 +355,7 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 	if (_pImageBuffer)
 	{
 		if (_SizeofImageBuffer < _pBitmapInfo->bmiHeader.biSizeImage)
-			return oErrorSetLast(std::errc::invalid_argument, "Destination buffer too small");
+			oTHROW0(no_buffer_space);
 
 		HDC hDC = GetWindowDC(_hWnd);
 		HDC hMemDC = CreateCompatibleDC(hDC);
@@ -284,15 +386,13 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 		DeleteDC(hMemDC);
 		ReleaseDC(0, hDC);
 	}
-
-	return true;
 }
 
-bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow, bool _FlipV)
+void oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow, bool _FlipV)
 {
 	if (!_Allocate || !_ppBuffer || !_pBufferSize)
-		return oErrorSetLast(std::errc::invalid_argument);
-	
+		oTHROW_INVARG0();
+
 	*_ppBuffer = nullptr;
 	*_pBufferSize = 0;
 
@@ -305,22 +405,18 @@ bool oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void
 	if (_IncludeBorder)
 		pRect = nullptr;
 
-	if (oGDIScreenCaptureWindow(_hWnd, pRect, nullptr, 0, &bmi, _RedrawWindow, _FlipV))
-	{
-		BITMAPFILEHEADER bmfh;
-		memset(&bmfh, 0, sizeof(bmfh));
-		bmfh.bfType = 'MB';
-		bmfh.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + bmi.bmiHeader.biSizeImage;
-		bmfh.bfOffBits = static_cast<DWORD>(sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO));
+	oGDIScreenCaptureWindow(_hWnd, pRect, nullptr, 0, &bmi, _RedrawWindow, _FlipV);
+	BITMAPFILEHEADER bmfh;
+	memset(&bmfh, 0, sizeof(bmfh));
+	bmfh.bfType = 'MB';
+	bmfh.bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + bmi.bmiHeader.biSizeImage;
+	bmfh.bfOffBits = static_cast<DWORD>(sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO));
 
-		*_pBufferSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + bmi.bmiHeader.biSizeImage;
-		*_ppBuffer = _Allocate(*_pBufferSize);
-		memcpy(*_ppBuffer, &bmfh, sizeof(bmfh));
-		memcpy(byte_add(*_ppBuffer, sizeof(bmfh)), &bmi, sizeof(bmi));
-		return oGDIScreenCaptureWindow(_hWnd, pRect, byte_add(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow, _FlipV);
-	}
-
-	return false;
+	*_pBufferSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + bmi.bmiHeader.biSizeImage;
+	*_ppBuffer = _Allocate(*_pBufferSize);
+	memcpy(*_ppBuffer, &bmfh, sizeof(bmfh));
+	memcpy(byte_add(*_ppBuffer, sizeof(bmfh)), &bmi, sizeof(bmi));
+	oGDIScreenCaptureWindow(_hWnd, pRect, byte_add(*_ppBuffer, sizeof(bmfh) + sizeof(bmi)), bmi.bmiHeader.biSizeImage, &bmi, _RedrawWindow, _FlipV);
 }
 
 HBITMAP oGDIIconToBitmap(HICON _hIcon)
@@ -352,119 +448,6 @@ HICON oGDIBitmapToIcon(HBITMAP _hBmp)
 	}
 
 	return hIcon;
-}
-
-BOOL oGDIDrawBitmap(HDC _hDC, INT _X, INT _Y, HBITMAP _hBitmap, DWORD _dwROP)
-{
-	HDC hDCBitmap = 0;
-	BITMAP Bitmap;
-	BOOL bResult = false;
-
-	if (_hDC && _hBitmap)
-	{
-		hDCBitmap = CreateCompatibleDC(_hDC);
-		GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
-		HGDIOBJ hOld = SelectObject(hDCBitmap, _hBitmap);
-		bResult = BitBlt(_hDC, _X, _Y, Bitmap.bmWidth, Bitmap.bmHeight, hDCBitmap, 0, 0, _dwROP);
-		SelectObject(hDCBitmap, hOld);
-		DeleteDC(hDCBitmap);
-	}
-
-	return bResult;
-}
-
-BOOL oGDIStretchBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap, DWORD _dwROP)
-{
-	HDC hDCBitmap = 0;
-	BITMAP Bitmap;
-	BOOL bResult = false;
-
-	if (_hDC && _hBitmap)
-	{
-		hDCBitmap = CreateCompatibleDC(_hDC);
-		GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
-		HGDIOBJ hOld = SelectObject(hDCBitmap, _hBitmap);
-		bResult = StretchBlt(_hDC, _X, _Y, _Width, _Height, hDCBitmap, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, _dwROP);
-		SelectObject(hDCBitmap, hOld);
-		DeleteDC(hDCBitmap);
-	}
-
-	return bResult;
-}
-
-BOOL oGDIStretchBlendBitmap(HDC _hDC, INT _X, INT _Y, INT _Width, INT _Height, HBITMAP _hBitmap)
-{
-	static const BLENDFUNCTION kBlend = { AC_SRC_OVER, 0, 255, AC_SRC_ALPHA };
-	HDC hDCBitmap = 0;
-	BITMAP Bitmap;
-	BOOL bResult = false;
-
-	if (_hDC && _hBitmap)
-	{
-		hDCBitmap = CreateCompatibleDC(_hDC);
-		GetObject(_hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
-		HGDIOBJ hOld = SelectObject(hDCBitmap, _hBitmap);
-		bResult = AlphaBlend(_hDC, _X, _Y, _Width, _Height, hDCBitmap, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, kBlend);
-		SelectObject(hDCBitmap, hOld);
-		DeleteDC(hDCBitmap);
-	}
-
-	return bResult;
-}
-
-bool oGDIStretchBits(HDC _hDC, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
-{
-	surface::info si;
-	si.dimensions = int3(_SourceSize, 1);
-	si.format = _SourceFormat;
-
-	const size_t bitmapinfoSize = windows::gdi::get_bitmapinfo_size(si.format);
-
-	BITMAPINFO* pBMI = (BITMAPINFO*)_alloca(bitmapinfoSize);
-	pBMI->bmiHeader = windows::gdi::make_header(si, !_FlipVertically);
-	if (bitmapinfoSize != sizeof(BITMAPINFO))
-		windows::gdi::fill_monochrone_palette(pBMI->bmiColors);
-
-	oGDIScopedBltMode Mode(_hDC, HALFTONE);
-	oVB(StretchDIBits(_hDC, _DestRect.left, _DestRect.top, oWinRectW(_DestRect), oWinRectH(_DestRect), 0, 0, _SourceSize.x, _SourceSize.y, _pSourceBits, pBMI, DIB_RGB_COLORS, SRCCOPY));
-	return true;
-}
-
-bool oGDIStretchBits(HWND _hWnd, const RECT& _DestRect, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
-{
-	RECT destRect;
-	if (_DestRect.bottom == ouro::invalid || _DestRect.top == ouro::invalid ||
-		_DestRect.left == ouro::invalid || _DestRect.right == ouro::invalid)
-	{
-		RECT rClient;
-		GetClientRect(_hWnd, &rClient);
-		destRect = rClient;
-	}
-	else
-		destRect = _DestRect;
-
-	oGDIScopedGetDC hDC(_hWnd);
-	return oGDIStretchBits(hDC, destRect, _SourceSize, _SourceFormat, _pSourceBits, _FlipVertically);
-}
-
-bool oGDIStretchBits(HWND _hWnd, const int2& _SourceSize, ouro::surface::format _SourceFormat, const void* _pSourceBits, bool _FlipVertically)
-{
-	RECT destRect;
-	destRect.bottom = ouro::invalid;
-	destRect.left = ouro::invalid;
-	destRect.right = ouro::invalid;
-	destRect.top = ouro::invalid;
-
-	return oGDIStretchBits(_hWnd, destRect, _SourceSize, _SourceFormat, _pSourceBits, _FlipVertically);
-}
-
-int2 oGDIGetDimensions(HDC _hDC)
-{
-	BITMAP BI;
-	memset(&BI, 0, sizeof(BI));
-	HGDIOBJ hBitmap = oGDIGetBitmap(_hDC);
-	GetObject(hBitmap, sizeof(BITMAP), &BI);
-	return int2(BI.bmWidth, BI.bmHeight);
 }
 
 float2 oGDIGetDPIScale(HDC _hDC)
