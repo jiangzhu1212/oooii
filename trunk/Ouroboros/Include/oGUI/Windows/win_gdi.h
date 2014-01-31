@@ -63,6 +63,7 @@ inline float point_to_dip(float _Point) { return 96.0f * _Point / 72.0f; }
 inline float dip_to_point(float _DIP) { return 72.0f * _DIP / 96.0f; }
 
 float2 dpi_scale(HDC _hDC);
+int estimate_point_size(int _PixelHeight);
 
 inline HBITMAP current_bitmap(HDC _hDC) { return (HBITMAP)GetCurrentObject(_hDC, OBJ_BITMAP); }
 inline HBRUSH current_brush(HDC _hDC) { return (HBRUSH)GetCurrentObject(_hDC, OBJ_BRUSH); }

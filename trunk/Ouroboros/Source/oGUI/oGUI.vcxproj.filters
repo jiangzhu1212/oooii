@@ -90,6 +90,9 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi_selection_box.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi_draw.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
@@ -162,6 +165,9 @@
       <Filter>Source\Windows</Filter>
     </ClCompile>
     <ClCompile Include="win_gdi_selection_box.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_gdi_draw.cpp">
       <Filter>Source\Windows</Filter>
     </ClCompile>
   </ItemGroup>

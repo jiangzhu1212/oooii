@@ -42,6 +42,7 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\win_common_dialog.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi_bitmap.h" />
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi_draw.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi_selection_box.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
@@ -74,6 +75,7 @@
     <ClCompile Include="win_common_dialog.cpp" />
     <ClCompile Include="win_gdi.cpp" />
     <ClCompile Include="win_gdi_bitmap.cpp" />
+    <ClCompile Include="win_gdi_draw.cpp" />
     <ClCompile Include="win_gdi_selection_box.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

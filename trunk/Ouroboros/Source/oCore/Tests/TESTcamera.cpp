@@ -195,7 +195,7 @@ void TESTcamera(test_services& _Services)
 					td.Alignment = alignment::middle_left;
 
 					scoped_getdc hDC(hWnd);
-					oGDIDrawText(hDC, td, sFPS);
+					draw_text(hDC, td, sFPS);
 				}
 
 				Contexts[i].Camera->Unmap();

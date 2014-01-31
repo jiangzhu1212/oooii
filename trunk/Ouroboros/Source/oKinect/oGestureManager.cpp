@@ -25,6 +25,7 @@
 #include <oKinect/oGestureManager.h>
 #include <oPlatform/oStreamUtil.h>
 #include <oGUI/windows/win_gdi_bitmap.h>
+#include <oGUI/windows/win_gdi_draw.h>
 #include <oKinect/oKinectGDI.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
@@ -172,9 +173,9 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, con
 	: Window(_Window)
 	, VizDesc(_Init.VizDesc)
 	, DeviceVizDesc(_Init.DeviceVizDesc)
-	, hBonePen(oGDICreatePen(Lime, 2))
-	, hBoneBrush(oGDICreateBrush(White))
-	, hBlankBG(oGDICreateBrush(Black))
+	, hBonePen(make_pen(Lime, 2))
+	, hBoneBrush(make_brush(White))
+	, hBlankBG(make_brush(Black))
 	, KinectDrawState(oKINECT_STATUS_DRAW_INITIALIZING_1)
 	, LastSetTimerState(oKINECT_STATUS_DRAW_NONE)
 	, TimerMessageVersion(0)
@@ -470,15 +471,14 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 		scoped_select ScopedSelectBrush(hDC, hBoneBrush);
 		scoped_select ScopedSelectPen(hDC, hBonePen);
 
-		oGDIDrawBox(hDC, oWinRect(rTarget.left, rTarget.top, rTarget.right + 1, rTarget.bottom + 1));
+		draw_box(hDC, oWinRect(rTarget.left, rTarget.top, rTarget.right + 1, rTarget.bottom + 1));
 		scoped_clip_region SelectClipRegion(hDC, rTarget);
 		oGDIDrawKinect(hDC, rTarget, FrameType, KinectDrawFlags, Kinect);
 
 		// Draw boxes and some HUD info
 		{
 			scoped_select SelFont(hDC, hFont);
-			ouro::font_info fd;
-			oGDIGetFontDesc(hFont, &fd);
+			ouro::font_info fi = get_font_info(hFont);
 
 			ouro::input::tracking_skeleton Skeleton;
 			int SkelIndex = 0;
@@ -495,9 +495,9 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 				const float4& h = Skeleton.positions[ouro::input::hip_center];
 				mstring text;
 				snprintf(text, "HIP: %.02f %.02f %.02f\n", h.x, h.y, h.z);
-				oGDIDrawText(hDC, td, text);
+				draw_text(hDC, td, text);
 
-				RECT rText = oGDICalcTextRect(hDC, text);
+				RECT rText = calc_text_rect(hDC, text);
 				VerticalOffset += oWinRectH(rText);
 
 				if (!ComboMessage[SkelIndex].empty())
@@ -519,7 +519,7 @@ void oGestureManagerImpl::GDIDrawNoKinect(ouro::draw_context_handle _hDC, const 
 
 	{
 		scoped_select ScopedSelectBrush(hDC, hBlankBG);
-		oGDIDrawBox(hDC, oWinRect(rTarget.left, rTarget.top, rTarget.right + 1, rTarget.bottom + 1));
+		draw_box(hDC, oWinRect(rTarget.left, rTarget.top, rTarget.right + 1, rTarget.bottom + 1));
 	}
 
 	scoped_clip_region SelectClipRegion(hDC, rTarget);
@@ -532,7 +532,7 @@ void oGestureManagerImpl::GDIDrawNoKinect(ouro::draw_context_handle _hDC, const 
 	td.size = oWinRectSize(rTarget);
 	td.shadow = Gray;
 	td.alignment = ouro::alignment::middle_center;
-	oGDIDrawText(hDC, td, NoKinectMessage);
+	draw_text(hDC, td, NoKinectMessage);
 }
 
 void oGestureManagerImpl::GDIDrawKinectStatusIcon(ouro::draw_context_handle _hDC, const int2& _ClientSize)
@@ -698,9 +698,9 @@ void oGestureManagerImpl::OnEvent(const window::basic_event& _Event)
 			ouro::display::info di = ouro::display::get_info(oWinGetDisplayId((HWND)_Event.window));
 			float2 Ratio = float2(VizDesc.Size) / float2(int2(di.mode.width, di.mode.height));
 			float R = min(Ratio);
-			ouro::font_info fd;
-			fd.point_size = round(R * 50.0f);
-			hFont = oGDICreateFont(fd);
+			ouro::font_info fi;
+			fi.point_size = round(R * 50.0f);
+			hFont = make_font(fi);
 			break;
 		}
 

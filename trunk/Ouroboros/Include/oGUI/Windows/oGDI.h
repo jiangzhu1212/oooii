@@ -48,44 +48,4 @@ void oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer
 // leak.
 void oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow, bool _FlipV);
 
-// _____________________________________________________________________________
-// Other APIs
-
-bool oGDIDrawLine(HDC _hDC, const int2& _P0, const int2& _P1);
-
-// Uses the currently bound pen and brush to draw a box (also can be used to 
-// draw a circle if a high roundness is used). If Alpha is [0,1), then a uniform 
-// alpha blend is done for the box.
-bool oGDIDrawBox(HDC _hDC, const RECT& _rBox, int _EdgeRoundness = 0, float _Alpha = 1.0f);
-
-// Uses the currently bound pen and brush to draw an ellipse
-bool oGDIDrawEllipse(HDC _hDC, const RECT& _rBox);
-
-// Returns the rect required for a single line of text using the specified HDC's 
-// font and other settings.
-RECT oGDICalcTextRect(HDC _hDC, const char* _Text);
-
-// Draws text using GDI.
-bool oGDIDrawText(HDC _hDC, const ouro::text_info& _Desc, const char* _Text);
-
-// If color alpha is true 0, then a null/empty objects is returned. Use 
-// DeleteObject on the value returned from these functions when finish with the
-// object. (width == 0 means "default")
-HPEN oGDICreatePen(ouro::color _Color, int _Width = 0);
-HBRUSH oGDICreateBrush(ouro::color _Color);
-
-COLORREF oGDIGetPenColor(HPEN _hPen, int* _pWidth = nullptr);
-
-// Returns the COLORREF of the specified brush
-COLORREF oGDIGetBrushColor(HBRUSH _hBrush);
-
-HFONT oGDICreateFont(const ouro::font_info& _Desc);
-void oGDIGetFontDesc(HFONT _hFont, ouro::font_info* _pDesc);
-
-const char* oGDIGetFontFamily(BYTE _tmPitchAndFamily);
-const char* oGDIGetCharSet(BYTE _tmCharSet);
-
-// _____________________________________________________________________________
-// More complex utilities
-
 #endif

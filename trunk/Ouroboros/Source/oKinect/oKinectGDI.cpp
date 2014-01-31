@@ -30,6 +30,7 @@
 #include <oCore/windows/win_error.h>
 #include <oGUI/windows/win_gdi.h>
 #include <oGUI/windows/win_gdi_bitmap.h>
+#include <oGUI/windows/win_gdi_draw.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <NuiApi.h>
 
@@ -41,7 +42,7 @@ static const int2 kNoDraw = int2(oDEFAULT, oDEFAULT);
 static void oGDIDrawKinectBone(HDC _hDC, const int2& _SSBonePos0, const int2& _SSBonePos1)
 {
 	if (any(_SSBonePos0 != kNoDraw) && any(_SSBonePos1 != kNoDraw))
-		oVB(oGDIDrawLine(_hDC, _SSBonePos0, _SSBonePos1));
+		draw_line(_hDC, _SSBonePos0, _SSBonePos1);
 }
 
 static void oGDIDrawKinectJoint(HDC _hDC, const int2& _SSBonePos, int _Radius)
@@ -49,7 +50,7 @@ static void oGDIDrawKinectJoint(HDC _hDC, const int2& _SSBonePos, int _Radius)
 	if (any(_SSBonePos != kNoDraw))
 	{
 		RECT r = oWinRectDilate(oWinRectWH(_SSBonePos, int2(0, 0)), _Radius);
-		oVB(oGDIDrawEllipse(_hDC, r));
+		draw_ellipse(_hDC, r);
 	}
 }
 
@@ -94,7 +95,7 @@ static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const ouro::input::
 	const int2 Dimensions = oWinRectSize(_rTarget);
 	const int2 ClippingDimensions = int2(float2(Dimensions) * 0.04f);
 
-	scoped_brush Hatch(CreateHatchBrush(HS_BDIAGONAL, oGDIGetBrushColor(current_brush(_hDC))));
+	scoped_brush Hatch(CreateHatchBrush(HS_BDIAGONAL, brush_color(current_brush(_hDC))));
 	scoped_select SelectHatch(_hDC, Hatch);
 	scoped_bk_mode TransparentBk(_hDC, TRANSPARENT);
 	scoped_select SelectNoPen(_hDC, GetStockObject(NULL_PEN));
@@ -102,25 +103,25 @@ static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const ouro::input::
 	if (_Clipping.left)
 	{
 		const RECT r = { 0, 0, ClippingDimensions.x, Dimensions.y };
-		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset));
+		draw_box(_hDC, oWinRectTranslate(r, Offset));
 	}
 
 	if (_Clipping.top)
 	{
 		const RECT r = { 0, 0, Dimensions.x, ClippingDimensions.y };
-		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset));
+		draw_box(_hDC, oWinRectTranslate(r, Offset));
 	}
 
 	if (_Clipping.right)
 	{
 		const RECT r = { 0, 0, ClippingDimensions.x, Dimensions.y };
-		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset + int2(oWinRectW(_rTarget) - oWinRectW(r), 0)));
+		draw_box(_hDC, oWinRectTranslate(r, Offset + int2(oWinRectW(_rTarget) - oWinRectW(r), 0)));
 	}
 
 	if (_Clipping.bottom)
 	{
 		const RECT r = { 0, 0, Dimensions.x, ClippingDimensions.y };
-		oGDIDrawBox(_hDC, oWinRectTranslate(r, Offset + int2(0, oWinRectH(_rTarget) - oWinRectH(r))));
+		draw_box(_hDC, oWinRectTranslate(r, Offset + int2(0, oWinRectH(_rTarget) - oWinRectH(r))));
 	}
 }
 
@@ -129,14 +130,14 @@ static void oGDIDrawKinectBoneNames(HDC _hDC, const RECT& _rTarget, int2 _Screen
 	ouro::text_info td;
 	td.size = int2(300, 50);
 	td.alignment = ouro::alignment::top_left;
-	COLORREF rgb = oGDIGetBrushColor(current_brush(_hDC));
+	COLORREF rgb = brush_color(current_brush(_hDC));
 	td.foreground = 0xff000000 | rgb;
 	td.shadow = Black;
 	for (int i = 0; i < ouro::input::bone_count; i++)
 	{
 		const char* Name = ouro::as_string(ouro::input::skeleton_bone(i)) + 14; // skip "oGUI_BONE_"
 		td.position = _ScreenSpaceBonePositions[i] + int2(5,5);
-		oGDIDrawText(_hDC, td, Name);
+		draw_text(_hDC, td, Name);
 	}
 }
 
@@ -158,23 +159,23 @@ void oGDIDrawBoneText(
 		, Size
 		, int2(320,240));
 
-	RECT rText = oGDICalcTextRect(_hDC, _Text);
+	RECT rText = calc_text_rect(_hDC, _Text);
 	RECT r = oWinRectResolve(SSBone + int2(0, -2 * oWinRectH(rText)), oWinRectSize(rText), _Anchor);
 
 	ouro::text_info td;
 	td.position = oWinRectPosition(r);
 	td.size = oWinRectSize(r);
 	td.alignment = _Alignment;
-	COLORREF rgb = oGDIGetBrushColor(current_brush(_hDC));
+	COLORREF rgb = brush_color(current_brush(_hDC));
 	td.foreground = 0xff000000 | rgb;
 	td.shadow = Black;
-	oGDIDrawText(_hDC, td, _Text);
+	draw_text(_hDC, td, _Text);
 }
 
 void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, int _Flags, const threadsafe oKinect* _pKinect)
 {
 	int PenWidth = 0;
-	oGDIGetPenColor(current_pen(_hDC), &PenWidth);
+	pen_color(current_pen(_hDC), &PenWidth);
 	static const int kJointThickness = PenWidth * 2;
 
 	// Ensure thick lines aren't drawn out-of-bounds by insetting _rTarget
@@ -248,14 +249,14 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	{
 		snprintf(text, "%.02f %.02f %.02f", Min.x, Min.y, Min.z);
 		td.alignment = ouro::alignment::top_left;
-		oGDIDrawText(_hDC, td, text.c_str());
+		draw_text(_hDC, td, text.c_str());
 	}
 
 	if (_Flags & oGDI_AIR_KEY_DRAW_MAX)
 	{
 		snprintf(text, "%.02f %.02f %.02f", Max.x, Max.y, Max.z);
 		td.alignment = ouro::alignment::bottom_right;
-		oGDIDrawText(_hDC, td, text.c_str());
+		draw_text(_hDC, td, text.c_str());
 	}
 
 	if (_Flags & oGDI_AIR_KEY_DRAW_KEY)
@@ -263,7 +264,7 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 		if (_LastAction == ouro::input::key_down)
 			td.foreground = Lime;
 		td.alignment = ouro::alignment::middle_center;
-		oGDIDrawText(_hDC, td, ouro::as_string(_Key.Key));
+		draw_text(_hDC, td, ouro::as_string(_Key.Key));
 	}
 
 	if (_Flags & oGDI_AIR_KEY_DRAW_BOX)
@@ -277,31 +278,31 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 			SSCorners[i] = oKinectSkeletonToScreen(float4(Corners[i].x, Corners[i].y, Corners[i].z, 1.0f), oWinRectPosition(_rTarget), oWinRectSize(_rTarget), int2(320,240));
 
 		// Far face (minZ face)
-		oGDIDrawLine(_hDC, SSCorners[0], SSCorners[1]);
-		oGDIDrawLine(_hDC, SSCorners[0], SSCorners[2]);
-		oGDIDrawLine(_hDC, SSCorners[1], SSCorners[3]);
-		oGDIDrawLine(_hDC, SSCorners[2], SSCorners[3]);
+		draw_line(_hDC, SSCorners[0], SSCorners[1]);
+		draw_line(_hDC, SSCorners[0], SSCorners[2]);
+		draw_line(_hDC, SSCorners[1], SSCorners[3]);
+		draw_line(_hDC, SSCorners[2], SSCorners[3]);
 
 		// Near face (maxZ face)
-		oGDIDrawLine(_hDC, SSCorners[7], SSCorners[6]);
-		oGDIDrawLine(_hDC, SSCorners[7], SSCorners[5]);
-		oGDIDrawLine(_hDC, SSCorners[6], SSCorners[4]);
-		oGDIDrawLine(_hDC, SSCorners[5], SSCorners[4]);
+		draw_line(_hDC, SSCorners[7], SSCorners[6]);
+		draw_line(_hDC, SSCorners[7], SSCorners[5]);
+		draw_line(_hDC, SSCorners[6], SSCorners[4]);
+		draw_line(_hDC, SSCorners[5], SSCorners[4]);
 
 		// top 2
-		oGDIDrawLine(_hDC, SSCorners[2], SSCorners[6]);
-		oGDIDrawLine(_hDC, SSCorners[3], SSCorners[7]);
+		draw_line(_hDC, SSCorners[2], SSCorners[6]);
+		draw_line(_hDC, SSCorners[3], SSCorners[7]);
 
 		// bottom 2
-		oGDIDrawLine(_hDC, SSCorners[0], SSCorners[4]);
-		oGDIDrawLine(_hDC, SSCorners[1], SSCorners[5]);
+		draw_line(_hDC, SSCorners[0], SSCorners[4]);
+		draw_line(_hDC, SSCorners[1], SSCorners[5]);
 	}
 
 	else
 	{
 		RECT r = oWinRect(SSMin, SSMax);
 		scoped_select NoFill(_hDC, GetStockObject(NULL_BRUSH));
-		oGDIDrawBox(_hDC, r);
+		draw_box(_hDC, r);
 	}
 }
 
