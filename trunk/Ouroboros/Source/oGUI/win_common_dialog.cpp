@@ -22,6 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include <oGUI/Windows/win_common_dialog.h>
 #include <oGUI/Windows/win_gdi.h>
 #include <Commdlg.h>
 #include <CdErr.h>

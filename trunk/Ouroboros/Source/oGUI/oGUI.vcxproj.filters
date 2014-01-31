@@ -21,9 +21,6 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\oGDI.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGUI\Windows\oWinCommonDialog.h">
-      <Filter>oGUI\Windows</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinControlSet.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
@@ -84,6 +81,9 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_common_dialog.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
@@ -93,9 +93,6 @@
       <Filter>Source\Windows</Filter>
     </ClCompile>
     <ClCompile Include="oWinWindowing.cpp">
-      <Filter>Source\Windows</Filter>
-    </ClCompile>
-    <ClCompile Include="oWinCommonDialog.cpp">
       <Filter>Source\Windows</Filter>
     </ClCompile>
     <ClCompile Include="oWinControlSet.cpp">
@@ -150,6 +147,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="win_gdi.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_common_dialog.cpp">
       <Filter>Source\Windows</Filter>
     </ClCompile>
   </ItemGroup>

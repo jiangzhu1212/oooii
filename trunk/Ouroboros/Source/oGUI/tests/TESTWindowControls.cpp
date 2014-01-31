@@ -27,7 +27,7 @@
 #include <oBase/timer.h>
 #include <oGUI/window.h>
 #include <oGUI/Windows/oGDI.h>
-#include <oGUI/Windows/oWinCommonDialog.h>
+#include <oGUI/Windows/win_common_dialog.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/system.h>
 #include <oCore/windows/win_error.h>

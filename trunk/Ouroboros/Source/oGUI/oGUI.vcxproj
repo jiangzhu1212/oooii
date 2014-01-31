@@ -31,7 +31,6 @@
     <ClInclude Include="..\..\Include\oGUI\progress_bar.h" />
     <ClInclude Include="..\..\Include\oGUI\window.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oGDI.h" />
-    <ClInclude Include="..\..\Include\oGUI\Windows\oWinCommonDialog.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinControlSet.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinCursor.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinDialog.h" />
@@ -40,6 +39,7 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinStatusBar.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinWindowing.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\win_as_string.h" />
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_common_dialog.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
@@ -53,7 +53,6 @@
     <ClCompile Include="oGDI.cpp" />
     <ClCompile Include="oGUI.cpp" />
     <ClCompile Include="oGUIMenu.cpp" />
-    <ClCompile Include="oWinCommonDialog.cpp" />
     <ClCompile Include="oWinControlSet.cpp" />
     <ClCompile Include="oWinCursor.cpp" />
     <ClCompile Include="oWinDialog.cpp" />
@@ -70,6 +69,7 @@
     <ClCompile Include="progress_bar.cpp" />
     <ClCompile Include="window.cpp" />
     <ClCompile Include="win_as_string.cpp" />
+    <ClCompile Include="win_common_dialog.cpp" />
     <ClCompile Include="win_gdi.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
