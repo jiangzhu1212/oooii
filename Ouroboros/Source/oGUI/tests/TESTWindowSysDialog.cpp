@@ -25,7 +25,7 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/window.h>
 #include <oGUI/Windows/oWinControlSet.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi_draw.h>
 #include <oCore/filesystem.h>
 #include <oCore/system.h>
 
@@ -271,11 +271,9 @@ oSystemProperties::oSystemProperties()
 		{
 			HWND hWnd = (HWND)Window->native_handle();
 
-			ouro::font_info fd;
-			HFONT hCurrent = oWinGetFont(hWnd);
-			oGDIGetFontDesc(hCurrent, &fd);
-			fd.antialiased = false;
-			HFONT hNew = oGDICreateFont(fd);
+			ouro::font_info fi = windows::gdi::get_font_info(oWinGetFont(hWnd));
+			fi.antialiased = false;
+			HFONT hNew = windows::gdi::make_font(fi);
 			oWinSetFont(hWnd, hNew);
 		});
 	}

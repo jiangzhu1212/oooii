@@ -22,54 +22,54 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oSurface/fill.h>
-#include <oGUI/Windows/win_gdi.h>
-#include <oGUI/Windows/win_gdi_bitmap.h>
-#include <oGUI/Windows/win_gdi_draw.h>
-#include <oGUI/Windows/oGDI.h>
+// API to make working with Window's GDI easier.
+#pragma once
+#ifndef oGUI_win_gdi_draw_h
+#define oGUI_win_gdi_draw_h
 
-using namespace ouro::windows::gdi;
+#include <oGUI/oGUI.h>
 
-namespace ouro
-{
+namespace ouro {
+	namespace windows {
+		namespace gdi {
 
-void core_fill_grid_numbers(surface::buffer* _pBuffer, const int2& _GridDimensions, color _NumberColor)
-{
-	surface::info si = _pBuffer->get_info();
+void draw_line(HDC _hDC, const int2& _P0, const int2& _P1);
 
-	if (si.format != surface::b8g8r8a8_unorm)
-		throw std::invalid_argument("only b8g8r8a8_unorm currently supported");
+// Uses the currently bound pen and brush to draw a box (also can be used to 
+// draw a circle if a high roundness is used). If Alpha is [0,1), then a uniform 
+// alpha blend is done for the box.
+void draw_box(HDC _hDC, const RECT& _rBox, int _EdgeRoundness = 0, float _Alpha = 1.0f);
 
-	scoped_bitmap hBmp = make_bitmap(_pBuffer);
-	scoped_getdc hScreenDC(nullptr);
-	scoped_compat hDC(hScreenDC);
+// Uses the currently bound pen and brush to draw an ellipse
+void draw_ellipse(HDC _hDC, const RECT& _rBox);
 
-	font_info fd;
-	fd.name = "Tahoma";
-	fd.point_size = (logical_height_to_pointf(hDC, _GridDimensions.y) * 0.33f);
-	fd.bold = fd.point_size < 15;
-	scoped_font hFont(make_font(fd));
+// Returns the rect required for a single line of text using the specified HDC's 
+// font and other settings.
+RECT calc_text_rect(HDC _hDC, const char* _Text);
 
-	scoped_select ScopedSelectBmp(hDC, hBmp);
-	scoped_select ScopedSelectFont(hDC, hFont);
+// Draws text using GDI.
+void draw_text(HDC _hDC, const text_info& _Desc, const char* _Text);
 
-	text_info td;
-	td.alignment = alignment::middle_center;
-	td.shadow = color(0);
-	td.single_line = true;
+// If color alpha is true 0, then a null/empty objects is returned. Use 
+// DeleteObject on the value returned from these functions when finish with the
+// object. (width == 0 means "default")
+HPEN make_pen(color _Color, int _Width = 0);
+HBRUSH make_brush(color _Color);
 
-	surface::fill_grid_numbers(si.dimensions.xy(), _GridDimensions,
-		[&](const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)->bool
-	{
-		td.position = _DrawBoxPosition;
-		td.size = _DrawBoxSize;
-		td.foreground = _NumberColor;
-		draw_text(hDC, td, _Text);
-		return true;
-	});
+// Returns the COLORREF of the specified pen and optionally its thickness/width
+COLORREF pen_color(HPEN _hPen, int* _pWidth = nullptr);
 
-	surface::lock_guard lock(_pBuffer);
-	windows::gdi::memcpy2d(lock.mapped.data, lock.mapped.row_pitch, hBmp, si.dimensions.y, true);
-}
+// Returns the COLORREF of the specified brush
+COLORREF brush_color(HBRUSH _hBrush);
 
+HFONT make_font(const font_info& _Desc);
+font_info get_font_info(HFONT _hFont);
+
+const char* font_family(BYTE _tmPitchAndFamily);
+const char* char_set(BYTE _tmCharSet);
+
+		} // namespace gdi
+	} // namespace windows
 } // namespace ouro
+
+#endif

@@ -356,7 +356,7 @@ template<size_t capacity> char* oWinGetText(ouro::fixed_string<char, capacity>& 
 // reference, so no lifetime management should be performed on the HBRUSH.
 HBRUSH oWinGetBackgroundBrush(HWND _hWnd);
 
-// If nullptr the DEFAULT_GUI_FONT is set. See oGDICreateFont to create a custom 
+// If nullptr the DEFAULT_GUI_FONT is set. See make_font to create a custom 
 // font.
 bool oWinSetFont(HWND _hWnd, HFONT _hFont = nullptr);
 

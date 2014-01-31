@@ -23,9 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGUI/windows/win_gdi_selection_box.h>
-#include <oGUI/Windows/oGDI.h>
-//#include <oCore/windows/win_error.h>
-//#include <oBase/byte.h>
+#include <oGUI/windows/win_gdi_draw.h>
 
 namespace ouro {
 	namespace windows {
@@ -36,7 +34,7 @@ selection_box::selection_box()
 	, MouseAt(0,0)
 	, Opacity(0.0f)
 	, Selecting(false)
-	, hNullBrush(oGDICreateBrush(ouro::color(0)))
+	, hNullBrush(make_brush(color(0)))
 {
 }
 
@@ -67,8 +65,8 @@ void selection_box::set_info(const info& _Info)
 		hOffscreenBMP = nullptr;
 	}
 
-	hPen = oGDICreatePen(_Info.Border);
-	hBrush = oGDICreateBrush(_Info.Fill);
+	hPen = make_pen(_Info.Border);
+	hBrush = make_brush(_Info.Fill);
 	float r,g,b;
 	_Info.Fill.decompose(&r, &g, &b, &Opacity);
 
@@ -112,13 +110,13 @@ void selection_box::draw(HDC _hDC)
 
 	{
 		scoped_select B(hTargetDC, hBrush);
-		oGDIDrawBox(hTargetDC, SelRect, Info.EdgeRoundness, Opacity);
+		draw_box(hTargetDC, SelRect, Info.EdgeRoundness, Opacity);
 	}
 	
 	{
 		scoped_select P(hTargetDC, hPen);
 		scoped_select B(hTargetDC, hNullBrush);
-		oGDIDrawBox(hTargetDC, SelRect, Info.EdgeRoundness, 1.0f);
+		draw_box(hTargetDC, SelRect, Info.EdgeRoundness, 1.0f);
 	}
 
 	if (Info.EdgeRoundness && Info.UseOffscreenRender)

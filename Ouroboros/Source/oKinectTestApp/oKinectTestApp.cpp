@@ -25,7 +25,7 @@
 
 #include <oKinect/oKinect.h>
 #include <oKinect/oKinectGDI.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi_draw.h>
 #include <oCore/windows/win_skeleton.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oPlatform/oStream.h>
@@ -220,8 +220,8 @@ private:
 };
 
 oKinectTestApp::oKinectTestApp()
-	: hKinectPen(oGDICreatePen(Lime, 2))
-	, hKinectBrush(oGDICreateBrush(White))
+	: hKinectPen(make_pen(Lime, 2))
+	, hKinectBrush(make_brush(White))
 	, Ready(false)
 {
 	int nKinects = oKinectGetCount();
@@ -369,8 +369,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 	// Draw boxes and some HUD info
 	{
 		scoped_select SelFont(hDC, _hFont);
-		ouro::font_info fd;
-		oGDIGetFontDesc(_hFont, &fd);
+		ouro::font_info fi = get_font_info(_hFont);
 
 		input::tracking_skeleton Skeleton;
 		int SkelIndex = 0;
@@ -387,9 +386,9 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 			const float4& hr = Skeleton.positions[input::ankle_right];
 			mstring text;
 			snprintf(text, "HIP: %.02f %.02f %.02f\nRANKLE: %.02f %.02f %.02f", h.x, h.y, h.z, hr.x, hr.y, hr.z);
-			oGDIDrawText(hDC, td, text);
+			draw_text(hDC, td, text);
 
-			RECT rText = oGDICalcTextRect(hDC, text);
+			RECT rText = calc_text_rect(hDC, text);
 			VerticalOffset += oWinRectH(rText);
 
 			if (!_HeadMessages[SkelIndex].empty())
@@ -416,9 +415,9 @@ void oKinectTestApp::MainEventHook(const window::basic_event& _Event, int _Index
 			display::info di = display::get_info(kw.Window->display_id());
 			float2 Ratio = float2(_Event.as_shape().shape.client_size) / float2(int2(di.mode.width, di.mode.height));
 			float R = max(Ratio);
-			ouro::font_info fd;
-			fd.point_size = round(R * 35.0f);
-			kw.hFont = oGDICreateFont(fd);
+			ouro::font_info fi;
+			fi.point_size = round(R * 35.0f);
+			kw.hFont = make_font(fi);
 			break;
 		}
 

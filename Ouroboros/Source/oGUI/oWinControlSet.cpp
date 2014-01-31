@@ -25,11 +25,12 @@
 #include <oGUI/Windows/oWinControlSet.h>
 #include <oCore/windows/win_error.h>
 #include <oBase/algorithm.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi_draw.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oBasis/oError.h> // @tony fixme
 
 using namespace ouro;
+using namespace ouro::windows::gdi;
 
 bool oWinControlSet::Initialize(HWND _hParent, const int2& _ParentClientSize, const xml& _XML, const IDFROMSTRING& _IDFromString)
 {
@@ -95,7 +96,7 @@ bool oWinControlSet::CreateFontsSibling(const xml& _XML, fonts_t* _pFonts)
 		if (!ParseFontDesc(_XML, hChild, &fd))
 			return false; // pass through error
 
-		HFONT hFont = oGDICreateFont(fd);
+		HFONT hFont = make_font(fd);
 		if (!hFont)
 			return oErrorSetLast(std::errc::invalid_argument, "Could not create font %s: %s: %s", StrFont, oErrorAsString(oErrorGetLast()), oErrorGetLastString());
 

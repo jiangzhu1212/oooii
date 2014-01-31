@@ -28,6 +28,7 @@
 #include <oGUI/window.h>
 #include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/win_common_dialog.h>
+#include <oGUI/Windows/win_gdi_draw.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/system.h>
 #include <oCore/windows/win_error.h>
@@ -198,7 +199,7 @@ void oWindowUITest::InitVCRControls(HWND _hParent, const int2& _Position)
 	fd.name = "Webdings";
 	fd.point_size = 12;
 	fd.antialiased = false; // ClearType is non-deterministic, so disable it for screen-compare purposes
-	HFONT hWebdings = oGDICreateFont(fd);
+	HFONT hWebdings = windows::gdi::make_font(fd);
 
 	ouro::control_info b;
 	b.parent = (ouro::window_handle)_hParent;
@@ -258,11 +259,9 @@ oWindowUITest::oWindowUITest(bool* _pSuccess)
 	Window->dispatch([&]
 	{
 		HWND hWnd = (HWND)Window->native_handle();
-		ouro::font_info fd;
-		HFONT hCurrent = oWinGetFont(hWnd);
-		oGDIGetFontDesc(hCurrent, &fd);
-		fd.antialiased = false;
-		HFONT hNew = oGDICreateFont(fd);
+		ouro::font_info fi = windows::gdi::get_font_info(oWinGetFont(hWnd));
+		fi.antialiased = false;
+		HFONT hNew = windows::gdi::make_font(fi);
 		oWinSetFont(hWnd, hNew);
 	});
 
