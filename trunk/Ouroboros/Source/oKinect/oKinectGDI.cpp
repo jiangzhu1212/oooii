@@ -29,6 +29,7 @@
 
 #include <oCore/windows/win_error.h>
 #include <oGUI/windows/win_gdi.h>
+#include <oGUI/windows/win_gdi_bitmap.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <NuiApi.h>
 
@@ -93,7 +94,7 @@ static void oGDIDrawClipping(HDC _hDC, const RECT& _rTarget, const ouro::input::
 	const int2 Dimensions = oWinRectSize(_rTarget);
 	const int2 ClippingDimensions = int2(float2(Dimensions) * 0.04f);
 
-	scoped_hbrush Hatch(CreateHatchBrush(HS_BDIAGONAL, oGDIGetBrushColor(oGDIGetBrush(_hDC))));
+	scoped_brush Hatch(CreateHatchBrush(HS_BDIAGONAL, oGDIGetBrushColor(current_brush(_hDC))));
 	scoped_select SelectHatch(_hDC, Hatch);
 	scoped_bk_mode TransparentBk(_hDC, TRANSPARENT);
 	scoped_select SelectNoPen(_hDC, GetStockObject(NULL_PEN));
@@ -128,7 +129,7 @@ static void oGDIDrawKinectBoneNames(HDC _hDC, const RECT& _rTarget, int2 _Screen
 	ouro::text_info td;
 	td.size = int2(300, 50);
 	td.alignment = ouro::alignment::top_left;
-	COLORREF rgb = oGDIGetBrushColor(oGDIGetBrush(_hDC));
+	COLORREF rgb = oGDIGetBrushColor(current_brush(_hDC));
 	td.foreground = 0xff000000 | rgb;
 	td.shadow = Black;
 	for (int i = 0; i < ouro::input::bone_count; i++)
@@ -164,7 +165,7 @@ void oGDIDrawBoneText(
 	td.position = oWinRectPosition(r);
 	td.size = oWinRectSize(r);
 	td.alignment = _Alignment;
-	COLORREF rgb = oGDIGetBrushColor(oGDIGetBrush(_hDC));
+	COLORREF rgb = oGDIGetBrushColor(current_brush(_hDC));
 	td.foreground = 0xff000000 | rgb;
 	td.shadow = Black;
 	oGDIDrawText(_hDC, td, _Text);
@@ -173,7 +174,7 @@ void oGDIDrawBoneText(
 void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, int _Flags, const threadsafe oKinect* _pKinect)
 {
 	int PenWidth = 0;
-	oGDIGetPenColor(oGDIGetPen(_hDC), &PenWidth);
+	oGDIGetPenColor(current_pen(_hDC), &PenWidth);
 	static const int kJointThickness = PenWidth * 2;
 
 	// Ensure thick lines aren't drawn out-of-bounds by insetting _rTarget

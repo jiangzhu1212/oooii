@@ -64,6 +64,11 @@ inline float dip_to_point(float _DIP) { return 72.0f * _DIP / 96.0f; }
 
 float2 dpi_scale(HDC _hDC);
 
+inline HBITMAP current_bitmap(HDC _hDC) { return (HBITMAP)GetCurrentObject(_hDC, OBJ_BITMAP); }
+inline HBRUSH current_brush(HDC _hDC) { return (HBRUSH)GetCurrentObject(_hDC, OBJ_BRUSH); }
+inline HFONT current_font(HDC _hDC) { return (HFONT)GetCurrentObject(_hDC, OBJ_FONT); }
+inline HPEN current_pen(HDC _hDC) { return (HPEN)GetCurrentObject(_hDC, OBJ_PEN); }
+
 template<typename HGDIOBJType> class scoped_object
 {
 	HGDIOBJType hObject;
@@ -96,11 +101,11 @@ public:
 	oDEFINE_GDI_BOOL_CAST_OPERATORS(HGDIOBJType, hObject);
 };
 
-typedef scoped_object<HBITMAP> scoped_hbitmap;
-typedef scoped_object<HBRUSH> scoped_hbrush;
-typedef scoped_object<HFONT> scoped_hfont;
-typedef scoped_object<HICON> scoped_hicon;
-typedef scoped_object<HPEN> scoped_hpen;
+typedef scoped_object<HBITMAP> scoped_bitmap;
+typedef scoped_object<HBRUSH> scoped_brush;
+typedef scoped_object<HFONT> scoped_font;
+typedef scoped_object<HICON> scoped_icon;
+typedef scoped_object<HPEN> scoped_pen;
 
 class scoped_blt_mode
 {
@@ -343,7 +348,7 @@ class scoped_offscreen
 
 	scoped_getdc hDCWin;
 	scoped_compat hDCOffscreen;
-	scoped_hbitmap hOffscreen;
+	scoped_bitmap hOffscreen;
 	scoped_select SelectOffscreen;
 	RECT rClient;
 

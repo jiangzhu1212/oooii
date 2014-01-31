@@ -84,6 +84,12 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\win_common_dialog.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi_bitmap.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi_selection_box.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
@@ -150,6 +156,12 @@
       <Filter>Source\Windows</Filter>
     </ClCompile>
     <ClCompile Include="win_common_dialog.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_gdi_bitmap.cpp">
+      <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="win_gdi_selection_box.cpp">
       <Filter>Source\Windows</Filter>
     </ClCompile>
   </ItemGroup>

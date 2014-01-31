@@ -24,7 +24,7 @@
  **************************************************************************/
 
 #include <oBasis/oRTTI.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi_bitmap.h>
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
@@ -38,6 +38,7 @@
 #include "../about_ouroboros.h"
 
 using namespace ouro;
+using namespace ouro::windows::gdi;
 
 enum oWMENU
 {
@@ -158,7 +159,7 @@ oWindowTestApp::oWindowTestApp()
 	{
 		window::init i;
 		i.title = "oWindowTestApp";
-		i.icon = (icon_handle)oGDILoadIcon(IDI_APPICON);
+		i.icon = (icon_handle)load_icon(IDI_APPICON);
 		i.on_action = std::bind(&oWindowTestApp::ActionHook, this, std::placeholders::_1);
 		i.on_event = std::bind(&oWindowTestApp::EventHook, this, std::placeholders::_1);
 		i.shape.client_size = int2(320, 240);
@@ -361,7 +362,7 @@ void oWindowTestApp::ActionHook(const input::action& _Action)
 				case oWMI_HELP_ABOUT:
 				{
 					#if 1
-						oDECLARE_ABOUT_INFO(i, oGDILoadIcon(IDI_APPICON));
+						oDECLARE_ABOUT_INFO(i, load_icon(IDI_APPICON));
 						if (!About)
 							About = about::make(i);
 						About->show_modal(Window);

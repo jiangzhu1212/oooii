@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oKinect/oGestureManager.h>
 #include <oPlatform/oStreamUtil.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/windows/win_gdi_bitmap.h>
 #include <oKinect/oKinectGDI.h>
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
@@ -138,10 +138,10 @@ private:
 
 	mutex_t DeviceIconMutex;
 
-	scoped_hfont hFont;
-	scoped_hpen hBonePen;
-	scoped_hbrush hBoneBrush;
-	scoped_hbrush hBlankBG;
+	scoped_font hFont;
+	scoped_pen hBonePen;
+	scoped_brush hBoneBrush;
+	scoped_brush hBlankBG;
 
 	// timer only executes if the version matches expectation
 	oKINECT_STATUS_DRAW_STATE LastSetTimerState;
@@ -193,8 +193,8 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, con
 		return;
 	}
 
-	//hKinect = oGDILoadIcon(IDI_KINECT);
-	//hNot = oGDILoadIcon(IDI_NOT);
+	//hKinect = load_icon(IDI_KINECT);
+	//hNot = load_icon(IDI_NOT);
 
 	if (!oAirKeyboardCreate(&AirKeyboard))
 		return; // pass through error
@@ -541,7 +541,7 @@ void oGestureManagerImpl::GDIDrawKinectStatusIcon(ouro::draw_context_handle _hDC
 	{
 		oRECT parent(oRECT::pos_size, int2(0,0), _ClientSize);
 		oRECT r = ouro::resolve_rect(parent, DeviceVizDesc.Position
-			, oGDIGetIconSize((HICON)DeviceVizDesc.hGestureDevice), DeviceVizDesc.Alignment, true);
+			, icon_dimensions((HICON)DeviceVizDesc.hGestureDevice), DeviceVizDesc.Alignment, true);
 
 		HDC hDC = (HDC)_hDC;
 		oVB(DrawIconEx(hDC, r.Min.x, r.Min.y, (HICON)DeviceVizDesc.hGestureDevice, r.size().x, r.size().y, 0, nullptr, DI_NORMAL));
@@ -554,7 +554,7 @@ void oGestureManagerImpl::GDIDrawNotStatusIcon(ouro::draw_context_handle _hDC, c
 	{
 		oRECT parent(oRECT::pos_size, int2(0,0), _ClientSize);
 		oRECT r = ouro::resolve_rect(parent, DeviceVizDesc.Position
-			, oGDIGetIconSize((HICON)DeviceVizDesc.hNotOverlay), DeviceVizDesc.Alignment, true);
+			, icon_dimensions((HICON)DeviceVizDesc.hNotOverlay), DeviceVizDesc.Alignment, true);
 
 		HDC hDC = (HDC)_hDC;
 		oVB(DrawIconEx(hDC, r.Min.x, r.Min.y, (HICON)DeviceVizDesc.hNotOverlay, r.size().x, r.size().y, 0, nullptr, DI_NORMAL));
