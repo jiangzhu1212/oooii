@@ -25,7 +25,7 @@
 #include <oBase/backoff.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi_bitmap.h>
 #include <oGUI/oGUIMenu.h>
 #include <oPlatform/oStream.h>
 #include <oGUI/window.h>
@@ -43,6 +43,7 @@
 #include <oGPU/oGPUUtil.h>
 
 using namespace ouro;
+using namespace ouro::windows::gdi;
 
 enum oWMENU
 {
@@ -230,7 +231,7 @@ void oGPUWindowThread::Run()
 		{
 			window::init i;
 			i.title = "Render Target Window";
-			i.icon = (ouro::icon_handle)oGDILoadIcon(IDI_APPICON);
+			i.icon = (ouro::icon_handle)load_icon(IDI_APPICON);
 			i.on_action = OnAction;
 			i.on_event = std::bind(&oGPUWindowThread::OnEvent, this, std::placeholders::_1);
 			i.shape.client_position = int2(0, 0); // important to think client-relative for this
@@ -331,7 +332,7 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 	{
 		window::init i;
 		i.title = "oGPUWindowTestApp";
-		i.icon = (ouro::icon_handle)oGDILoadIcon(IDI_APPICON);
+		i.icon = (ouro::icon_handle)load_icon(IDI_APPICON);
 		i.on_action = std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1);
 		i.on_event = std::bind(&oGPUWindowTestApp::AppEventHook, this, std::placeholders::_1);
 		i.shape.client_size = int2(256, 256);
@@ -561,7 +562,7 @@ void oGPUWindowTestApp::ActionHook(const ouro::input::action& _Action)
 				case oWMI_HELP_ABOUT:
 				{
 					#if 1
-						oDECLARE_ABOUT_INFO(i, oGDILoadIcon(IDI_APPICON));
+						oDECLARE_ABOUT_INFO(i, load_icon(IDI_APPICON));
 						std::shared_ptr<ouro::about> a = ouro::about::make(i);
 						a->show_modal(AppWindow);
 					#else

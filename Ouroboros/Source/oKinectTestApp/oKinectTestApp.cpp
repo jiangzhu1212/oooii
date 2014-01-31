@@ -179,7 +179,7 @@ private:
 		bool Playing;
 		bool Running;
 
-		scoped_hfont hFont;
+		scoped_font hFont;
 	private:
 		oKinectWindow(const oKinectWindow&);
 		const oKinectWindow& operator=(const oKinectWindow&);
@@ -187,8 +187,8 @@ private:
 
 	std::vector<oKinectWindow> KinectWindows;
 
-	scoped_hpen hKinectPen;
-	scoped_hbrush hKinectBrush;
+	scoped_pen hKinectPen;
+	scoped_brush hKinectBrush;
 
 	intrusive_ptr<threadsafe oStreamMonitor> StreamMonitor;
 	intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;

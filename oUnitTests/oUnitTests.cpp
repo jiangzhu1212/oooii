@@ -10,7 +10,7 @@
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStream.h>
 #include <oGUI/Windows/win_gdi.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi_bitmap.h>
 #include "resource.h"
 
 #include <oCore/windows/win_exception_handler.h>
@@ -88,7 +88,7 @@ void InitEnv()
 	}
 
 #if defined(WIN64) || defined(WIN32)
-	windows::gdi::scoped_hicon hIcon = oGDILoadIcon(IDI_APPICON);
+	windows::gdi::scoped_icon hIcon = windows::gdi::load_icon(IDI_APPICON);
 	console::icon((icon_handle)(HICON)hIcon);
 #endif
 }

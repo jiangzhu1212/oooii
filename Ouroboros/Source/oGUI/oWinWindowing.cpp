@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oGUI/Windows/oWinKey.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi_bitmap.h>
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinStatusBar.h>
 #include <oBase/timer.h>
@@ -2154,7 +2154,7 @@ static int2 GetSizeButtonDefault(const control_info& _Desc)
 
 static int2 GetSizeIcon(const control_info& _Desc)
 {
-	int2 iconSize = oGDIGetIconSize((HICON)_Desc.text);
+	int2 iconSize = icon_dimensions((HICON)_Desc.text);
 	return resolve_rect_size(_Desc.size, iconSize);
 }
 

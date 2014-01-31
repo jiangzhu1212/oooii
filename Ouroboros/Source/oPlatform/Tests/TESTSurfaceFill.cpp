@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oSurface/fill.h>
 #include <oGUI/Windows/win_gdi.h>
+#include <oGUI/Windows/win_gdi_bitmap.h>
 #include <oGUI/Windows/oGDI.h>
 
 using namespace ouro::windows::gdi;
@@ -38,7 +39,7 @@ void core_fill_grid_numbers(surface::buffer* _pBuffer, const int2& _GridDimensio
 	if (si.format != surface::b8g8r8a8_unorm)
 		throw std::invalid_argument("only b8g8r8a8_unorm currently supported");
 
-	scoped_hbitmap hBmp = make_bitmap(_pBuffer);
+	scoped_bitmap hBmp = make_bitmap(_pBuffer);
 	scoped_getdc hScreenDC(nullptr);
 	scoped_compat hDC(hScreenDC);
 
@@ -46,7 +47,7 @@ void core_fill_grid_numbers(surface::buffer* _pBuffer, const int2& _GridDimensio
 	fd.name = "Tahoma";
 	fd.point_size = (logical_height_to_pointf(hDC, _GridDimensions.y) * 0.33f);
 	fd.bold = fd.point_size < 15;
-	scoped_hfont hFont(oGDICreateFont(fd));
+	scoped_font hFont(oGDICreateFont(fd));
 
 	scoped_select ScopedSelectBmp(hDC, hBmp);
 	scoped_select ScopedSelectFont(hDC, hFont);
