@@ -81,6 +81,9 @@
     <ClInclude Include="..\..\Include\oGUI\msgbox_reporting.h">
       <Filter>oGUI</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi.h">
+      <Filter>oGUI\Windows</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
@@ -145,6 +148,9 @@
     </ClCompile>
     <ClCompile Include="msgbox_reporting.cpp">
       <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="win_gdi.cpp">
+      <Filter>Source\Windows</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

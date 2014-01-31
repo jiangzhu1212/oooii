@@ -22,14 +22,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGUI/Windows/oWinWindowing.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi.h>
 #include <Commdlg.h>
 #include <CdErr.h>
-#include <oBasis/oError.h> // @tony fixme
-#include <oCore/Windows/win_error.h>
 
-using namespace ouro;
+namespace ouro {
+	namespace windows {
+		namespace common_dialog {
 
 static const char* as_string_CD_err(int _CDERRCode)
 {
@@ -78,14 +77,11 @@ static const char* as_string_CD_err(int _CDERRCode)
 	return "unrecognized CDERR";
 }
 
-static bool oWinDialogGetOpenOrSavePath(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent, bool _IsOpenNotSave)
+static bool open_or_save_path(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent, bool _IsOpenNotSave)
 {
 	path_string StrPath;
-	if (!_Path.empty())
-	{
-		if (!clean_path(StrPath, _Path, '\\'))
-			return oErrorSetLast(std::errc::invalid_argument, "bad path: %s", _Path.c_str());
-	}
+	if (!_Path.empty() && !clean_path(StrPath, _Path, '\\'))
+		oTHROW_INVARG("bad path: %s", _Path.c_str());
 
 	std::string filters;
 	char defext[4] = {0};
@@ -144,25 +140,25 @@ static bool oWinDialogGetOpenOrSavePath(path& _Path, const char* _DialogTitle, c
 	{
 		DWORD err = CommDlgExtendedError();
 		if (err == CDERR_GENERALCODES)
-			return oErrorSetLast(std::errc::operation_canceled, "dialog was canceled");
-		return oErrorSetLast(std::errc::protocol_error, "%s", as_string_CD_err(err));
+			return false;
+		oTHROW(protocol_error, "%s", as_string_CD_err(err));
 	}
 
 	_Path = StrPath;
 	return true;
 }
 
-bool oWinDialogGetOpenPath(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
+bool open_path(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
 {
-	return oWinDialogGetOpenOrSavePath(_Path, _DialogTitle, _FilterPairs, _hParent, true);
+	return open_or_save_path(_Path, _DialogTitle, _FilterPairs, _hParent, true);
 }
 
-bool oWinDialogGetSavePath(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
+bool save_path(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent)
 {
-	return oWinDialogGetOpenOrSavePath(_Path, _DialogTitle, _FilterPairs, _hParent, false);
+	return open_or_save_path(_Path, _DialogTitle, _FilterPairs, _hParent, false);
 }
 
-bool oWinDialogGetColor(color* _pColor, HWND _hParent)
+bool pick_color(color* _pColor, HWND _hParent)
 {
 	int r,g,b,a;
 	_pColor->decompose(&r, &g, &b, &a);
@@ -181,17 +177,17 @@ bool oWinDialogGetColor(color* _pColor, HWND _hParent)
 	{
 		DWORD err = CommDlgExtendedError();
 		if (err == CDERR_GENERALCODES)
-			return oErrorSetLast(std::errc::operation_canceled, "dialog was canceled");
-		return oErrorSetLast(std::errc::protocol_error, "%s", as_string_CD_err(err));
+			return false;
+		oTHROW(protocol_error, "%s", as_string_CD_err(err));
 	}
 
 	*_pColor = color(GetRValue(cc.rgbResult), GetGValue(cc.rgbResult), GetBValue(cc.rgbResult), a);
 	return true;
 }
 
-bool oWinDialogGetFont(LOGFONT* _pLogicalFont, color* _pColor, HWND _hParent)
+bool pick_font(LOGFONT* _pLogicalFont, color* _pColor, HWND _hParent)
 {
-	oGDIScopedGetDC hDC(_hParent);
+	gdi::scoped_getdc hDC(_hParent);
 	CHOOSEFONT cf = {0};
 	cf.lStructSize = sizeof(CHOOSEFONT);
 	cf.hwndOwner = _hParent;
@@ -215,8 +211,8 @@ bool oWinDialogGetFont(LOGFONT* _pLogicalFont, color* _pColor, HWND _hParent)
 	{
 		DWORD err = CommDlgExtendedError();
 		if (err == CDERR_GENERALCODES)
-			return oErrorSetLast(std::errc::operation_canceled, "dialog was canceled");
-		return oErrorSetLast(std::errc::protocol_error, "%s", as_string_CD_err(err));
+			return false;
+		oTHROW(protocol_error, "%s", as_string_CD_err(err));
 	}
 
 	if (_pColor)
@@ -224,3 +220,6 @@ bool oWinDialogGetFont(LOGFONT* _pLogicalFont, color* _pColor, HWND _hParent)
 
 	return true;
 }
+		} // namespace common_dialog
+	} // namespace windows
+} // namespace ouro

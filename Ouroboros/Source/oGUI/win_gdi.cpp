@@ -22,39 +22,37 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Utilities for working with Window's common dialogs.
-#pragma once
-#ifndef oGUI_win_common_dialog_h
-#define oGUI_win_common_dialog_h
-
-#include <oBase/color.h>
-#include <oBase/path.h>
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <oGUI/Windows/win_gdi.h>
 
 namespace ouro {
 	namespace windows {
-		namespace common_dialog {
+		namespace gdi {
+		
+int point_to_logical_height(HDC _hDC, int _Point)
+{
+	return -MulDiv(_Point, GetDeviceCaps(_hDC, LOGPIXELSY), 72);
+}
 
-// All functions return true if successful or false if the user canceled the dialog
-// and thus there is no error but values are not valid.
-// If there is a system error an exception is thrown.
+int point_to_logical_heightf(HDC _hDC, float _Point)
+{
+	return point_to_logical_height(_hDC, static_cast<int>(_Point + 0.5f));
+}
 
-// Filter pairs are delimited by '|' and are the description, and the wildcard:
-// i.e. "Text Files|*.txt|Bitmap Files|*.bmp"
-// If _Path is not empty it will be used as the initial starting folder.
-bool open_path(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
-bool save_path(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent = nullptr);
+int logical_height_to_point(HDC _hDC, int _Height)
+{
+	return MulDiv(_Height, 72, GetDeviceCaps(_hDC, LOGPIXELSY));
+}
 
-// *_pColor is used as the initial value of the dialog
-bool pick_color(color* _pColor, HWND _hParent = nullptr);
+float logical_height_to_pointf(HDC _hDC, int _Height)
+{
+	return (_Height * 72.0f) / (float)GetDeviceCaps(_hDC, LOGPIXELSY);
+}
 
-// *_pLogicalFont is used to initialize the dialog
-bool pick_font(LOGFONT* _pLogicalFont, color* _pColor, HWND _hParent);
+float2 dpi_scale(HDC _hDC)
+{
+	return float2(GetDeviceCaps(_hDC, LOGPIXELSX) / 96.0f, GetDeviceCaps(_hDC, LOGPIXELSY) / 96.0f);
+}
 
-		} // namespace common_dialog
+		} // namespace gdi
 	} // namespace windows
 } // namespace ouro
-
-#endif

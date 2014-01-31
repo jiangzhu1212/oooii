@@ -194,7 +194,7 @@ void TESTcamera(test_services& _Services)
 					td.ShadowOffset = int2(1,1);
 					td.Alignment = alignment::middle_left;
 
-					oGDIScopedGetDC hDC(hWnd);
+					scoped_getdc hDC(hWnd);
 					oGDIDrawText(hDC, td, sFPS);
 				}
 

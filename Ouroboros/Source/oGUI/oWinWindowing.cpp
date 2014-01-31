@@ -42,6 +42,7 @@
 #include <windowsx.h>
 
 using namespace ouro;
+using namespace ouro::windows::gdi;
 
 // Raw Input (WM_INPUT support) These are not defined anywhere I can find in
 // Windows headers.
@@ -141,8 +142,8 @@ static char* oWinPnPEnumeratorToSetupClass(char* _StrDestination, size_t _Sizeof
 	if (!hash) return nullptr;
 	*hash = '\0';
 	char* end = _StrDestination + len;
-	ouro::transform(_StrDestination, end, _StrDestination, [=](char c) { return (c == '#') ? '\\' : c; });
-	ouro::transform(_StrDestination, end, _StrDestination, ouro::toupper<const char&>);
+	transform(_StrDestination, end, _StrDestination, [=](char c) { return (c == '#') ? '\\' : c; });
+	transform(_StrDestination, end, _StrDestination, toupper<const char&>);
 	char* first_slash = strchr(_StrDestination, '\\');
 	if (!first_slash) return nullptr;
 	*first_slash = '\0';
@@ -150,12 +151,12 @@ static char* oWinPnPEnumeratorToSetupClass(char* _StrDestination, size_t _Sizeof
 }
 
 template<size_t size> char* oWinPnPEnumeratorToSetupClass(char (&_StrDestination)[size], const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, size, _PnPEnumerator); }
-template<typename charT, size_t capacity> char* oWinPnPEnumeratorToSetupClass(ouro::fixed_string<charT, capacity>& _StrDestination, const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, _StrDestination.capacity(), _PnPEnumerator); }
+template<typename charT, size_t capacity> char* oWinPnPEnumeratorToSetupClass(fixed_string<charT, capacity>& _StrDestination, const char* _PnPEnumerator) { return oWinPnPEnumeratorToSetupClass(_StrDestination, _StrDestination.capacity(), _PnPEnumerator); }
 #endif
 
-ouro::input::type oWinGetDeviceTypeFromClass(const char* _Class)
+input::type oWinGetDeviceTypeFromClass(const char* _Class)
 {
-	static const char* DeviceClass[ouro::input::type_count] = 
+	static const char* DeviceClass[input::type_count] = 
 	{
 		"Unknown",
 		"Keyboard",
@@ -166,22 +167,22 @@ ouro::input::type oWinGetDeviceTypeFromClass(const char* _Class)
 		"Voice",
 		"Touch", // not sure what this is called generically
 	};
-	static_assert(oCOUNTOF(DeviceClass) == ouro::input::type_count, "array mismatch");
+	static_assert(oCOUNTOF(DeviceClass) == input::type_count, "array mismatch");
 	for (int i = 0; i < oCOUNTOF(DeviceClass); i++)
 		if (!strcmp(DeviceClass[i], _Class))
-			return (ouro::input::type)i;
-	return ouro::input::unknown;
+			return (input::type)i;
+	return input::unknown;
 }
 
-static bool oWinSetupGetString(ouro::mstring& _StrDestination, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
+static bool oWinSetupGetString(mstring& _StrDestination, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
 {
 	DEVPROPTYPE dpType;
 	DWORD size = 0;
 	SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
 	if (size)
 	{
-		ouro::mwstring buffer;
-		oASSERT(buffer.capacity() > (size / sizeof(ouro::mwstring::char_type)), "");
+		mwstring buffer;
+		oASSERT(buffer.capacity() > (size / sizeof(mwstring::char_type)), "");
 		oVB(SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) && dpType == DEVPROP_TYPE_STRING);
 		_StrDestination = buffer;
 	}
@@ -192,14 +193,14 @@ static bool oWinSetupGetString(ouro::mstring& _StrDestination, HDEVINFO _hDevInf
 }
 
 // _NumStrings must be initialized to maximum capacity
-static bool oWinSetupGetStringList(ouro::mstring* _StrDestination, size_t& _NumStrings, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
+static bool oWinSetupGetStringList(mstring* _StrDestination, size_t& _NumStrings, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
 {
 	DEVPROPTYPE dpType;
 	DWORD size = 0;
 	SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, nullptr, 0, &size, 0);
 	if (size)
 	{
-		ouro::xlwstring buffer;
+		xlwstring buffer;
 		oASSERT(buffer.capacity() > size, "");
 		oVB(SetupDiGetDevicePropertyW(_hDevInfo, _pSPDID, _pPropKey, &dpType, (BYTE*)buffer.c_str(), size, &size, 0) && dpType != DEVPROP_TYPE_STRING_LIST);
 
@@ -238,14 +239,14 @@ static bool oWinSetupGetStringList(ouro::mstring* _StrDestination, size_t& _NumS
 struct oWINDOWS_HID_DESC
 {
 	oWINDOWS_HID_DESC()
-		: Type(ouro::input::unknown)
+		: Type(input::unknown)
 		, DevInst(0)
 	{}
 
-	ouro::input::type Type;
+	input::type Type;
 	DWORD DevInst;
-	ouro::mstring ParentDeviceInstancePath;
-	ouro::mstring DeviceInstancePath;
+	mstring ParentDeviceInstancePath;
+	mstring DeviceInstancePath;
 };
 
 static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, const std::function<void(const oWINDOWS_HID_DESC& _HIDDesc)>& _Visitor)
@@ -254,7 +255,7 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 		return oErrorSetLast(std::errc::invalid_argument, "Must specify a visitor.");
 
 	HDEVINFO hDevInfo = INVALID_HANDLE_VALUE;
-	ouro::finally([=]
+	finally([=]
 	{ 
 		if (hDevInfo != INVALID_HANDLE_VALUE) 
 			SetupDiDestroyDeviceInfoList(hDevInfo);
@@ -275,14 +276,14 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 
 	oWINDOWS_HID_DESC HIDDesc;
 
-	ouro::mstring KinectCameraSibling;
-	ouro::mstring KinectCameraParent;
+	mstring KinectCameraSibling;
+	mstring KinectCameraParent;
 
 	while (SetupDiEnumDeviceInfo(hDevInfo, DeviceIndex, &SPDID))
 	{
 		DeviceIndex++;
 
-		ouro::mstring ClassValue;
+		mstring ClassValue;
 		if (!oWinSetupGetString(ClassValue, hDevInfo, &SPDID, &oDEVPKEY_Device_Class))
 			return false; // pass through error
 
@@ -301,7 +302,7 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 				ClassValue = "Skeleton";
 				HIDDesc.DeviceInstancePath = HIDDesc.ParentDeviceInstancePath;
 
-				ouro::mstring Strings[2];
+				mstring Strings[2];
 				size_t Capacity = oCOUNTOF(Strings);
 				if (!oWinSetupGetStringList(Strings, Capacity, hDevInfo, &SPDID, &oDEVPKEY_Device_Siblings) || Capacity != 1)
 					return false; // pass through error
@@ -341,7 +342,7 @@ static bool oWinEnumInputDevices(bool _EnumerateAll, const char* _Enumerator, co
 }
 
 // Translate a PnP enumerator name (DEV_BROADCAST_DEVICEINTERFACE_A::dbcc_name)
-// to one or more unique names based on the ouro::input_device_status::TYPEs represented
+// to one or more unique names based on the input_device_status::TYPEs represented
 // by the device. Devices now are often hybrid, such as a KB/mouse combo USB or 
 // a voice/skeleton Kinect device. This uses SetupAPI to do the discovery.
 static bool oWinEnumInputDevices(bool _EnumerateAll, const std::function<void(const oWINDOWS_HID_DESC& _HIDDesc)>& _Visitor)
@@ -358,7 +359,7 @@ struct oWIN_DEVICE_CHANGE_CONTEXT
 
 	std::vector<RAWINPUTDEVICELIST> RawInputs;
 	std::vector<mstring> RawInputInstanceNames;
-	std::array<unsigned int, ouro::input::status_count> LastChangeTimestamp;
+	std::array<unsigned int, input::status_count> LastChangeTimestamp;
 };
 
 // Register the specified window to receive WM_INPUT_DEVICE_CHANGE events. This
@@ -379,8 +380,8 @@ static bool oWinRegisterDeviceChangeEvents(HWND _hWnd)
 	{
 		switch(_HIDDesc.Type)
 		{
-			case ouro::input::keyboard: case ouro::input::mouse: case ouro::input::unknown: break;
-			default: SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(_HIDDesc.Type, ouro::input::ready), (LPARAM)_HIDDesc.DeviceInstancePath.c_str());
+			case input::keyboard: case input::mouse: case input::unknown: break;
+			default: SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(_HIDDesc.Type, input::ready), (LPARAM)_HIDDesc.DeviceInstancePath.c_str());
 		}
 	}));
 
@@ -408,22 +409,22 @@ static void oWinDeviceChangeDestroy(HDEVICECHANGE _hDeviceChance)
 	delete ctx;
 }
 
-static ouro::input::type oWinGetTypeFromRIM(DWORD _dwRIMType)
+static input::type oWinGetTypeFromRIM(DWORD _dwRIMType)
 {
 	switch (_dwRIMType)
 	{
-		case RIM_TYPEKEYBOARD: return ouro::input::keyboard;
-		case RIM_TYPEMOUSE: return ouro::input::mouse;
+		case RIM_TYPEKEYBOARD: return input::keyboard;
+		case RIM_TYPEMOUSE: return input::mouse;
 		default: break;
 	}
-	return ouro::input::unknown;
+	return input::unknown;
 }
 
 static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam, HDEVICECHANGE _hDeviceChance)
 {
 	oWIN_DEVICE_CHANGE_CONTEXT* ctx = (oWIN_DEVICE_CHANGE_CONTEXT*)_hDeviceChance;
-	ouro::input::type Type = ouro::input::unknown;
-	ouro::input::status Status = _wParam == GIDC_ARRIVAL ? ouro::input::ready : ouro::input::not_ready;
+	input::type Type = input::unknown;
+	input::status Status = _wParam == GIDC_ARRIVAL ? input::ready : input::not_ready;
 	mstring InstanceName;
 
 	switch (_wParam)
@@ -494,7 +495,7 @@ void oWinEnumWindows(const std::function<bool(HWND _hWnd)>& _Enumerator)
 	EnumWindows(oWinEnumWindowsProc, (LPARAM)&_Enumerator);
 }
 
-bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
+bool oWinGetProcessTopWindowAndThread(process::id _ProcessID
 	, HWND* _pHWND
 	, std::thread::id* _pThreadID
 	, const char* _pWindowName)
@@ -515,9 +516,9 @@ bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
 
 		// Look for windows that might get injected into our process that we would never want to target
 		const char* WindowsToSkip[] = {"Default IME", "MSCTFIME UI"};
-		ouro::mstring WindowText;
+		mstring WindowText;
 		// For some reason in release builds Default IME can take a while to respond to this. so wait longer unless the app appears to be hung.
-		if (SendMessageTimeout(_Hwnd, WM_GETTEXT, ouro::mstring::Capacity - 1, (LPARAM)WindowText.c_str(), SMTO_ABORTIFHUNG, 2000, nullptr) == 0)
+		if (SendMessageTimeout(_Hwnd, WM_GETTEXT, mstring::Capacity - 1, (LPARAM)WindowText.c_str(), SMTO_ABORTIFHUNG, 2000, nullptr) == 0)
 		{
 			WindowText = "";
 		}
@@ -559,22 +560,22 @@ bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
 		{ oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); return nullptr; } \
 	oASSERT(oWinIsWindowThread(_hWnd), "This function must be called on the window thread %d for %p", asdword(std::this_thread::get_id()), _hWnd)
 
-inline bool oErrorSetLastBadType(HWND _hControl, ouro::control_type::value _Type) { return oErrorSetLast(std::errc::invalid_argument, "The specified %s %p (%d) is not valid for this operation", as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
+inline bool oErrorSetLastBadType(HWND _hControl, control_type::value _Type) { return oErrorSetLast(std::errc::invalid_argument, "The specified %s %p (%d) is not valid for this operation", as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
 
-inline bool oErrorSetLastBadIndex(HWND _hControl, ouro::control_type::value _Type, int _SubItemIndex) { return oErrorSetLast(std::errc::invalid_argument, "_SubItemIndex %d was not found in %s %p (%d)", _SubItemIndex, as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
+inline bool oErrorSetLastBadIndex(HWND _hControl, control_type::value _Type, int _SubItemIndex) { return oErrorSetLast(std::errc::invalid_argument, "_SubItemIndex %d was not found in %s %p (%d)", _SubItemIndex, as_string(_Type), _hControl, GetDlgCtrlID(_hControl)); }
 
 inline HWND oWinControlGetBuddy(HWND _hControl) { return (HWND)SendMessage(_hControl, UDM_GETBUDDY, 0, 0); }
 
-static DWORD oWinGetStyle(ouro::window_style::value _Style, bool _HasParent)
+static DWORD oWinGetStyle(window_style::value _Style, bool _HasParent)
 {
 	switch (_Style)
 	{
-		case ouro::window_style::borderless: return _HasParent ? WS_CHILD : WS_POPUP;
-		case ouro::window_style::dialog: return WS_CAPTION;
-		case ouro::window_style::fixed: 
-		case ouro::window_style::fixed_with_menu:
-		case ouro::window_style::fixed_with_statusbar:
-		case ouro::window_style::fixed_with_menu_and_statusbar: return WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
+		case window_style::borderless: return _HasParent ? WS_CHILD : WS_POPUP;
+		case window_style::dialog: return WS_CAPTION;
+		case window_style::fixed: 
+		case window_style::fixed_with_menu:
+		case window_style::fixed_with_statusbar:
+		case window_style::fixed_with_menu_and_statusbar: return WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX;
 		default: break;
 	}
 	return WS_OVERLAPPEDWINDOW;
@@ -603,8 +604,8 @@ struct oWndExtra
 	HDEVICECHANGE hDeviceChange;
 	LONG_PTR RestoredPosition; // MAKELPARAM(x,y)
 	LONG_PTR RestoredSize; // MAKELPARAM(w,h)
-	LONG_PTR PreviousState; // ouro::window_state::value
-	LONG_PTR PreviousStyle; // ouro::window_style::value
+	LONG_PTR PreviousState; // window_state::value
+	LONG_PTR PreviousStyle; // window_style::value
 	LONG_PTR ExtraFlags;
 	intptr_t TempCallCounter;
 	uintptr_t LastShowTimestamp;
@@ -620,8 +621,8 @@ struct oWndExtra
 #define oGWLP_DEVICE_CHANGE (offsetof(oWndExtra, hDeviceChange))
 #define oGWLP_RESTORED_POSITION (offsetof(oWndExtra, RestoredPosition)) // use GET_X_LPARAM and GET_Y_LPARAM to decode
 #define oGWLP_RESTORED_SIZE (offsetof(oWndExtra, RestoredSize)) // use GET_X_LPARAM and GET_Y_LPARAM to decode
-#define oGWLP_PREVIOUS_STATE (offsetof(oWndExtra, PreviousState)) // ouro::window_state::value
-#define oGWLP_PREVIOUS_STYLE (offsetof(oWndExtra, PreviousStyle)) // ouro::window_style::value
+#define oGWLP_PREVIOUS_STATE (offsetof(oWndExtra, PreviousState)) // window_state::value
+#define oGWLP_PREVIOUS_STYLE (offsetof(oWndExtra, PreviousStyle)) // window_style::value
 #define oGWLP_EXTRA_FLAGS (offsetof(oWndExtra, ExtraFlags))
 #define oGWLP_TEMP_CALL_COUNTER (offsetof(oWndExtra, TempCallCounter))
 #define oGWLP_LAST_SHOW_TIMESTAMP (offsetof(oWndExtra, LastShowTimestamp))
@@ -635,7 +636,7 @@ struct oWndExtra
 
 HWND oWinCreate(HWND _hParent
 	, const char* _Title
-	, ouro::window_style::value _Style
+	, window_style::value _Style
 	, const int2& _ClientPosition
 	, const int2& _ClientSize
 	, WNDPROC _Wndproc
@@ -662,13 +663,13 @@ HWND oWinCreate(HWND _hParent
 	int2 NewSize = _ClientSize;
 	if (NewPosition.x == oDEFAULT || NewPosition.y == oDEFAULT || NewSize.x == oDEFAULT || NewSize.y == oDEFAULT)
 	{
-		ouro::display::info di = ouro::display::get_info(ouro::display::primary_id());
+		display::info di = display::get_info(display::primary_id());
 		const RECT rPrimaryWorkarea = oWinRectWH(int2(di.workarea_x, di.workarea_y), int2(di.workarea_width, di.workarea_height));
 		const int2 DefaultSize = oWinRectSize(rPrimaryWorkarea) / 4; // 25% of parent window by default
-		NewSize = ouro::resolve_rect_size(NewSize, DefaultSize);
-		const RECT rCenteredClient = oWinRect(ouro::resolve_rect(oRect(rPrimaryWorkarea), int2(0, 0), NewSize, ouro::alignment::middle_center, false));
+		NewSize = resolve_rect_size(NewSize, DefaultSize);
+		const RECT rCenteredClient = oWinRect(resolve_rect(oRect(rPrimaryWorkarea), int2(0, 0), NewSize, alignment::middle_center, false));
 		const int2 DefaultPosition = oWinRectPosition(rCenteredClient);
-		NewPosition = ouro::resolve_rect_position(NewPosition, DefaultPosition);
+		NewPosition = resolve_rect_position(NewPosition, DefaultPosition);
 	}
 
 	const DWORD dwInitialStyleEx = WS_EX_ACCEPTFILES|WS_EX_APPWINDOW;
@@ -677,7 +678,7 @@ HWND oWinCreate(HWND _hParent
 	RECT rWindow = oWinRectWH(NewPosition, NewSize);
 	oVB(AdjustWindowRectEx(&rWindow, dwInitialStyle, false, dwInitialStyleEx));
 	oWIN_CREATESTRUCT wcs;
-	wcs.Shape.state = ouro::window_state::hidden;
+	wcs.Shape.state = window_state::hidden;
 	wcs.Shape.style = _Style;
 	wcs.Shape.client_position = NewPosition;
 	wcs.Shape.client_size = NewSize;
@@ -705,7 +706,7 @@ HWND oWinCreate(HWND _hParent
 		if (GetLastError() == S_OK)
 			oTHROW(protocol_error, "CreateWindowEx returned a null HWND (failure condition) for '%s' but GetLastError is S_OK. This implies that user handling of a WM_CREATE message failed, so start looking there.", oSAFESTRN(_Title));
 		else
-			throw ouro::windows::error();
+			throw windows::error();
 	}
 
 	// only top-level windows should be allowed to quit the message loop
@@ -767,7 +768,7 @@ static void oWinSaveRestoredPosSize(HWND _hWnd)
 		LONG_PTR extra = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
 		if (0 == (extra & (oEF_FULLSCREEN_COOPERATIVE|oEF_FULLSCREEN_COOPERATIVE|oEF_NO_SAVE_RESTORED_POSITION_SIZE)))
 		{
-			ouro::window_shape s = oWinGetShape(_hWnd);
+			window_shape s = oWinGetShape(_hWnd);
 			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION, (LONG_PTR)MAKELPARAM(s.client_position.x, s.client_position.y));
 			SetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE, (LONG_PTR)MAKELPARAM(s.client_size.x, s.client_size.y));
 		}
@@ -798,14 +799,14 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				SetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE, (LONG_PTR)oWinDeviceChangeCreate());
 				SetWindowLongPtr(_hWnd, oGWLP_MENU, (LONG_PTR)CreateMenu());
 				SetWindowLongPtr(_hWnd, oGWLP_STATUSBAR, (LONG_PTR)oWinStatusBarCreate(_hWnd, (HMENU)0x00005747));
-				oVERIFY(oWinShowStatusBar(_hWnd, ouro::has_statusbar(wcs->Shape.style)));
+				oVERIFY(oWinShowStatusBar(_hWnd, has_statusbar(wcs->Shape.style)));
 
-				if (ouro::has_statusbar(wcs->Shape.style))
+				if (has_statusbar(wcs->Shape.style))
 					oVB(SetWindowPos(_hWnd, 0, cs->x, cs->y, cs->cx, cs->cy + oWinGetStatusBarHeight(_hWnd), SWP_NOZORDER|SWP_FRAMECHANGED|SWP_NOMOVE));
 
 				oWinSaveRestoredPosSize(_hWnd);
-				oWinSetTempChange(_hWnd, wcs->Shape.state != ouro::window_state::maximized);
-				oWinShowMenu(_hWnd, ouro::has_menu(wcs->Shape.style));
+				oWinSetTempChange(_hWnd, wcs->Shape.state != window_state::maximized);
+				oWinShowMenu(_hWnd, has_menu(wcs->Shape.style));
 				oWinSetTempChange(_hWnd, false);
 
 				SetWindowLongPtr(_hWnd, GWLP_USERDATA, (LONG_PTR)wcs->pThis);
@@ -855,28 +856,28 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				// Take over control of syscommands to resize since oWinSetShape does
 				// extra work DefWindowProc is not aware of.
 
-				ouro::window_shape s;
+				window_shape s;
 				switch (_wParam)
 				{
 					case SC_MAXIMIZE:
-						s.state = ouro::window_state::maximized;
+						s.state = window_state::maximized;
 						oWinSetShape(_hWnd, s);
 						return 0;
 					case SC_MINIMIZE:
-						s.state = ouro::window_state::minimized;
+						s.state = window_state::minimized;
 						oWinSetShape(_hWnd, s);
 						return 0;
 					case SC_RESTORE:
 					{
-						ouro::window_shape Old = oWinGetShape(_hWnd);
-						if (Old.state == ouro::window_state::minimized)
+						window_shape Old = oWinGetShape(_hWnd);
+						if (Old.state == window_state::minimized)
 						{
-							s.state = (ouro::window_state::value)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE);
-							if (s.state == ouro::window_state::hidden)
-								s.state = ouro::window_state::restored;
+							s.state = (window_state::value)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE);
+							if (s.state == window_state::hidden)
+								s.state = window_state::restored;
 						}
 						else 
-							s.state = ouro::window_state::restored;
+							s.state = window_state::restored;
 
 						oWinSetShape(_hWnd, s);
 						return 0;
@@ -891,7 +892,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 			case WM_WINDOWPOSCHANGED:
 			{
 				if (IsWindowVisible(_hWnd))
-					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)ouro::timer::nowmsi());
+					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)timer::nowmsi());
 				else
 					SetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP, (ULONG_PTR)0);
 				break;
@@ -946,15 +947,15 @@ bool oWinIsOpaque(HWND _hWnd)
 	uintptr_t LastShowTimestamp = (uintptr_t)GetWindowLongPtr(_hWnd, oGWLP_LAST_SHOW_TIMESTAMP);
 	if (LastShowTimestamp == 0)
 		return false;
-	uintptr_t Now = ouro::timer::nowmsi();
+	uintptr_t Now = timer::nowmsi();
 	return (LastShowTimestamp + kFadeInTime) < Now;
 }
 
 bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered)
 {
 	#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
-		ouro::windows::version::value v = ouro::windows::get_version();
-		if (v >= ouro::windows::version::win7)
+		windows::version::value v = windows::get_version();
+		if (v >= windows::version::win7)
 		{
 			if (_Registered)
 				oVB(RegisterTouchWindow(_hWnd, 0));
@@ -967,12 +968,12 @@ bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered)
 		return oErrorSetLast(std::errc::not_supported, "Windows 7 is the minimum required version for touch support");
 }
 
-void oWinAccelFromHotKeys(ACCEL* _pAccels, const ouro::basic_hotkey_info* _pHotKeys, size_t _NumHotKeys)
+void oWinAccelFromHotKeys(ACCEL* _pAccels, const basic_hotkey_info* _pHotKeys, size_t _NumHotKeys)
 {
 	for (size_t i = 0; i < _NumHotKeys; i++)
 	{
 		ACCEL& a = _pAccels[i];
-		const ouro::basic_hotkey_info& h = _pHotKeys[i];
+		const basic_hotkey_info& h = _pHotKeys[i];
 		a.fVirt = FVIRTKEY;
 		if (h.alt_down) a.fVirt |= FALT;
 		if (h.ctrl_down) a.fVirt |= FCONTROL;
@@ -982,12 +983,12 @@ void oWinAccelFromHotKeys(ACCEL* _pAccels, const ouro::basic_hotkey_info* _pHotK
 	}
 }
 
-void oWinAccelToHotKeys(ouro::basic_hotkey_info* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys)
+void oWinAccelToHotKeys(basic_hotkey_info* _pHotKeys, const ACCEL* _pAccels, size_t _NumHotKeys)
 {
 	for (size_t i = 0; i < _NumHotKeys; i++)
 	{
 		const ACCEL& a = _pAccels[i];
-		ouro::basic_hotkey_info& h = _pHotKeys[i];
+		basic_hotkey_info& h = _pHotKeys[i];
 		oASSERT(a.fVirt & FVIRTKEY, "");
 		oWINKEY_CONTROL_STATE dummy;
 		h.hotkey = oWinKeyToKey(a.key);
@@ -1459,7 +1460,7 @@ RECT oWinGetParentRect(HWND _hWnd, HWND _hExplicitParent)
 		oVERIFY(oWinGetClientRect(hParent, &rParent));
 	else
 	{
-		ouro::display::info di = ouro::display::get_info(oWinGetDisplayId(_hWnd));
+		display::info di = display::get_info(oWinGetDisplayId(_hWnd));
 		rParent = oWinRectWH(int2(di.workarea_x, di.workarea_y), int2(di.workarea_width, di.workarea_height));
 	}
 	return rParent;
@@ -1478,23 +1479,23 @@ RECT oWinGetRelativeRect(HWND _hWnd, HWND _hExplicitParent)
 	return r;	
 }
 
-ouro::window_state::value oWinGetState(HWND _hWnd)
+window_state::value oWinGetState(HWND _hWnd)
 {
-	if (!oWinExists(_hWnd)) return ouro::window_state::invalid;
+	if (!oWinExists(_hWnd)) return window_state::invalid;
 	
 	LONG_PTR style = GetWindowLongPtr(_hWnd, GWL_STYLE);
-	if (!(style & WS_VISIBLE)) return ouro::window_state::hidden;
+	if (!(style & WS_VISIBLE)) return window_state::hidden;
 
 	LONG_PTR extra = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
-	if (extra & (oEF_FULLSCREEN_EXCLUSIVE|oEF_FULLSCREEN_COOPERATIVE)) return ouro::window_state::fullscreen;
+	if (extra & (oEF_FULLSCREEN_EXCLUSIVE|oEF_FULLSCREEN_COOPERATIVE)) return window_state::fullscreen;
 	
-	if (IsIconic(_hWnd)) return ouro::window_state::minimized;
-	if (IsZoomed(_hWnd)) return ouro::window_state::maximized;
+	if (IsIconic(_hWnd)) return window_state::minimized;
+	if (IsZoomed(_hWnd)) return window_state::maximized;
 
-	return ouro::window_state::restored;
+	return window_state::restored;
 }
 
-static ouro::window_style::value oWinGetStyle(HWND _hWnd)
+static window_style::value oWinGetStyle(HWND _hWnd)
 {
 	#define oFIXED_STYLE (WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX)
 	#define oSET(_Flag) ((style & (_Flag)) == (_Flag))
@@ -1512,30 +1513,30 @@ static ouro::window_style::value oWinGetStyle(HWND _hWnd)
 	LONG_PTR style = GetWindowLongPtr(_hWnd, GWL_STYLE);
 	if (oSET(WS_OVERLAPPEDWINDOW))
 	{
-		if (HasMenu && HasStatusBar) return ouro::window_style::sizable_with_menu_and_statusbar;
-		else if (HasMenu) return ouro::window_style::sizable_with_menu;
-		else if (HasStatusBar) return ouro::window_style::sizable_with_statusbar;
-		else return ouro::window_style::sizable;
+		if (HasMenu && HasStatusBar) return window_style::sizable_with_menu_and_statusbar;
+		else if (HasMenu) return window_style::sizable_with_menu;
+		else if (HasStatusBar) return window_style::sizable_with_statusbar;
+		else return window_style::sizable;
 	}
 	else if (oSET(oFIXED_STYLE))
 	{
-		if (HasMenu && HasStatusBar) return ouro::window_style::fixed_with_menu_and_statusbar;
-		else if (HasMenu) return ouro::window_style::fixed_with_menu;
-		else if (HasStatusBar) return ouro::window_style::fixed_with_statusbar;
-		else return ouro::window_style::fixed;
+		if (HasMenu && HasStatusBar) return window_style::fixed_with_menu_and_statusbar;
+		else if (HasMenu) return window_style::fixed_with_menu;
+		else if (HasStatusBar) return window_style::fixed_with_statusbar;
+		else return window_style::fixed;
 	}
 
 	LONG_PTR exstyle = GetWindowLongPtr(_hWnd, GWL_EXSTYLE);
-	if (exstyle & WS_EX_WINDOWEDGE) return ouro::window_style::dialog;
-	return ouro::window_style::borderless;
+	if (exstyle & WS_EX_WINDOWEDGE) return window_style::dialog;
+	return window_style::borderless;
 	
 	#undef oFIXED_STYLE
 	#undef oSET
 }
 
-ouro::window_shape oWinGetShape(HWND _hWnd)
+window_shape oWinGetShape(HWND _hWnd)
 {
-	ouro::window_shape s;
+	window_shape s;
 	RECT rClient;
 	oVERIFY(oWinGetClientRect(_hWnd, &rClient));
 	s.client_size = oWinRectSize(rClient);
@@ -1545,73 +1546,73 @@ ouro::window_shape oWinGetShape(HWND _hWnd)
 	return s;
 }
 
-bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
+bool oWinSetShape(HWND _hWnd, const window_shape& _Shape)
 {
 	oWIN_CHECK(_hWnd);
 
-	ouro::window_shape New = _Shape;
-	ouro::window_shape Old = oWinGetShape(_hWnd);
-	oASSERT(Old.state != ouro::window_state::invalid && Old.style != ouro::window_style::default_style, "");
+	window_shape New = _Shape;
+	window_shape Old = oWinGetShape(_hWnd);
+	oASSERT(Old.state != window_state::invalid && Old.style != window_style::default_style, "");
 
-	if (New.state == ouro::window_state::invalid)
+	if (New.state == window_state::invalid)
 		New.state = Old.state;
 
-	if (New.style == ouro::window_style::default_style)
+	if (New.style == window_style::default_style)
 		New.style = Old.style;
 
-	if (ouro::has_statusbar(New.style) && oWinIsRenderTarget(_hWnd))
+	if (has_statusbar(New.style) && oWinIsRenderTarget(_hWnd))
 		return oErrorSetLast(std::errc::protocol_error, "HWND 0x%x is marked as a render target, disallowing status bar styles to be set", _hWnd);
 
-	if (Old.state == ouro::window_state::restored)
+	if (Old.state == window_state::restored)
 		oWinSaveRestoredPosSize(_hWnd);
 
 	finally f([&] {SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) &~ oEF_NO_SAVE_RESTORED_POSITION_SIZE);});
-	if (New.state == ouro::window_state::fullscreen || New.state == ouro::window_state::minimized || New.state == ouro::window_state::maximized)
+	if (New.state == window_state::fullscreen || New.state == window_state::minimized || New.state == window_state::maximized)
 		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) | oEF_NO_SAVE_RESTORED_POSITION_SIZE);
 
 	if (Old.state != New.state)
 		SetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STATE, (LONG_PTR)Old.state);
 
-	if (Old.state != ouro::window_state::fullscreen)
+	if (Old.state != window_state::fullscreen)
 		SetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE, (LONG_PTR)Old.style);
 
-	if (New.state == ouro::window_state::fullscreen)
+	if (New.state == window_state::fullscreen)
 	{
-		New.style = ouro::window_style::borderless;
+		New.style = window_style::borderless;
 		LONG_PTR extra = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
-		if (New.state == ouro::window_state::fullscreen)
+		if (New.state == window_state::fullscreen)
 			extra |= oEF_FULLSCREEN_COOPERATIVE;
 		else
 			extra &=~ oEF_FULLSCREEN_COOPERATIVE;
 		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, extra);
 	}
-	else if (Old.state == ouro::window_state::fullscreen)
+	else if (Old.state == window_state::fullscreen)
 	{
-		New.style = (ouro::window_style::value)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE);
+		New.style = (window_style::value)GetWindowLongPtr(_hWnd, oGWLP_PREVIOUS_STYLE);
 		SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & ~(oEF_FULLSCREEN_COOPERATIVE|oEF_FULLSCREEN_EXCLUSIVE));
 	}
 
-	if (New.state == ouro::window_state::restored)
+	if (New.state == window_state::restored)
 	{
 		LONG_PTR lParam = GetWindowLongPtr(_hWnd, oGWLP_RESTORED_POSITION);
 		const int2 RestoredClientPosition(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		New.client_position = ouro::resolve_rect_position(New.client_position, RestoredClientPosition);
+		New.client_position = resolve_rect_position(New.client_position, RestoredClientPosition);
 		lParam = GetWindowLongPtr(_hWnd, oGWLP_RESTORED_SIZE);
 		const int2 RestoredClientSize(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		New.client_size = ouro::resolve_rect_position(New.client_size, RestoredClientSize);
+		New.client_size = resolve_rect_position(New.client_size, RestoredClientSize);
 	}
 
-	else if (New.state == ouro::window_state::fullscreen)
+	else if (New.state == window_state::fullscreen)
 	{
-		ouro::display::info di = ouro::display::get_info(oWinGetDisplayId(_hWnd));
+		display::info di = display::get_info(oWinGetDisplayId(_hWnd));
 		New.client_position = int2(di.x, di.y);
 		New.client_size = int2(di.mode.width, di.mode.height);
 	}
 
 	else
 	{
-		New.client_position = ouro::resolve_rect_position(New.client_position, Old.client_position);
-		New.client_size = ouro::resolve_rect_position(New.client_size, Old.client_size);
+		New.client_position = resolve_rect_position(New.client_position, Old.client_position);
+		New.client_size = resolve_rect_position(New.client_size, Old.client_size);
 	}
 
 	int StatusBarHeight = 0;
@@ -1634,14 +1635,14 @@ bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
 		// visibility, the client area has changed, so spoof a WM_SIZE to notify
 		// the system of that change. If the menu changes, then allow the WM_SIZE to 
 		// be sent by oWinShowMenu.
-		oVERIFY(oWinShowStatusBar(_hWnd, ouro::has_statusbar(New.style)));
+		oVERIFY(oWinShowStatusBar(_hWnd, has_statusbar(New.style)));
 
-		if (Old.state == ouro::window_state::maximized && New.state == ouro::window_state::maximized 
-			&& ouro::has_statusbar(New.style) != ouro::has_statusbar(Old.style)
-			&& ouro::has_menu(New.style) == ouro::has_menu(Old.style))
+		if (Old.state == window_state::maximized && New.state == window_state::maximized 
+			&& has_statusbar(New.style) != has_statusbar(Old.style)
+			&& has_menu(New.style) == has_menu(Old.style))
 		{
 			int2 NewMaxSize = Old.client_size;
-			if (ouro::has_statusbar(New.style))
+			if (has_statusbar(New.style))
 				NewMaxSize.y -= StatusBarHeight;
 			else
 				NewMaxSize.y += StatusBarHeight;
@@ -1649,24 +1650,24 @@ bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
 		}
 
 		// This will send a temp WM_SIZE event. Another will be sent below, so 
-		// squelch this one from making it all the way through to an ouro::event_type::value.
+		// squelch this one from making it all the way through to an event_type::value.
 		// However, during a style change to a maximized window, that affects the 
 		// menu other calls won't be made, so let this be the authority in that case.
-		oWinSetTempChange(_hWnd, !(Old.state == ouro::window_state::maximized && New.state == ouro::window_state::maximized));
-		oWinShowMenu(_hWnd, ouro::has_menu(New.style));
+		oWinSetTempChange(_hWnd, !(Old.state == window_state::maximized && New.state == window_state::maximized));
+		oWinShowMenu(_hWnd, has_menu(New.style));
 		oWinSetTempChange(_hWnd, false);
 	}
 
 	// Resolve position and size to a rectangle. Add extra room for the status bar.
 	RECT r = oWinRectWH(New.client_position, New.client_size);
-	if (ouro::has_statusbar(New.style))
+	if (has_statusbar(New.style))
 		r.bottom += StatusBarHeight;
 
 	// @tony: are these bit-clears needed?
-	if (New.state != ouro::window_state::maximized)
+	if (New.state != window_state::maximized)
 		dwAllFlags &=~ WS_MAXIMIZE;
 
-	if (New.state != ouro::window_state::minimized)
+	if (New.state != window_state::minimized)
 		dwAllFlags &=~ WS_MINIMIZE;
 
 	// Transform the rectangle to with-border values for the new style
@@ -1681,10 +1682,10 @@ bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
 
 	// Allow the system to calculate minimized/maximized sizes for us, so don't
 	// modify them here, that will happen in SetWindowPlacement.
-	if (!(Old.state == ouro::window_state::fullscreen && New.state == ouro::window_state::maximized))
+	if (!(Old.state == window_state::fullscreen && New.state == window_state::maximized))
 	{
 		UINT uFlags = SWP_NOZORDER|SWP_FRAMECHANGED;
-		if (New.state == ouro::window_state::minimized || New.state == ouro::window_state::maximized)
+		if (New.state == window_state::minimized || New.state == window_state::maximized)
 			uFlags |= SWP_NOMOVE|SWP_NOSIZE;
 		oVB(SetWindowPos(_hWnd, 0, r.left, r.top, oWinRectW(r), oWinRectH(r), uFlags));
 	}
@@ -1698,17 +1699,17 @@ bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape)
 
 		switch (New.state)
 		{
-			case ouro::window_state::invalid: case ouro::window_state::hidden:
+			case window_state::invalid: case window_state::hidden:
 				WP.showCmd = SW_HIDE;
 				break;
-			case ouro::window_state::minimized:
+			case window_state::minimized:
 				WP.showCmd = SW_SHOWMINNOACTIVE;
 				break;
-			case ouro::window_state::maximized:
+			case window_state::maximized:
 				WP.showCmd = SW_SHOWMAXIMIZED;
 				break;
-			case ouro::window_state::fullscreen:
-			case ouro::window_state::restored:
+			case window_state::fullscreen:
+			case window_state::restored:
 				WP.showCmd = SW_RESTORE;
 				WP.rcNormalPosition = r;
 				break;
@@ -1741,9 +1742,9 @@ bool oWinAnimate(HWND _hWnd, const RECT& _From, const RECT& _To)
 	return true;
 }
 
-ouro::display::id oWinGetDisplayId(HWND _hWnd)
+display::id oWinGetDisplayId(HWND _hWnd)
 {
-	return ouro::display::get_id(MonitorFromWindow(_hWnd, MONITOR_DEFAULTTONEAREST));
+	return display::get_id(MonitorFromWindow(_hWnd, MONITOR_DEFAULTTONEAREST));
 }
 
 HBRUSH oWinGetBackgroundBrush(HWND _hWnd)
@@ -1773,22 +1774,22 @@ bool oWinSetFont(HWND _hWnd, HFONT _hFont)
 bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 {
 	oWIN_CHECK(_hWnd);
-	ouro::control_type::value type = oWinControlGetType(_hWnd);
+	control_type::value type = oWinControlGetType(_hWnd);
 	switch (type)
 	{
-		case ouro::control_type::combotextbox:
-			if (_SubItemIndex == ouro::invalid)
+		case control_type::combotextbox:
+			if (_SubItemIndex == invalid)
 				oVB(SetWindowText(_hWnd, _Text));
 			// pass through
-		case ouro::control_type::combobox:
-			if (_SubItemIndex != ouro::invalid)
+		case control_type::combobox:
+			if (_SubItemIndex != invalid)
 			{
 				oVERIFY(oWinControlDeleteSubItem(_hWnd, _Text, _SubItemIndex));
 				oVERIFY(oWinControlInsertSubItem(_hWnd, _Text, _SubItemIndex));
 			}
 			break;
 
-		case ouro::control_type::tab:
+		case control_type::tab:
 		{
 			TCITEM tci;
 			memset(&tci, 0, sizeof(tci));
@@ -1798,8 +1799,8 @@ bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 			break;
 		}
 
-		case ouro::control_type::floatbox:
-		case ouro::control_type::floatbox_spinner:
+		case control_type::floatbox:
+		case control_type::floatbox_spinner:
 			throw std::invalid_argument("For FloatBoxes and FloatBoxSpinners, use oWinControlSetValue instead.");
 
 		default: 
@@ -1815,7 +1816,7 @@ size_t oWinGetTruncatedLength(HWND _hWnd, const char* _StrSource)
 
 	RECT rClient;
 	GetClientRect(_hWnd, &rClient);
-	oGDIScopedGetDC hDC(_hWnd);
+	scoped_getdc hDC(_hWnd);
 
 	if (!PathCompactPathA(hDC, temp, oWinRectW(rClient) + 70)) // @tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
 	{
@@ -1858,7 +1859,7 @@ char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND
 	strlcpy(_StrDestination, _Path, _SizeofStrDestination);
 	RECT rClient;
 	GetClientRect(_hWnd, &rClient);
-	oGDIScopedGetDC hDC(_hWnd);
+	scoped_getdc hDC(_hWnd);
 
 	if (!PathCompactPathA(hDC, _StrDestination, oWinRectW(rClient) + 70)) // @tony: This constant was measured empirically. I think this should work without the +70, but truncation happens too aggressively.
 	{
@@ -1872,13 +1873,13 @@ char* oWinTruncatePath(char* _StrDestination, size_t _SizeofStrDestination, HWND
 char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWnd, int _SubItemIndex)
 {
 	oWINVP(_hWnd);
-	ouro::control_type::value type = ouro::control_type::unknown;
-	if (_SubItemIndex != ouro::invalid)
+	control_type::value type = control_type::unknown;
+	if (_SubItemIndex != invalid)
 		type = oWinControlGetType(_hWnd);
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox:
+		case control_type::combobox:
+		case control_type::combotextbox:
 		{
 			size_t len = (size_t)ComboBox_GetLBTextLen(_hWnd, _SubItemIndex);
 			if (len > _SizeofStrDestination)
@@ -1893,7 +1894,7 @@ char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWn
 			}
 		}
 
-		case ouro::control_type::tab:
+		case control_type::tab:
 		{
 			TCITEM item;
 			item.mask = TCIF_TEXT;
@@ -1912,22 +1913,22 @@ char* oWinGetText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hWn
 HICON oWinGetIcon(HWND _hWnd, bool _BigIcon)
 {
 	//oWINVP(_hWnd);
-	ouro::control_type::value type = oWinControlGetType(_hWnd);
+	control_type::value type = oWinControlGetType(_hWnd);
 	switch (type)
 	{
-		case ouro::control_type::icon: return (HICON)SendMessage(_hWnd, STM_GETICON, 0, 0);
+		case control_type::icon: return (HICON)SendMessage(_hWnd, STM_GETICON, 0, 0);
 		default: return (HICON)SendMessage(_hWnd, WM_GETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), 0);
 	}
 }
 
 bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon)
 {
-	ouro::control_type::value type = oWinControlGetType(_hWnd);
+	control_type::value type = oWinControlGetType(_hWnd);
 	if (oWinIsWindowThread(_hWnd))
 	{
 		switch (type)
 		{
-			case ouro::control_type::icon: SendMessage(_hWnd, STM_SETICON, (WPARAM)_hIcon, 0); break;
+			case control_type::icon: SendMessage(_hWnd, STM_SETICON, (WPARAM)_hIcon, 0); break;
 			default: SendMessage(_hWnd, WM_SETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), (LPARAM)_hIcon); break;
 		}
 
@@ -1938,7 +1939,7 @@ bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon)
 	{
 		switch (type)
 		{
-			case ouro::control_type::icon: PostMessage(_hWnd, STM_SETICON, (WPARAM)_hIcon, 0); break;
+			case control_type::icon: PostMessage(_hWnd, STM_SETICON, (WPARAM)_hIcon, 0); break;
 			default: PostMessage(_hWnd, WM_SETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), (LPARAM)_hIcon); break;
 		}
 
@@ -2015,7 +2016,7 @@ static LRESULT CALLBACK oSubclassProcFloatBox(HWND _hControl, UINT _uMsg, WPARAM
 				if (i >= oCOUNTOF(sAllowableKeys))
 					return DLGC_WANTARROWS;
 
-				DWORD dwStart = ouro::invalid, dwEnd = ouro::invalid;
+				DWORD dwStart = invalid, dwEnd = invalid;
 				SendMessage(_hControl, EM_GETSEL, (WPARAM)&dwStart, (LPARAM)&dwEnd);
 
 				// allow only one '.', unless it's in the selecte d text about to be replaced
@@ -2089,7 +2090,7 @@ static LRESULT CALLBACK oSubclassProcGroup(HWND _hControl, UINT _uMsg, WPARAM _w
 	return DefSubclassProc(_hControl, _uMsg, _wParam, _lParam);
 }
 
-static bool OnCreateAddSubItems(HWND _hControl, const ouro::control_info& _Desc)
+static bool OnCreateAddSubItems(HWND _hControl, const control_info& _Desc)
 {
 	if (strchr(_Desc.text, '|'))
 	{
@@ -2100,34 +2101,34 @@ static bool OnCreateAddSubItems(HWND _hControl, const ouro::control_info& _Desc)
 	return true;
 }
 
-static bool OnCreateTab(HWND _hControl, const ouro::control_info& _Desc)
+static bool OnCreateTab(HWND _hControl, const control_info& _Desc)
 {
 	oVERIFY_R(SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr));
 	return OnCreateAddSubItems(_hControl, _Desc);
 }
 
-static bool OnCreateGroup(HWND _hControl, const ouro::control_info& _Desc)
+static bool OnCreateGroup(HWND _hControl, const control_info& _Desc)
 {
 	return !!SetWindowSubclass(_hControl, oSubclassProcGroup, oSubclassGroupID, (DWORD_PTR)nullptr);
 }
 
-static bool OnCreateFloatBox(HWND _hControl, const ouro::control_info& _Desc)
+static bool OnCreateFloatBox(HWND _hControl, const control_info& _Desc)
 {
 	oVERIFY_R(SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr));
 	SetWindowText(_hControl, _Desc.text);
 	return true;
 }
 
-static bool OnCreateIcon(HWND _hControl, const ouro::control_info& _Desc)
+static bool OnCreateIcon(HWND _hControl, const control_info& _Desc)
 {
 	oWinControlSetIcon(_hControl, (HICON)_Desc.text);
 	return true;
 }
 
-static bool OnCreateFloatBoxSpinner(HWND _hControl, const ouro::control_info& _Desc)
+static bool OnCreateFloatBoxSpinner(HWND _hControl, const control_info& _Desc)
 {
-	ouro::control_info ActualFloatBoxDesc = _Desc;
-	ActualFloatBoxDesc.type = ouro::control_type::floatbox;
+	control_info ActualFloatBoxDesc = _Desc;
+	ActualFloatBoxDesc.type = control_type::floatbox;
 	HWND hActualFloatBox = oWinControlCreate(ActualFloatBoxDesc);
 	oVB(hActualFloatBox);
 	SendMessage(_hControl, UDM_SETBUDDY, (WPARAM)hActualFloatBox, 0);
@@ -2135,26 +2136,26 @@ static bool OnCreateFloatBoxSpinner(HWND _hControl, const ouro::control_info& _D
 	return true;
 }
 
-static bool OnCreateMarquee(HWND _hControl, const ouro::control_info& _Desc)
+static bool OnCreateMarquee(HWND _hControl, const control_info& _Desc)
 {
 	SendMessage(_hControl, PBM_SETMARQUEE, 1, 0);
 	return true;
 }
 
-static int2 GetSizeExplicit(const ouro::control_info& _Desc)
+static int2 GetSizeExplicit(const control_info& _Desc)
 {
 	return _Desc.size;
 }
 
-static int2 GetSizeButtonDefault(const ouro::control_info& _Desc)
+static int2 GetSizeButtonDefault(const control_info& _Desc)
 {
-	return ouro::resolve_rect_size(_Desc.size, int2(75, 23));
+	return resolve_rect_size(_Desc.size, int2(75, 23));
 }
 
-static int2 GetSizeIcon(const ouro::control_info& _Desc)
+static int2 GetSizeIcon(const control_info& _Desc)
 {
 	int2 iconSize = oGDIGetIconSize((HICON)_Desc.text);
-	return ouro::resolve_rect_size(_Desc.size, iconSize);
+	return resolve_rect_size(_Desc.size, iconSize);
 }
 
 struct CONTROL_CREATION_DESC
@@ -2163,11 +2164,11 @@ struct CONTROL_CREATION_DESC
 	DWORD dwStyle;
 	DWORD dwExStyle;
 	bool SetText;
-	bool (*FinishCreation)(HWND _hControl, const ouro::control_info& _Desc);
-	int2 (*GetSize)(const ouro::control_info& _Desc);
+	bool (*FinishCreation)(HWND _hControl, const control_info& _Desc);
+	int2 (*GetSize)(const control_info& _Desc);
 };
 
-static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(ouro::control_type::value _Type)
+static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(control_type::value _Type)
 {
 	// === IF ADDING A NEW TYPE, MAKE SURE YOU ADD AN ENTRY TO oWinControlGetType ===
 
@@ -2197,13 +2198,13 @@ static const CONTROL_CREATION_DESC& oWinControlGetCreationDesc(ouro::control_typ
 		{ TRACKBAR_CLASS, WS_VISIBLE|WS_CHILD|WS_TABSTOP, 0, true, nullptr, GetSizeExplicit, }, 
 		{ WC_LISTBOX, WS_VISIBLE|WS_CHILD|WS_TABSTOP|WS_VSCROLL|WS_HSCROLL|LBS_NOTIFY|LBS_NOINTEGRALHEIGHT|LBS_HASSTRINGS|LBS_USETABSTOPS|WS_BORDER, 0, true, OnCreateAddSubItems, GetSizeExplicit, }, 
 	};
-	static_assert(ouro::control_type::count == oCOUNTOF(sDescs), "ouro::control_type::count count mismatch");
+	static_assert(control_type::count == oCOUNTOF(sDescs), "control_type::count count mismatch");
 	return sDescs[_Type];
 }
 
-HWND oWinControlCreate(const ouro::control_info& _Desc)
+HWND oWinControlCreate(const control_info& _Desc)
 {
-	if (!_Desc.parent || _Desc.type == ouro::control_type::unknown)
+	if (!_Desc.parent || _Desc.type == control_type::unknown)
 		return (HWND)oErrorSetLast(std::errc::invalid_argument);
 	oWINVP((HWND)_Desc.parent);
 
@@ -2239,15 +2240,15 @@ HWND oWinControlCreate(const ouro::control_info& _Desc)
 	return hWnd;
 }
 
-bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult, ouro::control_type::value _Type)
+bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeader, LRESULT* _plResult, control_type::value _Type)
 {
 	oWIN_CHECK(_hControl);
 	bool ShortCircuit = false;
-	if (_Type == ouro::control_type::unknown)
+	if (_Type == control_type::unknown)
 		_Type = oWinControlGetType(_NotifyMessageHeader.hwndFrom);
 	switch (_Type)
 	{
-		case ouro::control_type::floatbox_spinner:
+		case control_type::floatbox_spinner:
 			if (_NotifyMessageHeader.code == UDN_DELTAPOS)
 			{
 				HWND hBuddyFloatBox = oWinControlGetBuddy(_NotifyMessageHeader.hwndFrom);
@@ -2261,13 +2262,13 @@ bool oWinControlDefaultOnNotify(HWND _hControl, const NMHDR& _NotifyMessageHeade
 			ShortCircuit = true;
 			break;
 
-		case ouro::control_type::hyperlabel:
+		case control_type::hyperlabel:
 		{
 			if (_NotifyMessageHeader.code == NM_CLICK || _NotifyMessageHeader.code == NM_RETURN)
 			{
 				const NMLINK& NMLink = (const NMLINK&)_NotifyMessageHeader;
 				xlstring asMultiByte(NMLink.item.szUrl);
-				ouro::system::spawn_associated_application(asMultiByte);
+				system::spawn_associated_application(asMultiByte);
 			}
 
 			ShortCircuit = true;
@@ -2297,13 +2298,13 @@ bool oWinControlSetVisible(HWND _hControl, bool _Visible)
 
 int oWinControlGetNumSubItems(HWND _hControl)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox: return ComboBox_GetCount(_hControl);
-		case ouro::control_type::listbox: return ListBox_GetCount(_hControl);
-		case ouro::control_type::tab: return TabCtrl_GetItemCount(_hControl);
+		case control_type::combobox:
+		case control_type::combotextbox: return ComboBox_GetCount(_hControl);
+		case control_type::listbox: return ListBox_GetCount(_hControl);
+		case control_type::tab: return TabCtrl_GetItemCount(_hControl);
 		default: return 0;
 	}
 }
@@ -2311,17 +2312,17 @@ int oWinControlGetNumSubItems(HWND _hControl)
 bool oWinControlClearSubItems(HWND _hControl)
 {
 	oWIN_CHECK(_hControl);
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox:
+		case control_type::combobox:
+		case control_type::combotextbox:
 			ComboBox_ResetContent(_hControl);
 			return true;
-		case ouro::control_type::listbox:
+		case control_type::listbox:
 			ListBox_ResetContent(_hControl);
 			return true;
-		case ouro::control_type::tab:
+		case control_type::tab:
 			oVB(TabCtrl_DeleteAllItems(_hControl));
 			return true;
 		default:
@@ -2334,11 +2335,11 @@ bool oWinControlClearSubItems(HWND _hControl)
 int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
 {
 	oWIN_CHECK(_hControl);
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox:
+		case control_type::combobox:
+		case control_type::combotextbox:
 		{
 			int index = CB_ERR;
 			if (_SubItemIndex >= 0 && _SubItemIndex < ComboBox_GetCount(_hControl))
@@ -2355,7 +2356,7 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 			return index;
 		}
 
-		case ouro::control_type::listbox:
+		case control_type::listbox:
 		{
 			int index = LB_ERR;
 			if (_SubItemIndex >= 0 && _SubItemIndex < ListBox_GetCount(_hControl))
@@ -2372,7 +2373,7 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 			return index;
 		}
 
-		case ouro::control_type::tab:
+		case control_type::tab:
 		{
 			TCITEM item;
 			item.mask = TCIF_TEXT;
@@ -2389,27 +2390,27 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 	}
 
 	oErrorSetLastBadType(_hControl, type);
-	return ouro::invalid;
+	return invalid;
 }
 
 bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
 {
 	oWIN_CHECK(_hControl);
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox:
+		case control_type::combobox:
+		case control_type::combotextbox:
 			if (_SubItemIndex >= 0)
 				ComboBox_DeleteString(_hControl, _SubItemIndex);
 			break;
 
-		case ouro::control_type::listbox:
+		case control_type::listbox:
 			if (_SubItemIndex >= 0)
 				ListBox_DeleteString(_hControl, _SubItemIndex);
 			break;
 
-		case ouro::control_type::tab:
+		case control_type::tab:
 			TabCtrl_DeleteItem(_hControl, _SubItemIndex);
 			break;
 
@@ -2429,7 +2430,7 @@ bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _
 	const char* tok = strtok_r((char*)copy.c_str(), delim, &ctx);
 	while (tok)
 	{
-		oWinControlInsertSubItem(_hControl, tok, ouro::invalid);
+		oWinControlInsertSubItem(_hControl, tok, invalid);
 		tok = strtok_r(nullptr, delim, &ctx);
 	}
 	return true;
@@ -2438,11 +2439,11 @@ bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _
 int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 {
 	int index = CB_ERR;
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox:
+		case control_type::combobox:
+		case control_type::combotextbox:
 		{
 			int index = ComboBox_FindStringExact(_hControl, 0, _SubItemText);
 			if (index == CB_ERR)
@@ -2450,7 +2451,7 @@ int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 			break;
 		}
 
-		case ouro::control_type::listbox:
+		case control_type::listbox:
 		{
 			int index = ListBox_FindStringExact(_hControl, 0, _SubItemText);
 			if (index == CB_ERR)
@@ -2458,7 +2459,7 @@ int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 			break;
 		}
 
-		case ouro::control_type::tab:
+		case control_type::tab:
 		{
 			mstring text;
 			TCITEM item;
@@ -2491,21 +2492,21 @@ int oWinControlFindSubItem(HWND _hControl, const char* _SubItemText)
 
 bool oWinControlSelectSubItem(HWND _hControl, int _SubItemIndex)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox:
+		case control_type::combobox:
+		case control_type::combotextbox:
 			if (CB_ERR == ComboBox_SetCurSel(_hControl, _SubItemIndex))
 				return oErrorSetLastBadIndex(_hControl, type, _SubItemIndex);
 			break;
 
-		case ouro::control_type::listbox:
+		case control_type::listbox:
 			if (CB_ERR == ListBox_SetCurSel(_hControl, _SubItemIndex))
 				return oErrorSetLastBadIndex(_hControl, type, _SubItemIndex);
 			break;
 
-		case ouro::control_type::tab:
+		case control_type::tab:
 		{
 			HWND hParent = GetParent(_hControl);
 			int index = TabCtrl_GetCurSel(_hControl);
@@ -2536,12 +2537,12 @@ bool oWinControlSelectSubItem(HWND _hControl, int _SubItemIndex)
 
 bool oWinControlSelectSubItemRelative(HWND _hControl, int _Offset)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	int next = -1, count = 0;
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox:
+		case control_type::combobox:
+		case control_type::combotextbox:
 			count = ComboBox_GetCount(_hControl);
 			next = ComboBox_GetCurSel(_hControl) + _Offset;
 			while (next < 0) next += count;
@@ -2550,7 +2551,7 @@ bool oWinControlSelectSubItemRelative(HWND _hControl, int _Offset)
 				return oErrorSetLastBadIndex(_hControl, type, next);
 			break;
 
-		case ouro::control_type::listbox:
+		case control_type::listbox:
 			count = ListBox_GetCount(_hControl);
 			next = ListBox_GetCurSel(_hControl) + _Offset;
 			while (next < 0) next += count;
@@ -2559,7 +2560,7 @@ bool oWinControlSelectSubItemRelative(HWND _hControl, int _Offset)
 				return oErrorSetLastBadIndex(_hControl, type, next);
 			break;
 
-		case ouro::control_type::tab:
+		case control_type::tab:
 			count = TabCtrl_GetItemCount(_hControl);
 			next = TabCtrl_GetCurSel(_hControl) + _Offset;
 			while (next < 0) next += count;
@@ -2577,35 +2578,35 @@ bool oWinControlSelectSubItemRelative(HWND _hControl, int _Offset)
 
 int oWinControlGetSelectedSubItem(HWND _hControl)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::combobox:
-		case ouro::control_type::combotextbox: return ComboBox_GetCurSel(_hControl);
-		case ouro::control_type::listbox: return ListBox_GetCurSel(_hControl);
-		case ouro::control_type::tab: return TabCtrl_GetCurSel(_hControl);
+		case control_type::combobox:
+		case control_type::combotextbox: return ComboBox_GetCurSel(_hControl);
+		case control_type::listbox: return ListBox_GetCurSel(_hControl);
+		case control_type::tab: return TabCtrl_GetCurSel(_hControl);
 		default: break;
 	}
-	return ouro::invalid;
+	return invalid;
 }
 
-ouro::control_type::value oWinControlGetType(HWND _hControl)
+control_type::value oWinControlGetType(HWND _hControl)
 {
 	mstring ClassName;
 	if (!GetClassName(_hControl, ClassName, static_cast<int>(ClassName.capacity())))
-		return ouro::control_type::unknown;
+		return control_type::unknown;
 	
 	if (!_stricmp("Button", ClassName))
 	{
 		LONG dwStyle = 0xff & GetWindowLong(_hControl, GWL_STYLE);
 		switch (dwStyle)
 		{
-			case BS_GROUPBOX: return ouro::control_type::group;
+			case BS_GROUPBOX: return control_type::group;
 			case BS_PUSHBUTTON: 
-			case BS_DEFPUSHBUTTON: return ouro::control_type::button;
-			case BS_AUTOCHECKBOX: return ouro::control_type::checkbox;
-			case BS_AUTORADIOBUTTON: return ouro::control_type::radio;
-			default: return ouro::control_type::unknown;
+			case BS_DEFPUSHBUTTON: return control_type::button;
+			case BS_AUTOCHECKBOX: return control_type::checkbox;
+			case BS_AUTORADIOBUTTON: return control_type::radio;
+			default: return control_type::unknown;
 		}
 	}
 
@@ -2613,30 +2614,30 @@ ouro::control_type::value oWinControlGetType(HWND _hControl)
 	{
 		LONG dwStyle = 0xff & GetWindowLong(_hControl, GWL_STYLE);
 		if (dwStyle & SS_ICON)
-			return ouro::control_type::icon;
+			return control_type::icon;
 		else if (dwStyle & SS_CENTER)
-			return ouro::control_type::label_centered;
+			return control_type::label_centered;
 		else if (dwStyle & SS_SIMPLE)
-			return ouro::control_type::label;
+			return control_type::label;
 		else
-			return ouro::control_type::unknown;
+			return control_type::unknown;
 	}
 
 	else if (!_stricmp("Edit", ClassName))
 	{
 		DWORD dwStyle = 0xffff & (DWORD)GetWindowLong(_hControl, GWL_STYLE);
-		if (dwStyle == (dwStyle & oWinControlGetCreationDesc(ouro::control_type::label_selectable).dwStyle))
-			return ouro::control_type::label_selectable;
+		if (dwStyle == (dwStyle & oWinControlGetCreationDesc(control_type::label_selectable).dwStyle))
+			return control_type::label_selectable;
 
 			DWORD_PTR data;
 		if (GetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, &data))
-			return ouro::control_type::floatbox;
+			return control_type::floatbox;
 
-		else if (dwStyle == (dwStyle & oWinControlGetCreationDesc(ouro::control_type::textbox).dwStyle))
-			return ouro::control_type::textbox;
+		else if (dwStyle == (dwStyle & oWinControlGetCreationDesc(control_type::textbox).dwStyle))
+			return control_type::textbox;
 
 		else
-			return ouro::control_type::unknown;
+			return control_type::unknown;
 	}
 
 	else if (!_stricmp("ComboBox", ClassName))
@@ -2644,54 +2645,54 @@ ouro::control_type::value oWinControlGetType(HWND _hControl)
 		LONG dwStyle = 0xf & GetWindowLong(_hControl, GWL_STYLE);
 		switch (dwStyle)
 		{
-			case CBS_DROPDOWNLIST: return ouro::control_type::combobox;
-			case CBS_DROPDOWN: return ouro::control_type::combotextbox;
-			default: return ouro::control_type::unknown;
+			case CBS_DROPDOWNLIST: return control_type::combobox;
+			case CBS_DROPDOWN: return control_type::combotextbox;
+			default: return control_type::unknown;
 		}
 	}
 
-	else if (!_stricmp(oWinControlGetCreationDesc(ouro::control_type::floatbox_spinner).ClassName, ClassName))
-		return ouro::control_type::floatbox_spinner;
+	else if (!_stricmp(oWinControlGetCreationDesc(control_type::floatbox_spinner).ClassName, ClassName))
+		return control_type::floatbox_spinner;
 
-	else if (!_stricmp(oWinControlGetCreationDesc(ouro::control_type::hyperlabel).ClassName, ClassName))
-		return ouro::control_type::hyperlabel;
+	else if (!_stricmp(oWinControlGetCreationDesc(control_type::hyperlabel).ClassName, ClassName))
+		return control_type::hyperlabel;
 
-	else if (!_stricmp(oWinControlGetCreationDesc(ouro::control_type::tab).ClassName, ClassName))
+	else if (!_stricmp(oWinControlGetCreationDesc(control_type::tab).ClassName, ClassName))
 	{
 		// Don't identify a generic tab as an oGUI tab, only ones that
 		// behave properly
 		DWORD_PTR data;
 		if (GetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, &data))
-			return ouro::control_type::tab;
-		return ouro::control_type::unknown;
+			return control_type::tab;
+		return control_type::unknown;
 	}
-	else if (!_stricmp(oWinControlGetCreationDesc(ouro::control_type::progressbar).ClassName, ClassName))
+	else if (!_stricmp(oWinControlGetCreationDesc(control_type::progressbar).ClassName, ClassName))
 	{
 		DWORD dwStyle = (DWORD)GetWindowLong(_hControl, GWL_STYLE);
 		if (dwStyle & PBS_MARQUEE)
-			return ouro::control_type::progressbar_unknown;
-		return ouro::control_type::progressbar;
+			return control_type::progressbar_unknown;
+		return control_type::progressbar;
 	}
-	else if (!_stricmp(oWinControlGetCreationDesc(ouro::control_type::slider).ClassName, ClassName))
+	else if (!_stricmp(oWinControlGetCreationDesc(control_type::slider).ClassName, ClassName))
 	{
 		DWORD dwStyle = (DWORD)GetWindowLong(_hControl, GWL_STYLE);
 
 		if (dwStyle & TBS_ENABLESELRANGE)
-			return ouro::control_type::slider_selectable;
+			return control_type::slider_selectable;
 		else if (dwStyle & TBS_NOTICKS)
-			return ouro::control_type::slider;
+			return control_type::slider;
 		else
-			return ouro::control_type::slider_with_ticks;
+			return control_type::slider_with_ticks;
 	}
-	else if (!_stricmp(oWinControlGetCreationDesc(ouro::control_type::listbox).ClassName, ClassName))
-		return ouro::control_type::listbox;
+	else if (!_stricmp(oWinControlGetCreationDesc(control_type::listbox).ClassName, ClassName))
+		return control_type::listbox;
 
-	return ouro::control_type::unknown;
+	return control_type::unknown;
 }
 
-int2 oWinControlGetInitialSize(ouro::control_type::value _Type, const int2& _Size)
+int2 oWinControlGetInitialSize(control_type::value _Type, const int2& _Size)
 {
-	ouro::control_info d;
+	control_info d;
 	d.type = _Type;
 	d.size = _Size;
 	return oWinControlGetCreationDesc(_Type).GetSize(d);
@@ -2726,16 +2727,16 @@ RECT oWinControlGetRect(HWND _hControl)
 char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestination, HWND _hControl)
 {
 	oWINVP(_hControl);
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::floatbox_spinner:
+		case control_type::floatbox_spinner:
 			_hControl = oWinControlGetBuddy(_hControl);
 			// pass through
-		case ouro::control_type::textbox:
-		case ouro::control_type::textbox_scrollable:
-		case ouro::control_type::combotextbox:
-		case ouro::control_type::floatbox:
+		case control_type::textbox:
+		case control_type::textbox_scrollable:
+		case control_type::combotextbox:
+		case control_type::floatbox:
 		{
 			uint start = 0, end = 0;
 			SendMessage(_hControl, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
@@ -2758,7 +2759,7 @@ char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestina
 			return _StrDestination;
 		}
 
-		case ouro::control_type::listbox:
+		case control_type::listbox:
 		{
 			int index = ListBox_GetCurSel(_hControl);
 			if (index != LB_ERR)
@@ -2788,20 +2789,20 @@ char* oWinControlGetSelectedText(char* _StrDestination, size_t _SizeofStrDestina
 
 bool oWinControlSelect(HWND _hControl, int _Start, int _Length)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::floatbox_spinner:
+		case control_type::floatbox_spinner:
 			_hControl = oWinControlGetBuddy(_hControl);
 			// pass thru
-		case ouro::control_type::floatbox:
-		case ouro::control_type::textbox:
-		case ouro::control_type::textbox_scrollable:
-		case ouro::control_type::combotextbox:
-		case ouro::control_type::label_selectable:
+		case control_type::floatbox:
+		case control_type::textbox:
+		case control_type::textbox_scrollable:
+		case control_type::combotextbox:
+		case control_type::label_selectable:
 			Edit_SetSel(_hControl, _Start, _Start+_Length);
 			return true;
-		case ouro::control_type::slider_selectable:
+		case control_type::slider_selectable:
 			if (_Length)
 			{
 				SendMessage(_hControl, TBM_SETSELSTART, FALSE, _Start);
@@ -2819,10 +2820,10 @@ bool oWinControlSetValue(HWND _hControl, float _Value)
 {
 	oWIN_CHECK(_hControl);
 	mstring text;
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::floatbox_spinner:
+		case control_type::floatbox_spinner:
 			_hControl = oWinControlGetBuddy(_hControl);
 			// pass through
 		default:
@@ -2835,10 +2836,10 @@ bool oWinControlSetValue(HWND _hControl, float _Value)
 float oWinControlGetFloat(HWND _hControl)
 {
 	mstring text;
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::floatbox_spinner:
+		case control_type::floatbox_spinner:
 			_hControl = oWinControlGetBuddy(_hControl);
 			// pass through
 		default: 
@@ -2854,11 +2855,11 @@ float oWinControlGetFloat(HWND _hControl)
 
 bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::icon:
-			if (_SubItemIndex != ouro::invalid)
+		case control_type::icon:
+			if (_SubItemIndex != invalid)
 				return oErrorSetLast(std::errc::invalid_argument, "Invalid _SubItemIndex");
 			SendMessage(_hControl, STM_SETICON, (WPARAM)_hIcon, 0);
 			return true;
@@ -2869,11 +2870,11 @@ bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex)
 
 HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::icon:
-			if (_SubItemIndex != ouro::invalid)
+		case control_type::icon:
+			if (_SubItemIndex != invalid)
 		{
 				oErrorSetLast(std::errc::invalid_argument, "Invalid _SubItemIndex");
 	return nullptr;
@@ -2887,11 +2888,11 @@ HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex)
 
 bool oWinControlIsChecked(HWND _hControl)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::checkbox:
-		case ouro::control_type::radio:
+		case control_type::checkbox:
+		case control_type::radio:
 	{
 			oErrorSetLast(0);
 			LRESULT State = Button_GetState(_hControl);
@@ -2905,11 +2906,11 @@ bool oWinControlIsChecked(HWND _hControl)
 bool oWinControlSetChecked(HWND _hControl, bool _Checked)
 {
 	oWIN_CHECK(_hControl);
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::checkbox:
-		case ouro::control_type::radio:
+		case control_type::checkbox:
+		case control_type::radio:
 			Button_SetCheck(_hControl, _Checked ? BST_CHECKED : BST_UNCHECKED);
 	return true;
 		default:
@@ -2919,16 +2920,16 @@ bool oWinControlSetChecked(HWND _hControl, bool _Checked)
 
 bool oWinControlSetRange(HWND _hControl, int _Min, int _Max)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::slider:
-		case ouro::control_type::slider_with_ticks:
-		case ouro::control_type::slider_selectable:
+		case control_type::slider:
+		case control_type::slider_with_ticks:
+		case control_type::slider_selectable:
 			SendMessage(_hControl, TBM_SETRANGEMIN, TRUE, _Min);
 			SendMessage(_hControl, TBM_SETRANGEMAX, TRUE, _Max);
 			return true;
-		case ouro::control_type::progressbar:
+		case control_type::progressbar:
 			SendMessage(_hControl, PBM_SETRANGE32, _Min, _Max);
 			return true;
 		default:
@@ -2938,16 +2939,16 @@ bool oWinControlSetRange(HWND _hControl, int _Min, int _Max)
 
 bool oWinControlGetRange(HWND _hControl, int* _pMin, int* _pMax)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::slider:
-		case ouro::control_type::slider_with_ticks:
-		case ouro::control_type::slider_selectable:
+		case control_type::slider:
+		case control_type::slider_with_ticks:
+		case control_type::slider_selectable:
 			if (_pMin) *_pMin = (int)SendMessage(_hControl, TBM_GETRANGEMIN, 0, 0);
 			if (_pMax) *_pMax = (int)SendMessage(_hControl, TBM_GETRANGEMAX, 0, 0);
 			return true;
-		case ouro::control_type::progressbar:
+		case control_type::progressbar:
 		{
 			PBRANGE pbr;
 			SendMessage(_hControl, PBM_GETRANGE, 0, (LPARAM)&pbr);
@@ -2961,15 +2962,15 @@ bool oWinControlGetRange(HWND _hControl, int* _pMin, int* _pMax)
 
 bool oWinControlSetRangePosition(HWND _hControl, int _Position, bool _bNotify /*=true*/)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::slider:
-		case ouro::control_type::slider_with_ticks:
-		case ouro::control_type::slider_selectable:
+		case control_type::slider:
+		case control_type::slider_with_ticks:
+		case control_type::slider_selectable:
 			SendMessage(_hControl, _bNotify ? TBM_SETPOSNOTIFY : TBM_SETPOS, 0, _Position);
 			return true;
-		case ouro::control_type::progressbar:
+		case control_type::progressbar:
 			SendMessage(_hControl, PBM_SETPOS, _Position, 0);
 			return true;
 		default:
@@ -2979,23 +2980,23 @@ bool oWinControlSetRangePosition(HWND _hControl, int _Position, bool _bNotify /*
 
 int oWinControlGetRangePosition(HWND _hControl)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::slider:
-		case ouro::control_type::slider_with_ticks:
-		case ouro::control_type::slider_selectable: return (int)SendMessage(_hControl, TBM_GETPOS, 0, 0);
-		case ouro::control_type::progressbar: return (int)SendMessage(_hControl, PBM_GETPOS, 0, 0);
+		case control_type::slider:
+		case control_type::slider_with_ticks:
+		case control_type::slider_selectable: return (int)SendMessage(_hControl, TBM_GETPOS, 0, 0);
+		case control_type::progressbar: return (int)SendMessage(_hControl, PBM_GETPOS, 0, 0);
 		default: return oErrorSetLastBadType(_hControl, type);
 	}
 }
 
 bool oWinControlSetTick(HWND _hControl, int _Position)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch(type)
 	{
-	case ouro::control_type::slider_with_ticks:
+	case control_type::slider_with_ticks:
 		SendMessage(_hControl, TBM_SETTIC, 0, _Position);
 		return true;
 	default:
@@ -3005,10 +3006,10 @@ bool oWinControlSetTick(HWND _hControl, int _Position)
 
 bool oWinControlClearTicks(HWND _hControl)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch(type)
 	{
-	case ouro::control_type::slider_with_ticks:
+	case control_type::slider_with_ticks:
 		SendMessage(_hControl, TBM_CLEARTICS, 1, 0);
 		return true;
 	default:
@@ -3018,10 +3019,10 @@ bool oWinControlClearTicks(HWND _hControl)
 
 bool oWinControlSetErrorState(HWND _hControl, bool _InErrorState)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::progressbar:
+		case control_type::progressbar:
 			SendMessage(_hControl, PBM_SETSTATE, _InErrorState ? PBST_ERROR : PBST_NORMAL, 0);
 			return true;
 		default:
@@ -3031,10 +3032,10 @@ bool oWinControlSetErrorState(HWND _hControl, bool _InErrorState)
 
 bool oWinControlGetErrorState(HWND _hControl)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::progressbar:
+		case control_type::progressbar:
 			oErrorSetLast(0);
 			return PBST_ERROR == SendMessage(_hControl, PBM_GETSTATE, 0, 0);
 		default:
@@ -3044,10 +3045,10 @@ bool oWinControlGetErrorState(HWND _hControl)
 
 bool oWinControlClampPositionToSelected(HWND _hControl)
 {
-	ouro::control_type::value type = oWinControlGetType(_hControl);
+	control_type::value type = oWinControlGetType(_hControl);
 	switch (type)
 	{
-		case ouro::control_type::slider_selectable:
+		case control_type::slider_selectable:
 		{
 			int Position = (int)SendMessage(_hControl, TBM_GETPOS, 0, 0);
 			int SelectionStart = (int)SendMessage(_hControl, TBM_GETSELSTART, 0, 0);
@@ -3066,6 +3067,6 @@ bool oWinControlClampPositionToSelected(HWND _hControl)
 void oMoveMouseCursorOffscreen()
 {
 	int2 p, sz;
-	ouro::display::virtual_rect(&p.x, &p.y, &sz.x, &sz.y);
+	display::virtual_rect(&p.x, &p.y, &sz.x, &sz.y);
 	SetCursorPos(p.x + sz.x, p.y-1);
 }
