@@ -1113,7 +1113,7 @@ static bool oIsDialogMessageEx(HWND _hWnd, MSG* _pMsg)
 	return !!IsDialogMessage(_hWnd, _pMsg);
 }
 
-bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
+int oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 {
 	MSG msg;
 	bool HasMessage = false;
@@ -1121,7 +1121,7 @@ bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 	{
 		int n = GetMessage(&msg, nullptr, 0, 0);
 		if (n == 0 || msg.message == oWM_QUIT)
-			return oErrorSetLast(std::errc::operation_canceled);
+			return -1;
 		HasMessage = n > 0;
 	}
 	else
@@ -1146,10 +1146,10 @@ bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext)
 
 		// Treat WM_NULL like the noop it is by indicating that there are no new messages
 		if (msg.message != WM_NULL)
-			return true;
+			return 1;
 	}
 
-	return oErrorSetLast(std::errc::no_message_available);
+	return 0;
 }
 
 HMENU oWinGetMenu(HWND _hWnd)

@@ -25,7 +25,6 @@
 #include <oGUI/oGUIMenu.h>
 #include <oBase/assert.h>
 #include <oCore/windows/win_error.h>
-#include <oBasis/oError.h> // @tony fixme
 
 using namespace ouro;
 
@@ -153,7 +152,7 @@ void oGUIMenuRemoveAllItems(ouro::menu_handle _hMenu)
 void oGUIMenuItemToSubmenu(ouro::menu_handle _hParentMenu, int _ItemID, ouro::menu_handle _hSubmenu)
 {
 	mstring text;
-	oVERIFY(oGUIMenuGetText(text, _hParentMenu, _ItemID));
+	oCHECK0(oGUIMenuGetText(text, _hParentMenu, _ItemID));
 	oVB(RemoveMenu((HMENU)_hParentMenu, _ItemID, MF_BYCOMMAND));
 	oVB(InsertMenu((HMENU)_hParentMenu, _ItemID, MF_STRING|MF_POPUP, (UINT_PTR)_hSubmenu, text));
 }
@@ -164,7 +163,7 @@ void oGUIMenuSubmenuToItem(ouro::menu_handle _hParentMenu, ouro::menu_handle _hS
 	oASSERT(p != -1, "the specified submenu is not under the specified parent menu");
 	
 	mstring text;	
-	oVERIFY(oGUIMenuGetTextByPosition(text, text.capacity(), _hParentMenu, p));
+	oCHECK0(oGUIMenuGetTextByPosition(text, text.capacity(), _hParentMenu, p));
 	oVB(DeleteMenu((HMENU)_hParentMenu, p, MF_BYPOSITION));
 
 	UINT uFlags = MF_BYPOSITION|MF_STRING;
@@ -199,7 +198,6 @@ bool oGUIMenuIsChecked(ouro::menu_handle _hMenu, int _ItemID)
 	if (mii.fState & MFS_CHECKED)
 		return true;
 
-	oErrorSetLast(0);
 	return false;
 }
 

@@ -124,7 +124,7 @@ public:
 
 	// Respect ParentClientSize since Initialize might be called from a WM_CREATE 
 	// message before the window is actually properly sized.
-	bool Initialize(HWND _hParent, const int2& _ParentClientSize, const ouro::xml& _XML, const IDFROMSTRING& _IDFromString);
+	void Initialize(HWND _hParent, const int2& _ParentClientSize, const ouro::xml& _XML, const IDFROMSTRING& _IDFromString);
 	void Deinitialize();
 
 	HWND GetControl(int _ID) const;
@@ -170,7 +170,7 @@ private:
 	controls_t Controls;
 
 	bool ParseFontDesc(const ouro::xml& _XML, ouro::xml::node _hNode, ouro::font_info* _pDesc);
-	bool CreateFontsSibling(const ouro::xml& _XML, fonts_t* _pFonts);
+	void CreateFontsSibling(const ouro::xml& _XML, fonts_t* _pFonts);
 	bool ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, const controls_t& _Controls, ouro::control_info* _pDesc);
 	HWND CreateControl(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls, int2 _ParentOffset);
 	bool CreateControlsRecursive(const XML_CONTEXT& _XmlContext, const CONTROL_CONTEXT& _ControlContext, controls_t* _pControls);

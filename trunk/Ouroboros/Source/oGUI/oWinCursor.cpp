@@ -26,19 +26,8 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/windows/win_error.h>
-#include <oBasis/oError.h> // @tony fixme
 
-#define oWINV(_hWnd) \
-	if (!oWinExists(_hWnd)) \
-	{	oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); \
-	return false; \
-	}
-
-#define oWINVP(_hWnd) \
-	if (!oWinExists(_hWnd)) \
-	{	oErrorSetLast(std::errc::invalid_argument, "Invalid HWND %p specified", _hWnd); \
-	return nullptr; \
-	}
+#define oWINV(_hWnd) if (!oWinExists(_hWnd)) oTHROW_INVARG("Invalid HWND %p specified", _hWnd);
 
 static bool oWinGetHonestClientScreenRect(HWND _hWnd, RECT* _pRect)
 {
@@ -111,13 +100,13 @@ void oWinCursorSetPosition(HWND _hWnd, const int2& _Position)
 
 HCURSOR oWinGetCursor(HWND _hWnd)
 {
-	oWINVP(_hWnd);
+	oWINV(_hWnd);
 	return (HCURSOR)GetClassLongPtr(_hWnd, GCLP_HCURSOR);
 }
 
 bool oWinSetCursor(HWND _hWnd, HCURSOR _hCursor)
 {
-	oWINVP(_hWnd);
+	oWINV(_hWnd);
 	oVB(SetClassLongPtr(_hWnd, GCLP_HCURSOR, (LONG_PTR)_hCursor));
 	return true;
 }

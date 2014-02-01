@@ -26,7 +26,6 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/windows/win_error.h>
-#include <oBasis/oError.h> // @tony fixme
 #include <CommCtrl.h>
 
 using namespace ouro;
@@ -121,11 +120,7 @@ void oWinStatusBarSetText(HWND _hStatusBar, int _ItemIndex, ouro::border_style::
 	{
 		int nParts = (int)SendMessage(_hStatusBar, SB_GETPARTS, INT_MAX, 0);
 		if (_ItemIndex >= nParts)
-		{
-			oErrorSetLast(std::errc::no_buffer_space, "The specified status bar item index %d is out of range (number of items %d)", _ItemIndex, nParts);
-			oVERIFY(false);
-		}
-
+			oTHROW(no_buffer_space, "The specified status bar item index %d is out of range (number of items %d)", _ItemIndex, nParts);
 		else
 			oVB(false);
 	}
@@ -136,7 +131,7 @@ char* oWinStatusBarGetText(char* _StrDestination, size_t _SizeofStrDestination, 
 	LRESULT lResult = SendMessage(_hStatusBar, SB_GETTEXTLENGTH, (WPARAM)_ItemIndex, 0);
 	size_t len = LOWORD(lResult);
 	if (len >= _SizeofStrDestination)
-		return (char*)oErrorSetLast(std::errc::no_buffer_space);
+		oTHROW0(no_buffer_space);
 	SendMessage(_hStatusBar, SB_GETTEXT, (WPARAM)_ItemIndex, (LPARAM)_StrDestination);
 	return _StrDestination;
 }

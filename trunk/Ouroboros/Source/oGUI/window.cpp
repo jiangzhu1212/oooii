@@ -806,7 +806,7 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 		bo.pause();
 		Now = timer::nowmsi();
 		if (_TimeoutMS != ouro::infinite && Now > Then)
-			return oErrorSetLast(std::errc::timed_out);
+			return false;
 	}
 
 	return true;
@@ -867,21 +867,11 @@ void window_impl::flush_messages(bool _WaitForNext)
 {
 	while (hWnd)
 	{
-		if (!oWinDispatchMessage(hWnd, hAccel, _WaitForNext))
-		{
-			switch (oErrorGetLast())
-			{
-				case std::errc::operation_canceled:
-					return;
-				case std::errc::operation_not_permitted:
-					oThrowLastError();
-					break;
-				default:
-					if (!_WaitForNext)
-						return;
-					break;
-			}
-		}
+		int r = oWinDispatchMessage(hWnd, hAccel, _WaitForNext);
+		if (r == -1)
+			return;
+		else if (r == 0 && !_WaitForNext)
+			return;
 	}
 }
 
