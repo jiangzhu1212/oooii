@@ -48,7 +48,7 @@ const char* as_string(const vendor::value& _Vendor)
 		case vendor::western_digital: return "Western Digital";
 		default: break;
 	}
-	return "unrecognized vendor";
+	return "?";
 }
 
 } // namespace ouro

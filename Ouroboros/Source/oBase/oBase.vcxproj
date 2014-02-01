@@ -149,6 +149,7 @@
     <ClInclude Include="..\..\Include\oBase\fixed_string.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
     <ClInclude Include="..\..\Include\oBase\fnv1a.h" />
+    <ClInclude Include="..\..\Include\oBase\fourcc.h" />
     <ClInclude Include="..\..\Include\oBase\future.h" />
     <ClInclude Include="..\..\Include\oBase\guid.h" />
     <ClInclude Include="..\..\Include\oBase\gzip.h" />
