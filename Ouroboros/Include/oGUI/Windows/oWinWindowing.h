@@ -279,14 +279,14 @@ inline bool oWinIsWindowThread(HWND _hWnd) { return std::this_thread::get_id() =
 inline bool oWinIsRegisteredMessage(UINT _uMsg) { return _uMsg >= 0xC000 && _uMsg <= 0xFFFF; }
 
 // Dispatches a single message from the Windows message queue. If _WaitForNext 
-// is true, the calling thread will sleep (GetMessage). If _WaitForNext is 
-// false, then PeekMessage is used. If this returns false, it means a new 
-// message was not dispatched. If the message queue is valid and empty, 
-// oErrorGetLast() will return std::errc::no_message_available, which might mean
-// to client code "do something else", like render a 3D scene or play a video. 
-// If a WM_QUIT message is received, this will return false with a last error
-// of std::errc::operation_canceled, implying the thread pump loop should exit.
-bool oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext = true);
+// is true the calling thread will sleep (GetMessage). If _WaitForNext is false 
+// then PeekMessage is used. If this 0 or a negative number it means a new 
+// message was not dispatched. If the message queue is valid and empty this will
+// return 0 which might mean to client code "do something else" like render a 
+// 3D scene or play a video. If a WM_QUIT message is received this will return 
+// -1 implying the thread pump loop should exit. If a message was dispatched then
+// 1 is returned.
+int oWinDispatchMessage(HWND _hWnd, HACCEL _hAccel, bool _WaitForNext = true);
 
 // _____________________________________________________________________________
 // Extended Top-Level Window Message Processing

@@ -262,6 +262,7 @@ void oGPUWindowThread::Run()
 			ouro::msgbox(ouro::msg_type::info, nullptr, "oGPUWindowTestApp", "ERROR\n%s", e.what());
 		}
 
+		WindowRenderTarget = nullptr;
 		pGPUWindow = nullptr;
 	}
 	if (OnThreadExit)

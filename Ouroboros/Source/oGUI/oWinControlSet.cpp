@@ -27,23 +27,21 @@
 #include <oBase/algorithm.h>
 #include <oGUI/Windows/win_gdi_draw.h>
 #include <oGUI/Windows/oWinRect.h>
-#include <oBasis/oError.h> // @tony fixme
 
 using namespace ouro;
 using namespace ouro::windows::gdi;
 
-bool oWinControlSet::Initialize(HWND _hParent, const int2& _ParentClientSize, const xml& _XML, const IDFROMSTRING& _IDFromString)
+void oWinControlSet::Initialize(HWND _hParent, const int2& _ParentClientSize, const xml& _XML, const IDFROMSTRING& _IDFromString)
 {
 	if (!_hParent)
-		return oErrorSetLast(std::errc::invalid_argument, "A valid HWND must be specified as the parent");
+		oTHROW_INVARG("A valid HWND must be specified as the parent");
 
 	xml::node hRoot = _XML.first_child(_XML.root(), "oUI");
 	if (!hRoot)
-		return oErrorSetLast(std::errc::invalid_argument, "XML root node \"oUI\" not found");
+		oTHROW_INVARG("XML root node \"oUI\" not found");
 
 	fonts_t fonts;
-	if (!CreateFontsSibling(_XML, &fonts))
-		return false; // pass through error
+	CreateFontsSibling(_XML, &fonts);
 
 	CONTROL_CONTEXT cc;
 	cc.hParent = _hParent;
@@ -54,10 +52,7 @@ bool oWinControlSet::Initialize(HWND _hParent, const int2& _ParentClientSize, co
 	xc.pXML = &_XML;
 	xc.hNode = hRoot;
 
-	if (!CreateControlsSibling(xc, cc, &Controls))
-		return false; // pass through error
-
-	return true;
+	CreateControlsSibling(xc, cc, &Controls);
 }
 
 void oWinControlSet::Deinitialize()
@@ -72,40 +67,31 @@ void oWinControlSet::Deinitialize()
 HWND oWinControlSet::GetControl(int _ID) const
 {
 	if (_ID < 0 || _ID >= as_int(Controls.size()))
-		return (HWND)oErrorSetLast(std::errc::invalid_argument, "Invalid ID %d", _ID);
+		oTHROW_INVARG("Invalid ID %d", _ID);
 	return Controls[_ID];
 }
 
-bool oWinControlSet::CreateFontsSibling(const xml& _XML, fonts_t* _pFonts)
+void oWinControlSet::CreateFontsSibling(const xml& _XML, fonts_t* _pFonts)
 {
 	xml::node hRoot = _XML.first_child(_XML.root(), "oUI");
 	if (!hRoot)
-		return oErrorSetLast(std::errc::invalid_argument, "XML root node \"oUI\" not found");
+		oTHROW_INVARG("XML root node \"oUI\" not found");
 
 	xml::node hChild = _XML.first_child(hRoot, "Font");
 	while (hChild)
 	{
 		const char* StrFont = _XML.find_attr_value(hChild, "Name");
 		if (!StrFont)
-			return oErrorSetLast(std::errc::invalid_argument, "Invalid or missing Name attribute in a Font node");
+			oTHROW_INVARG("Invalid or missing Name attribute in a Font node");
 
 		if (_pFonts->end() != _pFonts->find(StrFont))
-			return oErrorSetLast(std::errc::invalid_argument, "Font %s already defined", StrFont);
+			oTHROW_INVARG("Font %s already defined", StrFont);
 
 		ouro::font_info fd;
-		if (!ParseFontDesc(_XML, hChild, &fd))
-			return false; // pass through error
-
-		HFONT hFont = make_font(fd);
-		if (!hFont)
-			return oErrorSetLast(std::errc::invalid_argument, "Could not create font %s: %s: %s", StrFont, oErrorAsString(oErrorGetLast()), oErrorGetLastString());
-
-		(*_pFonts)[StrFont] = hFont;
-
+		ParseFontDesc(_XML, hChild, &fd);
+		(*_pFonts)[StrFont] = make_font(fd);
 		hChild = _XML.next_sibling(hChild, "Font");
 	}
-
-	return true;
 }
 
 // @tony: Should this be promoted to somewhere more generic?
@@ -129,21 +115,19 @@ bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONT
 
 	const char* StrID = _XmlContext.pXML->find_attr_value(_XmlContext.hNode, "ID");
 	if (!oSTRVALID(StrID))
-		return oErrorSetLast(std::errc::invalid_argument, "Invalid or missing ID attribute for the specified Control.");
+		oTHROW_INVARG("Invalid or missing ID attribute for the specified Control.");
 
 	int ID = ouro::invalid;
 	if (_ControlContext.IDFromString(&ID, StrID))
-	{
 		_pDesc->id = as_ushort(ID);
-	}
 	else
-		return oErrorSetLast(std::errc::invalid_argument, "Undeclared ID %s. All IDs must be declared as an enum in code.", StrID);
+		oTHROW_INVARG("Undeclared ID %s. All IDs must be declared as an enum in code.", StrID);
 
 	if (ID < as_int(_Controls.size()) && _Controls[ID])
-		return oErrorSetLast(std::errc::invalid_argument, "ID %s has already been used", StrID);
+		oTHROW_INVARG("ID %s has already been used", StrID);
 
 	if (!_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Type", &_pDesc->type))
-		return oErrorSetLast(std::errc::invalid_argument, "Invalid or missing Type attribute for Control %s.", StrID);
+		oTHROW_INVARG("Invalid or missing Type attribute for Control %s.", StrID);
 
 	_pDesc->text = oSAFESTR(_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Text"));
 	_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "StartsNewGroup", &_pDesc->starts_new_group); // allow this to default to false
@@ -153,14 +137,14 @@ bool oWinControlSet::ParseControlDesc(const XML_CONTEXT& _XmlContext, const CONT
 	{
 		auto it = _XmlContext.Fonts.find(StrFont);
 		if (it == _XmlContext.Fonts.end())
-			return oErrorSetLast(std::errc::invalid_argument, "Invalid or missing Font %s defined in Control %s", StrFont, StrID);
+			oTHROW_INVARG("Invalid or missing Font %s defined in Control %s", StrFont, StrID);
 		_pDesc->font = (ouro::font_handle)it->second;
 	}
 
 	// Resolve size relative to parent/context
 	int2 ControlPos(0, 0);
 	if (!_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Pos", &ControlPos))
-		return oErrorSetLast(std::errc::invalid_argument, "Invalid or missing Pos attribute for Control %s.", StrID);
+		oTHROW_INVARG("Invalid or missing Pos attribute for Control %s.", StrID);
 
 	int2 ControlSize(oDEFAULT, oDEFAULT);
 	_XmlContext.pXML->find_attr_value(_XmlContext.hNode, "Size", &ControlSize); // allow oDEFAULT to fall through if not specified
