@@ -622,7 +622,7 @@ bool oTest::TestImage(const surface::buffer* _pTestImage, unsigned int _NthImage
 	return oErrorSetLast(std::errc::no_such_file_or_directory, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());
 }
 
-//#define DEBUG_SPECIAL_TEST
+#define DEBUG_SPECIAL_TEST
 
 bool oSpecialTest::CreateProcess(const char* _SpecialTestName, std::shared_ptr<process>* _pProcess)
 {

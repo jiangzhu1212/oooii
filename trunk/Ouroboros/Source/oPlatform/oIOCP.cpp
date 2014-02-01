@@ -189,8 +189,30 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 			PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, nullptr);
 		}
 
-		for (std::thread& Thread : WorkerThreads)
-			Thread.join();
+		// been having problems with this... there seems to be something racy in the new std::thread
+		// so this is deadlocking. Since oICOP will be replaced with win_iocp soon, don't try too 
+		// hard to make this clean.
+		event AllJoined;
+		std::thread t([&]
+		{
+			for (std::thread& Thread : WorkerThreads)
+				Thread.join();
+
+			AllJoined.set();
+		});
+
+		AllJoined.wait_for(std::chrono::seconds(1));
+		
+		try
+		{
+			t.detach();
+			for (std::thread& Thread : WorkerThreads)
+				Thread.detach();
+		}
+
+		catch (std::exception&)
+		{
+		}
 
 		if (INVALID_HANDLE_VALUE != hIOCP)
 			CloseHandle(hIOCP);

@@ -44,8 +44,10 @@ public:
 
 	~tbb_context()
 	{
-		delete Init;
-		delete Observer;
+		// This was causing a hang/deadlock so disable the check for now - this only 
+		// gets called when the process exits anyway so nothing should be affected.
+		//delete Init;
+		//delete Observer;
 	}
 
 	inline void dispatch(const std::function<void()>& _Task)
