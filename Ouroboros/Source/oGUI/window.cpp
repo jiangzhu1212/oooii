@@ -395,8 +395,7 @@ void window_impl::init_window(const init& _Init)
 	InitShape.state = _Init.shape.state;
 	InitShape.style = _Init.shape.style;
 
-	if (!oWinSetShape(hWnd, InitShape))
-		oThrowLastError();
+	oWinSetShape(hWnd, InitShape);
 }
 
 window_impl::window_impl(const init& _Init)
@@ -464,8 +463,9 @@ void window_impl::shape(const window_shape& _Shape)
 {
 	dispatch_internal(std::move([=]
 	{
-		if (!oWinSetShape(hWnd, _Shape))
-			oTRACE("ERROR: oWinSetShape: %s", oErrorGetLastString());
+		try { oWinSetShape(hWnd, _Shape); }
+		catch (std::exception& e)
+		{ oTRACE("ERROR: oWinSetShape: %s", e.what()); }
 	}));
 }
 
@@ -651,7 +651,7 @@ void window_impl::allow_touch_actions(bool _Allow)
 {
 	dispatch_internal([=]
 	{
-		oVERIFY(oWinRegisterTouchEvents(hWnd, _Allow));
+		oWinRegisterTouchEvents(hWnd, _Allow);
 		AllowTouch = _Allow;
 	});
 }
@@ -1132,8 +1132,8 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 				ClientToScreen(_hWnd, &p);
 				window_shape Shape;
 				Shape.client_position = int2(p.x, p.y) - CursorClientPosAtMouseDown;
-				if (!oWinSetShape(_hWnd, Shape))
-					oTRACE("ERROR: oWinSetShape: %s", oErrorGetLastString());
+				try { oWinSetShape(_hWnd, Shape); }
+				catch (std::exception& e) { oTRACE("ERROR: oWinSetShape: %s", e.what()); }
 			}
 
 			break;

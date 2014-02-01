@@ -118,7 +118,7 @@ public:
 	void set_log(const path& _Path);
 	path get_log() const;
 
-	void icon(ouro::icon_handle _hIcon) { oWinSetIcon(GetConsoleWindow(), (HICON)_hIcon); }
+	void icon(ouro::icon_handle _hIcon) { if (GetConsoleWindow()) oWinSetIconAsync(GetConsoleWindow(), (HICON)_hIcon); }
 	ouro::icon_handle icon() const { return (ouro::icon_handle)oWinGetIcon(GetConsoleWindow()); }
 	void focus(bool _Focus) { oWinSetFocus(GetConsoleWindow()); }
 	bool has_focus() const { return oWinHasFocus(GetConsoleWindow()); }

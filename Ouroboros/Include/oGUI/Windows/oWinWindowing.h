@@ -175,7 +175,7 @@ void oWinEnumWindows(const std::function<bool(HWND _hWnd)>& _Enumerator);
 // the ID of its message pump thread. Since a process can have more than one top 
 // level window an optional name can also be specified to make certain the 
 // correct window is returned.
-bool oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
+void oWinGetProcessTopWindowAndThread(ouro::process::id _ProcessID
 	, HWND* _pHWND
 	, std::thread::id* _pThreadID
 	, const char* _pWindowName = nullptr);
@@ -310,7 +310,7 @@ bool oWinIsTempChange(HWND _hWnd);
 // window as to whether such events are enabled. This will return failure on 
 // versions of Windows prior to Windows 7 since the underlying API is not 
 // supported prior to Windows 7.
-bool oWinRegisterTouchEvents(HWND _hWnd, bool _Registered);
+void oWinRegisterTouchEvents(HWND _hWnd, bool _Registered);
 
 // Converts the specified oGUI_HOTKEY_DESCs into an ACCEL array. _pAccels must
 // be least the same number of items as _HotKeys.
@@ -329,15 +329,13 @@ HICON oWinGetIcon(HWND _hWnd, bool _BigIcon = false);
 
 // Asynchronously set the specified window's icon. This will enqueue the set,
 // but may not be atomic with other calls either from client code or from 
-// Windows internal code. If this is called from a thread different than the
-// _hWnd's, this will return false and oErrorGetLast will return 
-// std::errc::operation_not_permitted.
-bool oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
+// Windows internal code.
+void oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
 
 // @tony: I am still unclear about lifetime management... I don't see leak
 // reports in current usage, so I've not have something to fully trace through...
 // Let me know if you see leaks relating to HICONs.
-bool oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
+void oWinSetIcon(HWND _hWnd, HICON _hIcon, bool _BigIcon = false);
 
 // Sets the text of a window. If _SubItemIndex is ouro::invalid, this will set the
 // main text. If the window is a control that contains subitems, the specified
@@ -380,7 +378,7 @@ HMENU oWinGetMenu(HWND _hWnd);
 
 // Calls SetMenu() to either the value of oWinGetMenu or null, depending on the 
 // _Show value.
-bool oWinShowMenu(HWND _hWnd, bool _Show = true);
+void oWinShowMenu(HWND _hWnd, bool _Show = true);
 
 // Returns true if the specified window has a menu
 bool oWinMenuShown(HWND _hWnd);
@@ -478,7 +476,7 @@ bool oWinAltF4Enable(HWND _hWnd, bool _Enabled = true);
 // HWND has a status bar, the returned client size is shrunk by the size of the 
 // status bar (not shrunk if the status bar is hidden). Also this always has
 // a meaninful top-left coord rather than the 0,0 of GetClientRect.
-bool oWinGetClientRect(HWND _hWnd, RECT* _pRect);
+void oWinGetClientRect(HWND _hWnd, RECT* _pRect);
 
 // Returns the rectangle in which the window is most closely contained. If the
 // specified _hWnd is a child window, then the client rect of the parent is 
@@ -503,7 +501,7 @@ RECT oWinGetRelativeRect(HWND _hWnd, HWND _hExplicitParent = nullptr);
 ouro::window_shape oWinGetShape(HWND _hWnd);
 
 // Sets the shape of the specified window.
-bool oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape);
+void oWinSetShape(HWND _hWnd, const ouro::window_shape& _Shape);
 
 // There's a known issue that a simple ShowWindow doesn't always work on some 
 // minimized apps. The WAR seems to be to set focus to anything else, then try 
@@ -720,7 +718,7 @@ float oWinControlGetFloat(HWND _hControl);
 
 // Associates the specified _hIcon with the specified _hControl
 // Valid for: Icon
-bool oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex = ouro::invalid);
+void oWinControlSetIcon(HWND _hControl, HICON _hIcon, int _SubItemIndex = ouro::invalid);
 
 // Get's the icon associated with the specified _hControl
 // Valid for: Icon
@@ -728,8 +726,7 @@ HICON oWinControlGetIcon(HWND _hControl, int _SubItemIndex = ouro::invalid);
 
 // Returns true if the specified _hControl's checked state is true. This returns 
 // false for any other tri-state state or if the specified _hControl is not a 
-// type that can be checked. If legitimately not checked, oErrorGetLast will 
-// return 0.
+// type that can be checked.
 // Valid for: CheckBox, radio
 bool oWinControlIsChecked(HWND _hControl);
 
