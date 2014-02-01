@@ -225,9 +225,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oBase\finally.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
       <Filter>oBase</Filter>
     </ClInclude>
@@ -252,22 +249,7 @@
     <ClInclude Include="..\..\Include\oBase\fixed_string.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\equal.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\macros.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\operators.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\config.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\all.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\assert.h">
       <Filter>oBase</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\xml.h">
@@ -288,9 +270,6 @@
     <ClInclude Include="..\..\Include\oBase\path.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\throw.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\djb2.h">
       <Filter>oBase\hash</Filter>
     </ClInclude>
@@ -305,9 +284,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\uri.h">
       <Filter>oBase\types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\scc.h">
-      <Filter>oBase</Filter>
     </ClInclude>
     <ClInclude Include="scc_svn.h">
       <Filter>Source\scc</Filter>
@@ -362,9 +338,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\resized_type.h">
       <Filter>oBase\types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\all_libc.h">
-      <Filter>oBase</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h">
       <Filter>oBase\allocator</Filter>
@@ -435,23 +408,53 @@
     <ClInclude Include="..\..\Include\oBase\snappy.h">
       <Filter>oBase\compression</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\invalid.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\threadpool.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\future.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\std_make_unique.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\callable.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrency.h">
       <Filter>oBase\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\fourcc.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\invalid.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\macros.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\operators.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\std_make_unique.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\throw.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\assert.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\callable.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\config.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\finally.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\all_libc.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\scc.h">
+      <Filter>oBase\scc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\equal.h">
+      <Filter>oBase\memory</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -526,6 +529,12 @@
     </Filter>
     <Filter Include="Source\compression">
       <UniqueIdentifier>{cd00d521-6e43-4d90-ab21-c3e5eb16894e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\c++ support">
+      <UniqueIdentifier>{d6ae7f6e-a634-407b-a944-6e28f8923385}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\scc">
+      <UniqueIdentifier>{dedc6645-18e5-4b85-b45b-e6d9aafc9ace}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
