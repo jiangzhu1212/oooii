@@ -38,7 +38,6 @@
 #include <commctrl.h>
 #include <windowsx.h>
 #include <Shellapi.h>
-#include <oBasis/oError.h> // @tony fixme
 
 namespace ouro {
 
@@ -380,8 +379,7 @@ private:
 void window_impl::init_window(const init& _Init)
 {
 	// this->hWnd assigned in WM_CREATE
-	if (!oWinCreate(nullptr, _Init.title, _Init.shape.style, _Init.shape.client_position, _Init.shape.client_size, StaticWndProc, (void*)&_Init, this))
-		oThrowLastError();
+	oWinCreate(nullptr, _Init.title, _Init.shape.style, _Init.shape.client_position, _Init.shape.client_size, StaticWndProc, (void*)&_Init, this);
 	
 	PriorShape = oWinGetShape(hWnd);
 
@@ -585,7 +583,7 @@ void window_impl::parent(const std::shared_ptr<basic_window>& _Parent)
 	{
 		oCHECK(!Owner, "Can't have owner at same time as parent");
 		Parent = _Parent;
-		oVERIFY(oWinSetParent(hWnd, Parent ? (HWND)Parent->native_handle() : nullptr));
+		oWinSetParent(hWnd, Parent ? (HWND)Parent->native_handle() : nullptr);
 	}));
 }
 
@@ -614,7 +612,7 @@ void window_impl::sort_order(window_sort_order::value _SortOrder)
 	dispatch_internal(std::move([=]
 	{
 		this->SortOrder = _SortOrder;
-		oVERIFY(oWinSetAlwaysOnTop(hWnd, _SortOrder != window_sort_order::sorted));
+		oWinSetAlwaysOnTop(hWnd, _SortOrder != window_sort_order::sorted);
 		if (_SortOrder == window_sort_order::always_on_top_with_focus)
 			::SetTimer(hWnd, (UINT_PTR)&SortOrder, 500, nullptr);
 		else
@@ -673,7 +671,7 @@ bool window_impl::client_drag_to_move() const
 
 void window_impl::alt_f4_closes(bool _AltF4Closes)
 {
-	DISPATCH(oVERIFY(oWinAltF4Enable(hWnd, _AltF4Closes)));
+	DISPATCH(oWinAltF4Enable(hWnd, _AltF4Closes));
 }
 
 bool window_impl::alt_f4_closes() const
@@ -824,9 +822,9 @@ future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame, bool 
 		{
 			window_shape s = oWinGetShape(hWnd);
 			if (is_visible(s.state))
-				oVERIFY(false); // pass through verification of Wait
+				oCHECK0(false); // pass through verification of wait
 			else
-				oASSERT(false, "A non-hidden window timed out waiting to become opaque");
+				oCHECK(false, "A non-hidden window timed out waiting to become opaque");
 		}
 
 		std::shared_ptr<surface::buffer> snap;

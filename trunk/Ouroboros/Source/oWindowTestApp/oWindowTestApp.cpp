@@ -131,8 +131,8 @@ private:
 private:
 	void ActionHook(const input::action& _Action);
 	void EventHook(const window::basic_event& _Event);
-	bool CreateMenu(const window::create_event& _CreateEvent);
-	bool CreateControls(const window::create_event& _CreateEvent);
+	void CreateMenu(const window::create_event& _CreateEvent);
+	void CreateControls(const window::create_event& _CreateEvent);
 	void CheckState(window_state::value _State);
 	void CheckStyle(window_style::value _Style);
 	void OnDirectoryEvent(filesystem::file_event::value _Event, const path& _Path);
@@ -185,7 +185,7 @@ oWindowTestApp::oWindowTestApp()
 	Window->show();
 }
 
-bool oWindowTestApp::CreateMenu(const window::create_event& _CreateEvent)
+void oWindowTestApp::CreateMenu(const window::create_event& _CreateEvent)
 {
 	for (auto& m : Menus)
 		m = oGUIMenuCreate();
@@ -212,25 +212,19 @@ bool oWindowTestApp::CreateMenu(const window::create_event& _CreateEvent)
 	});
 
 	oGUIMenuAppendItem(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "&About...");
-
-	return true;
 }
 
-bool oWindowTestApp::CreateControls(const window::create_event& _CreateEvent)
+void oWindowTestApp::CreateControls(const window::create_event& _CreateEvent)
 {
-	{
-		control_info d;
-		d.parent = _CreateEvent.window;
-		d.type = control_type::button;
-		d.text = "&Easy";
-		d.position = int2(20, 20);
-		d.size = int2(80, 20);
-		d.id = oWCTL_EASY_BUTTON;
-		d.starts_new_group = true;
-		hButton = oWinControlCreate(d);
-	}
-
-	return true;
+	control_info d;
+	d.parent = _CreateEvent.window;
+	d.type = control_type::button;
+	d.text = "&Easy";
+	d.position = int2(20, 20);
+	d.size = int2(80, 20);
+	d.id = oWCTL_EASY_BUTTON;
+	d.starts_new_group = true;
+	hButton = oWinControlCreate(d);
 }
 
 void oWindowTestApp::CheckState(window_state::value _State)
@@ -283,10 +277,8 @@ void oWindowTestApp::EventHook(const window::basic_event& _Event)
 		case event_type::creating:
 		{
 			oTRACE("event_type::creating");
-			if (!CreateMenu(_Event.as_create()))
-				oThrowLastError();
-			if (!CreateControls(_Event.as_create()))
-				oThrowLastError();
+			CreateMenu(_Event.as_create());
+			CreateControls(_Event.as_create());
 			break;
 		}
 		case event_type::paint:

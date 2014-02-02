@@ -67,7 +67,7 @@ void oWinControlSet::Deinitialize()
 HWND oWinControlSet::GetControl(int _ID) const
 {
 	if (_ID < 0 || _ID >= as_int(Controls.size()))
-		oTHROW_INVARG("Invalid ID %d", _ID);
+		return nullptr;
 	return Controls[_ID];
 }
 
