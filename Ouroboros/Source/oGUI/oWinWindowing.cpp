@@ -28,7 +28,6 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinStatusBar.h>
 #include <oBase/timer.h>
-#include <oBasis/oError.h> // @tony fixme
 
 #undef interface
 #include <oCore/windows/win_error.h>
@@ -703,8 +702,8 @@ char* oWinMakeClassName(char* _StrDestination, size_t _SizeofStrDestination, WND
 bool oWinIsClass(HWND _hWnd, WNDPROC _Wndproc)
 {
 	sstring ClassName, ExpectedClassName;
-	oVERIFY_R(oWinMakeClassName(ExpectedClassName, _Wndproc));
-	oVERIFY_R(GetClassName(_hWnd, ClassName.c_str(), as_int(ClassName.capacity())));
+	if (!oWinMakeClassName(ExpectedClassName, _Wndproc)) return false;
+	if (!GetClassName(_hWnd, ClassName.c_str(), as_int(ClassName.capacity()))) return false;
 	return !strcmp(ClassName, ExpectedClassName);
 }
 
@@ -762,7 +761,7 @@ LRESULT CALLBACK oWinWindowProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _
 				SetWindowLongPtr(_hWnd, oGWLP_DEVICE_CHANGE, (LONG_PTR)oWinDeviceChangeCreate());
 				SetWindowLongPtr(_hWnd, oGWLP_MENU, (LONG_PTR)CreateMenu());
 				SetWindowLongPtr(_hWnd, oGWLP_STATUSBAR, (LONG_PTR)oWinStatusBarCreate(_hWnd, (HMENU)0x00005747));
-				oVERIFY(oWinShowStatusBar(_hWnd, has_statusbar(wcs->Shape.style)));
+				oWinShowStatusBar(_hWnd, has_statusbar(wcs->Shape.style));
 
 				if (has_statusbar(wcs->Shape.style))
 					oVB(SetWindowPos(_hWnd, 0, cs->x, cs->y, cs->cx, cs->cy + oWinGetStatusBarHeight(_hWnd), SWP_NOZORDER|SWP_FRAMECHANGED|SWP_NOMOVE));
@@ -1183,14 +1182,13 @@ HWND oWinGetStatusBar(HWND _hWnd)
 	return (HWND)GetWindowLongPtr(_hWnd, oGWLP_STATUSBAR);
 }
 
-bool oWinShowStatusBar(HWND _hWnd, bool _Show)
+void oWinShowStatusBar(HWND _hWnd, bool _Show)
 {
 	oWIN_CHECK(_hWnd);
 	HWND hStatusBar = oWinGetStatusBar(_hWnd);
-	oVERIFY_R(hStatusBar);
-	if (!ShowWindow(hStatusBar, _Show ? SW_SHOWNOACTIVATE : SW_HIDE))
-		oVB(RedrawWindow(hStatusBar, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW));
-	return true;
+	if (hStatusBar)
+		if (!ShowWindow(hStatusBar, _Show ? SW_SHOWNOACTIVATE : SW_HIDE))
+			oVB(RedrawWindow(hStatusBar, nullptr, nullptr, RDW_INVALIDATE|RDW_UPDATENOW));
 }
 
 bool oWinStatusBarShown(HWND _hWnd)
@@ -1216,7 +1214,7 @@ HWND oWinGetOwner(HWND _hWnd)
 	return GetWindow(_hWnd, GW_OWNER);
 }
 
-bool oWinSetParent(HWND _hWnd, HWND _hParent)
+void oWinSetParent(HWND _hWnd, HWND _hParent)
 {
 	oWIN_CHECK(_hWnd);
 	if (_hParent)
@@ -1234,8 +1232,6 @@ bool oWinSetParent(HWND _hWnd, HWND _hParent)
 		dwStyle = (dwStyle & ~WS_CHILD) | WS_POPUP;
 		SetWindowLongPtr(_hWnd, GWL_STYLE, dwStyle);
 	}
-
-	return true;
 }
 
 HWND oWinGetParent(HWND _hWnd)
@@ -1318,14 +1314,13 @@ bool oWinAltF4IsEnabled(HWND _hWnd)
 	return !!(GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS) & oEF_ALT_F4_ENABLED);
 }
 
-bool oWinAltF4Enable(HWND _hWnd, bool _Enabled)
+void oWinAltF4Enable(HWND _hWnd, bool _Enabled)
 {
 	oWIN_CHECK(_hWnd);
 	LONG_PTR flags = GetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS);
 	if (_Enabled) flags |= oEF_ALT_F4_ENABLED;
 	else flags &=~ oEF_ALT_F4_ENABLED;
 	SetWindowLongPtr(_hWnd, oGWLP_EXTRA_FLAGS, flags);
-	return true;
 }
 
 bool oWinExists(HWND _hWnd)
@@ -1377,12 +1372,13 @@ bool oWinIsAlwaysOnTop(HWND _hWnd)
 	return !!(GetWindowLong(_hWnd, GWL_EXSTYLE) & WS_EX_TOPMOST);
 }
 
-bool oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop)
+void oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop)
 {
 	oWIN_CHECK(_hWnd);
 	RECT r;
 	oVB(GetWindowRect(_hWnd, &r));
-	return !!::SetWindowPos(_hWnd, _AlwaysOnTop ? HWND_TOPMOST : HWND_TOP, r.left, r.top, oWinRectW(r), oWinRectH(r), IsWindowVisible(_hWnd) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW);
+	if (!::SetWindowPos(_hWnd, _AlwaysOnTop ? HWND_TOPMOST : HWND_TOP, r.left, r.top, oWinRectW(r), oWinRectH(r), IsWindowVisible(_hWnd) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW))
+		throw windows::error();
 }
 
 void oWinGetClientRect(HWND _hWnd, RECT* _pRect)
@@ -1593,7 +1589,7 @@ void oWinSetShape(HWND _hWnd, const window_shape& _Shape)
 		// visibility, the client area has changed, so spoof a WM_SIZE to notify
 		// the system of that change. If the menu changes, then allow the WM_SIZE to 
 		// be sent by oWinShowMenu.
-		oVERIFY(oWinShowStatusBar(_hWnd, has_statusbar(New.style)));
+		oWinShowStatusBar(_hWnd, has_statusbar(New.style));
 
 		if (Old.state == window_state::maximized && New.state == window_state::maximized 
 			&& has_statusbar(New.style) != has_statusbar(Old.style)
@@ -1740,8 +1736,8 @@ bool oWinSetText(HWND _hWnd, const char* _Text, int _SubItemIndex)
 		case control_type::combobox:
 			if (_SubItemIndex != invalid)
 			{
-				oVERIFY(oWinControlDeleteSubItem(_hWnd, _Text, _SubItemIndex));
-				oVERIFY(oWinControlInsertSubItem(_hWnd, _Text, _SubItemIndex));
+				oWinControlDeleteSubItem(_hWnd, _Text, _SubItemIndex);
+				oWinControlInsertSubItem(_hWnd, _Text, _SubItemIndex);
 			}
 			break;
 
@@ -2030,8 +2026,8 @@ static bool OnCreateAddSubItems(HWND _hControl, const control_info& _Desc)
 {
 	if (strchr(_Desc.text, '|'))
 	{
-		oVERIFY_R(oWinControlAddSubItems(_hControl, _Desc.text));
-		oVERIFY_R(oWinControlSelectSubItem(_hControl, 0));
+		if (!oWinControlAddSubItems(_hControl, _Desc.text)) return false;
+		if (!oWinControlSelectSubItem(_hControl, 0)) return false;
 	}
 
 	return true;
@@ -2039,7 +2035,7 @@ static bool OnCreateAddSubItems(HWND _hControl, const control_info& _Desc)
 
 static bool OnCreateTab(HWND _hControl, const control_info& _Desc)
 {
-	oVERIFY_R(SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr));
+	if (!SetWindowSubclass(_hControl, oSubclassProcTab, oSubclassTabID, (DWORD_PTR)nullptr)) return false;
 	return OnCreateAddSubItems(_hControl, _Desc);
 }
 
@@ -2050,7 +2046,7 @@ static bool OnCreateGroup(HWND _hControl, const control_info& _Desc)
 
 static bool OnCreateFloatBox(HWND _hControl, const control_info& _Desc)
 {
-	oVERIFY_R(SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr));
+	if (!SetWindowSubclass(_hControl, oSubclassProcFloatBox, oSubclassFloatBoxID, (DWORD_PTR)nullptr)) return false;
 	SetWindowText(_hControl, _Desc.text);
 	return true;
 }
@@ -2329,7 +2325,7 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 	//return invalid;
 }
 
-bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
+void oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex)
 {
 	oWIN_CHECK(_hControl);
 	control_type::value type = oWinControlGetType(_hControl);
@@ -2352,9 +2348,7 @@ bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _Sub
 
 			default:
 				break;
-		}
-
-	return true;
+	}
 }
 
 bool oWinControlAddSubItems(HWND _hControl, const char* _DelimitedString, char _Delimiter)

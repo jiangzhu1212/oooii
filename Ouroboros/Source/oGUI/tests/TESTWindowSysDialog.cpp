@@ -305,7 +305,7 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 	ControlSet.Deinitialize();
 
 	oWinControlSet::IDFROMSTRING FromString = [&](int* _pID, const char* _StrSource)->bool { return ouro::from_string((oSystemProperties::CONTROL*)_pID, _StrSource); };
-	oCHECK0(ControlSet.Initialize(_hParent, _ClientSize, *XML, FromString));
+	ControlSet.Initialize(_hParent, _ClientSize, *XML, FromString);
 
 	if (ControlSet[ID_COMPUTER_NAME_VALUE])
 	{

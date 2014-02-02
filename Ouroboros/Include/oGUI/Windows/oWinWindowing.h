@@ -387,7 +387,7 @@ bool oWinMenuShown(HWND _hWnd);
 HWND oWinGetStatusBar(HWND _hWnd);
 
 // Sets the status bar of the associated window to be visible or hidden.
-bool oWinShowStatusBar(HWND _hWnd, bool _Show = true);
+void oWinShowStatusBar(HWND _hWnd, bool _Show = true);
 
 // Returns the state set by oWinShowStatusBar. This can return visible even if 
 // the parent window is hidden - it only describes the local state of the 
@@ -419,7 +419,7 @@ bool oWinIsEnabled(HWND _hWnd);
 bool oWinEnable(HWND _hWnd, bool _Enabled = true);
 
 bool oWinIsAlwaysOnTop(HWND _hWnd);
-bool oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop = true);
+void oWinSetAlwaysOnTop(HWND _hWnd, bool _AlwaysOnTop = true);
 
 // Similar to ::SetParent, but for ownership to mask that the API is very 
 // inconsistent and mislabeled.
@@ -428,7 +428,7 @@ HWND oWinGetOwner(HWND _hWnd);
 bool oWinIsOwner(HWND _hWnd);
 
 // This calls ::SetParent, but also sets WS_CHILD v. WS_POPUP correctly.
-bool oWinSetParent(HWND _hWnd, HWND _hParent);
+void oWinSetParent(HWND _hWnd, HWND _hParent);
 HWND oWinGetParent(HWND _hWnd);
 bool oWinIsParent(HWND _hWnd);
 
@@ -463,7 +463,7 @@ bool oWinSetIsFullscreenExclusive(HWND _hWnd, bool _IsFullscreenExclusive = true
 bool oWinAltF4IsEnabled(HWND _hWnd);
 
 // Sets whether or not Alt-F4 closes the window.
-bool oWinAltF4Enable(HWND _hWnd, bool _Enabled = true);
+void oWinAltF4Enable(HWND _hWnd, bool _Enabled = true);
 
 // _____________________________________________________________________________
 // Top-Level Window Shape
@@ -605,7 +605,7 @@ int oWinControlInsertSubItem(HWND _hControl, const char* _SubItemText, int _SubI
 
 // Deletes the nth subitem
 // Valid for: ComboBox, ComboTextbox, Tab, ListBox
-bool oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex);
+void oWinControlDeleteSubItem(HWND _hControl, const char* _SubItemText, int _SubItemIndex);
 
 // Adds all items in the specified delimited list in order.
 // Valid for: ComboBox, ComboTextbox, Tab, ListBox
