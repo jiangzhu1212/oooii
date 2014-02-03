@@ -47,6 +47,11 @@ void ensure_initialized();
 OVERLAPPED* associate(HANDLE _Handle, const std::function<void(size_t _NumBytes)>& _OnCompletion);
 void disassociate(OVERLAPPED* _pOverlapped);
 
+// calls the completion routine explicitly. This is useful when operations can
+// complete synchronously or asynchronously. If they complete synchronously they
+// may not post the overlapped to IOCP for handling so call this in such cases.
+void post_completion(OVERLAPPED* _pOverlapped);
+
 // Waits until all associated IO operations have completed
 void wait();
 bool wait_for(unsigned int _TimeoutMS);
