@@ -66,6 +66,7 @@ public:
 
 	OVERLAPPED* associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _OnCompletion);
 	void disassociate(OVERLAPPED* _pOverlapped);
+	void post_completion(OVERLAPPED* _pOverlapped);
 
 private:
 	iocp_threadpool() : hIoPort(nullptr), NumRunningThreads(0), NumAssociations(0) {}
@@ -110,7 +111,6 @@ void iocp_threadpool::work()
 				if (ol->Task)
 					ol->Task(nBytes);
 			}
-
 			else
 				oTHROW(operation_not_supported, "CompletionKey %p not supported", key);
 		}
@@ -265,6 +265,11 @@ void iocp_threadpool::disassociate(OVERLAPPED* _pOverlapped)
 	NumAssociations--;
 }
 
+void iocp_threadpool::post_completion(OVERLAPPED* _pOverlapped)
+{
+	PostQueuedCompletionStatus(hIoPort, 0, oCOMPLETION, _pOverlapped);
+}
+
 namespace iocp {
 
 unsigned int concurrency()
@@ -283,6 +288,11 @@ OVERLAPPED* associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _O
 }
 
 void disassociate(OVERLAPPED* _pOverlapped)
+{
+	iocp_threadpool::singleton().disassociate(_pOverlapped);
+}
+
+void post_completion(OVERLAPPED* _pOverlapped)
 {
 	iocp_threadpool::singleton().disassociate(_pOverlapped);
 }
