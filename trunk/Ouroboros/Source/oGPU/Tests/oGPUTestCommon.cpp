@@ -140,15 +140,12 @@ bool oGPUTextureTestApp::Initialize()
 	if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 		return false;
 
-	oGPUPipeline::DESC pld;
-	if (!oGPUTestGetPipeline(GetPipeline(), &pld))
+	oGPUPipeline::DESC pld = oGPUTestGetPipeline(GetPipeline());
+
+	if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
 		return false;
 
-	if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
-		return false;
-
-	if (!oGPUUtilCreateFirstCube(Device, pld.pElements, pld.NumElements, &Mesh))
-		return false;
+	Mesh = ouro::gpu::make_first_cube(Device);
 
 	return CreateTexture();
 }
@@ -175,7 +172,7 @@ bool oGPUTextureTestApp::Render()
 
 	CommandList->Begin();
 
-	oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
+	ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
 	CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
 	CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
@@ -187,7 +184,7 @@ bool oGPUTextureTestApp::Render()
 	CommandList->SetShaderResources(0, 1, &Texture);
 	CommandList->SetPipeline(Pipeline);
 	CommandList->SetRenderTarget(PrimaryRenderTarget);
-	oGPUUtilMeshDraw(CommandList, Mesh);
+	Mesh->draw(CommandList);
 
 	CommandList->End();
 	return true;

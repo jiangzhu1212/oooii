@@ -23,7 +23,6 @@
     <ClCompile Include="oGfxMosaic.cpp" />
     <ClCompile Include="oGfxPickBuffer.cpp" />
     <ClCompile Include="oGfxPipelines.cpp" />
-    <ClCompile Include="oGfxVertexElements.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -40,7 +39,6 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxMosaic.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxPickBuffer.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxVertexElements.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxViewConstants.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

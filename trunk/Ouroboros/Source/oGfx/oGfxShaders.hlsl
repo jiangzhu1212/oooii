@@ -31,8 +31,9 @@
 #include <oGfx/oGfxDrawConstants.h>
 #include <oGfx/oGfxLightConstants.h>
 #include <oGfx/oGfxMaterialConstants.h>
-#include <oGfx/oGfxVertexElements.h>
 #include <oGfx/oGfxViewConstants.h>
+
+#include <oGPU/vertex_layouts.h>
 
 // Solid color shaders
 float4 PSBlack() : SV_Target { return oBLACK4; }
@@ -40,6 +41,16 @@ float4 PSWhite() : SV_Target { return oWHITE4; }
 float4 PSRed() : SV_Target { return oRED4; }
 float4 PSGreen() : SV_Target { return oGREEN4; }
 float4 PSBlue() : SV_Target { return oBLUE4; }
+
+struct oGFX_INSTANCE
+{
+	float3 Translation;
+	quatf Rotation;
+};
+
+#define MAX_NUM_INSTANCES (64)
+
+cbuffer cb_GfxInstances { oGFX_INSTANCE GfxInstances[MAX_NUM_INSTANCES]; }
 
 struct oGFX_VS_OUT_UNLIT
 {
@@ -87,56 +98,57 @@ void oGSExpandVertexVector(float3 _LSPosition, float3 _LSVector, float4 _Color, 
 // _____________________________________________________________________________
 // Vertex Shaders
 
-oGFX_VS_OUT_UNLIT VSLines(oGFX_LINE_VERTEX In)
+oGFX_VS_OUT_UNLIT VSLines(vertex_pos_color In)
 {
 	oGFX_VS_OUT_UNLIT Out = (oGFX_VS_OUT_UNLIT)0;
-	Out.SSPosition = oGfxLStoSS(In.LSPosition);
-	Out.Color = In.Color;
+	Out.SSPosition = oGfxLStoSS(In.position);
+	Out.Color = In.color;
 	return Out;
 }
 
-oGFX_RIGID_VERTEX VSPassThrough(oGFX_RIGID_VERTEX In)
+vertex_pos_nrm_tan_uv0 VSPassThrough(vertex_pos_nrm_tan_uv0 In)
 {
 	return In;
 }
 
-float4 VSPositionPassThrough(float3 LSPosition : POS0) : SV_Position
+float4 VSPositionPassThrough(float3 _LSPosition : POSITION) : SV_Position
 {
-	return float4(LSPosition, 1);
+	return float4(_LSPosition, 1);
 }
 
-float4 VSPosition(float3 LSPosition : POS0) : SV_Position
+float4 VSPosition(float3 _LSPosition : POSITION) : SV_Position
 {
-	return oGfxLStoSS(LSPosition);
+	return oGfxLStoSS(_LSPosition);
 }
 
-oGFX_VS_OUT_LIT VSRigid(oGFX_RIGID_VERTEX In)
+oGFX_VS_OUT_LIT VSRigid(vertex_pos_nrm_tan_uv0 In)
 {
 	oGFX_VS_OUT_LIT Out = (oGFX_VS_OUT_LIT)0;
-	Out.SSPosition = oGfxLStoSS(In.LSPosition);
-	Out.WSPosition = oGfxLStoWS(In.LSPosition);
-	Out.LSPosition = In.LSPosition;
-	Out.VSDepth = oGfxLStoVS(In.LSPosition).z;
-	oGfxRotateBasisLStoWS(In.LSNormal, In.LSTangent, Out.WSNormal, Out.WSTangent, Out.WSBitangent);
-	Out.VSNormal = oGfxRotateLStoVS(In.LSNormal);
-	Out.Texcoord = In.Texcoord;
+	Out.SSPosition = oGfxLStoSS(In.position);
+	Out.WSPosition = oGfxLStoWS(In.position);
+	Out.LSPosition = In.position;
+	Out.VSDepth = oGfxLStoVS(In.position).z;
+	oGfxRotateBasisLStoWS(In.normal, In.tangent, Out.WSNormal, Out.WSTangent, Out.WSBitangent);
+	Out.VSNormal = oGfxRotateLStoVS(In.normal);
+	Out.Texcoord = In.texcoord;
 	return Out;
 }
 	
-oGFX_VS_OUT_LIT VSRigidInstanced(oGFX_RIGID_VERTEX_INSTANCED In)
+oGFX_VS_OUT_LIT VSRigidInstanced(vertex_pos_nrm_tan_uv0 In, uint _InstanceID : SV_InstanceID)
 {
+	oGFX_INSTANCE Instance = GfxInstances[_InstanceID];
 	oGFX_VS_OUT_LIT Out = (oGFX_VS_OUT_LIT)0;
 	Out.SSPosition = oGfxWStoSS(Out.WSPosition);
-	Out.WSPosition = qmul(In.Rotation, In.LSPosition) + In.Translation;
-	Out.LSPosition = In.LSPosition;
+	Out.WSPosition = qmul(Instance.Rotation, In.position) + Instance.Translation;
+	Out.LSPosition = In.position;
 	Out.VSDepth = oGfxWStoVS(Out.WSPosition).z;
-	oQRotateTangentBasisVectors(In.Rotation, In.LSNormal, In.LSTangent, Out.WSNormal, Out.WSTangent, Out.WSBitangent);
-	Out.VSNormal = oGfxRotateWStoVS(qmul(In.Rotation, In.LSNormal));
-	Out.Texcoord = In.Texcoord;
+	oQRotateTangentBasisVectors(Instance.Rotation, In.normal, In.tangent, Out.WSNormal, Out.WSTangent, Out.WSBitangent);
+	Out.VSNormal = oGfxRotateWStoVS(qmul(Instance.Rotation, In.normal));
+	Out.Texcoord = In.texcoord;
 	return Out;
 }
 
-void VSShadow(in float3 LSPosition : POS0, out float4 _Position : SV_Position, out float _VSDepth : VIEWSPACEZ)
+void VSShadow(in float3 LSPosition : POSITION, out float4 _Position : SV_Position, out float _VSDepth : VIEWSPACEZ)
 {
 	_Position = oGfxLStoSS(LSPosition);
 	_VSDepth = oGfxNormalizeDepth(oGfxLStoVS(LSPosition).z);
@@ -152,15 +164,15 @@ void VSShadow(in float3 LSPosition : POS0, out float4 _Position : SV_Position, o
 // Geometry Shaders
 
 [maxvertexcount(2)]
-void GSVertexNormals(point oGFX_RIGID_VERTEX In[1], inout LineStream<oGFX_VS_OUT_UNLIT> _Out)
+void GSVertexNormals(point vertex_pos_nrm_tan_uv0 In[1], inout LineStream<oGFX_VS_OUT_UNLIT> _Out)
 {
-	oGSExpandVertexVector(In[0].LSPosition, In[0].LSNormal, oGREEN4, _Out);
+	oGSExpandVertexVector(In[0].position, In[0].normal, oGREEN4, _Out);
 }
 
 [maxvertexcount(2)]
-void GSVertexTangents(point oGFX_RIGID_VERTEX In[1], inout LineStream<oGFX_VS_OUT_UNLIT> _Out)
+void GSVertexTangents(point vertex_pos_nrm_tan_uv0 In[1], inout LineStream<oGFX_VS_OUT_UNLIT> _Out)
 {
-	oGSExpandVertexVector(In[0].LSPosition, In[0].LSTangent.xyz, oRED4, _Out);
+	oGSExpandVertexVector(In[0].position, In[0].tangent.xyz, oRED4, _Out);
 }
 
 // _____________________________________________________________________________

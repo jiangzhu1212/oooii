@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGfx/oGfxPipelines.h>
-#include <oGfx/oGfxVertexElements.h>
 
 typedef unsigned char BYTE;
 
@@ -49,88 +48,90 @@ typedef unsigned char BYTE;
 #include <PSWSPixelNormal.h>
 #include <PSWSVertexNormal.h>
 
-bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
+using namespace ouro::gpu;
+
+pipeline_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 {
-	memset(_pDesc, 0, sizeof(oGPU_PIPELINE_DESC));
+	pipeline_info i;
 
 	#define oPL_RIGID(_Enum, _PS) do { \
-		_pDesc->DebugName = #_Enum; \
-		_pDesc->InputType = ouro::gpu::primitive_type::triangles; \
-		oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements); \
-		_pDesc->pVertexShader = VSRigid; \
-		_pDesc->pPixelShader = _PS; \
+		i.debug_name = #_Enum; \
+		i.primitive_type = primitive_type::triangles; \
+		i.vertex_layouts[0] = vertex_layout::pos_nrm_tan_uv0; \
+		i.vs = VSRigid; \
+		i.ps = _PS; \
 	} while(false)
 
 	#define oCASE_RIGID(_Enum, _PS) case _Enum: \
 		oPL_RIGID(_Enum, _PS); \
-		return true;
+		break;
 
 	switch (_Pipeline)
 	{
 		case oGFX_PIPELINE_VERTEX_NORMALS:
-			_pDesc->DebugName = "oGFX_PIPELINE_VERTEX_NORMALS";
-			_pDesc->InputType = ouro::gpu::primitive_type::points;
-			oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = VSPassThrough;
-			_pDesc->pGeometryShader = GSVertexNormals;
-			_pDesc->pPixelShader = PSColor;
-			return true;
+			i.debug_name = "oGFX_PIPELINE_VERTEX_NORMALS";
+			i.primitive_type = primitive_type::points;
+			i.vertex_layouts[0] = vertex_layout::pos_nrm_tan_uv0;
+			i.vs = VSPassThrough;
+			i.gs = GSVertexNormals;
+			i.ps = PSColor;
+			break;
 
 		case oGFX_PIPELINE_VERTEX_TANGENTS:
-			_pDesc->DebugName = "oGFX_PIPELINE_VERTEX_TANGENTS";
-			_pDesc->InputType = ouro::gpu::primitive_type::points;
-			oGfxGetVertexElements(oGFX_VE_RIGID, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = VSPassThrough;
-			_pDesc->pGeometryShader = GSVertexTangents;
-			_pDesc->pPixelShader = PSColor;
-			return true;
+			i.debug_name = "oGFX_PIPELINE_VERTEX_TANGENTS";
+			i.primitive_type = primitive_type::points;
+			i.vertex_layouts[0] = vertex_layout::pos_nrm_tan_uv0;
+			i.vs = VSPassThrough;
+			i.gs = GSVertexTangents;
+			i.ps = PSColor;
+			break;
 
 		case oGFX_PIPELINE_LINES:
-			_pDesc->DebugName = "oGFX_PIPELINE_LINES";
-			_pDesc->InputType = ouro::gpu::primitive_type::lines;
-			oGfxGetVertexElements(oGFX_VE_LINE, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = VSLines;
-			_pDesc->pPixelShader = PSColor;
-			return true;
+			i.debug_name = "oGFX_PIPELINE_LINES";
+			i.primitive_type = primitive_type::lines;
+			i.vertex_layouts[0] = vertex_layout::pos_color;
+			i.vs = VSLines;
+			i.ps = PSColor;
+			break;
 
 		case oGFX_PIPELINE_LINE_STRIPS:
-			_pDesc->DebugName = "oGFX_PIPELINE_LINE_STRIPS";
-			_pDesc->InputType = ouro::gpu::primitive_type::line_strips;
-			oGfxGetVertexElements(oGFX_VE_LINE, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = VSLines;
-			_pDesc->pPixelShader = PSColor;
-			return true;
+			i.debug_name = "oGFX_PIPELINE_LINE_STRIPS";
+			i.primitive_type = primitive_type::line_strips;
+			i.vertex_layouts[0] = vertex_layout::pos_color;
+			i.vs = VSLines;
+			i.ps = PSColor;
+			break;
 
 		case oGFX_PIPELINE_PASS_THROUGH:
-			_pDesc->DebugName = "oGFX_PIPELINE_PASS_THROUGH";
-			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = VSPositionPassThrough;
-			_pDesc->pPixelShader = PSWhite;
-			return true;
+			i.debug_name = "oGFX_PIPELINE_PASS_THROUGH";
+			i.primitive_type = primitive_type::triangles;
+			i.vertex_layouts[0] = vertex_layout::pos;
+			i.vs = VSPositionPassThrough;
+			i.ps = PSWhite;
+			break;
 
 		case oGFX_PIPELINE_RIGID_ZPREPASS:
-			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_ZPREPASS";
-			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = VSPosition;
-			return true;
+			i.debug_name = "oGFX_PIPELINE_RIGID_ZPREPASS";
+			i.primitive_type = primitive_type::triangles;
+			i.vertex_layouts[0] = vertex_layout::pos;
+			i.vs = VSPosition;
+			break;
 
 		case oGFX_PIPELINE_RIGID_SHADOW:
-			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_SHADOW";
-			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = VSShadow;
-			_pDesc->pPixelShader = PSShadow;
-			return true;
+			i.debug_name = "oGFX_PIPELINE_RIGID_SHADOW";
+			i.primitive_type = primitive_type::triangles;
+			i.vertex_layouts[0] = vertex_layout::pos;
+			i.vs = VSShadow;
+			i.ps = PSShadow;
+			break;
 
 		case oGFX_PIPELINE_RIGID_WHITE:
-			_pDesc->DebugName = "oGFX_PIPELINE_RIGID_WHITE";
-			_pDesc->InputType = ouro::gpu::primitive_type::triangles;
-			oGfxGetVertexElements(oGFX_VE_POSITION, &_pDesc->pElements, &_pDesc->NumElements);
-			_pDesc->pVertexShader = VSPosition;
-			_pDesc->pPixelShader = PSWhite;
-			return true;
+			i.debug_name = "oGFX_PIPELINE_RIGID_WHITE";
+			i.primitive_type = primitive_type::triangles;
+			i.vertex_layouts[0] = vertex_layout::pos;
+			i.vs = VSPosition;
+			i.ps = PSWhite;
+			break;
 
 		oCASE_RIGID(oGFX_PIPELINE_RIGID_TEXCOORD, PSTexcoord)
 		oCASE_RIGID(oGFX_PIPELINE_RIGID_WSVNORMAL, PSWSVertexNormal)
@@ -144,6 +145,8 @@ bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc)
 		oCASE_RIGID(oGFX_PIPELINE_RIGID_MATERIAL, PSMaterial)
 		oCASE_RIGID(oGFX_PIPELINE_RIGID_HERO, PSHero)
 
-		default: return oErrorSetLast(std::errc::not_supported);
+		default: oTHROW_INVARG0();
 	}
+
+	return i;
 }

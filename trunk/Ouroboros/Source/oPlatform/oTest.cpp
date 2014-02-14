@@ -952,6 +952,14 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 
 	filesystem::remove(path(TempPath));
 
+	// There's a static initialized when the first std::thread is instantiated and it's marked as CRT so it
+	// shows up as a leak. MS says there's a fix coming. Until then, fire up a thread here so that's initialized
+	// before leak tracking occurs.
+	{
+		std::thread t([&] {});
+		t.join();
+	}
+
 	// Initialize iocp before leak tracking flags it as a leak
 	windows::iocp::ensure_initialized();
 

@@ -54,6 +54,10 @@ typedef TVEC2<llong> llong2; typedef TVEC2<ullong> ullong2;
 typedef TVEC3<llong> llong3; typedef TVEC3<ullong> ullong3;
 typedef TVEC4<llong> llong4; typedef TVEC4<ullong> ullong4;
 
+typedef TVEC2<half> half2;
+typedef TVEC3<half> half3;
+typedef TVEC4<half> half4;
+
 template<typename U, typename T> U as_type(const T& _X) { U X = (U)_X; T X2 = T(X); if (X2 != _X) throw std::bad_cast(); return X; }
 template<typename T> char as_char(const T& _X) { return as_type<char>(_X); }
 template<typename T> uchar as_uchar(const T& _X) { return as_type<uchar>(_X); }

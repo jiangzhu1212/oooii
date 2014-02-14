@@ -30,23 +30,23 @@ using namespace ouro::d3d11;
 
 oDEFINE_GPUDEVICE_CREATE(oD3D11, ComputeShader);
 oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, ComputeShader)
-	, DebugName(_Desc.DebugName)
+	, DebugName(_Desc.debug_name)
 {
 	*_pSuccess = false;
-	if (!_Desc.pComputeShader)
+	if (!_Desc.cs)
 	{
 		oErrorSetLast(std::errc::invalid_argument, "A buffer of valid compute shader bytecode must be specified");
 		return;
 	}
 
 	oD3D11DEVICE();
-	oV(D3DDevice->CreateComputeShader(_Desc.pComputeShader, byte_code_size(_Desc.pComputeShader), nullptr, &ComputeShader));
-	debug_name(ComputeShader, _Desc.DebugName);
+	oV(D3DDevice->CreateComputeShader(_Desc.cs, byte_code_size(_Desc.cs), nullptr, &ComputeShader));
+	debug_name(ComputeShader, _Desc.debug_name);
 	*_pSuccess = true;
 }
 
 void oD3D11ComputeShader::GetDesc(DESC* _pDesc) const threadsafe
 {
-	_pDesc->DebugName = DebugName;
-	_pDesc->pComputeShader = nullptr;
+	_pDesc->debug_name = DebugName;
+	_pDesc->cs = nullptr;
 }

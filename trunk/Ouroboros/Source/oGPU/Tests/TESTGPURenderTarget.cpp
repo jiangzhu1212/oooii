@@ -56,25 +56,18 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 			return false;
 
-		oGPUPipeline::DESC PassThroughDesc;
-		if (!oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH, &PassThroughDesc))
+		oGPUPipeline::DESC PassThroughDesc = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH);
+
+		if (!Device->CreatePipeline(PassThroughDesc.debug_name, PassThroughDesc, &PLPassThrough))
 			return false;
 
-		if (!Device->CreatePipeline(PassThroughDesc.DebugName, PassThroughDesc, &PLPassThrough))
+		Triangle = ouro::gpu::make_first_triangle(Device);
+
+		oGPUPipeline::DESC TextureDesc = oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D);
+		if (!Device->CreatePipeline(TextureDesc.debug_name, TextureDesc, &PLTexture))
 			return false;
 
-		if (!oGPUUtilCreateFirstTriangle(Device, PassThroughDesc.pElements, PassThroughDesc.NumElements, &Triangle))
-			return false;
-
-		oGPUPipeline::DESC TextureDesc;
-		if (!oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D, &TextureDesc))
-			return false;
-
-		if (!Device->CreatePipeline(TextureDesc.DebugName, TextureDesc, &PLTexture))
-			return false;
-
-		if (!oGPUUtilCreateFirstCube(Device, TextureDesc.pElements, TextureDesc.NumElements, &Cube))
-			return false;
+		Cube = ouro::gpu::make_first_cube(Device);
 
 		ouro::gpu::clear_info ci;
 		ci.clear_color[0] = DeepSkyBlue;
@@ -122,8 +115,8 @@ private:
 	intrusive_ptr<oGPUPipeline> PLPassThrough;
 	intrusive_ptr<oGPUPipeline> PLTexture;
 	intrusive_ptr<oGPURenderTarget> RenderTarget;
-	intrusive_ptr<oGPUUtilMesh> Cube;
-	intrusive_ptr<oGPUUtilMesh> Triangle;
+	std::shared_ptr<ouro::gpu::util_mesh> Cube;
+	std::shared_ptr<ouro::gpu::util_mesh> Triangle;
 	intrusive_ptr<oGPUBuffer> TestConstants;
 
 	void RenderToTarget(oGPUCommandList* _pCommandList, oGPURenderTarget* _pTarget)
@@ -135,7 +128,7 @@ private:
 		_pCommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
 		_pCommandList->SetPipeline(PLPassThrough);
 		_pCommandList->SetRenderTarget(_pTarget);
-		oGPUUtilMeshDraw(_pCommandList, Triangle);
+		Triangle->draw(_pCommandList);
 		_pCommandList->End();
 	}
 
@@ -152,7 +145,7 @@ private:
 
 		_pCommandList->Begin();
 
-		oGPUCommitBuffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, White));
+		ouro::gpu::commit_buffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
 		_pCommandList->Clear(_pTarget, ouro::gpu::clear_type::color_depth_stencil);
 		_pCommandList->SetBlendState(ouro::gpu::blend_state::opaque);
@@ -164,7 +157,7 @@ private:
 		_pCommandList->SetShaderResources(0, 1, &_pTexture);
 		_pCommandList->SetPipeline(PLTexture);
 		_pCommandList->SetRenderTarget(_pTarget);
-		oGPUUtilMeshDraw(_pCommandList, Cube);
+		Cube->draw(_pCommandList);
 
 		_pCommandList->End();
 	}

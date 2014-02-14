@@ -46,11 +46,6 @@ enum oGPU_TEST_PIPELINE
 	// PS: Color = white
 	oGPU_TEST_TRANSFORMED_WHITE,
 
-	// Vertex: float3 Positions, instanced float3 translation, instanced quatf rotation
-	// VS: ScreenSpacePos = full WVP transformation from instance data
-	// PS: Color = white
-	oGPU_TEST_TRANSFORMED_WHITE_INSTANCED,
-
 	// Vertex: NONE
 	// VS: ScreenSpacePos = full WVP transformation
 	// PS: AppendBuffer
@@ -76,21 +71,9 @@ enum oGPU_TEST_PIPELINE
 	// PS: Color = texture0
 	oGPU_TEST_TEXTURE_CUBE,
 
-	// Vertex: float3 Positions, uint BGRA Color
-	// VS: ScreenSpacePos = full WVP transformation
-	// PS: Color = Vertex Color
-	//oGPU_TEST_COLOR,
-	//oGPU_TEST_PHONG,
-
 	oGPU_TEST_NUM_PIPELINES,
 };
 
-struct oGPU_TEST_INSTANCE
-{
-	float3 Translation;
-	quatf Rotation;
-};
-
-oAPI bool oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline, oGPUPipeline::DESC* _pDesc);
+ouro::gpu::pipeline_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline);
 
 #endif

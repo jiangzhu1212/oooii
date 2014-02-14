@@ -494,7 +494,11 @@ FillMode
 FrontCounterClockWise
 
 errno_t
-oColor
+color
+dec3n
+udec3
+fourcc
+guid
 quatf
 size_t
 thread_cast
@@ -503,6 +507,7 @@ thread_local
 noexcept
 nullptr
 uint128
+uchar
 char2
 char3
 char4

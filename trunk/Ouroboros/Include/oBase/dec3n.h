@@ -22,50 +22,50 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+// A compressed float3+ format that can store a signed normalized value[-1,1].
+// This also can store a 2-bit value for a 4th term. Sometimes this can be 
+// useful such as when storing geometric tangents along with a winding order 
+// value of either -1 or 1.
+#pragma once
+#ifndef oBase_dec3n_h
+#define oBase_dec3n_h
 
-using namespace ouro;
+#include <oBase/byte.h>
+#include <oHLSL/oHLSLTypes.h>
+#include <stdexcept>
 
-static const int sSnapshotFrames[] = { 0 };
-static const bool kIsDevMode = false;
+namespace ouro {
 
-struct GPU_Triangle_App : public oGPUTestApp
+class dec3n
 {
-	GPU_Triangle_App() : oGPUTestApp("GPU_Triangle", kIsDevMode, sSnapshotFrames) {}
+public:
+	dec3n() : n(0) {}
+	dec3n(unsigned int _Dec3n) : n(_Dec3n) {}
+	dec3n(const float3& _That) { operator=(_That); }
+	dec3n(const float4& _That) { operator=(_That); }
 
-	bool Initialize() override
+	const dec3n& operator=(const unsigned int& _That) { n = _That; return *this; }
+	const dec3n& operator=(const float3& _That) { return operator=(float4(_That, 1.0f)); }
+	const dec3n& operator=(const float4& _That)
 	{
-		PrimaryRenderTarget->SetClearColor(AlmostBlack);
-
-		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH);
-
-		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
-			return false;
-
-		Mesh = ouro::gpu::make_first_triangle(Device);
-
-		return true;
+		#ifdef _DEBUG
+			if (_That.x < -1.0f || _That.x > 1.0f) throw std::out_of_range("value must be [-1,1]");
+			if (_That.y < -1.0f || _That.y > 1.0f) throw std::out_of_range("value must be [-1,1]");
+			if (_That.z < -1.0f || _That.z > 1.0f) throw std::out_of_range("value must be [-1,1]");
+			if (_That.w < -1.0f || _That.w > 1.0f) throw std::out_of_range("value must be [-1,1]");
+		#endif
+		n = (f32ton10(sf32touf32(_That.x)) << 22) | (f32ton10(sf32touf32(_That.y)) << 12) | (f32ton10(sf32touf32(_That.z)) << 2) | f32ton2(sf32touf32(_That.w));
+		return *this;
 	}
 
-	bool Render() override
-	{
-		CommandList->Begin();
-		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
-		CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
-		CommandList->SetPipeline(Pipeline);
-		CommandList->SetRenderTarget(PrimaryRenderTarget);
-		Mesh->draw(CommandList);
-		CommandList->End();
-		return true;
-	}
+	operator unsigned int() const { return n; }
+	operator float3() const { return float3(uf32tosf32(n10tof32(n>>22)), uf32tosf32(n10tof32((n>>12)&0x3ff)), uf32tosf32(n10tof32((n>>2)&0x3ff))); }
+	operator float4() const { float3 v = (float3)*this; return float4(v, uf32tosf32(n2tof32(n&0x3))); }
 
 private:
-	intrusive_ptr<oGPUPipeline> Pipeline;
-	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
+	unsigned int n;
 };
 
-oDEFINE_GPU_TEST(GPU_Triangle)
+} // namespace ouro
+
+#endif

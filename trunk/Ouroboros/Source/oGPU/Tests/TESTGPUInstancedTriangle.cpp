@@ -46,31 +46,22 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 			return false;
 
-		oGPUPipeline::DESC pld;
-		if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE_INSTANCED, &pld))
-			return false;
+		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE);
 
 		gpu::buffer_info i;
-		i.type = gpu::buffer_type::vertex;
+		i.type = gpu::buffer_type::constant;
 		i.array_size = 2;
-		i.struct_byte_size = static_cast<ushort>(oGPUCalcVertexSize(pld.pElements, pld.NumElements, 1));
+		i.struct_byte_size = sizeof(oGPU_TEST_INSTANCE);
 
-		if (!Device->CreateBuffer("InstanceList", i, &InstanceList))
+		if (!Device->CreateBuffer("Instances", i, &InstanceList))
 			return false;
 
-		if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
+		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
 			return false;
 
-		// Create geometry off the non-instanced version, i.e. the one without
-		// the instanced channel.
+		pld = oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE);
 
-		// @tony: Maybe there should be a util that can recognize and skip
-		// instanced elements?
-		if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE, &pld))
-			return false;
-
-		if (!oGPUUtilCreateFirstTriangle(Device, pld.pElements, pld.NumElements, &Mesh))
-			return false;
+		Mesh = ouro::gpu::make_first_triangle(Device);
 
 		return true;
 	}
@@ -100,18 +91,20 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 
 		CommandList->Begin();
 
-		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(oIDENTITY4x4, V, P, White));
+		ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(oIDENTITY4x4, V, P, White));
 
 		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
 		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
 		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::test_and_write);
 		CommandList->SetSurfaceState(ouro::gpu::surface_state::two_sided);
-		CommandList->SetBuffers(0, 1, &TestConstants);
+		
+		const oGPUBuffer* CBs[2] = { TestConstants.c_ptr(), InstanceList.c_ptr() };
+		
+		CommandList->SetBuffers(0, CBs);
 		CommandList->SetPipeline(Pipeline);
 		CommandList->SetRenderTarget(PrimaryRenderTarget);
 		
-		const oGPUBuffer* pBuffers[2] = { Mesh->GetVertexBuffer(), InstanceList };
-		CommandList->Draw(Mesh->GetIndexBuffer(), 0, 2, pBuffers, 0, 1, 0, 2);
+		Mesh->draw(CommandList);
 
 		CommandList->End();
 		return true;
@@ -120,7 +113,7 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 private:
 	intrusive_ptr<oGPUPipeline> Pipeline;
 	intrusive_ptr<oGPUBuffer> InstanceList;
-	intrusive_ptr<oGPUUtilMesh> Mesh;
+	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
 	intrusive_ptr<oGPUBuffer> TestConstants;
 };
 

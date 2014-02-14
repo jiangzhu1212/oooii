@@ -129,6 +129,9 @@
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
+    <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h" />
+    <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h" />
+    <ClInclude Include="d3d11_layout.h" />
     <ClInclude Include="d3d11_util.h" />
     <ClInclude Include="d3dx11_util.h" />
     <ClInclude Include="dxgi_util.h" />
@@ -144,6 +147,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="d3d11_layout.cpp" />
     <ClCompile Include="d3d11_util.cpp" />
     <ClCompile Include="d3dx11_util.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
@@ -157,6 +161,7 @@
     <ClCompile Include="oD3D11RenderTarget.cpp" />
     <ClCompile Include="oD3D11Texture.cpp" />
     <ClCompile Include="oGPUUtil.cpp" />
+    <ClCompile Include="oGPUUtilMesh.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

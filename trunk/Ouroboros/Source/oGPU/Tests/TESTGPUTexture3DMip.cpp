@@ -46,9 +46,7 @@ struct GPU_Texture3DMip_App : public oGPUTextureTestApp
 		images[1] = green.get();
 		images[2] = blue.get();
 
-		if (!oGPUCreateTexture(Device, images, oCOUNTOF(images), ouro::gpu::texture_type::mipped_3d, &Texture))
-			return false;
-
+		Texture = ouro::gpu::make_texture(Device, "Test 3D mipped", images, oCOUNTOF(images), ouro::gpu::texture_type::mipped_3d);
 		return true;
 	}
 };

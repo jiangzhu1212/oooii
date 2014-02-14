@@ -61,8 +61,16 @@ struct oGPUTestConstants
 	oRGBAf Color;
 };
 
+struct oGPU_TEST_INSTANCE
+{
+	float3 Translation;
+	quatf Rotation;
+	float PadA;
+};
+
 #ifdef oHLSL
 cbuffer cbuffer_oGPUTestConstants : register(b0) { oGPUTestConstants GPUTestConstants; }
+cbuffer cbuffer_oGPUTestInstances : register(b1) { oGPU_TEST_INSTANCE GPUTestInstances[2]; }
 
 // LS: Local Space
 // WS: World Space
@@ -71,30 +79,19 @@ cbuffer cbuffer_oGPUTestConstants : register(b0) { oGPUTestConstants GPUTestCons
 
 struct VSIN
 {
-	float3 LSPosition : POS0;
-	float3 LSNormal : NML0;
-	float2 Texcoord : TEX0;
-};
-
-struct VSININSTANCED
-{
-	// Per-vertex
-	float3 LSPosition : POS0;
-
-	// Per-instance
-	float3 Translation : TX;
-	float4 Rotation : ROT;
-	uint InstanceID : SV_InstanceID;
+	float3 LSPosition : POSITION;
+	float3 LSNormal : NORMAL;
+	float2 Texcoord : TEXCOORD;
 };
 
 struct VSOUT
 {
 	float4 SSPosition : SV_Position;
-	float3 WSPosition : POS0;
-	float3 LSPosition : POS1;
-	float3 WSNormal : NML0;
-	float3 Texcoord : TEX0;
-	float4 Color : CLR0;
+	float3 WSPosition : POSITION;
+	float3 LSPosition : POSITION1;
+	float3 WSNormal : NORMAL;
+	float3 Texcoord : TEXCOORD;
+	float4 Color : COLOR;
 };
 
 struct PSOUT
@@ -140,12 +137,13 @@ VSOUT CommonVS(float3 _LSPosition, float3 _Texcoord)
 	return Out;
 }
 
-VSOUT CommonVS(VSININSTANCED In)
+VSOUT CommonVS(float3 _LSPosition, uint _InstanceIndex)
 {
 	VSOUT Out = (VSOUT)0;
-	Out.WSPosition = qmul(In.Rotation, In.LSPosition) + In.Translation;
+	oGPU_TEST_INSTANCE Inst = GPUTestInstances[_InstanceIndex];
+	Out.WSPosition = qmul(Inst.Rotation, _LSPosition) + Inst.Translation;
 	Out.SSPosition = oGPUTestLStoSS(Out.WSPosition);
-	Out.LSPosition = In.LSPosition;
+	Out.LSPosition = _LSPosition;
 	Out.Color = GPUTestConstants.Color;
 	return Out;
 }

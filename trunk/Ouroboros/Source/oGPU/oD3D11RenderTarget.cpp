@@ -165,7 +165,7 @@ void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
 
 		gpu::texture_info d;
 		d.dimensions = ushort3(_Dimensions, 1);
-		d.array_size = 1;
+		d.array_size = 0;
 		d.format = Desc.depth_stencil_format;
 		d.type = gpu::texture_type::render_target_2d;
 		new_texture New = make_texture(D3DDevice, name, d, nullptr);
@@ -212,7 +212,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 				Textures[0] = intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
 				oVERIFY(textureSuccess);
 				make_rtv(GetName(), SwapChainTexture, RTVs[0]);
-				Desc.array_size = 1;
+				Desc.array_size = 0;
 				Desc.mrt_count = 1;
 				Desc.type = gpu::texture_type::render_target_2d;
 			}

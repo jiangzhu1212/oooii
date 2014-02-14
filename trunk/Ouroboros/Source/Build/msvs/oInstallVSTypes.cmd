@@ -13,7 +13,7 @@ if exist "%VS100COMNTOOLS%..\IDE" (
 )
 
 if exist "%VS110COMNTOOLS%..\IDE" (
-	echo Found VS100COMNTOOLS, installing usertype.dat...
+	echo Found VS110COMNTOOLS, installing usertype.dat...
 	copy /Y .\usertype.dat "%VS110COMNTOOLS%..\IDE\usertype.dat"
 )
 

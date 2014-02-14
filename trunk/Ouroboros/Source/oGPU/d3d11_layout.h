@@ -22,50 +22,27 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+// Simplify the complex state definition of D3D to be accessed by gpu enums.
+#pragma once
+#ifndef oGPU_d3d11_layout_h
+#define oGPU_d3d11_layout_h
 
-using namespace ouro;
+#include <oBasis/oGPUConcepts.h>
+#include <d3d11.h>
 
-static const int sSnapshotFrames[] = { 0 };
-static const bool kIsDevMode = false;
+namespace ouro {
+	namespace d3d11 {
 
-struct GPU_Triangle_App : public oGPUTestApp
-{
-	GPU_Triangle_App() : oGPUTestApp("GPU_Triangle", kIsDevMode, sSnapshotFrames) {}
+const char* get_semantic(gpu::vertex_semantic::value& _Semantic);
 
-	bool Initialize() override
-	{
-		PrimaryRenderTarget->SetClearColor(AlmostBlack);
+// ouro::gpu assumes vertex buffers will be created by usage, so a single mesh might have 
+// several vertex buffers. When this is set up D3D requires one input layout to describe
+// it all, so here create an ID3D11InputLayout based on the vertex layouts of each usage
+// type and the byte code for the vertex shader that will use it.
+intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice
+	, const void* _pVertexShaderByteCode, const gpu::vertex_layout_array& _VertexLayouts);
 
-		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH);
+	} // namespace d3d11
+} // namespace ouro
 
-		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
-			return false;
-
-		Mesh = ouro::gpu::make_first_triangle(Device);
-
-		return true;
-	}
-
-	bool Render() override
-	{
-		CommandList->Begin();
-		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
-		CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
-		CommandList->SetPipeline(Pipeline);
-		CommandList->SetRenderTarget(PrimaryRenderTarget);
-		Mesh->draw(CommandList);
-		CommandList->End();
-		return true;
-	}
-
-private:
-	intrusive_ptr<oGPUPipeline> Pipeline;
-	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
-};
-
-oDEFINE_GPU_TEST(GPU_Triangle)
+#endif

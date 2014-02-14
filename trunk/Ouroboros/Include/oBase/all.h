@@ -39,6 +39,7 @@
 #include <oBase/concurrent_object_pool.h>
 #include <oBase/countdown_latch.h>
 #include <oBase/date.h>
+#include <oBase/dec3n.h>
 #include <oBase/djb2.h>
 #include <oBase/endian.h>
 #include <oBase/equal.h>
@@ -79,6 +80,7 @@
 #include <oBase/type_id.h>
 #include <oBase/type_info.h>
 #include <oBase/types.h>
+#include <oBase/udec3.h>
 #include <oBase/uint128.h>
 #include <oBase/unordered_map.h>
 #include <oBase/uri.h>

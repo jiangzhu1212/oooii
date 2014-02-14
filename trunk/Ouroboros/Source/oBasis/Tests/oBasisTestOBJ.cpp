@@ -41,9 +41,7 @@ public:
 		_pDesc->pTexcoords = sTexcoords;
 		_pDesc->pIndices = sIndices;
 		_pDesc->pGroups = sGroups;
-		_pDesc->pVertexElements = sVertexElements;
-
-		_pDesc->NumVertexElements = oCOUNTOF(sVertexElements);
+		_pDesc->VertexLayout = ouro::gpu::vertex_layout::pos_nrm_tan_uv0;
 		_pDesc->NumVertices = oCOUNTOF(sPositions);
 		_pDesc->NumIndices = oCOUNTOF(sIndices);
 		_pDesc->NumGroups = oCOUNTOF(sGroups);
@@ -112,7 +110,6 @@ private:
 	static const uint sIndices[36];
 	static const char* sGroupNames[6];
 	static oOBJ_GROUP sGroups[6];
-	static const oGPU_VERTEX_ELEMENT sVertexElements[3];
 	static bool InitGroupsDone;
 	static void InitGroups()
 	{
@@ -236,13 +233,6 @@ const char* oBasisTestOBJ_Cube::sGroupNames[6] =
 
 bool oBasisTestOBJ_Cube::InitGroupsDone = false;
 oOBJ_GROUP oBasisTestOBJ_Cube::sGroups[6];
-
-const oGPU_VERTEX_ELEMENT oBasisTestOBJ_Cube::sVertexElements[3] =
-{
-	{ 'POS0', ouro::surface::r32g32b32a32_float, 0, false },
-	{ 'TEX0', ouro::surface::r32g32b32a32_float, 1, false },
-	{ 'NRM0', ouro::surface::r32g32b32a32_float, 2, false },
-};
 
 bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ)
 {

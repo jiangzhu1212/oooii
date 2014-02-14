@@ -171,7 +171,7 @@ bool oD3D11CommandList::QueryInterface(const oGUID& _InterfaceID, threadsafe voi
 	return !!*_ppInterface;
 }
 
-static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const int2& _TargetDimensions, int _NumViewports, const oAABoxf* _pViewports)
+static void SetViewports(ID3D11DeviceContext* _pDeviceContext, const int2& _TargetDimensions, int _NumViewports, const boundf* _pViewports)
 {
 	D3D11_VIEWPORT Viewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
 	if (_NumViewports && _pViewports)
@@ -287,7 +287,7 @@ void oD3D11CommandList::SetCounters(int _NumUnorderedResources, oGPUResource** _
 	Context->Dispatch(1, 1, 1);
 }
 
-void oD3D11CommandList::SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts)
+void oD3D11CommandList::SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const boundf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts)
 {
 	oASSERT(!_SetForDispatch || !_pRenderTarget, "If _SetForDispatch is true, then _pRenderTarget must be nullptr");
 

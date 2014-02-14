@@ -22,50 +22,109 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+// structs that are described by vertex_layout. This header compiles in C++ and HLSL
+#ifndef oHLSL
+	#pragma once
+#endif
+#ifndef oGPU_vertex_layouts_h
+#define oGPU_vertex_layouts_h
 
-using namespace ouro;
+#ifdef oHLSL
+#define oVL_POSITION float3 position : POSITION
+#define oVL_NORMAL float3 normal : NORMAL
+#define oVL_TANGENT float4 tangent : TANGENT
+#define oVL_TEXCOORD20 float2 texcoord : TEXCOORD0
+#define oVL_TEXCOORD40 float4 texcoord : TEXCOORD0
+#define oVL_COLOR float4 color : COLOR
+#else
 
-static const int sSnapshotFrames[] = { 0 };
-static const bool kIsDevMode = false;
+#include <oHLSL/oHLSLTypes.h>
+#include <oBase/color.h>
+#include <oBase/dec3n.h>
 
-struct GPU_Triangle_App : public oGPUTestApp
+#define oVL_POSITION float3 position
+#define oVL_NORMAL dec3n normal
+#define oVL_TANGENT dec3n tangent
+#define oVL_TEXCOORD20 float2 texcoord
+#define oVL_TEXCOORD40 float4 texcoord
+#define oVL_COLOR color color
+
+namespace ouro {
+	namespace gpu {
+#endif
+
+struct vertex_pos
 {
-	GPU_Triangle_App() : oGPUTestApp("GPU_Triangle", kIsDevMode, sSnapshotFrames) {}
-
-	bool Initialize() override
-	{
-		PrimaryRenderTarget->SetClearColor(AlmostBlack);
-
-		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH);
-
-		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
-			return false;
-
-		Mesh = ouro::gpu::make_first_triangle(Device);
-
-		return true;
-	}
-
-	bool Render() override
-	{
-		CommandList->Begin();
-		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
-		CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
-		CommandList->SetPipeline(Pipeline);
-		CommandList->SetRenderTarget(PrimaryRenderTarget);
-		Mesh->draw(CommandList);
-		CommandList->End();
-		return true;
-	}
-
-private:
-	intrusive_ptr<oGPUPipeline> Pipeline;
-	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
+	oVL_POSITION;
 };
 
-oDEFINE_GPU_TEST(GPU_Triangle)
+struct vertex_pos_color
+{
+	oVL_POSITION;
+	oVL_COLOR;
+};
+
+struct vertex_pos_nrm
+{
+	oVL_POSITION;
+	oVL_NORMAL;
+};
+
+struct vertex_pos_nrm_tan
+{
+	oVL_POSITION;
+	oVL_NORMAL;
+	oVL_TANGENT;
+};
+
+struct vertex_pos_nrm_tan_uv0
+{
+	oVL_POSITION;
+	oVL_NORMAL;
+	oVL_TANGENT;
+	oVL_TEXCOORD20;
+};
+
+struct vertex_pos_nrm_tan_uvwx0
+{
+	oVL_POSITION;
+	oVL_NORMAL;
+	oVL_TANGENT;
+	oVL_TEXCOORD40;
+};
+
+struct vertex_pos_nrm_tan_uv0_color
+{
+	oVL_POSITION;
+	oVL_NORMAL;
+	oVL_TANGENT;
+	oVL_TEXCOORD20;
+	oVL_COLOR;
+};
+
+struct vertex_pos_nrm_tan_uvwx0_color
+{
+	oVL_POSITION;
+	oVL_NORMAL;
+	oVL_TANGENT;
+	oVL_TEXCOORD40;
+	oVL_COLOR;
+};
+
+struct vertex_pos_uv0
+{
+	oVL_POSITION;
+	oVL_TEXCOORD20;
+};
+
+struct vertex_pos_uvwx0
+{
+	oVL_POSITION;
+	oVL_TEXCOORD40;
+};
+
+#ifndef oHLSL
+	} // namespace gpu
+} // namespace ouro
+#endif
+#endif
