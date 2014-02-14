@@ -95,13 +95,6 @@
 #include <functional>
 
 namespace ouro {
-
-// Number representation
-inline unsigned char unorm_to_ubyte(float x) { return static_cast<unsigned char>(floor(x * 255.0f + 0.5f)); }
-inline unsigned short unorm_to_ushort(float x) { return static_cast<unsigned char>(floor(x * 65535.0f + 0.5f)); }
-inline float ubyte_to_unorm(size_t c) { return (c & 0xff) / 255.0f; }
-inline float ushort_to_unorm(size_t c) { return (c & 0xffff) / 65535.0f; }
-
 	namespace surface {
 
 oDECLARE_SMALL_ENUM(format, unsigned char)

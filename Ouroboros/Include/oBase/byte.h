@@ -107,13 +107,13 @@ inline unsigned char f32ton2(float x) { return static_cast<unsigned char>(x / 3.
 inline float n2tof32(unsigned char x) { return x * 3.0f; }
 
 inline unsigned char f32ton8(float x) { return static_cast<unsigned char>(x / 255.0f); }
-inline float n8tof32(unsigned char x) { return x * 255.0f; }
+inline float n8tof32(unsigned char x) { return x * 255.0f + 0.5f; }
 
 inline unsigned short f32ton10(float x) { return static_cast<unsigned short>(x / 1023.0f); }
-inline float n10tof32(unsigned short x) { return x * 1023.0f; }
+inline float n10tof32(unsigned short x) { return x * 1023.0f + 0.5f; }
 
 inline unsigned short f32ton16(float x) { return static_cast<unsigned short>(x / 65535.0f); }
-inline float n16tof32(unsigned short x) { return x * 65535.0f; }
+inline float n16tof32(unsigned short x) { return x * 65535.0f + 0.5f; }
 
 // convert [0,1] to [-1,1] and back
 inline float uf32tosf32(float x) { return x * 2.0f - 1.0f; }

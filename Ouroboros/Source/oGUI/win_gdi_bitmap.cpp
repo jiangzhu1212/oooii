@@ -84,14 +84,14 @@ void fill_monochrone_palette(RGBQUAD* _pColors, color _Color0, color _Color1)
 	float4 c1;
 	_Color1.decompose(&c1.x, &c1.y, &c1.z, &c1.w);
 
-	for (size_t i = 0; i < 256; i++)
+	for (unsigned char i = 0; i < 256; i++)
 	{
-		float4 c = ::lerp(c0, c1, ubyte_to_unorm(i));
+		float4 c = ::lerp(c0, c1, n8tof32(i));
 		RGBQUAD& q = _pColors[i];
-		q.rgbRed = unorm_to_ubyte(c.x);
-		q.rgbGreen = unorm_to_ubyte(c.y);
-		q.rgbBlue = unorm_to_ubyte(c.z);
-		q.rgbReserved = unorm_to_ubyte(c.w);
+		q.rgbRed = f32ton8(c.x);
+		q.rgbGreen = f32ton8(c.y);
+		q.rgbBlue = f32ton8(c.z);
+		q.rgbReserved = f32ton8(c.w);
 	}
 }
 

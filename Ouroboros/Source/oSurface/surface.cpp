@@ -1220,7 +1220,7 @@ static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const 
 	p = (const unsigned char*)_pPixel2;
 	b = *p++; g = *p++; r = *p++;
 	float L2 = color(r, g, b, 255).luminance();
-	unsigned char absDiff = unorm_to_ubyte(abs(L1 - L2));
+	unsigned char absDiff = f32ton8(abs(L1 - L2));
 	*(unsigned char*)_pPixelOut = absDiff;
 	_pAccum->fetch_add(unsigned int(absDiff * absDiff));
 }
@@ -1233,7 +1233,7 @@ static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, cons
 	p = (const unsigned char*)_pPixel2;
 	b = *p++; g = *p++; r = *p++; a = *p++; 
 	float L2 = color(r, g, b, a).luminance();
-	unsigned char absDiff = unorm_to_ubyte(abs(L1 - L2));
+	unsigned char absDiff = f32ton8(abs(L1 - L2));
 	*(unsigned char*)_pPixelOut = absDiff;
 	_pAccum->fetch_add(unsigned int(absDiff * absDiff));
 }
@@ -1305,7 +1305,7 @@ static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, atomic<unsigned i
 {
 	const unsigned char* p = (const unsigned char*)_pPixel;
 	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
-	unsigned char Index = unorm_to_ubyte(color(r, g, b, 255).luminance());
+	unsigned char Index = f32ton8(color(r, g, b, 255).luminance());
 	_Histogram[Index]++;
 }
 
