@@ -71,7 +71,7 @@ inline const void* memmem(const void* _pBuffer, size_t _SizeofBuffer, const void
 // unsigned shorts.
 void memcpyuitous(unsigned short* _pDestination, const unsigned int* _pSource, size_t _NumElements);
 
-// Reverse of oMemcpyToUshort. Remember, _NumElements is count of unsigned shorts
+// Reverse of memcpyuitous. Remember, _NumElements is count of unsigned shorts
 // in _pSource and _pDestination has been pre-allocated to take at least the
 // same number of unsigned ints.
 void memcpyustoui(unsigned int* _pDestination, const unsigned short* _pSource, size_t _NumElements);

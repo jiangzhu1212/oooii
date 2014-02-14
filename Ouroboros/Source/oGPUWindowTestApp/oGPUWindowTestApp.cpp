@@ -41,6 +41,7 @@
 
 #include <oGPU/oGPU.h>
 #include <oGPU/oGPUUtil.h>
+#include <oGPU/oGPUUtilMesh.h>
 
 using namespace ouro;
 using namespace ouro::windows::gdi;
@@ -144,7 +145,7 @@ private:
 	intrusive_ptr<oGPUCommandList> CommandList;
 	intrusive_ptr<oGPURenderTarget> WindowRenderTarget;
 	intrusive_ptr<oGPUPipeline> Pipeline;
-	intrusive_ptr<oGPUUtilMesh> Mesh;
+	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
 
 	window* pGPUWindow;
 	std::thread Thread;
@@ -158,17 +159,18 @@ oGPUWindowThread::oGPUWindowThread()
 	: pGPUWindow(nullptr)
 	, Running(true)
 {
-	if (!oGPUDeviceCreate(ouro::gpu::device_init(), &Device))
+	ouro::gpu::device_init di;
+	di.driver_debug_level = gpu::debug_level::normal;
+	if (!oGPUDeviceCreate(di, &Device))
 	{
 		oASSERT(false, "Could not create device:\n%s", oErrorGetLastString());
 		Running = false;
 		return;
 	}
 
-	oGPUPipeline::DESC pld;
-	oVERIFY(oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH, &pld));
-	oVERIFY(Device->CreatePipeline(pld.DebugName, pld, &Pipeline));
-	oVERIFY(oGPUUtilCreateFirstTriangle(Device, pld.pElements, pld.NumElements, &Mesh));
+	oGPUPipeline::DESC pld = oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH);
+	oVERIFY(Device->CreatePipeline(pld.debug_name, pld, &Pipeline));
+	Mesh = gpu::make_first_triangle(Device);
 
 	Device->GetImmediateCommandList(&CommandList);
 }
@@ -282,7 +284,7 @@ void oGPUWindowThread::Render()
 		CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
 		CommandList->SetPipeline(Pipeline);
 
-		oGPUUtilMeshDraw(CommandList, Mesh);
+		Mesh->draw(CommandList);
 		CommandList->End();
 		Device->EndFrame();
 		Device->Present(1);

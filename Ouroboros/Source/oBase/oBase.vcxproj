@@ -141,6 +141,7 @@
     <ClInclude Include="..\..\Include\oBase\countdown_latch.h" />
     <ClInclude Include="..\..\Include\oBase\csv.h" />
     <ClInclude Include="..\..\Include\oBase\date.h" />
+    <ClInclude Include="..\..\Include\oBase\dec3n.h" />
     <ClInclude Include="..\..\Include\oBase\djb2.h" />
     <ClInclude Include="..\..\Include\oBase\endian.h" />
     <ClInclude Include="..\..\Include\oBase\equal.h" />
@@ -187,6 +188,7 @@
     <ClInclude Include="..\..\Include\oBase\types.h" />
     <ClInclude Include="..\..\Include\oBase\type_id.h" />
     <ClInclude Include="..\..\Include\oBase\type_info.h" />
+    <ClInclude Include="..\..\Include\oBase\udec3.h" />
     <ClInclude Include="..\..\Include\oBase\uint128.h" />
     <ClInclude Include="..\..\Include\oBase\unordered_map.h" />
     <ClInclude Include="..\..\Include\oBase\uri.h" />

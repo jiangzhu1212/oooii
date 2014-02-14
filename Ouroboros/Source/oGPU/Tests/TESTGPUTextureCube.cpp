@@ -52,9 +52,7 @@ struct GPU_TextureCube_App : public oGPUTextureTestApp
 		images[4] = _4.get();
 		images[5] = _5.get();
 
-		if (!oGPUCreateTexture(Device, images, oCOUNTOF(images), ouro::gpu::texture_type::default_cube, &Texture))
-			return false;
-
+		Texture = ouro::gpu::make_texture(Device, "Test cube", images, oCOUNTOF(images), ouro::gpu::texture_type::default_cube);
 		return true;
 	}
 

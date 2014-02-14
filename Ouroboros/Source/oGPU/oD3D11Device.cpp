@@ -94,7 +94,7 @@ oD3D11Device::oD3D11Device(ID3D11Device* _pDevice, const oGPUDevice::INIT& _Init
 {
 	*_pSuccess = false;
 
-	Desc = get_info(_pDevice, IsSoftwareEmulation);
+	Desc = ouro::d3d11::get_info(_pDevice, IsSoftwareEmulation);
 
 	HeapAllocations.reserve(500);
 
@@ -420,7 +420,7 @@ void oD3D11Device::MEMCommit(ID3D11DeviceContext* _pDeviceContext, oGPUResource*
 		uint StructureByteStride = 1;
 		if (type == ouro::gpu::resource_type::buffer)
 		{
-			gpu::buffer_info i = get_info(static_cast<ID3D11Buffer*>(pD3DResource));
+			gpu::buffer_info i = ouro::d3d11::get_info(static_cast<ID3D11Buffer*>(pD3DResource));
 			StructureByteStride = __max(1, i.struct_byte_size);
 			oASSERT(_Subregion.top == 0 && _Subregion.bottom == 1, "Buffer subregion must have top == 0 and bottom == 1");
 		}
@@ -489,7 +489,10 @@ bool oD3D11Device::MapRead(oGPUResource* _pReadbackResource, int _Subresource, o
 	ID3D11Resource* r = oD3D11GetSubresource(_pReadbackResource, _Subresource, &D3DSubresourceIndex);
 
 	D3D11_MAPPED_SUBRESOURCE msr;
-	oV(ImmediateContext->Map(r, D3DSubresourceIndex, D3D11_MAP_READ, _bBlocking ? 0 : D3D11_MAP_FLAG_DO_NOT_WAIT, &msr));
+	if (FAILED(ImmediateContext->Map(r, D3DSubresourceIndex, D3D11_MAP_READ, _bBlocking ? 0 : D3D11_MAP_FLAG_DO_NOT_WAIT, &msr)))
+		return false;
+	if (!msr.pData)
+		oTHROW0(no_buffer_space);
 	_pMappedSubresource->data = msr.pData;
 	_pMappedSubresource->row_pitch = msr.RowPitch;
 	_pMappedSubresource->depth_pitch = msr.DepthPitch;

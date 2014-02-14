@@ -33,7 +33,7 @@ oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, Buffer)
 	oD3D11DEVICE();
 	ID3D11UnorderedAccessView** ppUAV = _Desc.type == ouro::gpu::buffer_type::unordered_structured_append ? &UAVAppend : &UAV;
 	Buffer = make_buffer(D3DDevice, _Name, _Desc, nullptr, ppUAV, &SRV);
-	Desc = get_info(Buffer);
+	Desc = ouro::d3d11::get_info(Buffer);
 	if (_Desc.type == ouro::gpu::buffer_type::unordered_structured_append)
 		UAV = make_unflagged_copy(*ppUAV);
 	*_pSuccess = true;

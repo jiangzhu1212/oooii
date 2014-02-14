@@ -146,7 +146,7 @@ std::shared_ptr<buffer> buffer::make(const buffer* const* _ppSourceBuffers, size
 		for (int i = 0; i < nSlices; i++)
 		{
 			int DstSubresource = calc_subresource(0, i, 0, nMips, nSlices);
-			int SrcSubresource = calc_subresource(0, i, 0, 0, nSlices);
+			int SrcSubresource = calc_subresource(0, 0, 0, nMips, 0);
 			NewBuffer->copy_from(DstSubresource, _ppSourceBuffers[i], SrcSubresource);
 		}
 	}

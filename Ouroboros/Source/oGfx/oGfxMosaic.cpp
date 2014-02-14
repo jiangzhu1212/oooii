@@ -27,18 +27,19 @@
 #include <oBase/finally.h>
 
 using namespace ouro;
+using namespace ouro::gpu;
 
 struct oGfxMosaicImpl : oGfxMosaic
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_NOOP_QUERYINTERFACE();
 
-	oGfxMosaicImpl(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _pPipelineDesc, bool* _pSuccess);
+	oGfxMosaicImpl(oGPUDevice* _pDevice, const pipeline_info& _pPipelineDesc, bool* _pSuccess);
 
 	bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays) override;
 	void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures) override;
 
-	void SetBlendState(ouro::gpu::blend_state::value _BlendState) override { BlendState = _BlendState; }
+	void SetBlendState(blend_state::value _BlendState) override { BlendState = _BlendState; }
 
 private:
 	intrusive_ptr<oGPUDevice> Device;
@@ -46,14 +47,14 @@ private:
 	intrusive_ptr<oGPUBuffer> Indices;
 	intrusive_ptr<oGPUBuffer> Vertices[2];
 	uint NumPrimitives;
-	ouro::gpu::blend_state::value BlendState;
+	blend_state::value BlendState;
 	oRefCount RefCount;
 };
 
-oGfxMosaicImpl::oGfxMosaicImpl(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _PipelineDesc, bool* _pSuccess)
+oGfxMosaicImpl::oGfxMosaicImpl(oGPUDevice* _pDevice, const pipeline_info& _PipelineDesc, bool* _pSuccess)
 	: Device(_pDevice)
 	, NumPrimitives(0)
-	, BlendState(ouro::gpu::blend_state::opaque)
+	, BlendState(blend_state::opaque)
 {
 	*_pSuccess = false;
 
@@ -63,11 +64,12 @@ oGfxMosaicImpl::oGfxMosaicImpl(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _
 	*_pSuccess = true;
 }
 
-bool oGfxMosaicCreate(oGPUDevice* _pDevice, const oGPU_PIPELINE_DESC& _PipelineDesc, oGfxMosaic** _ppMosaic)
+intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(oGPUDevice* _pDevice, const pipeline_info& _Info)
 {
+	intrusive_ptr<oGfxMosaic> m;
 	bool success = false;
-	oCONSTRUCT(_ppMosaic, oGfxMosaicImpl(_pDevice, _PipelineDesc, &success));
-	return success;
+	oCONSTRUCT(&m, oGfxMosaicImpl(_pDevice, _Info, &success));
+	return success ? m : nullptr;
 }
 
 bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays)
@@ -98,22 +100,11 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	MSRGeo.data = GeoMapped.pIndices;
 	MSRGeo.row_pitch = sizeof(uint);
 	MSRGeo.depth_pitch = MSRGeo.row_pitch * GeoDesc.NumIndices;
+	Indices = make_index_buffer(Device, "MosaicIB", GeoDesc.NumIndices, GeoDesc.NumVertices, MSRGeo);
 
-	if (!oGPUCreateIndexBuffer(Device, "MosaicIB", GeoDesc.NumIndices, GeoDesc.NumVertices, MSRGeo, &Indices))
-		return false; // pass through error
+	pipeline_info pi = Pipeline->get_info();
 
-	oGPU_PIPELINE_DESC pd;
-	Pipeline->GetDesc(&pd);
-
-	if (!oGPUCreateVertexBuffer(Device
-		, "MosaicVB"
-		, GeoDesc.NumVertices
-		, GeoDesc
-		, GeoMapped
-		, pd.NumElements
-		, pd.pElements
-		, 0, &Vertices[0]))
-		return false; // pass through error
+	Vertices[0] = make_vertex_buffer(Device, "MosaicVB", GeoDesc.Layout.AsVertexLayout(), GeoDesc, GeoMapped);
 
 	NumPrimitives = GeoDesc.NumPrimitives;
 
@@ -149,8 +140,9 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 				return false; // pass through error
 		}
 
-		if (!oGPUCreateVertexBuffer(Device
-			, "MosaicExVB"
+		// @tony: what was this for? when uv1's are supported add this back?
+#if 0
+		Vertices[1] = make_vertex_buffer(Device, "MosaicExVB", 
 			, GeoDesc.NumVertices
 			, [&](const oGPU_VERTEX_ELEMENT& _Element, ouro::surface::const_mapped_subresource* _pElementData)
 				{
@@ -184,19 +176,20 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 			, pd.pElements
 			, 1, &Vertices[1]))
 			return false; // pass through error
+#endif
 	}
 	return true;
 }
 
 void oGfxMosaicImpl::Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures)
 {
-	std::array<ouro::gpu::sampler_type::value, ouro::gpu::max_num_samplers> samplers;
-	samplers.fill(ouro::gpu::sampler_type::linear_clamp);
+	std::array<sampler_type::value, max_num_samplers> samplers;
+	samplers.fill(sampler_type::linear_clamp);
 	if (_pRenderTarget)
 		_pCommandList->SetRenderTarget(_pRenderTarget);
 	_pCommandList->SetBlendState(BlendState);
-	_pCommandList->SetSurfaceState(ouro::gpu::surface_state::two_sided);
-	_pCommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
+	_pCommandList->SetSurfaceState(surface_state::two_sided);
+	_pCommandList->SetDepthStencilState(depth_stencil_state::none);
 	_pCommandList->SetSamplers(0, as_uint(samplers.size()), samplers.data());
 	_pCommandList->SetShaderResources(_TextureStartSlot, _NumTextures, _ppTextures);
 	_pCommandList->SetPipeline(Pipeline);

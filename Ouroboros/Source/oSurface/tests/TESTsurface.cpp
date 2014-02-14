@@ -37,7 +37,7 @@ static void TESTsurface_row_pitch(int _Depth, int _ArraySize)
 	inf.array_size = _ArraySize;
 	inf.format = surface::r8g8b8a8_unorm;
 
-	int RowPitches[10] = { 0x800, 0x400, 0x200, 0x100, 0x80, 0x40, 0x20, 0x10, 0x8, 0x4 };
+	uint RowPitches[10] = { 0x800, 0x400, 0x200, 0x100, 0x80, 0x40, 0x20, 0x10, 0x8, 0x4 };
 
 	inf.layout = surface::image;
 	oFORI(mipLevel, RowPitches)
@@ -68,7 +68,7 @@ static void TESTsurface_depth_pitch(int _Depth, int _ArraySize)
 	inf.array_size = _ArraySize;
 	inf.format = surface::r8g8b8a8_unorm;
 
-	int DepthPitches[10] = { 0x100000, 0x40000, 0x10000, 0x4000, 0x1000, 0x400, 0x100, 0x40, 0x10, 0x4 };
+	uint DepthPitches[10] = { 0x100000, 0x40000, 0x10000, 0x4000, 0x1000, 0x400, 0x100, 0x40, 0x10, 0x4 };
 
 	inf.layout = surface::image;
 	oFORI(mipLevel, DepthPitches)
@@ -133,7 +133,7 @@ static void TESTsurface_slice_pitch(int _ArraySize)
 
 	// The rest below tests the slice pitches for a number of depth levels, and 3d textures don't support more than one slice
 	inf.layout = surface::tight;
-	int SlicePitches[15] = { 0x00155800, 0x00255800, 0x00355800, 0x00495800, 0x00595800, 0x006d5800, 0x007d5800, 0x00925800, 0x00a25800, 0x00b65800, 0x00c65800, 0x00db5800, 0x00eb5800, 0x00ff5800, 0x010f5800 };
+	uint SlicePitches[15] = { 0x00155800, 0x00255800, 0x00355800, 0x00495800, 0x00595800, 0x006d5800, 0x007d5800, 0x00925800, 0x00a25800, 0x00b65800, 0x00c65800, 0x00db5800, 0x00eb5800, 0x00ff5800, 0x010f5800 };
 	oFORI(depthLevel, SlicePitches)
 	{
 		inf.dimensions.z = (int)depthLevel + 1;
@@ -142,7 +142,7 @@ static void TESTsurface_slice_pitch(int _ArraySize)
 	}
 
 	inf.layout = surface::below;
-	int SlicePitchesVertical[15] = { 0x00180000, 0x00280000, 0x00380000, 0x00500000, 0x00600000, 0x00780000, 0x00880000, 0x00a00000, 0x00b00000, 0x00c80000, 0x00d80000, 0x00f00000, 0x01000000, 0x01180000, 0x01280000 };
+	uint SlicePitchesVertical[15] = { 0x00180000, 0x00280000, 0x00380000, 0x00500000, 0x00600000, 0x00780000, 0x00880000, 0x00a00000, 0x00b00000, 0x00c80000, 0x00d80000, 0x00f00000, 0x01000000, 0x01180000, 0x01280000 };
 	oFORI(depthLevel, SlicePitchesVertical)
 	{
 		inf.dimensions.z = (int)depthLevel + 1;
@@ -151,7 +151,7 @@ static void TESTsurface_slice_pitch(int _ArraySize)
 	}
 
 	inf.layout = surface::right;
-	int SlicePitchesHorizontal[15] = { 0x00180000, 0x00300000, 0x00480000, 0x00600000, 0x00780000, 0x00900000, 0x00a80000, 0x00c00000, 0x00d80000, 0x00f00000, 0x01080000, 0x01200000, 0x01380000, 0x01500000, 0x01680000 };
+	uint SlicePitchesHorizontal[15] = { 0x00180000, 0x00300000, 0x00480000, 0x00600000, 0x00780000, 0x00900000, 0x00a80000, 0x00c00000, 0x00d80000, 0x00f00000, 0x01080000, 0x01200000, 0x01380000, 0x01500000, 0x01680000 };
 	oFORI(depthLevel, SlicePitchesHorizontal)
 	{
 		inf.dimensions.z = (int)depthLevel + 1;

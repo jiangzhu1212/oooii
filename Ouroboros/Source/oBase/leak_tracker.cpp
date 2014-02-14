@@ -70,10 +70,6 @@ size_t leak_tracker::report(bool _CurrentContextOnly)
 		const entry& e = pair.second;
 		if (e.tracked && (!_CurrentContextOnly || e.context == CurrentContext))
 		{
-			// known MS leak - alloc not properly marked as CRT
-			if (CheckedNumLeaks == 1 && e.size == 72)
-				continue;
-
 			if (!headerPrinted)
 			{
 				mstring Header;

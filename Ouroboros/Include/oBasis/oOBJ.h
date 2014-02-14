@@ -148,8 +148,7 @@ struct oOBJ_DESC
 		, pTexcoords(nullptr)
 		, pIndices(nullptr)
 		, pGroups(nullptr)
-		, pVertexElements(nullptr)
-		, NumVertexElements(0)
+		, VertexLayout(ouro::gpu::vertex_layout::pos)
 		, NumVertices(0)
 		, NumIndices(0)
 		, NumGroups(0)
@@ -162,9 +161,8 @@ struct oOBJ_DESC
 	const float3* pTexcoords;
 	const uint* pIndices;
 	const oOBJ_GROUP* pGroups;
-	const oGPU_VERTEX_ELEMENT* pVertexElements;
+	ouro::gpu::vertex_layout::value VertexLayout;
 
-	uint NumVertexElements;
 	uint NumVertices;
 	uint NumIndices;
 	uint NumGroups;

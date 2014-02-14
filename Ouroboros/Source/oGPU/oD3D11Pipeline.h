@@ -44,11 +44,9 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline, 0x772e2a04, 0x4c2d, 0x4
 	ouro::intrusive_ptr<ID3D11DomainShader> DomainShader;
 	ouro::intrusive_ptr<ID3D11GeometryShader> GeometryShader;
 	ouro::intrusive_ptr<ID3D11PixelShader> PixelShader;
-
-	oGPU_VERTEX_ELEMENT* pElements;
-	uint NumElements;
 	D3D_PRIMITIVE_TOPOLOGY InputTopology;
-
+	
+	ouro::gpu::vertex_layout_array VertexLayouts;
 	ouro::sstring DebugName;
 };
 

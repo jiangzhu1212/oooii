@@ -59,8 +59,7 @@ struct GPU_Buffer : public oTest
 		intrusive_ptr<oGPUBuffer> AppendBufferCount;
 		oTESTB0( Device->CreateBuffer("GPU_BufferAppendCount", BufferDesc, &AppendBufferCount) );
 		
-		oGPUPipeline::DESC PipelineDesc;
-		oTESTB0( oGPUTestGetPipeline(oGPU_TEST_BUFFER, &PipelineDesc) );
+		oGPUPipeline::DESC PipelineDesc = oGPUTestGetPipeline(oGPU_TEST_BUFFER);
 
 		intrusive_ptr<oGPUPipeline> Pipeline;
 		oTESTB0( Device->CreatePipeline("GPU_BufferPipeline", PipelineDesc, &Pipeline) );

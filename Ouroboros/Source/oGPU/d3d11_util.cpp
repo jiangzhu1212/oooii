@@ -146,6 +146,8 @@ const char* as_string(const D3D11_USAGE& _Usage)
 
 static bool muting_infos_or_state_creation(ID3D11Device* _pDevice)
 {
+#if 0 // not working with 8.1 SDK "Incorrect function."
+
 	intrusive_ptr<ID3D11InfoQueue> InfoQueue;
 	oV(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue));
 	SIZE_T size = 0;
@@ -158,6 +160,8 @@ static bool muting_infos_or_state_creation(ID3D11Device* _pDevice)
 	for (unsigned int i = 0 ; i < f->DenyList.NumCategories; i++)
 		if (f->DenyList.pCategoryList[i] == D3D11_MESSAGE_CATEGORY_STATE_CREATION)
 			return true;
+#endif
+
 	return false;
 }
 
@@ -237,13 +241,8 @@ intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init)
 	bool UsingDebug = false;
 	if (_Init.driver_debug_level != gpu::debug_level::none)
 	{
-		#if NTDDI_VERSION >= NTDDI_WIN8
-		oTRACE("Win8 SDK is very particular - or I may have to D/L the Win 8.1 dev sdk");
-
-		#else
-			Flags |= D3D11_CREATE_DEVICE_DEBUG;
-			UsingDebug = true;
-		#endif
+		Flags |= D3D11_CREATE_DEVICE_DEBUG;
+		UsingDebug = true;
 	}
 
 	if (!_Init.multithreaded)
@@ -264,8 +263,21 @@ intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init)
 		, nullptr);
 
 	// http://stackoverflow.com/questions/10586956/what-can-cause-d3d11createdevice-to-fail-with-e-fail
-	// It's possible that the debug lib isn't installed, so try again without 
-	// debug.
+	// It's possible that the debug lib isn't installed, so try again without debug.
+
+	if (hr == 0x887a002d)
+	{
+		#if NTDDI_VERSION < NTDDI_WIN8
+			oTRACE("The DirectX SDK must be installed for driver-level debugging.");
+		#else
+			oTRACE("Thie Windows SDK must be installed for driver-level debugging.");
+		#endif
+
+		Flags &=~ D3D11_CREATE_DEVICE_DEBUG;
+		UsingDebug = false;
+		hr = E_FAIL;
+	}
+
 	if (hr == E_FAIL)
 	{
 		oTRACE("The first-chance _com_error exception above is because there is no debug layer present during the creation of a D3D device, trying again without debug");
@@ -409,6 +421,23 @@ intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init)
 	return Device;
 }
 
+#define oDEFINE_MAKE_SHADER(std_name, TitleName) \
+	intrusive_ptr<ID3D11##TitleName> make_##std_name(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) \
+	{	intrusive_ptr<ID3D11##TitleName> Shader; \
+		if (_pByteCode) \
+		{	oV(_pDevice->Create##TitleName(_pByteCode, byte_code_size(_pByteCode), 0, &Shader)); \
+			if (_DebugName) debug_name(Shader, _DebugName); \
+		} \
+		return Shader; \
+	}
+
+oDEFINE_MAKE_SHADER(vertex_shader, VertexShader)
+oDEFINE_MAKE_SHADER(hull_shader, HullShader)
+oDEFINE_MAKE_SHADER(domain_shader, DomainShader)
+oDEFINE_MAKE_SHADER(geometry_shader, GeometryShader)
+oDEFINE_MAKE_SHADER(pixel_shader, PixelShader)
+oDEFINE_MAKE_SHADER(compute_kernel, ComputeShader)
+
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation)
 {
 	gpu::device_info d;
@@ -438,6 +467,16 @@ gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation)
 	d.is_software_emulation = _IsSoftwareEmulation;
 	d.debug_reporting_enabled = !!(_pDevice->GetCreationFlags() & D3D11_CREATE_DEVICE_DEBUG);
 	return d;
+}
+
+D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(const gpu::primitive_type::value& _Type)
+{
+	return D3D11_PRIMITIVE_TOPOLOGY(_Type);
+}
+
+gpu::primitive_type::value to_primitive_type(D3D11_PRIMITIVE_TOPOLOGY _Type)
+{
+	return gpu::primitive_type::value(_Type);
 }
 
 unsigned int num_elements(D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology, unsigned int _NumPrimitives)
@@ -710,7 +749,7 @@ void update_subresource(ID3D11DeviceContext* _pDeviceContext
 	, const surface::const_mapped_subresource& _Source, bool _DeviceSupportsDeferredContexts)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
-	gpu::texture_info info = get_texture_info(_pDstResource, &Usage);
+	gpu::texture_info info = get_texture_info(_pDstResource, false, &Usage);
 
 	//D3D11_BOX DstBox;
 	const D3D11_BOX* pLocalDstBox = _pDstBox;
@@ -788,7 +827,7 @@ void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix
 	#undef oD3D11_TRACE_FLAGS
 }
 
-template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, gpu::texture_type::value _BasicType, gpu::texture_info* _pInfo)
+template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, bool _AsArray, gpu::texture_type::value _BasicType, gpu::texture_info* _pInfo)
 {
 	if (_Desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE)
 		_BasicType = gpu::texture_type::default_cube;
@@ -798,6 +837,11 @@ template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, gpu
 	_pInfo->type = _BasicType;
 	if (_Desc.MipLevels > 1)
 		_pInfo->type = gpu::add_mipped(_pInfo->type);
+
+	if (_AsArray)
+		_pInfo->type = gpu::add_array(_pInfo->type);
+	else
+		_pInfo->array_size = 0;
 
 	if (_Desc.Usage == D3D11_USAGE_STAGING)
 		_pInfo->type = gpu::add_readback(_pInfo->type);
@@ -812,7 +856,7 @@ template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, gpu
 	}
 }
 
-gpu::texture_info get_texture_info(ID3D11Resource* _pResource, D3D11_USAGE* _pUsage)
+gpu::texture_info get_texture_info(ID3D11Resource* _pResource, bool _AsArray, D3D11_USAGE* _pUsage)
 {
 	gpu::texture_info info;
 
@@ -826,7 +870,7 @@ gpu::texture_info get_texture_info(ID3D11Resource* _pResource, D3D11_USAGE* _pUs
 			static_cast<ID3D11Texture1D*>(_pResource)->GetDesc(&desc);
 			info.dimensions = ushort3(static_cast<unsigned short>(desc.Width), 1, 1);
 			info.array_size = static_cast<unsigned short>(desc.ArraySize);
-			fill_non_dimensions(desc, gpu::texture_type::default_1d, &info);
+			fill_non_dimensions(desc, _AsArray || desc.ArraySize > 1, gpu::texture_type::default_1d, &info);
 			if (_pUsage) *_pUsage = desc.Usage;
 			break;
 		}
@@ -838,7 +882,7 @@ gpu::texture_info get_texture_info(ID3D11Resource* _pResource, D3D11_USAGE* _pUs
 			info.dimensions = ushort3(static_cast<unsigned short>(desc.Width)
 				, static_cast<unsigned short>(desc.Height), 1);
 			info.array_size = static_cast<unsigned short>(desc.ArraySize);
-			fill_non_dimensions(desc, gpu::texture_type::default_2d, &info);
+			fill_non_dimensions(desc, _AsArray || desc.ArraySize > 1, gpu::texture_type::default_2d, &info);
 			if (_pUsage) *_pUsage = desc.Usage;
 			break;
 		}
@@ -851,7 +895,7 @@ gpu::texture_info get_texture_info(ID3D11Resource* _pResource, D3D11_USAGE* _pUs
 				, static_cast<unsigned short>(desc.Height)
 				, static_cast<unsigned short>(desc.Depth));
 			info.array_size = 1;
-			fill_non_dimensions(desc, gpu::texture_type::default_3d, &info);
+			fill_non_dimensions(desc, false, gpu::texture_type::default_3d, &info);
 			if (_pUsage) *_pUsage = desc.Usage;
 			break;
 		}
@@ -883,7 +927,7 @@ static D3D11_SHADER_RESOURCE_VIEW_DESC get_srv_desc(const gpu::texture_info& _In
 
 	// All texture share basically the same memory footprint, so just write once
 	d.Texture2DArray.MostDetailedMip = 0;
-	d.Texture2DArray.MipLevels = surface::num_mips(gpu::is_mipped(_Info.type), _Info.dimensions);
+	d.Texture2DArray.MipLevels = __max(1, surface::num_mips(gpu::is_mipped(_Info.type), _Info.dimensions));
 	d.Texture2DArray.FirstArraySlice = 0;
 	d.Texture2DArray.ArraySize = _Info.array_size;
 
@@ -907,13 +951,13 @@ static D3D11_SHADER_RESOURCE_VIEW_DESC get_srv_desc(const gpu::texture_info& _In
 	return d;
 }
 
-intrusive_ptr<ID3D11ShaderResourceView> make_srv(const char* _DebugName, ID3D11Resource* _pTexture)
+intrusive_ptr<ID3D11ShaderResourceView> make_srv(const char* _DebugName, ID3D11Resource* _pTexture, bool _AsArray)
 {
-	// If a depth-stencil resource is specified we have to convert the specified 
-	// format to a compatible color one
 	D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
 	D3D11_SHADER_RESOURCE_VIEW_DESC* pSRVDesc = nullptr;
-	gpu::texture_info info = get_texture_info(_pTexture);
+
+	gpu::texture_info info = get_texture_info(_pTexture, _AsArray);
+
 	if (surface::is_depth(info.format))
 	{
 		D3D11_RESOURCE_DIMENSION type;
@@ -925,6 +969,7 @@ intrusive_ptr<ID3D11ShaderResourceView> make_srv(const char* _DebugName, ID3D11R
 	intrusive_ptr<ID3D11Device> Device;
 	_pTexture->GetDevice(&Device);
 	intrusive_ptr<ID3D11ShaderResourceView> SRV;
+
 	oV(Device->CreateShaderResourceView(_pTexture, pSRVDesc, &SRV));
 	debug_name(SRV, _DebugName);
 	return SRV;
@@ -1118,7 +1163,7 @@ new_texture make_texture(ID3D11Device* _pDevice
 	debug_name(NewTexture.pResource, _DebugName);
 	if (IsShaderResource)
 	{
-		auto srv = make_srv(_DebugName, NewTexture.pResource);
+		auto srv = make_srv(_DebugName, NewTexture.pResource, _Info.array_size != 0);
 		NewTexture.pSRV = srv;
 		NewTexture.pSRV->AddRef();
 	}
@@ -1278,23 +1323,23 @@ void set_srvs(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->CSSetShaderResources(_StartSlot, _NumShaderResourceViews, ppViews);
 }
 
-oAABoxf from_viewport(const D3D11_VIEWPORT& _Viewport)
+boundf from_viewport(const D3D11_VIEWPORT& _Viewport)
 {
-	oAABoxf b;
-	b.Min = float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth);
-	b.Max = float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth);
-	return b;
+	return boundf(float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth), float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
 }
 
-D3D11_VIEWPORT to_viewport(const oAABoxf& _Source)
+D3D11_VIEWPORT to_viewport(const boundf& _Source)
 {
 	D3D11_VIEWPORT v;
-	v.TopLeftX = _Source.Min.x;
-	v.TopLeftY = _Source.Min.y;
-	v.MinDepth = _Source.Min.z;
-	v.Width = _Source.size().x;
-	v.Height = _Source.size().y;
-	v.MaxDepth = _Source.Max.z;
+	float3 Min = _Source.get_min();
+	float3 Max = _Source.get_max();
+	float3 Size = _Source.size();
+	v.TopLeftX = Min.x;
+	v.TopLeftY = Min.y;
+	v.MinDepth = Min.z;
+	v.Width = Size.x;
+	v.Height = Size.y;
+	v.MaxDepth = Max.z;
 	return v;
 }
 
@@ -1353,11 +1398,6 @@ void check_bound_cs_uavs(ID3D11DeviceContext* _pDeviceContext, int _NumBuffers
 
 // {6489B24E-C12E-40C2-A9EF-249353888612}
 static const GUID oWKPDID_oBackPointer = { 0x6489b24e, 0xc12e, 0x40c2, { 0xa9, 0xef, 0x24, 0x93, 0x53, 0x88, 0x86, 0x12 } };
-
-D3D11_PRIMITIVE_TOPOLOGY oD3D11ToPrimitiveTopology(oGPU_PRIMITIVE_TYPE _Type)
-{
-	return D3D11_PRIMITIVE_TOPOLOGY(_Type);
-}
 
 // to oAlgorithm... should we permutate for various sources?
 bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths)

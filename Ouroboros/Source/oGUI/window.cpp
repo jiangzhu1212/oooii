@@ -463,7 +463,7 @@ void window_impl::shape(const window_shape& _Shape)
 	{
 		try { oWinSetShape(hWnd, _Shape); }
 		catch (std::exception& e)
-		{ oTRACE("ERROR: oWinSetShape: %s", e.what()); }
+		{ oTRACEA("ERROR: oWinSetShape: %s", e.what()); }
 	}));
 }
 
@@ -1121,7 +1121,7 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 				window_shape Shape;
 				Shape.client_position = int2(p.x, p.y) - CursorClientPosAtMouseDown;
 				try { oWinSetShape(_hWnd, Shape); }
-				catch (std::exception& e) { oTRACE("ERROR: oWinSetShape: %s", e.what()); }
+				catch (std::exception& e) { oTRACEA("ERROR: oWinSetShape: %s", e.what()); }
 			}
 
 			break;

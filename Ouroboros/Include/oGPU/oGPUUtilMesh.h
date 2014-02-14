@@ -22,88 +22,49 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This header is compiled both by HLSL and C++. It describes a oGfx-level 
-// policy encapsulation of the layout of vertex buffers that oGfx shaders 
-// expect.
-#ifndef oHLSL
-	#pragma once
-#endif
-#ifndef oGfxVertexElements_h
-#define oGfxVertexElements_h
+// A very simple mesh container that mainly provides very simple creation
+// and drawing, mostly used for unit testing and samples.
+#pragma once
+#ifndef oGPU_util_mesh_h
+#define oGPU_util_mesh_h
 
-#ifdef oHLSL
+#include <oGPU/oGPU.h>
 
-#define oGFX_VE(_Type, _Name, _Semantic) _Type _Name : _Semantic
+#include <oBasis/oGeometry.h>
+#include <oBasis/oOBJ.h>
 
-#else
+namespace ouro {
+	namespace gpu {
 
-#define oGFX_VE(_Type, _Name, _Semantic) _Type _Name
-
-#include <oBasis/oGPUConcepts.h>
-
-enum oGFX_VERTEX_ELEMENT_LIST
+class util_mesh
 {
-	oGFX_VE_POSITION,
-	oGFX_VE_POSITION_INSTANCED,
-	oGFX_VE_RIGID,
-	oGFX_VE_RIGID_INSTANCED,
-	oGFX_VE_LINE,
+public:
+	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name, const mesh_info& _Info);
+
+	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name
+		, const vertex_layout_array& _VertexLayouts, const oGeometry* _pGeometry);
+
+	virtual mesh_info get_info() const = 0;
+	virtual const oGPUBuffer* index_buffer() const = 0;
+	virtual oGPUBuffer* index_buffer() = 0;
+	virtual const oGPUBuffer* vertex_buffer(uint _Index) const = 0;
+	virtual oGPUBuffer* vertex_buffer(uint _Index) = 0;
+	inline const oGPUBuffer* vertex_buffer(const vertex_usage::value& _Usage) const { return vertex_buffer((uint)_Usage); }
+	inline oGPUBuffer* vertex_buffer(const vertex_usage::value& _Usage) { return vertex_buffer((uint)_Usage); }
+	virtual void vertex_buffers(const oGPUBuffer* _Buffers[vertex_usage::count]) = 0;
+	virtual void draw(oGPUCommandList* _pCommandList) = 0;
 };
 
-void oGfxGetVertexElements(oGFX_VERTEX_ELEMENT_LIST _GfxVertexElementList, const oGPU_VERTEX_ELEMENT** _ppVertexElements, unsigned int* _pNumVertexElements);
+// Creates a very simple front-facing triangle that can be rendered with all-
+// identify world, view, projection matrices. This is useful for very simple 
+// tests and first bring-up.
+std::shared_ptr<util_mesh> make_first_triangle(oGPUDevice* _pDevice);
 
-#endif
+// Creates a very simple unit cube. This is useful for bringing up world, view,
+// projection transforms quickly.
+std::shared_ptr<util_mesh> make_first_cube(oGPUDevice* _pDevice);
 
-struct oGFX_POSITION_VERTEX
-{
-	oGFX_VE(float3, LSPosition, POS0);
-};
-
-struct oGFX_POSITION_VERTEX_INSTANCED
-{
-	oGFX_VE(float3, LSPosition, POS0);
-
-	// Per-instance
-	oGFX_VE(float3, Translation, TX);
-	oGFX_VE(quatf, Rotation, ROT);
-	oGFX_VE(float, Scale, SCAL);
-};
-
-struct oGFX_RIGID_VERTEX
-{
-	oGFX_VE(float3, LSPosition, POS0);
-	oGFX_VE(float3, LSNormal, NML0);
-	oGFX_VE(float2, Texcoord, TEX0);
-	oGFX_VE(float4, LSTangent, TAN0);
-};
-
-struct oGFX_RIGID_VERTEX_INSTANCED
-{
-	// Per-vertex
-	oGFX_VE(float3, LSPosition, POS0);
-	oGFX_VE(float3, LSNormal, NML0);
-	oGFX_VE(float2, Texcoord, TEX0);
-	oGFX_VE(float4, LSTangent, TAN0);
-
-	// Per-instance
-	oGFX_VE(float3, Translation, TX);
-	oGFX_VE(quatf, Rotation, ROT);
-	oGFX_VE(float, Scale, SCAL);
-	
-	#ifdef oHLSL
-		uint InstanceID : SV_InstanceID;
-	#endif
-};
-
-struct oGFX_LINE_VERTEX
-{
-	oGFX_VE(float3, LSPosition, POS0);
-
-	#ifdef oHLSL
-		float4 Color : CLR0;
-	#else
-		ouro::color Color;
-	#endif
-};
+	} // namespace gpu
+} // namespace ouro
 
 #endif

@@ -47,15 +47,12 @@ public:
 		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
 			return false;
 
-		oGPUPipeline::DESC pld;
-		if (!oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE, &pld))
-			return false;
+		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE);
 
-		if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
+		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
 			return false;
-
-		if (!oGPUUtilCreateFirstTriangle(Device, pld.pElements, pld.NumElements, &Mesh))
-			return false;
+		
+		Mesh = ouro::gpu::make_first_triangle(Device);
 
 		return true;
 	}
@@ -79,7 +76,7 @@ public:
 
 		CommandList->Begin();
 
-		oGPUCommitBuffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
+		ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
 
 		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
 		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
@@ -88,7 +85,7 @@ public:
 		CommandList->SetBuffers(0, 1, &TestConstants);
 		CommandList->SetPipeline(Pipeline);
 		CommandList->SetRenderTarget(PrimaryRenderTarget);
-		oGPUUtilMeshDraw(CommandList, Mesh);
+		Mesh->draw(CommandList);
 
 		CommandList->End();
 
@@ -97,7 +94,7 @@ public:
 
 private:
 	intrusive_ptr<oGPUPipeline> Pipeline;
-	intrusive_ptr<oGPUUtilMesh> Mesh;
+	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
 	intrusive_ptr<oGPUBuffer> TestConstants;
 };
 

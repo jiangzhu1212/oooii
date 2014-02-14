@@ -364,7 +364,7 @@ int subsample_bias(format _Format, int _SubsurfaceIndex)
 	return 0;
 }
 
-int element_size(format _Format, int _SubsurfaceIndex)
+uint element_size(format _Format, int _SubsurfaceIndex)
 {
 	return (_Format < format_count) ? (_SubsurfaceIndex ? element_size(sFormatInfo[_Format].subformats.format[_SubsurfaceIndex]) : sFormatInfo[_Format].size) : 0;
 }
@@ -437,13 +437,13 @@ int num_mips(bool _HasMips, const int3& _Mip0Dimensions)
 	// Rules of mips are to go to 1x1... so a 1024x8 texture has many more than 4
 	// mips.
 
-	if (_Mip0Dimensions.x <= 0 || _Mip0Dimensions.y <= 0 || _Mip0Dimensions.z <= 0)
+	if (!_HasMips || _Mip0Dimensions.x <= 0 || _Mip0Dimensions.y <= 0 || _Mip0Dimensions.z <= 0)
 		return 0;
 
 	int nMips = 1;
 	int3 mip = _Mip0Dimensions;
 
-	while (_HasMips && any(mip != int3(1,1,1)))
+	while (any(mip != int3(1,1,1)))
 	{
 		nMips++;
 		mip = ::max(int3(1,1,1), mip / int3(2,2,2));
@@ -522,22 +522,22 @@ int3 dimensions_npot(format _Format, const int3& _Mip0Dimensions, int _MipLevel,
 		, dimension_npot(r32_uint, _Mip0Dimensions.z, _MipLevel, _SubsurfaceIndex)); // No block-compression alignment for depth
 }
 
-int row_size(format _Format, int _MipWidth, int _SubsurfaceIndex)
+uint row_size(format _Format, int _MipWidth, int _SubsurfaceIndex)
 {
 	oCHECK_DIM(_Format, _MipWidth);
 	oASSERT(_Format != unknown, "Unknown surface format passed to GetRowPitch");
-	int w = dimension(_Format, _MipWidth, 0, _SubsurfaceIndex);
+	uint w = dimension(_Format, _MipWidth, 0, _SubsurfaceIndex);
 	if (is_block_compressed(_Format)) // because the atom is a 4x4 block
 		w /= 4;
-	const int s = element_size(_Format, _SubsurfaceIndex);
+	const uint s = element_size(_Format, _SubsurfaceIndex);
 	return byte_align(w * s, s);
 }
 
-int row_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+uint row_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
 	oCHECK_INFO(_SurfaceInfo)
 	const int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
-	if (_MipLevel >= numMips)
+	if (numMips && _MipLevel >= numMips)
 		throw invalid_argument("invalid _MipLevel");
 
 	switch (_SurfaceInfo.layout)
@@ -548,7 +548,7 @@ int row_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 			return row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _MipLevel, _SubsurfaceIndex), _SubsurfaceIndex);
 		case below: 
 		{
-			const int mip0RowSize = row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _SubsurfaceIndex);
+			const uint mip0RowSize = row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _SubsurfaceIndex);
 			if (numMips > 2)
 			{
 					return ::max(mip0RowSize, 
@@ -561,7 +561,7 @@ int row_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 
 		case right: 
 		{
-			const int mip0RowSize = row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _SubsurfaceIndex);
+			const uint mip0RowSize = row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _SubsurfaceIndex);
 			if (numMips > 1)
 				return mip0RowSize + row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, 1, _SubsurfaceIndex), _SubsurfaceIndex);
 			else
@@ -572,7 +572,7 @@ int row_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 	}
 }
 
-int depth_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+uint depth_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
 	oCHECK_INFO(_SurfaceInfo)
 	int3 mipDimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, _MipLevel, 0);
@@ -681,7 +681,7 @@ int offset(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 {
 	oCHECK_INFO(_SurfaceInfo)
 	const int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
-	if (_MipLevel >= numMips) 
+	if (numMips && _MipLevel >= numMips) 
 		throw invalid_argument("invalid _MipLevel");
 
 	switch (_SurfaceInfo.layout)
@@ -694,10 +694,10 @@ int offset(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 	}
 }
 
-int slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex)
+uint slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex)
 {
 	oCHECK_INFO(_SurfaceInfo)
-	int pitch = 0;
+	uint pitch = 0;
 
 	switch (_SurfaceInfo.layout)
 	{
@@ -717,7 +717,7 @@ int slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex)
 			}
 
 			// Align slicePitch to mip0RowPitch
-			const int mip0RowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
+			const uint mip0RowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
 			pitch = (((pitch + (mip0RowPitch - 1)) / mip0RowPitch) * mip0RowPitch);
 			break;
 		}
@@ -727,11 +727,11 @@ int slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex)
 	return pitch;
 }
 
-int total_size(const info& _SurfaceInfo, int _SubsurfaceIndex)
+uint total_size(const info& _SurfaceInfo, int _SubsurfaceIndex)
 {
 	if (_SubsurfaceIndex < 0)
 	{
-		int size = 0;
+		uint size = 0;
 		const int nSurfaces = num_subformats(_SurfaceInfo.format);
 		for (int i = 0; i < nSurfaces; i++)
 		{
@@ -807,7 +807,7 @@ subresource_info subresource(const info& _SurfaceInfo, int _Subresource)
 	subresource_info inf;
 	int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
 	unpack_subresource(_Subresource, numMips, _SurfaceInfo.array_size, &inf.mip_level, &inf.array_slice, &inf.subsurface);
-	if (_SurfaceInfo.array_size && ::max(1, inf.array_slice) >= safe_array_size(_SurfaceInfo)) throw invalid_argument("array slice index is out of range");
+	if (_SurfaceInfo.array_size && inf.array_slice >= safe_array_size(_SurfaceInfo)) throw invalid_argument("array slice index is out of range");
 	if (inf.subsurface >= num_subformats(_SurfaceInfo.format)) throw invalid_argument("subsurface index is out of range for the specified surface");
 	inf.dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, inf.mip_level, inf.subsurface);
 	inf.format = _SurfaceInfo.format;
@@ -829,16 +829,16 @@ info subsurface(const info& _SurfaceInfo, int _SubsurfaceIndex, int _MipLevel, i
 	return inf;
 }
 
-int subresource_size(const subresource_info& _SubresourceInfo)
+uint subresource_size(const subresource_info& _SubresourceInfo)
 {
 	return mip_size(_SubresourceInfo.format, _SubresourceInfo.dimensions, _SubresourceInfo.subsurface);
 }
 
-int subresource_offset(const info& _SurfaceInfo, int _Subresource, int _DepthIndex)
+uint subresource_offset(const info& _SurfaceInfo, int _Subresource, int _DepthIndex)
 {
 	oASSERT(_DepthIndex < _SurfaceInfo.dimensions.z, "Depth index is out of range");
 	subresource_info inf = subresource(_SurfaceInfo, _Subresource);
-	int off = offset(_SurfaceInfo, inf.mip_level, inf.subsurface);
+	uint off = offset(_SurfaceInfo, inf.mip_level, inf.subsurface);
 	if (_DepthIndex)
 		off += depth_pitch(_SurfaceInfo, inf.mip_level, inf.subsurface) * _DepthIndex;
 	else if (inf.array_slice > 0)

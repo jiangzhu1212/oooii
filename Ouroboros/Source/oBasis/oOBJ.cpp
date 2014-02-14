@@ -394,39 +394,16 @@ static void ReduceElements(const oOBJ_INIT& _Init
 		oCalcMinMaxVertices(data(*_pIndices), g.Range.start_primitive*3, g.Range.num_primitives*3, as_uint(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
 }
 
-static uint oOBJGetVertexElements(oGPU_VERTEX_ELEMENT* _pElements, uint _MaxNumElements, const oOBJ_DESC& _OBJDesc)
+static ouro::gpu::vertex_layout::value oOBJGetVertexLayout(const oOBJ_DESC& _OBJDesc)
 {
-	uchar n = 0;
-
-	if (_OBJDesc.pPositions)
-	{
-		_pElements[n].Semantic = 'POS0';
-		_pElements[n].Format = surface::r32g32b32_float;
-		_pElements[n].InputSlot = 0;
-		_pElements[n].Instanced = false;
-		n++;
-	}
-
-	if (_OBJDesc.pTexcoords)
-	{
-		_pElements[n].Semantic = 'TEX0';
-		_pElements[n].Format = surface::r32g32b32_float;
-		_pElements[n].InputSlot = n;
-		_pElements[n].Instanced = false;
-		n++;
-	}
-
+	ouro::gpu::vertex_layout::value Layout = ouro::gpu::vertex_layout::pos;
+	if (!_OBJDesc.pPositions)
+		oTHROW_INVARG("vertices must have positions");
 	if (_OBJDesc.pNormals)
-	{
-		_pElements[n].Semantic = 'NRM0';
-		_pElements[n].Format = surface::r32g32b32_float;
-		_pElements[n].InputSlot = n;
-		_pElements[n].Instanced = false;
-		n++;
-	}
-
-	oASSERT(_MaxNumElements >= 3, "Too many elements for destination");
-	return n;
+		Layout = _OBJDesc.pTexcoords ? ouro::gpu::vertex_layout::pos_nrm_tan_uv0 : ouro::gpu::vertex_layout::pos_nrm;
+	if (_OBJDesc.pTexcoords)
+		Layout = ouro::gpu::vertex_layout::pos_uv0;
+	return Layout;
 }
 
 struct oOBJImpl : oOBJ
@@ -441,7 +418,7 @@ protected:
 	void GetDesc(oOBJ_DESC* _pDesc) const;
 	oOBJ_ELEMENTS VertexElements;
 	std::vector<unsigned int> Indices;
-	oGPU_VERTEX_ELEMENT GPUVertexElements[3];
+	ouro::gpu::vertex_layout::value VertexLayout;
 	uint NumGPUVertexElements;
 	path_string OBJPath;
 	oRefCount RefCount;
@@ -561,7 +538,7 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 
 	oOBJ_DESC d;
 	oOBJImpl::GetDesc(&d);
-	NumGPUVertexElements = oOBJGetVertexElements(GPUVertexElements, oCOUNTOF(GPUVertexElements), d);
+	VertexLayout = oOBJGetVertexLayout(d);
 
 	*_pSuccess = true;
 }
@@ -575,8 +552,7 @@ void oOBJImpl::GetDesc(oOBJ_DESC* _pDesc) const
 	_pDesc->pTexcoords = data(VertexElements.Texcoords);
 	_pDesc->pIndices = data(Indices);
 	_pDesc->pGroups = data(VertexElements.Groups);
-	_pDesc->pVertexElements = GPUVertexElements;
-	_pDesc->NumVertexElements = NumGPUVertexElements;
+	_pDesc->VertexLayout = VertexLayout;
 	_pDesc->NumVertices = as_uint(VertexElements.Positions.size());
 	_pDesc->NumIndices = as_uint(Indices.size());
 	_pDesc->NumGroups = as_uint(VertexElements.Groups.size());

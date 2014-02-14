@@ -52,7 +52,7 @@ oGfxPickBuffer::oGfxPickBuffer(oGPUDevice* _pDevice, const void* _pComputeShader
 	oVERIFY(_pDevice->CreateBuffer("oGfxPickBuffer.PicksStaging", BufferDesc, &PicksStaging));
 
 	oGPUComputeShader::DESC descComputeShader;
-	descComputeShader.pComputeShader = _pComputeShader;
+	descComputeShader.cs = _pComputeShader;
  	oVERIFY(_pDevice->CreateComputeShader("oGfxPickBuffer.PickResourceShader", descComputeShader, &PickResourceShader));
 
 	*bSuccess = true;

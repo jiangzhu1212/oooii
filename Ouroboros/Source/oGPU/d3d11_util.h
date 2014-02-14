@@ -67,12 +67,21 @@ inline int trace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _S
 // Creates a device with the specified description.
 intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init);
 
+// Convenience wrappers that create and name a particular type of shader.
+intrusive_ptr<ID3D11VertexShader> make_vertex_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+intrusive_ptr<ID3D11HullShader> make_hull_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+intrusive_ptr<ID3D11DomainShader> make_domain_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+intrusive_ptr<ID3D11GeometryShader> make_geometry_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+intrusive_ptr<ID3D11PixelShader> make_pixel_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+intrusive_ptr<ID3D11ComputeShader> make_compute_kernel(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+
 // Returns information about the specified device. There's no way to determine
 // if the device is software, so pass that through.
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation);
 
 // Returns the D3D11 equivalent.
-D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(gpu::primitive_type::value _Type);
+D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(const gpu::primitive_type::value& _Type);
+gpu::primitive_type::value to_primitive_type(D3D11_PRIMITIVE_TOPOLOGY _Type);
 
 // Returns the number of elements as described the specified topology given
 // the number of primitives. An element can refer to indices or vertices, but
@@ -185,7 +194,7 @@ void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix
 // ID3D11Texture3D or ID3D11Buffer. If an ID3D11Buffer the size of a single
 // struct is in dimensions.x, and the number of structures is in dimensions.y.
 // The y value will be replicated in array_size as well.
-gpu::texture_info get_texture_info(ID3D11Resource* _pResource, D3D11_USAGE* _pUsage = nullptr);
+gpu::texture_info get_texture_info(ID3D11Resource* _pResource, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr);
 
 // This converts back from a texture_info to typical fields in texture-related
 // structs (including D3DX11_IMAGE_LOAD_INFO, specify the info's format as 
@@ -199,7 +208,7 @@ void init_values(const gpu::texture_info& _Info
 	, unsigned int* _pMiscFlags = nullptr);
 
 // From the specified texture, create the correct shader resource view
-intrusive_ptr<ID3D11ShaderResourceView> make_srv(const char* _DebugName, ID3D11Resource* _pTexture);
+intrusive_ptr<ID3D11ShaderResourceView> make_srv(const char* _DebugName, ID3D11Resource* _pTexture, bool _AsArray = false);
 
 intrusive_ptr<ID3D11View> make_rtv(const char* _DebugName, ID3D11Resource* _pTexture);
 template<typename ViewT> void make_rtv(const char* _DebugName, ID3D11Resource* _pTexture, intrusive_ptr<ViewT>& _View) 
@@ -335,10 +344,10 @@ inline void set_srvs(ID3D11DeviceContext* _pDeviceContext
 		{ set_srvs(_pDeviceContext, _StartSlot, _NumShaderResourceViews, (const ID3D11ShaderResourceView* const*)_ppViews); }
 
 // Converts a viewport to an oAABoxf.
-oAABoxf from_viewport(const D3D11_VIEWPORT& _Viewport);
+boundf from_viewport(const D3D11_VIEWPORT& _Viewport);
 
 // Convert an oAABoxf (very similar in structure) to a D3D11_VIEWPORT
-D3D11_VIEWPORT to_viewport(const oAABoxf& _Source);
+D3D11_VIEWPORT to_viewport(const boundf& _Source);
 
 // Creats a viewport that uses the full render target (depth, [0,1])
 D3D11_VIEWPORT to_viewport(const int2& _RenderTargetDimensions);

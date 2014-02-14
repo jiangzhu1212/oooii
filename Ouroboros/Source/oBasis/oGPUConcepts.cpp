@@ -26,9 +26,13 @@
 
 #define STR_SUPPORT(_T, _NumTs) \
 	oDEFINE_TO_STRING(_T) \
-	oDEFINE_FROM_STRING(_T, _NumTs) \
+	oDEFINE_FROM_STRING(_T, _NumTs)
 
 namespace ouro {
+
+static_assert(sizeof(gpu::vertex_range) == 16, "unexpected struct packing for vertex_range");
+static_assert(sizeof(fourcc) == 4, "unexpected struct packing for fourcc");
+static_assert(sizeof(surface::format) == 1, "unexpected size");
 
 const char* as_string(const gpu::api::value& _Value)
 {
@@ -135,6 +139,21 @@ const char* as_string(const gpu::primitive_type::value& _Value)
 
 STR_SUPPORT(gpu::primitive_type::value, gpu::primitive_type::count);
 
+const char* as_string(const gpu::face_type::value& _Value)
+{
+	switch (_Value)
+	{
+		case gpu::face_type::unknown: return "unknown";
+		case gpu::face_type::front_ccw: return "front_ccw";
+		case gpu::face_type::front_cw: return "front_cw";
+		case gpu::face_type::outline: return "outline";
+		default: break;
+	}
+	return "?";
+}
+		
+STR_SUPPORT(gpu::face_type::value, gpu::face_type::count);
+		
 const char* as_string(const gpu::resource_type::value& _Value)
 {
 	switch (_Value)
@@ -411,210 +430,308 @@ const char* as_string(const gpu::clear_type::value& _Value)
 
 STR_SUPPORT(gpu::clear_type::value, gpu::clear_type::count);
 
-const char* as_string(const gpu::vertex_trait::value& _Value)
+const char* as_string(const gpu::vertex_semantic::value& _Value)
 {
 	switch (_Value)
 	{
-		//case gpu::vertex_trait::none: return "none";
-		case gpu::vertex_trait::position32: return "position32";
-		case gpu::vertex_trait::position16: return "position16";
-		case gpu::vertex_trait::normal32: return "normal32";
-		case gpu::vertex_trait::normal16: return "normal16";
-		case gpu::vertex_trait::normal10: return "normal10";
-		case gpu::vertex_trait::tangent32: return "tangent32";
-		case gpu::vertex_trait::tangent16: return "tangent16";
-		case gpu::vertex_trait::tangent10: return "tangent10";
-		case gpu::vertex_trait::uv032: return "uv032";
-		case gpu::vertex_trait::uvw032: return "uvw032";
-		case gpu::vertex_trait::uvwx032: return "uvwx032";
-		case gpu::vertex_trait::uv016: return "uv016";
-		case gpu::vertex_trait::uvw016: return "uvw016";
-		case gpu::vertex_trait::uvwx016: return "uvwx016";
-		case gpu::vertex_trait::uv132: return "uv132";
-		case gpu::vertex_trait::uvw132: return "uvw132";
-		case gpu::vertex_trait::uvwx132: return "uvwx132";
-		case gpu::vertex_trait::uv116: return "uv116";
-		case gpu::vertex_trait::uvw116: return "uvw116";
-		case gpu::vertex_trait::uvwx116: return "uvwx116";
-		case gpu::vertex_trait::color032: return "color032";
-		case gpu::vertex_trait::color08: return "color08";
-		case gpu::vertex_trait::color132: return "color132";
-		case gpu::vertex_trait::color18: return "color18";
-		
+		case gpu::vertex_semantic::position: return "position";
+		case gpu::vertex_semantic::normal: return "normal";
+		case gpu::vertex_semantic::tangent: return "tangent";
+		case gpu::vertex_semantic::texcoord: return "texcoord";
+		case gpu::vertex_semantic::color: return "color";
 		default: break;
 	}
 	return "?";
 }
-
-oDEFINE_TO_STRING(gpu::vertex_trait::value);
-
-const char* as_string(const gpu::input_layout::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::input_layout::Pf: return "Pf";
-		case gpu::input_layout::PfUV0f: return "PfUV0f";
-		case gpu::input_layout::PfCb: return "PfCb";
-		case gpu::input_layout::PfUV0fCb: return "PfUV0fCb";
-		case gpu::input_layout::PfNfTfUV0f: return "PfNfTfUV0f";
-		case gpu::input_layout::PfNfTfUV0fCb: return "PfNfTfUV0fCb";
-		case gpu::input_layout::Ph: return "Ph";
-		case gpu::input_layout::PhUV0h: return "PhUV0h";
-		case gpu::input_layout::PhCb: return "PhCb";
-		case gpu::input_layout::PhUV0hCb: return "PhUV0hCb";
-		case gpu::input_layout::PhNnTnUV0h: return "PhNnTnUV0h";
-		case gpu::input_layout::PhNnTnUV0hCb: return "PhNnTnUV0hCb";
 	
+STR_SUPPORT(gpu::vertex_semantic::value, gpu::vertex_semantic::count);
+
+const char* as_string(const gpu::vertex_layout::value& _Value)
+{
+	switch (_Value)
+	{
+		case gpu::vertex_layout::none: return "none";
+		case gpu::vertex_layout::pos: return "pos";
+		case gpu::vertex_layout::color: return "color";
+		case gpu::vertex_layout::pos_color: return "pos_color";
+		case gpu::vertex_layout::pos_nrm: return "pos_nrm";
+		case gpu::vertex_layout::pos_nrm_tan: return "pos_nrm_tan";
+		case gpu::vertex_layout::pos_nrm_tan_uv0: return "pos_nrm_tan_uv0";
+		case gpu::vertex_layout::pos_nrm_tan_uvwx0: return "pos_nrm_tan_uvwx0";
+		case gpu::vertex_layout::pos_uv0: return "pos_uv0";
+		case gpu::vertex_layout::pos_uvwx0: return "pos_uvwx0";
+		case gpu::vertex_layout::uv0: return "uv0";
+		case gpu::vertex_layout::uvwx0: return "uvwx0";
+		case gpu::vertex_layout::uv0_color: return "uv0_color";
+		case gpu::vertex_layout::uvwx0_color: return "uvwx0_color";
 		default: break;
 	}
 	return "?";
 }
 
-oDEFINE_TO_STRING(gpu::input_layout::value);
+STR_SUPPORT(gpu::vertex_layout::value, gpu::vertex_layout::count);
 
-bool from_string(gpu::vertex_trait::value* _pValue, const char* _StrSource)
+const char* as_string(const gpu::vertex_usage::value& _Value)
 {
-	if (!_stricmp("none", _StrSource)) *_pValue = gpu::vertex_trait::none;
-	else if (!_stricmp("position32", _StrSource)) *_pValue = gpu::vertex_trait::position32;
-	else if (!_stricmp("position16", _StrSource)) *_pValue = gpu::vertex_trait::position16;
-	else if (!_stricmp("normal32", _StrSource)) *_pValue = gpu::vertex_trait::normal32;
-	else if (!_stricmp("normal16", _StrSource)) *_pValue = gpu::vertex_trait::normal16;
-	else if (!_stricmp("normal10", _StrSource)) *_pValue = gpu::vertex_trait::normal10;
-	else if (!_stricmp("tangent32", _StrSource)) *_pValue = gpu::vertex_trait::tangent32;
-	else if (!_stricmp("tangent16", _StrSource)) *_pValue = gpu::vertex_trait::tangent16;
-	else if (!_stricmp("tangent10", _StrSource)) *_pValue = gpu::vertex_trait::tangent10;
-	else if (!_stricmp("uv032", _StrSource)) *_pValue = gpu::vertex_trait::uv032;
-	else if (!_stricmp("uvw032", _StrSource)) *_pValue = gpu::vertex_trait::uvw032;
-	else if (!_stricmp("uvwx032", _StrSource)) *_pValue = gpu::vertex_trait::uvwx032;
-	else if (!_stricmp("uv016", _StrSource)) *_pValue = gpu::vertex_trait::uv016;
-	else if (!_stricmp("uvw016", _StrSource)) *_pValue = gpu::vertex_trait::uvw016;
-	else if (!_stricmp("uvwx016", _StrSource)) *_pValue = gpu::vertex_trait::uvwx016;
-	else if (!_stricmp("uv132", _StrSource)) *_pValue = gpu::vertex_trait::uv132;
-	else if (!_stricmp("uvw132", _StrSource)) *_pValue = gpu::vertex_trait::uvw132;
-	else if (!_stricmp("uvwx132", _StrSource)) *_pValue = gpu::vertex_trait::uvwx132;
-	else if (!_stricmp("uv116", _StrSource)) *_pValue = gpu::vertex_trait::uv116;
-	else if (!_stricmp("uvw116", _StrSource)) *_pValue = gpu::vertex_trait::uvw116;
-	else if (!_stricmp("uvwx116", _StrSource)) *_pValue = gpu::vertex_trait::uvwx116;
-	else if (!_stricmp("color032", _StrSource)) *_pValue = gpu::vertex_trait::color032;
-	else if (!_stricmp("color08", _StrSource)) *_pValue = gpu::vertex_trait::color08;
-	else if (!_stricmp("color132", _StrSource)) *_pValue = gpu::vertex_trait::color132;
-	else if (!_stricmp("color18", _StrSource)) *_pValue = gpu::vertex_trait::color18;
-	else return false;
-	return true;
+	switch (_Value)
+	{
+		case gpu::vertex_usage::dynamic_vertices: return "dynamic_vertices";
+		case gpu::vertex_usage::static_vertices: return "static_vertices";
+		case gpu::vertex_usage::per_instance_vertices: return "per_instance_vertices";
+		default: break;
+	}
+	return "?";
 }
+
+oDEFINE_TO_STRING(gpu::vertex_usage::value);
 
 namespace gpu {
 
-unsigned short get_vertex_traits(const input_layout::value& _Layout)
+uint num_primitives(const primitive_type::value& _PrimitiveType, uint _NumIndices, uint _NumVertices)
 {
-	switch (_Layout)
+	uint n = _NumIndices;
+	switch (_PrimitiveType)
 	{
-		case input_layout::Pf: return vertex_trait::position32;
-		case input_layout::PfUV0f: return vertex_trait::position32 | vertex_trait::uv032;
-		case input_layout::PfCb: return vertex_trait::position32 | vertex_trait::color08;
-		case input_layout::PfUV0fCb: return vertex_trait::position32 | vertex_trait::uv032 | vertex_trait::color08;
-		case input_layout::PfNfTfUV0f: return vertex_trait::position32 | vertex_trait::normal32 | vertex_trait::tangent32 | vertex_trait::uv032;
-		case input_layout::PfNfTfUV0fCb: return vertex_trait::position32 | vertex_trait::normal32 | vertex_trait::tangent32 | vertex_trait::uv032 | vertex_trait::color08;
+		case primitive_type::points: n = _NumVertices; break;
+		case primitive_type::lines: n /= 2; break;
+		case primitive_type::line_strips: n--; break;
+		case primitive_type::triangles: n /= 3; break;
+		case primitive_type::triangle_strips: n -= 2; break;
+		default: oTHROW_INVARG("unsupported primitive type");
+	}
 	
-		case input_layout::Ph: return vertex_trait::position16;
-		case input_layout::PhUV0h: return vertex_trait::position16 | vertex_trait::uv016;
-		case input_layout::PhCb: return vertex_trait::position16 | vertex_trait::color08;
-		case input_layout::PhUV0hCb: return vertex_trait::position16 | vertex_trait::uv016 | vertex_trait::color08;
-		case input_layout::PhNnTnUV0h: return vertex_trait::position16 | vertex_trait::normal10 | vertex_trait::tangent10 | vertex_trait::uv016;
-		case input_layout::PhNnTnUV0hCb: return vertex_trait::position16 | vertex_trait::normal10 | vertex_trait::tangent10 | vertex_trait::uv016 | vertex_trait::color08;
-
-		default: break;
-	}
-	return 0;
-}
-	} // namespace gpu
-} // namespace ouro
-
-using namespace ouro;
-
-static_assert(sizeof(ouro::gpu::vertex_range) == 16, "unexpected struct packing for vertex_range");
-static_assert(sizeof(fourcc) == 4, "unexpected struct packing for fourcc");
-static_assert(sizeof(ouro::resized_type<ouro::surface::format, short>) == 2, "unexpected struct packing for oResizedType<ouro::surface::format, short>");
-static_assert(sizeof(oGPU_VERTEX_ELEMENT) == 8, "unexpected struct packing for oGPU_VERTEX_ELEMENT");
-
-bool oGPUParseSemantic(const fourcc& _FourCC, char _Name[5], uint* _pIndex)
-{
-	*_pIndex = 0;
-	*_Name = 0;
-
-	char fcc[5];
-	to_string(fcc, _FourCC);
-	char* i = &fcc[3];
-	while (isspace(*i)) i--;
-	if (i == fcc)
-		return false;
-
-	while (isdigit(*i)) i--;
-	if (i == fcc)
-		return false;
-
-	i++;
-	*_pIndex = atoi(i);
-
-	// there can be no numbers or space before the semantic index
-	char* n = _Name;
-	char* f = fcc;
-	while (f < i)
-	{
-		if (isspace(*f) || isdigit(*f))
-			return false;
-		*n++ = *f++;
-	}
-
-	*n = 0;
-	return true;
+	return n;
 }
 
-uint oGPUCalcVertexSize(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements, uint _InputSlot)
+uint vertex_size(const vertex_layout::value& _Layout)
 {
-	bool IsFirstRun = true;
-	bool IsInstanceList = false;
-
-	uint size = 0;
-	for (uint i = 0; i < _NumElements; i++)
+	static uchar sSizes[] =
 	{
-		if (_InputSlot == _pElements[i].InputSlot)
+		0,
+		sizeof(float3),
+		sizeof(color),
+		sizeof(float3) + sizeof(color),
+		sizeof(float3) + sizeof(dec3n),
+		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n),
+		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n) + sizeof(half2),
+		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n) + sizeof(half4),
+		sizeof(float3) + sizeof(half2),
+		sizeof(float3) + sizeof(half4),
+		sizeof(half2),
+		sizeof(half4),
+		sizeof(half2) + sizeof(color),
+		sizeof(half4) + sizeof(color),
+	};
+	static_assert(oCOUNTOF(sSizes) == vertex_layout::count, "array mismatch");
+	return sSizes[_Layout];
+}
+
+buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices)
+{
+	buffer_info i;
+	i.type = buffer_type::index;
+	i.format = has_16bit_indices(_NumVertices) ? surface::r16_uint : surface::r32_uint;
+	i.array_size = _NumIndices;
+	i.struct_byte_size = static_cast<ushort>(surface::element_size(i.format));
+	return i;
+}
+
+buffer_info make_vertex_buffer_info(uint _NumVertices, const vertex_layout::value& _Layout)
+{
+	buffer_info i;
+	i.type = buffer_type::vertex;
+	i.array_size = _NumVertices;
+	i.struct_byte_size = static_cast<ushort>(vertex_size(_Layout));
+	i.format = surface::unknown;
+	return i;
+}
+
+void copy_indices(surface::mapped_subresource& _Destination, const surface::const_mapped_subresource& _Source, uint _NumIndices)
+{
+	if (_Destination.row_pitch == _Source.row_pitch)
+		memcpy(_Destination.data, _Source.data, _NumIndices * _Destination.row_pitch);
+	else if (_Destination.row_pitch == sizeof(uint) && _Source.row_pitch == sizeof(ushort))
+		memcpyustoui((uint*)_Destination.data, (const ushort*)_Source.data, _NumIndices);
+	else if (_Destination.row_pitch == sizeof(ushort) && _Source.row_pitch == sizeof(uint))
+		memcpyuitous((ushort*)_Destination.data, (const uint*)_Source.data, _NumIndices);
+	else
+		oTHROW_INVARG("bad strides");
+}
+
+template<typename DstT, typename SrcT>
+void copy_vertex_element(DstT* oRESTRICT _pDestination, uint _DestinationPitch, const SrcT* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+{
+	if (std::is_same<DstT, SrcT>::value)
+		memcpy2d(_pDestination, _DestinationPitch, _pSource, _SourcePitch, _SourcePitch, _NumVertices);
+	else
+	{
+		const DstT* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
+		while (_pDestination < end)
 		{
-			if (IsFirstRun)
-			{
-				IsInstanceList = _pElements[i].Instanced;
-				IsFirstRun = false;
-			}
-
-			else
-				oASSERT(IsInstanceList == _pElements[i].Instanced, "Elements in the same slot must either be all instanced or all not instanced.");
-
-			size += ouro::surface::element_size(_pElements[i].Format);
+			*_pDestination = *_pSource;
+			_pDestination = byte_add(_pDestination, _DestinationPitch);
+			_pSource = byte_add(_pSource, _SourcePitch);
 		}
 	}
-
-	return size;
 }
 
-uint oGPUCalcNumInputSlots(const oGPU_VERTEX_ELEMENT* _pElements, uint _NumElements)
+template<>
+void copy_vertex_element<half2, float3>(half2* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
 {
-	uchar nSlots = 0;
-
-	#ifdef _DEBUG
-		uint lastSlot = ouro::invalid;
-	#endif
-
-	for (uint i = 0; i < _NumElements; i++)
+	const half2* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
+	while (_pDestination < end)
 	{
-		nSlots = __max(nSlots, _pElements[i].InputSlot+1);
-
-		#ifdef _DEBUG
-			oASSERT(lastSlot == ouro::invalid 
-				|| lastSlot == _pElements[i].InputSlot 
-				|| lastSlot == static_cast<unsigned int>(_pElements[i].InputSlot - 1), "Non-packed elements");
-			lastSlot = _pElements[i].InputSlot;
-		#endif
+		_pDestination->x = _pSource->x;
+		_pDestination->y = _pSource->y;
+		_pDestination = byte_add(_pDestination, _DestinationPitch);
+		_pSource = byte_add(_pSource, _SourcePitch);
 	}
-
-	return nSlots;
 }
+
+#if 0
+template<>
+void copy_vertex_element<ushort4, float3>(ushort4* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+{
+	const ushort4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
+	while (_pDestination < end)
+	{
+		_pDestination->x = f32ton16(_pSource->x);
+		_pDestination->y = f32ton16(_pSource->y); 
+		_pDestination->z = f32ton16(_pSource->z);
+		_pDestination->w = 65535;//f32ton16(1.0f);
+		_pDestination = byte_add(_pDestination, _DestinationPitch);
+		_pSource = byte_add(_pSource, _SourcePitch);
+	}
+}
+
+template<>
+void copy_vertex_element<float3, ushort4>(float3* oRESTRICT _pDestination, uint _DestinationPitch, const ushort4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+{
+	const float3* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
+	while (_pDestination < end)
+	{
+		_pDestination->x = n16tof32(_pSource->x);
+		_pDestination->y = n16tof32(_pSource->y); 
+		_pDestination->z = n16tof32(_pSource->z);
+		_pDestination = byte_add(_pDestination, _DestinationPitch);
+		_pSource = byte_add(_pSource, _SourcePitch);
+	}
+}
+#endif
+template<>
+void copy_vertex_element<half4, float3>(half4* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+{
+	const half4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
+	while (_pDestination < end)
+	{
+		_pDestination->x = _pSource->x;
+		_pDestination->y = _pSource->y;
+		_pDestination->z = _pSource->z;
+		_pDestination->w = 0.0f;
+		_pDestination = byte_add(_pDestination, _DestinationPitch);
+		_pSource = byte_add(_pSource, _SourcePitch);
+	}
+}
+
+template<>
+void copy_vertex_element<float3, half4>(float3* oRESTRICT _pDestination, uint _DestinationPitch, const half4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+{
+	const float3* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
+	while (_pDestination < end)
+	{
+		_pDestination->x = _pSource->x;
+		_pDestination->y = _pSource->y;
+		_pDestination->z = _pSource->z;
+		_pDestination = byte_add(_pDestination, _DestinationPitch);
+		_pSource = byte_add(_pSource, _SourcePitch);
+	}
+}
+
+template<>
+void copy_vertex_element<half4, float4>(half4* oRESTRICT _pDestination, uint _DestinationPitch, const float4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+{
+	const half4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
+	while (_pDestination < end)
+	{
+		_pDestination->x = _pSource->x;
+		_pDestination->y = _pSource->y;
+		_pDestination->z = _pSource->z;
+		_pDestination->w = _pSource->w;
+		_pDestination = byte_add(_pDestination, _DestinationPitch);
+		_pSource = byte_add(_pSource, _SourcePitch);
+	}
+}
+
+template<>
+void copy_vertex_element<float4, half4>(float4* oRESTRICT _pDestination, uint _DestinationPitch, const half4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+{
+	const float4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
+	while (_pDestination < end)
+	{
+		_pDestination->x = _pSource->x;
+		_pDestination->y = _pSource->y;
+		_pDestination->z = _pSource->z;
+		_pDestination->w = _pSource->w;
+		_pDestination = byte_add(_pDestination, _DestinationPitch);
+		_pSource = byte_add(_pSource, _SourcePitch);
+	}
+}
+
+template<typename DstT, typename SrcT>
+static void copy_semantic(void* oRESTRICT & _pDestination, uint _DestinationPitch, const vertex_layout::value& _DestinationLayout
+	, const SrcT* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices
+	, bool (*has_element)(const vertex_layout::value& _Layout))
+{
+	if (has_element(_DestinationLayout))
+	{
+		if (_pSource)
+			copy_vertex_element<DstT, SrcT>((DstT*)_pDestination, _DestinationPitch, (SrcT*)_pSource, _SourcePitch, _NumVertices);
+		else
+			memset2d4(_pDestination, _DestinationPitch, 0, sizeof(DstT), _NumVertices);
+
+		_pDestination = byte_add(_pDestination, sizeof(DstT));
+	}
+}
+
+void copy_vertices(void* oRESTRICT _pDestination, const vertex_layout::value& _DestinationLayout, const vertex_source& _Source, uint _NumVertices)
+{
+	const uint DestinationPitch = vertex_size(_DestinationLayout);
+
+	copy_semantic<float3, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.positionsf, _Source.positionf_pitch, _NumVertices, has_positions);
+	
+	if (_Source.normals)
+		copy_semantic<dec3n, dec3n>(_pDestination, DestinationPitch, _DestinationLayout, _Source.normals, _Source.normal_pitch, _NumVertices, has_normals);
+	else
+		copy_semantic<dec3n, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.normalsf, _Source.normalf_pitch, _NumVertices, has_normals);
+	
+	if (_Source.tangents)
+		copy_semantic<dec3n, dec3n>(_pDestination, DestinationPitch, _DestinationLayout, _Source.tangents, _Source.tangent_pitch, _NumVertices, has_tangents);
+	else
+		copy_semantic<dec3n, float4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.tangentsf, _Source.tangentf_pitch, _NumVertices, has_tangents);
+	
+	const int src_uv0s = (_Source.uv0s || _Source.uv0sf) ? 1 : 0;
+	const int src_uvw0s = (_Source.uvw0sf) ? 1 : 0;
+	const int src_uvwx0s = (_Source.uvwx0s || _Source.uvwx0sf) ? 1 : 0;
+
+	oCHECK((src_uv0s + src_uvw0s + src_uvwx0s) == 1, "only one of uv0 uvw0 or uvwx0's can be specified");
+
+	if (_Source.uv0s)
+		copy_semantic<half2, half2>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uv0s, _Source.uv0_pitch, _NumVertices, has_uv0s);
+	else if (!has_uvwx0s(_DestinationLayout) && _Source.uvw0sf)
+		copy_semantic<half2, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvw0sf, _Source.uvw0f_pitch, _NumVertices, has_uv0s);
+	else 
+		copy_semantic<half2, float2>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uv0sf, _Source.uv0f_pitch, _NumVertices, has_uv0s);
+
+	if (_Source.uvwx0s)
+		copy_semantic<half4, half4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvwx0s, _Source.uvwx0_pitch, _NumVertices, has_uvwx0s);
+	else if (_Source.uvwx0sf)
+		copy_semantic<half4, float4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvwx0sf, _Source.uvwx0f_pitch, _NumVertices, has_uvwx0s);
+	else
+		copy_semantic<half4, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvw0sf, _Source.uvw0f_pitch, _NumVertices, has_uvwx0s);
+
+	if (_Source.colors)
+		copy_semantic<color, color>(_pDestination, DestinationPitch, _DestinationLayout, _Source.colors, _Source.color_pitch, _NumVertices, has_colors);
+}
+
+	} // namespace gpu
+} // namespace ouro

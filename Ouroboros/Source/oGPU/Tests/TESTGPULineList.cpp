@@ -54,11 +54,8 @@ public:
 	{
 		PrimaryRenderTarget->SetClearColor(AlmostBlack);
 
-		oGPUPipeline::DESC pld;
-		if (!oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR, &pld))
-			return false;
-
-		if (!Device->CreatePipeline(pld.DebugName, pld, &Pipeline))
+		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR);
+		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
 			return false;
 
 		gpu::buffer_info i;

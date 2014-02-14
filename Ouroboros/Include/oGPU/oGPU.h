@@ -80,6 +80,8 @@ interface oGPUBuffer : oGPUResource
 {
 	typedef ouro::gpu::buffer_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	virtual DESC get_info() const { DESC d; GetDesc(&d); return d; }
 };
 
 // {19374525-0CC8-445B-80ED-A6D2FF13362C}
@@ -91,6 +93,8 @@ interface oGPUTexture : oGPUResource
 
 	typedef ouro::gpu::texture_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	virtual DESC get_info() const { DESC d; GetDesc(&d); return d; }
 };
 
 // {E7F8FD41-737A-4AC5-A3C0-EB04876C6071}
@@ -101,6 +105,8 @@ interface oGPURenderTarget : oGPUDeviceChild
 
 	typedef ouro::gpu::render_target_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	virtual DESC get_info() const { DESC d; GetDesc(&d); return d; }
 
 	// Modifies the values for clearing without modifying other topology
 	virtual void SetClearDesc(const ouro::gpu::clear_info& _ClearInfo) threadsafe = 0;
@@ -140,8 +146,10 @@ interface oGPUPipeline : oGPUDeviceChild
 	// A pipeline is the result of setting all stages of the programmable pipeline 
 	// (all shaders) and the vertex input format to that pipeline.
 
-	typedef oGPU_PIPELINE_DESC DESC;
+	typedef ouro::gpu::pipeline_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	virtual DESC get_info() const { DESC d; GetDesc(&d); return d; }
 };
 
 // {F095BC1F-872D-4F5E-B962-D91206DD154A}
@@ -152,8 +160,10 @@ interface oGPUComputeShader : oGPUDeviceChild
 	// path that ignores fixed-function rasterization stages and exposes more 
 	// general-purpose components.
 
-	typedef oGPU_COMPUTE_SHADER_DESC DESC;
+	typedef ouro::gpu::compute_kernel DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	virtual DESC get_info() const { DESC d; GetDesc(&d); return d; }
 };
 
 // {5408DEEA-6A3B-4FFD-B55A-65C340D55A99}
@@ -162,6 +172,8 @@ interface oGPUQuery : oGPUDeviceChild
 {
 	typedef ouro::gpu::query_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	virtual DESC get_info() const { DESC d; GetDesc(&d); return d; }
 };
 
 // {272A9B3E-64BC-4D20-845E-D4EE3F0ED890}
@@ -174,6 +186,8 @@ interface oGPUCommandList : oGPUDeviceChild
 
 	typedef ouro::gpu::command_list_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	virtual DESC get_info() const { DESC d; GetDesc(&d); return d; }
 
 	// Begins recording of GPU command submissions. All rendering for this context 
 	// should occur between Begin() and End().
@@ -266,12 +280,12 @@ interface oGPUCommandList : oGPUDeviceChild
 	template<size_t size> inline void SetBuffers(int _StartSlot, const oGPUBuffer* const (&_ppBuffers)[size]) { SetBuffers(_StartSlot, size, _ppBuffers); }
 	inline void SetBuffers(int _StartSlot, const oGPUBuffer* _pBuffer) { SetBuffers(_StartSlot, 1, (const oGPUBuffer* const *)&_pBuffer); }
 
-	// Sets the render target to which rendering will occur. By default, a single
-	// full-target viewport is created, else it can be overridden. A viewport is 
+	// Sets the render target to which rendering will occur. By default a single
+	// full-target viewport is created else it can be overridden. A viewport is 
 	// a 3D box whose minimum is at the top, left, near corner of the viewable 
 	// frustum, and whose maximum is at the bottom, right, far corner of the 
 	// viewable frustum. A full-target viewport would most often be: 
-	// oAABoxf(float3(0.0f), float3(RTWidth, RTHeight, 1.0f)). In addition this
+	// boundf(float3(0.0f), float3(RTWidth, RTHeight, 1.0f)). In addition this
 	// also sets up unordered resources resetting any counters according to values 
 	// in the _pInitialCounts array, which should be the same count as the number 
 	// of unordered resources being bound. This API can also bound unordered 
@@ -283,9 +297,9 @@ interface oGPUCommandList : oGPUDeviceChild
 	// must be specified. If _NumUnorderedResources is ouro::invalid, all slots after 
 	// the render target's MRTs are cleared. See SetRnederTarget() as an example 
 	// of setting the RT while clearing unordered targets).
-	virtual void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) = 0;
-	inline void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUBuffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, _NumUnorderedResources, (oGPUResource**)_ppUnorderedResources, _pInitialCounts); }
-	template<uint size> inline void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, oGPUResource* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
+	virtual void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const ouro::boundf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) = 0;
+	inline void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const ouro::boundf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUBuffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, _NumUnorderedResources, (oGPUResource**)_ppUnorderedResources, _pInitialCounts); }
+	template<uint size> inline void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const ouro::boundf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, oGPUResource* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
 	inline void SetUnorderedResources(int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, _NumUnorderedResources, _ppUnorderedResources, _pInitialCounts); }
 	template<uint size> inline void SetUnorderedResources(int _UnorderedResourcesStartSlot, oGPUResource* (&_ppUnorderedResources)[size]) { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources); }
 	template<uint size> inline void SetUnorderedResources(int _UnorderedResourcesStartSlot, oGPUResource* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
@@ -295,7 +309,7 @@ interface oGPUCommandList : oGPUDeviceChild
 	// will be used as shader resources, which conflicts with being a target. If
 	// this is not the desired behavior, use the above more explicit/complicated 
 	// version.
-	inline void SetRenderTarget(oGPURenderTarget* _pRenderTarget, int _NumViewports = 0, const oAABoxf* _pViewports = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, false, ouro::invalid, ouro::invalid, (oGPUResource**)nullptr); }
+	inline void SetRenderTarget(oGPURenderTarget* _pRenderTarget, int _NumViewports = 0, const ouro::boundf* _pViewports = nullptr) { SetRenderTargetAndUnorderedResources(_pRenderTarget, _NumViewports, _pViewports, false, ouro::invalid, ouro::invalid, (oGPUResource**)nullptr); }
 
 	inline void ClearRenderTargetAndUnorderedResources() { SetRenderTargetAndUnorderedResources(nullptr, 0, nullptr, false, 0, ouro::gpu::max_num_unordered_buffers, (oGPUResource**)nullptr); }
 
@@ -380,6 +394,8 @@ interface oGPUDevice : oInterface
 	
 	typedef ouro::gpu::device_info DESC;
 	virtual void GetDesc(DESC* _pDesc) const threadsafe = 0;
+
+	virtual DESC get_info() const { DESC d; GetDesc(&d); return d; }
 	
 	virtual const char* GetName() const threadsafe = 0;
 	virtual uint GetFrameID() threadsafe const = 0;
@@ -404,6 +420,27 @@ interface oGPUDevice : oInterface
 	virtual bool CreateRenderTarget(const char* _Name, const oGPURenderTarget::DESC& _Desc, oGPURenderTarget** _ppRenderTarget) = 0;
 	virtual bool CreateBuffer(const char* _Name, const oGPUBuffer::DESC& _Desc, oGPUBuffer** _ppBuffer) = 0;
 	virtual bool CreateTexture(const char* _Name, const oGPUTexture::DESC& _Desc, oGPUTexture** _ppTexture) = 0;
+
+	//virtual bool make_command_list(const char* _Name, const oGPUCommandList::DESC& _Desc, oGPUCommandList** _ppCommandList) = 0;
+	//virtual bool make_pipeline(const char* _Name, const oGPUPipeline::DESC& _Desc, oGPUPipeline** _ppPipeline) = 0;
+	//virtual bool make_compute_kernel(const char* _Name, const oGPUComputeShader::DESC& _Desc, oGPUComputeShader** _ppComputeShader) = 0;
+	//virtual bool make_query(const char* _Name, const oGPUQuery::DESC&, oGPUQuery** _ppQuery) = 0;
+	//virtual bool make_render_target(const char* _Name, const oGPURenderTarget::DESC& _Desc, oGPURenderTarget** _ppRenderTarget) = 0;
+	inline ouro::intrusive_ptr<oGPUBuffer> make_buffer(const char* _Name, const ouro::gpu::buffer_info& _Info)
+	{
+		ouro::intrusive_ptr<oGPUBuffer> b;
+		if (!CreateBuffer(_Name, _Info, &b))
+			oThrowLastError();
+		return b;
+	}
+
+	inline ouro::intrusive_ptr<oGPUTexture> make_texture(const char* _Name, const ouro::gpu::texture_info& _Info)
+	{
+		ouro::intrusive_ptr<oGPUTexture> t;
+		if (!CreateTexture(_Name, _Info, &t))
+			oThrowLastError();
+		return t;
+	}
 
 	// MapRead is a non-blocking call to read from the specified resource by the
 	// mapped data populated in the specified _pMappedSubresource. If the function
@@ -437,12 +474,12 @@ interface oGPUDevice : oInterface
 	virtual bool Present(int _SyncInterval) = 0;
 };
 
-oAPI bool oGPUDeviceCreate(const ouro::gpu::device_init& _Init, oGPUDevice** _ppDevice);
+bool oGPUDeviceCreate(const ouro::gpu::device_init& _Init, oGPUDevice** _ppDevice);
 
 // Compiles a shader to its driver-specific bytecode. To make parsing easy, 
 // there are two lists of defines that can be specified. These are concatenated
 // internally.
-oAPI bool oGPUCompileShader(
+bool oGPUCompileShader(
 	const char* _IncludePaths // semi-colon delimited list of paths to look in. 
 	                          // Use %DEV% for oSYSPATH_DEV
 	, const char* _CommonDefines // semi-colon delimited list of symbols (= value) 
@@ -473,7 +510,7 @@ oAPI bool oGPUCompileShader(
 // conversion functions at the moment. Check debug logs if this function seems
 // to hang because if for whatever reason the CPU/SW version of the BC6H/7
 // codec is used, it can take a VERY long time.
-oAPI bool oGPUSurfaceConvert(
+bool oGPUSurfaceConvert(
 	void* oRESTRICT _pDestination
 	, uint _DestinationRowPitch
 	, ouro::surface::format _DestinationFormat
@@ -483,7 +520,7 @@ oAPI bool oGPUSurfaceConvert(
 	, const int2& _MipDimensions);
 
 // Extract the parameters for the above call directly from textures
-oAPI bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format _NewFormat, oGPUTexture** _ppDestinationTexture);
+bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format _NewFormat, oGPUTexture** _ppDestinationTexture);
 
 // Loads a texture from disk. The _Desc specifies certain conversions/resizes
 // that can occur on load. Use 0 or ouro::surface::unknown to use values as 
@@ -494,8 +531,8 @@ oAPI bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format
 // DirectX's .dds support for advanced formats like BC6 and BC7 as well as their
 // internal conversion library. When it's time to go cross-platform, we'll 
 // revisit this and hopefully call more generic code.
-oAPI bool oGPUTextureLoad(oGPUDevice* _pDevice, const ouro::gpu::texture_info& _Info, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture);
-oAPI bool oGPUTextureLoad(oGPUDevice* _pDevice, const ouro::gpu::texture_info& _Info, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture);
+bool oGPUTextureLoad(oGPUDevice* _pDevice, const ouro::gpu::texture_info& _Info, const char* _URIReference, const char* _DebugName, oGPUTexture** _ppTexture);
+bool oGPUTextureLoad(oGPUDevice* _pDevice, const ouro::gpu::texture_info& _Info, const char* _DebugName, const void* _pBuffer, size_t _SizeofBuffer, oGPUTexture** _ppTexture);
 
 enum oGPU_FILE_FORMAT
 {
@@ -508,7 +545,7 @@ enum oGPU_FILE_FORMAT
 // the texture. If the specified format does not support the contents of the 
 // texture the function will return false - check oErrorGetLast() for extended
 // information.
-oAPI bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
-oAPI bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, const char* _Path);
+bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer);
+bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, const char* _Path);
 
 #endif

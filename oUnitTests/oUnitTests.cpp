@@ -453,7 +453,6 @@ bool EnsureOneInstanceIsRunning(bool _Prompt)
 int main(int argc, const char* argv[])
 {
 	reporting::set_prompter(prompt_msgbox);
-
 	InitEnv();
 
 	PARAMETERS parameters;

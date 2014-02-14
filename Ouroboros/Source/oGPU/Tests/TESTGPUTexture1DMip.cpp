@@ -39,8 +39,7 @@ struct GPU_Texture1DMip_App : public oGPUTextureTestApp
 	{
 		auto image = make_1D(512);
 		auto* i = image.get();
-		if (!oGPUCreateTexture(Device, &i, 1, ouro::gpu::texture_type::mipped_1d, &Texture))
-			return false;
+		Texture = ouro::gpu::make_texture(Device, "Test 1D mipped", &i, 1, ouro::gpu::texture_type::mipped_1d);
 		return true;
 	}
 

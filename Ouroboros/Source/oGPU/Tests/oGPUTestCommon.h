@@ -29,6 +29,7 @@
 #include <oPlatform/oTest.h>
 #include <oBase/future.h>
 #include <oGPU/oGPUUtil.h>
+#include <oGPU/oGPUUtilMesh.h>
 #include "oGPUTestPipelines.h"
 #include "oGPUTestHLSL.h"
 #include <oSurface/codec.h>
@@ -116,7 +117,7 @@ public:
 protected:
 	ouro::intrusive_ptr<oGPUPipeline> Pipeline;
 	ouro::intrusive_ptr<oGPUTexture> Texture;
-	ouro::intrusive_ptr<oGPUUtilMesh> Mesh;
+	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
 	ouro::intrusive_ptr<oGPUBuffer> TestConstants;
 
 	static const int sSnapshotFrames[2];

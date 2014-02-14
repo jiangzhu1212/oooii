@@ -46,7 +46,7 @@ float4 PSTestColor(VSOUT In) : SV_Target
 	return In.Color;
 }
 
-VSOUT VSTestPassThroughColor(float3 LSPosition : POS0, float4 Color : CLR0)
+VSOUT VSTestPassThroughColor(float3 LSPosition : POSITION, float4 Color : COLOR)
 {
 	VSOUT Out = (VSOUT)0;
 	Out.SSPosition = float4(LSPosition,1);
@@ -54,14 +54,14 @@ VSOUT VSTestPassThroughColor(float3 LSPosition : POS0, float4 Color : CLR0)
 	return Out;
 }
 
-VSOUT VSTestPassThrough(float3 LSPosition : POS0)
+VSOUT VSTestPassThrough(float3 LSPosition : POSITION)
 {
 	VSOUT Out = (VSOUT)0;
 	Out.SSPosition = float4(LSPosition,1);
 	return Out;
 }
 	
-VSOUT VSTestTexture1D(float3 LSPosition : POS0, float Texcoord : TEX0)
+VSOUT VSTestTexture1D(float3 LSPosition : POSITION, float Texcoord : TEXCOORD)
 {
 	return CommonVS(LSPosition, float3(Texcoord, 0, 0));
 }
@@ -74,7 +74,7 @@ float4 PSTestTexture1D(VSOUT In) : SV_Target
 	return Diffuse1D.Sample(Bilin, In.Texcoord.x);
 }
 
-VSOUT VSTestTexture2D(float3 LSPosition : POS0, float2 Texcoord : TEX0)
+VSOUT VSTestTexture2D(float3 LSPosition : POSITION, float2 Texcoord : TEXCOORD)
 {
 	return CommonVS(LSPosition, float3(Texcoord, 0));
 }
@@ -86,7 +86,7 @@ float4 PSTestTexture2D(VSOUT In) : SV_Target
 	return Diffuse2D.Sample(Bilin, In.Texcoord.xy);
 }
 
-VSOUT VSTestTexture3D(float3 LSPosition : POS0, float3 Texcoord : TEX0)
+VSOUT VSTestTexture3D(float3 LSPosition : POSITION, float3 Texcoord : TEXCOORD)
 {
 	return CommonVS(LSPosition, Texcoord);
 }
@@ -98,7 +98,7 @@ float4 PSTestTexture3D(VSOUT In) : SV_Target
 	return Diffuse3D.Sample(Bilin, In.Texcoord);
 }
 
-VSOUT VSTestTextureCube(float3 LSPosition : POS0, float3 Texcoord : TEX0)
+VSOUT VSTestTextureCube(float3 LSPosition : POSITION, float3 Texcoord : TEXCOORD)
 {
 	return CommonVS(LSPosition, LSPosition);
 }
@@ -110,12 +110,12 @@ float4 PSTestTextureCube(VSOUT In) : SV_Target
 	return DiffuseCube.Sample(Bilin, In.Texcoord);
 }
 
-VSOUT VSTestWhiteInstanced(VSININSTANCED In)
+VSOUT VSTestWhiteInstanced(float3 LSPosition : POSITION, uint Index : SV_InstanceID)
 {
-	return CommonVS(In);
+	return CommonVS(LSPosition, Index);
 }
 
-VSOUT VSTestWhite(float3 LSPosition : POS0)
+VSOUT VSTestWhite(float3 LSPosition : POSITION)
 {
 	return CommonVS(LSPosition, oZERO3);
 }

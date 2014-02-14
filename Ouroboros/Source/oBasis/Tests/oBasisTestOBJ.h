@@ -50,6 +50,6 @@ enum oBASIS_TEST_OBJ
 };
 
 // Returns a pointer to a singleton instance. Do not delete the pointer.
-oAPI bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ);
+bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ);
 
 #endif

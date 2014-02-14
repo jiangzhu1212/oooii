@@ -31,6 +31,8 @@
 #ifndef oGfxPipelines_h
 #define oGfxPipelines_h
 
+#include <oBasis/oGPUConcepts.h>
+
 enum oGFX_PIPELINE
 {
 	// POINTS
@@ -103,6 +105,6 @@ enum oGFX_PIPELINE
 	oGFX_PIPELINE_RIGID_HERO,
 };
 
-oAPI bool oGfxGetPipeline(oGFX_PIPELINE _Pipeline, oGPU_PIPELINE_DESC* _pDesc);
+ouro::gpu::pipeline_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline);
 
 #endif

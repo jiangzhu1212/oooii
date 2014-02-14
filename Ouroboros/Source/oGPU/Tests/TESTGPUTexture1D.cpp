@@ -39,7 +39,8 @@ struct GPU_Texture1D_App : public oGPUTextureTestApp
 	{
 		auto image = make_1D(512);
 		auto* i = image.get();
-		return oGPUCreateTexture(Device, &i, 1, ouro::gpu::texture_type::default_1d, &Texture);
+		Texture = ouro::gpu::make_texture(Device, "Test 1D", &i, 1, ouro::gpu::texture_type::default_1d);
+		return true;
 	}
 };
 
