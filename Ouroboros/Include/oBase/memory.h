@@ -65,17 +65,6 @@ bool memcmp4(const void* _pMemory, long _Value, size_t _NumBytes);
 void* memmem(void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _SizeofFind);
 inline const void* memmem(const void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _SizeofFind) { return memmem(const_cast<void*>(_pBuffer), _SizeofBuffer, _pFind, _SizeofFind); }
 
-// Copies 32-bit values to 16-bit values (useful when working with graphics 
-// index buffers). Remember, _NumElements is count of unsigned ints in _pSource 
-// and _pDestination has been pre-allocated to take at least the same number of 
-// unsigned shorts.
-void memcpyuitous(unsigned short* _pDestination, const unsigned int* _pSource, size_t _NumElements);
-
-// Reverse of memcpyuitous. Remember, _NumElements is count of unsigned shorts
-// in _pSource and _pDestination has been pre-allocated to take at least the
-// same number of unsigned ints.
-void memcpyustoui(unsigned int* _pDestination, const unsigned short* _pSource, size_t _NumElements);
-
 // _____________________________________________________________________________
 // 2D copies for copying image data, stuff that's easier to conceptualize as 2D 
 // rather than 1D.

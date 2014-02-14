@@ -30,8 +30,6 @@
 
 namespace ouro {
 
-static_assert(sizeof(gpu::vertex_range) == 16, "unexpected struct packing for vertex_range");
-static_assert(sizeof(fourcc) == 4, "unexpected struct packing for fourcc");
 static_assert(sizeof(surface::format) == 1, "unexpected size");
 
 const char* as_string(const gpu::api::value& _Value)
@@ -85,75 +83,6 @@ const char* as_string(const gpu::cube_face::value& _Value)
 
 STR_SUPPORT(gpu::cube_face::value, gpu::cube_face::count);
 
-const char* as_string(const gpu::primitive_type::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::primitive_type::unknown: return "unknown";
-		case gpu::primitive_type::points: return "points";
-		case gpu::primitive_type::lines: return "lines";
-		case gpu::primitive_type::line_strips: return "line_strips";
-		case gpu::primitive_type::triangles: return "triangles";
-		case gpu::primitive_type::triangle_strips: return "triangle_strips";
-		case gpu::primitive_type::lines_adjacency: return "lines_adjacency";
-		case gpu::primitive_type::line_strips_adjacency: return "line_strips_adjacency";
-		case gpu::primitive_type::triangles_adjacency: return "triangles_adjacency";
-		case gpu::primitive_type::triangle_strips_adjacency: return "triangle_strips_adjacency";
-		case gpu::primitive_type::patches1: return "patches1";
-		case gpu::primitive_type::patches2: return "patches2";
-		case gpu::primitive_type::patches3: return "patches3";
-		case gpu::primitive_type::patches4: return "patches4";
-		case gpu::primitive_type::patches5: return "patches5";
-		case gpu::primitive_type::patches6: return "patches6";
-		case gpu::primitive_type::patches7: return "patches7";
-		case gpu::primitive_type::patches8: return "patches8";
-		case gpu::primitive_type::patches9: return "patches9";
-		case gpu::primitive_type::patches10: return "patches10";
-		case gpu::primitive_type::patches11: return "patches11";
-		case gpu::primitive_type::patches12: return "patches12";
-		case gpu::primitive_type::patches13: return "patches13";
-		case gpu::primitive_type::patches14: return "patches14";
-		case gpu::primitive_type::patches15: return "patches15";
-		case gpu::primitive_type::patches16: return "patches16";
-		case gpu::primitive_type::patches17: return "patches17";
-		case gpu::primitive_type::patches18: return "patches18";
-		case gpu::primitive_type::patches19: return "patches19";
-		case gpu::primitive_type::patches20: return "patches20";
-		case gpu::primitive_type::patches21: return "patches21";
-		case gpu::primitive_type::patches22: return "patches22";
-		case gpu::primitive_type::patches23: return "patches23";
-		case gpu::primitive_type::patches24: return "patches24";
-		case gpu::primitive_type::patches25: return "patches25";
-		case gpu::primitive_type::patches26: return "patches26";
-		case gpu::primitive_type::patches27: return "patches27";
-		case gpu::primitive_type::patches28: return "patches28";
-		case gpu::primitive_type::patches29: return "patches29";
-		case gpu::primitive_type::patches30: return "patches30";
-		case gpu::primitive_type::patches31: return "patches31";
-		case gpu::primitive_type::patches32: return "patches32";
-
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(gpu::primitive_type::value, gpu::primitive_type::count);
-
-const char* as_string(const gpu::face_type::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::face_type::unknown: return "unknown";
-		case gpu::face_type::front_ccw: return "front_ccw";
-		case gpu::face_type::front_cw: return "front_cw";
-		case gpu::face_type::outline: return "outline";
-		default: break;
-	}
-	return "?";
-}
-		
-STR_SUPPORT(gpu::face_type::value, gpu::face_type::count);
-		
 const char* as_string(const gpu::resource_type::value& _Value)
 {
 	switch (_Value)
@@ -430,307 +359,26 @@ const char* as_string(const gpu::clear_type::value& _Value)
 
 STR_SUPPORT(gpu::clear_type::value, gpu::clear_type::count);
 
-const char* as_string(const gpu::vertex_semantic::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::vertex_semantic::position: return "position";
-		case gpu::vertex_semantic::normal: return "normal";
-		case gpu::vertex_semantic::tangent: return "tangent";
-		case gpu::vertex_semantic::texcoord: return "texcoord";
-		case gpu::vertex_semantic::color: return "color";
-		default: break;
-	}
-	return "?";
-}
-	
-STR_SUPPORT(gpu::vertex_semantic::value, gpu::vertex_semantic::count);
-
-const char* as_string(const gpu::vertex_layout::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::vertex_layout::none: return "none";
-		case gpu::vertex_layout::pos: return "pos";
-		case gpu::vertex_layout::color: return "color";
-		case gpu::vertex_layout::pos_color: return "pos_color";
-		case gpu::vertex_layout::pos_nrm: return "pos_nrm";
-		case gpu::vertex_layout::pos_nrm_tan: return "pos_nrm_tan";
-		case gpu::vertex_layout::pos_nrm_tan_uv0: return "pos_nrm_tan_uv0";
-		case gpu::vertex_layout::pos_nrm_tan_uvwx0: return "pos_nrm_tan_uvwx0";
-		case gpu::vertex_layout::pos_uv0: return "pos_uv0";
-		case gpu::vertex_layout::pos_uvwx0: return "pos_uvwx0";
-		case gpu::vertex_layout::uv0: return "uv0";
-		case gpu::vertex_layout::uvwx0: return "uvwx0";
-		case gpu::vertex_layout::uv0_color: return "uv0_color";
-		case gpu::vertex_layout::uvwx0_color: return "uvwx0_color";
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(gpu::vertex_layout::value, gpu::vertex_layout::count);
-
-const char* as_string(const gpu::vertex_usage::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::vertex_usage::dynamic_vertices: return "dynamic_vertices";
-		case gpu::vertex_usage::static_vertices: return "static_vertices";
-		case gpu::vertex_usage::per_instance_vertices: return "per_instance_vertices";
-		default: break;
-	}
-	return "?";
-}
-
-oDEFINE_TO_STRING(gpu::vertex_usage::value);
-
 namespace gpu {
-
-uint num_primitives(const primitive_type::value& _PrimitiveType, uint _NumIndices, uint _NumVertices)
-{
-	uint n = _NumIndices;
-	switch (_PrimitiveType)
-	{
-		case primitive_type::points: n = _NumVertices; break;
-		case primitive_type::lines: n /= 2; break;
-		case primitive_type::line_strips: n--; break;
-		case primitive_type::triangles: n /= 3; break;
-		case primitive_type::triangle_strips: n -= 2; break;
-		default: oTHROW_INVARG("unsupported primitive type");
-	}
-	
-	return n;
-}
-
-uint vertex_size(const vertex_layout::value& _Layout)
-{
-	static uchar sSizes[] =
-	{
-		0,
-		sizeof(float3),
-		sizeof(color),
-		sizeof(float3) + sizeof(color),
-		sizeof(float3) + sizeof(dec3n),
-		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n),
-		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n) + sizeof(half2),
-		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n) + sizeof(half4),
-		sizeof(float3) + sizeof(half2),
-		sizeof(float3) + sizeof(half4),
-		sizeof(half2),
-		sizeof(half4),
-		sizeof(half2) + sizeof(color),
-		sizeof(half4) + sizeof(color),
-	};
-	static_assert(oCOUNTOF(sSizes) == vertex_layout::count, "array mismatch");
-	return sSizes[_Layout];
-}
 
 buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices)
 {
 	buffer_info i;
 	i.type = buffer_type::index;
-	i.format = has_16bit_indices(_NumVertices) ? surface::r16_uint : surface::r32_uint;
+	i.format = mesh::has_16bit_indices(_NumVertices) ? surface::r16_uint : surface::r32_uint;
 	i.array_size = _NumIndices;
 	i.struct_byte_size = static_cast<ushort>(surface::element_size(i.format));
 	return i;
 }
 
-buffer_info make_vertex_buffer_info(uint _NumVertices, const vertex_layout::value& _Layout)
+buffer_info make_vertex_buffer_info(uint _NumVertices, const mesh::layout::value& _Layout)
 {
 	buffer_info i;
 	i.type = buffer_type::vertex;
 	i.array_size = _NumVertices;
-	i.struct_byte_size = static_cast<ushort>(vertex_size(_Layout));
+	i.struct_byte_size = static_cast<ushort>(mesh::vertex_size(_Layout));
 	i.format = surface::unknown;
 	return i;
-}
-
-void copy_indices(surface::mapped_subresource& _Destination, const surface::const_mapped_subresource& _Source, uint _NumIndices)
-{
-	if (_Destination.row_pitch == _Source.row_pitch)
-		memcpy(_Destination.data, _Source.data, _NumIndices * _Destination.row_pitch);
-	else if (_Destination.row_pitch == sizeof(uint) && _Source.row_pitch == sizeof(ushort))
-		memcpyustoui((uint*)_Destination.data, (const ushort*)_Source.data, _NumIndices);
-	else if (_Destination.row_pitch == sizeof(ushort) && _Source.row_pitch == sizeof(uint))
-		memcpyuitous((ushort*)_Destination.data, (const uint*)_Source.data, _NumIndices);
-	else
-		oTHROW_INVARG("bad strides");
-}
-
-template<typename DstT, typename SrcT>
-void copy_vertex_element(DstT* oRESTRICT _pDestination, uint _DestinationPitch, const SrcT* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
-{
-	if (std::is_same<DstT, SrcT>::value)
-		memcpy2d(_pDestination, _DestinationPitch, _pSource, _SourcePitch, _SourcePitch, _NumVertices);
-	else
-	{
-		const DstT* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-		while (_pDestination < end)
-		{
-			*_pDestination = *_pSource;
-			_pDestination = byte_add(_pDestination, _DestinationPitch);
-			_pSource = byte_add(_pSource, _SourcePitch);
-		}
-	}
-}
-
-template<>
-void copy_vertex_element<half2, float3>(half2* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
-{
-	const half2* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
-	{
-		_pDestination->x = _pSource->x;
-		_pDestination->y = _pSource->y;
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
-	}
-}
-
-#if 0
-template<>
-void copy_vertex_element<ushort4, float3>(ushort4* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
-{
-	const ushort4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
-	{
-		_pDestination->x = f32ton16(_pSource->x);
-		_pDestination->y = f32ton16(_pSource->y); 
-		_pDestination->z = f32ton16(_pSource->z);
-		_pDestination->w = 65535;//f32ton16(1.0f);
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
-	}
-}
-
-template<>
-void copy_vertex_element<float3, ushort4>(float3* oRESTRICT _pDestination, uint _DestinationPitch, const ushort4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
-{
-	const float3* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
-	{
-		_pDestination->x = n16tof32(_pSource->x);
-		_pDestination->y = n16tof32(_pSource->y); 
-		_pDestination->z = n16tof32(_pSource->z);
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
-	}
-}
-#endif
-template<>
-void copy_vertex_element<half4, float3>(half4* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
-{
-	const half4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
-	{
-		_pDestination->x = _pSource->x;
-		_pDestination->y = _pSource->y;
-		_pDestination->z = _pSource->z;
-		_pDestination->w = 0.0f;
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
-	}
-}
-
-template<>
-void copy_vertex_element<float3, half4>(float3* oRESTRICT _pDestination, uint _DestinationPitch, const half4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
-{
-	const float3* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
-	{
-		_pDestination->x = _pSource->x;
-		_pDestination->y = _pSource->y;
-		_pDestination->z = _pSource->z;
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
-	}
-}
-
-template<>
-void copy_vertex_element<half4, float4>(half4* oRESTRICT _pDestination, uint _DestinationPitch, const float4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
-{
-	const half4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
-	{
-		_pDestination->x = _pSource->x;
-		_pDestination->y = _pSource->y;
-		_pDestination->z = _pSource->z;
-		_pDestination->w = _pSource->w;
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
-	}
-}
-
-template<>
-void copy_vertex_element<float4, half4>(float4* oRESTRICT _pDestination, uint _DestinationPitch, const half4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
-{
-	const float4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
-	{
-		_pDestination->x = _pSource->x;
-		_pDestination->y = _pSource->y;
-		_pDestination->z = _pSource->z;
-		_pDestination->w = _pSource->w;
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
-	}
-}
-
-template<typename DstT, typename SrcT>
-static void copy_semantic(void* oRESTRICT & _pDestination, uint _DestinationPitch, const vertex_layout::value& _DestinationLayout
-	, const SrcT* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices
-	, bool (*has_element)(const vertex_layout::value& _Layout))
-{
-	if (has_element(_DestinationLayout))
-	{
-		if (_pSource)
-			copy_vertex_element<DstT, SrcT>((DstT*)_pDestination, _DestinationPitch, (SrcT*)_pSource, _SourcePitch, _NumVertices);
-		else
-			memset2d4(_pDestination, _DestinationPitch, 0, sizeof(DstT), _NumVertices);
-
-		_pDestination = byte_add(_pDestination, sizeof(DstT));
-	}
-}
-
-void copy_vertices(void* oRESTRICT _pDestination, const vertex_layout::value& _DestinationLayout, const vertex_source& _Source, uint _NumVertices)
-{
-	const uint DestinationPitch = vertex_size(_DestinationLayout);
-
-	copy_semantic<float3, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.positionsf, _Source.positionf_pitch, _NumVertices, has_positions);
-	
-	if (_Source.normals)
-		copy_semantic<dec3n, dec3n>(_pDestination, DestinationPitch, _DestinationLayout, _Source.normals, _Source.normal_pitch, _NumVertices, has_normals);
-	else
-		copy_semantic<dec3n, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.normalsf, _Source.normalf_pitch, _NumVertices, has_normals);
-	
-	if (_Source.tangents)
-		copy_semantic<dec3n, dec3n>(_pDestination, DestinationPitch, _DestinationLayout, _Source.tangents, _Source.tangent_pitch, _NumVertices, has_tangents);
-	else
-		copy_semantic<dec3n, float4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.tangentsf, _Source.tangentf_pitch, _NumVertices, has_tangents);
-	
-	const int src_uv0s = (_Source.uv0s || _Source.uv0sf) ? 1 : 0;
-	const int src_uvw0s = (_Source.uvw0sf) ? 1 : 0;
-	const int src_uvwx0s = (_Source.uvwx0s || _Source.uvwx0sf) ? 1 : 0;
-
-	oCHECK((src_uv0s + src_uvw0s + src_uvwx0s) == 1, "only one of uv0 uvw0 or uvwx0's can be specified");
-
-	if (_Source.uv0s)
-		copy_semantic<half2, half2>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uv0s, _Source.uv0_pitch, _NumVertices, has_uv0s);
-	else if (!has_uvwx0s(_DestinationLayout) && _Source.uvw0sf)
-		copy_semantic<half2, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvw0sf, _Source.uvw0f_pitch, _NumVertices, has_uv0s);
-	else 
-		copy_semantic<half2, float2>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uv0sf, _Source.uv0f_pitch, _NumVertices, has_uv0s);
-
-	if (_Source.uvwx0s)
-		copy_semantic<half4, half4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvwx0s, _Source.uvwx0_pitch, _NumVertices, has_uvwx0s);
-	else if (_Source.uvwx0sf)
-		copy_semantic<half4, float4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvwx0sf, _Source.uvwx0f_pitch, _NumVertices, has_uvwx0s);
-	else
-		copy_semantic<half4, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvw0sf, _Source.uvw0f_pitch, _NumVertices, has_uvwx0s);
-
-	if (_Source.colors)
-		copy_semantic<color, color>(_pDestination, DestinationPitch, _DestinationLayout, _Source.colors, _Source.color_pitch, _NumVertices, has_colors);
 }
 
 	} // namespace gpu

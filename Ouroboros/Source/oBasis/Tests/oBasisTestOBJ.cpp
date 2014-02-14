@@ -41,7 +41,7 @@ public:
 		_pDesc->pTexcoords = sTexcoords;
 		_pDesc->pIndices = sIndices;
 		_pDesc->pGroups = sGroups;
-		_pDesc->VertexLayout = ouro::gpu::vertex_layout::pos_nrm_tan_uv0;
+		_pDesc->VertexLayout = ouro::mesh::layout::pos_nrm_tan_uv0;
 		_pDesc->NumVertices = oCOUNTOF(sPositions);
 		_pDesc->NumIndices = oCOUNTOF(sIndices);
 		_pDesc->NumGroups = oCOUNTOF(sGroups);
@@ -119,7 +119,7 @@ private:
 			{
 				sGroups[i].GroupName = sGroupNames[i];
 				sGroups[i].MaterialName = "Body";
-				sGroups[i].Range = ouro::gpu::vertex_range(i*2, 2, i*4, (i+1)*4-1); // min/max is valid after vertex reduction
+				sGroups[i].Range = ouro::mesh::range(i*2, 2, i*4, (i+1)*4-1); // min/max is valid after vertex reduction
 			}
 
 			InitGroupsDone = true;

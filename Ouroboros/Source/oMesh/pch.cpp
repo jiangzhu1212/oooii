@@ -22,27 +22,4 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Simplify the complex state definition of D3D to be accessed by gpu enums.
-#pragma once
-#ifndef oGPU_d3d11_layout_h
-#define oGPU_d3d11_layout_h
-
-#include <oBasis/oGPUConcepts.h>
-#include <d3d11.h>
-
-namespace ouro {
-	namespace d3d11 {
-
-const char* get_semantic(mesh::semantic::value& _Semantic);
-
-// ouro::gpu assumes vertex buffers will be created by usage, so a single mesh might have 
-// several vertex buffers. When this is set up D3D requires one input layout to describe
-// it all, so here create an ID3D11InputLayout based on the vertex layouts of each usage
-// type and the byte code for the vertex shader that will use it.
-intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice
-	, const void* _pVertexShaderByteCode, const mesh::layout_array& _VertexLayouts);
-
-	} // namespace d3d11
-} // namespace ouro
-
-#endif
+#include "pch.h"

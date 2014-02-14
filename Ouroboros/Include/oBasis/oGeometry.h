@@ -64,7 +64,7 @@ interface oGeometry : oInterface
 		// curved/continuous surfaces
 		bool ContinuityIDs;
 
-		ouro::gpu::vertex_layout::value AsVertexLayout() const;
+		ouro::mesh::layout::value AsVertexLayout() const;
 	};
 
 	struct DESC
@@ -73,15 +73,15 @@ interface oGeometry : oInterface
 		unsigned int NumVertices;
 		unsigned int NumIndices;
 		unsigned int NumPrimitives;
-		ouro::gpu::face_type::value FaceType;
-		ouro::gpu::primitive_type::value PrimitiveType;
+		ouro::mesh::face_type::value FaceType;
+		ouro::mesh::primitive_type::value PrimitiveType;
 		oAABoxf Bounds;
 		LAYOUT Layout;
 	};
 
 	struct MAPPED
 	{
-		ouro::gpu::vertex_range* pRanges;
+		ouro::mesh::range* pRanges;
 		unsigned int* pIndices;
 		float3* pPositions;
 		float3* pNormals;
@@ -92,7 +92,7 @@ interface oGeometry : oInterface
 
 	struct CONST_MAPPED
 	{
-		const ouro::gpu::vertex_range* pRanges;
+		const ouro::mesh::range* pRanges;
 		const unsigned int* pIndices;
 		const float3* pPositions;
 		const float3* pNormals;
@@ -118,7 +118,7 @@ interface oGeometryFactory : oInterface
 {
 	struct RECT_DESC
 	{
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		float Width;
 		float Height;
 		unsigned int Divide;
@@ -129,7 +129,7 @@ interface oGeometryFactory : oInterface
 
 	struct BOX_DESC
 	{
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		oAABoxf Bounds;
 		unsigned int Divide;
 		ouro::color Color;
@@ -138,7 +138,7 @@ interface oGeometryFactory : oInterface
 
 	struct FRUSTUM_DESC
 	{
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		oFrustumf Bounds;
 		unsigned int Divide;
 		ouro::color Color;
@@ -146,7 +146,7 @@ interface oGeometryFactory : oInterface
 
 	struct CIRCLE_DESC
 	{
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		float Radius;
 		unsigned int Facet;
 		ouro::color Color;
@@ -154,7 +154,7 @@ interface oGeometryFactory : oInterface
 
 	struct WASHER_DESC
 	{
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		float InnerRadius;
 		float OuterRadius;
 		unsigned int Facet;
@@ -167,7 +167,7 @@ interface oGeometryFactory : oInterface
 		// texture coord u goes from 0 at Y=+1 to 0.25 at X=-1 to 0.5 at Y=-1 to 0.75 at X=+1 back to 1.0 at Y=+1
 		// texture coord v goes from 0 at Z=+1 to 1 at Z=-1, or if hemisphere, 0 at Z=+1 and 1 at Z=0
 
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		oSpheref Bounds;
 
 		// Careful, a Divide of 6 takes ~3 sec on an overclocked i7 920. 
@@ -183,7 +183,7 @@ interface oGeometryFactory : oInterface
 
 	struct CYLINDER_DESC
 	{
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		unsigned int Divide;
 		unsigned int Facet;
 		float Radius0;
@@ -201,7 +201,7 @@ interface oGeometryFactory : oInterface
 		// better to use a cylinder with radius0 = 0 so that 
 		// the texture coords are better distributed
 
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		unsigned int Divide;
 		unsigned int Facet;
 		float Radius;
@@ -214,7 +214,7 @@ interface oGeometryFactory : oInterface
 
 	struct TORUS_DESC
 	{
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		unsigned int Divide;
 		unsigned int Facet;
 		float InnerRadius;
@@ -224,7 +224,7 @@ interface oGeometryFactory : oInterface
 
 	struct TEARDROP_DESC
 	{
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		unsigned int Divide;
 		unsigned int Facet;
 		ouro::color Color;
@@ -277,7 +277,7 @@ interface oGeometryFactory : oInterface
 		// rectangle will be calculated internally.
 		int NumRectangles;
 
-		ouro::gpu::face_type::value FaceType;
+		ouro::mesh::face_type::value FaceType;
 		float ZPosition;
 
 		bool FlipTexcoordV;

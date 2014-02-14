@@ -44,50 +44,11 @@
 #include <oBase/types.h>
 #include <oBase/vendor.h>
 #include <oBase/version.h>
+#include <oMesh/mesh.h>
 #include <oSurface/surface.h>
 #include <array>
 
 namespace ouro {
-
-template<typename T>
-class bound
-{
-	// hybrid aabox/sphere class
-public:
-	typedef T element_type;
-	typedef TVEC3<element_type> vec3_type;
-	typedef TVEC4<element_type> vec4_type;
-
-	bound() { clear(); }
-	bound(const TVEC3<T>& _Extents) { extents(_Extents); }
-	bound(const TVEC3<T>& _Min, const TVEC3<T>& _Max) { extents(_Min, _Max); }
-
-	bool empty() const { return any(Extents < T(0)); }
-	void clear() { Sphere = TVEC4<T>(T(0)); extents(T(-1)); }
-
-	TVEC3<T> center() const { return Sphere.xyz(); }
-	void center(const TVEC3<T>& _Center) const { return Sphere = TVEC4<T>(_Position, sphere.w); }
-
-	T radius() const { return sphere.w; }
-	void radius(const T& _Radius) { Sphere.w = _Radius; }
-
-	TVEC4<T> sphere() const { return Sphere; }
-
-	TVEC3<T> extents() const { return Extents; }
-	void extents(const TVEC3<T>& _Extents) { Extents = _Extents; Sphere.w = length(get_max() - get_min()) / T(2); }
-	void extents(const TVEC3<T>& _Min, const TVEC3<T>& _Max) { Sphere.xyz() = (_Max - _Min) / T(2); extents(_Max - Sphere.xyz()); }
-
-	TVEC3<T> size() const { return Extents * 2.0f; }
-
-	TVEC3<T> get_min() const { return center() - Extents; }
-	TVEC3<T> get_max() const { return center() + Extents; }
-
-private:
-	TVEC4<T> Sphere;
-	TVEC3<T> Extents;
-};
-
-typedef bound<float> boundf; typedef bound<double> boundd;
 
 	namespace gpu {
 
@@ -134,68 +95,6 @@ namespace cube_face
 	negy,
 	posz,
 	negz,
-
-	count,
-
-};}
-
-namespace primitive_type
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
-
-	unknown,
-	points,
-	lines,
-	line_strips,
-	triangles,
-	triangle_strips,
-	lines_adjacency,
-	line_strips_adjacency,
-	triangles_adjacency,
-	triangle_strips_adjacency,
-	patches1, // # postfix is the # of control points per patch
-	patches2,
-	patches3,
-	patches4,
-	patches5,
-	patches6,
-	patches7,
-	patches8,
-	patches9,
-	patches10,
-	patches11,
-	patches12,
-	patches13,
-	patches14,
-	patches15,
-	patches16,
-	patches17,
-	patches18,
-	patches19,
-	patches20,
-	patches21,
-	patches22,
-	patches23,
-	patches24,
-	patches25,
-	patches26,
-	patches27,
-	patches28,
-	patches29,
-	patches30,
-	patches31,
-	patches32,
-	
-	count,
-
-};}
-
-namespace face_type
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
-
-	unknown,
-	front_ccw,
-	front_cw,
-	outline,
 
 	count,
 
@@ -492,154 +391,6 @@ namespace clear_type
 
 };}
 
-namespace vertex_semantic
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
-
-	position, // 3-component xyz (float3/ushort4)
-	normal, // 3-component xyz (float3/dec3n)
-	tangent, // 4-component xyz, w is -1, 0 or 1 (float4/dec3n)
-	texcoord, // 2- or 3-component uv (float2/half2 or float3/ushort4)
-	color, // 4-component color rgba (uint)
-
-	count, 
-
-};}
-
-namespace vertex_layout
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
-
-	// positions: float3
-	// normals: dec3n
-	// tangents: dec3n
-	// texcoords0: half2 \ mutually exclusive
-	// texcoords0: half4 /
-	// texcoords1: half2 \ mutually exclusive
-	// texcoords1: half4 /
-	// colors: color
-
-	// if this is updated, remember to update is_positions, etc.
-
-	none,
-
-	pos,
-	color,
-	pos_color,
-	pos_nrm,
-	pos_nrm_tan,
-	pos_nrm_tan_uv0,
-	pos_nrm_tan_uvwx0,
-	pos_uv0,
-	pos_uvwx0,
-	uv0,
-	uvwx0,
-	uv0_color,
-	uvwx0_color,
-
-	count,
-
-};}
-
-namespace vertex_usage
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
-
-	// can be updated by CPU
-	dynamic_vertices,
-	
-	// never updated by CPU
-	static_vertices,
-
-	// data is unique per-instance rather than per-mesh
-	per_instance_vertices,
-
-	count,
-
-};}
-
-class vertex_layout_array : public std::array<vertex_layout::value, vertex_usage::count>
-{
-public:
-	typedef std::array<vertex_layout::value, vertex_usage::count> this_type;
-
-	vertex_layout_array() { fill(vertex_layout::none); }
-	vertex_layout_array(const vertex_layout::value& _Dynamic, const vertex_layout::value& _Static = vertex_layout::none, const vertex_layout::value& _PerInstance = vertex_layout::none) { (*this)[vertex_usage::dynamic_vertices] = _Dynamic; (*this)[vertex_usage::static_vertices] = _Static; (*this)[vertex_usage::per_instance_vertices] = _PerInstance; }
-
-	operator this_type() { return *this; }
-	operator const this_type() const { return *this; }
-};
-
-struct vertex_source
-{
-	vertex_source()
-		: positionsf(nullptr)
-		, normalsf(nullptr)
-		, normals(nullptr)
-		, tangentsf(nullptr)
-		, tangents(nullptr)
-		, uv0sf(nullptr)
-		, uvw0sf(nullptr)
-		, uvwx0sf(nullptr)
-		, uv0s(nullptr)
-		, uvwx0s(nullptr)
-		, colors(nullptr)
-		, positionf_pitch(0)
-		, normalf_pitch(0)
-		, normal_pitch(0)
-		, tangentf_pitch(0)
-		, tangent_pitch(0)
-		, uv0f_pitch(0)
-		, uvw0f_pitch(0)
-		, uvwx0f_pitch(0)
-		, uv0_pitch(0)
-		, uvwx0_pitch(0)
-		, color_pitch(0)
-		, vertex_layout(vertex_layout::none)
-	{}
-
-	const float3* positionsf;
-	const float3* normalsf;
-	const dec3n* normals;
-	const float4* tangentsf;
-	const dec3n* tangents;
-	const float2* uv0sf;
-	const float3* uvw0sf;
-	const float4* uvwx0sf;
-	const half2* uv0s;
-	const half4* uvwx0s;
-	const color* colors;
-
-	uint positionf_pitch;
-	uint normalf_pitch;
-	uint normal_pitch;
-	uint tangentf_pitch;
-	uint tangent_pitch;
-	uint uv0f_pitch;
-	uint uvw0f_pitch;
-	uint uvwx0f_pitch;
-	uint uv0_pitch;
-	uint uvwx0_pitch;
-	uint color_pitch;
-
-	vertex_layout::value vertex_layout;
-
-	inline bool operator==(const vertex_source& _That) const
-	{
-		const void* const* thisP = (const void* const*)&positionsf;
-		const void* const* end = (const void* const*)&colors;
-		const void* const* thatP = (const void* const*)&_That.positionsf;
-		while (thisP <= end)
-			if (*thisP++ != *thatP++) return false;
-		
-		const uint* thisI = &positionf_pitch;
-		const uint* endI = &color_pitch;
-		const uint* thatI = &_That.positionf_pitch;
-		while (thisI <= endI)
-			if (*thisI++ != *thatI++) return false;
-
-		return vertex_layout == _That.vertex_layout;
-	}
-	inline bool operator!=(const vertex_source& _That) const { return !(*this == _That); }
-};
-
 struct buffer_info
 {
 	// A constant buffer (view, draw, material). Client code can defined whatever 
@@ -687,53 +438,11 @@ struct texture_info
 	uint array_size;
 };
 
-struct vertex_range
-{
-	vertex_range(uint _StartPrimitive = 0, uint _NumPrimitives = 0, uint _MinVertex = 0, uint _MaxVertex = invalid)
-		: start_primitive(_StartPrimitive)
-		, num_primitives(_NumPrimitives)
-		, min_vertex(_MinVertex)
-		, max_vertex(_MaxVertex)
-	{}
-
-	uint start_primitive; // index buffer offset in # of primitives
-	uint num_primitives; // Number of primitives in range
-	uint min_vertex; // min index into vertex buffer that will be accessed
-	uint max_vertex; // max index into vertex buffer that will be accessed
-};
-
-struct mesh_info
-{
-	mesh_info()
-		: num_indices(0)
-		, num_vertices(0)
-		, primitive_type(primitive_type::unknown)
-		, face_type(face_type::unknown)
-		, num_vertex_ranges(0)
-		, vertex_scale_shift(0)
-		, pad0(0)
-	{ vertex_layouts.fill(vertex_layout::none); }
-
-	// Ph layouts store a 16-bit value [0-1] to store a value between 65535 / (1 << vertex_scale_shift)
-	// so higher the shift value the higher the precision; the lower the value the larger range the 
-	// position can represent.
-
-	boundf local_space_bound;
-	uint num_indices;
-	uint num_vertices;
-	vertex_layout_array vertex_layouts;
-	primitive_type::value primitive_type;
-	face_type::value face_type;
-	uchar num_vertex_ranges;
-	uchar vertex_scale_shift;
-	uchar pad0;
-};
-
 struct basic_pipeline_info
 {
 	const char* debug_name;
-	vertex_layout_array vertex_layouts;
-	primitive_type::value primitive_type;
+	mesh::layout_array vertex_layouts;
+	mesh::primitive_type::value primitive_type;
 	const void* vs, *hs, *ds, *gs, *ps;
 };
 
@@ -742,8 +451,8 @@ struct pipeline_info : basic_pipeline_info
 	pipeline_info()
 	{
 		debug_name = "unnamed pipeline";
-		vertex_layouts.fill(vertex_layout::none);
-		primitive_type = primitive_type::unknown;
+		vertex_layouts.fill(mesh::layout::none);
+		primitive_type = mesh::primitive_type::unknown;
 		vs = nullptr; hs = nullptr; ds = nullptr; gs = nullptr; ps = nullptr;
 	}
 };
@@ -939,39 +648,13 @@ inline texture_type::value remove_readback(const texture_type::value& _Type) { r
 inline texture_type::value remove_mipped(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & ~texture_trait::mipped); }
 inline texture_type::value remove_render_target(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & ~texture_trait::render_target); }
 
-inline bool has_16bit_indices(uint _NumVertices) { return _NumVertices <= 65535; }
-inline uint index_size(uint _NumVertices) { return has_16bit_indices(_NumVertices) ? sizeof(ushort) : sizeof(uint); }
-
-inline bool has_positions(const vertex_layout::value& _Layout) { return _Layout >= vertex_layout::pos && _Layout <= vertex_layout::pos_uvwx0; }
-inline bool has_normals(const vertex_layout::value& _Layout) { return _Layout >= vertex_layout::pos_nrm && _Layout <= vertex_layout::pos_nrm_tan_uvwx0; }
-inline bool has_tangents(const vertex_layout::value& _Layout) { return _Layout >= vertex_layout::pos_nrm_tan && _Layout <= vertex_layout::pos_nrm_tan_uvwx0; }
-inline bool has_texcoords(const vertex_layout::value& _Layout) { return _Layout >= vertex_layout::pos_nrm_tan_uv0 && _Layout <= vertex_layout::uvwx0_color; }
-inline bool has_uv0s(const vertex_layout::value& _Layout) { return ((_Layout&0x1)==0) && has_texcoords(_Layout); }
-inline bool has_uvwx0s(const vertex_layout::value& _Layout) { return (_Layout&0x1) && has_texcoords(_Layout); }
-inline bool has_colors(const vertex_layout::value& _Layout) { return _Layout == vertex_layout::pos_color || _Layout == vertex_layout::color || _Layout == vertex_layout::uv0_color || _Layout == vertex_layout::uvwx0_color; }
-
-// return how many primitives are defined by the specified topology
-uint num_primitives(const primitive_type::value& _PrimitiveType, uint _NumIndices, uint _NumVertices);
-
-// Returns the size of a vertex with the specified layout.
-uint vertex_size(const vertex_layout::value& _Layout);
-
-// Returns the size in bytes of a vertex with the specified traits.
-//uint calc_vertex_size(ushort _VertexTraits);
-
 // Returns a buffer info that will auto-size to 16-bit indices or 32-bit indices depending
 // on the number of vertices.
 buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices);
 
 // Returns a buffer info for the vertex buffer with the specified usage and layout. Only vertex traits matching
 // the specified layout will be described by the buffer info,
-buffer_info make_vertex_buffer_info(uint _NumVertices, const vertex_layout::value& _Layout);
-
-// copies index buffers from one to another, properly converting from 16-bit to 32-bit and vice versa.
-void copy_indices(surface::mapped_subresource& _Destination, const surface::const_mapped_subresource& _Source, uint _NumIndices);
-
-// uses the above utility functions to do all necessary conversions to copy the source to the destination
-void copy_vertices(void* oRESTRICT _pDestination, const vertex_layout::value& _DestinationLayout, const vertex_source& _Source, uint _NumVertices);
+buffer_info make_vertex_buffer_info(uint _NumVertices, const mesh::layout::value& _Layout);
 
 	} // namespace gpu
 } // namespace ouro

@@ -29,6 +29,7 @@
 
 using namespace ouro;
 using namespace ouro::gpu;
+using namespace ouro::mesh;
 
 struct LineListContext
 {
@@ -110,7 +111,7 @@ std::shared_ptr<util_mesh> oGfxManipulatorImpl::CreateGeometryMesh(oGPUDevice* _
 	if(!GeometryFactory->Create(_GeometryDesc, GeoLayout, &Geometry))
 		return false;
 
-	vertex_layout_array layouts;
+	layout_array layouts;
 	layouts[0] = GeoLayout.AsVertexLayout();
 	return util_mesh::make(_pDevice, _Name, layouts, Geometry);
 }
@@ -338,7 +339,7 @@ void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(oGPUCommandList* _pComman
 			Manipulator->GetLinesPickGeometry(Axis, &VerticesWorking[0], PickVertexCount);
 			if(PickVertexCount > 0)
 			{
-				mesh_info MeshDesc = Mesh->get_info();
+				mesh::info MeshDesc = Mesh->get_info();
 
 				ouro::surface::const_mapped_subresource msr;
 				msr.data = &VerticesWorking[0];

@@ -62,12 +62,12 @@ void commit_index_buffer(oGPUCommandList* _pCommandList
 	{
 		surface::mapped_subresource MSRTemp;
 		_pCommandList->Reserve(_pIndexBuffer, 0, &MSRTemp);
-		copy_indices(MSRTemp, _MappedSubresource, i.array_size);
+		mesh::copy_indices(MSRTemp.data, MSRTemp.row_pitch, _MappedSubresource.data, _MappedSubresource.row_pitch, i.array_size);
 		_pCommandList->Commit(_pIndexBuffer, 0, MSRTemp);
 	}
 }
 
-void commit_vertex_buffer(oGPUCommandList* _pCommandList, const vertex_layout::value& _Layout, const vertex_source& _Source, oGPUBuffer* _pVertexBuffer)
+void commit_vertex_buffer(oGPUCommandList* _pCommandList, const mesh::layout::value& _Layout, const mesh::vertex_soa& _Source, oGPUBuffer* _pVertexBuffer)
 {
 	buffer_info Info = _pVertexBuffer->get_info();
 	surface::mapped_subresource Destination;
@@ -91,26 +91,26 @@ intrusive_ptr<oGPUBuffer> make_index_buffer(oGPUDevice* _pDevice, const char* _N
 	return IndexBuffer;
 }
 
-intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const vertex_layout::value& _Layout
-	, uint _NumVertices, const vertex_source& _Source)
+intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
+	, uint _NumVertices, const mesh::vertex_soa& _Source)
 {
-	if (_Layout == vertex_layout::none)
+	if (_Layout == mesh::layout::none)
 		oTHROW_INVARG("no vertex elements specified");
 
 	buffer_info i = make_vertex_buffer_info(_NumVertices, _Layout);
 
 	intrusive_ptr<oGPUBuffer> VertexBuffer = _pDevice->make_buffer(_Name, i);
 
-	if (_Source != vertex_source())
+	if (_Source != mesh::vertex_soa())
 		commit_vertex_buffer(_pDevice, _Layout, _Source, VertexBuffer);
 
 	return VertexBuffer;
 }
 
-intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const vertex_layout::value& _Layout
+intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
 	, const oGeometry::DESC& _GeoDesc, const oGeometry::CONST_MAPPED& _GeoMapped)
 {
-	vertex_source Source;
+	mesh::vertex_soa Source;
 	Source.positionsf = _GeoMapped.pPositions; Source.positionf_pitch = sizeof(float3);
 	Source.normalsf = _GeoMapped.pNormals; Source.normalf_pitch = sizeof(float3);
 	Source.tangentsf = _GeoMapped.pTangents; Source.tangentf_pitch = sizeof(float4);

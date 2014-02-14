@@ -31,7 +31,7 @@ namespace ouro {
 class util_mesh_impl : public util_mesh
 {
 public:
-	util_mesh_impl(oGPUDevice* _pDevice, const char* _Name, const mesh_info& _Info)
+	util_mesh_impl(oGPUDevice* _pDevice, const char* _Name, const mesh::info& _Info)
 		: MeshInfo(_Info)
 	{
 		if (_Info.num_vertex_ranges != 1)
@@ -40,16 +40,16 @@ public:
 		IB = make_index_buffer(_pDevice, _Name, MeshInfo.num_indices, MeshInfo.num_vertices);
 
 		for (size_t i = 0; i < MeshInfo.vertex_layouts.size(); i++)
-			if (MeshInfo.vertex_layouts[i] != vertex_layout::none)
+			if (MeshInfo.vertex_layouts[i] != mesh::layout::none)
 				VBs[i] = make_vertex_buffer(_pDevice, _Name, MeshInfo.vertex_layouts[i], MeshInfo.num_vertices);
 	}
 
-	util_mesh_impl(oGPUDevice* _pDevice, const char* _Name, const vertex_layout_array& _VertexLayouts, const oGeometry* _pGeometry)
+	util_mesh_impl(oGPUDevice* _pDevice, const char* _Name, const mesh::layout_array& _VertexLayouts, const oGeometry* _pGeometry)
 	{
 		oGeometry::DESC gd;
 		_pGeometry->GetDesc(&gd);
 
-		MeshInfo.local_space_bound = boundf(gd.Bounds.Min, gd.Bounds.Max);
+		MeshInfo.local_space_bound = mesh::boundf(gd.Bounds.Min, gd.Bounds.Max);
 		MeshInfo.num_indices = gd.NumIndices;
 		MeshInfo.num_vertices = gd.NumVertices;
 		MeshInfo.vertex_layouts[0] = gd.Layout.AsVertexLayout();
@@ -70,16 +70,16 @@ public:
 		IB = make_index_buffer(_pDevice, _Name, gd.NumIndices, gd.NumVertices, msrIndices);
 
 		for (size_t i = 0; i < MeshInfo.vertex_layouts.size(); i++)
-			if (MeshInfo.vertex_layouts[i] != vertex_layout::none)
+			if (MeshInfo.vertex_layouts[i] != mesh::layout::none)
 				VBs[i] = make_vertex_buffer(_pDevice, _Name, MeshInfo.vertex_layouts[i], gd, mapped);
 	}
 
-	mesh_info get_info() const override { return MeshInfo; }
+	mesh::info get_info() const override { return MeshInfo; }
 	const oGPUBuffer* index_buffer() const override { return IB; }
 	oGPUBuffer* index_buffer() override { return IB; }
 	const oGPUBuffer* vertex_buffer(uint _Index) const override { return VBs[_Index]; }
 	oGPUBuffer* vertex_buffer(uint _Index) override { return VBs[_Index]; }
-	void vertex_buffers(const oGPUBuffer* _Buffers[vertex_usage::count]) override
+	void vertex_buffers(const oGPUBuffer* _Buffers[mesh::usage::count]) override
 	{
 		oFORI(i, _Buffers)
 			_Buffers[i] = VBs[i].c_ptr();
@@ -87,36 +87,36 @@ public:
 
 	void draw(oGPUCommandList* _pCommandList)
 	{
-		_pCommandList->Draw(IB, 0, vertex_usage::count, (const oGPUBuffer* const *)VBs.data(), 0, num_primitives(MeshInfo.primitive_type, MeshInfo.num_indices, MeshInfo.num_vertices));
+		_pCommandList->Draw(IB, 0, mesh::usage::count, (const oGPUBuffer* const *)VBs.data(), 0, mesh::num_primitives(MeshInfo.primitive_type, MeshInfo.num_indices, MeshInfo.num_vertices));
 	}
 
-	mesh_info MeshInfo;
+	mesh::info MeshInfo;
 	intrusive_ptr<oGPUBuffer> IB;
-	std::array<intrusive_ptr<oGPUBuffer>, vertex_usage::count> VBs;
+	std::array<intrusive_ptr<oGPUBuffer>, mesh::usage::count> VBs;
 	uint NumPrimitives;
 };
 
-std::shared_ptr<util_mesh> util_mesh::make(oGPUDevice* _pDevice, const char* _Name, const mesh_info& _Info)
+std::shared_ptr<util_mesh> util_mesh::make(oGPUDevice* _pDevice, const char* _Name, const mesh::info& _Info)
 {
 	return std::make_shared<util_mesh_impl>(_pDevice, _Name, _Info);
 }
 
 std::shared_ptr<util_mesh> util_mesh::make(oGPUDevice* _pDevice, const char* _Name
-		, const vertex_layout_array& _VertexLayouts, const oGeometry* _pGeometry)
+		, const mesh::layout_array& _VertexLayouts, const oGeometry* _pGeometry)
 {
 	return std::make_shared<util_mesh_impl>(_pDevice, _Name, _VertexLayouts, _pGeometry);
 }
 
 std::shared_ptr<util_mesh> make_first_triangle(oGPUDevice* _pDevice)
 {
-	mesh_info mi;
-	mi.local_space_bound = boundf(float3(-0.8f, -0.7f, -0.01f), float3(0.8f, 0.7f, 0.01f));
+	mesh::info mi;
+	mi.local_space_bound = mesh::boundf(float3(-0.8f, -0.7f, -0.01f), float3(0.8f, 0.7f, 0.01f));
 	mi.num_indices = 3;
 	mi.num_vertices = 3;
 	mi.num_vertex_ranges = 1;
-	mi.vertex_layouts[0] = vertex_layout::pos;
-	mi.face_type = face_type::front_ccw;
-	mi.primitive_type = primitive_type::triangles;
+	mi.vertex_layouts[0] = mesh::layout::pos;
+	mi.face_type = mesh::face_type::front_ccw;
+	mi.primitive_type = mesh::primitive_type::triangles;
 	mi.vertex_scale_shift = 0;
 
 	std::shared_ptr<util_mesh> m;
@@ -154,7 +154,7 @@ std::shared_ptr<util_mesh> make_first_cube(oGPUDevice* _pDevice)
 	layout.Texcoords = true;
 
 	oGeometryFactory::BOX_DESC bd;
-	bd.FaceType = face_type::front_ccw;
+	bd.FaceType = mesh::face_type::front_ccw;
 	bd.Bounds = oAABoxf(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
 	bd.Divide = 1;
 	bd.Color = White;
@@ -166,7 +166,7 @@ std::shared_ptr<util_mesh> make_first_cube(oGPUDevice* _pDevice)
 	intrusive_ptr<oGeometry> geo;
 	oCHECK0(Factory->Create(bd, layout, &geo));
 
-	vertex_layout_array Layouts(vertex_layout::pos_uv0);
+	mesh::layout_array Layouts(mesh::layout::pos_uv0);
 	return util_mesh::make(_pDevice, "First Cube", Layouts, geo);
 }
 

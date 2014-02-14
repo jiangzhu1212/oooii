@@ -386,7 +386,7 @@ static void ReduceElements(const oOBJ_INIT& _Init
 
 	// close out last group
 	unsigned int LastFaceGroupIndex = _SourceElements.Faces.back().GroupIndex;
-	gpu::vertex_range& r = _pSinglyIndexedElements->Groups[LastFaceGroupIndex].Range;
+	mesh::range& r = _pSinglyIndexedElements->Groups[LastFaceGroupIndex].Range;
 	r.num_primitives = as_uint(_pIndices->size() / 3) - r.start_primitive;
 
 	// Go back through groups and calc min/max verts
@@ -394,15 +394,15 @@ static void ReduceElements(const oOBJ_INIT& _Init
 		oCalcMinMaxVertices(data(*_pIndices), g.Range.start_primitive*3, g.Range.num_primitives*3, as_uint(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
 }
 
-static ouro::gpu::vertex_layout::value oOBJGetVertexLayout(const oOBJ_DESC& _OBJDesc)
+static ouro::mesh::layout::value oOBJGetVertexLayout(const oOBJ_DESC& _OBJDesc)
 {
-	ouro::gpu::vertex_layout::value Layout = ouro::gpu::vertex_layout::pos;
+	ouro::mesh::layout::value Layout = ouro::mesh::layout::pos;
 	if (!_OBJDesc.pPositions)
 		oTHROW_INVARG("vertices must have positions");
 	if (_OBJDesc.pNormals)
-		Layout = _OBJDesc.pTexcoords ? ouro::gpu::vertex_layout::pos_nrm_tan_uv0 : ouro::gpu::vertex_layout::pos_nrm;
+		Layout = _OBJDesc.pTexcoords ? ouro::mesh::layout::pos_nrm_tan_uv0 : ouro::mesh::layout::pos_nrm;
 	if (_OBJDesc.pTexcoords)
-		Layout = ouro::gpu::vertex_layout::pos_uv0;
+		Layout = ouro::mesh::layout::pos_uv0;
 	return Layout;
 }
 
@@ -418,7 +418,7 @@ protected:
 	void GetDesc(oOBJ_DESC* _pDesc) const;
 	oOBJ_ELEMENTS VertexElements;
 	std::vector<unsigned int> Indices;
-	ouro::gpu::vertex_layout::value VertexLayout;
+	ouro::mesh::layout::value VertexLayout;
 	uint NumGPUVertexElements;
 	path_string OBJPath;
 	oRefCount RefCount;
@@ -869,7 +869,7 @@ bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** 
 	return success;
 }
 
-bool oOBJCopyRanges(gpu::vertex_range* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc)
+bool oOBJCopyRanges(mesh::range* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc)
 {
 	if (_Desc.NumGroups > _NumRanges)
 		return oErrorSetLast(std::errc::invalid_argument);

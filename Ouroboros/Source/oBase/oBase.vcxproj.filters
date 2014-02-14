@@ -88,12 +88,6 @@
     <ClCompile Include="memory\memcmp4.cpp">
       <Filter>Source\memory</Filter>
     </ClCompile>
-    <ClCompile Include="memory\memcpyuitous.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memcpyustoui.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
     <ClCompile Include="memory\memmem.cpp">
       <Filter>Source\memory</Filter>
     </ClCompile>

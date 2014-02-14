@@ -39,19 +39,19 @@ namespace ouro {
 class util_mesh
 {
 public:
-	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name, const mesh_info& _Info);
+	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name, const mesh::info& _Info);
 
 	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name
-		, const vertex_layout_array& _VertexLayouts, const oGeometry* _pGeometry);
+		, const mesh::layout_array& _VertexLayouts, const oGeometry* _pGeometry);
 
-	virtual mesh_info get_info() const = 0;
+	virtual mesh::info get_info() const = 0;
 	virtual const oGPUBuffer* index_buffer() const = 0;
 	virtual oGPUBuffer* index_buffer() = 0;
 	virtual const oGPUBuffer* vertex_buffer(uint _Index) const = 0;
 	virtual oGPUBuffer* vertex_buffer(uint _Index) = 0;
-	inline const oGPUBuffer* vertex_buffer(const vertex_usage::value& _Usage) const { return vertex_buffer((uint)_Usage); }
-	inline oGPUBuffer* vertex_buffer(const vertex_usage::value& _Usage) { return vertex_buffer((uint)_Usage); }
-	virtual void vertex_buffers(const oGPUBuffer* _Buffers[vertex_usage::count]) = 0;
+	inline const oGPUBuffer* vertex_buffer(const mesh::usage::value& _Usage) const { return vertex_buffer((uint)_Usage); }
+	inline oGPUBuffer* vertex_buffer(const mesh::usage::value& _Usage) { return vertex_buffer((uint)_Usage); }
+	virtual void vertex_buffers(const oGPUBuffer* _Buffers[mesh::usage::count]) = 0;
 	virtual void draw(oGPUCommandList* _pCommandList) = 0;
 };
 

@@ -469,14 +469,14 @@ gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation)
 	return d;
 }
 
-D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(const gpu::primitive_type::value& _Type)
+D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(const mesh::primitive_type::value& _Type)
 {
 	return D3D11_PRIMITIVE_TOPOLOGY(_Type);
 }
 
-gpu::primitive_type::value to_primitive_type(D3D11_PRIMITIVE_TOPOLOGY _Type)
+mesh::primitive_type::value to_primitive_type(D3D11_PRIMITIVE_TOPOLOGY _Type)
 {
-	return gpu::primitive_type::value(_Type);
+	return mesh::primitive_type::value(_Type);
 }
 
 unsigned int num_elements(D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology, unsigned int _NumPrimitives)
@@ -1323,12 +1323,12 @@ void set_srvs(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->CSSetShaderResources(_StartSlot, _NumShaderResourceViews, ppViews);
 }
 
-boundf from_viewport(const D3D11_VIEWPORT& _Viewport)
+mesh::boundf from_viewport(const D3D11_VIEWPORT& _Viewport)
 {
-	return boundf(float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth), float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
+	return mesh::boundf(float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth), float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
 }
 
-D3D11_VIEWPORT to_viewport(const boundf& _Source)
+D3D11_VIEWPORT to_viewport(const mesh::boundf& _Source)
 {
 	D3D11_VIEWPORT v;
 	float3 Min = _Source.get_min();
