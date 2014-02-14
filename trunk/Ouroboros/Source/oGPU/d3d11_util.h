@@ -80,8 +80,8 @@ intrusive_ptr<ID3D11ComputeShader> make_compute_kernel(ID3D11Device* _pDevice, c
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation);
 
 // Returns the D3D11 equivalent.
-D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(const gpu::primitive_type::value& _Type);
-gpu::primitive_type::value to_primitive_type(D3D11_PRIMITIVE_TOPOLOGY _Type);
+D3D11_PRIMITIVE_TOPOLOGY from_primitive_type(const mesh::primitive_type::value& _Type);
+mesh::primitive_type::value to_primitive_type(D3D11_PRIMITIVE_TOPOLOGY _Type);
 
 // Returns the number of elements as described the specified topology given
 // the number of primitives. An element can refer to indices or vertices, but
@@ -344,10 +344,10 @@ inline void set_srvs(ID3D11DeviceContext* _pDeviceContext
 		{ set_srvs(_pDeviceContext, _StartSlot, _NumShaderResourceViews, (const ID3D11ShaderResourceView* const*)_ppViews); }
 
 // Converts a viewport to an oAABoxf.
-boundf from_viewport(const D3D11_VIEWPORT& _Viewport);
+mesh::boundf from_viewport(const D3D11_VIEWPORT& _Viewport);
 
 // Convert an oAABoxf (very similar in structure) to a D3D11_VIEWPORT
-D3D11_VIEWPORT to_viewport(const boundf& _Source);
+D3D11_VIEWPORT to_viewport(const mesh::boundf& _Source);
 
 // Creats a viewport that uses the full render target (depth, [0,1])
 D3D11_VIEWPORT to_viewport(const int2& _RenderTargetDimensions);

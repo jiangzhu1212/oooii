@@ -56,7 +56,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	}
 
 	oGeometryFactory::CIRCLE_DESC d;
-	d.FaceType = face_type::outline;
+	d.FaceType = mesh::face_type::outline;
 	d.Radius = 1;
 	d.Facet = ROTATION_CIRCLE_VCOUNT;
 	d.Color = White;
@@ -69,7 +69,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	oGeometry::DESC gdesc;
 	CircleGeometry->GetDesc(&gdesc);
-	oASSERT(gdesc.PrimitiveType == primitive_type::lines,"created a line list, but actually didn't");
+	oASSERT(gdesc.PrimitiveType == mesh::primitive_type::lines,"created a line list, but actually didn't");
 
 	oGeometry::CONST_MAPPED gmapped;
 	if (!CircleGeometry->MapConst(&gmapped) || !gmapped.pIndices || !gmapped.pPositions)
@@ -94,7 +94,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		return;
 	}
 	CircleGeometry->GetDesc(&gdesc);
-	oASSERT(gdesc.PrimitiveType == primitive_type::lines,"created a line list, but actually didn't");
+	oASSERT(gdesc.PrimitiveType == mesh::primitive_type::lines,"created a line list, but actually didn't");
 
 	if (!CircleGeometry->MapConst(&gmapped) || !gmapped.pIndices || !gmapped.pPositions)
 	{
@@ -110,7 +110,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	CircleGeometry->UnmapConst();
 	
-	d.FaceType = face_type::front_cw;
+	d.FaceType = mesh::face_type::front_cw;
 	d.Radius = RotationScale;
 	d.Facet = ROTATION_PICK_ARCBALL_VCOUNT;
 	if(!GeometryFactory->CreateCircle(d, layout, &CircleGeometry))
@@ -136,7 +136,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	intrusive_ptr<oGeometry> TorusGeometry; 
 	oGeometryFactory::TORUS_DESC td;
-	td.FaceType = face_type::front_cw;
+	td.FaceType = mesh::face_type::front_cw;
 	td.InnerRadius = RotationScale - Desc.PickWidth;
 	td.OuterRadius = RotationScale + Desc.PickWidth;
 	td.Divide = ROTATION_PICK_TORUS_DIVIDE;

@@ -48,7 +48,7 @@ using namespace ouro::gpu;
 namespace ouro {
 	namespace d3d11 {
 
-const char* get_semantic(vertex_semantic::value& _Semantic)
+const char* get_semantic(mesh::semantic::value& _Semantic)
 {
 	const char* sSemantics[] =
 	{
@@ -58,7 +58,7 @@ const char* get_semantic(vertex_semantic::value& _Semantic)
 		"TEXCOORD",
 		"COLOR",
 	};
-	static_assert(oCOUNTOF(sSemantics) == vertex_semantic::count, "array mismatch");
+	static_assert(oCOUNTOF(sSemantics) == mesh::semantic::count, "array mismatch");
 
 	return sSemantics[_Semantic];
 }
@@ -95,22 +95,22 @@ static const D3D11_INPUT_ELEMENT_DESC* sInputElements[] =
 	Uv0Color,
 	Uvwx0Color,
 };
-static_assert(oCOUNTOF(sInputElements) == vertex_layout::count, "array mismatch");
+static_assert(oCOUNTOF(sInputElements) == mesh::layout::count, "array mismatch");
 
 static uchar sInputElementCounts[] = { 0, 1, 1, 2, 2, 3, 4, 4, 2, 2, 1, 1, 2, 2, };
-static_assert(oCOUNTOF(sInputElementCounts) == vertex_layout::count, "array mismatch");
+static_assert(oCOUNTOF(sInputElementCounts) == mesh::layout::count, "array mismatch");
 
-intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice, const void* _pVertexShaderByteCode, const gpu::vertex_layout_array& _VertexLayouts)
+intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice, const void* _pVertexShaderByteCode, const mesh::layout_array& _VertexLayouts)
 {
 	D3D11_INPUT_ELEMENT_DESC Elements[16];
 	memset(Elements, 0, sizeof(Elements));
 	uint Offset = 0;
 
 	// copy pieces into one array for input layout definition
-	for (uint L = 0; L < vertex_usage::count; L++)
+	for (uint L = 0; L < mesh::usage::count; L++)
 	{
-		vertex_layout::value Layout = _VertexLayouts[L];
-		if (Layout == vertex_layout::none)
+		mesh::layout::value Layout = _VertexLayouts[L];
+		if (Layout == mesh::layout::none)
 			continue;
 
 		uint nElements = sInputElementCounts[Layout];

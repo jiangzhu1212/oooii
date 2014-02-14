@@ -22,18 +22,9 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/assert.h>
-
-namespace ouro {
-
-void memcpyuitous(unsigned short* _pDestination, const unsigned int* _pSource, size_t _NumElements)
-{
-	const unsigned int* end = &_pSource[_NumElements];
-	while (_pSource < end)
-	{
-		oASSERT(*_pSource <= 65535, "Truncating an unsigned int (%d) to a short in a way that will change its value.", *_pSource);
-		*_pDestination++ = (*_pSource++) & 0xffff;
-	}
-}
-
-} // namespace ouro
+#pragma once
+#ifdef oPCH
+#include <oHLSL/all.h>
+#include <oBase/all.h>
+#include <oBase/all_libc.h>
+#endif

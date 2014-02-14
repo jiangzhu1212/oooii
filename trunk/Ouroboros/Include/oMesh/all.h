@@ -22,14 +22,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
-namespace ouro {
-
-void memcpyustoui(unsigned int* _pDestination, const unsigned short* _pSource, size_t _NumElements)
-{
-	const unsigned short* end = &_pSource[_NumElements];
-	while (_pSource < end)
-		*_pDestination++ = *_pSource++;
-}
-
-} // namespace ouro
+// Convenience "all headers" header for precompiled header files. Do NOT use 
+// this to be lazy when including headers in .cpp files. Be explicit.
+#pragma once
+#ifndef oMesh_all_h
+#define oMesh_all_h
+#include <oMesh/mesh.h>
+#endif

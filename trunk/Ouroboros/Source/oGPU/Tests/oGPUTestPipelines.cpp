@@ -48,63 +48,63 @@ ouro::gpu::pipeline_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 	{
 		case oGPU_TEST_PASS_THROUGH:
 			i.debug_name = "PassThrough";
-			i.vertex_layouts[0] = ouro::gpu::vertex_layout::pos;
-			i.primitive_type = ouro::gpu::primitive_type::triangles;
+			i.vertex_layouts[0] = ouro::mesh::layout::pos;
+			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestPassThrough;
 			i.ps = PSTestWhite;
 			break;
 
 		case oGPU_TEST_PASS_THROUGH_COLOR:
 			i.debug_name = "PassThroughColor";
-			i.vertex_layouts[0] = ouro::gpu::vertex_layout::pos_color;
-			i.primitive_type = ouro::gpu::primitive_type::lines;
+			i.vertex_layouts[0] = ouro::mesh::layout::pos_color;
+			i.primitive_type = ouro::mesh::primitive_type::lines;
 			i.vs = VSTestPassThroughColor;
 			i.ps = PSTestColor;
 			break;
 
 		case oGPU_TEST_TRANSFORMED_WHITE:
 			i.debug_name = "TransformedWhite";
-			i.vertex_layouts[0] = ouro::gpu::vertex_layout::pos;
-			i.primitive_type = ouro::gpu::primitive_type::triangles;
+			i.vertex_layouts[0] = ouro::mesh::layout::pos;
+			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestWhiteInstanced;
 			i.ps = PSTestWhite;
 			break;
 
 		case oGPU_TEST_BUFFER:
 			i.debug_name = "Buffer";
-			i.primitive_type = ouro::gpu::primitive_type::points;
+			i.primitive_type = ouro::mesh::primitive_type::points;
 			i.vs = VSTestBuffer;
 			i.ps = PSTestBuffer;
 			break;
 
 		case oGPU_TEST_TEXTURE_1D:
 			i.debug_name = "Texture1D";
-			i.vertex_layouts[0] = ouro::gpu::vertex_layout::pos_uv0;
-			i.primitive_type = ouro::gpu::primitive_type::triangles;
+			i.vertex_layouts[0] = ouro::mesh::layout::pos_uv0;
+			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestTexture1D;
 			i.ps = PSTestTexture1D;
 			break;
 
 		case oGPU_TEST_TEXTURE_2D:
 			i.debug_name = "Texture2D";
-			i.vertex_layouts[0] = ouro::gpu::vertex_layout::pos_uv0;
-			i.primitive_type = ouro::gpu::primitive_type::triangles;
+			i.vertex_layouts[0] = ouro::mesh::layout::pos_uv0;
+			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestTexture2D;
 			i.ps = PSTestTexture2D;
 			break;
 
 		case oGPU_TEST_TEXTURE_3D:
 			i.debug_name = "Texture3D";
-			i.vertex_layouts[0] = ouro::gpu::vertex_layout::pos_uvwx0;
-			i.primitive_type = ouro::gpu::primitive_type::triangles;
+			i.vertex_layouts[0] = ouro::mesh::layout::pos_uvwx0;
+			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestTexture3D;
 			i.ps = PSTestTexture3D;
 			break;
 
 		case oGPU_TEST_TEXTURE_CUBE:
 			i.debug_name = "TextureCube";
-			i.vertex_layouts[0] = ouro::gpu::vertex_layout::pos_uvwx0;
-			i.primitive_type = ouro::gpu::primitive_type::triangles;
+			i.vertex_layouts[0] = ouro::mesh::layout::pos_uvwx0;
+			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestTextureCube;
 			i.ps = PSTestTextureCube;
 			break;

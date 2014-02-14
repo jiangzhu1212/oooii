@@ -55,8 +55,6 @@
     <ClCompile Include="memory\dtoull.cpp" />
     <ClCompile Include="memory\is_ascii.cpp" />
     <ClCompile Include="memory\memcmp4.cpp" />
-    <ClCompile Include="memory\memcpyuitous.cpp" />
-    <ClCompile Include="memory\memcpyustoui.cpp" />
     <ClCompile Include="memory\memmem.cpp" />
     <ClCompile Include="memory\memset2.cpp" />
     <ClCompile Include="memory\memset2d.cpp" />
