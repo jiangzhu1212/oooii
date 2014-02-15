@@ -26,5 +26,8 @@
     <ClInclude Include="..\..\Include\oMesh\mesh.h">
       <Filter>oMesh</Filter>
     </ClInclude>
+    <ClInclude Include="mesh_template.h">
+      <Filter>Source</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

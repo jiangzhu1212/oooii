@@ -47,7 +47,6 @@
 #include <oBasis/oInterface.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oMeshUtil.h>
 #include <oBasis/oMIME.h>
 #include <oBasis/oOBJ.h>
 #include <oBasis/oOSC.h>
