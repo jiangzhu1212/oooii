@@ -30,6 +30,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\Include\oMesh\all.h" />
     <ClInclude Include="..\..\Include\oMesh\mesh.h" />
+    <ClInclude Include="mesh_template.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

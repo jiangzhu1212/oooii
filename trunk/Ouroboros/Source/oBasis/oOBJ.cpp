@@ -32,13 +32,14 @@
 #include <oBase/macros.h>
 #include <oBase/timer.h>
 #include <oBase/unordered_map.h>
+#include <oMesh/mesh.h>
 #include <oBasis/oContainer.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oMeshUtil.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oStdLinearAllocator.h>
 
 using namespace ouro;
+using namespace ouro::mesh;
 
 // To translate from several index streams - one per vertex element stream - to 
 // a single index buffer, we'll need to replicate vertices by their unique 
@@ -391,7 +392,7 @@ static void ReduceElements(const oOBJ_INIT& _Init
 
 	// Go back through groups and calc min/max verts
 	for (oOBJ_GROUP& g : _pSinglyIndexedElements->Groups)
-		oCalcMinMaxVertices(data(*_pIndices), g.Range.start_primitive*3, g.Range.num_primitives*3, as_uint(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
+		calc_min_max_indices(_pIndices->data(), g.Range.start_primitive*3, g.Range.num_primitives*3, as_uint(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
 }
 
 static ouro::mesh::layout::value oOBJGetVertexLayout(const oOBJ_DESC& _OBJDesc)
@@ -498,7 +499,7 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 			sstring StrTime;
 			timer t;
 			VertexElements.Normals.resize(VertexElements.Positions.size());
-			oCalcVertexNormals(data(VertexElements.Normals), data(Indices), Indices.size(), data(VertexElements.Positions), VertexElements.Positions.size(), _Init.CounterClockwiseFaces, true);
+			calc_vertex_normals(VertexElements.Normals.data(), Indices.data(), as_uint(Indices.size()), VertexElements.Positions.data(), as_uint(VertexElements.Positions.size()), _Init.CounterClockwiseFaces, true);
 			format_duration(StrTime, t.seconds(), true, true);
 			oTRACE("Calculating vertex normals done in %s. (%s)", StrTime.c_str(), oSAFESTRN(_OBJPath));
 		}
@@ -525,10 +526,11 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 			sstring StrTime;
 			double SolverTime = 0.0;
 			oTRACE("Calculating texture coordinates... (%s)", oSAFESTRN(_OBJPath));
-			if (!oCalcTexcoords(VertexElements.Bound, data(Indices), as_uint(Indices.size()), VertexElements.Positions.data(), VertexElements.Texcoords.data(), as_uint(VertexElements.Texcoords.size()), &SolverTime))
+			try { calc_texcoords(boundf(VertexElements.Bound.Min, VertexElements.Bound.Max), Indices.data(), as_uint(Indices.size()), VertexElements.Positions.data(), VertexElements.Texcoords.data(), as_uint(VertexElements.Texcoords.size()), &SolverTime); }
+			catch (std::exception& e)
 			{
 				VertexElements.Texcoords.clear();
-				oTRACE("Calculating texture coordinates failed. %s (%s)", oErrorGetLastString(), _OBJPath);
+				oTRACEA("Calculating texture coordinates failed. %s (%s)", _OBJPath, e.what());
 			}
 
 			format_duration(StrTime, SolverTime, true, true);

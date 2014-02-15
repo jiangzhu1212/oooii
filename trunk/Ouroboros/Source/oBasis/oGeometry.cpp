@@ -25,14 +25,15 @@
 #include <oBasis/oGeometry.h>
 #include <oBase/algorithm.h>
 #include <oBase/invalid.h>
+#include <oMesh/mesh.h>
 #include <oBasis/oError.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oMeshUtil.h>
 #include <oBasis/oOBJ.h>
 #include <oBasis/oRefCount.h>
 
 using namespace ouro;
 using namespace ouro::gpu;
+using namespace ouro::mesh;
 
 #define GEO_CONSTRUCT(fnName, SupportedLayout, InputLayout, FaceType) do { bool success = false; oCONSTRUCT(_ppGeometry, oGeometry_Impl(fnName, SupportedLayout, InputLayout, FaceType, &success)); } while (false); \
 	oGeometry_Impl* pGeometry = (oGeometry_Impl*)*_ppGeometry; \
@@ -295,13 +296,13 @@ struct oGeometry_Impl : public oGeometry
 	inline void CalcVertexNormals(bool _CCW)
 	{
 		Normals.resize(Positions.size());
-		oCalcVertexNormals(data(Normals), data(Indices), Indices.size(), data(Positions), Positions.size(), _CCW);
+		calc_vertex_normals(Normals.data(), Indices.data(), as_uint(Indices.size()), Positions.data(), as_uint(Positions.size()), _CCW);
 	}
 
 	inline void CalcTangents(unsigned int _BaseIndexIndex)
 	{
 		Tangents.resize(Positions.size());
-		oCalcTangents(data(Tangents), &Indices[_BaseIndexIndex], Indices.size() - _BaseIndexIndex, data(Positions), data(Normals), data(Texcoords), Positions.size());
+		calc_vertex_tangents(Tangents.data(), &Indices[_BaseIndexIndex], as_uint(Indices.size() - _BaseIndexIndex), Positions.data(), Normals.data(), Texcoords.data(), as_uint(Positions.size()));
 	}
 
 	inline void SetColor(color _Color, unsigned int _BaseVertexIndex)
@@ -321,16 +322,15 @@ struct oGeometry_Impl : public oGeometry
 
 	inline void CalculateBounds()
 	{
-		float3 m, M;
-		oCalcMinMaxPoints(data(Positions), Positions.size(), &m, &M);
-		Bounds.Min = m;
-		Bounds.Max = M;
+		boundf b = calc_bound(Positions.data(), sizeof(float3), as_uint(Positions.size()));
+		Bounds.Min = b.get_min();
+		Bounds.Max = b.get_max();
 	}
 
 	inline void PruneUnindexedVertices()
 	{
-		size_t newNumVerts = 0;
-		oPruneUnindexedVertices(data(Indices), Indices.size(), data(Positions), data(Normals), data(Tangents), data(Texcoords), (float3*)0, (unsigned int*)data(Colors), Positions.size(), &newNumVerts);
+		uint newNumVerts = 0;
+		prune_unindexed_vertices(Indices.data(), as_uint(Indices.size()), Positions.data(), Normals.data(), Tangents.data(), Texcoords.data(), (float2*)nullptr, Colors.data(), as_uint(Positions.size()), &newNumVerts);
 		if (newNumVerts != Positions.size())
 		{
 			Positions.resize(newNumVerts);
@@ -1398,10 +1398,10 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 					return oErrorSetLast(std::errc::invalid_argument, "Hemisphere not yet supported for this configuration");
 				}
 
-				unsigned int* pEdges = 0;
-				size_t nEdges = 0;
+				uint* pEdges = 0;
+				uint nEdges = 0;
 
-				oCalcEdges(pGeometry->Positions.size(), data(pGeometry->Indices), pGeometry->Indices.size(), &pEdges, &nEdges);
+				calc_edges(as_uint(pGeometry->Positions.size()), pGeometry->Indices.data(), as_uint(pGeometry->Indices.size()), &pEdges, &nEdges);
 
 				pGeometry->Indices.clear();
 				pGeometry->Indices.reserve(nEdges * 2);
@@ -1411,7 +1411,7 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 					pGeometry->Indices.push_back(pEdges[i*2+1]);
 				}
 
-				oFreeEdgeList(pEdges);
+				free_edge_list(pEdges);
 			}
 		}
 	}

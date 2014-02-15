@@ -41,11 +41,6 @@ follows the suite pattern:
 
 Ouroboros is comprised of (roughly in order of dependency):
 
-oStd              <== Implementations of C++11 std namespace objects not yet 
-                      supported by Visual Studio. Specifically oStd::future 
-                      work-steals, something even gcc's version does not yet 
-                      support.
-oStdTests         <== Unit tests for oStd.
 oHLSL             <== Implementation of the HLSL language for C++. Many of the 
                       math functions in HLSL and utils written for shader code 
                       are useful at tool-time or for C++ code so this library 
@@ -53,20 +48,26 @@ oHLSL             <== Implementation of the HLSL language for C++. Many of the
 oBase             <== Very common utility functions especially relating to 
                       string and memory parsing.
 oBaseTests        <== Unit tests for oBase.
+Concurrencies     <== implemenation of basic concurrency APIs such as dispatch,
+											parallel_for and task_groups. Because some tools should 
+											remain small and not pull in large middlewares there are
+											multiple implementations to allow apps to choose between
+											cost/benefit balanced. Currently there is an integration 
+											of TBB and an Ouroboros reference implementation.
 oSurface          <== Texture/advanced image support including image loading,
                       format introspection, utilities for dealing with 2D and 3D 
                       dimensions as well as mips, arrays, slices and cube maps.
                       this also includes simple fill and conversion utilities.
 oSurfaceTests     <== Unit tests for oSurface.
+oMesh             <== Buffer management and geometry calculation for arrays of 
+                      points, lines triangles and tessellation patches fit for 
+                      use with modern 3D APIs.
+oMeshTests        <== Unit tests for oMesh.
 oCompute          <== Semi-basic math functions that cross-compile on compute 
                       languages. At the moment this is only HLSL and C++.
 oComputeTests     <== Unit tests for oCompute.
 oCore             <== platform/OS concepts like files, debugger, adapters, cpus.
 oCoreTests        <== Unit tests for oCore.
-oConcurrency      <== Implementation of concurrency containers and sync objects
-                      for either bring-up, debugging, or building more complex
-                      systems.
-oConcurrencyTests <== Unit tests for oConcurrency.
 oGUI              <== graphical user interface concepts, often not abstracted or 
                       cross-platform - this isn't intended to be QT or WxWidgets,
                       but just the very basics until it's worth bringing in a 
@@ -79,7 +80,7 @@ oGfx              <== A renderer based on oGPU
 
 LEGACY 
 These libraries are scheduled for removal, though their contents will 
-shift to one of theabovce libraries
+shift to one of the above libraries
 
 oBasis            <== Basic algorithms, types and structures that have no 
                       platform dependencies (but perhaps lightweight compiler 
@@ -91,6 +92,10 @@ oKinect           <== Platform-level integration/wrapper for the Kinect API alon
                       with platform-specific visualization utils. Since this is 
                       uncommon specialized hardware, it has been separated from 
                       oPlatform.
+oConcurrency      <== Implementation of concurrency containers and sync objects
+                      for either bring-up, debugging, or building more complex
+                      systems.
+oConcurrencyTests <== Unit tests for oConcurrency.
 
 FUTURE
 These libraries don't exit yet, but will be a landing pad for things from the

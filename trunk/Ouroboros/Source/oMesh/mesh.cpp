@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oMesh/mesh.h>
 #include <oBase/throw.h>
+#include "mesh_template.h"
 
 #define STR_SUPPORT(_T, _NumTs) \
 	oDEFINE_TO_STRING(_T) \
@@ -413,6 +414,287 @@ void copy_vertices(void* oRESTRICT _pDestination, const layout::value& _Destinat
 	if (_Source.colors)
 		copy_semantic<color, color>(_pDestination, DestinationPitch, _DestinationLayout, _Source.colors, _Source.color_pitch, _NumVertices, has_colors);
 }
+
+void calc_min_max_indices(const uint* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex)
+{
+	detail::calc_min_max_indices(_pIndices, _StartIndex, _NumIndices, _NumVertices, _pMinVertex, _pMaxVertex);
+}
+
+void calc_min_max_indices(const ushort* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex)
+{
+	detail::calc_min_max_indices(_pIndices, _StartIndex, _NumIndices, _NumVertices, _pMinVertex, _pMaxVertex);
+}
+
+boundf calc_bound(const float3* _pVertices, uint _VertexStride, uint _NumVertices)
+{
+	return detail::calc_bound(_pVertices, _VertexStride, _NumVertices);
+}
+
+void transform_points(const float4x4& _Matrix, float3* oRESTRICT _pDestination, uint _DestinationStride, const float3* oRESTRICT _pSource, uint _SourceStride, uint _NumPoints)
+{
+	detail::transform_points(_Matrix, _pDestination, _DestinationStride, _pSource, _SourceStride, _NumPoints);
+}
+
+void transform_vectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination, uint _DestinationStride, const float3* oRESTRICT _pSource, uint _SourceStride, uint _NumVectors)
+{
+	detail::transform_vectors(_Matrix, _pDestination, _DestinationStride, _pSource, _SourceStride, _NumVectors);
+}
+
+void remove_degenerates(const float3* oRESTRICT _pPositions, uint _NumPositions, uint* oRESTRICT _pIndices, uint _NumIndices, uint* oRESTRICT _pNewNumIndices)
+{
+	detail::remove_degenerates(_pPositions, _NumPositions, _pIndices, _NumIndices, _pNewNumIndices);
+}
+
+void remove_degenerates(const float3* oRESTRICT _pPositions, uint _NumPositions, ushort* oRESTRICT _pIndices, uint _NumIndices, uint* oRESTRICT _pNewNumIndices)
+{
+	detail::remove_degenerates(_pPositions, _NumPositions, _pIndices, _NumIndices, _pNewNumIndices);
+}
+
+void calc_face_normals(float3* oRESTRICT _pFaceNormals, const uint* oRESTRICT _pIndices, uint _NumIndices, const float3* oRESTRICT _pPositions, uint _NumPositions, bool _CCW)
+{
+	detail::calc_face_normals(_pFaceNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW);
+}
+
+void calc_face_normals(float3* oRESTRICT _pFaceNormals, const ushort* oRESTRICT _pIndices, uint _NumIndices, const float3* oRESTRICT _pPositions, uint _NumPositions, bool _CCW)
+{
+	detail::calc_face_normals(_pFaceNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW);
+}
+
+void calc_vertex_normals(float3* _pVertexNormals, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, uint _NumPositions, bool _CCW, bool _OverwriteAll)
+{
+	detail::calc_vertex_normals(_pVertexNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW, _OverwriteAll);
+}
+
+void calc_vertex_normals(float3* _pVertexNormals, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, uint _NumPositions, bool _CCW, bool _OverwriteAll)
+{
+	detail::calc_vertex_normals(_pVertexNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW, _OverwriteAll);
+}
+
+void calc_vertex_tangents(float4* _pTangents, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, uint _NumVertices)
+{
+	detail::calc_vertex_tangents(_pTangents, _pIndices, _NumIndices, _pPositions, _pNormals, _pTexcoords, _NumVertices);
+}
+
+void calc_vertex_tangents(float4* _pTangents, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, uint _NumVertices)
+{
+	detail::calc_vertex_tangents(_pTangents, _pIndices, _NumIndices, _pPositions, _pNormals, _pTexcoords, _NumVertices);
+}
+
+void calc_texcoords(const boundf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+{
+	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
+}
+
+void calc_texcoords(const boundf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+{
+	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
+}
+
+void calc_texcoords(const boundf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+{
+	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
+}
+
+void calc_texcoords(const boundf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+{
+	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
+}
+
+namespace TerathonEdges {
+
+	/** <citation
+	usage="Implementation" 
+	reason="tangents can be derived, and this is how to do it" 
+	author="Eric Lengyel"
+	description="http://www.terathon.com/code/edges.html"
+	license="*** Assumed Public Domain ***"
+	licenseurl="http://www.terathon.com/code/edges.html"
+	modification="Minor changes to not limit algo to 65536 indices and some fixes to get it compiling"
+	/>*/
+
+	// $(CitedCodeBegin)
+
+	// Building an Edge List for an Arbitrary Mesh
+	// The following code builds a list of edges for an arbitrary triangle 
+	// mesh and has O(n) running time in the number of triangles n in the 
+	// pGeometry-> The edgeArray parameter must point to a previously allocated 
+	// array of Edge structures large enough to hold all of the mesh's 
+	// edges, which in the worst possible case is 3 times the number of 
+	// triangles in the pGeometry->
+
+	// An edge list is useful for many geometric algorithms in computer 
+	// graphics. In particular, an edge list is necessary for stencil 
+	// shadows.
+
+	struct Edge
+	{
+		unsigned int      vertexIndex[2]; 
+		unsigned int      faceIndex[2];
+	};
+
+
+	struct Triangle
+	{
+		unsigned int      index[3];
+	};
+
+
+	long BuildEdges(long vertexCount, long triangleCount,
+		const Triangle *triangleArray, Edge *edgeArray)
+	{
+		long maxEdgeCount = triangleCount * 3;
+		unsigned int *firstEdge = new unsigned int[vertexCount + maxEdgeCount];
+		unsigned int *nextEdge = firstEdge + vertexCount;
+
+		for (long a = 0; a < vertexCount; a++) firstEdge[a] = 0xFFFFFFFF;
+
+		// First pass over all triangles. This finds all the edges satisfying the
+		// condition that the first vertex index is less than the second vertex index
+		// when the direction from the first vertex to the second vertex represents
+		// a counterclockwise winding around the triangle to which the edge belongs.
+		// For each edge found, the edge index is stored in a linked list of edges
+		// belonging to the lower-numbered vertex index i. This allows us to quickly
+		// find an edge in the second pass whose higher-numbered vertex index is i.
+
+		long edgeCount = 0;
+		const Triangle *triangle = triangleArray;
+		for (long a = 0; a < triangleCount; a++)
+		{
+			long i1 = triangle->index[2];
+			for (long b = 0; b < 3; b++)
+			{
+				long i2 = triangle->index[b];
+				if (i1 < i2)
+				{
+					Edge *edge = &edgeArray[edgeCount];
+
+					edge->vertexIndex[0] = (unsigned int) i1;
+					edge->vertexIndex[1] = (unsigned int) i2;
+					edge->faceIndex[0] = (unsigned int) a;
+					edge->faceIndex[1] = (unsigned int) a;
+
+					long edgeIndex = firstEdge[i1];
+					if (edgeIndex == 0xFFFFFFFF)
+					{
+						firstEdge[i1] = edgeCount;
+					}
+					else
+					{
+						for (;;)
+						{
+							long index = nextEdge[edgeIndex];
+							if (index == 0xFFFFFFFF)
+							{
+								nextEdge[edgeIndex] = edgeCount;
+								break;
+							}
+
+							edgeIndex = index;
+						}
+					}
+
+					nextEdge[edgeCount] = 0xFFFFFFFF;
+					edgeCount++;
+				}
+
+				i1 = i2;
+			}
+
+			triangle++;
+		}
+
+		// Second pass over all triangles. This finds all the edges satisfying the
+		// condition that the first vertex index is greater than the second vertex index
+		// when the direction from the first vertex to the second vertex represents
+		// a counterclockwise winding around the triangle to which the edge belongs.
+		// For each of these edges, the same edge should have already been found in
+		// the first pass for a different triangle. So we search the list of edges
+		// for the higher-numbered vertex index for the matching edge and fill in the
+		// second triangle index. The maximum number of comparisons in this search for
+		// any vertex is the number of edges having that vertex as an endpoint.
+
+		triangle = triangleArray;
+		for (long a = 0; a < triangleCount; a++)
+		{
+			long i1 = triangle->index[2];
+			for (long b = 0; b < 3; b++)
+			{
+				long i2 = triangle->index[b];
+				if (i1 > i2)
+				{
+					for (long edgeIndex = firstEdge[i2]; edgeIndex != 0xFFFFFFFF;
+						edgeIndex = nextEdge[edgeIndex])
+					{
+						Edge *edge = &edgeArray[edgeIndex];
+						if ((edge->vertexIndex[1] == (unsigned int)i1) &&
+							(edge->faceIndex[0] == edge->faceIndex[1]))
+						{
+							edge->faceIndex[1] = (unsigned int) a;
+							break;
+						}
+					}
+				}
+
+				i1 = i2;
+			}
+
+			triangle++;
+		}
+
+		delete[] firstEdge;
+		return (edgeCount);
+	}
+
+	// $(CitedCodeEnd)
+
+} // namespace TerathonEdges
+
+void calc_edges(uint _NumVertices, const uint* _pIndices, uint _NumIndices, uint** _ppEdges, uint* _pNumberOfEdges)
+{
+	const uint numTriangles = _NumIndices / 3;
+	if ((uint)((long)_NumVertices) != _NumVertices)
+		throw std::out_of_range("_NumVertices is out of range");
+	
+	if ((uint)((long)numTriangles) != numTriangles)
+		throw std::out_of_range("numTriangles is out of range");
+
+	TerathonEdges::Edge* edgeArray = new TerathonEdges::Edge[3 * numTriangles];
+
+	uint numEdges = static_cast<uint>(TerathonEdges::BuildEdges(static_cast<long>(_NumVertices), static_cast<long>(numTriangles), (const TerathonEdges::Triangle *)_pIndices, edgeArray));
+
+	// @tony: Should the allocator be exposed?
+	*_ppEdges = new uint[numEdges * 2];
+
+	for (size_t i = 0; i < numEdges; i++)
+	{
+		(*_ppEdges)[i*2] = edgeArray[i].vertexIndex[0];
+		(*_ppEdges)[i*2+1] = edgeArray[i].vertexIndex[1];
+	}
+
+	*_pNumberOfEdges = numEdges;
+
+	delete [] edgeArray;
+}
+
+void free_edge_list(uint* _pEdges)
+{
+	delete [] _pEdges;
+}
+
+#define PUV(IndexT, UV0T, UV1T) \
+void prune_unindexed_vertices(const IndexT* oRESTRICT _pIndices, uint _NumIndices \
+	, float3* oRESTRICT _pPositions, float3* oRESTRICT _pNormals, float4* oRESTRICT _pTangents, UV0T* oRESTRICT _pTexcoords0, UV1T* oRESTRICT _pTexcoords1, color* oRESTRICT _pColors \
+	, uint _NumVertices, uint* oRESTRICT _pNewNumVertices) \
+{ detail::prune_unindexed_vertices(_pIndices, _NumIndices, _pPositions, _pNormals, _pTangents, _pTexcoords0, _pTexcoords1, _pColors, _NumVertices, _pNewNumVertices); }
+
+PUV(uint, float2, float2)
+PUV(uint, float2, float3)
+PUV(uint, float3, float2)
+PUV(uint, float3, float3)
+PUV(ushort, float2, float2)
+PUV(ushort, float2, float3)
+PUV(ushort, float3, float2)
+PUV(ushort, float3, float3)
 
 	} // namespace gpu
 } // namespace ouro

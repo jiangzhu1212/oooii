@@ -56,7 +56,6 @@
     <ClInclude Include="..\..\Include\oBasis\oLockThis.h" />
     <ClInclude Include="..\..\Include\oBasis\oManipulator.h" />
     <ClInclude Include="..\..\Include\oBasis\oMath.h" />
-    <ClInclude Include="..\..\Include\oBasis\oMeshUtil.h" />
     <ClInclude Include="..\..\Include\oBasis\oMIME.h" />
     <ClInclude Include="..\..\Include\oBasis\oOBJ.h" />
     <ClInclude Include="..\..\Include\oBasis\oOSC.h" />
@@ -108,7 +107,6 @@
     <ClCompile Include="oManipulatorScale.cpp" />
     <ClCompile Include="oManipulatorTranslation.cpp" />
     <ClCompile Include="oMath.cpp" />
-    <ClCompile Include="oMeshUtil.cpp" />
     <ClCompile Include="oMIME.cpp" />
     <ClCompile Include="oOBJ.cpp" />
     <ClCompile Include="oOSC.cpp" />
