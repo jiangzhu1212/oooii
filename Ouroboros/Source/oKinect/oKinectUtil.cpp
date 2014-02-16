@@ -176,11 +176,7 @@ unsigned char oKinectGetDepthIntensity(unsigned short _Depth)
 
 RGBQUAD oKinectGetColoredDepth(unsigned short _DepthAndIndex)
 {
-	static const color kPlayerColors[] =
-	{ 
-		Gray, Red, Orange, Yellow, Lime, Blue, 
-		Indigo, Violet
-	};
+	static const color kPlayerColors[] = { gray, red, orange, yellow, lime, blue, indigo, violet };
 	static_assert(oCOUNTOF(kPlayerColors) == (1<<NUI_IMAGE_PLAYER_INDEX_SHIFT), "color count mismatch");
 
 	const unsigned short D = NuiDepthPixelToDepth(_DepthAndIndex);

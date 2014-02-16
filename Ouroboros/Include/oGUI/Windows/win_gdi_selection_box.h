@@ -48,8 +48,8 @@ public:
 	{
 		info()
 			: hParent(nullptr)
-			, Fill(color(DodgerBlue, 0.33f))
-			, Border(DodgerBlue)
+			, Fill(color(dodger_blue, 0.33f))
+			, Border(dodger_blue)
 			, EdgeRoundness(0)
 			, UseOffscreenRender(false)
 		{}

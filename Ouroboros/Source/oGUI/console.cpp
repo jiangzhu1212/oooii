@@ -66,7 +66,7 @@ static WORD set_console_color(HANDLE _hStream, color _Foreground, color _Backgro
 	#define BLUE__ FOREGROUND_BLUE|BACKGROUND_BLUE
 	#define BRIGHT__ FOREGROUND_INTENSITY|BACKGROUND_INTENSITY
 
-	static const color sConsoleColors[] = { Black, Navy, Green, Teal, Maroon, Purple, Olive, Silver, Gray, Blue, Lime, Aqua, Red, Fuchsia, Yellow, White };
+	static const color sConsoleColors[] = { black, navy, green, teal, maroon, purple, olive, silver, gray, blue, lime, aqua, red, fuchsia, yellow, white };
 	static const WORD sConsoleColorWords[] = { 0, BLUE__, GREEN__, BLUE__|GREEN__, RED__, RED__|BLUE__, RED__|GREEN__, RED__|GREEN__|BLUE__, BRIGHT__, BRIGHT__|BLUE__, BRIGHT__|GREEN__, BRIGHT__|BLUE__|GREEN__, BRIGHT__|RED__, BRIGHT__|RED__|BLUE__, BRIGHT__|RED__|GREEN__, BRIGHT__|RED__|GREEN__|BLUE__ };
 
 	CONSOLE_SCREEN_BUFFER_INFO csbi;

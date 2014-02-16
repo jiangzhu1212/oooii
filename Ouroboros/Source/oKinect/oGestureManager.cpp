@@ -173,9 +173,9 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, con
 	: Window(_Window)
 	, VizDesc(_Init.VizDesc)
 	, DeviceVizDesc(_Init.DeviceVizDesc)
-	, hBonePen(make_pen(Lime, 2))
-	, hBoneBrush(make_brush(White))
-	, hBlankBG(make_brush(Black))
+	, hBonePen(make_pen(lime, 2))
+	, hBoneBrush(make_brush(white))
+	, hBlankBG(make_brush(black))
 	, KinectDrawState(oKINECT_STATUS_DRAW_INITIALIZING_1)
 	, LastSetTimerState(oKINECT_STATUS_DRAW_NONE)
 	, TimerMessageVersion(0)
@@ -491,7 +491,7 @@ bool oGestureManagerImpl::GDIDrawKinect(ouro::draw_context_handle _hDC, const in
 				ouro::text_info td;
 				td.position = float2((float)rTarget.left, VerticalOffset);
 				td.size = oWinRectSize(rTarget);
-				td.shadow = Black;
+				td.shadow = black;
 				const float4& h = Skeleton.positions[ouro::input::hip_center];
 				mstring text;
 				snprintf(text, "HIP: %.02f %.02f %.02f\n", h.x, h.y, h.z);
@@ -530,7 +530,7 @@ void oGestureManagerImpl::GDIDrawNoKinect(ouro::draw_context_handle _hDC, const 
 	ouro::text_info td;
 	td.position = float2(oWinRectPosition(rTarget));
 	td.size = oWinRectSize(rTarget);
-	td.shadow = Gray;
+	td.shadow = gray;
 	td.alignment = ouro::alignment::middle_center;
 	draw_text(hDC, td, NoKinectMessage);
 }

@@ -71,12 +71,12 @@ void VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
 	static const color fg[] = 
 	{
 		color(0),
-		Lime,
-		White,
+		lime,
+		white,
 		color(0),
-		Yellow,
-		Red,
-		Yellow,
+		yellow,
+		red,
+		yellow,
 	};
 	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
 
@@ -88,7 +88,7 @@ void VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
 		color(0),
 		color(0),
 		color(0),
-		Red,
+		red,
 	};
 	static_assert(oCOUNTOF(fg) == NUM_REPORT_TYPES, "");
 

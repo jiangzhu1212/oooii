@@ -95,7 +95,7 @@ public:
 			if (Device->BeginFrame())
 			{
 				ouro::gpu::clear_info ci;
-				ci.clear_color[0] = (Counter & 0x1) ? White : Blue;
+				ci.clear_color[0] = (Counter & 0x1) ? white : blue;
 				PrimaryRenderTarget->SetClearDesc(ci);
 
 				CommandList->Begin();

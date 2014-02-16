@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oSurface/codec.h>
+#include <oBase/colors.h>
 #include <oBase/path.h>
-//#include <oBase/timer.h>
-//#include <vector>
+#include <oBase/throw.h>
 
 #include "../../test_services.h"
 
@@ -50,7 +50,7 @@ static std::shared_ptr<surface::buffer> make_test_1d(int _Width)
 
 	{
 		surface::lock_guard lock(s);
-		static const color sConsoleColors[] = { Black, Navy, Green, Teal, Maroon, Purple, Olive, Silver, Gray, Blue, Lime, Aqua, Red, Fuchsia, Yellow, White };
+		static const color sConsoleColors[] = { black, navy, green, teal, maroon, purple, olive, silver, gray, blue, lime, aqua, red, fuchsia, yellow, white };
 		color* texture1Ddata = (color*)lock.mapped.data;
 		for (int i = 0; i < si.dimensions.x; i++)
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];

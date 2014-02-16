@@ -187,7 +187,7 @@ static void test_hsv()
 		const float3 kRGB(c.R, c.G, c.B);
 		const float3 kHSV(c.H, c.Shsv, c.V);
 
-		float3 testRGB = oHSVtoRGB(kHSV);
+		float3 testRGB = hsvtorgb(kHSV);
 		if (!equal_eps(testRGB, kRGB, HSV_EPS))
 			oTHROW(protocol_error, "failed (%d \"%s\"): oHSVtoRGB(%.03f, %.03f, %.03f) expected (%.03f, %.03f, %.03f), got (%.03f, %.03f, %.03f)"
 				, i, c.Tag
@@ -195,7 +195,7 @@ static void test_hsv()
 				, kRGB.x, kRGB.y, kRGB.z
 				, testRGB.x, testRGB.y, testRGB.z);
 
-		float3 testHSV = oRGBtoHSV(kRGB);
+		float3 testHSV = rgbtohsv(kRGB);
 		if (!equal_eps(testHSV, kHSV, HSV_EPS))
 			oTHROW(protocol_error, "failed (%d \"%s\"): oRGBtoHSV(%.03f, %.03f, %.03f) expected (%.03f, %.03f, %.03f), got (%.03f, %.03f, %.03f)"
 				, i, c.Tag

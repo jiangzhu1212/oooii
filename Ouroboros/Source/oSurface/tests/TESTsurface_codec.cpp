@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oSurface/codec.h>
 #include <oSurface/fill.h>
+#include <oBase/colors.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <oBase/fixed_string.h>
@@ -46,7 +47,7 @@ static void compare_checkboards(const int2& _InDimensions, surface::format _Form
 	size_t knownSize = known->size();
 	{
 		surface::lock_guard lock(known);
-		surface::fill_checkerboard((color*)lock.mapped.data, lock.mapped.row_pitch, si.dimensions.xy(), si.dimensions.xy() / 2, Azure, Salmon);
+		surface::fill_checkerboard((color*)lock.mapped.data, lock.mapped.row_pitch, si.dimensions.xy(), si.dimensions.xy() / 2, azure, salmon);
 	}
 
 	size_t EncodedSize = 0;

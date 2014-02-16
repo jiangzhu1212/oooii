@@ -220,8 +220,8 @@ private:
 };
 
 oKinectTestApp::oKinectTestApp()
-	: hKinectPen(make_pen(Lime, 2))
-	, hKinectBrush(make_brush(White))
+	: hKinectPen(make_pen(lime, 2))
+	, hKinectBrush(make_brush(white))
 	, Ready(false)
 {
 	int nKinects = oKinectGetCount();
@@ -381,7 +381,7 @@ void oKinectTestApp::OnPaint(HWND _hWnd
 			ouro::text_info td;
 			td.position = float2(0.0f, VerticalOffset);
 			td.size = _ClientSize;
-			td.shadow = Black;
+			td.shadow = black;
 			const float4& h = Skeleton.positions[input::hip_center];
 			const float4& hr = Skeleton.positions[input::ankle_right];
 			mstring text;

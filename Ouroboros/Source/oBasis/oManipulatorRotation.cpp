@@ -59,7 +59,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	d.FaceType = mesh::face_type::outline;
 	d.Radius = 1;
 	d.Facet = ROTATION_CIRCLE_VCOUNT;
-	d.Color = White;
+	d.Color = white;
 
 	if(!GeometryFactory->CreateCircle(d, layout, &CircleGeometry))
 	{
@@ -141,7 +141,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	td.OuterRadius = RotationScale + Desc.PickWidth;
 	td.Divide = ROTATION_PICK_TORUS_DIVIDE;
 	td.Facet = ROTATION_PICK_TORUS_FACET;
-	td.Color = White;
+	td.Color = white;
 
 	if(!GeometryFactory->CreateTorus(td, layout, &TorusGeometry))
 	{

@@ -27,6 +27,7 @@
 
 #include <exception>
 #include <oBase/byte.h>
+#include <oCompute/oComputeUtil.h>
 
 #define MAT4_IDENTITY TMAT4<T>( \
 			TVEC4<T>(T(1), T(0), T(0), T(0)), \

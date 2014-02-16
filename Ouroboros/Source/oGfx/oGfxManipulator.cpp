@@ -237,7 +237,7 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 			pickd.OuterRadius = 7;
 			pickd.Divide = oManipulator::ROTATION_PICK_TORUS_DIVIDE;
 			pickd.Facet = oManipulator::ROTATION_PICK_TORUS_FACET;
-			pickd.Color = White;
+			pickd.Color = white;
 
 			if(!CreateAxisGeometry(_pDevice, _Name, pickd, oManipulator::ROTATION_CIRCLE_VCOUNT*2, oManipulator::X))
 				return;
@@ -260,7 +260,7 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 
 bool oGfxManipulatorImpl::Pick(uint _ObjectID)
 {
-	static const color unpickedColors[oManipulator::NUM_AXES] = {Red, Green, Blue, Gray};
+	static const color unpickedColors[oManipulator::NUM_AXES] = {red, green, blue, gray};
 	for(size_t i = 0; i < oManipulator::NUM_AXES; ++i)
 		Lines[i].LineColor = unpickedColors[i];
 
@@ -272,7 +272,7 @@ bool oGfxManipulatorImpl::Pick(uint _ObjectID)
 			auto& Line = Lines[Axis];
 			if(_ObjectID == (uint)Line.URI.Hash())
 			{
-				Line.LineColor = Yellow;
+				Line.LineColor = yellow;
 				if(PickedAxis != Axis)
 				{
 					PickedAxis = Axis;

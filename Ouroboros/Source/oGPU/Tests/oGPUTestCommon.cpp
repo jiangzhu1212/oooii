@@ -133,7 +133,7 @@ const int oGPUTextureTestApp::sSnapshotFrames[2] = { 0, 2 };
 
 bool oGPUTextureTestApp::Initialize()
 {
-	PrimaryRenderTarget->SetClearColor(AlmostBlack);
+	PrimaryRenderTarget->SetClearColor(almost_black);
 
 	oGPUBuffer::DESC DCDesc;
 	DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
@@ -172,7 +172,7 @@ bool oGPUTextureTestApp::Render()
 
 	CommandList->Begin();
 
-	ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
+	ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, white));
 
 	CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
 	CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
@@ -206,7 +206,7 @@ std::shared_ptr<ouro::surface::buffer> make_1D(int _Width)
 
 	{
 		surface::lock_guard lock(s);
-		static const color sConsoleColors[] = { Black, Navy, Green, Teal, Maroon, Purple, Olive, Silver, Gray, Blue, Lime, Aqua, Red, Fuchsia, Yellow, White };
+		static const color sConsoleColors[] = { black, navy, green, teal, maroon, purple, olive, silver, gray, blue, lime, aqua, red, fuchsia, yellow, white };
 		color* texture1Ddata = (color*)lock.mapped.data;
 		for (int i = 0; i < si.dimensions.x; i++)
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];

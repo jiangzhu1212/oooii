@@ -1886,7 +1886,7 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 		pGeometry->Ranges[i] = d.pGroups[i].Range;
 	}
 
-	pGeometry->Finalize(_Layout, White);
+	pGeometry->Finalize(_Layout, white);
 
 	float3 dim = pGeometry->Bounds.size();
 	float s = 1.0f / __max(dim.x, __max(dim.y, dim.z));
@@ -1999,7 +1999,7 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 	if (_Desc.FaceType == mesh::face_type::front_ccw)
 		mesh::flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
 
-	pGeometry->Finalize(_Layout, Black);
+	pGeometry->Finalize(_Layout, black);
 	
 	return true;
 }

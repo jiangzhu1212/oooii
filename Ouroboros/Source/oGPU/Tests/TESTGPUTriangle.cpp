@@ -37,7 +37,7 @@ struct GPU_Triangle_App : public oGPUTestApp
 
 	bool Initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(almost_black);
 
 		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH);
 

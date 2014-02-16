@@ -52,7 +52,7 @@ public:
 
 	bool Initialize()
 	{
-		PrimaryRenderTarget->SetClearColor(AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(almost_black);
 
 		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR);
 		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
@@ -79,12 +79,12 @@ public:
 
 		static const float3 TrianglePoints[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
 
-		pLines[0].StartColor = Red;
-		pLines[0].EndColor = Green;
-		pLines[1].StartColor = Green;
-		pLines[1].EndColor = Blue;
-		pLines[2].StartColor = Blue;
-		pLines[2].EndColor = Red;
+		pLines[0].StartColor = red;
+		pLines[0].EndColor = green;
+		pLines[1].StartColor = green;
+		pLines[1].EndColor = blue;
+		pLines[2].StartColor = blue;
+		pLines[2].EndColor = red;
 
 		pLines[0].Start = TrianglePoints[0];
 		pLines[0].End = TrianglePoints[1];

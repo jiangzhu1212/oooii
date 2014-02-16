@@ -329,7 +329,7 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 	, UIMode(true)
 	, AllowUIModeChange(true)
 	, PreFullscreenState(ouro::window_state::hidden)
-	, ClearToggle(Green, Red)
+	, ClearToggle(green, red)
 {
 	// Set up application window
 	{

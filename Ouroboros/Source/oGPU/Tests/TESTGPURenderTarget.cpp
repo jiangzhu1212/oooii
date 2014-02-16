@@ -39,7 +39,7 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 
 	bool Initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(almost_black);
 
 		oGPUCommandList::DESC cld;
 		cld.draw_order = 1;
@@ -70,7 +70,7 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 		Cube = ouro::gpu::make_first_cube(Device);
 
 		ouro::gpu::clear_info ci;
-		ci.clear_color[0] = DeepSkyBlue;
+		ci.clear_color[0] = deep_sky_blue;
 
 		oGPURenderTarget::DESC rtd;
 		rtd.dimensions = ushort3(256, 256, 1);
@@ -145,7 +145,7 @@ private:
 
 		_pCommandList->Begin();
 
-		ouro::gpu::commit_buffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, White));
+		ouro::gpu::commit_buffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, white));
 
 		_pCommandList->Clear(_pTarget, ouro::gpu::clear_type::color_depth_stencil);
 		_pCommandList->SetBlendState(ouro::gpu::blend_state::opaque);

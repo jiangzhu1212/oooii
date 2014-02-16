@@ -42,7 +42,7 @@ public:
 
 	bool Render() override
 	{
-		static color sClearColors[] = { Lime, White };
+		static color sClearColors[] = { lime, white };
 		PrimaryRenderTarget->SetClearColor(sClearColors[Device->GetFrameID() % oCOUNTOF(sClearColors)]);
 		CommandList->Begin();
 		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
