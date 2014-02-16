@@ -25,6 +25,7 @@
 #include <oSurface/fill.h>
 #include <oSurface/codec.h>
 #include <oBase/color.h>
+#include <oBase/colors.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <vector>
@@ -87,16 +88,16 @@ static std::shared_ptr<surface::buffer> make_solid(const int2& _Dimensions, colo
 
 void TESTsurface_fill(test_services& _Services)
 {
-	static const color gradiantColors0[4] = { Blue, Purple, Lime, Orange};
-	static const color gradiantColors1[4] = { MidnightBlue, DarkSlateBlue, Green, Chocolate };
+	static const color gradiantColors0[4] = { blue, purple, lime, orange };
+	static const color gradiantColors1[4] = { midnight_blue, dark_slate_blue, green, chocolate };
 	std::shared_ptr<surface::buffer> s;
-	s = make_numbered_grid(int2(256,256), int2(64,64), Black, Black, gradiantColors0);
+	s = make_numbered_grid(int2(256,256), int2(64,64), black, black, gradiantColors0);
 	_Services.check(s, 0);
-	s = make_numbered_grid(int2(512,512), int2(32,32), Gray, White, gradiantColors1);
+	s = make_numbered_grid(int2(512,512), int2(32,32), gray, white, gradiantColors1);
 	_Services.check(s, 1);
-	s = make_checkerboard(int2(256,256), int2(32,32), Cyan, Pink);
+	s = make_checkerboard(int2(256,256), int2(32,32), cyan, pink);
 	_Services.check(s, 2);
-	s = make_solid(int2(256,256), TangentSpaceNormalBlue);
+	s = make_solid(int2(256,256), tangent_space_normal_blue);
 	_Services.check(s, 3);
 }
 

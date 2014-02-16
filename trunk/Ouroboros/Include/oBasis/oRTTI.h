@@ -36,6 +36,7 @@
 #include <oBase/uri.h>
 #include <typeinfo>
 #include <vector>
+#include <oCompute/rgb.h>
 
 #include <oBase/input.h> // @tony fixme: needed to convert namespace::enum -> namespace_enum. Maybe there's a more generic way to support namespaces?
 
@@ -128,7 +129,7 @@ oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float3)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float4)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, double)
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::color, ouro_color)
-oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oRGBf)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, rgbf, ouro_rgbf)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float4x4)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, quatf)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oPlanef)

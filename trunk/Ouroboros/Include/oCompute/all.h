@@ -32,7 +32,6 @@
 #include <oCompute/arcball.h>
 #include <oCompute/eye.h>
 #include <oCompute/linear_algebra.h>
-#include <oCompute/oComputeColor.h>
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/oComputeFilter.h>
 #include <oCompute/oComputeGBuffer.h>
@@ -48,4 +47,5 @@
 #include <oCompute/oFrustum.h>
 #include <oCompute/oPlane.h>
 #include <oCompute/oQuaternion.h>
+#include <oCompute/rgb.h>
 #endif

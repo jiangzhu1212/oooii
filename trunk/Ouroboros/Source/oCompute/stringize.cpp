@@ -25,12 +25,12 @@
 // This cpp contains implemenations of to_string and from_string for intrinsic
 // types as well as ouro types.
 
-#include <oCompute/oComputeColor.h>
 #include <oCompute/oAABox.h>
 #include <oCompute/oFrustum.h>
 #include <oCompute/oPlane.h>
 #include <oCompute/oQuaternion.h>
 #include <oCompute/oSphere.h>
+#include <oCompute/rgb.h>
 #include <oBase/stringize.h>
 
 namespace ouro {
@@ -84,7 +84,7 @@ bool from_string(oSpheref* _pValue, const char* _StrSource)
 	return from_string(pTmp, _StrSource);
 }
 
-bool from_string(oRGBf* _pValue, const char* _StrSource)
+bool from_string(rgbf* _pValue, const char* _StrSource)
 {
 	color c;
 	// Valid forms are: 0xAABBGGRR, R G B [0,1], and an ouro::color
@@ -109,7 +109,7 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oRECT
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oPlanef& _Value) { return to_string(_StrDestination, _SizeofStrDestination, (const float4&)_Value); }
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oSpheref& _Value) { return to_string(_StrDestination, _SizeofStrDestination, (const float4&)_Value); }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oRGBf& _Value) 
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rgbf& _Value) 
 {
 	if (!to_string(_StrDestination, _SizeofStrDestination, (color)_Value))
 		if (!to_string(_StrDestination, _SizeofStrDestination, (const float3&)_Value))

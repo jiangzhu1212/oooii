@@ -38,9 +38,9 @@ struct oGPUTestConstants
 
 	oGPUTestConstants() {}
 	oGPUTestConstants(CONSTRUCTION _Type) { SetIdentity(); }
-	oGPUTestConstants(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, const oRGBAf& _Color) { Set(_World, _View, _Projection, _Color); }
+	oGPUTestConstants(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, const rgbaf& _Color) { Set(_World, _View, _Projection, _Color); }
 
-	inline void Set(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, const oRGBAf& _Color)
+	inline void Set(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, const rgbaf& _Color)
 	{
 		World = _World;
 		WorldViewProjection = _World * _View * _Projection;
@@ -51,14 +51,14 @@ struct oGPUTestConstants
 	{
 		World = oIDENTITY4x4;
 		WorldViewProjection = oIDENTITY4x4;
-		Color = ouro::White;
+		Color = ouro::white;
 	}
 
 #endif
 
 	float4x4 World;
 	float4x4 WorldViewProjection;
-	oRGBAf Color;
+	rgbaf Color;
 };
 
 struct oGPU_TEST_INSTANCE

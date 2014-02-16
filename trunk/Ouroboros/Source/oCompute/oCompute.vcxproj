@@ -26,7 +26,6 @@
     <ClInclude Include="..\..\Include\oCompute\eye.h" />
     <ClInclude Include="..\..\Include\oCompute\linear_algebra.h" />
     <ClInclude Include="..\..\Include\oCompute\oAABox.h" />
-    <ClInclude Include="..\..\Include\oCompute\oComputeColor.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeConstants.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeFilter.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeGBuffer.h" />
@@ -40,6 +39,7 @@
     <ClInclude Include="..\..\Include\oCompute\oPlane.h" />
     <ClInclude Include="..\..\Include\oCompute\oQuaternion.h" />
     <ClInclude Include="..\..\Include\oCompute\oSphere.h" />
+    <ClInclude Include="..\..\Include\oCompute\rgb.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>

@@ -40,7 +40,7 @@ public:
 
 	bool Initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(almost_black);
 
 		oGPUBuffer::DESC DCDesc;
 		DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
@@ -76,7 +76,7 @@ public:
 
 		CommandList->Begin();
 
-		ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, White));
+		ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, white));
 
 		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
 		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);

@@ -129,6 +129,7 @@
     <ClInclude Include="..\..\Include\oBase\byte.h" />
     <ClInclude Include="..\..\Include\oBase\callable.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
+    <ClInclude Include="..\..\Include\oBase\colors.h" />
     <ClInclude Include="..\..\Include\oBase\compression.h" />
     <ClInclude Include="..\..\Include\oBase\concurrency.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h" />

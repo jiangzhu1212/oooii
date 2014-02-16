@@ -377,10 +377,10 @@ float4 PSWSPixelNormal(oGFX_VS_OUT_LIT In) : SV_Target
 		, In.WSNormal
 		, oGfxNormalSample(In.Texcoord).rgb
 		, 1.0));
-	return float4(oColorizeVector(WSNormal), 1);
+	return float4(colorize_vector(WSNormal), 1);
 }
 
 float4 PSWSVertexNormal(oGFX_VS_OUT_LIT In) : SV_Target
 {
-	return float4(oColorizeVector(normalize(In.WSNormal)), 1);
+	return float4(colorize_vector(normalize(In.WSNormal)), 1);
 }

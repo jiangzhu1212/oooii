@@ -398,7 +398,7 @@ static void OverwriteVariableColors(ouro::surface::buffer* _pBuffer)
 	ouro::surface::subresource_info sri = ouro::surface::subresource(_pBuffer->get_info(), 0);
 	ouro::surface::lock_guard lock(_pBuffer);
 	for (const int2& c : VarCoords)
-		ouro::surface::put(sri, &lock.mapped, c, ouro::Red);
+		ouro::surface::put(sri, &lock.mapped, c, ouro::red);
 }
 
 void TESTSysDialog(test_services& _Services)

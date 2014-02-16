@@ -29,10 +29,11 @@
 #define oOBJ_h
 
 #include <oBase/invalid.h>
+#include <oBase/colors.h>
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oInterface.h>
 #include <oCompute/oAABox.h>
-#include <oCompute/oComputeColor.h>
+#include <oCompute/rgb.h>
 
 // http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/
 enum oOBJ_ILLUMINATION
@@ -105,21 +106,21 @@ struct oOBJ_TEXTURE
 struct oOBJ_MATERIAL
 {
 	oOBJ_MATERIAL()
-		: AmbientColor(ouro::Black)
-		, EmissiveColor(ouro::Black)
-		, DiffuseColor(ouro::WhiteSmoke)
-		, SpecularColor(ouro::White)
+		: AmbientColor(ouro::black)
+		, EmissiveColor(ouro::black)
+		, DiffuseColor(ouro::white_smoke)
+		, SpecularColor(ouro::white)
 		, Specularity(0.25f)
 		, Transparency(1.0f) // (1 means opaque 0 means transparent)
 		, RefractionIndex(1.0f)
 		, Illum(oOBJ_COLOR_ON_AMBIENT_OFF)
 	{}
 
-	oRGBf AmbientColor;
-	oRGBf EmissiveColor;
-	oRGBf DiffuseColor;
-	oRGBf SpecularColor;
-	oRGBf TransmissionColor;
+	rgbf AmbientColor;
+	rgbf EmissiveColor;
+	rgbf DiffuseColor;
+	rgbf SpecularColor;
+	rgbf TransmissionColor;
 	float Specularity;
 	float Transparency;
 	float RefractionIndex;

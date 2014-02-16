@@ -132,7 +132,7 @@ static void oGDIDrawKinectBoneNames(HDC _hDC, const RECT& _rTarget, int2 _Screen
 	td.alignment = ouro::alignment::top_left;
 	COLORREF rgb = brush_color(current_brush(_hDC));
 	td.foreground = 0xff000000 | rgb;
-	td.shadow = Black;
+	td.shadow = black;
 	for (int i = 0; i < ouro::input::bone_count; i++)
 	{
 		const char* Name = ouro::as_string(ouro::input::skeleton_bone(i)) + 14; // skip "oGUI_BONE_"
@@ -168,7 +168,7 @@ void oGDIDrawBoneText(
 	td.alignment = _Alignment;
 	COLORREF rgb = brush_color(current_brush(_hDC));
 	td.foreground = 0xff000000 | rgb;
-	td.shadow = Black;
+	td.shadow = black;
 	draw_text(_hDC, td, _Text);
 }
 
@@ -243,7 +243,7 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	ouro::text_info td;
 	td.position = SSMin + int2(2,2);
 	td.size = (SSMax - SSMin) - int2(4,4);
-	td.shadow = Black;
+	td.shadow = black;
 	
 	if (_Flags & oGDI_AIR_KEY_DRAW_MIN)
 	{
@@ -262,7 +262,7 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	if (_Flags & oGDI_AIR_KEY_DRAW_KEY)
 	{
 		if (_LastAction == ouro::input::key_down)
-			td.foreground = Lime;
+			td.foreground = lime;
 		td.alignment = ouro::alignment::middle_center;
 		draw_text(_hDC, td, ouro::as_string(_Key.Key));
 	}

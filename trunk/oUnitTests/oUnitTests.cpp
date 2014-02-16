@@ -78,8 +78,8 @@ void InitEnv()
 		i.buffer_size = int2(255, 1024);
 		i.window_position = int2(10, 10);
 		i.window_size = int2(120, 50);
-		i.foreground = LimeGreen;
-		i.background = Black;
+		i.foreground = lime_green;
+		i.background = black;
 		console::set_info(i);
 	}
 	catch (std::exception& e)

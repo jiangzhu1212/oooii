@@ -37,7 +37,7 @@ namespace ouro {
 // Supported formats: b8g8r8_unorm b8g8r8a8_unorm r8_unorm. Must be 2D non-array
 BITMAPINFOHEADER make_header(const surface::info& _SurfaceInfo, bool _TopDown = true);
 BITMAPV4HEADER make_headerv4(const surface::info& _SurfaceInfo, bool _TopDown = true);
-void fill_monochrone_palette(RGBQUAD* _pColors, color _Color0 = Black, color _Color1 = White);
+void fill_monochrone_palette(RGBQUAD* _pColors, color _Color0 = black, color _Color1 = white);
 
 surface::info get_info(const BITMAPINFOHEADER& _Header);
 surface::info get_info(const BITMAPV4HEADER& _Header);

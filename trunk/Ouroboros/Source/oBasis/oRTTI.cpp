@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBasis/oRTTI.h>
 #include <oCompute/oComputeConstants.h>
-#include <oCompute/oComputeColor.h>
+#include <oCompute/rgb.h>
 #include <oCompute/oAABox.h>
 #include <oCompute/oFrustum.h>
 #include <oCompute/oPlane.h>
@@ -116,7 +116,7 @@ oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, float3, float3, 3)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, float4, float4, 4)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, double, double, 1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_color, ouro_color, -1) // Can be either 1 or 4 string tokens.. so it's ambiguous
-oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, oRGBf, oRGBf, -1) // Can be either 1 or 3 string tokens.. so it's ambiguous
+oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_rgbf, ouro_rgbf, -1) // Can be either 1 or 3 string tokens.. so it's ambiguous
 oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, float4x4, float4x4, 16, oIDENTITY4x4)
 oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, quatf, quatf, 4, oIDENTITYQ)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, oPlanef, oPlanef, 4)

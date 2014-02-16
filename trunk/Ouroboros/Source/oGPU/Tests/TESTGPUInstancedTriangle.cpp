@@ -39,7 +39,7 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 
 	bool Initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(AlmostBlack);
+		PrimaryRenderTarget->SetClearColor(almost_black);
 
 		oGPUBuffer::DESC DCDesc;
 		DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
@@ -91,7 +91,7 @@ struct GPU_InstancedTriangle_App : public oGPUTestApp
 
 		CommandList->Begin();
 
-		ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(oIDENTITY4x4, V, P, White));
+		ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(oIDENTITY4x4, V, P, white));
 
 		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
 		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);

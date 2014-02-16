@@ -31,6 +31,7 @@
 
 #include <oBase/assert.h>
 #include <oBase/color.h>
+#include <oBase/colors.h>
 #include <oBase/fixed_string.h>
 #include <oBase/input.h>
 #include <oBase/macros.h>
@@ -446,7 +447,7 @@ struct text_info
 		: position(int2(oDEFAULT, oDEFAULT))
 		, size(int2(oDEFAULT, oDEFAULT))
 		, alignment(alignment::top_left)
-		, foreground(White)
+		, foreground(white)
 		, background(0)
 		, shadow(0)
 		, shadow_offset(int2(2,2))

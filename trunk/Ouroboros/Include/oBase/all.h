@@ -32,6 +32,7 @@
 #include <oBase/atof.h>
 #include <oBase/byte.h>
 #include <oBase/color.h>
+#include <oBase/colors.h>
 #include <oBase/compression.h>
 #include <oBase/concurrency.h>
 #include <oBase/concurrent_index_allocator.h>

@@ -30,7 +30,7 @@
 #ifndef oComputeRaycast_h
 #define oComputeRaycast_h
 
-#include <oCompute/oComputeColor.h>
+#include <oCompute/rgb.h>
 
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>

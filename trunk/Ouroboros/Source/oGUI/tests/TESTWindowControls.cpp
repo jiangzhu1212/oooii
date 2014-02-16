@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/msgbox.h>
+#include <oBase/colors.h>
 #include <oBase/timer.h>
 #include <oGUI/window.h>
 #include <oGUI/Windows/oGDI.h>
@@ -432,7 +433,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			break;
 		case MENU_EDIT_COLOR:
 		{
-			ouro::color c = ouro::Red;
+			ouro::color c = ouro::red;
 
 			if (!windows::common_dialog::pick_color(&c, _hWnd))
 				ouro::msgbox(ouro::msg_type::info, nullptr, "TESTWindowUI", "No color!");
@@ -448,7 +449,7 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 		}
 		case MENU_EDIT_FONT:
 		{
-			ouro::color c = ouro::Red;
+			ouro::color c = ouro::red;
 			LOGFONT lf = {0};
 			GetObject((HFONT)GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf);
 			if (!windows::common_dialog::pick_font(&lf, &c, _hWnd))

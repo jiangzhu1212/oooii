@@ -33,10 +33,10 @@
 #ifndef oGfxHLSL_h
 #define oGfxHLSL_h
 
-#include <oCompute/oComputeColor.h>
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/oComputeFilter.h>
 #include <oCompute/oComputeGBuffer.h>
+#include <oCompute/rgb.h>
 
 #ifdef oHLSL
 
@@ -150,15 +150,15 @@ float2 oSobelSampleIntensityPacked(Texture2D _Source, SamplerState _Sampler, flo
 // a texture of encoded screen space normals.
 float2 oSobelSampleHalfSphereIntensityPacked(Texture2D _Source, SamplerState _Sampler, float4 _PackedTexcoord0, float4 _PackedTexcoord1, float4 _PackedTexcoord2, float4 _PackedTexcoord3, float4 _PackedTexcoord4)
 {
-	float tl = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord0.xy).xy));
-	float tc = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord0.zw).xy));
-	float tr = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord1.xy).xy));
-	float ml = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord1.zw).xy));
+	float tl = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord0.xy).xy));
+	float tc = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord0.zw).xy));
+	float tr = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord1.xy).xy));
+	float ml = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord1.zw).xy));
 	// skip center texel
-	float mr = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord2.zw).xy));
-	float bl = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord3.xy).xy));
-	float bc = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord3.zw).xy));
-	float br = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord4.xy).xy));
+	float mr = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord2.zw).xy));
+	float bl = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord3.xy).xy));
+	float bc = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord3.zw).xy));
+	float br = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _PackedTexcoord4.xy).xy));
 
 	return oCalcSobelComponents(tl, tc, tr, ml, mr, bl, bc, br);
 }
@@ -182,7 +182,7 @@ float2 oSobelSampleHalfSphereIntensity(Texture2D _Source, SamplerState _Sampler,
 {
 	const float2 t = oCalcTexelSize(_Source, _SampleScale);
 
-#define S(_Out, _Offset) float _Out = oNormalToLuminance(oHalfToFullSphere(_Source.Sample(_Sampler, _FSQTexcoord + _Offset).xy)).x;
+#define S(_Out, _Offset) float _Out = normal_to_luminance(oHalfToFullSphere(_Source.Sample(_Sampler, _FSQTexcoord + _Offset).xy)).x;
 	S(tl, -t)                S(tc, float2(0, -t.y)) S(tr, float2(t.x, -t.y))
 		S(ml, float2(-t.x, 0)) /*S(mc, float2(0,0))*/   S(mr, float2(t.x, 0))
 		S(bl, float2(-t.x, t.y)) S(bc, float2(0, t.y))  S(br, t)
@@ -283,14 +283,14 @@ float3 oYUVSampleNV12(Texture2D _Y, Texture2D _UV, SamplerState _Sampler, float2
 {
 	float y = _Y.Sample(_Sampler, _Texcoord).x;
 	float2 uv = _UV.Sample(_Sampler, _Texcoord).xy;
-	return oYUVToRGB(float3(y, uv.x, uv.y));
+	return yuvtorgb(float3(y, uv.x, uv.y));
 }
 
 float4 oYUVSampleNV12A(Texture2D _YA, Texture2D _UV, SamplerState _Sampler, float2 _Texcoord)
 {
 	float2 ya = _YA.Sample(_Sampler, _Texcoord).xy;
 	float2 uv = _UV.Sample(_Sampler, _Texcoord).xy;
-	return float4(oYUVToRGB(float3(ya.x, uv.x, uv.y)), ya.y);
+	return float4(yuvtorgb(float3(ya.x, uv.x, uv.y)), ya.y);
 }
 
 // _____________________________________________________________________________

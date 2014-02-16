@@ -157,7 +157,7 @@ std::shared_ptr<util_mesh> make_first_cube(oGPUDevice* _pDevice)
 	bd.FaceType = mesh::face_type::front_ccw;
 	bd.Bounds = oAABoxf(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
 	bd.Divide = 1;
-	bd.Color = White;
+	bd.Color = white;
 	bd.FlipTexcoordV = false;
 
 	intrusive_ptr<oGeometryFactory> Factory;

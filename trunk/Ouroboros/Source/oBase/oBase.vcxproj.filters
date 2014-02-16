@@ -456,6 +456,9 @@
     <ClInclude Include="..\..\Include\oBase\udec3.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\colors.h">
+      <Filter>oBase\types</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
