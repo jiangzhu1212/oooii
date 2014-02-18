@@ -22,11 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This cpp contains implemenations of to_string and from_string for intrinsic
-// types as well as ouro types.
-
-#include <oCompute/oFrustum.h>
-#include <oCompute/rgb.h>
+#include <oBase/rgb.h>
 #include <oBase/stringize.h>
 
 namespace ouro {

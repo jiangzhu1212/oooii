@@ -42,9 +42,5 @@
 #include <oCompute/oComputeRaycast.h>
 #include <oCompute/oComputeSimplex.h>
 #include <oCompute/oComputeUtil.h>
-// Types
 #include <oCompute/oFrustum.h>
-#include <oCompute/oPlane.h>
-#include <oCompute/oQuaternion.h>
-#include <oCompute/rgb.h>
 #endif

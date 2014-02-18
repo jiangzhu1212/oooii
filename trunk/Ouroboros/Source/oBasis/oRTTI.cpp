@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oBasis/oRTTI.h>
 #include <oCompute/oComputeConstants.h>
-#include <oCompute/rgb.h>
 #include <oBase/aabox.h>
 #include <oBase/plane.h>
 #include <oBase/quat.h>

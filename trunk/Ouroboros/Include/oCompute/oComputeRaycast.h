@@ -30,12 +30,12 @@
 #ifndef oComputeRaycast_h
 #define oComputeRaycast_h
 
-#include <oCompute/rgb.h>
-
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>
-#include <oHLSL/oHLSLSwizzlesOn.h>
 #include <oBase/quat.h>
+#include <oBase/rgb.h>
+#include <oHLSL/oHLSLSwizzlesOn.h>
+#include <oCompute/oComputeUtil.h>
 
 // _____________________________________________________________________________
 // Matrix code

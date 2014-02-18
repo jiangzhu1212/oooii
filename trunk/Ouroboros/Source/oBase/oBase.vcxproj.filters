@@ -229,6 +229,9 @@
     <ClCompile Include="quat.cpp">
       <Filter>Source\geometry</Filter>
     </ClCompile>
+    <ClCompile Include="rgb.cpp">
+      <Filter>Source\types</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -482,6 +485,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\quat.h">
       <Filter>oBase\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\rgb.h">
+      <Filter>oBase\types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -71,6 +71,7 @@
 #include <oBase/path.h>
 #include <oBase/path_traits.h>
 #include <oBase/plane.h>
+#include <oBase/rgb.h>
 #include <oBase/scc.h>
 #include <oBase/sphere.h>
 #include <oBase/snappy.h>

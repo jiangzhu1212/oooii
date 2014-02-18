@@ -33,10 +33,10 @@
 #ifndef oGfxHLSL_h
 #define oGfxHLSL_h
 
+#include <oBase/rgb.h>
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/oComputeFilter.h>
 #include <oCompute/oComputeGBuffer.h>
-#include <oCompute/rgb.h>
 
 #ifdef oHLSL
 

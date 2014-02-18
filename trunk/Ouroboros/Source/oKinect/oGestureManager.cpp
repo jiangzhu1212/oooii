@@ -30,6 +30,7 @@
 #include <oBasis/oAirKeyboard.h>
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oRefCount.h>
+#include <oCompute/oComputeUtil.h>
 #include <oCore/windows/win_error.h>
 #include <oCore/windows/win_skeleton.h>
 
