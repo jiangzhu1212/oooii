@@ -34,7 +34,7 @@
 
 #include <oCompute/linear_algebra.h>
 #include <oCompute/oComputeConstants.h>
-#include <oCompute/oQuaternion.h>
+#include <oBase/quat.h>
 #include <oBase/macros.h>
 
 namespace ouro {
@@ -51,7 +51,7 @@ public:
 
 	arcball(constraint_t _Constraint = none)
 		: Constraint(_Constraint)
-		, R(oIDENTITYQ)
+		, R(identity_quatf)
 		, T(oZERO3)
 		, LookAt(oZERO3)
 		, UpsideDownScalar(1.0f)

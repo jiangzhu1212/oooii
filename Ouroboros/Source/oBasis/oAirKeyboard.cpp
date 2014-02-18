@@ -34,7 +34,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, oAIR_KEY)
 	oRTTI_COMPOUND_ABSTRACT(oAIR_KEY)
 	oRTTI_COMPOUND_VERSION(oAIR_KEY, 0,1,0,0)
 	oRTTI_COMPOUND_ATTRIBUTES_BEGIN(oAIR_KEY)
-	oRTTI_COMPOUND_ATTR(oAIR_KEY, Bounds, oRTTI_OF(ouro_aaboxf), "Bounds", oRTTI_COMPOUND_ATTR_REGULAR)
+	oRTTI_COMPOUND_ATTR(oAIR_KEY, Bounds, oRTTI_OF(aaboxf), "Bounds", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTR(oAIR_KEY, Origin, oRTTI_OF(ouro_input_skeleton_bone), "Origin", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTR(oAIR_KEY, Trigger, oRTTI_OF(ouro_input_skeleton_bone), "Trigger", oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTR(oAIR_KEY, Key, oRTTI_OF(ouro_input_key), "Key", oRTTI_COMPOUND_ATTR_REGULAR)
@@ -239,7 +239,7 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::input::tracking_skeleton& _Ske
 	{
 		const auto& Key = Keys[k];
 		a.key = Key.Key;
-		ouro::aaboxf NewBounds(Key.Bounds), OldBounds(Key.Bounds);
+		aaboxf NewBounds(Key.Bounds), OldBounds(Key.Bounds);
 		if (Key.Origin != ouro::input::invalid_bone)
 		{
 			ouro::translate(NewBounds, _Skeleton.positions[Key.Origin].xyz());

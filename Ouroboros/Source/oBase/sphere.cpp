@@ -22,39 +22,17 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This cpp contains implemenations of to_string and from_string for intrinsic
-// types as well as ouro types.
-
-#include <oCompute/oFrustum.h>
-#include <oCompute/rgb.h>
+#include <oBase/sphere.h>
 #include <oBase/stringize.h>
 
 namespace ouro {
 
-bool from_string(rgbf* _pValue, const char* _StrSource)
+bool from_string(spheref* _pValue, const char* _StrSource)
 {
-	color c;
-	// Valid forms are: 0xAABBGGRR, R G B [0,1], and an ouro::color
-	if (*_StrSource == '0' && tolower(*_StrSource) == 'x')
-	{
-		unsigned int i;
-		if (from_string(&i, _StrSource))
-			*_pValue = *(color*)&i;
-	}
-	else if (from_string(&c, _StrSource))
-		*_pValue = c;
-	else if (!from_string((float3*)_pValue, _StrSource))
-		return false;
-	return true;
+	float4* pTmp = (float4*)_pValue;
+	return from_string(pTmp, _StrSource);
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rgbf& _Value) 
-{
-	if (!to_string(_StrDestination, _SizeofStrDestination, (color)_Value))
-		if (!to_string(_StrDestination, _SizeofStrDestination, (const float3&)_Value))
-			return nullptr;
-
-	return _StrDestination;
-}
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const spheref& _Value) { return to_string(_StrDestination, _SizeofStrDestination, (const float4&)_Value); }
 
 } // namespace ouro

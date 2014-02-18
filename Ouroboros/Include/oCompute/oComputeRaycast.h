@@ -34,8 +34,8 @@
 
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>
-#include <oCompute/oQuaternion.h>
 #include <oHLSL/oHLSLSwizzlesOn.h>
+#include <oBase/quat.h>
 
 // _____________________________________________________________________________
 // Matrix code

@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// An axis-aligned bounding box.
+// An axis-aligned bounding box. This header cross-compiles in C++ and HLSL.
 #ifndef oHLSL
 	#pragma once
 #endif
@@ -35,6 +35,12 @@ struct aaboxf
 {
 	float3 Min;
 	float3 Max;
+};
+
+struct aaboxd
+{
+	double3 Min;
+	double3 Max;
 };
 
 #else
@@ -122,12 +128,12 @@ int contains(const aabox<T, TVec>& _Box, const TVec& _Point)
 	return (bInX && bInY && bInZ) ? 1 : 0;
 }
 
-typedef aabox<float, TVEC3<float>> aaboxf; typedef aabox<double, TVEC3<double>> aaboxd;
-typedef aabox<int, TVEC2<int>> rect;
-typedef aabox<float, TVEC2<float>> rectf; typedef aabox<double, TVEC2<double>> rectd;
+typedef ouro::aabox<int, TVEC2<int>> rect;
+typedef ouro::aabox<float, TVEC2<float>> rectf; typedef ouro::aabox<double, TVEC2<double>> rectd;
 
 } // namespace ouro
 
+typedef ouro::aabox<float, TVEC3<float>> aaboxf; typedef ouro::aabox<double, TVEC3<double>> aaboxd;
 // Axis-aligned boxes/rects are always axis-aligned. An axis-aligned box that 
 // is naively transformed becomes an oriented bounding box. Take the points of
 // an oriented bounding box and calculate the axis-aligned box that contains

@@ -59,7 +59,7 @@ struct oAIR_KEY
 		, Key(ouro::input::none)
 	{}
 
-	ouro::aaboxf Bounds;
+	aaboxf Bounds;
 	ouro::input::skeleton_bone Origin; // bounds coords are relative to this
 	ouro::input::skeleton_bone Trigger; // only this bone can trigger events for this box
 	ouro::input::key Key;

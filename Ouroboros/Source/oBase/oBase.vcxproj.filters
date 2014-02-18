@@ -220,6 +220,15 @@
     <ClCompile Include="aabox.cpp">
       <Filter>Source\geometry</Filter>
     </ClCompile>
+    <ClCompile Include="sphere.cpp">
+      <Filter>Source\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="plane.cpp">
+      <Filter>Source\geometry</Filter>
+    </ClCompile>
+    <ClCompile Include="quat.cpp">
+      <Filter>Source\geometry</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -463,6 +472,15 @@
       <Filter>oBase\types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\aabox.h">
+      <Filter>oBase\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\sphere.h">
+      <Filter>oBase\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\plane.h">
+      <Filter>oBase\geometry</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\quat.h">
       <Filter>oBase\geometry</Filter>
     </ClInclude>
   </ItemGroup>

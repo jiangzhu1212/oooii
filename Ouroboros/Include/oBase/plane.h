@@ -22,71 +22,72 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This header is designed to cross-compile in both C++ and HLSL. This defines
-// a plane.
-
-// The plane equation used here is Ax + By + Cz + D = 0. Primarily it means that 
-// positive D values are in the direction/on the side of the normal and negative 
+// A plane defined as Ax + By + Cz + D = 0. Primarily it means positive D 
+// values are in the direction/on the side of the normal and negative 
 // values are in the opposite direction/on the opposite side of the normal.
-
+// This header cross-compiles for C++ and HLSL.
 #ifndef oHLSL
 	#pragma once
 #endif
-#ifndef oCompute_plane_h
-#define oCompute_plane_h
+#ifndef oBase_plane_h
+#define oBase_plane_h
 
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>
-#include <oBase/equal.h>
 
 #ifdef oHLSL
 
-#define oPlanef float4
-#define oPlaned double4
+#define planef float4
+#define planed double4
 
 #else
 
+#include <oBase/equal.h>
+
 // Wrap in a namespace so that NoStepInto can be used for VS2010+.
 namespace ouro {
-	template<typename T> struct plane : public TVEC4<T>
-	{
-		typedef T element_type;
-		typedef TVEC3<element_type> vector_type;
-		typedef TVEC4<element_type> base_type;
-		plane() {}
-		plane(const plane& _That) { operator=(_That); }
-		plane(const base_type& _That) { operator=(_That); }
-		plane(const vector_type& _Normal, const element_type& _Offset) : base_type(normalize(_Normal), _Offset) {}
-		plane(const element_type& _NormalX, const element_type& _NormalY, const element_type& _NormalZ, const element_type& _Offset) : base_type(normalize(vector_type(_NormalX, _NormalY, _NormalZ)), _Offset) {}
-		plane(const vector_type& _Normal, const vector_type& _Point) { xyz() = normalize(_Normal); w = dot(n, _Point); }
-		const plane& operator=(const plane& _That) { return operator=(*(base_type*)&_That); }
-		const plane& operator=(const base_type& _That) { *(base_type*)this = _That; return *this; }
-		operator base_type() { return *this; }
-	};
+
+template<typename T> struct plane : public TVEC4<T>
+{
+	typedef T element_type;
+	typedef TVEC3<element_type> vector_type;
+	typedef TVEC4<element_type> base_type;
+	plane() {}
+	plane(const plane& _That) { operator=(_That); }
+	plane(const base_type& _That) { operator=(_That); }
+	plane(const vector_type& _Normal, const element_type& _Offset) : base_type(normalize(_Normal), _Offset) {}
+	plane(const element_type& _NormalX, const element_type& _NormalY, const element_type& _NormalZ, const element_type& _Offset) : base_type(normalize(vector_type(_NormalX, _NormalY, _NormalZ)), _Offset) {}
+	plane(const vector_type& _Normal, const vector_type& _Point) { xyz() = normalize(_Normal); w = dot(n, _Point); }
+	const plane& operator=(const plane& _That) { return operator=(*(base_type*)&_That); }
+	const plane& operator=(const base_type& _That) { *(base_type*)this = _That; return *this; }
+	operator base_type() { return *this; }
+};
+
+template<typename T> inline bool equal(const plane<T>& a, const plane<T>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps) && equal(a.w, b.w, maxUlps); }
+
 } // namespace ouro
 
-typedef ouro::plane<float> oPlanef; typedef ouro::plane<double> oPlaned;
-template<> inline bool ouro::equal(const oPlanef& a, const oPlanef& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps) && ouro::equal(a.w, b.w, maxUlps); }
-template<> inline bool ouro::equal(const oPlaned& a, const oPlaned& b, unsigned int maxUlps) { return ouro::equal(a.x, b.x, maxUlps) && ouro::equal(a.y, b.y, maxUlps) && ouro::equal(a.z, b.z, maxUlps) && ouro::equal(a.w, b.w, maxUlps); }
+typedef ouro::plane<float> planef; typedef ouro::plane<double> planed;
 
 #endif
+
 #include <oHLSL/oHLSLSwizzlesOn.h>
 
-inline oPlanef oNormalizePlane(oIN(oPlanef, _Plane)) { float invLength = rsqrt(dot(_Plane.xyz, _Plane.xyz)); return _Plane * invLength; }
-inline oPlaned oNormalizePlane(oIN(oPlaned, _Plane)) { double invLength = rsqrt(dot(_Plane.xyz, _Plane.xyz)); return _Plane * invLength; }
+inline planef normalize_plane(oIN(planef, _Plane)) { float invLength = rsqrt(dot(_Plane.xyz, _Plane.xyz)); return _Plane * invLength; }
+inline planed normalize_plane(oIN(planed, _Plane)) { double invLength = rsqrt(dot(_Plane.xyz, _Plane.xyz)); return _Plane * invLength; }
 
 // Signed distance from a plane in Ax + By + Cz + Dw = 0 format (ABC = normalized normal, D = offset)
 // This assumes the plane is normalized.
 // >0 means on the same side as the normal
 // <0 means on the opposite side as the normal
 // 0 means on the plane
-inline float sdistance(oIN(oPlanef, _Plane), oIN(float3, _Point)) { return dot(_Plane.xyz, _Point) + _Plane.w; }
-inline double sdistance(oIN(oPlaned, _Plane), oIN(double3, _Point)) { return dot(_Plane.xyz, _Point) + _Plane.w; }
-inline float distance(oIN(oPlanef, _Plane), oIN(float3, _Point)) { return abs(sdistance(_Plane, _Point));  }
-inline double distance(oIN(oPlaned, _Plane), oIN(double3, _Point)) { return abs(sdistance(_Plane, _Point));  }
+inline float sdistance(oIN(planef, _Plane), oIN(float3, _Point)) { return dot(_Plane.xyz, _Point) + _Plane.w; }
+inline double sdistance(oIN(planed, _Plane), oIN(double3, _Point)) { return dot(_Plane.xyz, _Point) + _Plane.w; }
+inline float distance(oIN(planef, _Plane), oIN(float3, _Point)) { return abs(sdistance(_Plane, _Point));  }
+inline double distance(oIN(planed, _Plane), oIN(double3, _Point)) { return abs(sdistance(_Plane, _Point));  }
 
-inline bool oIntersects(oIN(oPlanef, _Plane0), oIN(oPlanef, _Plane1), oIN(oPlanef, _Plane2), oOUT(float3, _Intersection))
+inline bool intersects(oIN(planef, _Plane0), oIN(planef, _Plane1), oIN(planef, _Plane2), oOUT(float3, _Intersection))
 {
 	// Goldman, Ronald. Intersection of Three Planes. In A. Glassner,
 	// ed., Graphics Gems pg 305. Academic Press, Boston, 1991.
@@ -116,7 +117,7 @@ inline bool oIntersects(oIN(oPlanef, _Plane0), oIN(oPlanef, _Plane1), oIN(oPlane
 
 // Calculate the point on this plane where the line segment described by p0 and 
 // p1 intersects.
-inline bool oIntersects(oIN(float4, _Plane), oIN(float3, _Point0), oIN(float3, _Point1), oOUT(float3, _Intersection))
+inline bool intersects(oIN(float4, _Plane), oIN(float3, _Point0), oIN(float3, _Point1), oOUT(float3, _Intersection))
 {
 	bool intersects = true;
 	float d0 = distance(_Plane, _Point0);
@@ -154,4 +155,5 @@ inline bool oIntersects(oIN(float4, _Plane), oIN(float3, _Point0), oIN(float3, _
 }
 
 #include <oHLSL/oHLSLSwizzlesOff.h>
+
 #endif

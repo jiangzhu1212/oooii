@@ -33,7 +33,7 @@
 #define oCompute_frustum_h
 
 #include <oCompute/oComputeUtil.h>
-#include <oCompute/oPlane.h>
+#include <oBase/plane.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>
 
@@ -166,7 +166,7 @@ template<typename T> void oExtractFrustumPlanes(ouro::plane<T> _Planes[oFRUSTUM_
 
   if (_Normalize)
     for (int i = 0; i < oFRUSTUM_PLANE_COUNT; i++)
-      _Planes[i] = oNormalizePlane(_Planes[i]);
+      _Planes[i] = normalize_plane(_Planes[i]);
 
 	// $(CitedCodeEnd)
 }
@@ -177,14 +177,14 @@ template<typename T> void oExtractFrustumPlanes(ouro::plane<T> _Planes[oFRUSTUM_
 template<typename T> bool oExtractFrustumCorners(const ouro::plane<T> _Planes[oFRUSTUM_PLANE_COUNT], TVEC3<T> _Corners[oFRUSTUM_CORNER_COUNT])
 {
 	// @tony: TODO implement oIntersects for double
-	bool isect = oIntersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_LEFT_TOP_NEAR]);
-	isect = isect && oIntersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_LEFT_TOP_FAR]);
-	isect = isect && oIntersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_LEFT_BOTTOM_NEAR]);
-	isect = isect && oIntersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_LEFT_BOTTOM_FAR]);
-	isect = isect && oIntersects(_Planes[oFRUSTUM_RIGHT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_RIGHT_TOP_NEAR]);
-	isect = isect && oIntersects(_Planes[oFRUSTUM_RIGHT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_RIGHT_TOP_FAR]);
-	isect = isect && oIntersects(_Planes[oFRUSTUM_RIGHT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_RIGHT_BOTTOM_NEAR]);
-	isect = isect && oIntersects(_Planes[oFRUSTUM_RIGHT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_RIGHT_BOTTOM_FAR]);
+	bool isect = intersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_LEFT_TOP_NEAR]);
+	isect = isect && intersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_LEFT_TOP_FAR]);
+	isect = isect && intersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_LEFT_BOTTOM_NEAR]);
+	isect = isect && intersects(_Planes[oFRUSTUM_LEFT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_LEFT_BOTTOM_FAR]);
+	isect = isect && intersects(_Planes[oFRUSTUM_RIGHT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_RIGHT_TOP_NEAR]);
+	isect = isect && intersects(_Planes[oFRUSTUM_RIGHT], _Planes[oFRUSTUM_TOP], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_RIGHT_TOP_FAR]);
+	isect = isect && intersects(_Planes[oFRUSTUM_RIGHT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_NEAR], _Corners[oFRUSTUM_RIGHT_BOTTOM_NEAR]);
+	isect = isect && intersects(_Planes[oFRUSTUM_RIGHT], _Planes[oFRUSTUM_BOTTOM], _Planes[oFRUSTUM_FAR], _Corners[oFRUSTUM_RIGHT_BOTTOM_FAR]);
 	return isect;
 }
 

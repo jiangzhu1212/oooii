@@ -22,39 +22,22 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This cpp contains implemenations of to_string and from_string for intrinsic
-// types as well as ouro types.
-
-#include <oCompute/oFrustum.h>
-#include <oCompute/rgb.h>
+#include <oBase/quat.h>
 #include <oBase/stringize.h>
 
 namespace ouro {
 
-bool from_string(rgbf* _pValue, const char* _StrSource)
+bool from_string(quatf* _pValue, const char* _StrSource)
 {
-	color c;
-	// Valid forms are: 0xAABBGGRR, R G B [0,1], and an ouro::color
-	if (*_StrSource == '0' && tolower(*_StrSource) == 'x')
-	{
-		unsigned int i;
-		if (from_string(&i, _StrSource))
-			*_pValue = *(color*)&i;
-	}
-	else if (from_string(&c, _StrSource))
-		*_pValue = c;
-	else if (!from_string((float3*)_pValue, _StrSource))
-		return false;
-	return true;
+	return from_string_float_array((float*)_pValue, 4, _StrSource);
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rgbf& _Value) 
+bool from_string(quatd* _pValue, const char* _StrSource)
 {
-	if (!to_string(_StrDestination, _SizeofStrDestination, (color)_Value))
-		if (!to_string(_StrDestination, _SizeofStrDestination, (const float3&)_Value))
-			return nullptr;
-
-	return _StrDestination;
+	return from_string_double_array((double*)_pValue, 4, _StrSource);
 }
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const quatf& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.x, _Value.y, _Value.z, _Value.w) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const quatd& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.x, _Value.y, _Value.z, _Value.w) ? _StrDestination : nullptr; }
 
 } // namespace ouro

@@ -32,7 +32,6 @@
 #include <oBase/color.h>
 #include <oBase/threadpool.h>
 #include <oBase/throw.h>
-#include <oCompute/linear_algebra.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <vector>

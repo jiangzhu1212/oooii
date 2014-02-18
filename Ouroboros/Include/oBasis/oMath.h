@@ -39,10 +39,10 @@
 #include <oCompute/oComputeConstants.h>
 #include <oBase/types.h>
 #include <oBase/aabox.h>
+#include <oBase/plane.h>
+#include <oBase/quat.h>
+#include <oBase/sphere.h>
 #include <oCompute/oFrustum.h>
-#include <oCompute/oPlane.h>
-#include <oCompute/oQuaternion.h>
-#include <oCompute/oSphere.h>
 #include <oCompute/linear_algebra.h>
 #include <limits>
 
@@ -126,7 +126,6 @@ template<typename T> bool oIntersects(const ouro::frustum<T>& _Frustum, const TV
   return oNOT_CONTAINED != oContains(_Frustum, _Sphere); 
 }
 template<typename T> bool oIntersects(const ouro::sphere<T>& _Sphere, const ouro::aabox<T,TVEC3<T>>& _Box) { return oNOT_CONTAINED != oContains(_Sphere, _Box); }
-template<typename T, typename TVec> bool oIntersects(const ouro::aabox<T, TVec>& _Box0, const ouro::aabox<T, TVec>& _Box1) { return oNOT_CONTAINED != oContains(_Box0, _Box1); }
 
 // _____________________________________________________________________________
 // Miscellaneous
