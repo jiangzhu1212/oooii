@@ -75,7 +75,7 @@ interface oGeometry : oInterface
 		unsigned int NumPrimitives;
 		ouro::mesh::face_type::value FaceType;
 		ouro::mesh::primitive_type::value PrimitiveType;
-		oAABoxf Bounds;
+		ouro::aaboxf Bounds;
 		LAYOUT Layout;
 	};
 
@@ -130,7 +130,7 @@ interface oGeometryFactory : oInterface
 	struct BOX_DESC
 	{
 		ouro::mesh::face_type::value FaceType;
-		oAABoxf Bounds;
+		ouro::aaboxf Bounds;
 		unsigned int Divide;
 		ouro::color Color;
 		bool FlipTexcoordV;

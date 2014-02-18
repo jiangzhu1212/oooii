@@ -27,6 +27,7 @@
 #define oRTTI_h
 
 #include <oBase/assert.h>
+#include <oBase/aabox.h>
 #include <oBase/byte.h>
 #include <oBase/color.h>
 #include <oBase/fourcc.h>
@@ -134,7 +135,7 @@ oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, float4x4)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, quatf)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oPlanef)
 oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oSpheref)
-oRTTI_ATOM_DECLARATION(oRTTI_CAPS_ARRAY, oAABoxf)
+oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::aaboxf, ouro_aaboxf)
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::version, ouro_version)
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, ouro::fourcc, ouro_fourcc)
 oRTTI_ATOM_DECLARATION_NON_CANONICAL(oRTTI_CAPS_ARRAY, std::string, std_string)

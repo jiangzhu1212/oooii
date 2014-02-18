@@ -23,12 +23,25 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // An axis-aligned bounding box.
-#pragma once
+#ifndef oHLSL
+	#pragma once
+#endif
 #ifndef oBase_aabox_h
 #define oBase_aabox_h
 
+#ifdef oHLSL
+
+struct aaboxf
+{
+	float3 Min;
+	float3 Max;
+};
+
+#else
+
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>
+#include <float.h>
 
 namespace ouro {
 
@@ -49,7 +62,7 @@ template<typename T, typename TVec> struct aabox
 	inline const aabox<T,TVec>& operator=(const TVec& _That) { Min = _That.Min; Max = _That.Max; return *this; }
 	inline aabox<T,TVec>& operator=(TVec&& _That) { if (this != &_That) { Min = _That.Min; Max = _That.Max; _That.clear(); } return *this; }
 	inline bool empty() const { return any(Max < Min); } 
-	inline void clear() { Min = TVec(std::numeric_limits<T>::max()); Max = TVec(std::numeric_limits<T>::lowest()); }
+	inline void clear() { Min = TVec(FLT_MAX); Max = TVec(-FLT_MAX); }
 	inline TVec size() const { return abs(Max - Min); }
 	inline TVec center() const { return Min + size() / T(2.0); }
 	inline T bounding_radius() const { return length(Max - Min) / T(2.0); }
@@ -133,6 +146,5 @@ ouro::aabox<T, TVec> mul(const TMAT4<T>& _Matrix, const ouro::aabox<T, TVec>& _B
 	return box;
 }
 
-typedef ouro::aaboxf oAABoxf; typedef ouro::aaboxd oAABoxd;
-
+#endif
 #endif

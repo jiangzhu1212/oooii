@@ -109,7 +109,7 @@ public:
 	float4 Float4Member;
 	oPlanef PlaneMember;
 	oSpheref SphereMember;
-	oAABoxf BoxMember;
+	ouro::aaboxf BoxMember;
 
 	void OnAttrChanged(const oRTTI_ATTR_BASE* _pAttr)
 	{
@@ -136,7 +136,7 @@ oRTTI_COMPOUND_BEGIN_DESCRIPTION(oRTTI_CAPS_ARRAY, Test)
 		oRTTI_COMPOUND_ATTR(Test, Float4Member, oRTTI_OF(float4), "Float4Member", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(Test, PlaneMember, oRTTI_OF(oPlanef), "PlaneMember", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR(Test, SphereMember, oRTTI_OF(oSpheref), "SphereMember", oRTTI_COMPOUND_ATTR_REGULAR)
-		oRTTI_COMPOUND_ATTR(Test, BoxMember, oRTTI_OF(oAABoxf), "BoxMember", oRTTI_COMPOUND_ATTR_REGULAR)
+		oRTTI_COMPOUND_ATTR(Test, BoxMember, oRTTI_OF(ouro_aaboxf), "BoxMember", oRTTI_COMPOUND_ATTR_REGULAR)
 		oRTTI_COMPOUND_ATTR_VIRTUAL(Test, oRTTI_OF(int), "Virtual", GetVirtual, SetVirtual, oRTTI_COMPOUND_ATTR_REGULAR)
 	oRTTI_COMPOUND_ATTRIBUTES_END(Test)
 oRTTI_COMPOUND_END_DESCRIPTION(Test)
@@ -210,7 +210,7 @@ bool oBasisTest_oRTTI()
 
 	f = oRTTI_OF(Test).GetAttr(11);
 	f->RTTI->FromString("	 1.0   2.0  3.0 4.0 5.0   6.0", f->GetDestPtr(&test), static_cast<int>(f->Size));
-	oTESTB(ouro::equal(test.BoxMember, oAABoxf(oAABoxf::min_max, float3(1.0f, 2.0f, 3.0f), float3(4.0f, 5.0f, 6.0f))), "Failed FromString(test.BoxMember)");
+	oTESTB(ouro::equal(test.BoxMember, ouro::aaboxf(ouro::aaboxf::min_max, float3(1.0f, 2.0f, 3.0f), float3(4.0f, 5.0f, 6.0f))), "Failed FromString(test.BoxMember)");
 
 	str.clear();
 	oTESTB(f->RTTI->ToString(str, f->GetDestPtr(&test)), "Failed ToString(test.BoxMember)");

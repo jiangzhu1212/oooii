@@ -159,7 +159,7 @@ template<typename T> static oCONTAINMENT oContainsT(const TVEC4<T>* _pPlanes, si
 	return oPARTIALLY_CONTAINED;
 }
 
-oCONTAINMENT oContains(const oFrustumf& _Frustum, const oAABoxf& _Box)
+oCONTAINMENT oContains(const oFrustumf& _Frustum, const ouro::aaboxf& _Box)
 {
 	// @tony: A reasonable optimization might be to set 6 to 5, thus ignoring
 	// far plane clipping. When do we limit view distances these days?
@@ -188,7 +188,7 @@ template<typename T> void oFrustCullT(const ouro::frustum<T>* oRESTRICT _pFrustr
 	}
 }
 
-void oFrustCull(const oFrustumf* oRESTRICT _pFrustra, size_t _NumberOfFrusta, const oAABoxf* oRESTRICT _pVolumes, size_t _NumberOfVolumes, size_t* _pResults, size_t _MaxNumberOfVolumes, size_t* _pNumResults)
+void oFrustCull(const oFrustumf* oRESTRICT _pFrustra, size_t _NumberOfFrusta, const ouro::aaboxf* oRESTRICT _pVolumes, size_t _NumberOfVolumes, size_t* _pResults, size_t _MaxNumberOfVolumes, size_t* _pNumResults)
 {
 	oFrustCullT(_pFrustra, _NumberOfFrusta, _pVolumes, _NumberOfVolumes, _pResults, _MaxNumberOfVolumes, _pNumResults);
 }
@@ -257,7 +257,7 @@ template<typename T> oCONTAINMENT oContainsT(const ouro::sphere<T>& _Sphere, con
 	return oPARTIALLY_CONTAINED;
 }
 
-int oContains(const oSpheref& _Sphere, const oAABoxf& _Box)
+int oContains(const oSpheref& _Sphere, const ouro::aaboxf& _Box)
 {
 	return oContainsT(_Sphere, _Box);
 }

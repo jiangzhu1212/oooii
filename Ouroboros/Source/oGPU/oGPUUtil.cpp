@@ -606,7 +606,7 @@ bool oGPUUtilCreateFirstTriangle(oGPUDevice* _pDevice
 	md.NumIndices = 3;
 	md.NumVertices = 3;
 	md.NumRanges = 1;
-	md.LocalSpaceBounds = oAABoxf(oAABoxf::min_max
+	md.LocalSpaceBounds = ouro::aaboxf(ouro::aaboxf::min_max
 		, float3(-0.8f, -0.7f, -0.01f)
 		, float3(0.8f, 0.7f, 0.01f));
 	md.NumVertexElements = _NumElements;
@@ -654,7 +654,7 @@ bool oGPUUtilCreateFirstCube(oGPUDevice* _pDevice
 
 	oGeometryFactory::BOX_DESC bd;
 	bd.FaceType = oGeometry::FRONT_CCW;
-	bd.Bounds = oAABoxf(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
+	bd.Bounds = ouro::aaboxf(ouro::aaboxf::min_max, float3(-1.0f), float3(1.0f));
 	bd.Divide = 1;
 	bd.Color = White;
 	bd.FlipTexcoordV = false;
