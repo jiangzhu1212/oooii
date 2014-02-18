@@ -29,6 +29,7 @@
 #define oBase_types_h
 
 #include <oHLSL/oHLSLTypes.h>
+#include <oBase/equal.h>
 #include <oBase/uint128.h>
 
 typedef unsigned char uchar;
@@ -106,5 +107,23 @@ template<typename T> struct is_linear_algebra
 		std::is_same<float4,std::remove_cv<T>::type>::value ||
 		std::is_same<float4x4,std::remove_cv<T>::type>::value;
 };
+
+// _____________________________________________________________________________
+// ouro::equal support
+
+namespace ouro {
+
+template<> inline bool equal(const TVEC2<float>& a, const TVEC2<float>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps); }
+template<> inline bool equal(const TVEC3<float>& a, const TVEC3<float>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps); }
+template<> inline bool equal(const TVEC4<float>& a, const TVEC4<float>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps) && equal(a.w, b.w, maxUlps); }
+template<> inline bool equal(const TMAT3<float>& a, const TMAT3<float>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps); }
+template<> inline bool equal(const TMAT4<float>& a, const TMAT4<float>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps) && equal(a.Column3, b.Column3, maxUlps); }
+template<> inline bool equal(const TVEC2<double>& a, const TVEC2<double>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps); }
+template<> inline bool equal(const TVEC3<double>& a, const TVEC3<double>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps); }
+template<> inline bool equal(const TVEC4<double>& a, const TVEC4<double>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps) && equal(a.w, b.w, maxUlps); }
+template<> inline bool equal(const TMAT3<double>& a, const TMAT3<double>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps); }
+template<> inline bool equal(const TMAT4<double>& a, const TMAT4<double>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps) && equal(a.Column3, b.Column3, maxUlps); }
+
+} // namespace ouro
 
 #endif

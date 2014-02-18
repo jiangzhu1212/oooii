@@ -32,50 +32,6 @@ using namespace ouro;
 
 #define oTESTB2(test) do { if (!(test)) return false; } while(false)
 
-bool Test_oEqual()
-{
-	oTESTB(!equal(1.0f, 1.000001f), "equal() failed");
-	oTESTB(equal(1.0f, 1.000001f, 8), "equal() failed");
-	oTESTB(!equal(2.0, 1.99999999999997), "equal failed");
-	oTESTB(equal(2.0, 1.99999999999997, 135), "equal failed");
-	oErrorSetLast(0, "");
-	return true;
-}
-
-bool Test_oAABoxf()
-{
-	oAABoxf box(oAABoxf::min_max, float3(-1.0f), float3(1.0f));
-
-	oTESTB(equal(box.Min, float3(-1.0f)), "oAABoxf::Min failed");
-	oTESTB(equal(box.Max, float3(1.0f)), "oAABoxf::Min failed");
-
-	box.Min = float3(-2.0f);
-	box.Max = float3(2.0f);
-	oTESTB(equal(box.Min, float3(-2.0f)), "oAABoxf::SetMin() failed");	
-	oTESTB(equal(box.Max, float3(2.0f)), "oAABoxf::SetMin() failed");
-
-	oTESTB(!box.empty(), "oAABoxf::empty() failed (1)");
-	box.clear();
-	oTESTB(box.empty(), "oAABoxf::empty() failed (2)");
-
-	box = oAABoxf(oAABoxf::min_max, float3(0.0f), float3(1.0f, 2.0f, 3.0f));
-	oTESTB(equal(box.center(), float3(0.5f, 1.0f, 1.5f)), "oAABoxf::GetCenter() failed");
-
-	float3 dim = box.size();
-	oTESTB(equal(dim.x, 1.0f) && equal(dim.y, 2.0f) && equal(dim.z, 3.0f), "oAABoxf::GetDimensions() failed");
-
-	float radius = box.bounding_radius();
-	oTESTB(equal(radius, 1.87083f, 15), "oAABoxf:bounding_radius() failed");
-
-	oExtendBy(box, float3(5.0f));
-	oExtendBy(box, float3(-1.0f));
-	dim = box.size();
-	oTESTB(equal(dim.x, 6.0f) && equal(dim.y, 6.0f) && equal(dim.z, 6.0f), "oAABoxf::ExtendBy() failed");
-
-	oErrorSetLast(0, "");
-	return true;
-}
-
 bool Test_decompose()
 {
 	float3 testRotDegrees = float3(45.0f, 32.0f, 90.0f);
@@ -103,7 +59,7 @@ bool Test_decompose()
 bool Test_SplitRectOverlap()
 {
 	static const int NumberOfRects = 4;
-	oRECT BrokenRects[NumberOfRects];
+	ouro::rect BrokenRects[NumberOfRects];
 	float BrokenRectWeights[NumberOfRects];
 	float fEvenWeight = 1.0f / (float)NumberOfRects;
 
@@ -127,7 +83,7 @@ bool Test_SplitRectOverlap()
 
 	oTESTB(equal(totalWeight, 1.0f, 20), "Test failed to distribute random weight evenly (totalWeight = %f)", totalWeight);
 
-	oRECT srcRect;
+	ouro::rect srcRect;
 	srcRect.Min = 0;
 	srcRect.Max = int2(320, 480);
 	oTESTB(SplitRect(srcRect, NumberOfRects, BrokenRectWeights, 1, 1, BrokenRects), "Failed to split rectangles in an efficient way");
@@ -329,8 +285,6 @@ bool Test_MatrixMath()
 bool oBasisTest_oMath()
 {
 	oTESTB2(Test_MatrixMath());
-	oTESTB2(Test_oEqual());
-	oTESTB2(Test_oAABoxf());
 	oTESTB2(Test_decompose());
 	oTESTB2(Test_SplitRectOverlap());
 	oTESTB2(Test_Frustum());

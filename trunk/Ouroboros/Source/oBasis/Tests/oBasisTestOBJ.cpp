@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oBasisTestOBJ.h"
-#include <oCompute/oAABox.h>
+#include <oBase/aabox.h>
 
 struct oBasisTestOBJ_Cube : oBasisTestOBJ
 {

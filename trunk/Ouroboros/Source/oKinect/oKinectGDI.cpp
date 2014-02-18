@@ -227,7 +227,7 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 {
 	oAABoxf Bounds = _Key.Bounds;
 	if (_Key.Origin != ouro::input::invalid_bone)
-		oTranslate(Bounds, _Skeleton.positions[_Key.Origin].xyz());
+		ouro::translate(Bounds, _Skeleton.positions[_Key.Origin].xyz());
 
 	float3 Min = Bounds.Min;
 	float3 Max = Bounds.Max;
@@ -270,7 +270,7 @@ void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& 
 	if (_Flags & oGDI_AIR_KEY_DRAW_BOX)
 	{
 		float3 Corners[8];
-		oDecompose(Bounds, Corners);
+		ouro::decompose(Bounds, Corners);
 
 		int2 SSCorners[8];
 

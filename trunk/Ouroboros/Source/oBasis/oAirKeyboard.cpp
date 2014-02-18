@@ -242,8 +242,8 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::input::tracking_skeleton& _Ske
 		oAABoxf NewBounds(Key.Bounds), OldBounds(Key.Bounds);
 		if (Key.Origin != ouro::input::invalid_bone)
 		{
-			oTranslate(NewBounds, _Skeleton.positions[Key.Origin].xyz());
-			oTranslate(OldBounds, OldSkeleton.positions[Key.Origin].xyz());
+			ouro::translate(NewBounds, _Skeleton.positions[Key.Origin].xyz());
+			ouro::translate(OldBounds, OldSkeleton.positions[Key.Origin].xyz());
 		}
 
 		for (int i = 0; i < oCOUNTOF(_Skeleton.positions); i++)
@@ -255,8 +255,8 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::input::tracking_skeleton& _Ske
 
 				if (New.w >= 0.0f && Old.w >= 0.0f)
 				{
-					const bool NewInside = oContains(NewBounds, New.xyz());
-					const bool OldInside = oContains(OldBounds, Old.xyz());
+					const int NewInside = ouro::contains(NewBounds, New.xyz());
+					const int OldInside = ouro::contains(OldBounds, Old.xyz());
 
 					if (NewInside != OldInside)
 					{

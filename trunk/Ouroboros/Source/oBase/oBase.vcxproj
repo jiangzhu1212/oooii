@@ -45,6 +45,7 @@
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
     </ClCompile>
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
+    <ClCompile Include="aabox.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="date.cpp" />
     <ClCompile Include="future.cpp" />
@@ -120,6 +121,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\External\calfaq\calfaq.h" />
     <ClInclude Include="..\..\External\smhasher\MurmurHash3.h" />
+    <ClInclude Include="..\..\Include\oBase\aabox.h" />
     <ClInclude Include="..\..\Include\oBase\algorithm.h" />
     <ClInclude Include="..\..\Include\oBase\all.h" />
     <ClInclude Include="..\..\Include\oBase\all_libc.h" />

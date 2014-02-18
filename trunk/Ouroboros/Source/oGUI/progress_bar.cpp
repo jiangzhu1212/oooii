@@ -133,14 +133,14 @@ void progress_bar_impl::make_controls(const window::create_event& _CreateEvent)
 	const int2 ButtonSize(75, 23);
 
 	const int2 Inset(10, 10);
-	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.shape.client_size));
+	const ouro::rect rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.shape.client_size));
 
 	ouro::control_info Descs[PB_CONTROL_COUNT];
 
 	// progress/marquee bars
 	{
-		oRECT rChild = oRect(oWinRectWH(int2(Inset.x, 0), ProgressBarSize));
-		oRECT rText = ouro::resolve_rect(rParent, rChild, alignment::middle_left, true);
+		ouro::rect rChild = oRect(oWinRectWH(int2(Inset.x, 0), ProgressBarSize));
+		ouro::rect rText = ouro::resolve_rect(rParent, rChild, alignment::middle_left, true);
 		Descs[PB_MARQUEE].type = control_type::progressbar_unknown;
 		Descs[PB_MARQUEE].position = oWinRectPosition(oWinRect(rText));
 		Descs[PB_MARQUEE].size = ProgressBarSize;
@@ -161,8 +161,8 @@ void progress_bar_impl::make_controls(const window::create_event& _CreateEvent)
 
 	// Stop button
 	{
-		oRECT rChild = oRect(oWinRectWH(-Inset, ButtonSize));
-		oRECT rButton = ouro::resolve_rect(rParent, rChild, alignment::bottom_right, true);
+		ouro::rect rChild = oRect(oWinRectWH(-Inset, ButtonSize));
+		ouro::rect rButton = ouro::resolve_rect(rParent, rChild, alignment::bottom_right, true);
 
 		Descs[PB_BUTTON].type = control_type::button;
 		Descs[PB_BUTTON].text = "&Stop";

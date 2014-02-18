@@ -182,14 +182,14 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 
 	const int2 kButtonSize(75, 23);
 
-	const oRECT rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.shape.client_size));
+	const ouro::rect rParent = oRect(oWinRectWH(int2(0,0), _CreateEvent.shape.client_size));
 	
 	ouro::control_info Descs[AB_CONTROL_COUNT];
 
 	// Icon
 	{
-		oRECT rChild = oRect(oWinRectWH(int2(0,0), kIconSize));
-		oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
+		ouro::rect rChild = oRect(oWinRectWH(int2(0,0), kIconSize));
+		ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 		Descs[AB_ICON].type = control_type::icon;
 		Descs[AB_ICON].icon = Info.icon;
@@ -204,8 +204,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 
 		snprintf(StrModulePath, "Install Path: <a href=\"file://%s\">%s</a>", ModulePath.parent_path().c_str(), ModulePath.c_str());
 
-		oRECT rChild = oRect(oWinRectWH(kModulePathPos, kModulePathSize));
-		oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
+		ouro::rect rChild = oRect(oWinRectWH(kModulePathPos, kModulePathSize));
+		ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 		Descs[AB_INSTALL_PATH].type = control_type::hyperlabel;
 		Descs[AB_INSTALL_PATH].text = StrModulePath;
@@ -228,8 +228,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 			, mi.is_special ? " special" : ""
 			, mi.copyright.c_str());
 
-		oRECT rChild = oRect(oWinRectWH(kModuleInfoPos, kModuleInfoSize));
-		oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
+		ouro::rect rChild = oRect(oWinRectWH(kModuleInfoPos, kModuleInfoSize));
+		ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 		Descs[AB_MODULE_INFO].type = control_type::label;
 		Descs[AB_MODULE_INFO].text = StrModuleInfo;
@@ -254,8 +254,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		{
 			snprintf(StrWebsite, "<a href=\"%s\">visit our website</a>", Info.website);
 
-			oRECT rChild = oRect(oWinRectWH(kWebsitePos, kWebsiteSize));
-			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
+			ouro::rect rChild = oRect(oWinRectWH(kWebsitePos, kWebsiteSize));
+			ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_WEBSITE].type = control_type::hyperlabel;
 			Descs[AB_WEBSITE].text = StrWebsite;
@@ -271,8 +271,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 		{
 			snprintf(StrIssueSite, "<a href=\"%s\">report an issue</a>", Info.issue_site);
 
-			oRECT rChild = oRect(oWinRectWH(kIssueSitePos, kIssueSiteSize));
-			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
+			ouro::rect rChild = oRect(oWinRectWH(kIssueSitePos, kIssueSiteSize));
+			ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_ISSUE_SITE].type = control_type::hyperlabel;
 			Descs[AB_ISSUE_SITE].text = StrIssueSite;
@@ -283,8 +283,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 
 	// OK Button
 	{
-		oRECT rChild = oRect(oWinRectWH(-kInset, kButtonSize));
-		oRECT r = ouro::resolve_rect(rParent, rChild, alignment::bottom_right, true);
+		ouro::rect rChild = oRect(oWinRectWH(-kInset, kButtonSize));
+		ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::bottom_right, true);
 
 		Descs[AB_OK].type = control_type::button;
 		Descs[AB_OK].text = "&OK";
@@ -296,8 +296,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 	{
 		if (oSTRVALID(Info.components))
 		{
-			oRECT rChild = oRect(oWinRectWH(kComponentGroupPos, kComponentGroupSize));
-			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
+			ouro::rect rChild = oRect(oWinRectWH(kComponentGroupPos, kComponentGroupSize));
+			ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_COMPONENT_GROUP].type = control_type::group;
 			Descs[AB_COMPONENT_GROUP].text = "3rd-Party Components";
@@ -310,8 +310,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 	{
 		if (oSTRVALID(Info.components))
 		{
-			oRECT rChild = oRect(oWinRectWH(kComponentListPos, kComponentListSize));
-			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
+			ouro::rect rChild = oRect(oWinRectWH(kComponentListPos, kComponentListSize));
+			ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_COMPONENT_LIST].type = control_type::listbox;
 			Descs[AB_COMPONENT_LIST].text = Info.components;
@@ -326,8 +326,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 	{
 		if (oSTRVALID(Info.components))
 		{
-			oRECT rChild = oRect(oWinRectWH(kComponentCommentPos, kComponentCommentSize));
-			oRECT r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
+			ouro::rect rChild = oRect(oWinRectWH(kComponentCommentPos, kComponentCommentSize));
+			ouro::rect r = ouro::resolve_rect(rParent, rChild, alignment::top_left, true);
 
 			Descs[AB_COMPONENT_COMMENT].type = control_type::hyperlabel;
 			Descs[AB_COMPONENT_COMMENT].text = ComponentComments[0].c_str();

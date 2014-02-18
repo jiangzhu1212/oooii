@@ -30,6 +30,7 @@
     <ClCompile Include="tests\TESTfuture.cpp" />
     <ClCompile Include="Tests\TESTini.cpp" />
     <ClCompile Include="Tests\TESTjson.cpp" />
+    <ClCompile Include="tests\TESTmath.cpp" />
     <ClCompile Include="tests\TESTparallel_for.cpp" />
     <ClCompile Include="Tests\TESTpath.cpp" />
     <ClCompile Include="tests\TESTthreadpool.cpp" />

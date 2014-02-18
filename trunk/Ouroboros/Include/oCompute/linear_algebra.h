@@ -45,26 +45,12 @@
 #ifndef ouro_linear_algebra_h
 #define ouro_linear_algebra_h
 
-#include <oHLSL/oHLSLTypes.h>
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/oComputeUtil.h>
 #include <oBase/equal.h>
+#include <oBase/types.h>
 
 namespace ouro {
-
-// _____________________________________________________________________________
-// ouro::equal support
-
-template<> inline bool equal(const TVEC2<float>& a, const TVEC2<float>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps); }
-template<> inline bool equal(const TVEC3<float>& a, const TVEC3<float>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps); }
-template<> inline bool equal(const TVEC4<float>& a, const TVEC4<float>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps) && equal(a.w, b.w, maxUlps); }
-template<> inline bool equal(const TMAT3<float>& a, const TMAT3<float>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps); }
-template<> inline bool equal(const TMAT4<float>& a, const TMAT4<float>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps) && equal(a.Column3, b.Column3, maxUlps); }
-template<> inline bool equal(const TVEC2<double>& a, const TVEC2<double>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps); }
-template<> inline bool equal(const TVEC3<double>& a, const TVEC3<double>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps); }
-template<> inline bool equal(const TVEC4<double>& a, const TVEC4<double>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps) && equal(a.w, b.w, maxUlps); }
-template<> inline bool equal(const TMAT3<double>& a, const TMAT3<double>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps); }
-template<> inline bool equal(const TMAT4<double>& a, const TMAT4<double>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps) && equal(a.Column3, b.Column3, maxUlps); }
 
 // _____________________________________________________________________________
 // General transformation functions

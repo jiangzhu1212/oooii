@@ -192,7 +192,7 @@ const char* as_string(const event_type::value& _Event)
 oDEFINE_TO_STRING(event_type::value);
 oDEFINE_FROM_STRING(event_type::value, event_type::count);
 
-oRECT resolve_rect(const oRECT& _Parent, const oRECT& _UnadjustedChild, alignment::value _Alignment, bool _Clip)
+rect resolve_rect(const rect& _Parent, const rect& _UnadjustedChild, alignment::value _Alignment, bool _Clip)
 {
 	int2 cpos = resolve_rect_position(_UnadjustedChild.Min);
 
@@ -253,7 +253,7 @@ oRECT resolve_rect(const oRECT& _Parent, const oRECT& _UnadjustedChild, alignmen
 
 	int2 FinalOffset = _Parent.Min + offset;
 
-	oRECT resolved;
+	rect resolved;
 	resolved.Min = cpos;
 	resolved.Max = resolved.Min + csz;
 

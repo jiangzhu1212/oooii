@@ -35,7 +35,7 @@
 #include <oBase/fixed_string.h>
 #include <oBase/input.h>
 #include <oBase/macros.h>
-#include <oCompute/oAABox.h>
+#include <oBase/aabox.h>
 #include <array>
 #include <functional>
 
@@ -546,7 +546,7 @@ inline bool is_shape_event(const event_type::value& _Event)
 // Rectangle utils
 
 // Clips the child (to-be-clipped) rectangle against the parent.
-inline oRECT clip_rect(const oRECT& _Parent, const oRECT& _ToBeClipped) { oRECT r = _ToBeClipped; r.Min.x = __max(r.Min.x, _Parent.Min.x); r.Min.y = __max(r.Min.y, _Parent.Min.y); r.Max.x = __min(r.Max.x, _Parent.Max.x); r.Max.y = __min(r.Max.y, _Parent.Max.y); return r; }
+inline rect clip_rect(const rect& _Parent, const rect& _ToBeClipped) { rect r = _ToBeClipped; r.Min.x = __max(r.Min.x, _Parent.Min.x); r.Min.y = __max(r.Min.y, _Parent.Min.y); r.Max.x = __min(r.Max.x, _Parent.Max.x); r.Max.y = __min(r.Max.y, _Parent.Max.y); return r; }
 
 // Replaces any oDEFAULT values with the specified default value.
 inline int2 resolve_rect_size(const int2& _Size, const int2& _DefaultSize) { int2 result(_Size); if (result.x == oDEFAULT) result.x = _DefaultSize.x; if (result.y == oDEFAULT) result.y = _DefaultSize.y; return result; }
@@ -561,8 +561,8 @@ inline int2 resolve_rect_position(const int2& _Position, const int2& _DefaultPos
 // aligned, and there is a position of x=-10, then the rectangle is inset an
 // additional 10 units. oDEFAULT for position most often evaluates to a zero 
 // offset.
-oRECT resolve_rect(const oRECT& _Parent, const oRECT& _UnadjustedChild, alignment::value _Alignment, bool _Clip);
-inline oRECT resolve_rect(const oRECT& _Parent, const int2& _UnadjustedChildPosition, const int2& _UnadjustedChildSize, alignment::value _Alignment, bool _Clip) { oRECT r; r.Min = resolve_rect_position(_UnadjustedChildPosition); r.Max = r.Min + _UnadjustedChildSize; return resolve_rect(_Parent, r, _Alignment, _Clip); }
+rect resolve_rect(const rect& _Parent, const rect& _UnadjustedChild, alignment::value _Alignment, bool _Clip);
+inline rect resolve_rect(const rect& _Parent, const int2& _UnadjustedChildPosition, const int2& _UnadjustedChildSize, alignment::value _Alignment, bool _Clip) { rect r; r.Min = resolve_rect_position(_UnadjustedChildPosition); r.Max = r.Min + _UnadjustedChildSize; return resolve_rect(_Parent, r, _Alignment, _Clip); }
 
 } // namespace ouro
 

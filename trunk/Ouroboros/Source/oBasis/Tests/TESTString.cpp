@@ -32,7 +32,7 @@ using namespace ouro;
 
 bool oBasisTest_oString()
 {
-	std::vector<oRECT> testRect;
+	std::vector<ouro::rect> testRect;
 
 	const char* rectString = "-6 -7 8 4, 0 0 1 1, -4 5 3 34";
 	from_string(&testRect, rectString);

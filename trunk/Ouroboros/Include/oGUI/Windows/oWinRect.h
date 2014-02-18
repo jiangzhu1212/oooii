@@ -32,8 +32,8 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-inline oRECT oRect(const RECT& _Rect) { oRECT r; r.Min = int2(_Rect.left, _Rect.top); r.Max = int2(_Rect.right, _Rect.bottom); return r; }
-inline RECT oWinRect(const oRECT& _Rect) { RECT r; r.left = _Rect.Min.x; r.top = _Rect.Min.y; r.right = _Rect.Max.x; r.bottom = _Rect.Max.y; return r; }
+inline ouro::rect oRect(const RECT& _Rect) { ouro::rect r; r.Min = int2(_Rect.left, _Rect.top); r.Max = int2(_Rect.right, _Rect.bottom); return r; }
+inline RECT oWinRect(const ouro::rect& _Rect) { RECT r; r.left = _Rect.Min.x; r.top = _Rect.Min.y; r.right = _Rect.Max.x; r.bottom = _Rect.Max.y; return r; }
 inline RECT oWinRect(int _Left, int _Top, int _Right, int _Bottom) { RECT r; r.left = __min(_Left, _Right); r.top = __min(_Top, _Bottom); r.right = __max(_Left, _Right); r.bottom = __max(_Top, _Bottom); return r; }
 inline RECT oWinRect(const int2& _TopLeft, const int2 _BottomRight) { return oWinRect(_TopLeft.x, _TopLeft.y, _BottomRight.x, _BottomRight.y); }
 inline RECT oWinRectWH(int _Left, int _Top, int _Width, int _Height) { return oWinRect(_Left, _Top, _Left + _Width, _Top + _Height); }

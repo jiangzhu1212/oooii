@@ -25,7 +25,6 @@
     <ClInclude Include="..\..\Include\oCompute\easing.h" />
     <ClInclude Include="..\..\Include\oCompute\eye.h" />
     <ClInclude Include="..\..\Include\oCompute\linear_algebra.h" />
-    <ClInclude Include="..\..\Include\oCompute\oAABox.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeConstants.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeFilter.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeGBuffer.h" />
