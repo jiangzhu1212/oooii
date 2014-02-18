@@ -33,11 +33,11 @@
 #include <oBase/fourcc.h>
 #include <oBase/macros.h>
 #include <oBase/path.h>
+#include <oBase/rgb.h>
 #include <oBase/type_info.h>
 #include <oBase/uri.h>
 #include <typeinfo>
 #include <vector>
-#include <oCompute/rgb.h>
 
 #include <oBase/input.h> // @tony fixme: needed to convert namespace::enum -> namespace_enum. Maybe there's a more generic way to support namespaces?
 

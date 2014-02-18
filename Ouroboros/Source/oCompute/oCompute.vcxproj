@@ -35,7 +35,6 @@
     <ClInclude Include="..\..\Include\oCompute\oComputeSimplex.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeUtil.h" />
     <ClInclude Include="..\..\Include\oCompute\oFrustum.h" />
-    <ClInclude Include="..\..\Include\oCompute\rgb.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -47,7 +46,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="stringize.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="linear_algebra.inl" />

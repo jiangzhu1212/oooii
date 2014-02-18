@@ -33,6 +33,7 @@
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLMacros.h>
 #include <oBase/quat.h>
+#include <oBase/rgb.h>
 #include <oHLSL/oHLSLSwizzlesOn.h>
 
 #ifndef oCONCAT
@@ -205,6 +206,26 @@ inline void oQRotateTangentBasisVectors(oIN(quatf, _Quaternion)
 
 // _____________________________________________________________________________
 // Misc
+
+// Given an integer ID [0,255], return a color that ensures IDs near each other 
+// (i.e. 13,14,15) have significantly different colors.
+inline rgbf idtocolor8(uint ID8Bit)
+{
+	uint R = oRandUnmasked(ID8Bit);
+	uint G = oRandUnmasked(R);
+	uint B = oRandUnmasked(G);
+	return rgbf(float3(uint3(R,G,B) & 0xff) / 255.0f);
+}
+
+// Given an integer ID [0,65535], return a color that ensures IDs near each other 
+// (i.e. 13,14,15) have significantly different colors.
+inline rgbf idtocolor16(uint ID16Bit)
+{
+	uint R = oRandUnmasked(ID16Bit);
+	uint G = oRandUnmasked(R);
+	uint B = oRandUnmasked(G);
+	return rgbf(float3(uint3(R,G,B) & 0xffff) / 65535.0f);
+}
 
 // Creates a cube in a geometry shader (useful for voxel visualization. To use,
 // generate indices in a for (uint i = 0; i < 14; i++) loop (14 iterations).

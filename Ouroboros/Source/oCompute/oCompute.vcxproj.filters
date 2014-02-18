@@ -63,15 +63,9 @@
     <ClInclude Include="..\..\Include\oCompute\easing.h">
       <Filter>oCompute</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\rgb.h">
-      <Filter>oCompute</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="stringize.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="linear_algebra.cpp">

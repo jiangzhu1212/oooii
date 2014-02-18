@@ -28,6 +28,8 @@
 #include <exception>
 #include <oBase/byte.h>
 #include <oCompute/oComputeUtil.h>
+#include <oHLSL/oHLSLMath.h>
+#include <oHLSL/oHLSLTypes.h>
 
 #define MAT4_IDENTITY TMAT4<T>( \
 			TVEC4<T>(T(1), T(0), T(0), T(0)), \
@@ -107,7 +109,7 @@ template<typename T> TMAT4<T> make_plane(const TVEC4<T>& _Plane)
 		m.Column1.y = -m.Column1.y;
 
 	TVEC3<T> offset(T(0), T(0), _Plane.w);
-	offset = ((TMAT3<T>)m) * offset;
+	offset = mul((TMAT3<T>)m, offset);
 	m.Column3.x = offset.x;
 	m.Column3.y = offset.y;
 	m.Column3.z = offset.z;
@@ -124,7 +126,7 @@ template<typename T> TMAT4<T> make_normalization(const TVEC3<T>& _AABoxMin, cons
 	const TVEC3<T> ScaledTranslation = (-_AABoxMin / Scale) + TVEC3<T>(std::numeric_limits<T>::epsilon());
 	return mul(make_scale(rcp(Scale)), make_translation(ScaledTranslation));
 }
-template<typename T> const TVEC3<T> combine(const TVEC3<T>& a, const TVEC3<T>& b, T aScale, T bScale) { return aScale * a + bScale * b; }
+template<typename T> const TVEC3<T> combine(const TVEC3<T>& a, const TVEC3<T>& b, T aScale, T bScale) { return a * aScale + b * bScale; }
 
 // returns the specified vector with the specified length
 template<typename T> TVEC3<T> scale(const TVEC3<T>& a, T newLength)
@@ -196,7 +198,7 @@ template<typename T> bool decompose(const TMAT4<T>& _Matrix, TVEC3<T>* _pScale, 
  		 */
  		invpmat = invert(pmat);
 		tinvpmat = transpose(invpmat);
-		psol = tinvpmat * prhs;
+		psol = mul(tinvpmat, prhs);
  
  		/* Stuff the answer away. */
 		
@@ -415,7 +417,7 @@ make_viewport(const T& _NDCResolutionX, const T& _NDCResolutionY, const T& _NDCR
 	TVEC2<T> dim = TVEC2<T>(_NDCResolutionX, _NDCResolutionY);
 	TVEC2<T> NDCMin = (TVEC2<T>(_NDCRectLeft, _NDCRectBottom) / dim) * T(2) - T(1);
 	TVEC2<T> NDCMax = (TVEC2<T>(_NDCRectLeft + _NDCRectWidth, _NDCRectBottom + _NDCRectHeight) / dim) * T(2) - T(1);
-	TVEC2<T> NDCScale = T(2) / (NDCMax - NDCMin);
+	TVEC2<T> NDCScale = TVEC2<T>(T(2), T(2)) / (NDCMax - NDCMin);
 	TVEC2<T> NDCTranslate = TVEC2<T>(-T(1), T(1)) - NDCMin * TVEC2<T>(NDCScale.x, -NDCScale.y);
 	return TMAT4<T>(
 		TVEC4<T>(NDCScale.x,     T(0),           T(0), T(0)),

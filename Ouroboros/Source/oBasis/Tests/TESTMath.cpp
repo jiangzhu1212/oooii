@@ -291,4 +291,3 @@ bool oBasisTest_oMath()
 	oTESTB2(Test_FrustumCalcCorners());
 	return true;
 }
-    

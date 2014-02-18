@@ -29,12 +29,11 @@
 #ifndef oHLSL
 	#pragma once
 #endif
-#ifndef oCompute_rgb_h
-#define oCompute_rgb_h
+#ifndef oBase_rgb_h
+#define oBase_rgb_h
 
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>
-#include <oCompute/oComputeUtil.h>
 
 #ifdef oHLSL
 	#define rgbf float3
@@ -44,6 +43,7 @@
 #include <oBase/color.h>
 #include <oBase/operators.h>
 #include <oHLSL/oHLSLMath.h>
+#include <oHLSL/oHLSLTypes.h>
 #include <oHLSL/oHLSLSwizzlesOn.h>
 
 //namespace ouro {
@@ -205,8 +205,8 @@ inline float3 rgbtohsv(oIN(rgbf, _RGB))
 	// http://stackoverflow.com/questions/4728581/hsl-image-adjustements-on-gpu
 	float H = 0.0f;
 	float S = 0.0f;
-	float V = max(_RGB);
-	float m = min(_RGB);
+	float V = max(_RGB.r, max(_RGB.g, _RGB.b));
+	float m = min(_RGB.r, min(_RGB.g, _RGB.b));
 	float chroma = V - m;
 	S = chroma / V;
 	float3 delta = (V - _RGB) / chroma;
@@ -283,26 +283,6 @@ inline uint float4toabgr(oIN(float4, _RGBA))
 		| ((uint(_RGBA.z) & 0xff) << 16u)
 		| ((uint(_RGBA.y) & 0xff) << 8u)
 		| (uint(_RGBA.x) & 0xff);
-}
-
-// Given an integer ID [0,255], return a color that ensures IDs near each other 
-// (i.e. 13,14,15) have significantly different colors.
-inline rgbf idtocolor8(uint ID8Bit)
-{
-	uint R = oRandUnmasked(ID8Bit);
-	uint G = oRandUnmasked(R);
-	uint B = oRandUnmasked(G);
-	return rgbf(float3(uint3(R,G,B) & 0xff) / 255.0f);
-}
-
-// Given an integer ID [0,65535], return a color that ensures IDs near each other 
-// (i.e. 13,14,15) have significantly different colors.
-inline rgbf idtocolor16(uint ID16Bit)
-{
-	uint R = oRandUnmasked(ID16Bit);
-	uint G = oRandUnmasked(R);
-	uint B = oRandUnmasked(G);
-	return rgbf(float3(uint3(R,G,B) & 0xffff) / 65535.0f);
 }
 
 #ifndef oHLSL
