@@ -33,7 +33,7 @@ public:
 		InitGroups();
 	}
 
-	ouro::mesh::obj::info get_info() const threadsafe override
+	ouro::mesh::obj::info get_info() const override
 	{
 		ouro::mesh::obj::info i;
 
@@ -62,7 +62,7 @@ public:
 		return i;
 	}
 
-	const char* GetFileContents() const threadsafe override
+	const char* GetFileContents() const override
 	{
 		return
 			"# Simple Unit Cube\n" \
@@ -251,7 +251,7 @@ bool oBasisTestOBJ_Cube::InitGroupsDone = false;
 ouro::mesh::obj::group oBasisTestOBJ_Cube::sGroups[6];
 ouro::mesh::range oBasisTestOBJ_Cube::sRanges[6];
 
-bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ)
+void oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ)
 {
 	static oBasisTestOBJ_Cube c;
 
@@ -261,8 +261,6 @@ bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ)
 			*_ppTestOBJ = &c;
 			break;
 		default:
-			return oErrorSetLast(std::errc::no_such_file_or_directory, "the specified test obj was not found");
+			oTHROW(no_such_file_or_directory, "the specified test obj was not found");
 	}
-
-	return true;
 }

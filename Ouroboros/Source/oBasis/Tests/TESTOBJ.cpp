@@ -33,7 +33,7 @@
 
 using namespace ouro;
 
-static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const std::shared_ptr<ouro::mesh::obj::mesh>& _OBJ)
+static bool TestCorrectness(const oBasisTestOBJ* _pExpected, const std::shared_ptr<ouro::mesh::obj::mesh>& _OBJ)
 {
 	ouro::mesh::obj::info Expected = _pExpected->get_info();
 

@@ -31,8 +31,7 @@
 #include <oBase/colors.h>
 #include <oBase/path.h>
 #include <oBase/rgb.h>
-#include <oBasis/oGPUConcepts.h>
-#include <oBasis/oInterface.h>
+#include <oMesh/mesh.h>
 #include <memory>
 
 namespace ouro {

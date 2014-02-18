@@ -29,17 +29,15 @@
 #include <oBase/fixed_string.h>
 #include <oBase/assert.h>
 #include <oBase/macros.h>
-#include <oBase/macros.h>
 #include <oBase/timer.h>
 #include <oBase/unordered_map.h>
-#include <oCompute/oComputeConstants.h>
 #include <oMesh/mesh.h>
 
-//#include <oBasis/oContainer.h>
-//#include <oBasis/oMath.h>
 #include <oBasis/oStdLinearAllocator.h>
 
 oDEFINE_WHITESPACE_PARSING();
+
+static const float3 ZERO3(0.0f, 0.0f, 0.0f);
 
 namespace ouro {
 
@@ -386,7 +384,7 @@ static void reduce_elements(const init& _Init
 					else
 					{
 						_pDegenerateNormals->push_back(NewIndex);
-						_pSinglyIndexedElements->normals.push_back(oZERO3);
+						_pSinglyIndexedElements->normals.push_back(ZERO3);
 					}
 				}
 
@@ -397,7 +395,7 @@ static void reduce_elements(const init& _Init
 					else
 					{
 						_pDegenerateTexcoords->push_back(NewIndex);
-						_pSinglyIndexedElements->texcoords.push_back(oZERO3);
+						_pSinglyIndexedElements->texcoords.push_back(ZERO3);
 					}
 				}
 			
