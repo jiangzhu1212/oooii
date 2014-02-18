@@ -125,68 +125,6 @@ static void FreeString(const char* string)
 	free((void*)string);
 }
 
-bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ)
-{
-	void* pBuffer = nullptr;
-	size_t Size = 0;
-
-	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
-		return false; // pass through error
-
-	finally FreeBuffer([&] { if (pBuffer) free(pBuffer); });
-
-	if (!oOBJCreate(_URIReference, (const char*)pBuffer, _Init, _ppOBJ))
-		return false; // pass through error
-
-	return true;
-}
-
-bool oMTLLoad(const char* _URIReference, threadsafe oMTL** _ppMTL)
-{
-	void* pBuffer = nullptr;
-	size_t Size = 0;
-
-	if (!oStreamLoad(&pBuffer, &Size, malloc, free, _URIReference, true))
-		return false; // pass through error
-
-	finally FreeBuffer([&] { if (pBuffer) free(pBuffer); });
-
-	if (!oMTLCreate(_URIReference, (const char*)pBuffer, _ppMTL))
-		return false; // pass through error
-
-	return true;
-}
-
-bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ, threadsafe oMTL** _ppMTL)
-{
-	if (!oOBJLoad(_URIReference, _Init, _ppOBJ))
-		return false; // pass through error
-
-	oOBJ_DESC d;
-	(*_ppOBJ)->GetDesc(&d);
-
-	if (_ppMTL)
-	{
-		if (oSTRVALID(d.MTLPath))
-		{
-			ouro::path mtlPath(d.MTLPath);
-			if (!mtlPath.is_absolute())
-			{
-				mtlPath = ouro::uri(_URIReference).path();
-				mtlPath.replace_filename(d.MTLPath);
-			}
-
-			if (!oMTLLoad(mtlPath, _ppMTL))
-				return false; // pass through error
-		}
-
-		else
-			*_ppMTL = nullptr;
-	}
-
-	return true;
-}
-
 #define LOAD_BUFFER \
 	void* pBuffer = nullptr; \
 	size_t Size = 0; \

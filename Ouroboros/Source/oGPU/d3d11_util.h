@@ -344,10 +344,10 @@ inline void set_srvs(ID3D11DeviceContext* _pDeviceContext
 		{ set_srvs(_pDeviceContext, _StartSlot, _NumShaderResourceViews, (const ID3D11ShaderResourceView* const*)_ppViews); }
 
 // Converts a viewport to an oAABoxf.
-mesh::boundf from_viewport(const D3D11_VIEWPORT& _Viewport);
+oAABoxf from_viewport(const D3D11_VIEWPORT& _Viewport);
 
 // Convert an oAABoxf (very similar in structure) to a D3D11_VIEWPORT
-D3D11_VIEWPORT to_viewport(const mesh::boundf& _Source);
+D3D11_VIEWPORT to_viewport(const oAABoxf& _Source);
 
 // Creats a viewport that uses the full render target (depth, [0,1])
 D3D11_VIEWPORT to_viewport(const int2& _RenderTargetDimensions);

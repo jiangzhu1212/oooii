@@ -67,8 +67,8 @@ inline void commit_index_buffer(oGPUDevice* _pDevice
 // values for that vertex trait will be set to 0 in _pVertexBuffer. No conversions
 // will be done in this function so if a trait is asked for in a compressed format
 // the returned mapping is expected to be in that compressed format.
-void commit_vertex_buffer(oGPUCommandList* _pCommandList, const mesh::layout::value& _Layout, const mesh::vertex_soa& _Source, oGPUBuffer* _pVertexBuffer);
-inline void commit_vertex_buffer(oGPUDevice* _pDevice, const mesh::layout::value& _Layout, const mesh::vertex_soa& _Source, oGPUBuffer* _pVertexBuffer)
+void commit_vertex_buffer(oGPUCommandList* _pCommandList, const mesh::layout::value& _Layout, const mesh::source& _Source, oGPUBuffer* _pVertexBuffer);
+inline void commit_vertex_buffer(oGPUDevice* _pDevice, const mesh::layout::value& _Layout, const mesh::source& _Source, oGPUBuffer* _pVertexBuffer)
 {
 	intrusive_ptr<oGPUCommandList> ICL;
 	_pDevice->GetImmediateCommandList(&ICL);
@@ -84,7 +84,7 @@ intrusive_ptr<oGPUBuffer> make_index_buffer(oGPUDevice* _pDevice, const char* _N
 // Creates a vertex buffer based on the parameters. If _GetElementData is valid 
 // then commit_vertex_buffer is called.
 intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
-	, uint _NumVertices, const mesh::vertex_soa& _Source = mesh::vertex_soa());
+	, uint _NumVertices, const mesh::source& _Source = mesh::source());
 
 // Creates a vertex buffer based on the parameters. If _GetElementData is valid 
 // oGPUCommitVertexBuffer, else only do the creation.

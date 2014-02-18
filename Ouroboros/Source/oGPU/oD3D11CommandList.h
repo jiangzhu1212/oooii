@@ -57,7 +57,7 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, CommandList, 0x2d6106c4, 0x7741, 
 	void SetShaderResources(int _StartSlot, int _NumResources, const oGPUResource* const* _ppResources) override;
 	void SetBuffers(int _StartSlot, int _NumBuffers, const oGPUBuffer* const* _ppConstants) override;
 
-	void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const ouro::mesh::boundf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
+	void SetRenderTargetAndUnorderedResources(oGPURenderTarget* _pRenderTarget, int _NumViewports, const oAABoxf* _pViewports, bool _SetForDispatch, int _UnorderedResourcesStartSlot, int _NumUnorderedResources, oGPUResource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
 	void SetPipeline(const oGPUPipeline* _pPipeline) override;
 	void SetSurfaceState(ouro::gpu::surface_state::value _State) override;
 	void SetBlendState(ouro::gpu::blend_state::value _State) override;

@@ -375,7 +375,7 @@ static void copy_semantic(void* oRESTRICT & _pDestination, uint _DestinationPitc
 	}
 }
 
-void copy_vertices(void* oRESTRICT _pDestination, const layout::value& _DestinationLayout, const vertex_soa& _Source, uint _NumVertices)
+void copy_vertices(void* oRESTRICT _pDestination, const layout::value& _DestinationLayout, const source& _Source, uint _NumVertices)
 {
 	const uint DestinationPitch = vertex_size(_DestinationLayout);
 
@@ -425,7 +425,7 @@ void calc_min_max_indices(const ushort* oRESTRICT _pIndices, uint _StartIndex, u
 	detail::calc_min_max_indices(_pIndices, _StartIndex, _NumIndices, _NumVertices, _pMinVertex, _pMaxVertex);
 }
 
-boundf calc_bound(const float3* _pVertices, uint _VertexStride, uint _NumVertices)
+aaboxf calc_bound(const float3* _pVertices, uint _VertexStride, uint _NumVertices)
 {
 	return detail::calc_bound(_pVertices, _VertexStride, _NumVertices);
 }
@@ -480,22 +480,22 @@ void calc_vertex_tangents(float4* _pTangents, const ushort* _pIndices, uint _Num
 	detail::calc_vertex_tangents(_pTangents, _pIndices, _NumIndices, _pPositions, _pNormals, _pTexcoords, _NumVertices);
 }
 
-void calc_texcoords(const boundf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aaboxf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
 {
 	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
 }
 
-void calc_texcoords(const boundf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aaboxf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
 {
 	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
 }
 
-void calc_texcoords(const boundf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aaboxf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
 {
 	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
 }
 
-void calc_texcoords(const boundf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aaboxf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
 {
 	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
 }

@@ -31,6 +31,7 @@
 #include <oBase/dec3n.h>
 #include <oBase/macros.h>
 #include <oBase/types.h>
+#include <oCompute/oAABox.h>
 #include <array>
 
 namespace ouro {
@@ -167,10 +168,32 @@ public:
 	operator const this_type() const { return *this; }
 };
 
-struct vertex_soa
+struct range
 {
-	vertex_soa()
-		: positionsf(nullptr)
+	range(uint _StartPrimitive = 0, uint _NumPrimitives = 0, uint _MinVertex = 0, uint _MaxVertex = ~0u)
+		: start_primitive(_StartPrimitive)
+		, num_primitives(_NumPrimitives)
+		, min_vertex(_MinVertex)
+		, max_vertex(_MaxVertex)
+	{}
+
+	uint start_primitive; // index buffer offset in # of primitives
+	uint num_primitives; // Number of primitives in range
+	uint min_vertex; // min index into vertex buffer that will be accessed
+	uint max_vertex; // max index into vertex buffer that will be accessed
+};
+
+struct source
+{
+	// this struct is a general-purpose container for vertex source data.
+	// the intent is not that every pointer be populated but rather if one
+	// is populated than it contains typed data with the specified stride.
+
+	source()
+		: indicesi(nullptr)
+		, indicess(nullptr)
+		, ranges(nullptr)
+		, positionsf(nullptr)
 		, normalsf(nullptr)
 		, normals(nullptr)
 		, tangentsf(nullptr)
@@ -181,6 +204,9 @@ struct vertex_soa
 		, uv0s(nullptr)
 		, uvwx0s(nullptr)
 		, colors(nullptr)
+		, indexi_pitch(0)
+		, indexs_pitch(0)
+		, range_pitch(0)
 		, positionf_pitch(0)
 		, normalf_pitch(0)
 		, normal_pitch(0)
@@ -195,6 +221,11 @@ struct vertex_soa
 		, vertex_layout(layout::none)
 	{}
 
+	const uint* indicesi;
+	const ushort* indicess;
+
+	const range* ranges;
+	
 	const float3* positionsf;
 	const float3* normalsf;
 	const dec3n* normals;
@@ -207,6 +238,9 @@ struct vertex_soa
 	const half4* uvwx0s;
 	const color* colors;
 
+	uint indexi_pitch;
+	uint indexs_pitch;
+	uint range_pitch;
 	uint positionf_pitch;
 	uint normalf_pitch;
 	uint normal_pitch;
@@ -221,77 +255,19 @@ struct vertex_soa
 
 	layout::value vertex_layout;
 
-	inline bool operator==(const vertex_soa& _That) const
+	inline bool operator==(const source& _That) const
 	{
-		const void* const* thisP = (const void* const*)&positionsf;
+		const void* const* thisP = (const void* const*)&indicesi;
 		const void* const* end = (const void* const*)&colors;
-		const void* const* thatP = (const void* const*)&_That.positionsf;
+		const void* const* thatP = (const void* const*)&_That.indicesi;
 		while (thisP <= end) if (*thisP++ != *thatP++) return false;
-		const uint* thisI = &positionf_pitch;
+		const uint* thisI = &indexi_pitch;
 		const uint* endI = &color_pitch;
-		const uint* thatI = &_That.positionf_pitch;
+		const uint* thatI = &_That.indexi_pitch;
 		while (thisI <= endI) if (*thisI++ != *thatI++) return false;
 		return vertex_layout == _That.vertex_layout;
 	}
-	inline bool operator!=(const vertex_soa& _That) const { return !(*this == _That); }
-};
-
-template<typename T>
-class bound
-{
-	// hybrid aabox/sphere class
-	// the aabox is the minimal size to store all points and the sphere contains that box
-public:
-	typedef T element_type;
-	typedef TVEC3<element_type> vec3_type;
-	typedef TVEC4<element_type> vec4_type;
-
-	bound() { clear(); }
-	bound(const TVEC3<T>& _Extents) { extents(_Extents); }
-	bound(const TVEC3<T>& _Min, const TVEC3<T>& _Max) { extents(_Min, _Max); }
-
-	bool empty() const { return any(Extents < T(0)); }
-	void clear() { Sphere = TVEC4<T>(T(0)); extents(T(-1)); }
-
-	TVEC3<T> center() const { return Sphere.xyz(); }
-	void center(const TVEC3<T>& _Center) const { return Sphere = TVEC4<T>(_Position, sphere.w); }
-
-	T radius() const { return sphere.w; }
-	void radius(const T& _Radius) { Sphere.w = _Radius; }
-
-	TVEC4<T> sphere() const { return Sphere; }
-
-	TVEC3<T> extents() const { return Extents; }
-	void extents(const TVEC3<T>& _Extents) { Extents = _Extents; Sphere.w = length(get_max() - get_min()) / T(2); }
-	void extents(const TVEC3<T>& _Min, const TVEC3<T>& _Max) { Sphere.xyz() = (_Max - _Min) / T(2); extents(_Max - Sphere.xyz()); }
-
-	TVEC3<T> size() const { return Extents * 2.0f; }
-
-	TVEC3<T> get_min() const { return center() - Extents; }
-	TVEC3<T> get_max() const { return center() + Extents; }
-
-private:
-	TVEC4<T> Sphere;
-	TVEC3<T> Extents;
-};
-
-typedef bound<float> boundf; typedef bound<double> boundd;
-
-struct range
-{
-	range(uint _StartPrimitive = 0, uint _NumPrimitives = 0, uint _MinVertex = 0, uint _MaxVertex = invalid, uint _Material = 0)
-		: start_primitive(_StartPrimitive)
-		, num_primitives(_NumPrimitives)
-		, min_vertex(_MinVertex)
-		, max_vertex(_MaxVertex)
-		, material(_Material)
-	{}
-
-	uint start_primitive; // index buffer offset in # of primitives
-	uint num_primitives; // Number of primitives in range
-	uint min_vertex; // min index into vertex buffer that will be accessed
-	uint max_vertex; // max index into vertex buffer that will be accessed
-	uint material;
+	inline bool operator!=(const source& _That) const { return !(*this == _That); }
 };
 
 struct info
@@ -301,18 +277,18 @@ struct info
 		, num_vertices(0)
 		, primitive_type(primitive_type::unknown)
 		, face_type(face_type::unknown)
-		, num_vertex_ranges(0)
+		, num_ranges(0)
 		, vertex_scale_shift(0)
 		, pad0(0)
 	{ vertex_layouts.fill(layout::none); }
 
-	boundf local_space_bound;
+	aaboxf local_space_bound;
 	uint num_indices;
 	uint num_vertices;
 	layout_array vertex_layouts;
 	primitive_type::value primitive_type;
 	face_type::value face_type;
-	uchar num_vertex_ranges;
+	uchar num_ranges;
 	uchar vertex_scale_shift; // for position as shorts for xyz it'll be (x / SHORT_MAX) * (1 << vertex_scale_shift)
 	uchar pad0;
 };
@@ -339,7 +315,7 @@ void copy_indices(ushort* oRESTRICT _pDestination, const uint* oRESTRICT _pSourc
 void copy_indices(uint* oRESTRICT _pDestination, const ushort* oRESTRICT _pSource, uint _NumIndices);
 
 // uses the above utility functions to do all necessary conversions to copy the source to the destination
-void copy_vertices(void* oRESTRICT _pDestination, const layout::value& _DestinationLayout, const vertex_soa& _Source, uint _NumVertices);
+void copy_vertices(void* oRESTRICT _pDestination, const layout::value& _DestinationLayout, const source& _Source, uint _NumVertices);
 
 // Calculates the min and max index as stored in _pIndices. This starts iterating at _StartIndex through
 // _NumIndices as if from 0. _NumVertices is the number to traverse (end() will be _StartIndex + _NumIndices).
@@ -347,7 +323,7 @@ void copy_vertices(void* oRESTRICT _pDestination, const layout::value& _Destinat
 void calc_min_max_indices(const uint* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex);
 void calc_min_max_indices(const ushort* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex);
 
-boundf calc_bound(const float3* _pVertices, uint _VertexStride, uint _NumVertices);
+aaboxf calc_bound(const float3* _pVertices, uint _VertexStride, uint _NumVertices);
 
 void transform_points(const float4x4& _Matrix, float3* oRESTRICT _pDestination, uint _DestinationStride, const float3* oRESTRICT _pSource, uint _SourceStride, uint _NumPoints);
 void transform_vectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination, uint _DestinationStride, const float3* oRESTRICT _pSource, uint _SourceStride, uint _NumVectors);
@@ -413,10 +389,10 @@ void calc_vertex_tangents(float4* _pTangents, const ushort* _pIndices, uint _Num
 
 // NOTE: No LCSM code or middleware has been integrated, so these will only throw
 // operation_not_supported right now.
-void calc_texcoords(const boundf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
-void calc_texcoords(const boundf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
-void calc_texcoords(const boundf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
-void calc_texcoords(const boundf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
+void calc_texcoords(const aaboxf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
+void calc_texcoords(const aaboxf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
+void calc_texcoords(const aaboxf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
+void calc_texcoords(const aaboxf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
 
 // Allocates and fills an edge list for the mesh described by the specified indices:
 // _NumVertices: The number of vertices the index array indexes

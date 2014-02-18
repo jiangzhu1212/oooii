@@ -1323,16 +1323,16 @@ void set_srvs(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->CSSetShaderResources(_StartSlot, _NumShaderResourceViews, ppViews);
 }
 
-mesh::boundf from_viewport(const D3D11_VIEWPORT& _Viewport)
+oAABoxf from_viewport(const D3D11_VIEWPORT& _Viewport)
 {
-	return mesh::boundf(float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth), float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
+	return oAABoxf(oAABoxf::min_max, float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth), float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
 }
 
-D3D11_VIEWPORT to_viewport(const mesh::boundf& _Source)
+D3D11_VIEWPORT to_viewport(const oAABoxf& _Source)
 {
 	D3D11_VIEWPORT v;
-	float3 Min = _Source.get_min();
-	float3 Max = _Source.get_max();
+	float3 Min = _Source.Min;
+	float3 Max = _Source.Max;
 	float3 Size = _Source.size();
 	v.TopLeftX = Min.x;
 	v.TopLeftY = Min.y;

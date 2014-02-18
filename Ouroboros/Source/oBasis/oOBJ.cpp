@@ -32,31 +32,67 @@
 #include <oBase/macros.h>
 #include <oBase/timer.h>
 #include <oBase/unordered_map.h>
+#include <oCompute/oComputeConstants.h>
 #include <oMesh/mesh.h>
-#include <oBasis/oContainer.h>
-#include <oBasis/oMath.h>
-#include <oBasis/oRefCount.h>
+
+//#include <oBasis/oContainer.h>
+//#include <oBasis/oMath.h>
 #include <oBasis/oStdLinearAllocator.h>
-
-using namespace ouro;
-using namespace ouro::mesh;
-
-// To translate from several index streams - one per vertex element stream - to 
-// a single index buffer, we'll need to replicate vertices by their unique 
-// combination of all vertex elements. This basically means an index is uniquely
-// identified by a hash of the streams it indexes. We'll build the hash as well
-// parse faces, but then it all can be freed at once. To prevent a length series
-// of deallocs for indices - i.e. int values - use a linear allocator and then
-// free all entries once the map goes out of scope.
-typedef unsigned long long key_t;
-typedef unsigned int val_t;
-typedef std::pair<const key_t, val_t> pair_type;
-typedef oStdLinearAllocator<pair_type> allocator_type;
-typedef unordered_map<key_t, val_t, oNoopHash<key_t>, std::equal_to<key_t>, std::less<key_t>, allocator_type> index_map_t;
 
 oDEFINE_WHITESPACE_PARSING();
 
-static inline const char* ParseString(char* _StrDestination, size_t _SizeofStrDestination, const char* _S)
+namespace ouro {
+
+bool from_string(mesh::obj::texture_type::value* _pType, const char* _StrSource)
+{
+	static const char* sStrings[] = 
+	{
+		"regular",
+		"cube_right",
+		"cube_left",
+		"cube_top",
+		"cube_bottom",
+		"cube_back",
+		"cube_front",
+		"sphere",
+	};
+	static_assert(mesh::obj::texture_type::count == oCOUNTOF(sStrings), "array mismatch");
+
+	if (*_StrSource == '\0')
+	{
+		*_pType = mesh::obj::texture_type::regular;
+		return true;
+	}
+
+	for (size_t i = 0; i < oCOUNTOF(sStrings); i++)
+	{
+		if (!_stricmp(sStrings[i], _StrSource))
+		{
+			*_pType = (mesh::obj::texture_type::value)i;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+	namespace mesh {
+		namespace obj {
+
+// To translate from several index streams - one per vertex element stream - to 
+// a single index buffer we'll need to replicate vertices by their unique 
+// combination of all vertex elements. This basically means an index is uniquely
+// identified by a hash of the streams it indexes. We'll build the hash as well
+// parse faces but then it all can be freed at once. To prevent a length series
+// of deallocs for indices - i.e. int values - use a linear allocator and then
+// free all entries once the map goes out of scope.
+typedef unsigned long long key_t;
+typedef uint val_t;
+typedef std::pair<const key_t, val_t> pair_type;
+typedef oStdLinearAllocator<pair_type> allocator_type;
+typedef unordered_map<key_t, val_t, std_noop_hash<key_t>, std::equal_to<key_t>, std::less<key_t>, allocator_type> index_map_t;
+
+static inline const char* parse_string(char* _StrDestination, size_t _SizeofStrDestination, const char* _S)
 {
 	move_next_word(&_S);
 	const char* start = _S;
@@ -66,76 +102,83 @@ static inline const char* ParseString(char* _StrDestination, size_t _SizeofStrDe
 	return _S;
 }
 
-template<size_t size> static inline const char* ParseString(fixed_string<char, size>& _StrDestination, const char* r) { return ParseString(_StrDestination, _StrDestination.capacity(), r); }
+template<size_t size> static inline const char* parse_string(fixed_string<char, size>& _StrDestination, const char* r) { return parse_string(_StrDestination, _StrDestination.capacity(), r); }
 
-enum oOBJ_VERTEX_ELEMENT
+static const uint kMaxNumVertsPerFace = 4;
+
+struct face
 {
-	oOBJ_POSITIONS,
-	oOBJ_TEXCOORDS,
-	oOBJ_NORMALS,
-
-	oOBJ_VERTEX_NUM_ELEMENTS,
-};
-
-static const size_t oOBJ_MAX_NUM_VERTICES_PER_FACE = 4;
-
-struct oOBJ_FACE
-{
-	oOBJ_FACE() 
-		: NumIndices(0)
-		, GroupIndex(0)
+	face() 
+		: num_indices(0)
+		, group_range_index(0)
 	{
-		memset(Index, invalid, sizeof(Index));
+		for (auto& i : index)
+			i.fill(invalid);
 	}
 
-	unsigned int Index[oOBJ_MAX_NUM_VERTICES_PER_FACE][oOBJ_VERTEX_NUM_ELEMENTS];
-	unsigned int NumIndices; // 3 for tris, 4 for quads
-	unsigned int GroupIndex;
+	enum semantic
+	{
+		position,
+		texcoord,
+		normal,
+
+		semantic_count,
+	};
+
+	std::array<std::array<uint, semantic_count>, kMaxNumVertsPerFace> index;
+	uint num_indices; // 3 for tris, 4 for quads
+	uint group_range_index; // groups and ranges are indexed with the same value
 };
 
-struct oOBJ_ELEMENTS
+struct vertex_data
 {
-	void Reserve(size_t _NewVertexCount, size_t _NewFaceCount)
+	void reserve(uint _NewVertexCount, uint _NewFaceCount)
 	{
-		Positions.reserve(_NewVertexCount);
-		Normals.reserve(_NewVertexCount);
-		Texcoords.reserve(_NewVertexCount);
-		Faces.reserve(_NewFaceCount);
-		Groups.reserve(20);
+		positions.reserve(_NewVertexCount);
+		normals.reserve(_NewVertexCount);
+		texcoords.reserve(_NewVertexCount);
+		faces.reserve(_NewFaceCount);
+		groups.reserve(20);
 	}
 
-	oAABoxf Bound;
+	aaboxf bound;
 
-	std::vector<float3> Positions;
-	std::vector<float3> Normals;
-	std::vector<float3> Texcoords;
+	std::vector<float3> positions;
+	std::vector<float3> normals;
+	std::vector<float3> texcoords;
 	
 	// these are assigned after negative indices have been handled, but are 
 	// otherwise directly-from-file values.
-	std::vector<oOBJ_FACE> Faces;
+	std::vector<face> faces;
 
-	// On from-disk first-pass only the GroupName and MaterialName fields are 
-	// valid. The range is calculated in the second reduction pass.
-	std::vector<oOBJ_GROUP> Groups;
+	std::vector<group> groups;
+	std::vector<range> ranges;
 
-	path_string MTLPath;
+	path_string mtl_path;
 };
 
 // Given a string that starts with the letter 'v', parse as a line of vector
 // values and push_back into the appropriate vector.
-static const char* oOBJParseVLine(const char* _V, bool _FlipHandedness, oOBJ_ELEMENTS* _pElements)
+static const char* parse_vline(const char* _V
+	, bool _FlipHandedness
+	, std::vector<float3>& _Positions
+	, std::vector<float3>& _Normals
+	, std::vector<float3>& _Texcoords
+	, float3& _Min
+	, float3& _Max)
 {
 	float3 temp;
 
 	_V++;
-	switch(*_V)
+	switch (*_V)
 	{
 		case ' ':
 			atof(&_V, &temp.x);
 			atof(&_V, &temp.y);
 			atof(&_V, &temp.z); if (_FlipHandedness) temp.z = -temp.z;
-			_pElements->Positions.push_back(temp);
-			oExtendBy(_pElements->Bound, temp);
+			_Positions.push_back(temp);
+			_Min = min(_Min, temp);
+			_Max = max(_Max, temp);
 			break;
 		case 't':
 			move_to_whitespace(&_V);
@@ -143,14 +186,14 @@ static const char* oOBJParseVLine(const char* _V, bool _FlipHandedness, oOBJ_ELE
 			atof(&_V, &temp.y);
 			if (!atof(&_V, &temp.z)) temp.z = 0.0f;
 			if (_FlipHandedness) temp.y = 1.0f - temp.y;
-			_pElements->Texcoords.push_back(temp);
+			_Texcoords.push_back(temp);
 			break;
 		case 'n':
 			move_to_whitespace(&_V);
 			atof(&_V, &temp.x);
 			atof(&_V, &temp.y);
 			atof(&_V, &temp.z); if (_FlipHandedness) temp.z = -temp.z;
-			_pElements->Normals.push_back(temp);
+			_Normals.push_back(temp);
 			break;
 		oNODEFAULT;
 	}
@@ -161,35 +204,39 @@ static const char* oOBJParseVLine(const char* _V, bool _FlipHandedness, oOBJ_ELE
 // Fills the specified face with data from a line in an OBJ starting with the 
 // 'f' (face) character. This returns a pointer into the string _F that is 
 // either the end of the string, or the end of the line.
-static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
+static const char* parse_fline(const char* _F
+	, uint _NumPositions
+	, uint _NumNormals
+	, uint _NumTexcoords
+	, uint _NumGroups
+	, std::vector<face>& _Faces)
 {
 	move_to_whitespace(&_F);
 	move_past_line_whitespace(&_F);
-	oOBJ_FACE face;
-	face.NumIndices = 0;
-	face.GroupIndex = as_uint(_pElements->Groups.size());
-	while (face.NumIndices < 4 && *_F != 0 && !is_newline(*_F))
+	face f;
+	f.num_indices = 0;
+	f.group_range_index = _NumGroups;
+	while (f.num_indices < 4 && *_F != '\0' && !is_newline(*_F))
 	{
 		bool foundSlash = false;
-		int element = oOBJ_POSITIONS;
+		int semantic = face::position;
 		do
 		{
-			// @tony: GAH! This is relative to the vertex parsing up to this 
-			// point, not absolute from the end. /sigh...
-
-			unsigned int ZeroBasedIndexFromFile = 0;
+			// parsing faces is relative to vertex parsing up to this point,
+			// so figure out where the data's at.
+			uint ZeroBasedIndexFromFile = 0;
 
 			// Negative indices implies the max indexable vertex OBJ will be INT_MAX, 
 			// not UINT_MAX.
 			if (*_F == '-')
 			{
 				int NegativeIndex = atoi(_F);
-				unsigned int NumElements = 0;
-				switch (element)
+				uint NumElements = 0;
+				switch (semantic)
 				{
-					case oOBJ_POSITIONS: NumElements = as_uint(_pElements->Positions.size()); break;
-					case oOBJ_TEXCOORDS: NumElements = as_uint(_pElements->Texcoords.size()); break;
-					case oOBJ_NORMALS: NumElements = as_uint(_pElements->Normals.size()); break;
+					case face::position: NumElements = _NumPositions; break;
+					case face::normal: NumElements = _NumNormals; break;
+					case face::texcoord: NumElements = _NumTexcoords; break;
 					oNODEFAULT;
 				}
 				ZeroBasedIndexFromFile = NumElements + NegativeIndex;
@@ -197,9 +244,9 @@ static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
 			else
 				ZeroBasedIndexFromFile = atoi(_F) - 1;
 
-			face.Index[face.NumIndices][element] = ZeroBasedIndexFromFile;
+			f.index[f.num_indices][semantic] = ZeroBasedIndexFromFile;
 
-			if (element == (oOBJ_VERTEX_NUM_ELEMENTS-1))
+			if (semantic == (face::semantic_count-1))
 				break;
 
 			while (isdigit(*_F) || *_F == '-')
@@ -212,7 +259,7 @@ static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
 				do
 				{
 					_F++;
-					element++;
+					semantic++;
 					foundSlash = true;
 				} while(*_F == '/');
 			}
@@ -225,19 +272,19 @@ static const char* oOBJParseFLine(const char* _F, oOBJ_ELEMENTS* _pElements)
 		} while(foundSlash);
 
 		move_next_word(&_F);
-		face.NumIndices++;
+		f.num_indices++;
 	}
 
-	_pElements->Faces.push_back(face);
+	_Faces.push_back(f);
 
 	return _F;
 }
 
 // Scans an OBJ string and appends vertex element data
-static bool oOBJParseElements(const char* _OBJString, bool _FlipHandedness, oOBJ_ELEMENTS* _pElements)
+static void parse_elements(const char* _OBJString, bool _FlipHandedness, vertex_data* _pElements)
 {
-	unsigned int NumGroups = 0;
-	oOBJ_GROUP group;
+	uint NumGroups = 0;
+	group group;
 
 	const char* line = _OBJString;
 	while (*line)
@@ -246,23 +293,28 @@ static bool oOBJParseElements(const char* _OBJString, bool _FlipHandedness, oOBJ
 		switch (*line)
 		{
 			case 'v':
-				line = oOBJParseVLine(line, _FlipHandedness, _pElements);
+				line = parse_vline(line, _FlipHandedness, _pElements->positions, _pElements->normals, _pElements->texcoords, _pElements->bound.Min, _pElements->bound.Max);
 				break;
 			case 'f':
-				line = oOBJParseFLine(line, _pElements);
+				line = parse_fline(line
+					, as_uint(_pElements->positions.size())
+					, as_uint(_pElements->normals.size())
+					, as_uint(_pElements->texcoords.size())
+					, as_uint(_pElements->groups.size())
+					, _pElements->faces);
 				break;
 			case 'g':
 				// close out previous group
 				if (NumGroups)
-					_pElements->Groups.push_back(group); 
+					_pElements->groups.push_back(group); 
 				NumGroups++;
-				ParseString(group.GroupName, line);
+				parse_string(group.group_name, line);
 				break;
 			case 'u':
-				ParseString(group.MaterialName, line);
+				parse_string(group.material_name, line);
 				break;
 			case 'm':
-				ParseString(_pElements->MTLPath, line);
+				parse_string(_pElements->mtl_path, line);
 				break;
 			default:
 				break;
@@ -272,84 +324,80 @@ static bool oOBJParseElements(const char* _OBJString, bool _FlipHandedness, oOBJ
 	}
 
 	// close out a remaining group one last time
+	// NOTE: start prim / num prims are handled later after vertices have been reduced
 	if (NumGroups)
-	{
-		//group.Range.NumTriangles = oUInt(Indices.size() / 3) - group.Range.StartTriangle;
-		_pElements->Groups.push_back(group);
-	}
+		_pElements->groups.push_back(group);
 
 	else
 	{
-		group.GroupName = "Default Group";
-		//group.Range.StartTriangle = 0;
-		//group.Range.NumTriangles = oUInt(Indices.size() / 3);
-		_pElements->Groups.push_back(group);
+		group.group_name = "Default Group";
+		_pElements->groups.push_back(group);
 	}
-
-	return true;
 }
 
 // Using config data and an index hash, reduce all duplicate/face data into 
 // unique indexed data. This must be called after ALL SourceElements have been
 // populated.
-static void ReduceElements(const oOBJ_INIT& _Init
+static void reduce_elements(const init& _Init
 	, index_map_t* _pIndexMap
-	, const oOBJ_ELEMENTS& _SourceElements
-	, std::vector<unsigned int>* _pIndices
-	, oOBJ_ELEMENTS* _pSinglyIndexedElements
-	, std::vector<unsigned int>* _pDegenerateNormals
-	, std::vector<unsigned int>* _pDegenerateTexcoords)
+	, const vertex_data& _SourceElements
+	, std::vector<uint>* _pIndices
+	, vertex_data* _pSinglyIndexedElements
+	, std::vector<uint>* _pDegenerateNormals
+	, std::vector<uint>* _pDegenerateTexcoords)
 {
-	unsigned int resolvedIndices[4];
-	_pSinglyIndexedElements->Bound = _SourceElements.Bound;
-	_pSinglyIndexedElements->Groups = _SourceElements.Groups;
-	_pSinglyIndexedElements->MTLPath = _SourceElements.MTLPath;
-	unsigned int LastGroupIndex = invalid;
+	_pSinglyIndexedElements->ranges.resize(_SourceElements.groups.size());
 
-	for (const oOBJ_FACE& Face : _SourceElements.Faces)
+	uint resolvedIndices[4];
+	_pSinglyIndexedElements->bound = _SourceElements.bound;
+	_pSinglyIndexedElements->groups = _SourceElements.groups;
+	_pSinglyIndexedElements->mtl_path = _SourceElements.mtl_path;
+	uint LastRangeIndex = invalid;
+
+	for (const face& f : _SourceElements.faces)
 	{
-		oOBJ_GROUP& Group = _pSinglyIndexedElements->Groups[Face.GroupIndex];
+		range& Range = _pSinglyIndexedElements->ranges[f.group_range_index];
 
-		if (LastGroupIndex != Face.GroupIndex)
+		if (LastRangeIndex != f.group_range_index)
 		{
-			if (LastGroupIndex != invalid)
+			if (LastRangeIndex != invalid)
 			{
-				oOBJ_GROUP& LastGroup = _pSinglyIndexedElements->Groups[LastGroupIndex];
-				LastGroup.Range.num_primitives = as_uint(_pIndices->size() / 3) - LastGroup.Range.start_primitive;
-				Group.Range.start_primitive = as_uint(_pIndices->size() / 3);
+				range& LastRange = _pSinglyIndexedElements->ranges[LastRangeIndex];
+				LastRange.num_primitives = as_uint(_pIndices->size() / 3) - LastRange.start_primitive;
+				Range.start_primitive = as_uint(_pIndices->size() / 3);
 			}
-			LastGroupIndex = Face.GroupIndex;
+			LastRangeIndex = f.group_range_index;
 		}
 
-		for (unsigned int p = 0; p < Face.NumIndices; p++)
+		for (uint p = 0; p < f.num_indices; p++)
 		{
-			const key_t hash = Face.Index[p][oOBJ_POSITIONS] + _SourceElements.Positions.size() * Face.Index[p][oOBJ_TEXCOORDS] + _SourceElements.Positions.size() * _SourceElements.Texcoords.size() * Face.Index[p][oOBJ_NORMALS];
+			const key_t hash = f.index[p][face::position] + _SourceElements.positions.size() * f.index[p][face::texcoord] + _SourceElements.positions.size() * _SourceElements.texcoords.size() * f.index[p][face::normal];
 			index_map_t::iterator it = _pIndexMap->find(hash);
 
 			if (it == _pIndexMap->end())
 			{
-				unsigned int NewIndex = as_uint(_pSinglyIndexedElements->Positions.size());
-				_pSinglyIndexedElements->Positions.push_back(_SourceElements.Positions[Face.Index[p][oOBJ_POSITIONS]]);
+				uint NewIndex = as_uint(_pSinglyIndexedElements->positions.size());
+				_pSinglyIndexedElements->positions.push_back(_SourceElements.positions[f.index[p][face::position]]);
 			
-				if (!_SourceElements.Normals.empty())
+				if (!_SourceElements.normals.empty())
 				{
-					if (Face.Index[p][oOBJ_NORMALS] != invalid)
-						_pSinglyIndexedElements->Normals.push_back(_SourceElements.Normals[Face.Index[p][oOBJ_NORMALS]]);
+					if (f.index[p][face::normal] != invalid)
+						_pSinglyIndexedElements->normals.push_back(_SourceElements.normals[f.index[p][face::normal]]);
 					else
 					{
 						_pDegenerateNormals->push_back(NewIndex);
-						_pSinglyIndexedElements->Normals.push_back(oZERO3);
+						_pSinglyIndexedElements->normals.push_back(oZERO3);
 					}
 				}
 
-				if (!_SourceElements.Texcoords.empty())
+				if (!_SourceElements.texcoords.empty())
 				{
-					if(Face.Index[p][oOBJ_TEXCOORDS] != invalid)
-						_pSinglyIndexedElements->Texcoords.push_back(_SourceElements.Texcoords[Face.Index[p][oOBJ_TEXCOORDS]]);
+					if(f.index[p][face::texcoord] != invalid)
+						_pSinglyIndexedElements->texcoords.push_back(_SourceElements.texcoords[f.index[p][face::texcoord]]);
 					else
 					{
 						_pDegenerateTexcoords->push_back(NewIndex);
-						_pSinglyIndexedElements->Texcoords.push_back(oZERO3);
+						_pSinglyIndexedElements->texcoords.push_back(oZERO3);
 					}
 				}
 			
@@ -363,21 +411,21 @@ static void ReduceElements(const oOBJ_INIT& _Init
 		// Now that the index has either been added or reset to a pre-existing index, 
 		// add the face definition to the index list
 
-		static const unsigned int CCWindices[6] = { 0, 2, 1, 2, 0, 3, };
-		static const unsigned int CWindices[6] = { 0, 1, 2, 2, 3, 0, };
+		static const uint CCWindices[6] = { 0, 2, 1, 2, 0, 3, };
+		static const uint CWindices[6] = { 0, 1, 2, 2, 3, 0, };
 	
-		bool UseCCW = _Init.CounterClockwiseFaces;
-		if (_Init.FlipHandedness)
+		bool UseCCW = _Init.counter_clockwide_faces;
+		if (_Init.flip_handedness)
 			UseCCW = !UseCCW;
 	
-		const unsigned int* pOrder = UseCCW ? CCWindices : CWindices;
+		const uint* pOrder = UseCCW ? CCWindices : CWindices;
 
 		_pIndices->push_back(resolvedIndices[pOrder[0]]);
 		_pIndices->push_back(resolvedIndices[pOrder[1]]);
 		_pIndices->push_back(resolvedIndices[pOrder[2]]);
 
 		// Add another triangle for the rest of the quad
-		if (Face.NumIndices == 4)
+		if (f.num_indices == 4)
 		{
 			_pIndices->push_back(resolvedIndices[pOrder[3]]);
 			_pIndices->push_back(resolvedIndices[pOrder[4]]);
@@ -386,54 +434,47 @@ static void ReduceElements(const oOBJ_INIT& _Init
 	} // for each face
 
 	// close out last group
-	unsigned int LastFaceGroupIndex = _SourceElements.Faces.back().GroupIndex;
-	mesh::range& r = _pSinglyIndexedElements->Groups[LastFaceGroupIndex].Range;
+	LastRangeIndex = _SourceElements.faces.back().group_range_index;
+	range& r = _pSinglyIndexedElements->ranges[LastRangeIndex];
 	r.num_primitives = as_uint(_pIndices->size() / 3) - r.start_primitive;
 
-	// Go back through groups and calc min/max verts
-	for (oOBJ_GROUP& g : _pSinglyIndexedElements->Groups)
-		calc_min_max_indices(_pIndices->data(), g.Range.start_primitive*3, g.Range.num_primitives*3, as_uint(_pSinglyIndexedElements->Positions.size()), &g.Range.min_vertex, &g.Range.max_vertex);
+	// Go back through ranges and calc min/max verts
+	for (range& r : _pSinglyIndexedElements->ranges)
+		calc_min_max_indices(_pIndices->data(), r.start_primitive*3, r.num_primitives*3, as_uint(_pSinglyIndexedElements->positions.size()), &r.min_vertex, &r.max_vertex);
 }
 
-static ouro::mesh::layout::value oOBJGetVertexLayout(const oOBJ_DESC& _OBJDesc)
+static layout::value get_vertex_layout(const vertex_data& _Data)
 {
-	ouro::mesh::layout::value Layout = ouro::mesh::layout::pos;
-	if (!_OBJDesc.pPositions)
+	layout::value Layout = layout::pos;
+	if (_Data.positions.empty())
 		oTHROW_INVARG("vertices must have positions");
-	if (_OBJDesc.pNormals)
-		Layout = _OBJDesc.pTexcoords ? ouro::mesh::layout::pos_nrm_tan_uv0 : ouro::mesh::layout::pos_nrm;
-	if (_OBJDesc.pTexcoords)
-		Layout = ouro::mesh::layout::pos_uv0;
+	if (!_Data.normals.empty())
+		Layout = _Data.texcoords.empty() ? layout::pos_nrm : layout::pos_nrm_tan_uv0;
+	if (!_Data.texcoords.empty())
+		Layout = layout::pos_uv0;
 	return Layout;
 }
 
-struct oOBJImpl : oOBJ
+class mesh_impl : public mesh
 {
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
+public:
+	mesh_impl(const init& _Init, const path& _OBJPath, const char* _OBJString);
+	info get_info() const override;
 
-	oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _Init, bool* _pSuccess);
-	void GetDesc(oOBJ_DESC* _pDesc) const threadsafe override;
-
-protected:
-	void GetDesc(oOBJ_DESC* _pDesc) const;
-	oOBJ_ELEMENTS VertexElements;
-	std::vector<unsigned int> Indices;
-	ouro::mesh::layout::value VertexLayout;
-	uint NumGPUVertexElements;
-	path_string OBJPath;
-	oRefCount RefCount;
+private:
+	vertex_data Data;
+	std::vector<uint> Indices;
+	layout::value VertexLayout;
+	path Path;
 };
 
-oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _Init, bool* _pSuccess)
-	: OBJPath(_OBJPath)
+mesh_impl::mesh_impl(const init& _Init, const path& _OBJPath, const char* _OBJString)
+	: Path(_OBJPath)
 {
-	*_pSuccess = false;
-
-	const size_t kInitialReserve = _Init.EstimatedNumIndices * sizeof(unsigned int);
+	const size_t kInitialReserve = _Init.est_num_indices * sizeof(uint);
 	size_t IndexMapMallocBytes = 0;
 	
-	std::vector<unsigned int> DegenerateNormals, DegenerateTexcoords;
+	std::vector<uint> DegenerateNormals, DegenerateTexcoords;
 	DegenerateNormals.reserve(1000);
 	DegenerateTexcoords.reserve(1000);
 
@@ -452,20 +493,15 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 		// create same-sized vertex data - even by replication of data - so that a 
 		// single index buffer can be used. That's the this->VertexElements, but 
 		// first to get the raw vertex data off disk, use this.
-		oOBJ_ELEMENTS OffDiskElements;
-		OffDiskElements.Reserve(_Init.EstimatedNumVertices, _Init.EstimatedNumIndices / 3);
+		vertex_data OffDiskElements;
+		OffDiskElements.reserve(_Init.est_num_vertices, _Init.est_num_indices / 3);
+		parse_elements(_OBJString, _Init.flip_handedness, &OffDiskElements);
 
-		if (!oOBJParseElements(_OBJString, _Init.FlipHandedness, &OffDiskElements))
-		{
-			oErrorSetLast(std::errc::io_error, "Error parsing vertex elements in %s", _OBJPath);
-			return;
-		}
+		const uint kEstMaxVertexElements = as_uint(__max(__max(OffDiskElements.positions.size(), OffDiskElements.normals.size()), OffDiskElements.texcoords.size()));
+		Data.reserve(kEstMaxVertexElements, _Init.est_num_indices / 3);
+		Indices.reserve(_Init.est_num_indices);
 
-		const size_t kEstMaxVertexElements = __max(__max(OffDiskElements.Positions.size(), OffDiskElements.Normals.size()), OffDiskElements.Texcoords.size());
-		VertexElements.Reserve(kEstMaxVertexElements, _Init.EstimatedNumIndices / 3);
-		Indices.reserve(_Init.EstimatedNumIndices);
-
-		ReduceElements(_Init, &IndexMap, OffDiskElements, &Indices, &VertexElements, &DegenerateNormals, &DegenerateTexcoords);
+		reduce_elements(_Init, &IndexMap, OffDiskElements, &Indices, &Data, &DegenerateNormals, &DegenerateTexcoords);
 
 	} // End of life for from-disk vertex elements and index hash
 
@@ -473,16 +509,16 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 		if (IndexMapMallocBytes)
 		{
 			mstring reserved, additional;
-			oTRACE("oOBJ: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), format_commas(additional, as_uint(IndexMapMallocBytes / sizeof(unsigned int))), format_commas(reserved, _Init.EstimatedNumVertices));
+			oTRACE("obj: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), format_commas(additional, as_uint(IndexMapMallocBytes / sizeof(uint))), format_commas(reserved, _Init.est_num_vertices));
 		}
 	#endif
 
-	if (_Init.CalcNormalsOnError)
+	if (_Init.calc_normals_on_error)
 	{
 		bool CalcNormals = false;
-		if (VertexElements.Normals.empty())
+		if (Data.normals.empty())
 		{
-			oTRACE("oOBJ: No normals found in %s...", _OBJPath);
+			oTRACE("obj: No normals found in %s...", _OBJPath);
 			CalcNormals = true;
 		}
 
@@ -498,17 +534,17 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 			oTRACE("Calculating vertex normals... (%s)", oSAFESTRN(_OBJPath));
 			sstring StrTime;
 			timer t;
-			VertexElements.Normals.resize(VertexElements.Positions.size());
-			calc_vertex_normals(VertexElements.Normals.data(), Indices.data(), as_uint(Indices.size()), VertexElements.Positions.data(), as_uint(VertexElements.Positions.size()), _Init.CounterClockwiseFaces, true);
+			Data.normals.resize(Data.positions.size());
+			calc_vertex_normals(Data.normals.data(), Indices.data(), as_uint(Indices.size()), Data.positions.data(), as_uint(Data.positions.size()), _Init.counter_clockwide_faces, true);
 			format_duration(StrTime, t.seconds(), true, true);
 			oTRACE("Calculating vertex normals done in %s. (%s)", StrTime.c_str(), oSAFESTRN(_OBJPath));
 		}
 	}
 
-	if (_Init.CalcTexcoordsOnError)
+	if (_Init.calc_texcoords_on_error)
 	{
 		bool CalcTexcoords = false;
-		if (VertexElements.Texcoords.empty())
+		if (Data.texcoords.empty())
 		{
 			oTRACE("oOBJ: No texcoords found in %s...", oSAFESTRN(_OBJPath));
 			CalcTexcoords = true;
@@ -522,14 +558,14 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 
 		if (CalcTexcoords)
 		{
-			VertexElements.Texcoords.resize(VertexElements.Positions.size());
+			Data.texcoords.resize(Data.positions.size());
 			sstring StrTime;
 			double SolverTime = 0.0;
 			oTRACE("Calculating texture coordinates... (%s)", oSAFESTRN(_OBJPath));
-			try { calc_texcoords(boundf(VertexElements.Bound.Min, VertexElements.Bound.Max), Indices.data(), as_uint(Indices.size()), VertexElements.Positions.data(), VertexElements.Texcoords.data(), as_uint(VertexElements.Texcoords.size()), &SolverTime); }
+			try { calc_texcoords(Data.bound, Indices.data(), as_uint(Indices.size()), Data.positions.data(), Data.texcoords.data(), as_uint(Data.texcoords.size()), &SolverTime); }
 			catch (std::exception& e)
 			{
-				VertexElements.Texcoords.clear();
+				Data.texcoords.clear();
 				oTRACEA("Calculating texture coordinates failed. %s (%s)", _OBJPath, e.what());
 			}
 
@@ -537,74 +573,43 @@ oOBJImpl::oOBJImpl(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT
 			oTRACE("Calculating texture coordinates done in %s. (%s)", StrTime.c_str(), oSAFESTRN(_OBJPath));
 		}
 	}
-
-	oOBJ_DESC d;
-	oOBJImpl::GetDesc(&d);
-	VertexLayout = oOBJGetVertexLayout(d);
-
-	*_pSuccess = true;
 }
 
-void oOBJImpl::GetDesc(oOBJ_DESC* _pDesc) const
+std::shared_ptr<mesh> mesh::make(const init& _Init, const path& _OBJPath, const char* _OBJString)
 {
-	_pDesc->OBJPath = OBJPath;
-	_pDesc->MTLPath = VertexElements.MTLPath;
-	_pDesc->pPositions = data(VertexElements.Positions);
-	_pDesc->pNormals = data(VertexElements.Normals);
-	_pDesc->pTexcoords = data(VertexElements.Texcoords);
-	_pDesc->pIndices = data(Indices);
-	_pDesc->pGroups = data(VertexElements.Groups);
-	_pDesc->VertexLayout = VertexLayout;
-	_pDesc->NumVertices = as_uint(VertexElements.Positions.size());
-	_pDesc->NumIndices = as_uint(Indices.size());
-	_pDesc->NumGroups = as_uint(VertexElements.Groups.size());
-	_pDesc->Bound = VertexElements.Bound;
+	return std::make_shared<mesh_impl>(_Init, _OBJPath, _OBJString);
 }
 
-void oOBJImpl::GetDesc(oOBJ_DESC* _pDesc) const threadsafe
+info mesh_impl::get_info() const
 {
-	oThreadsafe(this)->GetDesc(_pDesc); // safe because the object is const throughout its lifetime
+	info i;
+	i.obj_path = Path;
+	i.mtl_path = Data.mtl_path;
+	i.groups = Data.groups.data();
+
+	i.mesh_info.local_space_bound = Data.bound;
+	i.mesh_info.num_indices = as_uint(Indices.size());
+	i.mesh_info.num_vertices = as_uint(Data.positions.size());
+	i.mesh_info.vertex_layouts[0] = get_vertex_layout(Data);
+	i.mesh_info.primitive_type = primitive_type::triangles;
+	i.mesh_info.face_type = face_type::unknown;
+	i.mesh_info.num_ranges = (uchar)Data.groups.size();
+	i.mesh_info.vertex_scale_shift = 0;
+
+	i.data.indicesi = Indices.data();
+	i.data.ranges = Data.ranges.data();
+	i.data.range_pitch = sizeof(range);
+	i.data.positionsf = Data.positions.data();
+	i.data.positionf_pitch = sizeof(float3);
+	i.data.normalsf = Data.normals.data();
+	i.data.normalf_pitch = sizeof(float3);
+	i.data.uvw0sf = Data.texcoords.data();
+	i.data.uvw0f_pitch = sizeof(float3);
+	i.data.vertex_layout = i.mesh_info.vertex_layouts[0];
+	return i;
 }
 
-bool oOBJCreate(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ)
-{
-	bool success = false;
-	oCONSTRUCT(_ppOBJ, oOBJImpl(_OBJPath, _OBJString, _Init, &success));
-	return success;
-}
-
-namespace ouro {
-
-bool from_string(oOBJ_TEXTURE_TYPE* _pType, const char* _StrSource)
-{
-	static const char* sStrings[] = 
-	{
-		"",
-		"cube_right",
-		"cube_left",
-		"cube_top",
-		"cube_bottom",
-		"cube_back",
-		"cube_front",
-		"sphere",
-	};
-	static_assert(oOBJ_TEXTURE_TYPE_COUNT == oCOUNTOF(sStrings), "array mismatch");
-
-	for (size_t i = 0; i < oCOUNTOF(sStrings); i++)
-	{
-		if (!_stricmp(sStrings[i], _StrSource))
-		{
-			*_pType = (oOBJ_TEXTURE_TYPE)i;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-} // namespace ouro
-
-bool oFromStringOptVec(float3* _pDest, const char** _pStart)
+bool from_string_opt(float3* _pDest, const char** _pStart)
 {
 	const char* c = *_pStart;
 	move_past_line_whitespace(&++c);
@@ -636,9 +641,9 @@ bool oFromStringOptVec(float3* _pDest, const char** _pStart)
 	return true;
 }
 
-static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTexture)
+static texture_info parse_texture_info(const char* _TextureLine)
 {
-	*_pTexture = oOBJ_TEXTURE();
+	texture_info i;
 	const char* c = _TextureLine;
 	while (*c)
 	{
@@ -647,28 +652,28 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			c++;
 			if (*c == 'o')
 			{
-				if (!oFromStringOptVec(&_pTexture->OriginOffset, &c))
-					return false;
+				if (!from_string_opt(&i.origin_offset, &c))
+					break;
 			}
 
 			else if (*c == 's')
 			{
-				if (!oFromStringOptVec(&_pTexture->Scale, &c))
-					return false;
+				if (!from_string_opt(&i.scale, &c))
+					break;
 			}
 
 			else if (*c == 't')
 			{
-				if (!oFromStringOptVec(&_pTexture->Turbulance, &c))
-					return false;
+				if (!from_string_opt(&i.turbulance, &c))
+					break;
 			}
 
 			else if (*c == 'm' && *(c+1) == 'm')
 			{
 				c += 2;
 				move_past_line_whitespace(&++c);
-				if (!from_string(&_pTexture->BrightnessGain, c))
-					return false;
+				if (!from_string(&i.brightness_gain, c))
+					break;
 
 				move_next_word(&c);
 				move_to_whitespace(&c);
@@ -678,8 +683,8 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			{
 				c += 2;
 				move_past_line_whitespace(&++c);
-				if (!from_string(&_pTexture->BumpMultiplier, c))
-					return false;
+				if (!from_string(&i.bump_multiplier, c))
+					break;
 
 				move_to_whitespace(&c);
 			}
@@ -688,24 +693,24 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			{
 				c += 6;
 				move_past_line_whitespace(&c);
-				_pTexture->Blendu = !!_memicmp(c, "on", 2);
-				c += _pTexture->Blendu ? 2 : 3;
+				i.blendu = !!_memicmp(c, "on", 2);
+				c += i.blendu ? 2 : 3;
 			}
 
 			else if (!_memicmp(c, "blendv", 6))
 			{
 				c += 6;
 				move_past_line_whitespace(&c);
-				_pTexture->Blendv = !!_memicmp(c, "on", 2);
-				c += _pTexture->Blendv ? 2 : 3;
+				i.blendv = !!_memicmp(c, "on", 2);
+				c += i.blendv ? 2 : 3;
 			}
 
 			else if (!_memicmp(c, "boost", 5))
 			{
 				c += 5;
 				move_past_line_whitespace(&c);
-				if (!from_string(&_pTexture->Boost, c))
-					return false;
+				if (!from_string(&i.boost, c))
+					break;
 
 				move_to_whitespace(&c);
 			}
@@ -714,8 +719,8 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			{
 				c += 6;
 				move_past_line_whitespace(&c);
-				if (!from_string(&_pTexture->Resolution, c))
-					return false;
+				if (!from_string(&i.resolution, c))
+					break;
 
 				move_next_word(&c);
 				move_to_whitespace(&c);
@@ -725,15 +730,15 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 			{
 				c += 5;
 				move_past_line_whitespace(&c);
-				_pTexture->Blendv = !!_memicmp(c, "on", 2);
-				c += _pTexture->Blendv ? 2 : 3;
+				i.blendv = !!_memicmp(c, "on", 2);
+				c += i.blendv ? 2 : 3;
 			}
 
 			else if (!_memicmp(c, "imfchan", 7))
 			{
 				c += 7;
 				move_past_line_whitespace(&c);
-				_pTexture->IMFChan = *c++;
+				i.imfchan = *c++;
 			}
 
 			else if (!_memicmp(c, "type", 4))
@@ -741,28 +746,29 @@ static bool oOBJParseTextureDesc(const char* _TextureLine, oOBJ_TEXTURE* _pTextu
 				c += 4;
 				move_past_line_whitespace(&c);
 
-				if (!from_string(&_pTexture->Type, c))
-					return false;
+				if (!from_string(&i.type, c))
+					break;
 			}
 		}
 		else
 		{
 			move_past_line_whitespace(&c);
-			_pTexture->Path = c;
-			return true;
+			i.path = c;
+			return i;
 		}
 	}
 
-	return false;
+	oTHROW(io_error, "error parsing obj texture info");
 }
 
-// @tony: NOTE: _MTLPath is not used yet, but leave this in case we need
-// to report better errors.
-static bool oMTLParse(const char* _MTLPath, const char* _MTLString, std::vector<oOBJ_MATERIAL>* _pMTLLibrary)
+static void parse_materials(std::vector<material_info>& _Materials, const path& _MTLPath, const char* _MTLString)
 {
-	_pMTLLibrary->clear();
+	// NOTE: _MTLPath is not used yet, but leave this in case we need
+	// to report better errors.
 
-	float3* pColor = 0;
+	material_info i;
+
+	float3* pColor = nullptr;
 	char type = 0;
 	char buf[_MAX_PATH];
 
@@ -776,34 +782,34 @@ static bool oMTLParse(const char* _MTLPath, const char* _MTLString, std::vector<
 				r += 6; // "newmtl"
 				move_past_line_whitespace(&r);
 				sscanf_s(r, "%[^\r|^\n]", buf, oCOUNTOF(buf));
-				_pMTLLibrary->resize(_pMTLLibrary->size() + 1);
-				_pMTLLibrary->back().Name = buf;
+				_Materials.resize(_Materials.size() + 1);
+				_Materials.back().name = buf;
 				break;
 			case 'N':
 				type = *(++r);
-				sscanf_s(++r, "%f", type == 's' ? &_pMTLLibrary->back().Specularity : &_pMTLLibrary->back().RefractionIndex);
+				sscanf_s(++r, "%f", type == 's' ? &_Materials.back().specularity : &_Materials.back().refraction_index);
 				break;
 			case 'T': // Tr
 				type = *(++r);
 				if (type == 'f')
 				{
-					float3* pColor = (float3*)&_pMTLLibrary->back().TransmissionColor;
+					float3* pColor = (float3*)&_Materials.back().transmission_color;
 					sscanf_s(++r, "%f %f %f", &pColor->x, &pColor->y, &pColor->z);
 				}
 				else if (type == 'r') 
-					sscanf_s(++r, "%f", &_pMTLLibrary->back().Transparency); // 'd' or 'Tr' are the same (transparency)
+					sscanf_s(++r, "%f", &_Materials.back().transparency); // 'd' or 'Tr' are the same (transparency)
 				break;
 			case 'd':
-				sscanf_s(++r, "%f", &_pMTLLibrary->back().Transparency);
+				sscanf_s(++r, "%f", &_Materials.back().transparency);
 				break;
 			case 'K':
 				if (r[1] == 'm') break; // I can't find Km documented anywhere.
 				switch (r[1])
 				{
-					case 'a': pColor = (float3*)&_pMTLLibrary->back().AmbientColor; break;
-					case 'e': pColor = (float3*)&_pMTLLibrary->back().EmissiveColor; break;
-					case 'd': pColor = (float3*)&_pMTLLibrary->back().DiffuseColor; break;
-					case 's': pColor = (float3*)&_pMTLLibrary->back().SpecularColor; break;
+					case 'a': pColor = (float3*)&_Materials.back().ambient_color; break;
+					case 'e': pColor = (float3*)&_Materials.back().emissive_color; break;
+					case 'd': pColor = (float3*)&_Materials.back().diffuse_color; break;
+					case 's': pColor = (float3*)&_Materials.back().specular_color; break;
 					default: break;
 				}
 				sscanf_s(r+2, "%f %f %f", &pColor->x, &pColor->y, &pColor->z);
@@ -812,20 +818,20 @@ static bool oMTLParse(const char* _MTLPath, const char* _MTLString, std::vector<
 				sscanf_s(r + strcspn(r, "\t "), "%[^\r|^\n]", buf, oCOUNTOF(buf));
 
 				#define oOBJTEX(_Name) do \
-				{	if (!oOBJParseTextureDesc(buf + 1, &_pMTLLibrary->back()._Name)) \
+				{	if (!parse_texture_info(buf + 1, &_Materials.back()._Name)) \
 						return oErrorSetLast(std::errc::io_error, "Failed to parse \"%s\"", r); \
 				} while(false)
 				
-				if (!_memicmp("map_Ka", r, 6)) oOBJTEX(Ambient);
-				else if (!_memicmp("map_Kd", r, 6)) oOBJTEX(Diffuse);
-				else if (!_memicmp("map_Ks", r, 6)) oOBJTEX(Specular);
-				else if (!_memicmp("map_d", r, 5) || 0 == _memicmp("map_opacity", r, 11)) oOBJTEX(Alpha);
-				else if (!_memicmp("map_Bump", r, 8) || 0 == _memicmp("bump", r, 4)) oOBJTEX(Bump);
+				if (!_memicmp("map_Ka", r, 6)) _Materials.back().ambient = parse_texture_info(buf + 1);
+				else if (!_memicmp("map_Kd", r, 6)) _Materials.back().diffuse = parse_texture_info(buf + 1);
+				else if (!_memicmp("map_Ks", r, 6)) _Materials.back().specular = parse_texture_info(buf + 1);
+				else if (!_memicmp("map_d", r, 5) || 0 == _memicmp("map_opacity", r, 11)) _Materials.back().alpha = parse_texture_info(buf + 1);
+				else if (!_memicmp("map_Bump", r, 8) || 0 == _memicmp("bump", r, 4)) _Materials.back().bump = parse_texture_info(buf + 1);
 				break;
 			case 'i':
 				r += 5; // "illum"
 				move_past_line_whitespace(&r);
-				sscanf_s(r, "%d", &_pMTLLibrary->back().Illum);
+				sscanf_s(r, "%d", &_Materials.back().illum);
 				break;
 			default:
 				break;
@@ -833,49 +839,38 @@ static bool oMTLParse(const char* _MTLPath, const char* _MTLString, std::vector<
 		move_to_line_end(&r);
 		move_past_newline(&r);
 	}
-
-	return true;
 }
 
-struct oMTLImpl : oMTL
+class material_lib_impl : public material_lib
 {
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_NOOP_QUERYINTERFACE();
-	oMTLImpl(const char* _MTLPath, const char* _MTLString, bool* _pSuccess);
-	void GetDesc(oMTL_DESC* _pDesc) const threadsafe override;
-	std::vector<oOBJ_MATERIAL> Materials;
-	path_string MTLPath;
-	oRefCount RefCount;
+public:
+	material_lib_impl(const path& _MTLPath, const char* _MTLString);
+	material_lib_info get_info() const override;
+private:
+	std::vector<material_info> Materials;
+	path Path;
 };
 
-oMTLImpl::oMTLImpl(const char* _MTLPath, const char* _MTLString, bool* _pSuccess)
-	: MTLPath(_MTLPath)
+material_lib_impl::material_lib_impl(const path& _MTLPath, const char* _MTLString)
 {
 	Materials.reserve(16);
-	*_pSuccess = oMTLParse(_MTLPath, _MTLString, &Materials);
+	parse_materials(Materials, _MTLPath, _MTLString);
 }
 
-void oMTLImpl::GetDesc(oMTL_DESC* _pDesc) const threadsafe
+std::shared_ptr<material_lib> material_lib::make(const path& _MTLPath, const char* _MTLString)
 {
-	auto& m = oThreadsafe(Materials); // safe because data is const throughout this object's lifetime
-
-	_pDesc->MTLPath = MTLPath;
-	_pDesc->pMaterials = data(m);
-	_pDesc->NumMaterials = as_uint(m.size());
+	return std::make_shared<material_lib_impl>(_MTLPath, _MTLString);
 }
 
-bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** _ppMTL)
+material_lib_info material_lib_impl::get_info() const
 {
-	bool success = false;
-	oCONSTRUCT(_ppMTL, oMTLImpl(_MTLPath, _MTLString, &success));
-	return success;
+	material_lib_info i;
+	i.materials = Materials.data();
+	i.num_materials = as_uint(Materials.size());
+	i.mtl_path = Path;
+	return i;
 }
 
-bool oOBJCopyRanges(mesh::range* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc)
-{
-	if (_Desc.NumGroups > _NumRanges)
-		return oErrorSetLast(std::errc::invalid_argument);
-	for (uint i = 0; i < _Desc.NumGroups; i++)
-		_pDestination[i] = _Desc.pGroups[i].Range;
-	return true;
-}
+		} // namespace obj
+	} // namespace mesh
+} // namespace ouro 

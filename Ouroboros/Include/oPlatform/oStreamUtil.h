@@ -32,7 +32,6 @@
 #define oStreamUtil_h
 
 #include <vector>
-#include <oBasis/oOBJ.h>
 #include <oBase/csv.h>
 #include <oBase/ini.h>
 #include <oBase/xml.h>
@@ -51,9 +50,6 @@ bool oStreamLoadPartial(void* _pBuffer, size_t _SizeofBuffer, const char* _URIRe
 template<typename T> bool oStreamLoadPartial(T* _pBuffer, const char* _URIReference) { return oStreamLoadPartial()}
 
 bool oBufferLoad(const char* _URIReference, interface oBuffer** _ppBuffer, bool _AsString = false);
-bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ);
-bool oMTLLoad(const char* _URIReference, threadsafe oMTL** _ppMTL);
-bool oOBJLoad(const char* _URIReference, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ, threadsafe oMTL** _ppMTL);
 
 std::shared_ptr<ouro::csv> oCSVLoad(const char* _URIReference);
 std::shared_ptr<ouro::ini> oINILoad(const char* _URIReference);

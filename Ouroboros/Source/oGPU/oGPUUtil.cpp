@@ -67,7 +67,7 @@ void commit_index_buffer(oGPUCommandList* _pCommandList
 	}
 }
 
-void commit_vertex_buffer(oGPUCommandList* _pCommandList, const mesh::layout::value& _Layout, const mesh::vertex_soa& _Source, oGPUBuffer* _pVertexBuffer)
+void commit_vertex_buffer(oGPUCommandList* _pCommandList, const mesh::layout::value& _Layout, const mesh::source& _Source, oGPUBuffer* _pVertexBuffer)
 {
 	buffer_info Info = _pVertexBuffer->get_info();
 	surface::mapped_subresource Destination;
@@ -92,7 +92,7 @@ intrusive_ptr<oGPUBuffer> make_index_buffer(oGPUDevice* _pDevice, const char* _N
 }
 
 intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
-	, uint _NumVertices, const mesh::vertex_soa& _Source)
+	, uint _NumVertices, const mesh::source& _Source)
 {
 	if (_Layout == mesh::layout::none)
 		oTHROW_INVARG("no vertex elements specified");
@@ -101,7 +101,7 @@ intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _
 
 	intrusive_ptr<oGPUBuffer> VertexBuffer = _pDevice->make_buffer(_Name, i);
 
-	if (_Source != mesh::vertex_soa())
+	if (_Source != mesh::source())
 		commit_vertex_buffer(_pDevice, _Layout, _Source, VertexBuffer);
 
 	return VertexBuffer;
@@ -110,7 +110,7 @@ intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _
 intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
 	, const oGeometry::DESC& _GeoDesc, const oGeometry::CONST_MAPPED& _GeoMapped)
 {
-	mesh::vertex_soa Source;
+	mesh::source Source;
 	Source.positionsf = _GeoMapped.pPositions; Source.positionf_pitch = sizeof(float3);
 	Source.normalsf = _GeoMapped.pNormals; Source.normalf_pitch = sizeof(float3);
 	Source.tangentsf = _GeoMapped.pTangents; Source.tangentf_pitch = sizeof(float4);

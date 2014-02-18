@@ -322,9 +322,7 @@ struct oGeometry_Impl : public oGeometry
 
 	inline void CalculateBounds()
 	{
-		boundf b = calc_bound(Positions.data(), sizeof(float3), as_uint(Positions.size()));
-		Bounds.Min = b.get_min();
-		Bounds.Max = b.get_max();
+		Bounds = calc_bound(Positions.data(), sizeof(float3), as_uint(Positions.size()));
 	}
 
 	inline void PruneUnindexedVertices()
@@ -1843,48 +1841,41 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, true, true, true);
 	GEO_CONSTRUCT("CreateOBJ", sSupportedLayout, _Layout, mesh::face_type::front_cw);
 
-	oOBJ_INIT init;
-	init.EstimatedNumVertices = oMB(1);
-	init.EstimatedNumIndices = oMB(1);
-	init.CounterClockwiseFaces = !_Desc.FlipFaces;
-	init.CalcNormalsOnError = true;
+	ouro::mesh::obj::init init;
+	init.est_num_vertices = oMB(1);
+	init.est_num_indices = oMB(1);
+	init.counter_clockwide_faces = !_Desc.FlipFaces;
+	init.calc_normals_on_error = true;
 
-	intrusive_ptr<threadsafe oOBJ> obj;
-	if (!oOBJCreate(_Desc.OBJPath, _Desc.OBJString, init, &obj))
-		return false;
+	std::shared_ptr<ouro::mesh::obj::mesh> obj = ouro::mesh::obj::mesh::make(init, _Desc.OBJPath, _Desc.OBJString);
+	ouro::mesh::obj::info i = obj->get_info();
 
-	oOBJ_DESC d;
-	obj->GetDesc(&d);
+	pGeometry->Positions.resize(i.mesh_info.num_vertices);
+	pGeometry->Normals.resize(i.mesh_info.num_vertices);
+	pGeometry->Texcoords.resize(i.mesh_info.num_vertices);
+	pGeometry->Indices.resize(i.mesh_info.num_indices);
 
-	pGeometry->Positions.resize(d.NumVertices);
-	pGeometry->Normals.resize(d.NumVertices);
-	pGeometry->Texcoords.resize(d.NumVertices);
-	pGeometry->Indices.resize(d.NumIndices);
-
-	memcpy(data(pGeometry->Positions), d.pPositions, d.NumVertices * sizeof(float3));
-	memcpy(data(pGeometry->Normals), d.pNormals, d.NumVertices * sizeof(float3));
-	memcpy(data(pGeometry->Texcoords), d.pTexcoords, d.NumVertices * sizeof(float2));
-	memcpy(data(pGeometry->Indices), d.pIndices, d.NumIndices * sizeof(float2));
+	memcpy(data(pGeometry->Positions), i.data.positionsf, i.mesh_info.num_vertices * i.data.positionf_pitch);
+	memcpy(data(pGeometry->Normals), i.data.normalsf, i.mesh_info.num_vertices * i.data.normalf_pitch);
+	memcpy(data(pGeometry->Texcoords), i.data.uvw0sf, i.mesh_info.num_vertices * i.data.uvw0f_pitch);
+	memcpy(data(pGeometry->Indices), i.data.indicesi, i.mesh_info.num_indices * sizeof(uint));
 	
-	if (d.NumGroups)
+	if (i.mesh_info.num_ranges)
 	{
-		pGeometry->ContinuityIDs.resize(d.NumVertices);
-		for (unsigned int i = 0; i < d.NumGroups; i++)
+		pGeometry->ContinuityIDs.resize(i.mesh_info.num_vertices);
+		for (unsigned int r = 0; r < i.mesh_info.num_ranges; r++)
 		{
-			const oOBJ_GROUP& g = d.pGroups[i];
-			const size_t indexStart = g.Range.start_primitive * 3;
-			const size_t indexEnd = indexStart + g.Range.num_primitives * 3;
-			for (size_t j = indexStart; j < indexEnd; j++)
-				pGeometry->ContinuityIDs[pGeometry->Indices[j]] = i;
+			const ouro::mesh::range& range = i.data.ranges[r];
+			const uint indexStart = range.start_primitive * 3;
+			const uint indexEnd = indexStart + range.num_primitives * 3;
+			for (uint j = indexStart; j < indexEnd; j++)
+				pGeometry->ContinuityIDs[pGeometry->Indices[j]] = r;
 		}
 	}
 
-	pGeometry->Ranges.resize(d.NumGroups);
-	for (size_t i = 0; i < pGeometry->Ranges.size(); i++)
-	{
-		pGeometry->Ranges[i] = d.pGroups[i].Range;
-		pGeometry->Ranges[i] = d.pGroups[i].Range;
-	}
+	pGeometry->Ranges.resize(i.mesh_info.num_ranges);
+	for (size_t r = 0; r < pGeometry->Ranges.size(); r++)
+		pGeometry->Ranges[r] = i.data.ranges[r];
 
 	pGeometry->Finalize(_Layout, white);
 
