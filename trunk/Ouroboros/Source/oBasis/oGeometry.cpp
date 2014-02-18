@@ -389,7 +389,7 @@ struct oGeometry_Impl : public oGeometry
 	std::vector<unsigned int> ContinuityIDs;
 	mesh::face_type::value FaceType;
 	mesh::primitive_type::value PrimitiveType;
-	oAABoxf Bounds;
+	ouro::aaboxf Bounds;
 	oRefCount RefCount;
 	//oConcurrency::shared_mutex Mutex;
 };
