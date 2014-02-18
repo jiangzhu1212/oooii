@@ -22,39 +22,45 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This cpp contains implemenations of to_string and from_string for intrinsic
-// types as well as ouro types.
+// A bounding sphere. This header cross-compiles in C++ and HLSL.
+#ifndef oHLSL
+	#pragma once
+#endif
+#ifndef oBase_sphere_h
+#define oBase_sphere_h
 
-#include <oCompute/oFrustum.h>
-#include <oCompute/rgb.h>
-#include <oBase/stringize.h>
+#include <oHLSL/oHLSLMacros.h>
+#include <oHLSL/oHLSLMath.h>
+#include <oHLSL/oHLSLTypes.h>
 
+#ifdef oHLSL
+
+#define spheref float4
+#define sphered double4
+
+#else
 namespace ouro {
 
-bool from_string(rgbf* _pValue, const char* _StrSource)
+template<typename T> struct sphere : public TVEC4<T>
 {
-	color c;
-	// Valid forms are: 0xAABBGGRR, R G B [0,1], and an ouro::color
-	if (*_StrSource == '0' && tolower(*_StrSource) == 'x')
-	{
-		unsigned int i;
-		if (from_string(&i, _StrSource))
-			*_pValue = *(color*)&i;
-	}
-	else if (from_string(&c, _StrSource))
-		*_pValue = c;
-	else if (!from_string((float3*)_pValue, _StrSource))
-		return false;
-	return true;
-}
+	typedef T element_type;
+	typedef TVEC3<element_type> vector_type;
+	typedef TVEC4<element_type> base_type;
+	sphere() {}
+	sphere(const sphere& _That) { operator=(_That); }
+	sphere(const base_type& _That) { operator=(_That); }
+	sphere(const vector_type& _Position, element_type _Radius) : base_type(_Position, _Radius) {}
+	element_type radius() const { return w; }
+	const sphere& operator=(const sphere& _That) { return operator=(*(base_type*)&_That); }
+	const sphere& operator=(const base_type& _That) { *(base_type*)this = _That; return *this; }
+	operator base_type() { return *this; }
+};
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rgbf& _Value) 
-{
-	if (!to_string(_StrDestination, _SizeofStrDestination, (color)_Value))
-		if (!to_string(_StrDestination, _SizeofStrDestination, (const float3&)_Value))
-			return nullptr;
-
-	return _StrDestination;
-}
+template<typename T> inline bool equal(const sphere<T>& a, const sphere<T>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps) && equal(a.w, b.w, maxUlps); }
 
 } // namespace ouro
+
+typedef ouro::sphere<float> spheref; typedef ouro::sphere<double> sphered;
+
+#endif
+#endif

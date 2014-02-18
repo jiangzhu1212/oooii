@@ -35,9 +35,6 @@
     <ClInclude Include="..\..\Include\oCompute\oComputeSimplex.h" />
     <ClInclude Include="..\..\Include\oCompute\oComputeUtil.h" />
     <ClInclude Include="..\..\Include\oCompute\oFrustum.h" />
-    <ClInclude Include="..\..\Include\oCompute\oPlane.h" />
-    <ClInclude Include="..\..\Include\oCompute\oQuaternion.h" />
-    <ClInclude Include="..\..\Include\oCompute\oSphere.h" />
     <ClInclude Include="..\..\Include\oCompute\rgb.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>

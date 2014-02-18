@@ -70,9 +70,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="plane.cpp" />
+    <ClCompile Include="quat.cpp" />
     <ClCompile Include="scc.cpp" />
     <ClCompile Include="scc_svn.cpp" />
     <ClCompile Include="snappy.cpp" />
+    <ClCompile Include="sphere.cpp" />
     <ClCompile Include="string\ampersand_decode.cpp" />
     <ClCompile Include="string\ampersand_encode.cpp" />
     <ClCompile Include="string\argtok.cpp" />
@@ -174,9 +177,12 @@
     <ClInclude Include="..\..\Include\oBase\opttok.h" />
     <ClInclude Include="..\..\Include\oBase\path.h" />
     <ClInclude Include="..\..\Include\oBase\path_traits.h" />
+    <ClInclude Include="..\..\Include\oBase\plane.h" />
+    <ClInclude Include="..\..\Include\oBase\quat.h" />
     <ClInclude Include="..\..\Include\oBase\resized_type.h" />
     <ClInclude Include="..\..\Include\oBase\scc.h" />
     <ClInclude Include="..\..\Include\oBase\snappy.h" />
+    <ClInclude Include="..\..\Include\oBase\sphere.h" />
     <ClInclude Include="..\..\Include\oBase\std_make_unique.h" />
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />

@@ -36,7 +36,6 @@
 	#include <float.h>
 	#include <oHLSL/oHLSLTypes.h>
 #endif
-#include <oCompute/oQuaternion.h>
 
 // _____________________________________________________________________________
 // Common math constants
@@ -83,7 +82,6 @@ static const float4 oWAXIS4 = float4(0.0f, 0.0f, 0.0f, 1.0f);
 
 static const float3x3 oIDENTITY3x3 = float3x3(oXAXIS3, oYAXIS3, oZAXIS3);
 static const float4x4 oIDENTITY4x4 = float4x4(oXAXIS4, oYAXIS4, oZAXIS4, oWAXIS4);
-static const quatf oIDENTITYQ = quatf(0.0f, 0.0f, 0.0f, 1.0f);
 
 // @tony: We're currently compiling against SM4, but we need a mechanism
 // to pass into the shader which shader model it actually is for stuff like
@@ -91,7 +89,6 @@ static const quatf oIDENTITYQ = quatf(0.0f, 0.0f, 0.0f, 1.0f);
 #ifndef oHLSL
 	static const double3x3 oIDENTITY3x3D = double3x3(oXAXIS3, oYAXIS3, oZAXIS3);
 	static const double4x4 oIDENTITY4x4D = double4x4(oXAXIS4, oYAXIS4, oZAXIS4, oWAXIS4);
-	static const quatd oIDENTITYQD = quatd(0.0, 0.0, 0.0, 1.0);
 #endif
 
 // _____________________________________________________________________________

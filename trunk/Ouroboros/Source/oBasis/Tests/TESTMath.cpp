@@ -94,44 +94,44 @@ bool Test_SplitRectOverlap()
 
 bool Test_Frustum()
 {
-	static const oPlanef EXPECTED_PLANES_LH[6] =
+	static const planef EXPECTED_PLANES_LH[6] =
 	{
-		oPlanef(1.0f, 0.0f, 0.0f,  1.0f),
-		oPlanef(-1.0f, 0.0f, 0.0f, 1.0f),
-		oPlanef(0.0f, -1.0f, 0.0f, 1.0f),
-		oPlanef(0.0f, 1.0f, 0.0f,  1.0f),
-		oPlanef(0.0f, 0.0f, 1.0f,  1.0f),
-		oPlanef(0.0f, 0.0f, -1.0f,  1.0f),
+		planef(1.0f, 0.0f, 0.0f,  1.0f),
+		planef(-1.0f, 0.0f, 0.0f, 1.0f),
+		planef(0.0f, -1.0f, 0.0f, 1.0f),
+		planef(0.0f, 1.0f, 0.0f,  1.0f),
+		planef(0.0f, 0.0f, 1.0f,  1.0f),
+		planef(0.0f, 0.0f, -1.0f,  1.0f),
 	};
 
-	static const oPlanef EXPECTED_PLANES_RH[6] =
+	static const planef EXPECTED_PLANES_RH[6] =
 	{
-		oPlanef(1.0f, 0.0f, 0.0f,  1.0f),
-		oPlanef(-1.0f, 0.0f, 0.0f, 1.0f),
-		oPlanef(0.0f, -1.0f, 0.0f, 1.0f),
-		oPlanef(0.0f, 1.0f, 0.0f,  1.0f),
-		oPlanef(0.0f, 0.0f, -1.0f, 1.0f),
-		oPlanef(0.0f, 0.0f, 1.0f,  1.0f),
+		planef(1.0f, 0.0f, 0.0f,  1.0f),
+		planef(-1.0f, 0.0f, 0.0f, 1.0f),
+		planef(0.0f, -1.0f, 0.0f, 1.0f),
+		planef(0.0f, 1.0f, 0.0f,  1.0f),
+		planef(0.0f, 0.0f, -1.0f, 1.0f),
+		planef(0.0f, 0.0f, 1.0f,  1.0f),
 	};
 
-	static const oPlanef EXPECTED_PERSPECTIVE_PLANES_LH[6] =
+	static const planef EXPECTED_PERSPECTIVE_PLANES_LH[6] =
 	{
-		oPlanef(0.707f, 0.0f, 0.707f, 0.0f),
-		oPlanef(-0.707f, 0.0f, 0.707f, 0.0f),
-		oPlanef(0.0f, -0.707f, 0.707f, 0.0f),
-		oPlanef(0.0f, 0.707f, 0.707f, 0.0f),
-		oPlanef(0.0f, 0.0f, 1.0f,    -0.1f),
-		oPlanef(0.0f, 0.0f, -1.0f,  100.0f),
+		planef(0.707f, 0.0f, 0.707f, 0.0f),
+		planef(-0.707f, 0.0f, 0.707f, 0.0f),
+		planef(0.0f, -0.707f, 0.707f, 0.0f),
+		planef(0.0f, 0.707f, 0.707f, 0.0f),
+		planef(0.0f, 0.0f, 1.0f,    -0.1f),
+		planef(0.0f, 0.0f, -1.0f,  100.0f),
 	};
 
-	static const oPlanef EXPECTED_PERSPECTIVE_PLANES_RH[6] =
+	static const planef EXPECTED_PERSPECTIVE_PLANES_RH[6] =
 	{
-		oPlanef(0.707f, 0.0f, -0.707f, 0.0f),
-		oPlanef(-0.707f, 0.0f, -0.707f, 0.0f),
-		oPlanef(0.0f, -0.707f, -0.707f, 0.0f),
-		oPlanef(0.0f, 0.707f, -0.707f, 0.0f),
-		oPlanef(0.0f, 0.0f, -1.0f, -0.1f),
-		oPlanef(0.0f, 0.0f, 1.0f, 100.0f),
+		planef(0.707f, 0.0f, -0.707f, 0.0f),
+		planef(-0.707f, 0.0f, -0.707f, 0.0f),
+		planef(0.0f, -0.707f, -0.707f, 0.0f),
+		planef(0.0f, 0.707f, -0.707f, 0.0f),
+		planef(0.0f, 0.0f, -1.0f, -0.1f),
+		planef(0.0f, 0.0f, 1.0f, 100.0f),
 	};
 
 	static const char* names[6] =
@@ -146,7 +146,7 @@ bool Test_Frustum()
                                                    
 	const int MAX_ULPS = 1800;
 
-	oPlanef planes[6];
+	planef planes[6];
 	float4x4 P = make_orthographic_lh(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
 	oExtractFrustumPlanes(planes, P, false);
 	oFORI(i, EXPECTED_PLANES_LH)

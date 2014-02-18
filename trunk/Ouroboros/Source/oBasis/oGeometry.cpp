@@ -389,7 +389,7 @@ struct oGeometry_Impl : public oGeometry
 	std::vector<unsigned int> ContinuityIDs;
 	mesh::face_type::value FaceType;
 	mesh::primitive_type::value PrimitiveType;
-	ouro::aaboxf Bounds;
+	aaboxf Bounds;
 	oRefCount RefCount;
 	//oConcurrency::shared_mutex Mutex;
 };
@@ -1099,7 +1099,7 @@ bool oGeometryFactory_Impl::CreateWasher(const WASHER_DESC& _Desc, const oGeomet
 	return true;
 }
 
-void Clip(const oPlanef& _Plane, bool _Clip, oGeometry_Impl* _pGeometry)
+void Clip(const planef& _Plane, bool _Clip, oGeometry_Impl* _pGeometry)
 {
 	// @tony: FIXME: I just wanted this for a skydome, where 
 	// the horizon is hidden anyway, so don't be too smart, just cut 
@@ -1386,7 +1386,7 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 		if (!_Desc.Icosahedron)
 		{
 			if (_Desc.Hemisphere)
-				Clip(oPlanef(float3(0.0f, 0.0f, 1.0f), 0.0f), false, pGeometry);
+				Clip(planef(float3(0.0f, 0.0f, 1.0f), 0.0f), false, pGeometry);
 
 			if (_Desc.FaceType == mesh::face_type::outline)
 			{

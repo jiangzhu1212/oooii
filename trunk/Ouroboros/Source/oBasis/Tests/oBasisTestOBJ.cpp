@@ -52,7 +52,7 @@ public:
 		i.data.uvw0f_pitch = sizeof(float3);
 		
 		i.mesh_info.face_type = ouro::mesh::face_type::unknown;
-		i.mesh_info.local_space_bound = ouro::aaboxf(ouro::aaboxf::min_max, float3(-0.5), float3(0.5f));
+		i.mesh_info.local_space_bound = aaboxf(aaboxf::min_max, float3(-0.5), float3(0.5f));
 		i.mesh_info.num_indices = oCOUNTOF(sIndices);
 		i.mesh_info.num_ranges = oCOUNTOF(sRanges);
 		i.mesh_info.num_vertices = oCOUNTOF(sPositions);

@@ -42,16 +42,7 @@
     <ClInclude Include="..\..\Include\oCompute\all.h">
       <Filter>oCompute</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oPlane.h">
-      <Filter>oCompute\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oQuaternion.h">
-      <Filter>oCompute\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oCompute\oFrustum.h">
-      <Filter>oCompute\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oSphere.h">
       <Filter>oCompute\Types</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">

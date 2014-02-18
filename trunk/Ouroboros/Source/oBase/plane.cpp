@@ -22,44 +22,17 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// This header is designed to cross-compile in both C++ and HLSL. This defines
-// a sphere.
+#include <oBase/plane.h>
+#include <oBase/stringize.h>
 
-#ifndef oHLSL
-	#pragma once
-#endif
-#ifndef oCompute_sphere_h
-#define oCompute_sphere_h
+namespace ouro {
 
-#include <oHLSL/oHLSLMacros.h>
-#include <oHLSL/oHLSLMath.h>
-#include <oHLSL/oHLSLTypes.h>
+bool from_string(planef* _pValue, const char* _StrSource)
+{
+	float4* pTmp = (float4*)_pValue;
+	return from_string(pTmp, _StrSource);
+}
 
-#ifdef oHLSL
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const planef& _Value) { return to_string(_StrDestination, _SizeofStrDestination, (const float4&)_Value); }
 
-#define oSpheref float4
-#define oSphered double4
-
-#else
-	// Wrap in a namespace so that NoStepInto can be used for VS2010+.
-	namespace ouro {
-		template<typename T> struct sphere : public TVEC4<T>
-		{
-			typedef T element_type;
-			typedef TVEC3<element_type> vector_type;
-			typedef TVEC4<element_type> base_type;
-			sphere() {}
-			sphere(const sphere& _That) { operator=(_That); }
-			sphere(const base_type& _That) { operator=(_That); }
-			sphere(const vector_type& _Position, element_type _Radius) : base_type(_Position, _Radius) {}
-			element_type radius() const { return w; }
-			const sphere& operator=(const sphere& _That) { return operator=(*(base_type*)&_That); }
-			const sphere& operator=(const base_type& _That) { *(base_type*)this = _That; return *this; }
-			operator base_type() { return *this; }
-		};
-	} // namespace ouro
-
-typedef ouro::sphere<float> oSpheref; typedef ouro::sphere<double> oSphered;
-
-#endif
-#endif
+} // namespace ouro

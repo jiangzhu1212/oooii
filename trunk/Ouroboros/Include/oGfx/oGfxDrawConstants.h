@@ -57,10 +57,10 @@ struct oGfxDrawConstants
 
 	oGfxDrawConstants() {}
 	oGfxDrawConstants(CONSTRUCTION _Type) { SetIdentity(); }
-	oGfxDrawConstants(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, const ouro::aaboxf& _ObjectBound, uint _ObjectID = 0, uint _DrawID = 0) { Set(_World, _View, _Projection, _ObjectBound, _ObjectID, _DrawID); }
-	oGfxDrawConstants(const float4x4& _World, const oGfxViewConstants& _ViewConstants, const ouro::aaboxf& _ObjectBound, uint _ObjectID = 0, uint _DrawID = 0) { Set(_World, _ViewConstants.GetView(), _ViewConstants.GetProjection(), _ObjectBound, _ObjectID, _DrawID); }
+	oGfxDrawConstants(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, const aaboxf& _ObjectBound, uint _ObjectID = 0, uint _DrawID = 0) { Set(_World, _View, _Projection, _ObjectBound, _ObjectID, _DrawID); }
+	oGfxDrawConstants(const float4x4& _World, const oGfxViewConstants& _ViewConstants, const aaboxf& _ObjectBound, uint _ObjectID = 0, uint _DrawID = 0) { Set(_World, _ViewConstants.GetView(), _ViewConstants.GetProjection(), _ObjectBound, _ObjectID, _DrawID); }
 
-	inline void Set(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, const ouro::aaboxf& _ObjectBound, uint _ObjectID, uint _DrawID)
+	inline void Set(const float4x4& _World, const float4x4& _View, const float4x4& _Projection, const aaboxf& _ObjectBound, uint _ObjectID, uint _DrawID)
 	{
 		World = _World;
 		WorldView = _World * _View;
@@ -83,8 +83,8 @@ struct oGfxDrawConstants
 		WorldViewProjection = oIDENTITY4x4;
 		Normalized = oIDENTITY4x4;
 		NormalizedInverse = oIDENTITY4x4;
-		WorldQuaternion = oIDENTITYQ;
-		WorldViewQuaternion = oIDENTITYQ;
+		WorldQuaternion = identity_quatf;
+		WorldViewQuaternion = identity_quatf;
 		Scale = 1.0f;
 		ObjectID = 0;
 		DrawID = 0;

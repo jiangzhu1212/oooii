@@ -1323,12 +1323,12 @@ void set_srvs(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->CSSetShaderResources(_StartSlot, _NumShaderResourceViews, ppViews);
 }
 
-ouro::aaboxf from_viewport(const D3D11_VIEWPORT& _Viewport)
+aaboxf from_viewport(const D3D11_VIEWPORT& _Viewport)
 {
-	return ouro::aaboxf(ouro::aaboxf::min_max, float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth), float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
+	return aaboxf(aaboxf::min_max, float3(_Viewport.TopLeftX, _Viewport.TopLeftY, _Viewport.MinDepth), float3(_Viewport.Width, _Viewport.Height, _Viewport.MaxDepth));
 }
 
-D3D11_VIEWPORT to_viewport(const ouro::aaboxf& _Source)
+D3D11_VIEWPORT to_viewport(const aaboxf& _Source)
 {
 	D3D11_VIEWPORT v;
 	float3 Min = _Source.Min;

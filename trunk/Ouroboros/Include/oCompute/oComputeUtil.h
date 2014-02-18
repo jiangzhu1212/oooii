@@ -32,7 +32,7 @@
 
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLMacros.h>
-#include <oCompute/oQuaternion.h>
+#include <oBase/quat.h>
 #include <oHLSL/oHLSLSwizzlesOn.h>
 
 #ifndef oCONCAT

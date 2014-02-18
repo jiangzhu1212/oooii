@@ -34,7 +34,7 @@
 #include <oHLSL/oHLSLMacros.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLSwizzlesOn.h>
-#include <oCompute/oQuaternion.h>
+#include <oBase/quat.h>
 #include <oCompute/oComputeUtil.h>//asdfsadfsadf
 
 // Returns the eye position in whatever space the view matrix is in. REMEMBER

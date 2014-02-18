@@ -26,10 +26,10 @@
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/rgb.h>
 #include <oBase/aabox.h>
+#include <oBase/plane.h>
+#include <oBase/quat.h>
+#include <oBase/sphere.h>
 #include <oCompute/oFrustum.h>
-#include <oCompute/oPlane.h>
-#include <oCompute/oQuaternion.h>
-#include <oCompute/oSphere.h>
 #include <oCompute/linear_algebra.h>
 #include <oBasis/oError.h>
 #include <oBase/invalid.h>
@@ -118,10 +118,10 @@ oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, double, double, 1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_color, ouro_color, -1) // Can be either 1 or 4 string tokens.. so it's ambiguous
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_rgbf, ouro_rgbf, -1) // Can be either 1 or 3 string tokens.. so it's ambiguous
 oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, float4x4, float4x4, 16, oIDENTITY4x4)
-oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, quatf, quatf, 4, oIDENTITYQ)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, oPlanef, oPlanef, 4)
-oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, oSpheref, oSpheref, 4)
-oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, ouro_aaboxf, ouro_aaboxf, 6, ouro::aaboxf())
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, quatf, quatf, 4, identity_quatf)
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, planef, planef, 4, planef())
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, spheref, spheref, 4, spheref())
+oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, aaboxf, aaboxf, 6, aaboxf())
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_fourcc, ouro_fourcc, 1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_sstring, ouro_sstring, -1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_mstring, ouro_mstring, -1)

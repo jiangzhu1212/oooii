@@ -225,7 +225,7 @@ void oGDIDrawKinect(HDC _hDC, const RECT& _rTarget, oKINECT_FRAME_TYPE _Type, in
 
 void oGDIDrawAirKey(HDC _hDC, const RECT& _rTarget, int _Flags, const oAIR_KEY& _Key, ouro::input::action_type _LastAction, const ouro::input::tracking_skeleton& _Skeleton)
 {
-	ouro::aaboxf Bounds = _Key.Bounds;
+	aaboxf Bounds = _Key.Bounds;
 	if (_Key.Origin != ouro::input::invalid_bone)
 		ouro::translate(Bounds, _Skeleton.positions[_Key.Origin].xyz());
 
