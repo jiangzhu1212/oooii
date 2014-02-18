@@ -34,7 +34,7 @@ public:
 	util_mesh_impl(oGPUDevice* _pDevice, const char* _Name, const mesh::info& _Info)
 		: MeshInfo(_Info)
 	{
-		if (_Info.num_vertex_ranges != 1)
+		if (_Info.num_ranges != 1)
 			oTHROW_INVARG("mesh range must be 1");
 
 		IB = make_index_buffer(_pDevice, _Name, MeshInfo.num_indices, MeshInfo.num_vertices);
@@ -49,13 +49,13 @@ public:
 		oGeometry::DESC gd;
 		_pGeometry->GetDesc(&gd);
 
-		MeshInfo.local_space_bound = mesh::boundf(gd.Bounds.Min, gd.Bounds.Max);
+		MeshInfo.local_space_bound = aaboxf(aaboxf::min_max, gd.Bounds.Min, gd.Bounds.Max);
 		MeshInfo.num_indices = gd.NumIndices;
 		MeshInfo.num_vertices = gd.NumVertices;
 		MeshInfo.vertex_layouts[0] = gd.Layout.AsVertexLayout();
 		MeshInfo.primitive_type = gd.PrimitiveType;
 		MeshInfo.face_type = gd.FaceType;
-		MeshInfo.num_vertex_ranges = 1;
+		MeshInfo.num_ranges = 1;
 		MeshInfo.vertex_scale_shift = 0;
 
 		buffer_info ii = make_index_buffer_info(gd.NumIndices, gd.NumVertices);
@@ -110,10 +110,10 @@ std::shared_ptr<util_mesh> util_mesh::make(oGPUDevice* _pDevice, const char* _Na
 std::shared_ptr<util_mesh> make_first_triangle(oGPUDevice* _pDevice)
 {
 	mesh::info mi;
-	mi.local_space_bound = mesh::boundf(float3(-0.8f, -0.7f, -0.01f), float3(0.8f, 0.7f, 0.01f));
+	mi.local_space_bound = aaboxf(aaboxf::min_max, float3(-0.8f, -0.7f, -0.01f), float3(0.8f, 0.7f, 0.01f));
 	mi.num_indices = 3;
 	mi.num_vertices = 3;
-	mi.num_vertex_ranges = 1;
+	mi.num_ranges = 1;
 	mi.vertex_layouts[0] = mesh::layout::pos;
 	mi.face_type = mesh::face_type::front_ccw;
 	mi.primitive_type = mesh::primitive_type::triangles;

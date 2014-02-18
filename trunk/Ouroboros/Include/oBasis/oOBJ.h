@@ -22,208 +22,202 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
 // Structures and utilities for loading the Wavefront OBJ 3D object file format
 #pragma once
-#ifndef oOBJ_h
-#define oOBJ_h
+#ifndef oMesh_obj_h
+#define oMesh_obj_h
 
 #include <oBase/invalid.h>
 #include <oBase/colors.h>
+#include <oBase/path.h>
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oInterface.h>
-#include <oCompute/oAABox.h>
 #include <oCompute/rgb.h>
+#include <memory>
+
+namespace ouro {
+	namespace mesh {
+		namespace obj {
 
 // http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/
-enum oOBJ_ILLUMINATION
+namespace illumination
+{ enum value {
+			
+	color_on_ambient_off,
+	color_on_ambient_on,
+	highlight_on,
+	reflection_on_ray_trace_on,
+	transparency_glass_on_reflection_ray_trace_on,
+	reflection_fresnel_on_ray_trace_on,
+	transparency_refraction_on_reflection_fresnel_off_ray_trace_on,
+	transparency_refraction_on_reflection_frensel_on_ray_trace_on,
+	reflection_on_ray_trace_off,
+	transparency_glass_on_reflection_ray_trace_off,
+	casts_shadows_onto_invisible_surfaces,
+
+	count
+
+};}
+
+namespace texture_type
+{ enum value {
+
+	regular,
+	cube_right,
+	cube_left,
+	cube_top,
+	cube_bottom,
+	cube_back,
+	cube_front,
+	sphere,
+	
+	count,
+
+};}
+
+struct group
 {
-	oOBJ_COLOR_ON_AMBIENT_OFF,
-	oOBJ_COLOR_ON_AMBIENT_ON,
-	oOBJ_HIGHLIGHT_ON,
-	oOBJ_REFLECTION_ON_RAY_TRACE_ON,
-	oOBJ_TRANSPARENCY_GLASS_ON_REFLECTION_RAY_TRACE_ON,
-	oOBJ_REFLECTION_FRESNEL_ON_RAY_TRACE_ON,
-	oOBJ_TRANSPARENCY_REFRACTION_ON_REFLECTION_FRESNEL_OFF_RAY_TRACE_ON,
-	oOBJ_TRANSPARENCY_REFRACTION_ON_REFLECTION_FRENSEL_ON_RAY_TRACE_ON,
-	oOBJ_REFLECTION_ON_RAY_TRACE_OFF,
-	oOBJ_TRANSPARENCY_GLASS_ON_REFLECTION_RAY_TRACE_OFF,
-	oOBJ_CASTS_SHADOWS_ONTO_INVISIBLE_SURFACES,
+	mstring group_name;
+	mstring material_name;
 };
 
-enum oOBJ_TEXTURE_TYPE
-{
-	oOBJ_DEFAULT,
-	oOBJ_CUBE_RIGHT,
-	oOBJ_CUBE_LEFT,
-	oOBJ_CUBE_TOP,
-	oOBJ_CUBE_BOTTOM,
-	oOBJ_CUBE_BACK,
-	oOBJ_CUBE_FRONT,
-	oOBJ_SPHERE,
-	oOBJ_TEXTURE_TYPE_COUNT,
-};
-
-struct oOBJ_GROUP
-{
-	ouro::mstring GroupName;
-	ouro::mstring MaterialName;
-	ouro::mesh::range Range;
-};
-
-struct oOBJ_TEXTURE
-{
-	oOBJ_TEXTURE()
-		: Boost(0.0f)
-		, BrightnessGain(0.0f, 1.0f)
-		, OriginOffset(0.0f, 0.0f, 0.0f)
-		, Scale(1.0f, 1.0f, 1.0f)
-		, Turbulance(0.0f, 0.0f, 0.0f)
-		, Resolution(ouro::invalid, ouro::invalid)
-		, BumpMultiplier(1.0f)
-		, Type(oOBJ_DEFAULT)
-		, IMFChan('l')
-		, Blendu(true)
-		, Blendv(true)
-		, Clamp(false)
-	{}
-
-	ouro::path_string Path;
-	float Boost;
-	float2 BrightnessGain;
-	float3 OriginOffset;
-	float3 Scale;
-	float3 Turbulance;
-	uint2 Resolution;
-	float BumpMultiplier;
-	oOBJ_TEXTURE_TYPE Type;
-	char IMFChan;
-	bool Blendu;
-	bool Blendv;
-	bool Clamp;
-};
-
-struct oOBJ_MATERIAL
-{
-	oOBJ_MATERIAL()
-		: AmbientColor(ouro::black)
-		, EmissiveColor(ouro::black)
-		, DiffuseColor(ouro::white_smoke)
-		, SpecularColor(ouro::white)
-		, Specularity(0.25f)
-		, Transparency(1.0f) // (1 means opaque 0 means transparent)
-		, RefractionIndex(1.0f)
-		, Illum(oOBJ_COLOR_ON_AMBIENT_OFF)
-	{}
-
-	rgbf AmbientColor;
-	rgbf EmissiveColor;
-	rgbf DiffuseColor;
-	rgbf SpecularColor;
-	rgbf TransmissionColor;
-	float Specularity;
-	float Transparency;
-	float RefractionIndex;
-	oOBJ_ILLUMINATION Illum;
-
-	ouro::path_string Name;
-	oOBJ_TEXTURE Ambient;
-	oOBJ_TEXTURE Diffuse;
-	oOBJ_TEXTURE Alpha;
-	oOBJ_TEXTURE Specular;
-	oOBJ_TEXTURE Bump;
-};
-
-struct oOBJ_DESC
+struct info
 {
 	// positions/texcoords/normals will all have the same count (i.e. 
 	// reduction/duplication is done internally). If there is no data for one of 
 	// the channels, then the pointer will be null and pVertexElements will be 
 	// collapsed (no null element between others).
 
-	oOBJ_DESC()
-		: OBJPath(nullptr)
-		, MTLPath(nullptr)
-		, pPositions(nullptr)
-		, pNormals(nullptr)
-		, pTexcoords(nullptr)
-		, pIndices(nullptr)
-		, pGroups(nullptr)
-		, VertexLayout(ouro::mesh::layout::pos)
-		, NumVertices(0)
-		, NumIndices(0)
-		, NumGroups(0)
+	info()
+		: obj_path(nullptr)
+		, mtl_path(nullptr)
+		, groups(nullptr)
 	{}
 
-	const char* OBJPath;
-	const char* MTLPath;
-	const float3* pPositions;
-	const float3* pNormals;
-	const float3* pTexcoords;
-	const uint* pIndices;
-	const oOBJ_GROUP* pGroups;
-	ouro::mesh::layout::value VertexLayout;
-
-	uint NumVertices;
-	uint NumIndices;
-	uint NumGroups;
-
-	oAABoxf Bound;
+	path obj_path;
+	path mtl_path;
+	const group* groups; // the size of this array is the same as mesh_info::num_ranges
+	mesh::info mesh_info;
+	source data;
 };
 
-interface oOBJ : oInterface
+struct init
 {
-	virtual void GetDesc(oOBJ_DESC* _pDesc) const threadsafe = 0;
-};
-
-struct oMTL_DESC
-{
-	oMTL_DESC()
-		: MTLPath(nullptr)
-		, pMaterials(nullptr)
-		, NumMaterials(0)
-	{}
-
-	const char* MTLPath;
-	const oOBJ_MATERIAL* pMaterials;
-	uint NumMaterials;
-};
-
-interface oMTL : oInterface
-{
-	virtual void GetDesc(oMTL_DESC* _pDesc) const threadsafe = 0;
-};
-
-struct oOBJ_INIT
-{
-	oOBJ_INIT()
-		: EstimatedNumVertices(100000)
-		, EstimatedNumIndices(100000)
-		, FlipHandedness(false)
-		, CounterClockwiseFaces(true)
-		, CalcNormalsOnError(true)
-		, CalcTexcoordsOnError(true)
+	init()
+		: est_num_vertices(100000)
+		, est_num_indices(100000)
+		, flip_handedness(false)
+		, counter_clockwide_faces(true)
+		, calc_normals_on_error(true)
+		, calc_texcoords_on_error(false)
 	{}
 
 	// Estimates are used to pre-allocate memory in order to minimize reallocs
-	uint EstimatedNumVertices;
-	uint EstimatedNumIndices;
-	bool FlipHandedness;
-	bool CounterClockwiseFaces;
-	bool CalcNormalsOnError; // either for no loaded normals or degenerates
-	bool CalcTexcoordsOnError; // uses LCSM if no texcoords in source
+	uint est_num_vertices;
+	uint est_num_indices;
+	bool flip_handedness;
+	bool counter_clockwide_faces;
+	bool calc_normals_on_error; // either for no loaded normals or degenerates
+	bool calc_texcoords_on_error; // uses LCSM if no texcoords in source
 };
 
-// oOBJ processing hashes faces for sharing of vertices, but this can result in 
-// many small allocations internally that then need to be freed, which can take 
-// a long time. As an optimization, client code can pass a hint in 
-// _InternalReserve to make internal memory management a lot faster.
-bool oOBJCreate(const char* _OBJPath, const char* _OBJString, const oOBJ_INIT& _Init, threadsafe oOBJ** _ppOBJ);
-bool oMTLCreate(const char* _MTLPath, const char* _MTLString, threadsafe oMTL** _ppMTL);
+class mesh
+{
+public:
+	// given the path and the loaded-to-memory string contents of the file, parse into 3D data
+	static std::shared_ptr<mesh> make(const init& _Init, const path& _OBJPath, const char* _OBJString);
 
-// Convenience function to collapse groups into an array of ranges. If this 
-// succeeds, the number of valid ranges will be Desc.NumRanges.
-bool oOBJCopyRanges(ouro::mesh::range* _pDestination, size_t _NumRanges, const oOBJ_DESC& _Desc);
-template<size_t size> bool oOBJCopyRanges(ouro::mesh::range (&_pDestination)[size], const oOBJ_DESC& _Desc) { return oOBJCopyRanges(_pDestination, size, _Desc); }
+	virtual info get_info() const = 0;
+};
+
+struct texture_info
+{
+	texture_info()
+		: boost(0.0f)
+		, brightness_gain(0.0f, 1.0f)
+		, origin_offset(0.0f, 0.0f, 0.0f)
+		, scale(1.0f, 1.0f, 1.0f)
+		, turbulance(0.0f, 0.0f, 0.0f)
+		, resolution(ouro::invalid, ouro::invalid)
+		, bump_multiplier(1.0f)
+		, type(texture_type::regular)
+		, imfchan('l')
+		, blendu(true)
+		, blendv(true)
+		, clamp(false)
+	{}
+
+	path path;
+	float boost;
+	float2 brightness_gain;
+	float3 origin_offset;
+	float3 scale;
+	float3 turbulance;
+	uint2 resolution;
+	float bump_multiplier;
+	texture_type::value type;
+	char imfchan;
+	bool blendu;
+	bool blendv;
+	bool clamp;
+};
+
+struct material_info
+{
+	material_info()
+		: ambient_color(black)
+		, emissive_color(black)
+		, diffuse_color(white_smoke)
+		, specular_color(white)
+		, transmission_color(black)
+		, specularity(0.04f)
+		, transparency(1.0f) // (1 means opaque 0 means transparent)
+		, refraction_index(1.0f)
+		, illum(illumination::color_on_ambient_off)
+	{}
+
+	rgbf ambient_color;
+	rgbf emissive_color;
+	rgbf diffuse_color;
+	rgbf specular_color;
+	rgbf transmission_color;
+	float specularity;
+	float transparency;
+	float refraction_index;
+	illumination::value illum;
+
+	path name;
+	texture_info ambient;
+	texture_info diffuse;
+	texture_info alpha;
+	texture_info specular;
+	texture_info transmission;
+	texture_info bump;
+};
+
+struct material_lib_info
+{
+	material_lib_info()
+		: mtl_path(nullptr)
+		, materials(nullptr)
+		, num_materials(0)
+	{}
+
+	path mtl_path;
+	const material_info* materials;
+	uint num_materials;
+};
+
+class material_lib
+{
+public:
+	static std::shared_ptr<material_lib> make(const path& _MTLPath, const char* _MTLString);
+
+	virtual material_lib_info get_info() const = 0;
+};
+
+		} // namespace obj
+	} // namespace mesh 
+} // namespace ouro
 
 #endif

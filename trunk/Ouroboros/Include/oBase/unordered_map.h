@@ -42,6 +42,9 @@
 
 namespace ouro {
 
+// returns the value as the hash (useful for when hashes are pre-computed)
+template<typename T> struct std_noop_hash : public std::unary_function<T, size_t> { size_t operator()(const T& v) const { return static_cast<size_t>(v); } };
+
 template
 	< typename _KeyType
 	, typename _MappedType

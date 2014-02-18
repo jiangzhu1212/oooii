@@ -22,34 +22,66 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oBasisTestOBJ_h
-#define oBasisTestOBJ_h
+// This header is designed to cross-compile in both C++ and HLSL. This defines
+// an axis-aligned bounding box.
+#ifndef oHLSL
+	#pragma once
+#endif
+#ifndef oCompute_bound_h
+#define oCompute_bound_h
 
-#include <oBasis/oOBJ.h>
+#include <oHLSL/oHLSLMacros.h>
+#include <oHLSL/oHLSLMath.h>
+#include <oHLSL/oHLSLTypes.h>
 
-struct oBasisTestOBJ
+#ifdef oHLSL
+
+#else
+
+namespace ouro {
+
+template<typename T>
+class bound
 {
-	// Provides a hand-constructed OBJ and its binary equivalents. Use this to 
-	// test OBJ handling code.
+	// hybrid aabox/sphere class
+	// the aabox is the minimal size to store all points and the sphere contains that box
+public:
+	typedef T element_type;
+	typedef TVEC3<element_type> vec3_type;
+	typedef TVEC4<element_type> vec4_type;
 
-	// Returns an oOBJ_DESC to verified binary data as if the file contents had
-	// been properly loaded.
-	virtual ouro::mesh::obj::info get_info() const threadsafe = 0;
+	bound() { clear(); }
+	bound(const TVEC3<T>& _Extents) { extents(_Extents); }
+	bound(const TVEC3<T>& _Min, const TVEC3<T>& _Max) { extents(_Min, _Max); }
 
-	// Returns the text of an OBJ file as if it had been fread into memory. ('\n'
-	// is the only newline here)
-	virtual const char* GetFileContents() const threadsafe = 0;
+	bool empty() const { return any(Extents < T(0)); }
+	void clear() { Sphere = TVEC4<T>(T(0)); extents(T(-1)); }
+
+	TVEC3<T> center() const { return Sphere.xyz(); }
+	void center(const TVEC3<T>& _Center) const { return Sphere = TVEC4<T>(_Position, sphere.w); }
+
+	T radius() const { return sphere.w; }
+	void radius(const T& _Radius) { Sphere.w = _Radius; }
+
+	TVEC4<T> sphere() const { return Sphere; }
+
+	TVEC3<T> extents() const { return Extents; }
+	void extents(const TVEC3<T>& _Extents) { Extents = _Extents; Sphere.w = length(get_max() - get_min()) / T(2); }
+	void extents(const TVEC3<T>& _Min, const TVEC3<T>& _Max) { Sphere.xyz() = (_Max - _Min) / T(2); extents(_Max - Sphere.xyz()); }
+
+	TVEC3<T> size() const { return Extents * 2.0f; }
+
+	TVEC3<T> get_min() const { return center() - Extents; }
+	TVEC3<T> get_max() const { return center() + Extents; }
+
+private:
+	TVEC4<T> Sphere;
+	TVEC3<T> Extents;
 };
 
-enum oBASIS_TEST_OBJ
-{
-	oBASIS_TEST_CUBE_OBJ,
+} // namespace ouro
 
-	oBASIS_TEST_OBJ_COUNT,
-};
+typedef ouro::bound<float> boundf; typedef ouro::bound<double> boundd;
 
-// Returns a pointer to a singleton instance. Do not delete the pointer.
-bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ);
-
+#endif
 #endif

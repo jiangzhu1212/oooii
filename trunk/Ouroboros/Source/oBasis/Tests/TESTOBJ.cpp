@@ -33,35 +33,33 @@
 
 using namespace ouro;
 
-static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const threadsafe oOBJ* _pOBJ)
+static bool TestCorrectness(const threadsafe oBasisTestOBJ* _pExpected, const std::shared_ptr<ouro::mesh::obj::mesh>& _OBJ)
 {
-	oOBJ_DESC Expected;
-	_pExpected->GetDesc(&Expected);
+	ouro::mesh::obj::info Expected = _pExpected->get_info();
 
-	oOBJ_DESC d;
-	_pOBJ->GetDesc(&d);
+	ouro::mesh::obj::info objInfo = _OBJ->get_info();
 
-	oTESTB(!strcmp(Expected.MTLPath, d.MTLPath), "MaterialLibraryPath \"%s\" (should be %s) does not match in obj file \"%s\"", d.MTLPath, Expected.MTLPath, d.OBJPath);
+	oTESTB(!strcmp(Expected.mtl_path, objInfo.mtl_path), "MaterialLibraryPath \"%s\" (should be %s) does not match in obj file \"%s\"", objInfo.mtl_path.c_str(), Expected.mtl_path.c_str(), objInfo.obj_path.c_str());
 
-	oTESTB(Expected.NumVertices == d.NumVertices, "Position counts do not match in obj file \"%s\"", d.OBJPath);
-	for (uint i = 0; i < d.NumVertices; i++)
+	oTESTB(Expected.mesh_info.num_vertices == objInfo.mesh_info.num_vertices, "Position counts do not match in obj file \"%s\"", objInfo.obj_path.c_str());
+	for (uint i = 0; i < objInfo.mesh_info.num_vertices; i++)
 	{
-		oTESTB(equal(Expected.pPositions[i], d.pPositions[i]), "Position %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(equal(Expected.pTexcoords[i], d.pTexcoords[i]), "Texcoord %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(equal(Expected.pNormals[i], d.pNormals[i]), "Normal %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(equal(Expected.data.positionsf[i], objInfo.data.positionsf[i]), "Position %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oTESTB(equal(Expected.data.normalsf[i], objInfo.data.normalsf[i]), "Normal %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oTESTB(equal(Expected.data.uvw0sf[i], objInfo.data.uvw0sf[i]), "Texcoord %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
 	}
 	
-	oTESTB(Expected.NumIndices == d.NumIndices, "Index counts do not match in obj file \"%s\"", d.OBJPath);
-	for (uint i = 0; i < d.NumIndices; i++)
-		oTESTB(equal(Expected.pIndices[i], d.pIndices[i]), "Index %u does not match in obj file \"%s\"", i, d.OBJPath);
+	oTESTB(Expected.mesh_info.num_indices == objInfo.mesh_info.num_indices, "Index counts do not match in obj file \"%s\"", objInfo.obj_path.c_str());
+	for (uint i = 0; i < objInfo.mesh_info.num_indices; i++)
+		oTESTB(equal(Expected.data.indicesi[i], objInfo.data.indicesi[i]), "Index %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
 
-	oTESTB(Expected.NumGroups == d.NumGroups, "Group counts do not match in obj file \"%s\"", d.OBJPath);
-	for (uint i = 0; i < d.NumGroups; i++)
+	oTESTB(Expected.mesh_info.num_ranges == objInfo.mesh_info.num_ranges, "Group counts do not match in obj file \"%s\"", objInfo.obj_path.c_str());
+	for (uint i = 0; i < objInfo.mesh_info.num_ranges; i++)
 	{
-		oTESTB(!strcmp(Expected.pGroups[i].GroupName.c_str(), d.pGroups[i].GroupName.c_str()), "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(!strcmp(Expected.pGroups[i].MaterialName.c_str(), d.pGroups[i].MaterialName.c_str()), "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(Expected.pGroups[i].Range.start_primitive == d.pGroups[i].Range.start_primitive, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
-		oTESTB(Expected.pGroups[i].Range.num_primitives == d.pGroups[i].Range.num_primitives, "Group %u does not match in obj file \"%s\"", i, d.OBJPath);
+		oTESTB(!strcmp(Expected.groups[i].group_name.c_str(), objInfo.groups[i].group_name.c_str()), "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oTESTB(!strcmp(Expected.groups[i].material_name.c_str(), objInfo.groups[i].material_name.c_str()), "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oTESTB(Expected.data.ranges[i].start_primitive == objInfo.data.ranges[i].start_primitive, "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oTESTB(Expected.data.ranges[i].num_primitives == objInfo.data.ranges[i].num_primitives, "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
 	}
 
 	oErrorSetLast(0);
@@ -73,7 +71,6 @@ static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char*
 	path path;
 	oTESTB(_Services.ResolvePath(path, _Path, true), "not found: %s", _Path);
 
-	intrusive_ptr<threadsafe oOBJ> obj;
 	char* pOBJBuffer = nullptr;
 	size_t Size = 0;
 	double start = ouro::timer::now();
@@ -82,10 +79,9 @@ static bool oBasisTest_oOBJLoad(const oBasisTestServices& _Services, const char*
 
 	finally FreeBuffer([&] { _Services.DeallocateLoadedBuffer(pOBJBuffer); });
 		
-	oOBJ_INIT init;
-	init.CalcNormalsOnError = false; // buddha doesn't have normals and is 300k faces... let's not sit in the test suite calculating such a large test case
-	if (!oOBJCreate(path, pOBJBuffer, init, &obj))
-		return false;
+	ouro::mesh::obj::init init;
+	init.calc_normals_on_error = false; // buddha doesn't have normals and is 300k faces... let's not sit in the test suite calculating such a large test case
+	std::shared_ptr<ouro::mesh::obj::mesh> obj = ouro::mesh::obj::mesh::make(init, path, pOBJBuffer);
 
 	if (_pLoadTime)
 		*_pLoadTime = ouro::timer::now() - start;
@@ -102,8 +98,7 @@ bool oBasisTest_oOBJ(const oBasisTestServices& _Services)
 		const oBasisTestOBJ* pCube = nullptr;
 		oBasisTestOBJGet(oBASIS_TEST_CUBE_OBJ, &pCube);
 
-		intrusive_ptr<threadsafe oOBJ> obj;
-		oTESTB(oOBJCreate("Correctness (cube) obj", pCube->GetFileContents(), oOBJ_INIT(), &obj), "Failed to parse correctness (cube) obj file");
+		std::shared_ptr<ouro::mesh::obj::mesh> obj = ouro::mesh::obj::mesh::make(ouro::mesh::obj::init(), "Correctness (cube) obj", pCube->GetFileContents());
 		oTESTB0(TestCorrectness(pCube, obj));
 	}
 

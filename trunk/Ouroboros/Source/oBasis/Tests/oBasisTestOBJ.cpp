@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oBasisTestOBJ.h"
+#include <oCompute/oAABox.h>
 
 struct oBasisTestOBJ_Cube : oBasisTestOBJ
 {
@@ -32,21 +33,33 @@ public:
 		InitGroups();
 	}
 
-	void GetDesc(oOBJ_DESC* _pDesc) const threadsafe override
+	ouro::mesh::obj::info get_info() const threadsafe override
 	{
-		_pDesc->OBJPath = "cube.obj";
-		_pDesc->MTLPath = "cube.mtl";
-		_pDesc->pPositions = sPositions;
-		_pDesc->pNormals = sNormals;
-		_pDesc->pTexcoords = sTexcoords;
-		_pDesc->pIndices = sIndices;
-		_pDesc->pGroups = sGroups;
-		_pDesc->VertexLayout = ouro::mesh::layout::pos_nrm_tan_uv0;
-		_pDesc->NumVertices = oCOUNTOF(sPositions);
-		_pDesc->NumIndices = oCOUNTOF(sIndices);
-		_pDesc->NumGroups = oCOUNTOF(sGroups);
+		ouro::mesh::obj::info i;
 
-		_pDesc->Bound = oAABoxf(oAABoxf::min_max, float3(-0.5), float3(0.5f));
+		i.obj_path = "cube.obj";
+		i.mtl_path = "cube.mtl";
+		i.groups = sGroups;
+
+		i.data.indicesi = sIndices;
+		i.data.ranges = sRanges;
+		i.data.indexi_pitch = sizeof(uint);
+		i.data.positionsf = sPositions;
+		i.data.positionf_pitch = sizeof(float3);
+		i.data.normalsf = sNormals;
+		i.data.normalf_pitch = sizeof(float3);
+		i.data.uvw0sf = sTexcoords;
+		i.data.uvw0f_pitch = sizeof(float3);
+		
+		i.mesh_info.face_type = ouro::mesh::face_type::unknown;
+		i.mesh_info.local_space_bound = ouro::aaboxf(ouro::aaboxf::min_max, float3(-0.5), float3(0.5f));
+		i.mesh_info.num_indices = oCOUNTOF(sIndices);
+		i.mesh_info.num_ranges = oCOUNTOF(sRanges);
+		i.mesh_info.num_vertices = oCOUNTOF(sPositions);
+		i.mesh_info.primitive_type = ouro::mesh::primitive_type::triangles;
+		i.mesh_info.vertex_layouts[0] = ouro::mesh::layout::pos_nrm_tan_uv0;
+		i.mesh_info.vertex_scale_shift = 0;
+		return i;
 	}
 
 	const char* GetFileContents() const threadsafe override
@@ -109,17 +122,20 @@ private:
 	static const float3 sNormals[24];
 	static const uint sIndices[36];
 	static const char* sGroupNames[6];
-	static oOBJ_GROUP sGroups[6];
+	static ouro::mesh::obj::group sGroups[6];
+	static ouro::mesh::range sRanges[6];
 	static bool InitGroupsDone;
 	static void InitGroups()
 	{
 		if (!InitGroupsDone)
 		{
-			oFORI(i, sGroups)
+			int i = 0;
+			for (auto& g : sGroups)
 			{
-				sGroups[i].GroupName = sGroupNames[i];
-				sGroups[i].MaterialName = "Body";
-				sGroups[i].Range = ouro::mesh::range(i*2, 2, i*4, (i+1)*4-1); // min/max is valid after vertex reduction
+				g.group_name = sGroupNames[i];
+				g.material_name = "Body";
+				sRanges[i] = ouro::mesh::range(i*2, 2, i*4, (i+1)*4-1); // min/max is valid after vertex reduction
+				i++;
 			}
 
 			InitGroupsDone = true;
@@ -232,7 +248,8 @@ const char* oBasisTestOBJ_Cube::sGroupNames[6] =
 };
 
 bool oBasisTestOBJ_Cube::InitGroupsDone = false;
-oOBJ_GROUP oBasisTestOBJ_Cube::sGroups[6];
+ouro::mesh::obj::group oBasisTestOBJ_Cube::sGroups[6];
+ouro::mesh::range oBasisTestOBJ_Cube::sRanges[6];
 
 bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ)
 {

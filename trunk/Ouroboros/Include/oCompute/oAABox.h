@@ -38,7 +38,6 @@
 
 #else
 
-// Wrap in a namespace so that NoStepInto can be used for VS2010+.
 namespace ouro {
 	template<typename T, typename TVec> struct aabox
 	{
@@ -65,6 +64,9 @@ namespace ouro {
 		TVec Min;
 		TVec Max;
 	};
+
+	typedef aabox<float, TVEC3<float>> aaboxf; typedef aabox<double, TVEC3<double>> aaboxd;
+
 } // namespace ouro
 
 typedef ouro::aabox<float, TVEC3<float>> oAABoxf; typedef ouro::aabox<double, TVEC3<double>> oAABoxd;

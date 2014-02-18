@@ -62,19 +62,17 @@ template<typename T> void calc_min_max_indices(const T* oRESTRICT _pIndices, uin
 	}
 }
 
-template<typename T> bound<T> calc_bound(const TVEC3<T>* _pVertices, uint _VertexStride, uint _NumVertices)
+template<typename T> aabox<T, TVEC3<T>> calc_bound(const TVEC3<T>* _pVertices, uint _VertexStride, uint _NumVertices)
 {
-	TVEC3<T> Min = TVEC3<T>(std::numeric_limits<T>::max());
-	TVEC3<T> Max = TVEC3<T>(std::numeric_limits<T>::lowest());
+	aabox<T, TVEC3<T>> b;
 	const TVEC3<T>* end = byte_add(_pVertices, _VertexStride * _NumVertices);
 	while (_pVertices < end)
 	{
-		Min = min(Min, *_pVertices);
-		Max = max(Max, *_pVertices);
+		oExtendBy(b, *_pVertices);
 		_pVertices = byte_add(_pVertices, _VertexStride);
 	}
 
-	return bound<T>(Min, Max);
+	return b;
 }
 
 template<typename T> void transform_points(const TMAT4<T>& _Matrix, TVEC3<T>* oRESTRICT _pDestination, uint _DestinationStride, const TVEC3<T>* oRESTRICT _pSource, uint _SourceStride, uint _NumPoints)
@@ -327,7 +325,7 @@ template<typename T, typename IndexT> void calc_vertex_tangents(TVEC4<T>* oRESTR
 }
 
 template<typename T, typename IndexT, typename UV0T>
-void calc_texcoords(const bound<T>& _Bound, const IndexT* _pIndices, uint _NumIndices, const TVEC3<T>* _pPositions, UV0T* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aabox<T, TVEC3<T>>& _Bound, const IndexT* _pIndices, uint _NumIndices, const TVEC3<T>* _pPositions, UV0T* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
 {
 	oTHROW(operation_not_supported, "calc_texcoords not implemented");
 }
