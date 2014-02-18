@@ -35,11 +35,11 @@ struct oBasisTestOBJ
 
 	// Returns an oOBJ_DESC to verified binary data as if the file contents had
 	// been properly loaded.
-	virtual ouro::mesh::obj::info get_info() const threadsafe = 0;
+	virtual ouro::mesh::obj::info get_info() const = 0;
 
 	// Returns the text of an OBJ file as if it had been fread into memory. ('\n'
 	// is the only newline here)
-	virtual const char* GetFileContents() const threadsafe = 0;
+	virtual const char* GetFileContents() const = 0;
 };
 
 enum oBASIS_TEST_OBJ
@@ -50,6 +50,6 @@ enum oBASIS_TEST_OBJ
 };
 
 // Returns a pointer to a singleton instance. Do not delete the pointer.
-bool oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ);
+void oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ);
 
 #endif
