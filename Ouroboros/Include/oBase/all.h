@@ -27,6 +27,7 @@
 #pragma once
 #ifndef oBase_all_h
 #define oBase_all_h
+#include <oBase/aabox.h>
 #include <oBase/algorithm.h>
 #include <oBase/assert.h>
 #include <oBase/atof.h>

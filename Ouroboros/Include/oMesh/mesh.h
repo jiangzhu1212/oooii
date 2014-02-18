@@ -31,7 +31,7 @@
 #include <oBase/dec3n.h>
 #include <oBase/macros.h>
 #include <oBase/types.h>
-#include <oCompute/oAABox.h>
+#include <oBase/aabox.h>
 #include <array>
 
 namespace ouro {

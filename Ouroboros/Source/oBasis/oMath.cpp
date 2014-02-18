@@ -120,7 +120,7 @@ template<typename T> static oCONTAINMENT oContainsT(const TVEC4<T>* _pPlanes, si
 	int totalInFront = 0;
 
 	// get the corners of the box into the vCorner array
-	oDecompose(_Box, vCorner);
+	ouro::decompose(_Box, vCorner);
 
 	// test all 8 corners against the 6 sides 
 	// if all points are behind 1 specific plane, we are out
@@ -157,42 +157,6 @@ template<typename T> static oCONTAINMENT oContainsT(const TVEC4<T>* _pPlanes, si
 		return oWHOLLY_CONTAINED;
 
 	return oPARTIALLY_CONTAINED;
-}
-
-
-oCONTAINMENT oContains(const oRECT& _Rect0, const oRECT& _Rect1)
-{
-	if (_Rect0.Min.x > _Rect1.Max.x
-		|| _Rect0.Max.x < _Rect1.Min.x
-		|| _Rect0.Min.y > _Rect1.Max.y
-		|| _Rect0.Max.y < _Rect1.Min.y)
-		return oNOT_CONTAINED;
-
-	if (all(_Rect1.Min >= _Rect0.Min) && all(_Rect1.Max <= _Rect0.Max))
-		return oWHOLLY_CONTAINED;
-
-	return oPARTIALLY_CONTAINED;
-}
-
-oCONTAINMENT oContains(const oAABoxf& _Box0, const oAABoxf& _Box1)
-{
-	if (any(_Box0.Min > _Box1.Max) || any(_Box0.Max < _Box1.Min))
-		return oNOT_CONTAINED;
-
-	if (all(_Box1.Min >= _Box0.Min) && all(_Box1.Max <= _Box0.Max))
-		return oWHOLLY_CONTAINED;
-
-	return oPARTIALLY_CONTAINED;
-}
-
-oCONTAINMENT oContains(float3 _Point, const oAABoxf& _Box)
-{
-	float3 distance = _Point - _Box.center();
-	bool bInX = abs(distance.x) < _Box.size().x / 2.f;
-	bool bInY = abs(distance.y) < _Box.size().y / 2.f;
-	bool bInZ = abs(distance.z) < _Box.size().z / 2.f;
-
-	return (bInX && bInY && bInZ) ? oWHOLLY_CONTAINED : oNOT_CONTAINED;
 }
 
 oCONTAINMENT oContains(const oFrustumf& _Frustum, const oAABoxf& _Box)
@@ -298,9 +262,7 @@ int oContains(const oSpheref& _Sphere, const oAABoxf& _Box)
 	return oContainsT(_Sphere, _Box);
 }
 
-
-
-unsigned int SplitRect( const oRECT& _SrcRect, const unsigned int _MaxNumSplits, const float* _pOrderedSplitRatio, const unsigned int _XMultiple, const unsigned int _YMultiple, oRECT* _pSplitResults )
+unsigned int SplitRect( const ouro::rect& _SrcRect, const unsigned int _MaxNumSplits, const float* _pOrderedSplitRatio, const unsigned int _XMultiple, const unsigned int _YMultiple, ouro::rect* _pSplitResults )
 {
 	typedef int T;
 	typedef TVEC2<T> T_VEC;
@@ -321,7 +283,7 @@ unsigned int SplitRect( const oRECT& _SrcRect, const unsigned int _MaxNumSplits,
 		T HorizAmount		= SplitHorizontally ? SplitAmount : Dimensions.x;
 		T VerticalAmount	= SplitHorizontally ? Dimensions.y : SplitAmount;
 
-		oRECT& rect = _pSplitResults[i];
+		ouro::rect& rect = _pSplitResults[i];
 		rect.Min = T_VEC(HorizSplit, VeritcalSplit);
 		rect.Max = T_VEC(HorizSplit + HorizAmount, VeritcalSplit + VerticalAmount);
 		HorizSplit += SplitHorizontally ? ( HorizAmount ) : 0;

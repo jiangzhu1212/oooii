@@ -22,29 +22,40 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
-#ifndef oHLSL
-	#pragma once
-#endif
-#ifndef oCompute_h
-#define oCompute_h
-#include <oCompute/arcball.h>
-#include <oCompute/eye.h>
-#include <oCompute/linear_algebra.h>
-#include <oCompute/oComputeConstants.h>
-#include <oCompute/oComputeFilter.h>
-#include <oCompute/oComputeGBuffer.h>
-#include <oCompute/oComputePhong.h>
-#include <oCompute/oComputeMorton.h>
-#include <oCompute/oComputeProcedural.h>
-#include <oCompute/oQuaternion.h>
-#include <oCompute/oComputeRaycast.h>
-#include <oCompute/oComputeSimplex.h>
-#include <oCompute/oComputeUtil.h>
-// Types
-#include <oCompute/oFrustum.h>
-#include <oCompute/oPlane.h>
-#include <oCompute/oQuaternion.h>
-#include <oCompute/rgb.h>
-#endif
+#include <oBase/aabox.h>
+#include <oBase/stringize.h>
+
+namespace ouro {
+
+bool from_string(aaboxf* _pValue, const char* _StrSource)
+{
+	return from_string_float_array((float*)_pValue, 6, _StrSource);
+}
+
+bool from_string(rect* _pValue, const char* _StrSource)
+{
+	if (!_pValue) return false;
+	int4 temp;
+	if (!from_string(&temp, _StrSource))
+		return false;
+	_pValue->Min = int2(temp.x, temp.y);
+	_pValue->Max = int2(temp.z, temp.w);
+	return true;
+}
+
+bool from_string(rectf* _pValue, const char* _StrSource)
+{
+	if (!_pValue) return false;
+	float4 temp;
+	if (!from_string(&temp, _StrSource))
+		return false;
+	_pValue->Min = float2(temp.x, temp.y);
+	_pValue->Max = float2(temp.z, temp.w);
+	return true;
+}
+
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const aaboxf& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f %f %f", _Value.Min.x, _Value.Min.y, _Value.Min.z, _Value.Max.x, _Value.Max.y, _Value.Max.z) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rect& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u %u %u", _Value.Min.x, _Value.Min.y, _Value.Max.x, _Value.Max.y) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rectf& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.Min.x, _Value.Min.y, _Value.Max.x, _Value.Max.y) ? _StrDestination : nullptr; }
+
+} // namespace ouro

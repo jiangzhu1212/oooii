@@ -60,6 +60,9 @@
     <ClCompile Include="tests\TESTparallel_for.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TESTmath.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\tests\oBaseTests.h">

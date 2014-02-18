@@ -33,6 +33,7 @@
 #include <oBase/threadpool.h>
 #include <oBase/throw.h>
 #include <oCompute/linear_algebra.h>
+#include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <vector>
 
@@ -68,7 +69,7 @@ template<typename T> aabox<T, TVEC3<T>> calc_bound(const TVEC3<T>* _pVertices, u
 	const TVEC3<T>* end = byte_add(_pVertices, _VertexStride * _NumVertices);
 	while (_pVertices < end)
 	{
-		oExtendBy(b, *_pVertices);
+		extend_by(b, *_pVertices);
 		_pVertices = byte_add(_pVertices, _VertexStride);
 	}
 

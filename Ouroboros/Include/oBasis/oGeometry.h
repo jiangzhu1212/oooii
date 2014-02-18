@@ -30,7 +30,7 @@
 
 #include <oBasis/oGPUConcepts.h>
 #include <oBasis/oInterface.h>
-#include <oCompute/oAABox.h>
+#include <oBase/aabox.h>
 #include <oCompute/oFrustum.h>
 #include <oCompute/oSphere.h>
 
@@ -256,7 +256,7 @@ interface oGeometryFactory : oInterface
 		// So we need to adjust pSourceRects by SourceImageSpace.GetMin() and then
 		// map UVs appropriately by using SourceImageSpace.GetDimensions(), which 
 		// represents the actual range [0,1] in texture coordinates.
-		oRECT SourceImageSpace;
+		ouro::rect SourceImageSpace;
 
 		// Dimensions of total space in which pDestinationRects map (usually the 
 		// size of the client area of a window or the total screen dimensions).
@@ -264,11 +264,11 @@ interface oGeometryFactory : oInterface
 
 		// An array of source rectangles used to set up texcoords for each quad
 		// subcomponent of the geometry produced by CreateMosaic().
-		const oRECT* pSourceRects;
+		const ouro::rect* pSourceRects;
 
 		// An array of destination rectangles used t oset up positions for each quad
 		// subcomponents of the geometry produced by CreateMosaic()
-		const oRECT* pDestinationRects;
+		const ouro::rect* pDestinationRects;
 
 		// The number of rectangles in both pSourceRects and pDestinationRects. 
 		// Because sources map 1:1 to destinations, the sizes of the arrays must be 

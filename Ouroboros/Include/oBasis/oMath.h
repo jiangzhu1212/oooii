@@ -38,7 +38,7 @@
 #include <oHLSL/oHLSLMath.h>
 #include <oCompute/oComputeConstants.h>
 #include <oBase/types.h>
-#include <oCompute/oAABox.h>
+#include <oBase/aabox.h>
 #include <oCompute/oFrustum.h>
 #include <oCompute/oPlane.h>
 #include <oCompute/oQuaternion.h>
@@ -119,8 +119,6 @@ enum oCONTAINMENT
 template<typename T> oCONTAINMENT oContains(const ouro::frustum<T>& _Frustum, const ouro::aabox<T,TVEC3<T>>& _Box);
 template<typename T> oCONTAINMENT oContains(const ouro::frustum<T>& _Frustum, const TVEC4<T>& _Sphere);
 template<typename T> oCONTAINMENT oContains(const ouro::sphere<T>& _Sphere, const ouro::aabox<T,TVEC3<T>>& _Box);
-template<typename T, typename TVec> oCONTAINMENT oContains(const ouro::aabox<T, TVec>& _Box0, const ouro::aabox<T, TVec>& _Box1);
-template<typename T> oCONTAINMENT oContains(float3 _Point, const ouro::aabox<T,TVEC3<T>>& _Box);
 
 template<typename T> bool oIntersects(const ouro::frustum<T>& _Frustum, const ouro::aabox<T,TVEC3<T>>& _Box) { return oNOT_CONTAINED != oContains(_Frustum, _Box); }
 template<typename T> bool oIntersects(const ouro::frustum<T>& _Frustum, const TVEC4<T>& _Sphere) 
@@ -133,14 +131,14 @@ template<typename T, typename TVec> bool oIntersects(const ouro::aabox<T, TVec>&
 // _____________________________________________________________________________
 // Miscellaneous
 
-template<typename T> oRECT oToRect(const T& _Rect);
+template<typename T> ouro::rect oToRect(const T& _Rect);
 
 // Takes a rectangle and breaks it into _MaxNumSplits rectangles
 // where each rectangle's area is a % of the source rectangle approximated 
 // by its value in _pOrderedSplitRatio.  The sum of the values in _pOrderedSplitRatio
 // must be 1.0f and decreasing in size.  SplitRect returns the number of splits
 // it could do (which may be less than _MaxNumSplits when the ratios are too small)
-unsigned int SplitRect(const oRECT& _SrcRect, const unsigned int _MaxNumSplits, const float* _pOrderedSplitRatio, const unsigned int _XMultiple, const unsigned int _YMultiple, oRECT* _pSplitResults);
+unsigned int SplitRect(const ouro::rect& _SrcRect, const unsigned int _MaxNumSplits, const float* _pOrderedSplitRatio, const unsigned int _XMultiple, const unsigned int _YMultiple, ouro::rect* _pSplitResults);
 
 // _____________________________________________________________________________
 // Basic Octree-related calculations. The depth index of the root is 0, there 

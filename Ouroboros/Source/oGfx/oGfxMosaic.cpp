@@ -36,7 +36,7 @@ struct oGfxMosaicImpl : oGfxMosaic
 
 	oGfxMosaicImpl(oGPUDevice* _pDevice, const pipeline_info& _pPipelineDesc, bool* _pSuccess);
 
-	bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays) override;
+	bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const ouro::rect* _AdditionalSourceImageSpaces, const ouro::rect* const* _pAdditionalSourceRectArrays) override;
 	void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures) override;
 
 	void SetBlendState(blend_state::value _BlendState) override { BlendState = _BlendState; }
@@ -72,7 +72,7 @@ intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(oGPUDevice* _pDevice, const pipeline_
 	return success ? m : nullptr;
 }
 
-bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays)
+bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const ouro::rect* _AdditionalSourceImageSpaces, const ouro::rect* const* _pAdditionalSourceRectArrays)
 {
 	intrusive_ptr<oGeometryFactory> GeoFactory;
 	if (!oGeometryFactoryCreate(&GeoFactory))

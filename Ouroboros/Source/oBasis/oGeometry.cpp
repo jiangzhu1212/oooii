@@ -439,7 +439,7 @@ void oGeometry_Impl::Transform(const float4x4& _Matrix, unsigned int _BaseVertex
 	for (size_t i = _BaseVertexIndex; i < Positions.size(); i++)
 	{
 		Positions[i] = _Matrix * Positions[i];
-		oExtendBy(Bounds, Positions[i]);
+		ouro::extend_by(Bounds, Positions[i]);
 	}
 
 	float3x3 r = (float3x3)_Matrix;
@@ -1912,8 +1912,8 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 	static const oGeometry::LAYOUT sSupportedLayout(true, false, false, true, false, false);
 	GEO_CONSTRUCT("CreateMosaic", sSupportedLayout, _Layout, _Desc.FaceType);
 	
-	const oRECT kNullDestRect(oRECT::pos_size, int2(0,0), _Desc.DestinationSize);
-	const oRECT kNullSourceRect(oRECT::pos_size, int2(0,0), _Desc.SourceSize);
+	const ouro::rect kNullDestRect(ouro::rect::pos_size, int2(0,0), _Desc.DestinationSize);
+	const ouro::rect kNullSourceRect(ouro::rect::pos_size, int2(0,0), _Desc.SourceSize);
 
 	MOSAIC_DESC LocalDesc = _Desc;
 	if (!LocalDesc.pDestinationRects)

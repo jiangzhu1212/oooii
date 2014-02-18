@@ -33,6 +33,7 @@ namespace ouro {
 
 	namespace tests {
 
+		void TESTaaboxf();
 		void TESTatof(test_services& _Services);
 		void TESTcompression(test_services& _Services);
 		void TESTconcurrent_index_allocator();
@@ -40,6 +41,7 @@ namespace ouro {
 		void TESTcountdown_latch();
 		void TESTcsv();
 		void TESTdate(test_services& _Services);
+		void TESTequal();
 		void TESTfourcc();
 		void TESTfuture(test_services& _Services);
 		void TESTindex_allocator();

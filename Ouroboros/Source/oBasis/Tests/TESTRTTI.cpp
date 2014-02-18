@@ -27,7 +27,7 @@
 #include <oBasis/oRTTI.h>
 #include "oBasisTestCommon.h"
 #include <oCompute/linear_algebra.h>
-#include <oCompute/oAABox.h>
+#include <oBase/aabox.h>
 #include <oCompute/oFrustum.h>
 #include <oCompute/oSphere.h>
 

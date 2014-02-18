@@ -42,9 +42,6 @@
     <ClInclude Include="..\..\Include\oCompute\all.h">
       <Filter>oCompute</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oCompute\oAABox.h">
-      <Filter>oCompute\Types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oCompute\oPlane.h">
       <Filter>oCompute\Types</Filter>
     </ClInclude>

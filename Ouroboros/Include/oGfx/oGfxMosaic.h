@@ -42,7 +42,7 @@ interface oGfxMosaic : oInterface
 	// requirements of video wall presentation where the logical screen might be 
 	// made up of several physical screen.
 
-	virtual bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const oRECT* _AdditionalSourceImageSpaces, const oRECT* const* _pAdditionalSourceRectArrays) = 0;
+	virtual bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const ouro::rect* _AdditionalSourceImageSpaces, const ouro::rect* const* _pAdditionalSourceRectArrays) = 0;
 	inline bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc) { return Rebuild(_Desc, 0, nullptr, nullptr); }
 	virtual void SetBlendState(ouro::gpu::blend_state::value _BlendState) = 0; // will be ouro::gpu::blend_state::opaque by default
 

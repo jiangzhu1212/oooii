@@ -25,7 +25,7 @@
 #include <oBasis/oRTTI.h>
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/rgb.h>
-#include <oCompute/oAABox.h>
+#include <oBase/aabox.h>
 #include <oCompute/oFrustum.h>
 #include <oCompute/oPlane.h>
 #include <oCompute/oQuaternion.h>

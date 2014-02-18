@@ -217,6 +217,9 @@
     <ClCompile Include="future.cpp">
       <Filter>Source\concurrency</Filter>
     </ClCompile>
+    <ClCompile Include="aabox.cpp">
+      <Filter>Source\geometry</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -459,6 +462,9 @@
     <ClInclude Include="..\..\Include\oBase\colors.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\aabox.h">
+      <Filter>oBase\geometry</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -538,6 +544,12 @@
     </Filter>
     <Filter Include="oBase\scc">
       <UniqueIdentifier>{dedc6645-18e5-4b85-b45b-e6d9aafc9ace}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="oBase\geometry">
+      <UniqueIdentifier>{ca7fb34d-b94e-4176-afcf-c4cdb451ac4f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\geometry">
+      <UniqueIdentifier>{13e44b8d-05da-492b-abf5-482a968e929c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
