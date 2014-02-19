@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="Tests\oBasisTestOBJ.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\oBasisTestStruct.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -23,9 +20,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests\TESTMath.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTOBJ.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests\TESTOSC.cpp">
@@ -55,9 +49,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Tests\oBasisTestCommon.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="Tests\oBasisTestOBJ.h">
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="Tests\oBasisTestStruct.h">

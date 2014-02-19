@@ -22,49 +22,15 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A very simple mesh container that mainly provides very simple creation
-// and drawing, mostly used for unit testing and samples.
-#pragma once
-#ifndef oGPU_util_mesh_h
-#define oGPU_util_mesh_h
+#include <oMesh/tests/oMeshTests.h>
+#include "oTestIntegration.h"
 
-#include <oGPU/oGPU.h>
+using namespace ouro::tests;
 
-#include <oBasis/oGeometry.h>
-#include <oMesh/obj.h>
+#define oTEST_REGISTER_MESH_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oMesh_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_MESH_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oMesh_, _Name), oCONCAT(TEST, _Name))
 
-namespace ouro {
-	namespace gpu {
+#define oTEST_REGISTER_MESH_TEST_BUGGED0(_Name) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oMesh_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_MESH_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oMesh_, _Name), oCONCAT(TEST, _Name))
 
-class util_mesh
-{
-public:
-	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name, const mesh::info& _Info);
-
-	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name
-		, const mesh::layout_array& _VertexLayouts, const oGeometry* _pGeometry);
-
-	virtual mesh::info get_info() const = 0;
-	virtual const oGPUBuffer* index_buffer() const = 0;
-	virtual oGPUBuffer* index_buffer() = 0;
-	virtual const oGPUBuffer* vertex_buffer(uint _Index) const = 0;
-	virtual oGPUBuffer* vertex_buffer(uint _Index) = 0;
-	inline const oGPUBuffer* vertex_buffer(const mesh::usage::value& _Usage) const { return vertex_buffer((uint)_Usage); }
-	inline oGPUBuffer* vertex_buffer(const mesh::usage::value& _Usage) { return vertex_buffer((uint)_Usage); }
-	virtual void vertex_buffers(const oGPUBuffer* _Buffers[mesh::usage::count]) = 0;
-	virtual void draw(oGPUCommandList* _pCommandList) = 0;
-};
-
-// Creates a very simple front-facing triangle that can be rendered with all-
-// identify world, view, projection matrices. This is useful for very simple 
-// tests and first bring-up.
-std::shared_ptr<util_mesh> make_first_triangle(oGPUDevice* _pDevice);
-
-// Creates a very simple unit cube. This is useful for bringing up world, view,
-// projection transforms quickly.
-std::shared_ptr<util_mesh> make_first_cube(oGPUDevice* _pDevice);
-
-	} // namespace gpu
-} // namespace ouro
-
-#endif
+oTEST_REGISTER_MESH_TEST(obj);

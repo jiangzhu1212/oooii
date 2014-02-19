@@ -19,25 +19,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="mesh.cpp" />
-    <ClCompile Include="obj.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
+    <ClCompile Include="tests\obj_test.cpp" />
+    <ClCompile Include="tests\TESTobj.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oMesh\all.h" />
-    <ClInclude Include="..\..\Include\oMesh\mesh.h" />
-    <ClInclude Include="..\..\Include\oMesh\obj.h" />
-    <ClInclude Include="mesh_template.h" />
-    <ClInclude Include="pch.h" />
+    <ClInclude Include="..\..\Include\oMesh\tests\oMeshTests.h" />
+    <ClInclude Include="tests\obj_test.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{8A76FF30-F5E2-4127-B86E-C5AE324961FB}</ProjectGuid>
-    <RootNamespace>oMesh</RootNamespace>
+    <ProjectGuid>{4672A7EF-E55C-4746-8CCD-97ABF0713D83}</ProjectGuid>
+    <RootNamespace>oMeshTests</RootNamespace>
     <SccProjectName>
     </SccProjectName>
     <SccLocalPath>
@@ -63,13 +54,11 @@
     <PlatformToolset>v110</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
     <Import Project="..\Build\msvs\Properties\Release32.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
@@ -77,7 +66,6 @@
     <Import Project="..\Build\msvs\Properties\Debug32.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
@@ -85,7 +73,6 @@
     <Import Project="..\Build\msvs\Properties\Release64.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
@@ -93,7 +80,6 @@
     <Import Project="..\Build\msvs\Properties\Debug64.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -142,5 +128,4 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets" />
 </Project>

@@ -23,33 +23,37 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oBasisTestOBJ_h
-#define oBasisTestOBJ_h
+#ifndef oMeshTests_obj_test_h
+#define oMeshTests_obj_test_h
 
-#include <oBasis/oOBJ.h>
+#include <oMesh/obj.h>
 
-struct oBasisTestOBJ
+namespace ouro {
+	namespace tests {
+
+struct obj_test
 {
+	enum which
+	{
+		cube,
+
+		count, 
+	};
+
+	static std::shared_ptr<obj_test> make(which _Which);
+
 	// Provides a hand-constructed OBJ and its binary equivalents. Use this to 
 	// test OBJ handling code.
 
-	// Returns an oOBJ_DESC to verified binary data as if the file contents had
-	// been properly loaded.
-	virtual ouro::mesh::obj::info get_info() const = 0;
+	// returns info for the mesh
+	virtual mesh::obj::info get_info() const = 0;
 
-	// Returns the text of an OBJ file as if it had been fread into memory. ('\n'
+	// returns the text of an OBJ file as if it had been fread into memory. ('\n'
 	// is the only newline here)
-	virtual const char* GetFileContents() const = 0;
+	virtual const char* file_contents() const = 0;
 };
 
-enum oBASIS_TEST_OBJ
-{
-	oBASIS_TEST_CUBE_OBJ,
-
-	oBASIS_TEST_OBJ_COUNT,
-};
-
-// Returns a pointer to a singleton instance. Do not delete the pointer.
-void oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ);
+	} // tests
+} // namespace ouro
 
 #endif

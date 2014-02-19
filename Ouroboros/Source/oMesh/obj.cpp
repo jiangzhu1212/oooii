@@ -22,18 +22,17 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oOBJ.h>
+#include <oMesh/obj.h>
+#include <oMesh/mesh.h>
 #include <oBase/algorithm.h>
 #include <oBase/atof.h>
 #include <oBase/finally.h>
 #include <oBase/fixed_string.h>
 #include <oBase/assert.h>
 #include <oBase/macros.h>
+#include <oBase/std_linear_allocator.h>
 #include <oBase/timer.h>
 #include <oBase/unordered_map.h>
-#include <oMesh/mesh.h>
-
-#include <oBasis/oStdLinearAllocator.h>
 
 oDEFINE_WHITESPACE_PARSING();
 

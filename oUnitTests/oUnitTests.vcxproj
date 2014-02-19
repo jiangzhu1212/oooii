@@ -190,6 +190,7 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGUI.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMesh.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp" />
     <ClCompile Include="oooii_icon.cpp" />
@@ -260,6 +261,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oMesh\oMesh.vcxproj">
       <Project>{8a76ff30-f5e2-4127-b86e-c5ae324961fb}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oMesh\oMeshTests.vcxproj">
+      <Project>{4672a7ef-e55c-4746-8ccd-97abf0713d83}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oPlatform\oPlatform.vcxproj">
       <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>

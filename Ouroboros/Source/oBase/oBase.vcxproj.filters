@@ -489,6 +489,9 @@
     <ClInclude Include="..\..\Include\oBase\rgb.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\std_linear_allocator.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

@@ -15,6 +15,9 @@
     <ClCompile Include="mesh.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="obj.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -28,6 +31,9 @@
     </ClInclude>
     <ClInclude Include="mesh_template.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMesh\obj.h">
+      <Filter>oMesh</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
