@@ -26,9 +26,9 @@
 #include <oBase/algorithm.h>
 #include <oBase/invalid.h>
 #include <oMesh/mesh.h>
+#include <oMesh/obj.h>
 #include <oBasis/oError.h>
 #include <oBasis/oMath.h>
-#include <oBasis/oOBJ.h>
 #include <oBasis/oRefCount.h>
 
 using namespace ouro;

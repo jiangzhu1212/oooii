@@ -57,7 +57,6 @@
     <ClInclude Include="..\..\Include\oBasis\oManipulator.h" />
     <ClInclude Include="..\..\Include\oBasis\oMath.h" />
     <ClInclude Include="..\..\Include\oBasis\oMIME.h" />
-    <ClInclude Include="..\..\Include\oBasis\oOBJ.h" />
     <ClInclude Include="..\..\Include\oBasis\oOSC.h" />
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h" />
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h" />
@@ -71,7 +70,6 @@
     <ClInclude Include="..\..\Include\oBasis\oRTTIStructs.h" />
     <ClInclude Include="..\..\Include\oBasis\oRTTITypedefs.h" />
     <ClInclude Include="..\..\Include\oBasis\oScopedPartialTimeout.h" />
-    <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h" />
     <ClInclude Include="..\..\Include\oBasis\oStdStringSupport.h" />
     <ClInclude Include="..\..\Include\oBasis\oStrTok.h" />
     <ClInclude Include="..\..\Include\oBasis\oURI.h" />
@@ -108,7 +106,6 @@
     <ClCompile Include="oManipulatorTranslation.cpp" />
     <ClCompile Include="oMath.cpp" />
     <ClCompile Include="oMIME.cpp" />
-    <ClCompile Include="oOBJ.cpp" />
     <ClCompile Include="oOSC.cpp" />
     <ClCompile Include="oRTTI.cpp" />
     <ClCompile Include="oScopedPartialTimeout.cpp" />

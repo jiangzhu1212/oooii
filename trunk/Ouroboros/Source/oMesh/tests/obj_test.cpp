@@ -22,20 +22,23 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oBasisTestOBJ.h"
+#include "obj_test.h"
 #include <oBase/aabox.h>
 
-struct oBasisTestOBJ_Cube : oBasisTestOBJ
+namespace ouro {
+	namespace tests {
+
+class obj_test_cube : public obj_test
 {
 public:
-	oBasisTestOBJ_Cube()
+	obj_test_cube()
 	{
-		InitGroups();
+		init_groups();
 	}
 
-	ouro::mesh::obj::info get_info() const override
+	mesh::obj::info get_info() const override
 	{
-		ouro::mesh::obj::info i;
+		mesh::obj::info i;
 
 		i.obj_path = "cube.obj";
 		i.mtl_path = "cube.mtl";
@@ -51,18 +54,18 @@ public:
 		i.data.uvw0sf = sTexcoords;
 		i.data.uvw0f_pitch = sizeof(float3);
 		
-		i.mesh_info.face_type = ouro::mesh::face_type::unknown;
+		i.mesh_info.face_type = mesh::face_type::unknown;
 		i.mesh_info.local_space_bound = aaboxf(aaboxf::min_max, float3(-0.5), float3(0.5f));
 		i.mesh_info.num_indices = oCOUNTOF(sIndices);
 		i.mesh_info.num_ranges = oCOUNTOF(sRanges);
 		i.mesh_info.num_vertices = oCOUNTOF(sPositions);
-		i.mesh_info.primitive_type = ouro::mesh::primitive_type::triangles;
-		i.mesh_info.vertex_layouts[0] = ouro::mesh::layout::pos_nrm_tan_uv0;
+		i.mesh_info.primitive_type = mesh::primitive_type::triangles;
+		i.mesh_info.vertex_layouts[0] = mesh::layout::pos_nrm_tan_uv0;
 		i.mesh_info.vertex_scale_shift = 0;
 		return i;
 	}
 
-	const char* GetFileContents() const override
+	const char* file_contents() const override
 	{
 		return
 			"# Simple Unit Cube\n" \
@@ -122,10 +125,10 @@ private:
 	static const float3 sNormals[24];
 	static const uint sIndices[36];
 	static const char* sGroupNames[6];
-	static ouro::mesh::obj::group sGroups[6];
-	static ouro::mesh::range sRanges[6];
+	static mesh::obj::group sGroups[6];
+	static mesh::range sRanges[6];
 	static bool InitGroupsDone;
-	static void InitGroups()
+	static void init_groups()
 	{
 		if (!InitGroupsDone)
 		{
@@ -134,7 +137,7 @@ private:
 			{
 				g.group_name = sGroupNames[i];
 				g.material_name = "Body";
-				sRanges[i] = ouro::mesh::range(i*2, 2, i*4, (i+1)*4-1); // min/max is valid after vertex reduction
+				sRanges[i] = mesh::range(i*2, 2, i*4, (i+1)*4-1); // min/max is valid after vertex reduction
 				i++;
 			}
 
@@ -143,7 +146,7 @@ private:
 	}
 };
 
-const float3 oBasisTestOBJ_Cube::sPositions[24] = 
+const float3 obj_test_cube::sPositions[24] = 
 {
 	float3(-0.500000f, -0.500000f, 0.500000f),
 	float3(-0.500000f, 0.500000f, -0.500000f),
@@ -171,7 +174,7 @@ const float3 oBasisTestOBJ_Cube::sPositions[24] =
 	float3(0.500000f, 0.500000f, 0.500000f),
 };
 
-const float3 oBasisTestOBJ_Cube::sTexcoords[24] = 
+const float3 obj_test_cube::sTexcoords[24] = 
 {
 	float3(0.000000f, 1.000000f, 0.000000f),
 	float3(1.000000f, 1.000000f, 0.000000f),
@@ -199,7 +202,7 @@ const float3 oBasisTestOBJ_Cube::sTexcoords[24] =
 	float3(0.000000f, 1.000000f, 0.000000f),
 };
 
-const float3 oBasisTestOBJ_Cube::sNormals[24] = 
+const float3 obj_test_cube::sNormals[24] = 
 {
 	float3(-1.000000f, 0.000000f, 0.000000f),
 	float3(-1.000000f, 0.000000f, 0.000000f),
@@ -227,7 +230,7 @@ const float3 oBasisTestOBJ_Cube::sNormals[24] =
 	float3(0.000000f, 0.000000f, 1.000000f),
 };
 
-const uint oBasisTestOBJ_Cube::sIndices[36] =
+const uint obj_test_cube::sIndices[36] =
 {
 	0,2,1,3,0,1,
 	4,6,5,7,6,4,
@@ -237,7 +240,7 @@ const uint oBasisTestOBJ_Cube::sIndices[36] =
 	20,22,21,22,23,21,
 };
 
-const char* oBasisTestOBJ_Cube::sGroupNames[6] = 
+const char* obj_test_cube::sGroupNames[6] = 
 {
 	"Left",
 	"Right",
@@ -247,20 +250,21 @@ const char* oBasisTestOBJ_Cube::sGroupNames[6] =
 	"Far"
 };
 
-bool oBasisTestOBJ_Cube::InitGroupsDone = false;
-ouro::mesh::obj::group oBasisTestOBJ_Cube::sGroups[6];
-ouro::mesh::range oBasisTestOBJ_Cube::sRanges[6];
+bool obj_test_cube::InitGroupsDone = false;
+mesh::obj::group obj_test_cube::sGroups[6];
+mesh::range obj_test_cube::sRanges[6];
 
-void oBasisTestOBJGet(oBASIS_TEST_OBJ _OBJ, const oBasisTestOBJ** _ppTestOBJ)
+std::shared_ptr<obj_test> obj_test::make(which _Which)
 {
-	static oBasisTestOBJ_Cube c;
-
-	switch (_OBJ)
+	switch (_Which)
 	{
-		case oBASIS_TEST_CUBE_OBJ:
-			*_ppTestOBJ = &c;
-			break;
-		default:
-			oTHROW(no_such_file_or_directory, "the specified test obj was not found");
+		case obj_test::cube: return std::make_shared<obj_test_cube>();
+		default: break;
 	}
+
+	oTHROW_INVARG("invalid obj_test");
 }
+
+	} // tests
+} // namespace ouro
+

@@ -75,6 +75,7 @@
 #include <oBase/scc.h>
 #include <oBase/sphere.h>
 #include <oBase/snappy.h>
+#include <oBase/std_linear_allocator.h>
 #include <oBase/string.h>
 #include <oBase/string_traits.h>
 #include <oBase/text_document.h>

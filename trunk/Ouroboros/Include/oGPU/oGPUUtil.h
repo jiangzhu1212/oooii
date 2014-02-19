@@ -30,7 +30,7 @@
 #include <oGPU/oGPU.h>
 
 #include <oBasis/oGeometry.h>
-#include <oBasis/oOBJ.h>
+#include <oMesh/obj.h>
 
 namespace ouro {
 	namespace gpu {

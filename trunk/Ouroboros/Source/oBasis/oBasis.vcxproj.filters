@@ -111,9 +111,6 @@
     <ClInclude Include="..\..\Include\oBasis\oGeometry.h">
       <Filter>oBasis\3D Math &amp; Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oOBJ.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oRTTI.h">
       <Filter>oBasis\RTTI</Filter>
     </ClInclude>
@@ -237,9 +234,6 @@
     <ClInclude Include="..\..\Include\oBasis\oScopedPartialTimeout.h">
       <Filter>oBasis</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oStdLinearAllocator.h">
-      <Filter>oBasis</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oError.h">
       <Filter>oBasis</Filter>
     </ClInclude>
@@ -256,9 +250,6 @@
     </ClCompile>
     <ClCompile Include="oRTTI.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oOBJ.cpp">
-      <Filter>Source\3D Math &amp; Graphics</Filter>
     </ClCompile>
     <ClCompile Include="oCameraController.cpp">
       <Filter>Source\3D Math &amp; Graphics\Camera Controllers</Filter>

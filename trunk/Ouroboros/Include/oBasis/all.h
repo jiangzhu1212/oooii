@@ -48,7 +48,6 @@
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oMath.h>
 #include <oBasis/oMIME.h>
-#include <oBasis/oOBJ.h>
 #include <oBasis/oOSC.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oRefCount.h>

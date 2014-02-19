@@ -50,6 +50,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libs", "Libs", "{214923A8-7DC6-4CC0-ACE3-B40564F05945}"
 	ProjectSection(SolutionItems) = preProject
 		Ouroboros\Source\Build\CompileShaders.cmd = Ouroboros\Source\Build\CompileShaders.cmd
+		Ouroboros\Source\oMesh\obj.cpp = Ouroboros\Source\oMesh\obj.cpp
 		Ouroboros\Include\Ouroboros.h = Ouroboros\Include\Ouroboros.h
 		Ouroboros\Include\Ouroboros_externals.h = Ouroboros\Include\Ouroboros_externals.h
 		Ouroboros\Source\test_services.h = Ouroboros\Source\test_services.h
@@ -94,6 +95,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TestApps", "TestApps", "{3E293457-7803-4A98-B0C1-45D71DCFE082}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "oMesh", "Ouroboros\Source\oMesh\oMesh.vcxproj", "{8A76FF30-F5E2-4127-B86E-C5AE324961FB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "oMeshTests", "Ouroboros\Source\oMesh\oMeshTests.vcxproj", "{4672A7EF-E55C-4746-8CCD-97ABF0713D83}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -367,6 +370,14 @@ Global
 		{8A76FF30-F5E2-4127-B86E-C5AE324961FB}.Release|Win32.Build.0 = Release|Win32
 		{8A76FF30-F5E2-4127-B86E-C5AE324961FB}.Release|x64.ActiveCfg = Release|x64
 		{8A76FF30-F5E2-4127-B86E-C5AE324961FB}.Release|x64.Build.0 = Release|x64
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83}.Debug|Win32.Build.0 = Debug|Win32
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83}.Debug|x64.ActiveCfg = Debug|x64
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83}.Debug|x64.Build.0 = Debug|x64
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83}.Release|Win32.ActiveCfg = Release|Win32
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83}.Release|Win32.Build.0 = Release|Win32
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83}.Release|x64.ActiveCfg = Release|x64
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -407,6 +418,7 @@ Global
 		{F02DF42C-54F3-4D80-B233-1D310B41917C} = {61FA4EB1-7485-4903-80D6-631E7349C627}
 		{76618711-9E0A-4EFD-8D9E-B41215E0AB78} = {61FA4EB1-7485-4903-80D6-631E7349C627}
 		{3982DDF0-20F5-4181-97B7-CD20212ECDF4} = {61FA4EB1-7485-4903-80D6-631E7349C627}
+		{4672A7EF-E55C-4746-8CCD-97ABF0713D83} = {61FA4EB1-7485-4903-80D6-631E7349C627}
 		{0BD0AE0C-4BA5-434D-B381-F7A836CF0CB6} = {3E293457-7803-4A98-B0C1-45D71DCFE082}
 		{297F32B9-0DAE-4FF6-B8DE-47084058F4D9} = {3E293457-7803-4A98-B0C1-45D71DCFE082}
 		{F4043C03-3302-462F-8756-5291E8E2CAF9} = {3E293457-7803-4A98-B0C1-45D71DCFE082}

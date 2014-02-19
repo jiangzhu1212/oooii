@@ -21,11 +21,9 @@
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBasis\tests\oBasisTests.h" />
     <ClInclude Include="Tests\oBasisTestCommon.h" />
-    <ClInclude Include="Tests\oBasisTestOBJ.h" />
     <ClInclude Include="Tests\oBasisTestStruct.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\oBasisTestOBJ.cpp" />
     <ClCompile Include="Tests\oBasisTestStruct.cpp" />
     <ClCompile Include="Tests\TESTBuffer.cpp" />
     <ClCompile Include="Tests\TESTDispatchQueueGlobal.cpp" />
@@ -35,7 +33,6 @@
     <ClCompile Include="Tests\TESTINISerialize.cpp" />
     <ClCompile Include="Tests\TESTJSONSerialize.cpp" />
     <ClCompile Include="Tests\TESTMath.cpp" />
-    <ClCompile Include="Tests\TESTOBJ.cpp" />
     <ClCompile Include="Tests\TESTOSC.cpp" />
     <ClCompile Include="Tests\TESTRTTI.cpp">
       <PreprocessToFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</PreprocessToFile>
