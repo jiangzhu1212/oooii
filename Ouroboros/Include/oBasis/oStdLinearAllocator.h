@@ -22,96 +22,77 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Simple allocator that has a fixed arena of memory and increments an index 
-// with each allocation until all memory is used up. There is no Deallocate(), 
-// but Reset() will set the index back to zero. This is useful for containers
-// such as std::maps that are built up and searched and whose data is simple
-// (i.e. no ref counting or handles/pointers that need to be cleaned up). Use of 
-// this allocator can alleviate long destructor times in such containers where
-// there's not a lot of use to the destruction because of the simple types.
-//
-// This uses the oversized-allocation pattern where the full arena is allocated
-// and this class is overlaid on top of it to manage the buffer.
-//
-// Allocation is O(1) and a single CAS is used to enable concurrency.
-
+// Wraps a linear_allocator in std::allocator's API as well as falling back
+// on the default std::allocator if the original arena is insufficient, so
+// this can gain efficiency if the size of allocations is known ahead of time
+// but also won't fail if that estimate comes up short.
 #pragma once
-#ifndef oLinearAllocator_h
-#define oLinearAllocator_h
+#ifndef oBase_std_linear_allocator_h
+#define oBase_std_linear_allocator_h
 
 #include <oBasis/oPlatformFeatures.h>
-#include <oBase/concurrent_linear_allocator.h>
-#include <oBase/macros.h>
+#include <oBase/linear_allocator.h>
 
-template<typename T> struct oStdLinearAllocator
+namespace ouro {
+
+template<typename T> class std_linear_allocator
 {
-	// Use an initial buffer or when that is exhausted fall back to system malloc.
-	// Deallocate noops on the first allocations, but will free memory allocated
-	// by the system heaps. This also keeps a pointer that records how many bytes
-	// were allocated from platform Malloc so that the arena size can be adjusted.
-
-	oDEFINE_STD_ALLOCATOR_BOILERPLATE(oStdLinearAllocator)
-	oStdLinearAllocator(ouro::concurrent_linear_allocator* _pAllocator
-		, size_t* _pPlatformBytesAllocated = nullptr
-		, void* (*_PlatformMalloc)(size_t _Size) = malloc
-		, void (*_PlatformFree)(void* _Pointer) = free)
+public:
+	oDEFINE_STD_ALLOCATOR_BOILERPLATE(std_linear_allocator)
+	std_linear_allocator(linear_allocator* _pAllocator, size_t* _pHighwaterMark)
 			: pAllocator(_pAllocator)
-			, PlatformMalloc(_PlatformMalloc)
-			, PlatformFree(_PlatformFree)
-			, pPlatformBytesAllocated(_pPlatformBytesAllocated)
+			, pHighwaterMark(_pHighwaterMark)
 	{
-		if (pPlatformBytesAllocated)
-			*pPlatformBytesAllocated = 0;
+		if (pHighwaterMark)
+			*pHighwaterMark = 0;
 	}
 
-	~oStdLinearAllocator()
-	{
-	}
+	~std_linear_allocator() {}
 	
-	template<typename U> oStdLinearAllocator(oStdLinearAllocator<U> const& _That)
+	template<typename U> std_linear_allocator(std_linear_allocator<U> const& _That)
 		: pAllocator(_That.pAllocator)
-		, PlatformMalloc(_That.PlatformMalloc)
-		, PlatformFree(_That.PlatformFree)
-		, pPlatformBytesAllocated(_That.pPlatformBytesAllocated)
+		, pHighwaterMark(_That.pHighwaterMark)
 	{}
+	
+	inline const std_linear_allocator& operator=(const std_linear_allocator& _That)
+	{
+		pAllocator = _That.pAllocator;
+		FallbackAllocator = _That.FallbackAllocator;
+		pHighwaterMark = _That.pHighwaterMark;
+		return *this;
+	}
 	
 	inline pointer allocate(size_type count, const_pointer hint = 0)
 	{
 		const size_t nBytes = sizeof(T) * count;
-
 		void* p = pAllocator->allocate(nBytes);
 		if (!p)
-		{
-			p = PlatformMalloc(nBytes);
-			if (p && pPlatformBytesAllocated)
-				*pPlatformBytesAllocated += nBytes;
-		}
+			p = FallbackAllocator.allocate(nBytes, hint);
+		if (p && pHighwaterMark)
+			*pHighwaterMark = max(*pHighwaterMark, nBytes);
 		return static_cast<pointer>(p);
 	}
 	
 	inline void deallocate(pointer p, size_type count)
 	{
 		if (!pAllocator->valid(p))
-			PlatformFree(p);
+			FallbackAllocator.deallocate(p, count);
 	}
 	
-	inline void Reset() { pAllocator->Reset(); }
-	inline const oStdLinearAllocator& operator=(const oStdLinearAllocator& _That)
-	{
-		pAllocator = _That.pAllocator;
-		PlatformMalloc = _That.PlatformMalloc;
-		PlatformFree = _That.PlatformFree;
-		pPlatformBytesAllocated = _That.pPlatformBytesAllocated;
-		return *this;
-	}
+	inline void reset() { pAllocator->reset(); }
 	
-	ouro::concurrent_linear_allocator* pAllocator;
-	void* (*PlatformMalloc)(size_t _Size);
-	void (*PlatformFree)(void* _Pointer);
-	size_t* pPlatformBytesAllocated;
+	inline size_t get_highwater_mark() const { return pHighwaterMark ? *pHighwaterMark : 0; }
+
+private:
+	template<typename> friend class std_linear_allocator;
+	linear_allocator* pAllocator;
+	size_t* pHighwaterMark;
+	std::allocator<T> FallbackAllocator;
 };
 
-oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(oStdLinearAllocator)
-oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(oStdLinearAllocator) { return a.pAllocator == b.pAllocator; }
+} // namespace ouro
+
+oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(ouro::std_linear_allocator)
+oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(ouro::std_linear_allocator) { return a.pAllocator == b.pAllocator; }
 
 #endif
