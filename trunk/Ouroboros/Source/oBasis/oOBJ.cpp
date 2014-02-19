@@ -87,7 +87,7 @@ bool from_string(mesh::obj::texture_type::value* _pType, const char* _StrSource)
 typedef unsigned long long key_t;
 typedef uint val_t;
 typedef std::pair<const key_t, val_t> pair_type;
-typedef oStdLinearAllocator<pair_type> allocator_type;
+typedef ouro::std_linear_allocator<pair_type> allocator_type;
 typedef unordered_map<key_t, val_t, std_noop_hash<key_t>, std::equal_to<key_t>, std::less<key_t>, allocator_type> index_map_t;
 
 static inline const char* parse_string(char* _StrDestination, size_t _SizeofStrDestination, const char* _S)
@@ -482,7 +482,7 @@ mesh_impl::mesh_impl(const init& _Init, const path& _OBJPath, const char* _OBJSt
 	{
 		void* pArena = malloc(kInitialReserve);
 		finally FreeArena([&] { if (pArena) free(pArena); });
-		concurrent_linear_allocator Allocator(pArena, kInitialReserve);
+		linear_allocator Allocator(pArena, kInitialReserve);
 		index_map_t IndexMap(0, index_map_t::hasher(), index_map_t::key_equal(), std::less<key_t>()
 			, allocator_type(&Allocator, &IndexMapMallocBytes));
 
