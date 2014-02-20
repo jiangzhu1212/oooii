@@ -264,10 +264,7 @@ struct oGeometry_Impl : public oGeometry
 
 	void GetDesc(DESC* _pDesc) const override;
 	void Transform(const float4x4& _Matrix) override;
-	bool Map(MAPPED* _pMapped) override;
-	void Unmap() override;
-	bool MapConst(CONST_MAPPED* _pMapped) const override;
-	void UnmapConst() const override;
+	ouro::mesh::source get_source() const override;
 
 	inline void Clear()
 	{
@@ -377,8 +374,6 @@ struct oGeometry_Impl : public oGeometry
 		CalculateBounds();
 	}
 
-	void FillMapped(MAPPED* _pMapped) const;
-
 	std::vector<mesh::range> Ranges;
 	std::vector<unsigned int> Indices;
 	std::vector<float3> Positions;
@@ -393,19 +388,6 @@ struct oGeometry_Impl : public oGeometry
 	oRefCount RefCount;
 	//oConcurrency::shared_mutex Mutex;
 };
-
-void oGeometry_Impl::FillMapped(MAPPED* _pMapped) const
-{
-	oGeometry_Impl* pThis = const_cast<oGeometry_Impl*>(this);
-
-	_pMapped->pRanges = data(pThis->Ranges);
-	_pMapped->pIndices = data(pThis->Indices);
-	_pMapped->pPositions = data(pThis->Positions);
-	_pMapped->pNormals = data(pThis->Normals);
-	_pMapped->pTangents = data(pThis->Tangents);
-	_pMapped->pTexcoords = data(pThis->Texcoords);
-	_pMapped->pColors = data(pThis->Colors);
-}
 
 void oGeometry_Impl::GetDesc(DESC* _pDesc) const
 {
@@ -448,40 +430,29 @@ void oGeometry_Impl::Transform(const float4x4& _Matrix, unsigned int _BaseVertex
 		Normals[i] = normalize(r * Normals[i]);
 	for (size_t i = _BaseVertexIndex; i < Tangents.size(); i++)
 		Tangents[i] = float4(normalize(r * Tangents[i].xyz()), Tangents[i].w);
-
-// @oooii-jeffrey: attempt to generate the z of TexCoords
-// 	for (size_t i = _BaseVertexIndex; i < Texcoords.size(); i++)
-// 	{
-// 		float3 uv = float3(Texcoords[i].xy(), 0);
-// 		float3 uvrot = r * uv;
-// 		Texcoords[i].z = uvrot.z;
-// 	}
 };
 
-bool oGeometry_Impl::Map(MAPPED* _pMapped)
+ouro::mesh::source oGeometry_Impl::get_source() const
 {
-	//Mutex.Lock();
-	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
-	pLockedThis->FillMapped(_pMapped);
-	return true;
-}
+	ouro::mesh::source s;
+	s.indicesi = Indices.data();
+	s.indexi_pitch = sizeof(uint);
+	s.ranges = Ranges.data();
+	s.range_pitch = sizeof(ouro::mesh::range);
+	s.positionsf = Positions.data();
+	s.positionf_pitch = sizeof(float3);
+	s.normalsf = Normals.data();
+	s.normalf_pitch = sizeof(float3);
+	s.tangentsf = Tangents.data();
+	s.tangentf_pitch = sizeof(float4);
+	s.uvw0sf = Texcoords.data();
+	s.uvw0f_pitch = sizeof(float3);
+	s.colors = Colors.data();
+	s.color_pitch = sizeof(color);
 
-void oGeometry_Impl::Unmap()
-{
-	//Mutex.Unlock();
-}
+	s.vertex_layout = ouro::mesh::calc_layout(s);
 
-bool oGeometry_Impl::MapConst(CONST_MAPPED* _pMapped) const
-{
-	//Mutex.LockRead();
-	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
-	pLockedThis->FillMapped((MAPPED*)_pMapped);
-	return true;
-}
-
-void oGeometry_Impl::UnmapConst() const
-{
-	//Mutex.UnlockRead();
+	return s;
 }
 
 struct oGeometryFactory_Impl : public oGeometryFactory

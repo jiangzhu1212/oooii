@@ -306,6 +306,10 @@ inline bool has_uv0s(const layout::value& _Layout) { return ((_Layout&0x1)==0) &
 inline bool has_uvwx0s(const layout::value& _Layout) { return (_Layout&0x1) && has_texcoords(_Layout); }
 inline bool has_colors(const layout::value& _Layout) { return _Layout == layout::pos_color || _Layout == layout::color || _Layout == layout::uv0_color || _Layout == layout::uvwx0_color; }
 
+// Given a source populated with vertex streams, return what layout it specifies.
+// (indices, ranges and layout fields are ignored)
+layout::value calc_layout(const source& _Source);
+
 void flip_winding_order(uint _BaseIndexIndex, ushort* _pIndices, uint _NumIndices);
 void flip_winding_order(uint _BaseIndexIndex, uint* _pIndices, uint _NumIndices);
 

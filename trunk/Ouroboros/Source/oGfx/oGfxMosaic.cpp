@@ -90,21 +90,17 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	oGeometry::DESC GeoDesc;
 	Geo->GetDesc(&GeoDesc);
 
-	oGeometry::CONST_MAPPED GeoMapped;
-	if (!Geo->MapConst(&GeoMapped))
-		return false; // pass through error
-
-	finally OSEGeoUnmap([&] { Geo->UnmapConst(); });
+	ouro::mesh::source GeoSource = Geo->get_source();
 
 	ouro::surface::const_mapped_subresource MSRGeo;
-	MSRGeo.data = GeoMapped.pIndices;
+	MSRGeo.data = GeoSource.indicesi;
 	MSRGeo.row_pitch = sizeof(uint);
 	MSRGeo.depth_pitch = MSRGeo.row_pitch * GeoDesc.NumIndices;
 	Indices = make_index_buffer(Device, "MosaicIB", GeoDesc.NumIndices, GeoDesc.NumVertices, MSRGeo);
 
 	pipeline_info pi = Pipeline->get_info();
 
-	Vertices[0] = make_vertex_buffer(Device, "MosaicVB", GeoDesc.Layout.AsVertexLayout(), GeoDesc, GeoMapped);
+	Vertices[0] = make_vertex_buffer(Device, "MosaicVB", GeoDesc.Layout.AsVertexLayout(), GeoDesc, GeoSource);
 
 	NumPrimitives = GeoDesc.NumPrimitives;
 
@@ -115,10 +111,9 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 			return false; // pass through error
 
 		std::vector<intrusive_ptr<oGeometry>> ExtraGeos;
-		std::vector<oGeometry::CONST_MAPPED> ExtraGeoMapped;
+		std::vector<ouro::mesh::source> ExtraGeoSource;
 		ExtraGeos.resize(_NumAdditionalTextureSets);
-		ExtraGeoMapped.resize(_NumAdditionalTextureSets);
-		finally OSEGeoUnmap([&] { for (auto geo : ExtraGeos) geo->UnmapConst(); });
+		ExtraGeoSource.resize(_NumAdditionalTextureSets);
 
 		for (int i = 0; i < _NumAdditionalTextureSets; i++)
 		{
@@ -136,8 +131,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 			if (!GeoFactory->Create(mosaicDesc, Layout, &ExtraGeos[i]))
 				return false; // pass through error
 
-			if (!ExtraGeos[i]->MapConst(&ExtraGeoMapped[i]))
-				return false; // pass through error
+			ExtraGeoSource[i] = ExtraGeos[i]->get_source();
 		}
 
 		// @tony: what was this for? when uv1's are supported add this back?
