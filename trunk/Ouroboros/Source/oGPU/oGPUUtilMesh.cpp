@@ -46,29 +46,19 @@ public:
 
 	util_mesh_impl(oGPUDevice* _pDevice, const char* _Name, const mesh::layout_array& _VertexLayouts, const oGeometry* _pGeometry)
 	{
-		oGeometry::DESC gd;
-		_pGeometry->GetDesc(&gd);
+		ouro::mesh::info gi = _pGeometry->get_info();
 
-		MeshInfo.local_space_bound = aaboxf(aaboxf::min_max, gd.Bounds.Min, gd.Bounds.Max);
-		MeshInfo.num_indices = gd.NumIndices;
-		MeshInfo.num_vertices = gd.NumVertices;
-		MeshInfo.vertex_layouts[0] = gd.Layout.AsVertexLayout();
-		MeshInfo.primitive_type = gd.PrimitiveType;
-		MeshInfo.face_type = gd.FaceType;
-		MeshInfo.num_ranges = 1;
-		MeshInfo.vertex_scale_shift = 0;
-
-		buffer_info ii = make_index_buffer_info(gd.NumIndices, gd.NumVertices);
+		buffer_info ii = make_index_buffer_info(gi.num_indices, gi.num_vertices);
 
 		mesh::source source = _pGeometry->get_source();
 		surface::const_mapped_subresource msrIndices;
 		msrIndices.data = source.indicesi;
 		msrIndices.row_pitch = source.indexi_pitch;
-		IB = make_index_buffer(_pDevice, _Name, gd.NumIndices, gd.NumVertices, msrIndices);
+		IB = make_index_buffer(_pDevice, _Name, gi.num_indices, gi.num_vertices, msrIndices);
 
 		for (size_t i = 0; i < MeshInfo.vertex_layouts.size(); i++)
 			if (MeshInfo.vertex_layouts[i] != mesh::layout::none)
-				VBs[i] = make_vertex_buffer(_pDevice, _Name, MeshInfo.vertex_layouts[i], gd, source);
+				VBs[i] = make_vertex_buffer(_pDevice, _Name, gi.vertex_layouts[i], gi.num_indices, source);
 	}
 
 	mesh::info get_info() const override { return MeshInfo; }

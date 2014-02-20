@@ -67,14 +67,13 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		return;
 	}
 
-	oGeometry::DESC gdesc;
-	CircleGeometry->GetDesc(&gdesc);
-	oASSERT(gdesc.PrimitiveType == mesh::primitive_type::lines,"created a line list, but actually didn't");
+	ouro::mesh::info ginfo = CircleGeometry->get_info();
+	oASSERT(ginfo.primitive_type == mesh::primitive_type::lines,"created a line list, but actually didn't");
 
 	ouro::mesh::source gsource = CircleGeometry->get_source();
-	LineGeometry.resize(gdesc.NumIndices);
+	LineGeometry.resize(ginfo.num_indices);
 
-	for(unsigned int i = 0;i < gdesc.NumIndices;i++)
+	for(unsigned int i = 0;i < ginfo.num_indices;i++)
 	{
 		LineGeometry[i] = float4(make_scale(RotationScale)*gsource.positionsf[gsource.indicesi[i]],1.0f);
 	}
@@ -85,13 +84,14 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
 	}
-	CircleGeometry->GetDesc(&gdesc);
-	oASSERT(gdesc.PrimitiveType == mesh::primitive_type::lines,"created a line list, but actually didn't");
+
+	ginfo = CircleGeometry->get_info();
+	oASSERT(ginfo.primitive_type == mesh::primitive_type::lines,"created a line list, but actually didn't");
 
 	gsource = CircleGeometry->get_source();
-	AngleGeometryBase.resize(gdesc.NumVertices);
+	AngleGeometryBase.resize(ginfo.num_vertices);
 
-	for(unsigned int i = 0;i < gdesc.NumVertices;i++)
+	for(unsigned int i = 0;i < ginfo.num_vertices;i++)
 	{
 		AngleGeometryBase[i] = float4(make_scale(RotationScale)*gsource.positionsf[i],1.0f);
 	}
@@ -104,12 +104,12 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
 	}
-	CircleGeometry->GetDesc(&gdesc);
+	ginfo = CircleGeometry->get_info();
 
 	gsource = CircleGeometry->get_source();
-	PickGeometryBaseArc.resize(gdesc.NumVertices);
+	PickGeometryBaseArc.resize(ginfo.num_vertices);
 
-	for(unsigned int i = 0;i < gdesc.NumVertices;i++)
+	for(unsigned int i = 0;i < ginfo.num_vertices;i++)
 	{
 		PickGeometryBaseArc[i] = float4(gsource.positionsf[i],1.0f);
 	}
@@ -130,9 +130,9 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	}
 
 	gsource = TorusGeometry->get_source();
-	TorusGeometry->GetDesc(&gdesc);
-	PickGeometryBase.resize(gdesc.NumVertices);
-	for(unsigned int i = 0;i < gdesc.NumVertices;++i)
+	ginfo = TorusGeometry->get_info();
+	PickGeometryBase.resize(ginfo.num_vertices);
+	for(unsigned int i = 0;i < ginfo.num_vertices; ++i)
 	{
 		PickGeometryBase[i] = float4(gsource.positionsf[i],1);
 	}
@@ -147,9 +147,9 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	}
 
 	gsource = TorusGeometry->get_source();
-	TorusGeometry->GetDesc(&gdesc);
-	PickGeometryBaseFade.resize(gdesc.NumVertices);
-	for(unsigned int i = 0;i < gdesc.NumVertices;++i)
+	ginfo = TorusGeometry->get_info();
+	PickGeometryBaseFade.resize(ginfo.num_vertices);
+	for(unsigned int i = 0;i < ginfo.num_vertices;++i)
 	{
 		PickGeometryBaseFade[i] = float4(gsource.positionsf[i],1);
 	}

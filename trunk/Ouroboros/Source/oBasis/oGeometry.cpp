@@ -262,9 +262,9 @@ struct oGeometry_Impl : public oGeometry
 		*_pSuccess = IsSupported(_CallingFunction, _Supported, _Input, _FaceType);
 	}
 
-	void GetDesc(DESC* _pDesc) const override;
-	void Transform(const float4x4& _Matrix) override;
+	ouro::mesh::info get_info() const override;
 	ouro::mesh::source get_source() const override;
+	void transform(const float4x4& _Matrix) override;
 
 	inline void Clear()
 	{
@@ -288,7 +288,7 @@ struct oGeometry_Impl : public oGeometry
 		ContinuityIDs.reserve(_NumVertices);
 	}
 
-	void Transform(const float4x4& _Matrix, unsigned int _BaseVertexIndex);
+	void transform(const float4x4& _Matrix, unsigned int _BaseVertexIndex);
 
 	inline void CalcVertexNormals(bool _CCW)
 	{
@@ -389,34 +389,31 @@ struct oGeometry_Impl : public oGeometry
 	//oConcurrency::shared_mutex Mutex;
 };
 
-void oGeometry_Impl::GetDesc(DESC* _pDesc) const
+ouro::mesh::info oGeometry_Impl::get_info() const
 {
-	//oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
-	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
+	ouro::mesh::info i;
 
-	_pDesc->NumRanges = static_cast<unsigned int>(pLockedThis->Ranges.size());
-	_pDesc->NumVertices = static_cast<unsigned int>(pLockedThis->Positions.size());
-	_pDesc->NumIndices = static_cast<unsigned int>(pLockedThis->Indices.size());
-	_pDesc->NumPrimitives = mesh::num_primitives(PrimitiveType, static_cast<unsigned int>(pLockedThis->Indices.size()), static_cast<unsigned int>(pLockedThis->Positions.size()));
-	_pDesc->FaceType = FaceType;
-	_pDesc->PrimitiveType = PrimitiveType;
-	_pDesc->Bounds = pLockedThis->Bounds;
-	_pDesc->Layout.Positions = !!data(pLockedThis->Positions);
-	_pDesc->Layout.Normals = !!data(pLockedThis->Normals);
-	_pDesc->Layout.Tangents = !!data(pLockedThis->Tangents);
-	_pDesc->Layout.Texcoords = !!data(pLockedThis->Texcoords);
-	_pDesc->Layout.Colors = !!data(pLockedThis->Colors);
+	i.local_space_bound = Bounds;
+	i.num_indices = as_uint(Indices.size());
+	i.num_vertices = as_uint(Positions.size());
+	i.vertex_layouts[0] = get_source().vertex_layout;
+	i.primitive_type = PrimitiveType;
+	i.face_type = FaceType;
+	i.num_ranges = as_uchar(Ranges.size());
+	i.vertex_scale_shift = 0;
+
+	return i;
 }
 
-void oGeometry_Impl::Transform(const float4x4& _Matrix)
+void oGeometry_Impl::transform(const float4x4& _Matrix)
 {
 	//oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
 	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
 	Bounds.clear();
-	pLockedThis->Transform(_Matrix, 0);
+	pLockedThis->transform(_Matrix, 0);
 }
 
-void oGeometry_Impl::Transform(const float4x4& _Matrix, unsigned int _BaseVertexIndex)
+void oGeometry_Impl::transform(const float4x4& _Matrix, unsigned int _BaseVertexIndex)
 {
 	for (size_t i = _BaseVertexIndex; i < Positions.size(); i++)
 	{
@@ -626,7 +623,7 @@ bool oGeometryFactory_Impl::CreateBox(const BOX_DESC& _Desc, const oGeometry::LA
 			d.Centered = true;
 			d.FlipTexcoordV = _Desc.FlipTexcoordV;
 			RectDetails::AppendRect(pGeometry, d, _Layout);
-			pGeometry->Transform(tx[i] * m, i * 4);
+			pGeometry->transform(tx[i] * m, i * 4);
 		}
 	}
 
@@ -1332,7 +1329,7 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 			return false;
 
 		float4x4 m = make_rotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
-		pGeometry->Transform(m);
+		pGeometry->transform(m);
 
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
@@ -1633,7 +1630,7 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 			return false;
 
 		float4x4 m = make_rotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
-		pGeometry->Transform(m);
+		pGeometry->transform(m);
 
 		//small circles
 		c.Radius = kRangeRadius;
@@ -1641,25 +1638,25 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 		m = make_translation(float3(kCenterRadius, 0.0f, 0.0f));
-		pGeometry->Transform(m,nextCircleIndex);
+		pGeometry->transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 		m = make_translation(float3(-kCenterRadius, 0.0f, 0.0f));
-		pGeometry->Transform(m,nextCircleIndex);
+		pGeometry->transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 		m = make_rotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * make_translation(float3(0.0f, 0.0f, kCenterRadius));
-		pGeometry->Transform(m,nextCircleIndex);
+		pGeometry->transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
 		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
 			return false;
 		m = make_rotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * make_translation(float3(0.0f, 0.0f, -kCenterRadius));
-		pGeometry->Transform(m,nextCircleIndex);
+		pGeometry->transform(m,nextCircleIndex);
 	}
 	else
 	{
@@ -1856,7 +1853,7 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 	if (!equal(s, 1.0f))
 	{
 		float4x4 scale = make_scale(s);
-		pGeometry->Transform(scale);
+		pGeometry->transform(scale);
 	}
 
 #if 0

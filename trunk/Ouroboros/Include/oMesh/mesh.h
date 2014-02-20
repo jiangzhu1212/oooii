@@ -296,6 +296,7 @@ struct info
 inline bool has_16bit_indices(uint _NumVertices) { return _NumVertices <= 65535; }
 inline uint index_size(uint _NumVertices) { return has_16bit_indices(_NumVertices) ? sizeof(ushort) : sizeof(uint); }
 uint num_primitives(const primitive_type::value& _PrimitiveType, uint _NumIndices, uint _NumVertices);
+inline uint num_primitives(const info& _Info) { return num_primitives(_Info.primitive_type, _Info.num_indices, _Info.num_vertices); }
 uint vertex_size(const layout::value& _Layout);
 
 inline bool has_positions(const layout::value& _Layout) { return _Layout >= layout::pos && _Layout <= layout::pos_uvwx0; }
