@@ -35,6 +35,56 @@ using namespace ouro;
 using namespace ouro::gpu;
 using namespace ouro::mesh;
 
+struct LAYOUT
+{
+	LAYOUT(const layout::value & _Layout)
+		: Positions(has_positions(_Layout))
+		, Normals(has_normals(_Layout))
+		, Tangents(has_tangents(_Layout))
+		, Texcoords(has_texcoords(_Layout))
+		, Colors(has_colors(_Layout))
+		, ContinuityIDs(false)
+	{}
+
+	LAYOUT(bool _Positions = false, bool _Normals = false, bool _Tangents = false, bool _Texcoords = false, bool _Colors = false, bool _ContinuityIDs = false)
+		: Positions(_Positions)
+		, Normals(_Normals)
+		, Tangents(_Tangents)
+		, Texcoords(_Texcoords)
+		, Colors(_Colors)
+		, ContinuityIDs(_ContinuityIDs)
+	{}
+
+	bool Positions;
+	bool Normals;
+	bool Tangents;
+	bool Texcoords;
+	bool Colors;
+
+	// Per-vertex id where same ids indices 
+	// curved/continuous surfaces
+	bool ContinuityIDs;
+
+	layout::value AsVertexLayout() const;
+};
+
+layout::value LAYOUT::AsVertexLayout() const
+{
+	int v = (Positions?1:0) + (Normals?2:0) + (Tangents?4:0) + (Texcoords?8:0) + (Colors?16:0);// + (ContinuityIDs?32:0);
+
+	switch (v)
+	{
+		case 1: return layout::pos;
+		case 3: return layout::pos_nrm;
+		case 7: return layout::pos_nrm_tan;
+		case 31:
+		case 15: return layout::pos_nrm_tan_uv0;
+		case 9: return layout::pos_uv0;
+		case 17: return layout::pos_color;
+		default: oTHROW_INVARG("unsupported layout (%d)", v);
+	}
+}
+
 #define GEO_CONSTRUCT(fnName, SupportedLayout, InputLayout, FaceType) do { bool success = false; oCONSTRUCT(_ppGeometry, oGeometry_Impl(fnName, SupportedLayout, InputLayout, FaceType, &success)); } while (false); \
 	oGeometry_Impl* pGeometry = (oGeometry_Impl*)*_ppGeometry; \
 	if (!pGeometry) return false;
@@ -192,58 +242,58 @@ static void oSubdivideMesh(unsigned int& _NumEdges, std::vector<unsigned int>& _
 	oSubdivideMeshT(_NumEdges, _Indices, _Positions, _Normals, _Tangents, _Texcoords0, _Texcoords1, _Colors, _ContinuityIDs);
 }
 
-static bool IsSupported(const char* _CreateFunctionName, const oGeometry::LAYOUT& _Supported, const oGeometry::LAYOUT& _Input, mesh::face_type::value _FaceType)
+static bool IsSupported(const char* _CreateFunctionName, const LAYOUT& _Supported, const layout::value& _Input, face_type::value _FaceType)
 {
 	if (!_Supported.Positions)
 		return oErrorSetLast(std::errc::invalid_argument, "%s() is not validly implemented", oSAFESTRN(_CreateFunctionName));
 
-	if (_FaceType == mesh::face_type::outline && (_Input.Normals || _Input.Tangents || _Input.Texcoords))
+	if (_FaceType == face_type::outline && (has_normals(_Input) || has_tangents(_Input) || has_texcoords(_Input)))
 		return oErrorSetLast(std::errc::invalid_argument, "Outline face types do not support normals, tangents, or texcoords");
 
-	if (!_Supported.Normals && _Input.Normals)
+	if (!_Supported.Normals && has_normals(_Input))
 		return oErrorSetLast(std::errc::invalid_argument, "%s() does not support normals", oSAFESTRN(_CreateFunctionName));
 
-	if (!_Supported.Tangents && _Input.Tangents)
+	if (!_Supported.Tangents && has_tangents(_Input))
 		return oErrorSetLast(std::errc::invalid_argument, "%s() does not support tangents", oSAFESTRN(_CreateFunctionName));
 
-	if (!_Supported.Texcoords && _Input.Texcoords)
+	if (!_Supported.Texcoords && has_texcoords(_Input))
 		return oErrorSetLast(std::errc::invalid_argument, "%s() does not support texcoords", oSAFESTRN(_CreateFunctionName));
 
-	if (!_Supported.Colors && _Input.Colors)
+	if (!_Supported.Colors && has_colors(_Input))
 		return oErrorSetLast(std::errc::invalid_argument, "%s() does not support colors", oSAFESTRN(_CreateFunctionName));
 
-	if (!_Supported.ContinuityIDs && _Input.ContinuityIDs)
+	if (!_Supported.ContinuityIDs && false /*continuity ids*/)
 		return oErrorSetLast(std::errc::invalid_argument, "%s() does not support continuity IDs", oSAFESTRN(_CreateFunctionName));
 
-	if (!_Input.Positions)
+	if (!has_positions(_Input))
 		return oErrorSetLast(std::errc::invalid_argument, "Positions must be specified as true in layout");
 
-	if (_Input.Tangents && (!_Input.Normals || !_Input.Texcoords))
+	if (has_tangents(_Input) && (!has_normals(_Input) || !has_texcoords(_Input)))
 		return oErrorSetLast(std::errc::invalid_argument, "Invalid layout: Tangents require both normals and texcoords");
 
 	return true;
 }
 
-static float GetNormalSign(mesh::face_type::value type)
+static float GetNormalSign(face_type::value type)
 {
 	// This geo lib was brought up as CCW, so invert some values for CW systems
 
 	switch (type)
 	{
-		case mesh::face_type::front_cw: return -1.0f;
-		case mesh::face_type::front_ccw: return 1.0f;
+		case face_type::front_cw: return -1.0f;
+		case face_type::front_ccw: return 1.0f;
 		default: break;
 	}
 
 	return 0.0f;
 }
 
-static mesh::face_type::value GetOppositeWindingOrder(mesh::face_type::value type)
+static face_type::value GetOppositeWindingOrder(face_type::value type)
 {
 	switch (type)
 	{
-		case mesh::face_type::front_cw: return mesh::face_type::front_ccw;
-		case mesh::face_type::front_ccw: return mesh::face_type::front_cw;
+		case face_type::front_cw: return face_type::front_ccw;
+		case face_type::front_ccw: return face_type::front_cw;
 		default: break;
 	}
 
@@ -255,15 +305,15 @@ struct oGeometry_Impl : public oGeometry
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGeometry);
 
-	oGeometry_Impl(const char* _CallingFunction, const LAYOUT& _Supported, const LAYOUT& _Input, mesh::face_type::value _FaceType, bool* _pSuccess)
+	oGeometry_Impl(const char* _CallingFunction, const LAYOUT& _Supported, const layout::value& _Input, face_type::value _FaceType, bool* _pSuccess)
 		: FaceType(_FaceType)
-		, PrimitiveType(_FaceType == mesh::face_type::outline ? mesh::primitive_type::lines : mesh::primitive_type::triangles)
+		, PrimitiveType(_FaceType == face_type::outline ? primitive_type::lines : primitive_type::triangles)
 	{
 		*_pSuccess = IsSupported(_CallingFunction, _Supported, _Input, _FaceType);
 	}
 
-	ouro::mesh::info get_info() const override;
-	ouro::mesh::source get_source() const override;
+	info get_info() const override;
+	source get_source() const override;
 	void transform(const float4x4& _Matrix) override;
 
 	inline void Clear()
@@ -345,26 +395,26 @@ struct oGeometry_Impl : public oGeometry
 
 	// Calculates all derived attributes if not already created
 	// by prior code.
-	inline void Finalize(const LAYOUT& _Layout, const color& _Color)
+	inline void finalize(const layout::value& _Layout, const color& _Color)
 	{
-		if (FaceType != mesh::face_type::outline)
+		if (FaceType != face_type::outline)
 		{
-			if (_Layout.Normals && Normals.empty())
-				CalcVertexNormals(FaceType == mesh::face_type::front_ccw);
+			if (has_normals(_Layout) && Normals.empty())
+				CalcVertexNormals(FaceType == face_type::front_ccw);
 		
-			if (_Layout.Tangents && Tangents.empty())
+			if (has_tangents(_Layout) && Tangents.empty())
 				CalcTangents(0);
 		}
 
-		if (_Layout.Colors)
+		if (has_colors(_Layout))
 			SetColor(_Color, 0);
 
-		if (_Layout.ContinuityIDs && ContinuityIDs.empty())
+		if (false/*_Layout.ContinuityIDs*/ && ContinuityIDs.empty())
 			SetContinuityID(0);
 
 		if (Ranges.empty())
 		{
-			mesh::range r;
+			range r;
 			r.start_primitive = 0;
 			r.num_primitives = as_uint(Indices.size() / 3);
 			r.max_vertex = as_uint(Positions.size());
@@ -374,7 +424,7 @@ struct oGeometry_Impl : public oGeometry
 		CalculateBounds();
 	}
 
-	std::vector<mesh::range> Ranges;
+	std::vector<range> Ranges;
 	std::vector<unsigned int> Indices;
 	std::vector<float3> Positions;
 	std::vector<float3> Normals;
@@ -382,16 +432,16 @@ struct oGeometry_Impl : public oGeometry
 	std::vector<float3> Texcoords;
 	std::vector<color> Colors;
 	std::vector<unsigned int> ContinuityIDs;
-	mesh::face_type::value FaceType;
-	mesh::primitive_type::value PrimitiveType;
+	face_type::value FaceType;
+	primitive_type::value PrimitiveType;
 	aaboxf Bounds;
 	oRefCount RefCount;
 	//oConcurrency::shared_mutex Mutex;
 };
 
-ouro::mesh::info oGeometry_Impl::get_info() const
+info oGeometry_Impl::get_info() const
 {
-	ouro::mesh::info i;
+	info i;
 
 	i.local_space_bound = Bounds;
 	i.num_indices = as_uint(Indices.size());
@@ -429,13 +479,13 @@ void oGeometry_Impl::transform(const float4x4& _Matrix, unsigned int _BaseVertex
 		Tangents[i] = float4(normalize(r * Tangents[i].xyz()), Tangents[i].w);
 };
 
-ouro::mesh::source oGeometry_Impl::get_source() const
+source oGeometry_Impl::get_source() const
 {
-	ouro::mesh::source s;
+	source s;
 	s.indicesi = Indices.data();
 	s.indexi_pitch = sizeof(uint);
 	s.ranges = Ranges.data();
-	s.range_pitch = sizeof(ouro::mesh::range);
+	s.range_pitch = sizeof(range);
 	s.positionsf = Positions.data();
 	s.positionf_pitch = sizeof(float3);
 	s.normalsf = Normals.data();
@@ -447,7 +497,7 @@ ouro::mesh::source oGeometry_Impl::get_source() const
 	s.colors = Colors.data();
 	s.color_pitch = sizeof(color);
 
-	s.vertex_layout = ouro::mesh::calc_layout(s);
+	s.vertex_layout = calc_layout(s);
 
 	return s;
 }
@@ -458,18 +508,18 @@ struct oGeometryFactory_Impl : public oGeometryFactory
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGeometry);
 
 	oGeometryFactory_Impl(bool* _pSuccess) { *_pSuccess = true; }
-	bool CreateRect(const RECT_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateBox(const BOX_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateFrustum(const FRUSTUM_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateCircle(const CIRCLE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateWasher(const WASHER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateSphere(const SPHERE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateCylinder(const CYLINDER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateCone(const CONE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateTorus(const TORUS_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateTeardrop(const TEARDROP_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
-	bool CreateMosaic(const MOSAIC_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateRect(const RECT_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateBox(const BOX_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateFrustum(const FRUSTUM_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateCircle(const CIRCLE_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateWasher(const WASHER_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateSphere(const SPHERE_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateCylinder(const CYLINDER_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateCone(const CONE_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateTorus(const TORUS_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateTeardrop(const TEARDROP_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateOBJ(const OBJ_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
+	bool CreateMosaic(const MOSAIC_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry) override;
 
 	oRefCount RefCount;
 };
@@ -485,7 +535,7 @@ bool oGeometryFactoryCreate(oGeometryFactory** _ppGeometryFactory)
 
 namespace RectDetails
 {
-	static void AppendRect(oGeometry_Impl* _pGeometry, const oGeometryFactory::RECT_DESC& _Desc, const oGeometry::LAYOUT& _Layout)
+	static void AppendRect(oGeometry_Impl* _pGeometry, const oGeometryFactory::RECT_DESC& _Desc, const layout::value& _Layout)
 	{
 		static const float3 kCorners[4] = 
 		{
@@ -507,7 +557,7 @@ namespace RectDetails
 			_pGeometry->Positions.push_back(m * kCorners[i]);
 
 		size_t baseIndexIndex = _pGeometry->Indices.size();
-		if (_Desc.FaceType == mesh::face_type::outline)
+		if (_Desc.FaceType == face_type::outline)
 		{
 			oFORI(i, kOutlineIndices)
 				_pGeometry->Indices.push_back(static_cast<unsigned int>(baseVertexIndex) + kOutlineIndices[i]);
@@ -518,11 +568,11 @@ namespace RectDetails
 			oFORI(i, kTriIndices)
 				_pGeometry->Indices.push_back(static_cast<unsigned int>(baseVertexIndex) + kTriIndices[i]);
 
-			if (_Desc.FaceType == mesh::face_type::front_ccw)
-				mesh::flip_winding_order(static_cast<unsigned int>(baseIndexIndex), _pGeometry->Indices.data(), (uint)_pGeometry->Indices.size());
+			if (_Desc.FaceType == face_type::front_ccw)
+				flip_winding_order(static_cast<unsigned int>(baseIndexIndex), _pGeometry->Indices.data(), (uint)_pGeometry->Indices.size());
 		}
 
-		if (_Layout.Texcoords)
+		if (has_texcoords(_Layout))
 		{
 			oFORI(i, kCorners)
 			{
@@ -536,34 +586,34 @@ namespace RectDetails
 
 } // namespace RectDetails
 
-bool oGeometryFactory_Impl::CreateRect(const RECT_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateRect(const RECT_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, true, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, true, true, true);
 	GEO_CONSTRUCT("CreateRect", sSupportedLayout, _Layout, _Desc.FaceType);
 
 	RectDetails::AppendRect(pGeometry, _Desc, _Layout);
 
-	if (_Desc.FaceType != mesh::face_type::outline)
+	if (_Desc.FaceType != face_type::outline)
 		pGeometry->Subdivide(_Desc.Divide, 6);
 
-	if (_Layout.Normals)
+	if (has_normals(_Layout))
 		pGeometry->Normals.assign(pGeometry->Positions.size(), GetNormalSign(_Desc.FaceType) * float3(0.0f, 0.0f, 1.0f));
-	if (_Layout.Tangents)
+	if (has_tangents(_Layout))
 		pGeometry->Tangents.assign(pGeometry->Positions.size(), float4(1.0f, 0.0f, 0.0f, 1.0f));
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
-bool oGeometryFactory_Impl::CreateBox(const BOX_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateBox(const BOX_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, true, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, true, true, true);
 	GEO_CONSTRUCT("CreateBox", sSupportedLayout, _Layout, _Desc.FaceType);
 
 	const float s = GetNormalSign(_Desc.FaceType);
 	float3 dim = _Desc.Bounds.size();
 
-	if (_Desc.FaceType == mesh::face_type::outline)
+	if (_Desc.FaceType == face_type::outline)
 	{
 		const float4x4 m = make_translation(float3(_Desc.Bounds.center()));
 		float3 positions[] =
@@ -627,10 +677,10 @@ bool oGeometryFactory_Impl::CreateBox(const BOX_DESC& _Desc, const oGeometry::LA
 		}
 	}
 
-	if (_Desc.FaceType != mesh::face_type::outline)
+	if (_Desc.FaceType != face_type::outline)
 		pGeometry->Subdivide(_Desc.Divide, 36);
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
@@ -763,27 +813,27 @@ namespace FrustumDetails {
 
 } // namespace FrustumDetails
 
-bool oGeometryFactory_Impl::CreateFrustum(const FRUSTUM_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateFrustum(const FRUSTUM_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, false, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, false, true, true);
 	GEO_CONSTRUCT("CreateFrustum", sSupportedLayout, _Layout, _Desc.FaceType);
 
 	FrustumDetails::FillPositions(pGeometry->Positions, _Desc.Bounds);
-	if(_Desc.FaceType != mesh::face_type::outline)
+	if(_Desc.FaceType != face_type::outline)
 		FrustumDetails::FillIndices(pGeometry->Indices);
 	else
 		FrustumDetails::FillIndicesOutline(pGeometry->Indices);
 
-	if (_Layout.ContinuityIDs)
+	if (false/*_Layout.ContinuityIDs*/)
 		FrustumDetails::FillContinuityIDs(pGeometry->ContinuityIDs);
 
-	if (_Desc.FaceType == mesh::face_type::front_ccw)
-		mesh::flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
+	if (_Desc.FaceType == face_type::front_ccw)
+		flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
 
-	if (_Desc.FaceType != mesh::face_type::outline)
+	if (_Desc.FaceType != face_type::outline)
 		pGeometry->Subdivide(_Desc.Divide, 36);
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
@@ -794,9 +844,9 @@ namespace CircleDetails
 	// of zig-zag tessellating the circle for more uniform shading than a point in the 
 	// center of the circle that radiates outward trifan-style.
 
-	void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _BaseIndexIndex, unsigned int _BaseVertexIndex, unsigned int _Facet, mesh::face_type::value _FaceType)
+	void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _BaseIndexIndex, unsigned int _BaseVertexIndex, unsigned int _Facet, face_type::value _FaceType)
 	{
-		if (_FaceType == mesh::face_type::outline)
+		if (_FaceType == face_type::outline)
 		{
 			_Indices.reserve(_Indices.size() + _Facet * 2);
 
@@ -839,15 +889,15 @@ namespace CircleDetails
 				_Indices.push_back(_BaseVertexIndex + i+o[i&0x1][1]);
 			}
 
-			if (_FaceType == mesh::face_type::front_ccw)
-				mesh::flip_winding_order(static_cast<unsigned int>(_BaseIndexIndex), _Indices.data(), (uint)_Indices.size());
+			if (_FaceType == face_type::front_ccw)
+				flip_winding_order(static_cast<unsigned int>(_BaseIndexIndex), _Indices.data(), (uint)_Indices.size());
 
 		}
 	}
 
-	void FillIndicesWasher(std::vector<unsigned int>& _Indices, unsigned int _BaseIndexIndex, unsigned int _BaseVertexIndex, unsigned int _Facet, mesh::face_type::value _FaceType)
+	void FillIndicesWasher(std::vector<unsigned int>& _Indices, unsigned int _BaseIndexIndex, unsigned int _BaseVertexIndex, unsigned int _Facet, face_type::value _FaceType)
 	{
-		if (_FaceType == mesh::face_type::outline)
+		if (_FaceType == face_type::outline)
 		{
 			CircleDetails::FillIndices(_Indices, _BaseIndexIndex, _BaseVertexIndex, _Facet, _FaceType);
 			CircleDetails::FillIndices(_Indices, _BaseIndexIndex+_Facet*2, _BaseVertexIndex+_Facet, _Facet, _FaceType);
@@ -894,8 +944,8 @@ namespace CircleDetails
 				_Indices.push_back(_BaseVertexIndex + i+o[_Facet&0x1][3]);
 			}
 
-			if (_FaceType == mesh::face_type::front_ccw)
-				mesh::flip_winding_order(_BaseIndexIndex, _Indices.data(), (uint)_Indices.size());
+			if (_FaceType == face_type::front_ccw)
+				flip_winding_order(_BaseIndexIndex, _Indices.data(), (uint)_Indices.size());
 		}
 	}
 
@@ -935,7 +985,7 @@ namespace CircleDetails
 	// Optionally does not clear the specified geometry, so this can be used to 
 	// append circles while building cylinders.
 	bool CreateCircleInternal(const oGeometryFactory::CIRCLE_DESC& _Desc
-		, const oGeometry::LAYOUT& _Layout
+		, const LAYOUT& _Layout
 		, oGeometry_Impl* _pGeometry
 		, unsigned int _BaseIndexIndex
 		, unsigned int _BaseVertexIndex
@@ -953,7 +1003,7 @@ namespace CircleDetails
 			_pGeometry->Clear();
 
 		CircleDetails::FillPositions(_pGeometry->Positions, _Desc.Radius, _Desc.Facet, _ZValue);
-		if (_Desc.FaceType == mesh::face_type::outline)
+		if (_Desc.FaceType == face_type::outline)
 			CircleDetails::FillIndices(_pGeometry->Indices, _BaseIndexIndex, _BaseVertexIndex, _Desc.Facet, _Desc.FaceType);
 		else
 		{
@@ -977,7 +1027,7 @@ namespace CircleDetails
 	// Optionally does not clear the specified geometry, so this can be used to 
 	// append circles while building shells.
 	bool CreateWasherInternal(const oGeometryFactory::WASHER_DESC& _Desc
-		, const oGeometry::LAYOUT& _Layout
+		, const LAYOUT& _Layout
 		, oGeometry_Impl* _pGeometry
 		, unsigned int _BaseIndexIndex
 		, unsigned int _BaseVertexIndex
@@ -1003,7 +1053,7 @@ namespace CircleDetails
 		CircleDetails::FillPositions(outerCircle, _Desc.OuterRadius, _Desc.Facet, _ZValue);
 		
 		//For outlines, the vertex layout is the full inner circle, followed by the full outer circle
-		if (_Desc.FaceType == mesh::face_type::outline)
+		if (_Desc.FaceType == face_type::outline)
 		{
 			_pGeometry->Positions.insert(end(_pGeometry->Positions), begin(innerCircle), end(innerCircle));
 			_pGeometry->Positions.insert(end(_pGeometry->Positions), begin(outerCircle), end(outerCircle));
@@ -1037,33 +1087,33 @@ namespace CircleDetails
 	}
 } // namespace CircleDetails
 
-bool oGeometryFactory_Impl::CreateCircle(const CIRCLE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateCircle(const CIRCLE_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, false, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, false, true, true);
 	GEO_CONSTRUCT("CreateCircle", sSupportedLayout, _Layout, _Desc.FaceType);
-	if (!CircleDetails::CreateCircleInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, _Layout.ContinuityIDs ? 0 : invalid))
+	if (!CircleDetails::CreateCircleInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, false/*_Layout.ContinuityIDs*/ ? 0 : invalid))
 	{
 		delete pGeometry;
 		*_ppGeometry = 0;
 		return false;
 	}
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
-bool oGeometryFactory_Impl::CreateWasher(const WASHER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateWasher(const WASHER_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, false, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, false, true, true);
 	GEO_CONSTRUCT("CreateWasher", sSupportedLayout, _Layout, _Desc.FaceType);
-	if (!CircleDetails::CreateWasherInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, _Layout.ContinuityIDs ? 0 : invalid))
+	if (!CircleDetails::CreateWasherInternal(_Desc, _Layout, pGeometry, 0, 0, true, 0.0f, false/*_Layout.ContinuityIDs*/ ? 0 : invalid))
 	{
 		delete pGeometry;
 		*_ppGeometry = 0;
 		return false;
 	}
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
@@ -1306,18 +1356,18 @@ const static unsigned int sIcosahedronNumEdges = 30;
 
 } // namespace SphereDetails
 
-bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, true, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, true, true, true);
 	GEO_CONSTRUCT("CreateSphere", sSupportedLayout, _Layout, _Desc.FaceType);
 
 	if (_Desc.Icosahedron && _Desc.Divide != 0)
 		return oErrorSetLast(std::errc::invalid_argument, "Icosahedron subdividing not yet implemented");
 
-	if (_Desc.Icosahedron && _Layout.Texcoords)
+	if (_Desc.Icosahedron && has_texcoords(_Layout))
 		return oErrorSetLast(std::errc::invalid_argument, "Icosahedron texcoords not yet implemented");
 
-	if (_Desc.FaceType == mesh::face_type::outline)
+	if (_Desc.FaceType == face_type::outline)
 	{
 		CIRCLE_DESC c;
 		c.FaceType = _Desc.FaceType;
@@ -1325,13 +1375,13 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 		c.Color = _Desc.Color;
 
 		c.Radius = _Desc.Bounds.radius();
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, false/*_Layout.ContinuityIDs */? 0 : invalid))
 			return false;
 
 		float4x4 m = make_rotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
 		pGeometry->transform(m);
 
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, false/*_Layout.ContinuityIDs*/ ? 0 : invalid))
 			return false;
 	}
 	else
@@ -1345,10 +1395,10 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 		pGeometry->Positions.assign(srcVerts, srcVerts + numVerts);
 		pGeometry->Indices.assign(srcIndices, srcIndices + 3*numFaces);
 
-		if (_Desc.FaceType == mesh::face_type::front_ccw)
-			mesh::flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
+		if (_Desc.FaceType == face_type::front_ccw)
+			flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
 
-		if (_Desc.FaceType != mesh::face_type::outline)
+		if (_Desc.FaceType != face_type::outline)
 			pGeometry->Subdivide(_Desc.Divide, numEdges);
 
 		if (!_Desc.Icosahedron)
@@ -1356,7 +1406,7 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 			if (_Desc.Hemisphere)
 				Clip(planef(float3(0.0f, 0.0f, 1.0f), 0.0f), false, pGeometry);
 
-			if (_Desc.FaceType == mesh::face_type::outline)
+			if (_Desc.FaceType == face_type::outline)
 			{
 				if (_Desc.Hemisphere)
 				{
@@ -1382,7 +1432,7 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 		}
 	}
 
-	if (_Layout.Texcoords)
+	if (has_texcoords(_Layout))
 	{
 		SphereDetails::tcs(pGeometry->Texcoords, pGeometry->Positions, _Desc.Hemisphere);
 		if (_Desc.Icosahedron)
@@ -1393,7 +1443,7 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 		SphereDetails::fix_seam_tcs(pGeometry->Texcoords, pGeometry->Indices, 0.85f);
 	}
 
-	if (_Layout.Normals)
+	if (has_normals(_Layout))
 	{
 		pGeometry->Normals.resize(pGeometry->Positions.size());
 		for (size_t i = 0; i < pGeometry->Normals.size(); i++)
@@ -1403,14 +1453,14 @@ bool oGeometryFactory_Impl::CreateSphere(const SPHERE_DESC& _Desc, const oGeomet
 	for (float3& v : pGeometry->Positions)
 		v = (normalize(v) * _Desc.Bounds.radius()) + _Desc.Bounds.xyz();
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
 namespace CylinderDetails
 {
 
-static void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _Facet, unsigned int _BaseVertexIndex, mesh::face_type::value _FaceType)
+static void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _Facet, unsigned int _BaseVertexIndex, face_type::value _FaceType)
 {
 	unsigned int numEvens = (_Facet + 1) / 2;
 	unsigned int oddsStartI = _Facet - 1 - (_Facet & 0x1);
@@ -1464,13 +1514,13 @@ static void FillIndices(std::vector<unsigned int>& _Indices, unsigned int _Facet
 	_Indices.push_back(_BaseVertexIndex + 1);
 	_Indices.push_back(_BaseVertexIndex + 1 + _Facet);
 
-	if (_FaceType == mesh::face_type::front_ccw)
-		mesh::flip_winding_order(cwoStartIndex, _Indices.data(), (uint)_Indices.size());
+	if (_FaceType == face_type::front_ccw)
+		flip_winding_order(cwoStartIndex, _Indices.data(), (uint)_Indices.size());
 }
 
 } // namespace CylinderDetails
 
-bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
 	// Tangents would be supported if texcoords were supported
 	// Texcoord support is a bit hard b/c it has the same wrap-around problem spheres have.
@@ -1481,7 +1531,7 @@ bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGe
 	// 2. Be able to duplicate that vert and reindex triangles on the (0.0001,0.9999,0) 
 	//    side
 	// 3. Also texture a circle.
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, false, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, false, true, true);
 	GEO_CONSTRUCT("CreateCylinder", sSupportedLayout, _Layout, _Desc.FaceType);
 
 	if (_Desc.Facet < 3)
@@ -1492,7 +1542,7 @@ bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGe
 
 	const float fStep = _Desc.Height / static_cast<float>(_Desc.Divide);
 
-	if (_Desc.FaceType == mesh::face_type::outline)
+	if (_Desc.FaceType == face_type::outline)
 	{
 		CIRCLE_DESC c;
 		c.FaceType = _Desc.FaceType;
@@ -1502,7 +1552,7 @@ bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGe
 		for (unsigned int i = 0; i <= _Desc.Divide; i++)
 		{
 			c.Radius = lerp(_Desc.Radius0, _Desc.Radius1, i/static_cast<float>(_Desc.Divide));
-			if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, i * fStep, _Layout.ContinuityIDs ? 0 : invalid))
+			if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, i * fStep, false/*_Layout.ContinuityIDs*/ ? 0 : invalid))
 				return false;
 		}
 
@@ -1534,11 +1584,11 @@ bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGe
 			CircleDetails::FillPositions(pGeometry->Positions, lerp(_Desc.Radius0, _Desc.Radius1, i/static_cast<float>(_Desc.Divide)), _Desc.Facet, i * fStep);
 			CylinderDetails::FillIndices(pGeometry->Indices, _Desc.Facet, (i-1) * _Desc.Facet, _Desc.FaceType);
 
-			if (_Layout.ContinuityIDs)
+			if (false /*_Layout.ContinuityIDs*/)
 				pGeometry->SetContinuityID(0);
 		}
 
-		if (_Layout.Texcoords)
+		if (has_texcoords(_Layout))
 		{
 			pGeometry->Texcoords.resize(pGeometry->Positions.size());
 			for (size_t i = 0; i < pGeometry->Texcoords.size(); i++)
@@ -1564,28 +1614,28 @@ bool oGeometryFactory_Impl::CreateCylinder(const CYLINDER_DESC& _Desc, const oGe
 			c.Facet = _Desc.Facet;
 			c.Radius = __max(_Desc.Radius0, oVERYSMALL); // pure 0 causes a degenerate face and thus degenerate normals
 
-			oGeometry::LAYOUT layout = _Layout;
+			LAYOUT layout = _Layout;
 			layout.Normals = false; // normals get created later
 
-			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0.0f, _Layout.ContinuityIDs ? 1 : invalid))
+			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0.0f, false/*_Layout.ContinuityIDs */? 1 : invalid))
 				return false;
 
 			c.FaceType = GetOppositeWindingOrder(_Desc.FaceType);
 			c.Radius = __max(_Desc.Radius1, oVERYSMALL); // pure 0 causes a degenerate face and thus degenerate normals
-			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, _Desc.Height, _Layout.ContinuityIDs ? 2 : invalid))
+			if (!CircleDetails::CreateCircleInternal(c, layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, _Desc.Height, false /*_Layout.ContinuityIDs */? 2 : invalid))
 				return false;
 
 			//fixme: implement texcoord generation
-			if (_Layout.Texcoords)
+			if (has_texcoords(_Layout))
 				pGeometry->Texcoords.resize(pGeometry->Positions.size());
 		}
 	}
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
-bool oGeometryFactory_Impl::CreateCone(const CONE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateCone(const CONE_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
 	CYLINDER_DESC desc;
 	desc.FaceType = _Desc.FaceType;
@@ -1600,9 +1650,9 @@ bool oGeometryFactory_Impl::CreateCone(const CONE_DESC& _Desc, const oGeometry::
 	return CreateCylinder(desc, _Layout, _ppGeometry);
 }
 
-bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, true, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, true, true, true);
 	GEO_CONSTRUCT("CreateTorus", sSupportedLayout, _Layout, _Desc.FaceType);
 
 	if (_Desc.Facet < 3)
@@ -1617,7 +1667,7 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 	const float kCenterRadius = (_Desc.InnerRadius + _Desc.OuterRadius) / 2.0f;
 	const float kRangeRadius = _Desc.OuterRadius - kCenterRadius;
 
-	if (_Desc.FaceType == mesh::face_type::outline)
+	if (_Desc.FaceType == face_type::outline)
 	{
 		CIRCLE_DESC c;
 		c.FaceType = _Desc.FaceType;
@@ -1626,7 +1676,7 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 
 		//main circle
 		c.Radius = kCenterRadius;
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, false/*_Layout.ContinuityIDs */? 0 : invalid))
 			return false;
 
 		float4x4 m = make_rotation(radians(90.0f), float3(1.0f, 0.0f, 0.0f));
@@ -1635,25 +1685,25 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 		//small circles
 		c.Radius = kRangeRadius;
 		unsigned int nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, false/*_Layout.ContinuityIDs */? 0 : invalid))
 			return false;
 		m = make_translation(float3(kCenterRadius, 0.0f, 0.0f));
 		pGeometry->transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, false /*_Layout.ContinuityIDs */? 0 : invalid))
 			return false;
 		m = make_translation(float3(-kCenterRadius, 0.0f, 0.0f));
 		pGeometry->transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, false/*_Layout.ContinuityIDs */? 0 : invalid))
 			return false;
 		m = make_rotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * make_translation(float3(0.0f, 0.0f, kCenterRadius));
 		pGeometry->transform(m,nextCircleIndex);
 
 		nextCircleIndex = static_cast<unsigned int>(pGeometry->Positions.size());
-		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, _Layout.ContinuityIDs ? 0 : invalid))
+		if (!CircleDetails::CreateCircleInternal(c, _Layout, pGeometry, static_cast<unsigned int>(pGeometry->Indices.size()), static_cast<unsigned int>(pGeometry->Positions.size()), false, 0, false/*_Layout.ContinuityIDs */? 0 : invalid))
 			return false;
 		m = make_rotation(radians(90.0f), float3(0.0f, 1.0f, 0.0f)) * make_translation(float3(0.0f, 0.0f, -kCenterRadius));
 		pGeometry->transform(m,nextCircleIndex);
@@ -1683,13 +1733,13 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 
 					float3 p = float3((kCenterRadius + kRangeRadius * fCos) * C[k], kRangeRadius * fSin, (kCenterRadius + kRangeRadius * fCos) * S[k]);
 
-					if (_Layout.Positions)
+					if (has_positions(_Layout))
 						pGeometry->Positions.push_back(p);
 
-					if (_Layout.Texcoords)
+					if (has_texcoords(_Layout))
 						pGeometry->Texcoords.push_back(float3(1.0f - (i + k) * kInvDivide, j * kInvFacet, 0.0f));
 
-					if (_Layout.Normals)
+					if (has_normals(_Layout))
 						pGeometry->Normals.push_back(normalize(p - center));
 				}
 			}
@@ -1716,10 +1766,10 @@ bool oGeometryFactory_Impl::CreateTorus(const TORUS_DESC& _Desc, const oGeometry
 		}
 	}
 
-	if (_Desc.FaceType == mesh::face_type::front_ccw)
-		mesh::flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
+	if (_Desc.FaceType == face_type::front_ccw)
+		flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
@@ -1762,9 +1812,9 @@ void CylinderFillIndices(std::vector<unsigned int>& _Indices, unsigned int _Face
 	}
 }
 
-bool oGeometryFactory_Impl::CreateTeardrop(const TEARDROP_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateTeardrop(const TEARDROP_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, true, true, true);
+	static const LAYOUT sSupportedLayout(true, true, true, true, true, true);
 	GEO_CONSTRUCT("CreateTeardrop", sSupportedLayout, _Layout, _Desc.FaceType);
 
 	//if (_Desc.Divide < 3)
@@ -1797,26 +1847,26 @@ bool oGeometryFactory_Impl::CreateTeardrop(const TEARDROP_DESC& _Desc, const oGe
 
 	CylinderFillIndices(pGeometry->Indices, _Desc.Facet, _Desc.Divide);
 
-	//if (_Desc.FaceType == mesh::face_type::front_ccw)
+	//if (_Desc.FaceType == face_type::front_ccw)
 	//	ChangeWindingOrder(pGeometry->Indices, 0);
 
-	pGeometry->Finalize(_Layout, _Desc.Color);
+	pGeometry->finalize(_Layout, _Desc.Color);
 	return true;
 }
 
-bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	static const oGeometry::LAYOUT sSupportedLayout(true, true, true, true, true, true);
-	GEO_CONSTRUCT("CreateOBJ", sSupportedLayout, _Layout, mesh::face_type::front_cw);
+	static const LAYOUT sSupportedLayout(true, true, true, true, true, true);
+	GEO_CONSTRUCT("CreateOBJ", sSupportedLayout, _Layout, face_type::front_cw);
 
-	ouro::mesh::obj::init init;
+	obj::init init;
 	init.est_num_vertices = oMB(1);
 	init.est_num_indices = oMB(1);
 	init.counter_clockwide_faces = !_Desc.FlipFaces;
 	init.calc_normals_on_error = true;
 
-	std::shared_ptr<ouro::mesh::obj::mesh> obj = ouro::mesh::obj::mesh::make(init, _Desc.OBJPath, _Desc.OBJString);
-	ouro::mesh::obj::info i = obj->get_info();
+	std::shared_ptr<obj::mesh> obj = obj::mesh::make(init, _Desc.OBJPath, _Desc.OBJString);
+	obj::info i = obj->get_info();
 
 	pGeometry->Positions.resize(i.mesh_info.num_vertices);
 	pGeometry->Normals.resize(i.mesh_info.num_vertices);
@@ -1833,7 +1883,7 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 		pGeometry->ContinuityIDs.resize(i.mesh_info.num_vertices);
 		for (unsigned int r = 0; r < i.mesh_info.num_ranges; r++)
 		{
-			const ouro::mesh::range& range = i.data.ranges[r];
+			const range& range = i.data.ranges[r];
 			const uint indexStart = range.start_primitive * 3;
 			const uint indexEnd = indexStart + range.num_primitives * 3;
 			for (uint j = indexStart; j < indexEnd; j++)
@@ -1845,7 +1895,7 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 	for (size_t r = 0; r < pGeometry->Ranges.size(); r++)
 		pGeometry->Ranges[r] = i.data.ranges[r];
 
-	pGeometry->Finalize(_Layout, white);
+	pGeometry->finalize(_Layout, white);
 
 	float3 dim = pGeometry->Bounds.size();
 	float s = 1.0f / __max(dim.x, __max(dim.y, dim.z));
@@ -1872,12 +1922,12 @@ bool oGeometryFactory_Impl::CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LA
 	return true;
 }
 
-bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry)
+bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const layout::value& _Layout, oGeometry** _ppGeometry)
 {
-	if (_Desc.FaceType == mesh::face_type::outline)
+	if (_Desc.FaceType == face_type::outline)
 		return oErrorSetLast(std::errc::invalid_argument, "Face type OUTLINE not supported for mosaics");
 
-	static const oGeometry::LAYOUT sSupportedLayout(true, false, false, true, false, false);
+	static const LAYOUT sSupportedLayout(true, false, false, true, false, false);
 	GEO_CONSTRUCT("CreateMosaic", sSupportedLayout, _Layout, _Desc.FaceType);
 	
 	const ouro::rect kNullDestRect(ouro::rect::pos_size, int2(0,0), _Desc.DestinationSize);
@@ -1890,7 +1940,7 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 		LocalDesc.NumRectangles = 1;
 	}
 	
-	if (_Layout.Texcoords && !LocalDesc.pSourceRects)
+	if (has_texcoords(_Layout) && !LocalDesc.pSourceRects)
 	{
 		// if no orig dest, limit num rects to 1 and thus use the first source rect, 
 		// otherwise use source rects to do a 1:1 mapping.
@@ -1928,7 +1978,7 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 		pGeometry->Positions.push_back(float3(DMinClip, LocalDesc.ZPosition));
 		pGeometry->Positions.push_back(float3(DMaxClip.x, DMinClip.y, LocalDesc.ZPosition));
 
-		if (_Layout.Texcoords)
+		if (has_texcoords(_Layout))
 		{
 			// Now define texture coords in texel space [0,1]
 			float2 SMin = oCastAsFloat(LocalDesc.pSourceRects[i].Min-LocalDesc.SourceImageSpace.Min) / SourcePaddedSize;
@@ -1955,27 +2005,10 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const oGeomet
 		pGeometry->Indices.push_back(offset + 3);
 	}
 
-	if (_Desc.FaceType == mesh::face_type::front_ccw)
-		mesh::flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
+	if (_Desc.FaceType == face_type::front_ccw)
+		flip_winding_order(0, pGeometry->Indices.data(), (uint)pGeometry->Indices.size());
 
-	pGeometry->Finalize(_Layout, black);
+	pGeometry->finalize(_Layout, black);
 	
 	return true;
-}
-
-ouro::mesh::layout::value oGeometry::LAYOUT::AsVertexLayout() const
-{
-	int v = (Positions?1:0) + (Normals?2:0) + (Tangents?4:0) + (Texcoords?8:0) + (Colors?16:0);// + (ContinuityIDs?32:0);
-
-	switch (v)
-	{
-		case 1: return mesh::layout::pos;
-		case 3: return mesh::layout::pos_nrm;
-		case 7: return mesh::layout::pos_nrm_tan;
-		case 31:
-		case 15: return mesh::layout::pos_nrm_tan_uv0;
-		case 9: return mesh::layout::pos_uv0;
-		case 17: return mesh::layout::pos_color;
-		default: oTHROW_INVARG("unsupported layout (%d)", v);
-	}
 }

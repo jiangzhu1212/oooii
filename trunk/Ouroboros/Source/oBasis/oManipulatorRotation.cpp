@@ -37,14 +37,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		return;
 	*_pSuccess = false;
 
-	intrusive_ptr<oGeometry> CircleGeometry; 
-	oGeometry::LAYOUT layout;
-	layout.Positions = true;
-	layout.Normals = false;
-	layout.Tangents = false;
-	layout.Texcoords = false;
-	layout.Colors = false;
-	layout.ContinuityIDs = false;
+	intrusive_ptr<oGeometry> CircleGeometry;
 
 	auto RotationScale = Desc.ManipularScale;
 
@@ -61,7 +54,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	d.Facet = ROTATION_CIRCLE_VCOUNT;
 	d.Color = white;
 
-	if(!GeometryFactory->CreateCircle(d, layout, &CircleGeometry))
+	if(!GeometryFactory->CreateCircle(d, mesh::layout::pos, &CircleGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -79,7 +72,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	}
 
 	d.Facet = ROTATION_CIRCLE_VCOUNT*2;
-	if(!GeometryFactory->CreateCircle(d, layout, &CircleGeometry))
+	if(!GeometryFactory->CreateCircle(d, mesh::layout::pos, &CircleGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -99,7 +92,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	d.FaceType = mesh::face_type::front_cw;
 	d.Radius = RotationScale;
 	d.Facet = ROTATION_PICK_ARCBALL_VCOUNT;
-	if(!GeometryFactory->CreateCircle(d, layout, &CircleGeometry))
+	if(!GeometryFactory->CreateCircle(d, mesh::layout::pos, &CircleGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -123,7 +116,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	td.Facet = ROTATION_PICK_TORUS_FACET;
 	td.Color = white;
 
-	if(!GeometryFactory->CreateTorus(td, layout, &TorusGeometry))
+	if(!GeometryFactory->CreateTorus(td, mesh::layout::pos, &TorusGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -140,7 +133,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	td.InnerRadius = RotationScale;
 	td.OuterRadius = RotationScale;
 
-	if(!GeometryFactory->CreateTorus(td, layout, &TorusGeometry))
+	if(!GeometryFactory->CreateTorus(td, mesh::layout::pos, &TorusGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
