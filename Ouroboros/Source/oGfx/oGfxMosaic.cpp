@@ -87,22 +87,20 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	if (!GeoFactory->Create(_Desc, Layout, &Geo))
 		return false; // pass through error
 
-	oGeometry::DESC GeoDesc;
-	Geo->GetDesc(&GeoDesc);
-
+	ouro::mesh::info GeoInfo = Geo->get_info();
 	ouro::mesh::source GeoSource = Geo->get_source();
 
 	ouro::surface::const_mapped_subresource MSRGeo;
 	MSRGeo.data = GeoSource.indicesi;
 	MSRGeo.row_pitch = sizeof(uint);
-	MSRGeo.depth_pitch = MSRGeo.row_pitch * GeoDesc.NumIndices;
-	Indices = make_index_buffer(Device, "MosaicIB", GeoDesc.NumIndices, GeoDesc.NumVertices, MSRGeo);
+	MSRGeo.depth_pitch = MSRGeo.row_pitch * GeoInfo.num_indices;
+	Indices = make_index_buffer(Device, "MosaicIB", GeoInfo.num_indices, GeoInfo.num_vertices, MSRGeo);
 
 	pipeline_info pi = Pipeline->get_info();
 
-	Vertices[0] = make_vertex_buffer(Device, "MosaicVB", GeoDesc.Layout.AsVertexLayout(), GeoDesc, GeoSource);
+	Vertices[0] = make_vertex_buffer(Device, "MosaicVB", GeoInfo.vertex_layouts[0], GeoInfo.num_vertices, GeoSource);
 
-	NumPrimitives = GeoDesc.NumPrimitives;
+	NumPrimitives = ouro::mesh::num_primitives(GeoInfo);
 
 	if (_NumAdditionalTextureSets)
 	{

@@ -80,10 +80,9 @@ interface oGeometry : oInterface
 		LAYOUT Layout;
 	};
 
-	virtual void GetDesc(DESC* _pDesc) const = 0;
-	virtual void Transform(const float4x4& _Matrix) = 0;
-
+	virtual ouro::mesh::info get_info() const = 0;
 	virtual ouro::mesh::source get_source() const = 0;
+	virtual void transform(const float4x4& _Matrix) = 0;
 };
 
 // {57FBE80E-60DC-4a7c-8ADC-6CA9B95D6366}
