@@ -108,16 +108,9 @@ intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _
 }
 
 intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
-	, const oGeometry::DESC& _GeoDesc, const oGeometry::CONST_MAPPED& _GeoMapped)
+	, const oGeometry::DESC& _GeoDesc, const mesh::source& _Source)
 {
-	mesh::source Source;
-	Source.positionsf = _GeoMapped.pPositions; Source.positionf_pitch = sizeof(float3);
-	Source.normalsf = _GeoMapped.pNormals; Source.normalf_pitch = sizeof(float3);
-	Source.tangentsf = _GeoMapped.pTangents; Source.tangentf_pitch = sizeof(float4);
-	Source.uvw0sf = _GeoMapped.pTexcoords; Source.uvw0f_pitch = sizeof(float3);
-	Source.colors = _GeoMapped.pColors; Source.color_pitch = sizeof(color);
-
-	return make_vertex_buffer(_pDevice, _Name, _Layout, _GeoDesc.NumVertices, Source);
+	return make_vertex_buffer(_pDevice, _Name, _Layout, _GeoDesc.NumVertices, _Source);
 }
 
 intrusive_ptr<oGPUBuffer> make_readback_copy(oGPUBuffer* _pSource)

@@ -33,6 +33,7 @@
 #include <oBase/aabox.h>
 #include <oBase/sphere.h>
 #include <oCompute/oFrustum.h>
+#include <oMesh/mesh.h>
 
 // {7BA30462-0899-489a-87A8-D897D1CE929E}
 oDEFINE_GUID_I(oGeometry, 0x7ba30462, 0x899, 0x489a, 0x87, 0xa8, 0xd8, 0x97, 0xd1, 0xce, 0x92, 0x9e);
@@ -79,37 +80,10 @@ interface oGeometry : oInterface
 		LAYOUT Layout;
 	};
 
-	struct MAPPED
-	{
-		ouro::mesh::range* pRanges;
-		unsigned int* pIndices;
-		float3* pPositions;
-		float3* pNormals;
-		float4* pTangents; // handedness in w component
-		float3* pTexcoords;
-		ouro::color* pColors;
-	};
-
-	struct CONST_MAPPED
-	{
-		const ouro::mesh::range* pRanges;
-		const unsigned int* pIndices;
-		const float3* pPositions;
-		const float3* pNormals;
-		const float4* pTangents; // handedness in w component
-		const float3* pTexcoords;
-		const ouro::color* pColors;
-	};
-
 	virtual void GetDesc(DESC* _pDesc) const = 0;
 	virtual void Transform(const float4x4& _Matrix) = 0;
 
-	// the MAPPED structure can have NULL values for streams that don't exist.
-	virtual bool Map(MAPPED* _pMapped) = 0;
-	virtual void Unmap() = 0;
-
-	virtual bool MapConst(CONST_MAPPED* _pMapped) const = 0;
-	virtual void UnmapConst() const = 0;
+	virtual ouro::mesh::source get_source() const = 0;
 };
 
 // {57FBE80E-60DC-4a7c-8ADC-6CA9B95D6366}

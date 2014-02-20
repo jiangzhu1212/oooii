@@ -71,21 +71,13 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	CircleGeometry->GetDesc(&gdesc);
 	oASSERT(gdesc.PrimitiveType == mesh::primitive_type::lines,"created a line list, but actually didn't");
 
-	oGeometry::CONST_MAPPED gmapped;
-	if (!CircleGeometry->MapConst(&gmapped) || !gmapped.pIndices || !gmapped.pPositions)
-	{
-		oErrorSetLast(std::errc::invalid_argument, "Geometry Map() failed");
-		return;
-	}
-
+	ouro::mesh::source gsource = CircleGeometry->get_source();
 	LineGeometry.resize(gdesc.NumIndices);
 
 	for(unsigned int i = 0;i < gdesc.NumIndices;i++)
 	{
-		LineGeometry[i] = float4(make_scale(RotationScale)*gmapped.pPositions[gmapped.pIndices[i]],1.0f);
+		LineGeometry[i] = float4(make_scale(RotationScale)*gsource.positionsf[gsource.indicesi[i]],1.0f);
 	}
-
-	CircleGeometry->UnmapConst();
 
 	d.Facet = ROTATION_CIRCLE_VCOUNT*2;
 	if(!GeometryFactory->CreateCircle(d, layout, &CircleGeometry))
@@ -96,20 +88,14 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	CircleGeometry->GetDesc(&gdesc);
 	oASSERT(gdesc.PrimitiveType == mesh::primitive_type::lines,"created a line list, but actually didn't");
 
-	if (!CircleGeometry->MapConst(&gmapped) || !gmapped.pIndices || !gmapped.pPositions)
-	{
-		oErrorSetLast(std::errc::invalid_argument, "Geometry Map() failed");
-		return;
-	}
+	gsource = CircleGeometry->get_source();
 	AngleGeometryBase.resize(gdesc.NumVertices);
 
 	for(unsigned int i = 0;i < gdesc.NumVertices;i++)
 	{
-		AngleGeometryBase[i] = float4(make_scale(RotationScale)*gmapped.pPositions[i],1.0f);
+		AngleGeometryBase[i] = float4(make_scale(RotationScale)*gsource.positionsf[i],1.0f);
 	}
 
-	CircleGeometry->UnmapConst();
-	
 	d.FaceType = mesh::face_type::front_cw;
 	d.Radius = RotationScale;
 	d.Facet = ROTATION_PICK_ARCBALL_VCOUNT;
@@ -120,19 +106,13 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	}
 	CircleGeometry->GetDesc(&gdesc);
 
-	if (!CircleGeometry->MapConst(&gmapped) || !gmapped.pIndices || !gmapped.pPositions)
-	{
-		oErrorSetLast(std::errc::invalid_argument, "Geometry Map() failed");
-		return;
-	}
+	gsource = CircleGeometry->get_source();
 	PickGeometryBaseArc.resize(gdesc.NumVertices);
 
 	for(unsigned int i = 0;i < gdesc.NumVertices;i++)
 	{
-		PickGeometryBaseArc[i] = float4(gmapped.pPositions[i],1.0f);
+		PickGeometryBaseArc[i] = float4(gsource.positionsf[i],1.0f);
 	}
-
-	CircleGeometry->UnmapConst();
 
 	intrusive_ptr<oGeometry> TorusGeometry; 
 	oGeometryFactory::TORUS_DESC td;
@@ -148,16 +128,13 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
 	}
-	if (!TorusGeometry->MapConst(&gmapped) || !gmapped.pIndices || !gmapped.pPositions)
-	{
-		oErrorSetLast(std::errc::invalid_argument, "Geometry Map() failed");
-		return;
-	}
+
+	gsource = TorusGeometry->get_source();
 	TorusGeometry->GetDesc(&gdesc);
 	PickGeometryBase.resize(gdesc.NumVertices);
 	for(unsigned int i = 0;i < gdesc.NumVertices;++i)
 	{
-		PickGeometryBase[i] = float4(gmapped.pPositions[i],1);
+		PickGeometryBase[i] = float4(gsource.positionsf[i],1);
 	}
 
 	td.InnerRadius = RotationScale;
@@ -168,16 +145,13 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
 	}
-	if (!TorusGeometry->MapConst(&gmapped) || !gmapped.pIndices || !gmapped.pPositions)
-	{
-		oErrorSetLast(std::errc::invalid_argument, "Geometry Map() failed");
-		return;
-	}
+
+	gsource = TorusGeometry->get_source();
 	TorusGeometry->GetDesc(&gdesc);
 	PickGeometryBaseFade.resize(gdesc.NumVertices);
 	for(unsigned int i = 0;i < gdesc.NumVertices;++i)
 	{
-		PickGeometryBaseFade[i] = float4(gmapped.pPositions[i],1);
+		PickGeometryBaseFade[i] = float4(gsource.positionsf[i],1);
 	}
 
 	*_pSuccess = true;

@@ -60,18 +60,15 @@ public:
 
 		buffer_info ii = make_index_buffer_info(gd.NumIndices, gd.NumVertices);
 
-		oGeometry::CONST_MAPPED mapped;
-		_pGeometry->MapConst(&mapped);
-		finally UnMap([&] { _pGeometry->UnmapConst(); });
-
+		mesh::source source = _pGeometry->get_source();
 		surface::const_mapped_subresource msrIndices;
-		msrIndices.data = mapped.pIndices;
-		msrIndices.row_pitch = ii.struct_byte_size;
+		msrIndices.data = source.indicesi;
+		msrIndices.row_pitch = source.indexi_pitch;
 		IB = make_index_buffer(_pDevice, _Name, gd.NumIndices, gd.NumVertices, msrIndices);
 
 		for (size_t i = 0; i < MeshInfo.vertex_layouts.size(); i++)
 			if (MeshInfo.vertex_layouts[i] != mesh::layout::none)
-				VBs[i] = make_vertex_buffer(_pDevice, _Name, MeshInfo.vertex_layouts[i], gd, mapped);
+				VBs[i] = make_vertex_buffer(_pDevice, _Name, MeshInfo.vertex_layouts[i], gd, source);
 	}
 
 	mesh::info get_info() const override { return MeshInfo; }

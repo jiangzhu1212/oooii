@@ -198,6 +198,40 @@ uint vertex_size(const layout::value& _Layout)
 	return sSizes[_Layout];
 }
 
+layout::value calc_layout(const source& _Source)
+{
+	static ushort sMapping[] = 
+	{
+		0,
+		1,
+		32,
+		1 + 32,
+		1 + 2,
+		1 + 2 + 4,
+		1 + 2 + 4 + 8,
+		1 + 2 + 4 + 16,
+		1 + 8,
+		1 + 16,
+		8,
+		16,
+		8 + 32,
+		16 + 32,
+	};
+	static_assert(oCOUNTOF(sMapping) == layout::count, "array mismatch");
+
+	const int v = (_Source.positionsf?1:0) 
+		+ ((_Source.normals || _Source.normalsf)?2:0) 
+		+ ((_Source.tangents || _Source.tangentsf)?4:0) 
+		+ ((_Source.uv0s || _Source.uv0sf)?8:0) 
+		+ ((_Source.uvwx0s || _Source.uvwx0sf || _Source.uvw0sf)?16:0) 
+		+ (_Source.colors?32:0);
+
+	for (const ushort& i : sMapping)
+		if (i == v)
+			return (layout::value)i;
+	return layout::none;
+}
+
 void flip_winding_order(uint _BaseIndexIndex, ushort* _pIndices, uint _NumIndices)
 {
 	oCHECK((_BaseIndexIndex % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
@@ -220,8 +254,8 @@ void copy_indices(void* oRESTRICT _pDestination, uint _DestinationPitch, const v
 		copy_indices((uint*)_pDestination, (const ushort*)_pSource, _NumIndices);
 	else if (_DestinationPitch == sizeof(ushort) && _SourcePitch == sizeof(uint))
 		copy_indices((ushort*)_pDestination, (const uint*)_pSource, _NumIndices);
-
-	oTHROW_INVARG("unsupported index pitches (src=%d, dst=%d)", _SourcePitch, _DestinationPitch);
+	else
+		oTHROW_INVARG("unsupported index pitches (src=%d, dst=%d)", _SourcePitch, _DestinationPitch);
 }
 
 void copy_indices(ushort* oRESTRICT _pDestination, const uint* oRESTRICT _pSource, uint _NumIndices)
