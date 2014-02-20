@@ -99,20 +99,14 @@ struct oGfxManipulatorImpl : public oGfxManipulator
 template<typename GEOMETRY_T>
 std::shared_ptr<util_mesh> oGfxManipulatorImpl::CreateGeometryMesh(oGPUDevice* _pDevice, const char* _Name, const GEOMETRY_T& _GeometryDesc)
 {
-	oGeometry::LAYOUT GeoLayout;
-	GeoLayout.Positions = true;
-	GeoLayout.Normals = false;
-	GeoLayout.Tangents = false;
-	GeoLayout.Texcoords = false;
-	GeoLayout.Colors = false;
-	GeoLayout.ContinuityIDs = true;
+	ouro::mesh::layout::value GeoLayout = ouro::mesh::layout::pos;
 
 	intrusive_ptr<oGeometry> Geometry; 
 	if(!GeometryFactory->Create(_GeometryDesc, GeoLayout, &Geometry))
 		return false;
 
 	layout_array layouts;
-	layouts[0] = GeoLayout.AsVertexLayout();
+	layouts[0] = GeoLayout;
 	return util_mesh::make(_pDevice, _Name, layouts, Geometry);
 }
 

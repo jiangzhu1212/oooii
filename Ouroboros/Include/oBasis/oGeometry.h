@@ -44,30 +44,6 @@ interface oGeometry : oInterface
 	// functions, all the parts are exposed for easy access. This is not a 
 	// structure for general runtime.
 
-	struct LAYOUT
-	{
-		LAYOUT(bool _Positions = false, bool _Normals = false, bool _Tangents = false, bool _Texcoords = false, bool _Colors = false, bool _ContinuityIDs = false)
-			: Positions(_Positions)
-			, Normals(_Normals)
-			, Tangents(_Tangents)
-			, Texcoords(_Texcoords)
-			, Colors(_Colors)
-			, ContinuityIDs(_ContinuityIDs)
-		{}
-
-		bool Positions;
-		bool Normals;
-		bool Tangents;
-		bool Texcoords;
-		bool Colors;
-
-		// Per-vertex id where same ids indices 
-		// curved/continuous surfaces
-		bool ContinuityIDs;
-
-		ouro::mesh::layout::value AsVertexLayout() const;
-	};
-
 	virtual ouro::mesh::info get_info() const = 0;
 	virtual ouro::mesh::source get_source() const = 0;
 	virtual void transform(const float4x4& _Matrix) = 0;
@@ -248,32 +224,32 @@ interface oGeometryFactory : oInterface
 		bool FlipPositionY;
 	};
 
-	virtual bool CreateRect(const RECT_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateBox(const BOX_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateFrustum(const FRUSTUM_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateCircle(const CIRCLE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateWasher(const WASHER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateSphere(const SPHERE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateCylinder(const CYLINDER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateCone(const CONE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateTorus(const TORUS_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateTeardrop(const TEARDROP_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateOBJ(const OBJ_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
-	virtual bool CreateMosaic(const MOSAIC_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateRect(const RECT_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateBox(const BOX_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateFrustum(const FRUSTUM_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateCircle(const CIRCLE_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateWasher(const WASHER_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateSphere(const SPHERE_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateCylinder(const CYLINDER_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateCone(const CONE_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateTorus(const TORUS_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateTeardrop(const TEARDROP_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateOBJ(const OBJ_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
+	virtual bool CreateMosaic(const MOSAIC_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) = 0;
 
 	// Readied for template usage
-	inline bool Create(const RECT_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateRect(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const BOX_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateBox(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const FRUSTUM_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateFrustum(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const CIRCLE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateCircle(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const WASHER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateWasher(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const SPHERE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateSphere(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const CYLINDER_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateCylinder(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const CONE_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateCone(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const TORUS_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateTorus(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const TEARDROP_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateTeardrop(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const OBJ_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateOBJ(_Desc, _Layout, _ppGeometry); }
-	inline bool Create(const MOSAIC_DESC& _Desc, const oGeometry::LAYOUT& _Layout, oGeometry** _ppGeometry) { return CreateMosaic(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const RECT_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateRect(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const BOX_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateBox(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const FRUSTUM_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateFrustum(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const CIRCLE_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateCircle(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const WASHER_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateWasher(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const SPHERE_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateSphere(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const CYLINDER_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateCylinder(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const CONE_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateCone(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const TORUS_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateTorus(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const TEARDROP_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateTeardrop(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const OBJ_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateOBJ(_Desc, _Layout, _ppGeometry); }
+	inline bool Create(const MOSAIC_DESC& _Desc, const ouro::mesh::layout::value& _Layout, oGeometry** _ppGeometry) { return CreateMosaic(_Desc, _Layout, _ppGeometry); }
 };
 
 bool oGeometryFactoryCreate(oGeometryFactory** _ppGeometryFactory);

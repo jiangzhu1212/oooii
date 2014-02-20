@@ -78,10 +78,9 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	if (!oGeometryFactoryCreate(&GeoFactory))
 		return false; // pass through error
 
-	oGeometry::LAYOUT Layout;
-	memset(&Layout, 0, sizeof(Layout));
-	Layout.Positions = true;
-	Layout.Texcoords = _NumAdditionalTextureSets ? !!_Desc.pSourceRects : true;
+	mesh::layout::value Layout = mesh::layout::pos;
+	if (0 == _NumAdditionalTextureSets || !!_Desc.pSourceRects)
+		Layout = mesh::layout::pos_uv0;
 
 	intrusive_ptr<oGeometry> Geo;
 	if (!GeoFactory->Create(_Desc, Layout, &Geo))
@@ -121,10 +120,9 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 			mosaicDesc.SourceImageSpace = _AdditionalSourceImageSpaces[i];
 			mosaicDesc.pSourceRects = _pAdditionalSourceRectArrays[i];
 
-			oGeometry::LAYOUT Layout;
-			memset(&Layout, 0, sizeof(Layout));
-			Layout.Positions = true;
-			Layout.Texcoords = !!mosaicDesc.pSourceRects;
+			mesh::layout::value Layout = mesh::layout::pos;
+			if (!!mosaicDesc.pSourceRects)
+				Layout = mesh::layout::pos_uv0;
 
 			if (!GeoFactory->Create(mosaicDesc, Layout, &ExtraGeos[i]))
 				return false; // pass through error

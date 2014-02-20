@@ -136,9 +136,7 @@ std::shared_ptr<util_mesh> make_first_triangle(oGPUDevice* _pDevice)
 
 std::shared_ptr<util_mesh> make_first_cube(oGPUDevice* _pDevice)
 {
-	oGeometry::LAYOUT layout;
-	layout.Positions = true;
-	layout.Texcoords = true;
+	mesh::layout::value Layout = mesh::layout::pos_uv0;
 
 	oGeometryFactory::BOX_DESC bd;
 	bd.FaceType = mesh::face_type::front_ccw;
@@ -151,7 +149,7 @@ std::shared_ptr<util_mesh> make_first_cube(oGPUDevice* _pDevice)
 	oCHECK0(oGeometryFactoryCreate(&Factory));
 
 	intrusive_ptr<oGeometry> geo;
-	oCHECK0(Factory->Create(bd, layout, &geo));
+	oCHECK0(Factory->Create(bd, Layout, &geo));
 
 	mesh::layout_array Layouts(mesh::layout::pos_uv0);
 	return util_mesh::make(_pDevice, "First Cube", Layouts, geo);
