@@ -68,18 +68,6 @@ interface oGeometry : oInterface
 		ouro::mesh::layout::value AsVertexLayout() const;
 	};
 
-	struct DESC
-	{
-		unsigned int NumRanges;
-		unsigned int NumVertices;
-		unsigned int NumIndices;
-		unsigned int NumPrimitives;
-		ouro::mesh::face_type::value FaceType;
-		ouro::mesh::primitive_type::value PrimitiveType;
-		aaboxf Bounds;
-		LAYOUT Layout;
-	};
-
 	virtual ouro::mesh::info get_info() const = 0;
 	virtual ouro::mesh::source get_source() const = 0;
 	virtual void transform(const float4x4& _Matrix) = 0;
