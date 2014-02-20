@@ -61,8 +61,11 @@ static const uint max_num_thread_groups_per_dimension = 65535;
 static const uint max_num_thread_groups_per_dimension_mask = 0xffff;
 static const uint max_num_thread_groups_per_dimension_shift = 16;
 
+// _____________________________________________________________________________
+// Device concepts
+
 namespace api
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
 	unknown,
 	d3d11,
@@ -76,7 +79,7 @@ namespace api
 };}
 
 namespace debug_level
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
 	none, // No driver debug reporting
 	normal, // Trivial/auto-handled warnings by driver squelched
@@ -86,22 +89,8 @@ namespace debug_level
 
 };}
 
-namespace cube_face
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
-
-	posx,
-	negx,
-	posy,
-	negy,
-	posz,
-	negz,
-
-	count,
-
-};}
-
 namespace resource_type
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
 	buffer,
 	texture,
@@ -110,8 +99,120 @@ namespace resource_type
 
 };}
 
+struct device_init
+{
+	device_init(const char* _DebugName = "GPU device")
+		: debug_name(_DebugName)
+		, version(11,0)
+		, min_driver_version(0,0)
+		, driver_debug_level(debug_level::none)
+		, adapter_index(0)
+		, virtual_desktop_position(oDEFAULT, oDEFAULT)
+		, use_software_emulation(false)
+		, use_exact_driver_version(false)
+		, multithreaded(true)
+	{}
+
+	// Name associated with this device in debug output
+	sstring debug_name;
+
+	// The version of the underlying API to use.
+	struct version version;
+
+	// The minimum version of the driver required to successfully create the 
+	// device. If the driver version is 0.0.0.0 (the default) then a hard-coded
+	// internal value is used based on QA verificiation.
+	struct version min_driver_version;
+
+	// Specify to what degree driver warnings/errors are reported. GPU-level 
+	// errors and warnings are always reported.
+	debug_level::value driver_debug_level;
+
+	// If virtual_desktop_position is oDEFAULT, oDEFAULT then use the nth found
+	// device as specified by this Index. If virtual_desktop_position is anything
+	// valid then the device used to handle that desktop position will be used
+	// and adapter_index is ignored.
+	int adapter_index;
+
+	// Position on the desktop and thus on a monitor to be used to determine which 
+	// GPU is used for that monitor and create a device for that GPU.
+	int2 virtual_desktop_position;
+
+	// Allow SW emulation for the specified version. If false, a create will fail
+	// if HW acceleration is not available.
+	bool use_software_emulation;
+
+	// If true, == is used to match min_driver_version to the specified GPU's 
+	// driver. If false cur_version >= min_driver_version is used.
+	bool use_exact_driver_version;
+
+	// If true, the device is thread-safe.
+	bool multithreaded;
+};
+
+struct device_info
+{
+	device_info()
+		: native_memory(0)
+		, dedicated_system_memory(0)
+		, shared_system_memory(0)
+		, adapter_index(0)
+		, api(api::unknown)
+		, vendor(vendor::unknown)
+		, is_software_emulation(false)
+		, debug_reporting_enabled(false)
+	{}
+
+	// Name associated with this device in debug output
+	sstring debug_name;
+
+	// Description as provided by the device vendor
+	mstring device_description;
+
+	// Description as provided by the driver vendor
+	mstring driver_description;
+
+	// Number of bytes present on the device (AKA VRAM)
+	ullong native_memory;
+
+	// Number of bytes reserved by the system to accommodate data transfer to the 
+	// device
+	ullong dedicated_system_memory;
+
+	// Number of bytes reserved in system memory used instead of a separate bank 
+	// of NativeMemory 
+	ullong shared_system_memory;
+
+	// The version for the software that supports the native API. This depends on 
+	// the API type being used.
+	version driver_version;
+
+	// The feature level the device supports. This depends on the API type being 
+	// used.
+	version feature_version; 
+
+	// The zero-based index of the adapter. This may be different than what is 
+	// specified in device_init in certain debug/development modes.
+	int adapter_index;
+
+	// Describes the API used to implement the oGPU API
+	api::value api;
+
+	// Describes the company that made the device.
+	vendor::value vendor;
+
+	// True if the device was created in software emulation mode.
+	bool is_software_emulation;
+
+	// True if the device was created with debug reporting enabled.
+	bool debug_reporting_enabled;
+};
+
+// _____________________________________________________________________________
+// Buffer concepts
+
 namespace buffer_type
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 	// Binding fit for rasterization HW. Using this requires a structure byte size
 	// to be specified.
 	constant,
@@ -166,76 +267,224 @@ namespace buffer_type
 
 };}
 
-namespace texture_trait
-{ oDECLARE_SMALL_ENUM(value, ushort) {
+struct buffer_info
+{
+	// A constant buffer (view, draw, material). Client code can defined whatever 
+	// value are to be passed to a shader that expects them. struct_byte_size must 
+	// be 16-byte aligned. For unstructured buffers specify size = 0, and provide
+	// a format.
 
-	cube = 1 << 0,
-	_1d = 1 << 1,
-	_2d = 1 << 2,
-	_3d = 1 << 3,
-	mipped = 1 << 4,
-	array = 1 << 5,
-	readback = 1 << 6,
-	unordered = 1 << 7,
-	render_target = 1 << 8,
+	buffer_info()
+		: type(buffer_type::constant)
+		, format(surface::unknown)
+		, struct_byte_size(0)
+		, array_size(1)
+	{}
+
+	// Specifies the type of the constant buffer. Normally the final buffer size
+	// is struct_byte_size * array_size. If the type is specified as 
+	// unordered_unstructured then StructByteSize must be 0 and the size is 
+	// calculated as (size of Format) * ArraySize.
+	buffer_type::value type;
+
+	// This must be valid for unordered_unstructured types, and surface::unknown 
+	// for all other types.
+	surface::format format;
+
+	// This must be invalid_size for unordered_unstructured types, but valid for 
+	// all other types.
+	ushort struct_byte_size;
+
+	// The number of format elements or structures in the buffer.
+	uint array_size;
+};
+
+// Returns a buffer info that will auto-size to 16-bit indices or 32-bit indices depending
+// on the number of vertices.
+buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices);
+
+// Returns a buffer info for the vertex buffer with the specified usage and layout. Only vertex traits matching
+// the specified layout will be described by the buffer info,
+buffer_info make_vertex_buffer_info(uint _NumVertices, const mesh::layout::value& _Layout);
+
+// _____________________________________________________________________________
+// Texture concepts
+
+namespace cube_face
+{ oDECLARE_SMALL_ENUM(value, uchar) {
+
+	posx,
+	negx,
+	posy,
+	negy,
+	posz,
+	negz,
+
+	count,
 
 };}
 
 namespace texture_type
-{ oDECLARE_SMALL_ENUM(value, ushort) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
+
+	// 8-bits: array, mipped, usage, type
+	// 00AMUsTy
+
+	type_mask = 0x3,
+	type_1d = 0,
+	type_2d = 1,
+	type_3d = 2,
+	type_cube = 3,
+	usage_mask = 0xc,
+	usage_default = 0,
+	usage_readback = 4,
+	usage_render_target = 8,
+	usage_unordered = 12,
+	flag_mipped = 16,
+	flag_array = 32,
 
 	// 1D texture.
-	default_1d = texture_trait::_1d,
-	mipped_1d = texture_trait::_1d | texture_trait::mipped,
-	array_1d = texture_trait::_1d | texture_trait::array,
-	mipped_array_1d = texture_trait::_1d | texture_trait::array | texture_trait::mipped,
-	render_target_1d = texture_trait::_1d | texture_trait::render_target,
-	mipped_render_target_1d = texture_trait::_1d | texture_trait::mipped | texture_trait::render_target,
-	readback_1d = texture_trait::_1d | texture_trait::readback,
-	mipped_readback_1d = texture_trait::_1d | texture_trait::mipped | texture_trait::readback,
-	readback_array_1d = texture_trait::_1d | texture_trait::array | texture_trait::readback,
-	mipped_readback_array_1d = texture_trait::_1d | texture_trait::array | texture_trait::mipped | texture_trait::readback,
+	default_1d = type_1d,
+	mipped_1d = type_1d | flag_mipped,
+	array_1d = type_1d | flag_array,
+	mipped_array_1d = type_1d | flag_array | flag_mipped,
+	render_target_1d = type_1d | usage_render_target,
+	mipped_render_target_1d = type_1d | flag_mipped | usage_render_target,
+	readback_1d = type_1d | usage_readback,
+	mipped_readback_1d = type_1d | flag_mipped | usage_readback,
+	readback_array_1d = type_1d | flag_array | usage_readback,
+	mipped_readback_array_1d = type_1d | flag_array | flag_mipped | usage_readback,
 
 	// "normal" 2D texture.
-	default_2d = texture_trait::_2d,
-	mipped_2d = texture_trait::_2d | texture_trait::mipped,
-	array_2d = texture_trait::_2d | texture_trait::array,
-	mipped_array_2d = texture_trait::_2d | texture_trait::array | texture_trait::mipped,
-	render_target_2d = texture_trait::_2d | texture_trait::render_target,
-	mipped_render_target_2d = texture_trait::_2d | texture_trait::mipped | texture_trait::render_target,
-	readback_2d = texture_trait::_2d | texture_trait::readback,
-	mipped_readback_2d = texture_trait::_2d | texture_trait::mipped | texture_trait::readback,
-	readback_array_2d = texture_trait::_2d | texture_trait::array | texture_trait::readback,
-	mipped_readback_array_2d = texture_trait::_2d | texture_trait::array | texture_trait::mipped | texture_trait::readback,
+	default_2d = type_2d,
+	mipped_2d = type_2d | flag_mipped,
+	array_2d = type_2d | flag_array,
+	mipped_array_2d = type_2d | flag_array | flag_mipped,
+	render_target_2d = type_2d | usage_render_target,
+	mipped_render_target_2d = type_2d | flag_mipped | usage_render_target,
+	readback_2d = type_2d | usage_readback,
+	mipped_readback_2d = type_2d | flag_mipped | usage_readback,
+	readback_array_2d = type_2d | flag_array | usage_readback,
+	mipped_readback_array_2d = type_2d | flag_array | flag_mipped | usage_readback,
 
 	// a "normal" 2D texture, no mips, configured for unordered access. Currently
 	// all GPGPU access to such buffers are one subresource at a time so there is 
 	// no spec that describes unordered access to arbitrary mipped memory.
-	unordered_2d = texture_trait::_2d | texture_trait::unordered,
+	unordered_2d = type_2d | usage_unordered,
 	
 	// 6- 2D slices that form the faces of a cube that is sampled from its center.
-	default_cube = texture_trait::cube,
-	mipped_cube = texture_trait::cube | texture_trait::mipped,
-	array_cube = texture_trait::cube | texture_trait::array,
-	mipped_array_cube = texture_trait::cube | texture_trait::array | texture_trait::mipped,
-	render_target_cube = texture_trait::cube | texture_trait::render_target,
-	mipped_render_target_cube = texture_trait::cube | texture_trait::mipped | texture_trait::render_target,
-	readback_cube = texture_trait::cube | texture_trait::readback,
-	mipped_readback_cube = texture_trait::cube | texture_trait::mipped | texture_trait::readback,
+	default_cube = type_cube,
+	mipped_cube = type_cube | flag_mipped,
+	array_cube = type_cube | flag_array,
+	mipped_array_cube = type_cube | flag_array | flag_mipped,
+	render_target_cube = type_cube | usage_render_target,
+	mipped_render_target_cube = type_cube | flag_mipped | usage_render_target,
+	readback_cube = type_cube | usage_readback,
+	mipped_readback_cube = type_cube | flag_mipped | usage_readback,
 
 	// Series of 2D slices sampled as a volume
-	default_3d = texture_trait::_3d,
-	mipped_3d = texture_trait::_3d | texture_trait::mipped,
-	array_3d = texture_trait::_3d | texture_trait::array,
-	mipped_array_3d = texture_trait::_3d | texture_trait::array | texture_trait::mipped,
-	render_target_3d = texture_trait::_3d | texture_trait::render_target,
-	mipped_render_target_3d = texture_trait::_3d | texture_trait::mipped | texture_trait::render_target,
-	readback_3d = texture_trait::_3d | texture_trait::readback,
-	mipped_readback_3d = texture_trait::_3d | texture_trait::mipped | texture_trait::readback,
+	default_3d = type_3d,
+	mipped_3d = type_3d | flag_mipped,
+	array_3d = type_3d | flag_array,
+	mipped_array_3d = type_3d | flag_array | flag_mipped,
+	render_target_3d = type_3d | usage_render_target,
+	mipped_render_target_3d = type_3d | flag_mipped | usage_render_target,
+	readback_3d = type_3d | usage_readback,
+	mipped_readback_3d = type_3d | flag_mipped | usage_readback,
+
 };}
 
+inline bool is_1d(const texture_type::value& _Type) { return texture_type::type_1d == (_Type & texture_type::type_mask); }
+inline bool is_2d(const texture_type::value& _Type) { return texture_type::type_2d == (_Type & texture_type::type_mask); }
+inline bool is_3d(const texture_type::value& _Type) { return texture_type::type_3d == (_Type & texture_type::type_mask); }
+inline bool is_cube(const texture_type::value& _Type) { return texture_type::type_cube == (_Type & texture_type::type_mask); }
+inline bool is_default(const texture_type::value& _Type) { return texture_type::usage_default == (_Type & texture_type::usage_mask); }
+inline bool is_readback(const texture_type::value& _Type) { return texture_type::usage_readback == (_Type & texture_type::usage_mask); }
+inline bool is_render_target(const texture_type::value& _Type) { return texture_type::usage_render_target == (_Type & texture_type::usage_mask); }
+inline bool is_unordered(const texture_type::value& _Type) { return texture_type::usage_unordered == (_Type & texture_type::usage_mask); }
+inline bool is_mipped(const texture_type::value& _Type) { return 0 != (_Type & texture_type::flag_mipped); }
+inline bool is_array(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_type::flag_array); }
+
+inline texture_type::value get_type(const texture_type::value& _Type) { return (texture_type::value)(_Type & texture_type::type_mask); }
+inline texture_type::value get_usage(const texture_type::value& _Type) { return (texture_type::value)(_Type & texture_type::usage_mask); }
+
+inline texture_type::value make_default(const texture_type::value& _Type) { return (texture_type::value)((_Type & ~texture_type::usage_mask) | texture_type::usage_default); }
+inline texture_type::value make_readback(const texture_type::value& _Type) { return (texture_type::value)((_Type & ~texture_type::usage_mask) | texture_type::usage_readback); }
+inline texture_type::value make_render_target(const texture_type::value& _Type) { return (texture_type::value)((_Type & ~texture_type::usage_mask) | texture_type::usage_render_target); }
+inline texture_type::value make_unordered(const texture_type::value& _Type) { return (texture_type::value)((_Type & ~texture_type::usage_mask) | texture_type::usage_unordered); }
+
+inline texture_type::value add_mipped(const texture_type::value& _Type) { return (texture_type::value)(_Type | texture_type::flag_mipped); }
+inline texture_type::value add_array(const texture_type::value& _Type) { return (texture_type::value)(_Type | texture_type::flag_array); }
+
+inline texture_type::value remove_mipped(const texture_type::value& _Type) { return (texture_type::value)(_Type & ~texture_type::flag_mipped); }
+inline texture_type::value remove_render_target(const texture_type::value& _Type) { return (texture_type::value)(_Type & ~texture_type::usage_render_target); }
+
+struct texture_info
+{
+	texture_info()
+		: type(texture_type::default_2d)
+		, format(surface::b8g8r8a8_unorm)
+		, dimensions(0, 0, 0)
+		, array_size(1)
+	{}
+
+	texture_type::value type;
+	surface::format format;
+	ushort3 dimensions;
+	uint array_size;
+};
+
+namespace clear_type
+{ oDECLARE_SMALL_ENUM(value, uchar) {
+
+	depth,
+	stencil,
+	depth_stencil,
+	color,
+	color_depth,
+	color_stencil,
+	color_depth_stencil,
+
+	count,
+
+};}
+
+struct clear_info
+{
+	clear_info()
+		: depth_clear_value(1.0f)
+		, stencil_clear_value(0)
+	{ clear_color.fill(color(0)); }
+
+	std::array<color, max_num_mrts> clear_color;
+	float depth_clear_value;
+	uchar stencil_clear_value;
+};
+
+struct render_target_info
+{
+	render_target_info()
+		: dimensions(0, 0, 0)
+		, type(texture_type::render_target_2d)
+		, depth_stencil_format(surface::unknown)
+		, mrt_count(1)
+		, array_size(1)
+	{ format.fill(surface::unknown); }
+
+	ushort3 dimensions;
+	texture_type::value type;
+	surface::format depth_stencil_format;
+	ushort mrt_count;
+	ushort array_size;
+	std::array<surface::format, max_num_mrts> format;
+	clear_info clear;
+};
+
+// _____________________________________________________________________________
+// Pipeline concepts
+
 namespace query_type
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
 	timer,
 
@@ -244,7 +493,7 @@ namespace query_type
 };}
 
 namespace surface_state
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
 	// Front-facing is clockwise winding order. Back-facing is counter-clockwise.
 
@@ -260,7 +509,7 @@ namespace surface_state
 };}
 
 namespace depth_stencil_state
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
 	// No depth or stencil operation.
 	none,
@@ -278,7 +527,7 @@ namespace depth_stencil_state
 };}
 
 namespace blend_state
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
 	// Blend mode math from http://en.wikipedia.org/wiki/Blend_modes
 
@@ -297,7 +546,7 @@ namespace blend_state
 };}
 
 namespace sampler_type
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
 	// Use 100% of the texel nearest to the sample point. If the sample is outside 
 	// the texture, use an edge texel.
@@ -364,7 +613,7 @@ namespace sampler_type
 };}
 
 namespace pipeline_stage
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 	
 	vertex,
 	hull,
@@ -375,68 +624,6 @@ namespace pipeline_stage
 	count,
 
 };}
-
-namespace clear_type
-{ oDECLARE_SMALL_ENUM(value, unsigned char) {
-
-	depth,
-	stencil,
-	depth_stencil,
-	color,
-	color_depth,
-	color_stencil,
-	color_depth_stencil,
-
-	count,
-
-};}
-
-struct buffer_info
-{
-	// A constant buffer (view, draw, material). Client code can defined whatever 
-	// value are to be passed to a shader that expects them. struct_byte_size must 
-	// be 16-byte aligned. For unstructured buffers specify size = 0, and provide
-	// a format.
-
-	buffer_info()
-		: type(buffer_type::constant)
-		, format(surface::unknown)
-		, struct_byte_size(0)
-		, array_size(1)
-	{}
-
-	// Specifies the type of the constant buffer. Normally the final buffer size
-	// is struct_byte_size * array_size. If the type is specified as 
-	// unordered_unstructured then StructByteSize must be 0 and the size is 
-	// calculated as (size of Format) * ArraySize.
-	buffer_type::value type;
-
-	// This must be valid for unordered_unstructured types, and surface::unknown 
-	// for all other types.
-	surface::format format;
-
-	// This must be invalid_size for unordered_unstructured types, but valid for 
-	// all other types.
-	ushort struct_byte_size;
-
-	// The number of format elements or structures in the buffer.
-	uint array_size;
-};
-
-struct texture_info
-{
-	texture_info()
-		: type(texture_type::default_2d)
-		, format(ouro::surface::b8g8r8a8_unorm)
-		, dimensions(0, 0, 0)
-		, array_size(1)
-	{}
-
-	texture_type::value type;
-	surface::format format;
-	ushort3 dimensions;
-	uint array_size;
-};
 
 struct basic_pipeline_info
 {
@@ -472,37 +659,6 @@ struct compute_kernel : basic_compute_kernel
 	}
 };
 
-struct clear_info
-{
-	clear_info()
-		: depth_clear_value(1.0f)
-		, stencil_clear_value(0)
-	{ clear_color.fill(color(0)); }
-
-	std::array<color, max_num_mrts> clear_color;
-	float depth_clear_value;
-	uchar stencil_clear_value;
-};
-
-struct render_target_info
-{
-	render_target_info()
-		: type(texture_type::render_target_2d)
-		, depth_stencil_format(surface::unknown)
-		, mrt_count(1)
-		, dimensions(0, 0, 0)
-		, array_size(1)
-	{ format.fill(surface::unknown); }
-
-	texture_type::value type;
-	surface::format depth_stencil_format;
-	ushort mrt_count;
-	ushort3 dimensions;
-	uint array_size;
-	std::array<surface::format, max_num_mrts> format;
-	clear_info clear;
-};
-
 struct query_info
 {
 	query_info()
@@ -518,143 +674,6 @@ struct command_list_info
 
 	short draw_order;
 };
-
-struct device_init
-{
-	device_init(const char* _DebugName = "GPU device")
-		: debug_name(_DebugName)
-		, version(11,0)
-		, min_driver_version(0,0)
-		, driver_debug_level(debug_level::none)
-		, adapter_index(0)
-		, virtual_desktop_position(oDEFAULT, oDEFAULT)
-		, use_software_emulation(false)
-		, use_exact_driver_version(false)
-		, multithreaded(true)
-	{}
-
-	// Name associated with this device in debug output
-	sstring debug_name;
-
-	// The version of the underlying API to use.
-	struct version version;
-
-	// The minimum version of the driver required to successfully create the 
-	// device. If the driver version is 0.0.0.0 (the default) then a hard-coded
-	// internal value is used based on QA verificiation.
-	struct version min_driver_version;
-
-	// Specify to what degree driver warnings/errors are reported. GPU-level 
-	// errors and warnings are always reported.
-	debug_level::value driver_debug_level;
-
-	// If virtual_desktop_position is oDEFAULT, oDEFAULT then use the nth found
-	// device as specified by this Index. If virtual_desktop_position is anything
-	// valid then the device used to handle that desktop position will be used
-	// and adapter_index is ignored.
-	int adapter_index;
-
-	// Position on the desktop and thus on a monitor to be used to determine which 
-	// GPU is used for that monitor and create a device for that GPU.
-	int2 virtual_desktop_position;
-
-	// Allow SW emulation for the specified version. If false, a create will fail
-	// if HW acceleration is not available.
-	bool use_software_emulation;
-
-	// If true, == is used to match min_driver_version to the specified GPU's 
-	// driver. If false cur_version >= min_driver_version is used.
-	bool use_exact_driver_version;
-
-	// If true, the device is thread-safe.
-	bool multithreaded;
-};
-
-struct device_info
-{
-	device_info()
-		: native_memory(0)
-		, dedicated_system_memory(0)
-		, shared_system_memory(0)
-		, adapter_index(0)
-		, api(api::unknown)
-		, vendor(ouro::vendor::unknown)
-		, is_software_emulation(false)
-		, debug_reporting_enabled(false)
-	{}
-
-	// Name associated with this device in debug output
-	sstring debug_name;
-
-	// Description as provided by the device vendor
-	mstring device_description;
-
-	// Description as provided by the driver vendor
-	mstring driver_description;
-
-	// Number of bytes present on the device (AKA VRAM)
-	unsigned long long native_memory;
-
-	// Number of bytes reserved by the system to accommodate data transfer to the 
-	// device
-	unsigned long long dedicated_system_memory;
-
-	// Number of bytes reserved in system memory used instead of a separate bank 
-	// of NativeMemory 
-	unsigned long long shared_system_memory;
-
-	// The version for the software that supports the native API. This depends on 
-	// the API type being used.
-	version driver_version;
-
-	// The feature level the device supports. This depends on the API type being 
-	// used.
-	version feature_version; 
-
-	// The zero-based index of the adapter. This may be different than what is 
-	// specified in device_init in certain debug/development modes.
-	int adapter_index;
-
-	// Describes the API used to implement the oGPU API
-	api::value api;
-
-	// Describes the company that made the device.
-	vendor::value vendor;
-
-	// True if the device was created in software emulation mode.
-	bool is_software_emulation;
-
-	// True if the device was created with debug reporting enabled.
-	bool debug_reporting_enabled;
-};
-
-inline bool is_mipped(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::mipped); }
-inline bool is_readback(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::readback); }
-inline bool is_render_target(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::render_target); }
-inline bool is_array(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::array); }
-inline bool is_1d(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::_1d); }
-inline bool is_2d(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::_2d); }
-inline bool is_3d(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::_3d); }
-inline bool is_cube(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::cube); }
-inline bool is_unordered(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_trait::unordered); }
-
-inline texture_type::value add_readback(const texture_type::value& _Type) { return (texture_type::value)((int)_Type | texture_trait::readback); }
-inline texture_type::value add_mipped(const texture_type::value& _Type) { return (texture_type::value)((int)_Type | texture_trait::mipped); }
-inline texture_type::value add_render_target(const texture_type::value& _Type) { return (texture_type::value)((int)_Type | texture_trait::render_target); }
-inline texture_type::value add_array(const texture_type::value& _Type) { return (texture_type::value)((int)_Type | texture_trait::array); }
-inline texture_type::value get_basic(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & (texture_trait::_1d|texture_trait::_2d|texture_trait::_3d|texture_trait::cube)); }
-
-inline texture_type::value remove_readback(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & ~texture_trait::readback); }
-inline texture_type::value remove_mipped(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & ~texture_trait::mipped); }
-inline texture_type::value remove_render_target(const texture_type::value& _Type) { return (texture_type::value)((int)_Type & ~texture_trait::render_target); }
-
-// Returns a buffer info that will auto-size to 16-bit indices or 32-bit indices depending
-// on the number of vertices.
-buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices);
-
-// Returns a buffer info for the vertex buffer with the specified usage and layout. Only vertex traits matching
-// the specified layout will be described by the buffer info,
-buffer_info make_vertex_buffer_info(uint _NumVertices, const mesh::layout::value& _Layout);
 
 	} // namespace gpu
 } // namespace ouro

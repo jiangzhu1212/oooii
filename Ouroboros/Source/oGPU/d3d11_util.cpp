@@ -844,10 +844,10 @@ template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, boo
 		_pInfo->array_size = 0;
 
 	if (_Desc.Usage == D3D11_USAGE_STAGING)
-		_pInfo->type = gpu::add_readback(_pInfo->type);
+		_pInfo->type = gpu::make_readback(_pInfo->type);
 
 	if (_Desc.BindFlags & (D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL))
-		_pInfo->type = gpu::add_render_target(_pInfo->type);
+		_pInfo->type = gpu::make_render_target(_pInfo->type);
 
 	if (_Desc.BindFlags & D3D11_BIND_UNORDERED_ACCESS)
 	{
@@ -1113,7 +1113,7 @@ new_texture make_texture(ID3D11Device* _pDevice
 	new_texture NewTexture;
 	bool IsShaderResource = false;
 	intrusive_ptr<ID3D11Resource> Texture;
-	switch (gpu::get_basic(_Info.type))
+	switch (gpu::get_type(_Info.type))
 	{
 		case gpu::texture_type::default_1d:
 		{
@@ -1203,7 +1203,7 @@ intrusive_ptr<ID3D11Resource> make_cpu_copy(ID3D11Resource* _pResource)
 			static_cast<ID3D11Buffer*>(_pResource)->GetDesc(&d);
 			d.Usage = D3D11_USAGE_STAGING;
 			d.CPUAccessFlags = /*D3D11_CPU_ACCESS_WRITE|*/D3D11_CPU_ACCESS_READ;
-			d.BindFlags &=~ (D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_STREAM_OUTPUT|D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL);
+			d.BindFlags = 0;
 			oV(D3D11Device->CreateBuffer(&d, nullptr, (ID3D11Buffer**)&CPUCopy));
 			debug_name(CPUCopy, copyName);
 			break;
@@ -1214,7 +1214,7 @@ intrusive_ptr<ID3D11Resource> make_cpu_copy(ID3D11Resource* _pResource)
 		case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
 		{
 			gpu::texture_info i = get_texture_info(_pResource);
-			i.type = gpu::add_readback(i.type);
+			i.type = gpu::make_readback(i.type);
 			new_texture NewTexture = make_texture(D3D11Device, copyName, i, nullptr);
 			CPUCopy = NewTexture.pResource;
 			break;
