@@ -86,11 +86,6 @@ intrusive_ptr<oGPUBuffer> make_index_buffer(oGPUDevice* _pDevice, const char* _N
 intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
 	, uint _NumVertices, const mesh::source& _Source = mesh::source());
 
-// Creates a vertex buffer based on the parameters. If _GetElementData is valid 
-// oGPUCommitVertexBuffer, else only do the creation.
-intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
-	, const oGeometry::DESC& _GeoDesc, const mesh::source& _Source = mesh::source());
-
 // Creates a readback buffer or texture sized to be able to completely contain the 
 // specified source.
 intrusive_ptr<oGPUBuffer> make_readback_copy(oGPUBuffer* _pSource);

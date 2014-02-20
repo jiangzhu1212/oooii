@@ -107,12 +107,6 @@ intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _
 	return VertexBuffer;
 }
 
-intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
-	, const oGeometry::DESC& _GeoDesc, const mesh::source& _Source)
-{
-	return make_vertex_buffer(_pDevice, _Name, _Layout, _GeoDesc.NumVertices, _Source);
-}
-
 intrusive_ptr<oGPUBuffer> make_readback_copy(oGPUBuffer* _pSource)
 {
 	intrusive_ptr<oGPUDevice> Device;
