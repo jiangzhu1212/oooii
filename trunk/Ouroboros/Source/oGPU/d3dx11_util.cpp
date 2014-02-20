@@ -282,7 +282,7 @@ void convert(ID3D11Texture2D* _pSourceTexture, surface::format _NewFormat
 	info.dimensions = ushort3(static_cast<ushort>(desc.Width), static_cast<ushort>(desc.Height), 1);
 	info.array_size = as_ushort(desc.ArraySize);
 	info.format = _NewFormat;
-	info.type = gpu::add_readback(info.type); // @tony: this should probably come from somewhere better.
+	info.type = gpu::make_readback(info.type);
 
 	intrusive_ptr<ID3D11Texture2D> NewTexture = d3d11::make_texture(Device, "convert_temp", info).pTexture2D;
 	intrusive_ptr<ID3D11DeviceContext> ImmediateContext;

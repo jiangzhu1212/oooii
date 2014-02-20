@@ -227,7 +227,7 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 					d.dimensions = New;
 					d.format = Desc.format[i];
 					d.array_size = Desc.array_size;
-					d.type = gpu::add_render_target(Desc.type);
+					d.type = gpu::make_render_target(Desc.type);
 					oVERIFY(Device->CreateTexture(name, d, &Textures[i]));
 					make_rtv(GetName(), static_cast<oD3D11Texture*>(Textures[i].c_ptr())->Texture, RTVs[0]);
 				}

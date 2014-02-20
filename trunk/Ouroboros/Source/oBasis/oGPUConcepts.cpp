@@ -120,27 +120,6 @@ const char* as_string(const gpu::buffer_type::value& _Value)
 
 STR_SUPPORT(gpu::buffer_type::value, gpu::buffer_type::count);
 
-const char* as_string(const gpu::texture_trait::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::texture_trait::cube: return "cube";
-		case gpu::texture_trait::_1d: return "_1d";
-		case gpu::texture_trait::_2d: return "_2d";
-		case gpu::texture_trait::_3d: return "_3d";
-		case gpu::texture_trait::mipped: return "mipped";
-		case gpu::texture_trait::array: return "array";
-		case gpu::texture_trait::readback: return "readback";
-		case gpu::texture_trait::unordered: return "unordered";
-		case gpu::texture_trait::render_target: return "render_target";
-
-		default: break;
-	}
-	return "?";
-}
-
-oDEFINE_TO_STRING(gpu::texture_trait::value);
-
 const char* as_string(const gpu::texture_type::value& _Value)
 {
 	switch (_Value)
@@ -198,15 +177,17 @@ bool from_string(gpu::texture_type::value* _pValue, const char* _StrSource)
 	int traits = 0;
 	while (tok)
 	{
-		if (!_stricmp("1d", tok)) traits |= gpu::texture_trait::_1d;
-		else if (!_stricmp("2d", tok)) traits |= gpu::texture_trait::_2d;
-		else if (!_stricmp("3d", tok)) traits |= gpu::texture_trait::_3d;
-		else if (!_stricmp("cube", tok)) traits |= gpu::texture_trait::cube;
-		else if (!_stricmp("mipped", tok)) traits |= gpu::texture_trait::mipped;
-		else if (!_stricmp("array", tok)) traits |= gpu::texture_trait::array;
-		else if (!_stricmp("readback", tok)) traits |= gpu::texture_trait::readback;
-		else if (!_stricmp("unordered", tok)) traits |= gpu::texture_trait::unordered;
-		else if (!_stricmp("render_target", tok)) traits |= gpu::texture_trait::render_target;
+		int traits = 0;
+		if (!_stricmp("1d", tok)) traits |= gpu::texture_type::type_1d;
+		else if (!_stricmp("2d", tok)) traits |= gpu::texture_type::type_2d;
+		else if (!_stricmp("3d", tok)) traits |= gpu::texture_type::type_3d;
+		else if (!_stricmp("cube", tok)) traits |= gpu::texture_type::type_cube;
+		else if (!_stricmp("default", tok)) traits |= gpu::texture_type::usage_default;
+		else if (!_stricmp("readback", tok)) traits |= gpu::texture_type::usage_readback;
+		else if (!_stricmp("render_target", tok)) traits |= gpu::texture_type::usage_render_target;
+		else if (!_stricmp("unordered", tok)) traits |= gpu::texture_type::usage_unordered;
+		else if (!_stricmp("mipped", tok)) traits |= gpu::texture_type::flag_mipped;
+		else if (!_stricmp("array", tok)) traits |= gpu::texture_type::flag_array;
 
 		tok = strtok_r(nullptr, "_", &ctx);
 	}

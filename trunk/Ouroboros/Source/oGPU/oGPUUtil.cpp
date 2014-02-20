@@ -136,7 +136,7 @@ intrusive_ptr<oGPUTexture> make_readback_copy(oGPUTexture* _pSource)
 	intrusive_ptr<oGPUDevice> Device;
 	_pSource->GetDevice(&Device);
 	texture_info i = _pSource->get_info();
-	i.type = add_readback(i.type);
+	i.type = make_readback(i.type);
 	sstring Name;
 	snprintf(Name, "%s.Readback", _pSource->GetName());
 	return Device->make_texture(Name, i);
@@ -231,7 +231,7 @@ intrusive_ptr<oGPUTexture> make_texture(oGPUDevice* _pDevice, const char* _Name,
 	i.dimensions = int3(si.dimensions.xy(), is_3d(_Type) ? _NumImages : 1);
 	i.array_size = is_array(_Type) || is_cube(_Type) ? static_cast<ushort>(_NumImages) : 0;
 
-	switch (get_basic(_Type))
+	switch (get_type(_Type))
 	{
 		case texture_type::default_1d:
 			if (si.dimensions.y != 1)
