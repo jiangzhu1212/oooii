@@ -151,6 +151,7 @@
     <ClCompile Include="d3d11_util.cpp" />
     <ClCompile Include="d3dx11_util.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
+    <ClCompile Include="gpu.cpp" />
     <ClCompile Include="oD3D11Buffer.cpp" />
     <ClCompile Include="oD3D11CommandList.cpp" />
     <ClCompile Include="oD3D11ComputeShader.cpp" />

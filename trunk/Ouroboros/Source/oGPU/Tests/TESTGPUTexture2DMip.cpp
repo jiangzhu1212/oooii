@@ -26,22 +26,27 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const bool kIsDevMode = false;
 
-struct GPU_Texture2DMip_App : public oGPUTextureTestApp
+struct gpu_test_texture2dmip : public gpu_texture_test
 {
-	GPU_Texture2DMip_App() : oGPUTextureTestApp("GPU_Texture2DMip", kIsDevMode) {}
+	gpu_test_texture2dmip() : gpu_texture_test("GPU test: texture2dmip", kIsDevMode) {}
 
-	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_2D; }
-	bool CreateTexture() override
+	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_2D; }
+	std::shared_ptr<texture> make_test_texture() override
 	{
 		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", surface::alpha_option::force_alpha);
 		auto* p = image.get();
-		Texture = ouro::gpu::make_texture(Device, "Test 2D mipped", &p, 1, ouro::gpu::texture_type::mipped_2d);
-		return true;
+		return make_texture(Device, "Test 2D mipped", &p, 1, texture_type::mipped_2d);
 	}
 };
 
-oDEFINE_GPU_TEST(GPU_Texture2DMip)
+oGPU_COMMON_TEST(texture2dmip);
+
+	} // namespace tests
+} // namespace ouro

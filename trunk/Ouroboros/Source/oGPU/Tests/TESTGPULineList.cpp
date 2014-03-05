@@ -26,7 +26,10 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const int sSnapshotFrames[] = { 0 };
 static const bool kIsDevMode = false;
@@ -45,36 +48,22 @@ struct oGPU_LINE
 	color EndColor;
 };
 
-class GPU_LineList_App : public oGPUTestApp
+class gpu_test_lines : public gpu_test
 {
 public:
-	GPU_LineList_App() : oGPUTestApp("GPU_LineList", kIsDevMode, sSnapshotFrames) {}
+	gpu_test_lines() : gpu_test("GPU test: lines", kIsDevMode, sSnapshotFrames) {}
 
-	bool Initialize()
+	void initialize()
 	{
-		PrimaryRenderTarget->SetClearColor(almost_black);
-
-		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR);
-		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
-			return false;
-
-		gpu::buffer_info i;
-		i.type = gpu::buffer_type::vertex;
-		i.struct_byte_size = sizeof(oGPU_LINE_VERTEX);
-		i.array_size = 6;
-
-		if (!Device->CreateBuffer("LineList", i, &LineList))
-			return false;
-
-		return true;
+		Pipeline = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR));
+		LineList = Device->make_vertex_buffer<oGPU_LINE_VERTEX>("LineList", 6);
 	}
 
-	bool Render()
+	void render()
 	{
-		CommandList->Begin();
+		CommandList->begin();
 
-		ouro::surface::mapped_subresource msr;
-		CommandList->Reserve(LineList, 0, &msr);
+		surface::mapped_subresource msr = CommandList->reserve(LineList, 0);
 		oGPU_LINE* pLines = (oGPU_LINE*)msr.data;
 
 		static const float3 TrianglePoints[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
@@ -93,21 +82,23 @@ public:
 		pLines[2].Start = TrianglePoints[2];
 		pLines[2].End = TrianglePoints[0];
 
-		CommandList->Commit(LineList, 0, msr, ouro::surface::box(6));
+		CommandList->commit(LineList, 0, msr, surface::box(6));
 
-		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
-		CommandList->SetPipeline(Pipeline);
-		CommandList->SetRenderTarget(PrimaryRenderTarget);
-		CommandList->Draw(nullptr, 0, 1, &LineList, 0, 3);
-		CommandList->End();
-		return true;
+		CommandList->clear(PrimaryRenderTarget, gpu::clear_type::color_depth_stencil);
+		CommandList->set_blend_state(gpu::blend_state::opaque);
+		CommandList->set_depth_stencil_state(gpu::depth_stencil_state::none);
+		CommandList->set_pipeline(Pipeline);
+		CommandList->set_render_target(PrimaryRenderTarget);
+		CommandList->draw(nullptr, 0, 1, &LineList, 0, 3);
+		CommandList->end();
 	}
 
 private:
-	intrusive_ptr<oGPUPipeline> Pipeline;
-	intrusive_ptr<oGPUBuffer> LineList;
+	std::shared_ptr<pipeline> Pipeline;
+	std::shared_ptr<buffer> LineList;
 };
 
-oDEFINE_GPU_TEST(GPU_LineList)
+oGPU_COMMON_TEST(lines);
+
+	} // namespace tests
+} // namespace ouro

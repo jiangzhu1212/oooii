@@ -126,6 +126,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oGPU\tests\oGPUTests.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="Tests\oGPUTestCommon.h" />
     <ClInclude Include="Tests\oGPUTestHLSL.h" />

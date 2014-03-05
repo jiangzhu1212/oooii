@@ -22,43 +22,37 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
 #include <oGPU/oGPU.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
 
-struct GPU_Query : public oTest
+namespace ouro {
+	namespace tests {
+
+void TESTquery()
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
+	device_init init("GPU Query");
+	init.driver_debug_level = gpu::debug_level::normal;
+	init.version = version(10,0);
+	std::shared_ptr<device> d = device::make(init);
+
+	command_list* icl = d->immediate();
+
+	// Test timer
 	{
-		oGPUDevice::INIT init("GPU_Query");
-		init.driver_debug_level = gpu::debug_level::normal;
-		intrusive_ptr<oGPUDevice> Device;
-		oTESTB0(oGPUDeviceCreate(init, &Device));
+		query_info i;
+		i.type = query_type::timer;
+		std::shared_ptr<query> q = d->make_query("Timer", i);
 
-		intrusive_ptr<oGPUCommandList> ICL;
-		Device->GetImmediateCommandList(&ICL);
+		icl->begin_query(q);
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+		icl->end_query(q);
 
-		// Test timer
-		{
-			intrusive_ptr<oGPUQuery> Query;
-
-			oGPUQuery::DESC QueryDesc;
-			QueryDesc.type = ouro::gpu::query_type::timer;
-			
-			oTESTB0(Device->CreateQuery("Timer", QueryDesc, &Query));
-
-			ICL->BeginQuery(Query);
-			std::this_thread::sleep_for(std::chrono::seconds(1));
-			ICL->EndQuery(Query);
-
-			double SecondsPast = 0.0;
-			oTESTB0(Device->ReadQuery(Query, &SecondsPast));
-			oTESTB(SecondsPast > 0.0, "No time past!");
-		}
-
-		return SUCCESS;
+		double SecondsPast = 0.0;
+		d->read_query(q, &SecondsPast);
+		oCHECK(SecondsPast > 0.0, "No time past!");
 	}
-};
+}
 
-oTEST_REGISTER(GPU_Query);
+	} // namespace tests
+} // namespace ouro

@@ -74,11 +74,25 @@ public:
 
 	std::shared_ptr<char> load_buffer(const char* _Path, size_t* _pSize = nullptr) override
 	{
-		path FullPath = filesystem::data_path() / _Path;
-		return filesystem::load(FullPath, _pSize);
+		std::shared_ptr<char> b;
+		try
+		{
+			b = filesystem::load(_Path, _pSize);
+		}
+
+		catch (std::system_error& e)
+		{
+			if (e.code() != std::errc::no_such_file_or_directory)
+				throw;
+
+			path FullPath = filesystem::data_path() / _Path;
+			b = filesystem::load(FullPath, _pSize);
+		}
+		return b;
 	}
 
 	bool is_debugger_attached() const override { return this_process::has_debugger_attached(); }
+	bool is_remote_session() const override { return system::is_remote_session(); }
 
 	size_t total_physical_memory() const override
 	{

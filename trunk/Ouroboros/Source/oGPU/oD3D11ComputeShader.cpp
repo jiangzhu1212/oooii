@@ -24,29 +24,25 @@
  **************************************************************************/
 #include "oD3D11ComputeShader.h"
 #include "oD3D11Device.h"
-#include <oCore/windows/win_util.h>
 
-using namespace ouro::d3d11;
+oGPU_NAMESPACE_BEGIN
 
-oDEFINE_GPUDEVICE_CREATE(oD3D11, ComputeShader);
-oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, ComputeShader)
-	, DebugName(_Desc.debug_name)
+oDEFINE_DEVICE_MAKE(compute_kernel)
+oDEVICE_CHILD_CTOR(compute_kernel)
+	, DebugName(_Info.debug_name)
 {
-	*_pSuccess = false;
-	if (!_Desc.cs)
-	{
-		oErrorSetLast(std::errc::invalid_argument, "A buffer of valid compute shader bytecode must be specified");
-		return;
-	}
-
-	oD3D11DEVICE();
-	oV(D3DDevice->CreateComputeShader(_Desc.cs, byte_code_size(_Desc.cs), nullptr, &ComputeShader));
-	debug_name(ComputeShader, _Desc.debug_name);
-	*_pSuccess = true;
+	if (!_Info.cs)
+		oTHROW_INVARG("A buffer of valid compute shader bytecode must be specified");
+	oD3D11_DEVICE();
+	ComputeShader = make_compute_kernel(D3DDevice, _Info.cs, _Info.debug_name);
 }
 
-void oD3D11ComputeShader::GetDesc(DESC* _pDesc) const threadsafe
+compute_kernel_info d3d11_compute_kernel::get_info() const
 {
-	_pDesc->debug_name = DebugName;
-	_pDesc->cs = nullptr;
+	compute_kernel_info i;
+	i.debug_name = DebugName;
+	i.cs = nullptr;
+	return i;
 }
+
+oGPU_NAMESPACE_END

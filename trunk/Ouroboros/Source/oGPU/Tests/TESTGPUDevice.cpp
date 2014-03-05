@@ -22,40 +22,38 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
 #include <oGPU/oGPU.h>
 
-using namespace ouro;
+#include "../../test_services.h"
 
-struct GPU_Device : public oTest
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
+
+void TESTdevice(test_services& _Services)
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		oGPUDevice::INIT init("GPU_Device");
-		init.version = version(10,0); // for more compatibility when running on varied machines
-		intrusive_ptr<oGPUDevice> Device;
-		oTESTB0(oGPUDeviceCreate(init, &Device));
+	device_init init("GPU device");
+	init.driver_debug_level = debug_level::normal;
+	init.version = version(10,0); // for more compatibility when running on varied machines
+	std::shared_ptr<device> d = device::make(init);
+	device_info i = d->get_info();
 
-		oGPUDevice::DESC info;
-		Device->GetDesc(&info);
+	oCHECK(i.adapter_index == 0, "Index is incorrect");
+	oCHECK(i.feature_version >= version(9,0), "Invalid version retrieved");
+	sstring VRAMSize, SharedSize, IVer, FVer, DVer;
+	format_bytes(VRAMSize, i.native_memory, 1);
+	format_bytes(SharedSize, i.shared_system_memory, 1);
+	_Services.report("%s %s %s %s (%s shared) running on %s v%s drivers (%s)"
+		, i.device_description.c_str()
+		, as_string(i.api)
+		, to_string2(FVer, i.feature_version)
+		, VRAMSize.c_str()
+		, SharedSize.c_str()
+		, as_string(i.vendor)
+		, to_string2(DVer, i.driver_version)
+		, i.driver_description.c_str());
+}
 
-		oTESTB(info.adapter_index == 0, "Index is incorrect");
-		oTESTB(info.feature_version >= version(9,0), "Invalid version retrieved");
-		sstring VRAMSize, SharedSize, IVer, FVer, DVer;
-		format_bytes(VRAMSize, info.native_memory, 1);
-		format_bytes(SharedSize, info.shared_system_memory, 1);
-		snprintf(_StrStatus, _SizeofStrStatus, "%s %s %s %s (%s shared) running on %s v%s drivers (%s)"
-			, info.device_description.c_str()
-			, ouro::as_string(info.api)
-			, to_string2(FVer, info.feature_version)
-			, VRAMSize.c_str()
-			, SharedSize.c_str()
-			, ouro::as_string(info.vendor)
-			, to_string2(DVer, info.driver_version)
-			, info.driver_description.c_str());
-
-		return SUCCESS;
-	}
-};
-
-oTEST_REGISTER(GPU_Device);
+	} // namespace tests
+} // namespace ouro

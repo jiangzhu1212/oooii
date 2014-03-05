@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oGPUConcepts.h>
+#include <oGPU/oGPU.h>
 
 #define STR_SUPPORT(_T, _NumTs) \
 	oDEFINE_TO_STRING(_T) \

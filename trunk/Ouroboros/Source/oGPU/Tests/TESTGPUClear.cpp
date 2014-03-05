@@ -30,25 +30,30 @@
 
 #include <oGUI/window.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const int sSnapshotFrames[] = { 0, 1 };
 static const bool kIsDevMode = false;
 
-class GPU_Clear_App : public oGPUTestApp
+class gpu_test_clear : public gpu_test
 {
 public:
-	GPU_Clear_App() : oGPUTestApp("GPU_Clear", kIsDevMode, sSnapshotFrames) {}
+	gpu_test_clear() : gpu_test("GPU test: clear", kIsDevMode, sSnapshotFrames) {}
 
-	bool Render() override
+	void render() override
 	{
 		static color sClearColors[] = { lime, white };
-		PrimaryRenderTarget->SetClearColor(sClearColors[Device->GetFrameID() % oCOUNTOF(sClearColors)]);
-		CommandList->Begin();
-		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-		CommandList->End();
-		return true;
+		PrimaryRenderTarget->set_clear_color(sClearColors[Device->frame_id() % oCOUNTOF(sClearColors)]);
+		CommandList->begin();
+		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
+		CommandList->end();
 	}
 };
 
-oDEFINE_GPU_TEST(GPU_Clear)
+oGPU_COMMON_TEST(clear);
+
+	} // namespace tests
+} // namespace ouro

@@ -44,12 +44,12 @@ interface oGfxMosaic : oInterface
 
 	virtual bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const ouro::rect* _AdditionalSourceImageSpaces, const ouro::rect* const* _pAdditionalSourceRectArrays) = 0;
 	inline bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc) { return Rebuild(_Desc, 0, nullptr, nullptr); }
-	virtual void SetBlendState(ouro::gpu::blend_state::value _BlendState) = 0; // will be ouro::gpu::blend_state::opaque by default
+	virtual void set_blend_state(ouro::gpu::blend_state::value _BlendState) = 0; // will be ouro::gpu::blend_state::opaque by default
 
-	virtual void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const oGPUTexture* const* _ppTextures) = 0;
-	inline void Draw(oGPUCommandList* _pCommandList, oGPURenderTarget* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const ouro::intrusive_ptr<oGPUTexture>* _ppTextures) { Draw(_pCommandList, _pRenderTarget, _TextureStartSlot, _NumTextures, (const oGPUTexture* const*)_ppTextures); }
+	virtual void Draw(ouro::gpu::command_list* _pCommandList, ouro::gpu::render_target* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const ouro::gpu::texture* const* _ppTextures) = 0;
+	inline void Draw(ouro::gpu::command_list* _pCommandList, ouro::gpu::render_target* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const std::shared_ptr<ouro::gpu::texture>* _ppTextures) { Draw(_pCommandList, _pRenderTarget, _TextureStartSlot, _NumTextures, (const ouro::gpu::texture* const*)_ppTextures); }
 };
 
-ouro::intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(oGPUDevice* _pDevice, const ouro::gpu::pipeline_info& _Info);
+ouro::intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(ouro::gpu::device* _pDevice, const ouro::gpu::pipeline_info& _Info);
 
 #endif

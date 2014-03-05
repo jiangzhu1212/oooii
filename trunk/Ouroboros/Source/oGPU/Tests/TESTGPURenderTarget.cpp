@@ -28,72 +28,56 @@
 
 #include <oBasis/oMath.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const int sSnapshotFrames[] = { 0, 50 };
 static const bool kIsDevMode = false;
 
-struct GPU_RenderTarget_App : public oGPUTestApp
+struct gpu_test_render_target : public gpu_test
 {
-	GPU_RenderTarget_App() : oGPUTestApp("GPU_RenderTarget", kIsDevMode, sSnapshotFrames) {}
+	gpu_test_render_target() : gpu_test("GPU test: render_target", kIsDevMode, sSnapshotFrames) {}
 
-	bool Initialize() override
+	void initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(almost_black);
+		command_list_info i;
+		
+		i.draw_order = 1;
+		CLMainScene = Device->make_command_list("CLMainScene", i);
 
-		oGPUCommandList::DESC cld;
-		cld.draw_order = 1;
+		i.draw_order = 0;
+		CLRenderTarget = Device->make_command_list("CLRenderTarget", i);
+		TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
+		PLPassThrough = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
+		Triangle = make_first_triangle(Device);
+		PLTexture = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D));
+		Cube = make_first_cube(Device);
 
-		if (!Device->CreateCommandList("CLMainScene", cld, &CLMainScene))
-			return false;
-
-		cld.draw_order = 0;
-		if (!Device->CreateCommandList("CLRenderTarget", cld, &CLRenderTarget))
-			return false;
-
-		oGPUBuffer::DESC DCDesc;
-		DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
-		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
-			return false;
-
-		oGPUPipeline::DESC PassThroughDesc = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH);
-
-		if (!Device->CreatePipeline(PassThroughDesc.debug_name, PassThroughDesc, &PLPassThrough))
-			return false;
-
-		Triangle = ouro::gpu::make_first_triangle(Device);
-
-		oGPUPipeline::DESC TextureDesc = oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D);
-		if (!Device->CreatePipeline(TextureDesc.debug_name, TextureDesc, &PLTexture))
-			return false;
-
-		Cube = ouro::gpu::make_first_cube(Device);
-
-		ouro::gpu::clear_info ci;
+		clear_info ci;
 		ci.clear_color[0] = deep_sky_blue;
 
-		oGPURenderTarget::DESC rtd;
-		rtd.dimensions = ushort3(256, 256, 1);
-		rtd.array_size = 1;
-		rtd.mrt_count = 1;
-		rtd.format[0] = ouro::surface::b8g8r8a8_unorm;
-		rtd.depth_stencil_format = ouro::surface::d24_unorm_s8_uint;
-		rtd.clear = ci;
-		if (!Device->CreateRenderTarget("RenderTarget", rtd, &RenderTarget))
-			return false;
-
-		return true;
+		{
+			render_target_info i;
+			i.dimensions = ushort3(256, 256, 1);
+			i.array_size = 1;
+			i.mrt_count = 1;
+			i.format[0] = surface::b8g8r8a8_unorm;
+			i.depth_stencil_format = surface::d24_unorm_s8_uint;
+			i.clear = ci;
+			RenderTarget = Device->make_render_target("RenderTarget", i);
+		}
 	}
 
-	bool Render() override
+	void render() override
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-		oGPURenderTarget::DESC RTDesc;
-		PrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
+		render_target_info RTI = PrimaryRenderTarget->get_info();
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
 
-		float rotationStep = Device->GetFrameID() * 1.0f;
+		float rotationStep = Device->frame_id() * 1.0f;
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
 		// DrawOrder should be respected in out-of-order submits, so show that here
@@ -101,66 +85,64 @@ struct GPU_RenderTarget_App : public oGPUTestApp
 		// draw order of the command lists defines the render target before the 
 		// main scene, this should come out as a cube with a triangle texture.
 
-		intrusive_ptr<oGPUTexture> Texture;
-		RenderTarget->GetTexture(0, &Texture);
+		std::shared_ptr<texture> Texture = RenderTarget->get_texture(0);
 
-		RenderMainScene(CLMainScene, Texture, PrimaryRenderTarget);
-		RenderToTarget(CLRenderTarget, RenderTarget);
-		return true;
+		render_main_scene(CLMainScene.get(), Texture.get(), PrimaryRenderTarget.get());
+		render_to_target(CLRenderTarget.get(), RenderTarget.get());
 	}
 
 private:
-	intrusive_ptr<oGPUCommandList> CLMainScene;
-	intrusive_ptr<oGPUCommandList> CLRenderTarget;
-	intrusive_ptr<oGPUPipeline> PLPassThrough;
-	intrusive_ptr<oGPUPipeline> PLTexture;
-	intrusive_ptr<oGPURenderTarget> RenderTarget;
-	std::shared_ptr<ouro::gpu::util_mesh> Cube;
-	std::shared_ptr<ouro::gpu::util_mesh> Triangle;
-	intrusive_ptr<oGPUBuffer> TestConstants;
+	std::shared_ptr<command_list> CLMainScene;
+	std::shared_ptr<command_list> CLRenderTarget;
+	std::shared_ptr<pipeline> PLPassThrough;
+	std::shared_ptr<pipeline> PLTexture;
+	std::shared_ptr<render_target> RenderTarget;
+	std::shared_ptr<util_mesh> Cube;
+	std::shared_ptr<util_mesh> Triangle;
+	std::shared_ptr<buffer> TestConstants;
 
-	void RenderToTarget(oGPUCommandList* _pCommandList, oGPURenderTarget* _pTarget)
+	void render_to_target(command_list* _pCommandList, render_target* _pTarget)
 	{
-		_pCommandList->Begin();
-		_pCommandList->Clear(_pTarget, ouro::gpu::clear_type::color_depth_stencil);
-		_pCommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		_pCommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
-		_pCommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
-		_pCommandList->SetPipeline(PLPassThrough);
-		_pCommandList->SetRenderTarget(_pTarget);
+		_pCommandList->begin();
+		_pCommandList->clear(_pTarget, clear_type::color_depth_stencil);
+		_pCommandList->set_blend_state(blend_state::opaque);
+		_pCommandList->set_depth_stencil_state(depth_stencil_state::none);
+		_pCommandList->set_surface_state(surface_state::front_face);
+		_pCommandList->set_pipeline(PLPassThrough);
+		_pCommandList->set_render_target(_pTarget);
 		Triangle->draw(_pCommandList);
-		_pCommandList->End();
+		_pCommandList->end();
 	}
 
-	void RenderMainScene(oGPUCommandList* _pCommandList, oGPUTexture* _pTexture, oGPURenderTarget* _pTarget)
+	void render_main_scene(command_list* _pCommandList, texture* _pTexture, render_target* _pTarget)
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-		oGPURenderTarget::DESC RTDesc;
-		_pTarget->GetDesc(&RTDesc);
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
+		render_target_info RTI = PrimaryRenderTarget->get_info();
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
 
-		float rotationStep = Device->GetFrameID() * 1.0f;
+		float rotationStep = Device->frame_id() * 1.0f;
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-		_pCommandList->Begin();
+		_pCommandList->begin();
 
-		ouro::gpu::commit_buffer(_pCommandList, TestConstants, oGPUTestConstants(W, V, P, white));
+		commit_buffer(_pCommandList, TestConstants.get(), oGPUTestConstants(W, V, P, white));
 
-		_pCommandList->Clear(_pTarget, ouro::gpu::clear_type::color_depth_stencil);
-		_pCommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		_pCommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::test_and_write);
-		_pCommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
-		_pCommandList->SetBuffers(0, 1, &TestConstants);
-		ouro::gpu::sampler_type::value s = ouro::gpu::sampler_type::linear_wrap;
-		_pCommandList->SetSamplers(0, 1, &s);
-		_pCommandList->SetShaderResources(0, 1, &_pTexture);
-		_pCommandList->SetPipeline(PLTexture);
-		_pCommandList->SetRenderTarget(_pTarget);
+		_pCommandList->clear(_pTarget, clear_type::color_depth_stencil);
+		_pCommandList->set_blend_state(blend_state::opaque);
+		_pCommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
+		_pCommandList->set_surface_state(surface_state::front_face);
+		_pCommandList->set_buffer(0, TestConstants);
+		_pCommandList->set_sampler(0, sampler_type::linear_wrap);
+		_pCommandList->set_shader_resource(0, _pTexture);
+		_pCommandList->set_pipeline(PLTexture);
+		_pCommandList->set_render_target(_pTarget);
 		Cube->draw(_pCommandList);
-
-		_pCommandList->End();
+		_pCommandList->end();
 	}
 };
 
-oDEFINE_GPU_TEST(GPU_RenderTarget)
+oGPU_COMMON_TEST(render_target);
+
+	} // namespace tests
+} // namespace ouro

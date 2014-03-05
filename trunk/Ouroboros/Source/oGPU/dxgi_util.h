@@ -81,6 +81,12 @@ namespace ouro {
 	// pass-thru to all three output values.
 	void get_compatible_formats(DXGI_FORMAT _DesiredFormat, DXGI_FORMAT* _pTextureFormat = nullptr, DXGI_FORMAT* _pDepthStencilViewFormat = nullptr, DXGI_FORMAT* _pShaderResourceViewFormat = nullptr);
 
+	// Does some extra sanity checking
+	void set_fullscreen_exclusive(IDXGISwapChain* _pSwapChain, bool _FullscreenExclusive);
+
+	// Does some extra sanity checking
+	void present(IDXGISwapChain* _pSwapChain, uint _PresentInterval);
+
 	} // namespace dxgi
 } // namespace ouro
 

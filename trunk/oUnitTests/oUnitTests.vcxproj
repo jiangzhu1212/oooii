@@ -189,6 +189,7 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCompute.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGPU.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGUI.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMesh.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp" />

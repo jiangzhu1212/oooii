@@ -26,46 +26,43 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const int sSnapshotFrames[] = { 0 };
 static const bool kIsDevMode = false;
 
-struct GPU_Triangle_App : public oGPUTestApp
+struct gpu_test_triangle : public gpu_test
 {
-	GPU_Triangle_App() : oGPUTestApp("GPU_Triangle", kIsDevMode, sSnapshotFrames) {}
+	gpu_test_triangle() : gpu_test("GPU test: triangle", kIsDevMode, sSnapshotFrames) {}
 
-	bool Initialize() override
+	void initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(almost_black);
-
-		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH);
-
-		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
-			return false;
-
-		Mesh = ouro::gpu::make_first_triangle(Device);
-
-		return true;
+		Pipeline = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
+		Mesh = make_first_triangle(Device);
 	}
 
-	bool Render() override
+	void render() override
 	{
-		CommandList->Begin();
-		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
-		CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
-		CommandList->SetPipeline(Pipeline);
-		CommandList->SetRenderTarget(PrimaryRenderTarget);
+		CommandList->begin();
+		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
+		CommandList->set_blend_state(blend_state::opaque);
+		CommandList->set_depth_stencil_state(depth_stencil_state::none);
+		CommandList->set_surface_state(surface_state::front_face);
+		CommandList->set_pipeline(Pipeline);
+		CommandList->set_render_target(PrimaryRenderTarget);
 		Mesh->draw(CommandList);
-		CommandList->End();
-		return true;
+		CommandList->end();
 	}
 
 private:
-	intrusive_ptr<oGPUPipeline> Pipeline;
-	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
+	std::shared_ptr<pipeline> Pipeline;
+	std::shared_ptr<util_mesh> Mesh;
 };
 
-oDEFINE_GPU_TEST(GPU_Triangle)
+oGPU_COMMON_TEST(triangle);
+
+	} // namespace tests
+} // namespace ouro

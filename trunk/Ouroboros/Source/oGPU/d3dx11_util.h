@@ -28,12 +28,13 @@
 #define oGPU_d3dx11_util_h
 
 #include <oSurface/buffer.h>
-#include <oBasis/oGPUConcepts.h>
+#include <oGPU/oGPU.h>
 #include <oCore/windows/win_util.h>
 #include <d3dx11.h>
 
 namespace ouro {
-	namespace d3dx11 {
+	namespace gpu {
+		namespace d3dx11 {
 
 // Returns an IFF based on the extension specified in the file path
 D3DX11_IMAGE_FILE_FORMAT from_path(const path& _Path);
@@ -79,7 +80,8 @@ void convert(ID3D11Device* _pDevice
 	, surface::format _SourceFormat
 	, const int2& _MipDimensions);
 
-	} // namespace d3dx11
+		} // namespace d3dx11
+	} // namespace gpu
 } // namespace ouro
 
 #endif

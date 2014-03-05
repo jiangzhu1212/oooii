@@ -142,7 +142,8 @@ const char* as_string(const D3D11_USAGE& _Usage)
 	return "?";
 }
 
-	namespace d3d11 {
+	namespace gpu {
+		namespace d3d11 {
 
 static bool muting_infos_or_state_creation(ID3D11Device* _pDevice)
 {
@@ -162,7 +163,7 @@ static bool muting_infos_or_state_creation(ID3D11Device* _pDevice)
 			return true;
 #endif
 
-	return false;
+	return true;
 }
 
 static void trace_debug_name(ID3D11Device* _pDevice, const char* _Name)
@@ -175,7 +176,10 @@ void debug_name(ID3D11Device* _pDevice, const char* _Name)
 {
 	unsigned int CreationFlags = _pDevice->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-		oV(_pDevice->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<unsigned int>(strlen(_Name) + 1), _Name));
+	{
+		sstring Buffer(_Name); // if strings aren't the same size, D3D issues a warning
+		oV(_pDevice->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Buffer.capacity()), Buffer.c_str()));
+	}
 	trace_debug_name(_pDevice, _Name);
 }
 
@@ -196,7 +200,10 @@ void debug_name(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
 	_pDeviceChild->GetDevice(&Device);
 	unsigned int CreationFlags = Device->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-		oV(_pDeviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<unsigned int>(strlen(_Name) + 1), _Name));
+	{
+		sstring Buffer(_Name); // if strings aren't the same size, D3D issues a warning
+		oV(_pDeviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Buffer.capacity()), Buffer.c_str()));
+	}
 	trace_debug_name(Device, _Name);
 }
 
@@ -744,9 +751,10 @@ bool supports_deferred_contexts(ID3D11Device* _pDevice)
 
 void update_subresource(ID3D11DeviceContext* _pDeviceContext
 	, ID3D11Resource* _pDstResource
-	, unsigned int _DstSubresource
+	, uint _DstSubresource
 	, const D3D11_BOX* _pDstBox
-	, const surface::const_mapped_subresource& _Source, bool _DeviceSupportsDeferredContexts)
+	, const surface::const_mapped_subresource& _Source
+	, bool _DeviceSupportsDeferredContexts)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
 	gpu::texture_info info = get_texture_info(_pDstResource, false, &Usage);
@@ -1475,7 +1483,7 @@ bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _Sizeo
 void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, unsigned int _Subresource, surface::mapped_subresource* _pMappedResource)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
-	ouro::gpu::texture_info d;
+	texture_info d;
 	oD3D11GetTextureDesc(_pResource, &d, &Usage);
 
 	switch (Usage)
@@ -1501,7 +1509,7 @@ void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource*
 void oD3D11Unmap(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, unsigned int _Subresource, surface::mapped_subresource& _MappedResource)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
-	ouro::gpu::texture_info d;
+	texture_info d;
 	oD3D11GetTextureDesc(_pResource, &d, &Usage);
 	switch (Usage)
 	{
@@ -1893,5 +1901,6 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 }
 #endif
 
-	} // namespace d3d11
+		} // namespace d3d11
+	} // namespace gpu
 } // namespace ouro

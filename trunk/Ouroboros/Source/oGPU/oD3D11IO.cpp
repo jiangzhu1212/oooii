@@ -31,8 +31,9 @@
 #include "d3dx11_util.h"
 
 using namespace ouro;
-using namespace ouro::d3d11;
-using namespace ouro::d3dx11;
+using namespace ouro::gpu;
+using namespace ouro::gpu::d3d11;
+using namespace ouro::gpu::d3dx11;
 
 #if 0
 static char* oStrTokToSwitches(char* _StrDestination
@@ -82,11 +83,11 @@ bool oGPUCompileShader(
 	, const char* _ShaderPath
 	, const char* _EntryPoint
 	, const char* _ShaderBody
-	, oBuffer** _ppByteCode
-	, oBuffer** _ppErrors)
+	, struct oBuffer** _ppByteCode
+	, struct oBuffer** _ppErrors)
 {
 #if 1
-	return oErrorSetLast(std::errc::not_supported);
+	oTHROW0(not_supported);
 #else
 
 	xxlstring IncludeSwitches, DefineSwitches;
@@ -136,6 +137,7 @@ bool oGPUCompileShader(
 	return true;
 #endif
 }
+#if 0
 
 bool oGPUSurfaceConvert(
 	void* oRESTRICT _pDestination
@@ -171,18 +173,17 @@ bool oGPUSurfaceConvert(
 	return true;
 }
 
-bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, ouro::surface::format _NewFormat, oGPUTexture** _ppDestinationTexture)
+bool oGPUSurfaceConvert(texture* _pSourceTexture, surface::format _NewFormat, texture** _ppDestinationTexture)
 {
 	intrusive_ptr<ID3D11Texture2D> D3DDestinationTexture;
-	convert(static_cast<oD3D11Texture*>(_pSourceTexture)->Texture, _NewFormat, &D3DDestinationTexture);
+	convert(static_cast<d3d11_texture*>(_pSourceTexture)->pTexture2D, _NewFormat, &D3DDestinationTexture);
 
-	intrusive_ptr<oGPUDevice> Device;
-	_pSourceTexture->GetDevice(&Device);
+	std::shared_ptr<device> Device = _pSourceTexture->get_device();
 
-	oGPUTexture::DESC d = get_texture_info(D3DDestinationTexture);
+	texture_info i = get_texture_info(D3DDestinationTexture);
 
 	bool success = false;
-	oCONSTRUCT(_ppDestinationTexture, oD3D11Texture(Device, d, _pSourceTexture->GetName(), &success, D3DDestinationTexture));
+	oCONSTRUCT(_ppDestinationTexture, oD3D11Texture(Device, i, _pSourceTexture->name(), D3DDestinationTexture));
 	return success;
 }
 
@@ -239,3 +240,4 @@ bool oGPUTextureSave(oGPUTexture* _pTexture, oGPU_FILE_FORMAT _Format, const cha
 	save(static_cast<oD3D11Texture*>(_pTexture)->Texture, _Path);
 	return true;
 }
+#endif

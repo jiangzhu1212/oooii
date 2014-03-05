@@ -23,31 +23,28 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oD3D11Pipline_h
-#define oD3D11Pipline_h
+#ifndef oGPU_pipeline_h
+#define oGPU_pipeline_h
 
 #include "oGPUCommon.h"
-#include "d3d11.h"
 
-// {772E2A04-4C2D-447A-8DA8-91F258EFA68C}
-oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Pipeline, 0x772e2a04, 0x4c2d, 0x447a, 0x8d, 0xa8, 0x91, 0xf2, 0x58, 0xef, 0xa6, 0x8c)
+oGPU_NAMESPACE_BEGIN
+
+oDEVICE_CHILD_CLASS(pipeline)
 {
-	oDEFINE_GPUDEVICECHILD_INTERFACE();
-	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline);
-	~oD3D11Pipeline();
-
-	void GetDesc(DESC* _pDesc) const threadsafe override;
-
-	ouro::intrusive_ptr<ID3D11InputLayout> InputLayout;
-	ouro::intrusive_ptr<ID3D11VertexShader> VertexShader;
-	ouro::intrusive_ptr<ID3D11HullShader> HullShader;
-	ouro::intrusive_ptr<ID3D11DomainShader> DomainShader;
-	ouro::intrusive_ptr<ID3D11GeometryShader> GeometryShader;
-	ouro::intrusive_ptr<ID3D11PixelShader> PixelShader;
+	oDEVICE_CHILD_DECLARATION(pipeline)
+	pipeline_info get_info() const override;
+	intrusive_ptr<ID3D11InputLayout> InputLayout;
+	intrusive_ptr<ID3D11VertexShader> VertexShader;
+	intrusive_ptr<ID3D11HullShader> HullShader;
+	intrusive_ptr<ID3D11DomainShader> DomainShader;
+	intrusive_ptr<ID3D11GeometryShader> GeometryShader;
+	intrusive_ptr<ID3D11PixelShader> PixelShader;
 	D3D_PRIMITIVE_TOPOLOGY InputTopology;
-	
-	ouro::mesh::layout_array VertexLayouts;
-	ouro::sstring DebugName;
+	mesh::layout_array VertexLayouts;
+	sstring DebugName;
 };
+
+oGPU_NAMESPACE_END
 
 #endif

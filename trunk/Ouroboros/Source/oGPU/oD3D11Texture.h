@@ -23,29 +23,36 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oD3D11Texture_h
-#define oD3D11Texture_h
+#ifndef oGPU_Texture_h
+#define oGPU_Texture_h
 
-#include <oGPU/oGPU.h>
 #include "oGPUCommon.h"
-#include "d3d11.h"
 
-// {75D2C3FA-A10C-48C2-ABCA-4CB84F4C447B}
-oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Texture, ouro::gpu::resource_type::texture, 0x75d2c3fa, 0xa10c, 0x48c2, 0xab, 0xca, 0x4c, 0xb8, 0x4f, 0x4c, 0x44, 0x7b)
+oGPU_NAMESPACE_BEGIN
+
+oRESOURCE_CLASS(texture)
 {
-	oDEFINE_GPURESOURCE_INTERFACE();
-	//oDECLARE_GPURESOURCE_CTOR(oD3D11, Texture);
-	oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess, ID3D11Resource* _pTexture = nullptr);
+	//oRESOURCE_DECLARATION(oD3D11, Texture);
+public:
+	oRESOURCE_INTERFACE__
+	d3d11_texture(std::shared_ptr<device>& _Device, const char* _Name, const texture_info& _Info, ID3D11Resource* _pTexture = nullptr);
+	~d3d11_texture();
 
-	ouro::intrusive_ptr<ID3D11Texture2D> Texture;
-	ouro::intrusive_ptr<ID3D11ShaderResourceView> SRV;
-	ouro::intrusive_ptr<ID3D11UnorderedAccessView> UAV;
+	union //intrusive_ptr<ID3D11Texture2D> Texture;
+	{
+		ID3D11Resource* pResource;
+		ID3D11Texture1D* pTexture1D;
+		ID3D11Texture2D* pTexture2D;
+		ID3D11Texture3D* pTexture3D;
+	};
 
-	// Texture2 is used to emulate YUV aniso-sized formats. As DXGI specs more YUV
-	// formats and HW supports them, this might get used less, but there are still
-	// formats OOOii requires not on the posted DXGI roadmap, so this will be 
-	// needed for the foreseeable future.
-	ouro::intrusive_ptr<oD3D11Texture> Texture2;
+	intrusive_ptr<ID3D11ShaderResourceView> SRV;
+	intrusive_ptr<ID3D11UnorderedAccessView> UAV;
+
+	// Texture2 is used to emulate YUV and other planar sized formats.
+	std::shared_ptr<texture> Texture2;
 };
+
+oGPU_NAMESPACE_END
 
 #endif

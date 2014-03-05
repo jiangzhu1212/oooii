@@ -84,6 +84,9 @@
     <ClInclude Include="Tests\oGPUTestHLSL.h">
       <Filter>Source</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\tests\oGPUTests.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

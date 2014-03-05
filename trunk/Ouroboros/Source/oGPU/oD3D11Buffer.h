@@ -23,21 +23,26 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oD3D11Buffer_h
-#define oD3D11Buffer_h
+#ifndef oGPU_buffer_h
+#define oGPU_buffer_h
 
-#include <oGPU/oGPU.h>
 #include "oGPUCommon.h"
 
-// {6CB53116-9751-4EB0-864C-A87D3E66AEB0}
-oDECLARE_GPURESOURCE_IMPLEMENTATION(oD3D11, Buffer, ouro::gpu::resource_type::buffer, 0x6cb53116, 0x9751, 0x4eb0, 0x86, 0x4c, 0xa8, 0x7d, 0x3e, 0x66, 0xae, 0xb0)
+oGPU_NAMESPACE_BEGIN
+
+oRESOURCE_CLASS(buffer)
 {
-	oDEFINE_GPURESOURCE_INTERFACE();
-	oDECLARE_GPURESOURCE_CTOR(oD3D11, Buffer);
-	ouro::intrusive_ptr<ID3D11Buffer> Buffer;
-	ouro::intrusive_ptr<ID3D11UnorderedAccessView> UAV;
-	ouro::intrusive_ptr<ID3D11UnorderedAccessView> UAVAppend;
-	ouro::intrusive_ptr<ID3D11ShaderResourceView> SRV;
+	oRESOURCE_DECLARATION(buffer)
+	inline bool has_counter() const { return gpu::has_counter(Info.type); }
+	
+	ID3D11UnorderedAccessView* choose_uav(bool _Append = false) const { return Info.type == buffer_type::unordered_structured_append ? const_cast<ID3D11UnorderedAccessView*>(UAVAppend.c_ptr()) : const_cast<ID3D11UnorderedAccessView*>(UAV.c_ptr()); }
+
+	intrusive_ptr<ID3D11Buffer> Buffer;
+	intrusive_ptr<ID3D11UnorderedAccessView> UAV;
+	intrusive_ptr<ID3D11UnorderedAccessView> UAVAppend;
+	intrusive_ptr<ID3D11ShaderResourceView> SRV;
 };
+
+oGPU_NAMESPACE_END
 
 #endif

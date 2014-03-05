@@ -51,7 +51,8 @@ const char* as_string(const D3DX11_FILTER_FLAG& _Flag)
 	return "?";
 }
 
-	namespace d3dx11 {
+	namespace gpu {
+		namespace d3dx11 {
 
 D3DX11_IMAGE_FILE_FORMAT from_path(const path& _Path)
 {
@@ -312,5 +313,6 @@ void convert(ID3D11Device* _pDevice
 	d3d11::copy(DestinationTexture, 0, &_Destination);
 }
 
-	} // namespace d3dx11
+		} // namespace d3dx11
+	} // namespace gpu
 } // namespace ouro

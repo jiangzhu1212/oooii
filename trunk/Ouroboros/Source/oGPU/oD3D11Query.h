@@ -23,23 +23,20 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oD3D11Query_h
-#define oD3D11Query_h
+#ifndef oGPU_query_h
+#define oGPU_query_h
 
-#include <oGPU/oGPU.h>
 #include "oGPUCommon.h"
-#include "d3d11.h"
 
-// {47A1C5E7-D484-414C-9B23-1587E875F97F}
-oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Query, 0x47a1c5e7, 0xd484, 0x414c, 0x9b, 0x23, 0x15, 0x87, 0xe8, 0x75, 0xf9, 0x7f)
+oGPU_NAMESPACE_BEGIN
+
+oDEVICE_CHILD_CLASS(query)
 {
-	oDEFINE_GPUDEVICECHILD_INTERFACE();
-	oDEFINE_CONST_GETDESC_INTERFACE(Info, threadsafe);
-	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, Query);
-	void Begin(ID3D11DeviceContext* _pDeviceContext);
-	void End(ID3D11DeviceContext* _pDeviceContext);
-	bool ReadQuery(ID3D11DeviceContext* _pDeviceContext, void* _pData, size_t _SizeofData);
-	DESC Info;
+	oDEVICE_CHILD_DECLARATION(query)
+	query_info get_info() const override { return Info; }
+	void begin(ID3D11DeviceContext* _pDeviceContext);
+	void end(ID3D11DeviceContext* _pDeviceContext);
+	bool read_query(ID3D11DeviceContext* _pDeviceContext, void* _pData, size_t _SizeofData);
 
 	enum TIMER_QUERIES
 	{
@@ -49,7 +46,10 @@ oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, Query, 0x47a1c5e7, 0xd484, 0x414c
 		TIMER_COUNT,
 	};
 
-	ouro::intrusive_ptr<ID3D11Query> Queries[3];
+	intrusive_ptr<ID3D11Query> Queries[3];
+	query_info Info;
 };
+
+oGPU_NAMESPACE_END
 
 #endif

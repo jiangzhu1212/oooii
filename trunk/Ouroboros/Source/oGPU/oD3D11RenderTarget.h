@@ -23,45 +23,40 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oD3D11RenderTarget2_h
-#define oD3D11RenderTarget2_h
+#ifndef oGPU_render_target_h
+#define oGPU_render_target_h
 
 #include "oGPUCommon.h"
-#include "d3d11.h"
-#include <oCore/mutex.h>
 
-// {772E2A04-4C2D-447A-8DA8-91F258EFA68C}
-oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, RenderTarget, 0x772e2a04, 0x4c2d, 0x447a, 0x8d, 0xa8, 0x91, 0xf2, 0x58, 0xef, 0xa6, 0x8c)
+oGPU_NAMESPACE_BEGIN
+
+oDEVICE_CHILD_CLASS(render_target)
 {
-	oDEFINE_GPUDEVICECHILD_INTERFACE_EXPLICIT_QI();
-	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget);
-	oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, const char* _Name, bool* _pSuccess);
-	~oD3D11RenderTarget();
+	oDEVICE_CHILD_DECLARATION(render_target)
+	d3d11_render_target(std::shared_ptr<device>& _Device, const char* _Name, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat);
+	~d3d11_render_target();
+	render_target_info get_info() const override;
+	void set_clear_info(const clear_info& _ClearInfo) override;
+	void resize(const int3& _NewDimensions) override;
+	std::shared_ptr<texture> get_texture(int _MRTIndex) override;
+	std::shared_ptr<texture> get_depth_texture() override;
+	std::shared_ptr<surface::buffer> make_snapshot(int _MRTIndex) override;
 
-	void GetDesc(DESC* _pDesc) const threadsafe override;
-	void SetClearDesc(const ouro::gpu::clear_info& _ClearInfo) threadsafe override;
-	void Resize(const int3& _NewDimensions) override;
-	void GetTexture(int _MRTIndex, oGPUTexture** _ppTexture) override;
-	void GetDepthTexture(oGPUTexture** _ppTexture) override;
-	std::shared_ptr<ouro::surface::buffer> CreateSnapshot(int _MRTIndex) override;
+	inline void set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Info.mrt_count, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
 
-	inline void Set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Desc.mrt_count, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
+	std::array<std::shared_ptr<texture>, max_num_mrts> Textures;
+	std::array<intrusive_ptr<ID3D11RenderTargetView>, max_num_mrts> RTVs;
+	std::shared_ptr<texture> DepthStencilTexture;
+	intrusive_ptr<ID3D11DepthStencilView> DSV;
+	intrusive_ptr<IDXGISwapChain> SwapChain;
+	render_target_info Info;
 
-	std::array<ouro::intrusive_ptr<oGPUTexture>, ouro::gpu::max_num_mrts> Textures;
-	std::array<ouro::intrusive_ptr<ID3D11RenderTargetView>, ouro::gpu::max_num_mrts> RTVs;
-	ouro::intrusive_ptr<oGPUTexture> DepthStencilTexture;
-	ouro::intrusive_ptr<ID3D11DepthStencilView> DSV;
-	ouro::intrusive_ptr<IDXGISwapChain> SwapChain;
-
-	void ClearResources();
+	void clear_resources();
 
 	// Creates the depth buffer according to the Desc.DepthStencilFormat value
-	void RecreateDepthBuffer(const int2& _Dimensions);
-
-	ouro::shared_mutex DescMutex;
-	DESC Desc;
+	void recreate_depth(const int2& _Dimensions);
 };
 
-bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, ouro::surface::format _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget);
+oGPU_NAMESPACE_END
 
 #endif

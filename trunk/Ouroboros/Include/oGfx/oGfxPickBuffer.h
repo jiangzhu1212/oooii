@@ -40,11 +40,11 @@ public:
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_TRIVIAL_QUERYINTERFACE(oGfxPickBuffer);
 
-	oGfxPickBuffer(oGPUDevice* _pDevice, const void* _pComputeShader, bool* bSuccess);
+	oGfxPickBuffer(ouro::gpu::device* _pDevice, const void* _pComputeShader, bool* bSuccess);
 
-	void PIMap(oGPUCommandList* _pCommandList, int2** _Picks);
-	void PIUnmap(oGPUCommandList* _pCommandList);
-	void PDraw(oGPUCommandList* _pCommandList, oGPUTexture* _pPickRenderTargetTexture);
+	void PIMap(ouro::gpu::command_list* _pCommandList, int2** _Picks);
+	void PIUnmap(ouro::gpu::command_list* _pCommandList);
+	void PDraw(ouro::gpu::command_list* _pCommandList, ouro::gpu::texture* _pPickRenderTargetTexture);
 	//Map outputs from the pick shader. This must be an immediate context. And if a deferred context was
 	//	used for any other functions in this class, those must be submitted before mapping the outputs.
 	void POMap(uint** _Picks);
@@ -53,12 +53,12 @@ public:
 private:
 	oRefCount RefCount;
 	int2 PicksInputBuffer[oGPU_MAX_NUM_PICKS_PER_FRAME];
-	ouro::intrusive_ptr<oGPUTexture> PicksInput;
-	ouro::intrusive_ptr<oGPUBuffer> PicksOutput;
-	ouro::intrusive_ptr<oGPUBuffer> PicksStaging;
- 	ouro::intrusive_ptr<oGPUComputeShader> PickResourceShader;
+	std::shared_ptr<ouro::gpu::texture> PicksInput;
+	std::shared_ptr<ouro::gpu::buffer> PicksOutput;
+	std::shared_ptr<ouro::gpu::buffer> PicksStaging;
+ 	std::shared_ptr<ouro::gpu::compute_kernel> PickResourceShader;
 };
 
-oAPI bool oGfxPickBufferCreate(oGPUDevice* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer);
+oAPI bool oGfxPickBufferCreate(ouro::gpu::device* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer);
 
 #endif // oGfxPickBuffer_h

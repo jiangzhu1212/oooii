@@ -46,7 +46,6 @@
     <ClInclude Include="..\..\Include\oBasis\oError.h" />
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h" />
     <ClInclude Include="..\..\Include\oBasis\oGeometry.h" />
-    <ClInclude Include="..\..\Include\oBasis\oGPUConcepts.h" />
     <ClInclude Include="..\..\Include\oBasis\oINISerialize.h" />
     <ClInclude Include="..\..\Include\oBasis\oInitOnce.h" />
     <ClInclude Include="..\..\Include\oBasis\oInputMapper.h" />
@@ -95,7 +94,6 @@
     <ClCompile Include="oDispatchQueuePrivate.cpp" />
     <ClCompile Include="oError.cpp" />
     <ClCompile Include="oGeometry.cpp" />
-    <ClCompile Include="oGPUConcepts.cpp" />
     <ClCompile Include="oINISerialize.cpp" />
     <ClCompile Include="oInputMapper.cpp" />
     <ClCompile Include="oJSONSerialize.cpp" />

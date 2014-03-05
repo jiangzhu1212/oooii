@@ -359,5 +359,40 @@ void get_compatible_formats(DXGI_FORMAT _DesiredFormat, DXGI_FORMAT* _pTextureFo
 	}
 }
 
+void set_fullscreen_exclusive(IDXGISwapChain* _pSwapChain, bool _FullscreenExclusive)
+{
+	DXGI_SWAP_CHAIN_DESC SCD;
+	_pSwapChain->GetDesc(&SCD);
+	if (GetParent(SCD.OutputWindow))
+		oTHROW(operation_not_permitted, "child windows cannot go full screen exclusive");
+
+	BOOL FS = FALSE;
+	_pSwapChain->GetFullscreenState(&FS, nullptr);
+	if (_FullscreenExclusive != !!FS)
+	{
+		// This can throw an exception for some reason, but there's no DXGI error, and everything seems just fine.
+		// so ignore?
+		_pSwapChain->SetFullscreenState(_FullscreenExclusive, nullptr);
+	}
+}
+
+void present(IDXGISwapChain* _pSwapChain, uint _PresentInterval)
+{
+	DXGI_SWAP_CHAIN_DESC SCD;
+	_pSwapChain->GetDesc(&SCD);
+
+	std::thread::id tid = astid(GetWindowThreadProcessId(SCD.OutputWindow, nullptr));
+
+	if (tid != std::this_thread::get_id())
+		oTHROW(operation_not_permitted, "Present() must be called from the window thread");
+
+	if (tid != std::this_thread::get_id())
+		oTHROW(no_such_device, "Present() must be called from the window thread");
+
+	HRESULT hr = _pSwapChain->Present(_PresentInterval, 0);
+	if (FAILED(hr))
+		oTHROW(no_such_device, "GPU device has been reset or removed");
+}
+
 	} // namespace dxgi
 } // namespace ouro

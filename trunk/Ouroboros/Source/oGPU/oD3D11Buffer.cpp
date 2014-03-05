@@ -25,21 +25,22 @@
 #include "oD3D11Buffer.h"
 #include "oD3D11Device.h"
 
-using namespace ouro::d3d11;
+oGPU_NAMESPACE_BEGIN
 
-oDEFINE_GPUDEVICE_CREATE(oD3D11, Buffer);
-oBEGIN_DEFINE_GPURESOURCE_CTOR(oD3D11, Buffer)
+oDEFINE_DEVICE_MAKE(buffer)
+oRESOURCE_CTOR(buffer)
 {
-	oD3D11DEVICE();
-	ID3D11UnorderedAccessView** ppUAV = _Desc.type == ouro::gpu::buffer_type::unordered_structured_append ? &UAVAppend : &UAV;
-	Buffer = make_buffer(D3DDevice, _Name, _Desc, nullptr, ppUAV, &SRV);
-	Desc = ouro::d3d11::get_info(Buffer);
-	if (_Desc.type == ouro::gpu::buffer_type::unordered_structured_append)
+	oD3D11_DEVICE();
+	ID3D11UnorderedAccessView** ppUAV = Info.type == buffer_type::unordered_structured_append ? &UAVAppend : &UAV;
+	Buffer = d3d11::make_buffer(D3DDevice, _Name, Info, nullptr, ppUAV, &SRV);
+	Info = d3d11::get_info(Buffer);
+	if (Info.type == buffer_type::unordered_structured_append)
 		UAV = make_unflagged_copy(*ppUAV);
-	*_pSuccess = true;
 }
 
-int2 oD3D11Buffer::GetByteDimensions(int _Subresource) const threadsafe
+uint2 d3d11_buffer::byte_dimensions(int _Subresource) const
 {
-	return int2(Desc.struct_byte_size, Desc.array_size);
+	return uint2(Info.struct_byte_size, Info.array_size);
 }
+
+oGPU_NAMESPACE_END

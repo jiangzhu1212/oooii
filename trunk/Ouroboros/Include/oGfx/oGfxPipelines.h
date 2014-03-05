@@ -31,7 +31,7 @@
 #ifndef oGfxPipelines_h
 #define oGfxPipelines_h
 
-#include <oBasis/oGPUConcepts.h>
+#include <oGPU/oGPU.h>
 
 enum oGFX_PIPELINE
 {

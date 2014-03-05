@@ -24,24 +24,19 @@
  **************************************************************************/
 #include "oD3D11Pipeline.h"
 #include "oD3D11Device.h"
-#include "dxgi_util.h"
 #include "d3d11_layout.h"
 
-using namespace ouro;
-using namespace ouro::d3d11;
-using namespace ouro::gpu;
+oGPU_NAMESPACE_BEGIN
 
-oDEFINE_GPUDEVICE_CREATE(oD3D11, Pipeline);
-oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
-	, InputTopology(from_primitive_type(_Desc.primitive_type))
-	, DebugName(_Desc.debug_name)
-	, VertexLayouts(_Desc.vertex_layouts)
+oDEFINE_DEVICE_MAKE(pipeline)
+oDEVICE_CHILD_CTOR(pipeline)
+	, InputTopology(from_primitive_type(_Info.primitive_type))
+	, VertexLayouts(_Info.vertex_layouts)
+	, DebugName(_Info.debug_name)
 {
-	*_pSuccess = false;
-
 	// Verify input against shaders
-	if ((InputTopology == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED || InputTopology < D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST) && (_Desc.hs || _Desc.ds))
-		oTHROW_INVARG("%s inputs cannot have a hull or domain shader bound", as_string(_Desc.primitive_type));
+	if ((InputTopology == D3D11_PRIMITIVE_TOPOLOGY_UNDEFINED || InputTopology < D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST) && (_Info.hs || _Info.ds))
+		oTHROW_INVARG("%s inputs cannot have a hull or domain shader bound", as_string(_Info.primitive_type));
 
 	switch (InputTopology)
 	{
@@ -52,8 +47,8 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 		case D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ:
 		{
 			// HS/DS handled above in if statement
-			if (_Desc.gs)
-				oTHROW_INVARG("%s inputs cannot have a geometry shader bound", as_string(_Desc.primitive_type));
+			if (_Info.gs)
+				oTHROW_INVARG("%s inputs cannot have a geometry shader bound", as_string(_Info.primitive_type));
 			break;
 		}
 		
@@ -61,26 +56,23 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Pipeline)
 			break;
 	}
 
-	oD3D11DEVICE();
+	oD3D11_DEVICE();
 
-	InputLayout = make_input_layout(D3DDevice, _Desc.vs, VertexLayouts);
-	VertexShader = make_vertex_shader(D3DDevice, _Desc.vs, _Desc.debug_name);
-	HullShader = make_hull_shader(D3DDevice, _Desc.hs, _Desc.debug_name);
-	DomainShader = make_domain_shader(D3DDevice, _Desc.ds, _Desc.debug_name);
-	GeometryShader = make_geometry_shader(D3DDevice, _Desc.gs, _Desc.debug_name);
-	PixelShader = make_pixel_shader(D3DDevice, _Desc.ps, _Desc.debug_name);
-
-	*_pSuccess = true;
+	InputLayout = make_input_layout(D3DDevice, _Info.vs, VertexLayouts);
+	VertexShader = make_vertex_shader(D3DDevice, _Info.vs, _Info.debug_name);
+	HullShader = make_hull_shader(D3DDevice, _Info.hs, _Info.debug_name);
+	DomainShader = make_domain_shader(D3DDevice, _Info.ds, _Info.debug_name);
+	GeometryShader = make_geometry_shader(D3DDevice, _Info.gs, _Info.debug_name);
+	PixelShader = make_pixel_shader(D3DDevice, _Info.ps, _Info.debug_name);
 }
 
-oD3D11Pipeline::~oD3D11Pipeline()
+pipeline_info d3d11_pipeline::get_info() const 
 {
+	pipeline_info i;
+	i.debug_name = DebugName;
+	i.vertex_layouts = VertexLayouts;
+	i.primitive_type = to_primitive_type(InputTopology);
+	return i;
 }
 
-void oD3D11Pipeline::GetDesc(DESC* _pDesc) const threadsafe
-{
-	memset(_pDesc, 0, sizeof(DESC));
-	_pDesc->debug_name = DebugName;
-	_pDesc->vertex_layouts = oThreadsafe(this)->VertexLayouts;
-	_pDesc->primitive_type = to_primitive_type(InputTopology);
-}
+oGPU_NAMESPACE_END

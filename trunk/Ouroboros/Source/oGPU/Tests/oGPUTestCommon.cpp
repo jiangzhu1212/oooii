@@ -28,9 +28,12 @@
 
 #include <oBasis/oMath.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
 
-bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size)
+namespace ouro {
+	namespace tests {
+
+void gpu_test::create(const char* _Title, bool _DevMode, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size)
 {
 	NthSnapshot = 0;
 	Running = true;
@@ -41,37 +44,35 @@ bool oGPUTestApp::Create(const char* _Title, bool _DevMode, const int* _pSnapsho
 		SnapshotFrames.assign(_pSnapshotFrameIDs, _pSnapshotFrameIDs + _NumSnapshotFrameIDs);
 
 	{
-		ouro::gpu::device_init init;
-		init.debug_name = "oGPUTestApp.Device";
-		init.version = version(10,0); // for broader compatibility
-		init.driver_debug_level = gpu::debug_level::normal;
-		if (!oGPUDeviceCreate(init, &Device))
-			return false; // pass through error
+		device_init i;
+		i.debug_name = "gpu_test.Device";
+		i.version = version(10,0); // for broader compatibility
+		i.driver_debug_level = debug_level::normal;
+		Device = device::make(i);
 	}
 
 	{
-		ouro::window::init i;
+		window::init i;
 		i.title = _Title;
 		i.alt_f4_closes = true;
-		i.on_event = std::bind(&oGPUTestApp::OnEvent, this, std::placeholders::_1);
-		i.shape.state = DevMode ? ouro::window_state::restored : ouro::window_state::hidden;
-		i.shape.style = ouro::window_style::sizable;
+		i.on_event = std::bind(&gpu_test::on_event, this, std::placeholders::_1);
+		i.shape.state = DevMode ? window_state::restored : window_state::hidden;
+		i.shape.style = window_style::sizable;
 		i.shape.client_size = _Size;
-		Window = ouro::window::make(i);
+		Window = window::make(i);
 	}
 
-	if (!Device->CreatePrimaryRenderTarget(Window.get(), surface::d24_unorm_s8_uint, true, &PrimaryRenderTarget))
-		return false; // pass through error
+	PrimaryRenderTarget = Device->make_primary_render_target(Window, surface::d24_unorm_s8_uint, true);
+	PrimaryRenderTarget->set_clear_color(almost_black);
 
-	Device->GetImmediateCommandList(&CommandList);
-	return true;
+	CommandList = Device->get_immediate_command_list();
 }
 
-void oGPUTestApp::OnEvent(const ouro::window::basic_event& _Event)
+void gpu_test::on_event(const window::basic_event& _Event)
 {
 	switch (_Event.type)
 	{
-		case ouro::event_type::closing:
+		case event_type::closing:
 			Running = false;
 			break;
 		default:
@@ -79,24 +80,18 @@ void oGPUTestApp::OnEvent(const ouro::window::basic_event& _Event)
 	}
 }
 
-bool oGPUTestApp::CheckSnapshot(oTest* _pTest)
+void gpu_test::check_snapshot(test_services& _Services)
 {
-	const int FrameID = Device->GetFrameID();
+	const int FrameID = Device->frame_id();
 	if (SnapshotFrames.end() != find(SnapshotFrames, FrameID))
 	{
-		std::shared_ptr<surface::buffer> snap = PrimaryRenderTarget->CreateSnapshot(0);
-		if (!_pTest->TestImage(snap, NthSnapshot))
-		{
-			oTRACEA("%s: Image(%u) %s: %s", _pTest->GetName(), NthSnapshot, oErrorAsString(oErrorGetLast()), oErrorGetLastString());
-			AllSnapshotsSucceeded = false;
-		}
-
+		std::shared_ptr<surface::buffer> snap = PrimaryRenderTarget->make_snapshot(0);
+		_Services.check(snap, NthSnapshot);
 		NthSnapshot++;
 	}
-	return AllSnapshotsSucceeded;
 }
 
-bool oGPUTestApp::Run(oTest* _pTest)
+void gpu_test::run(test_services& _Services)
 {
 	oASSERT(Window->is_window_thread(), "Run must be called from same thread that created the window");
 	bool AllFramesSucceeded = true;
@@ -104,90 +99,75 @@ bool oGPUTestApp::Run(oTest* _pTest)
 	// Flush window init
 	Window->flush_messages();
 
-	if (!Initialize())
-		return false; // pass through error
+	initialize();
 
-	while (Running && DevMode)
+	while (Running && (DevMode || Device->frame_id() < SnapshotFrames.back()))
 	{
 		Window->flush_messages();
-		if (!Device->BeginFrame())
-			return false; // pass through error
+		if (Device->begin_frame())
+		{
+			render();
 
-		if (!Render())
-			return false; // pass through error
+			Device->end_frame();
 
-		Device->EndFrame();
+			check_snapshot(_Services);
 
-		CheckSnapshot(_pTest);
-
-		Device->Present(1);
+			if (DevMode)
+				Device->present(1);
+		}
+		else
+			oTRACEA("Frame %u failed", Device->frame_id());
 	}
 
 	if (!AllFramesSucceeded)
-		return oErrorSetLast(std::errc::protocol_error, "Image compares failed, see debug output/log for specifics.");
-
-	return true;
+		oTHROW(protocol_error, "Image compares failed, see debug output/log for specifics.");
 }
 
-const int oGPUTextureTestApp::sSnapshotFrames[2] = { 0, 2 };
+const int gpu_texture_test::sSnapshotFrames[2] = { 0, 2 };
 
-bool oGPUTextureTestApp::Initialize()
+void gpu_texture_test::initialize()
 {
-	PrimaryRenderTarget->SetClearColor(almost_black);
-
-	oGPUBuffer::DESC DCDesc;
-	DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
-	if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
-		return false;
-
-	oGPUPipeline::DESC pld = oGPUTestGetPipeline(GetPipeline());
-
-	if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
-		return false;
-
-	Mesh = ouro::gpu::make_first_cube(Device);
-
-	return CreateTexture();
+	TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
+	Pipeline = Device->make_pipeline(oGPUTestGetPipeline(get_pipeline()));
+	Mesh = make_first_cube(Device);
+	Texture = make_test_texture();
 }
 
-float oGPUTextureTestApp::GetRotationStep()
+float gpu_texture_test::rotation_step()
 {
-	// this is -1 because there was a code change that resulted in BeginFrame()
-	// being moved out of the Render function below so it updated the FrameID
-	// earlier than this code was ready for. If golden images are updated, this
+	// this is -1 because there was a code change that resulted in begin_frame()
+	// being moved out of the Render function below so it updated the frame ID
+	// earlier than this code was ready for. If golden images are updated this
 	// could go away.
-	return (Device->GetFrameID()-1) * 1.0f;
+	return (Device->frame_id()-1) * 1.0f;
 }
 
-bool oGPUTextureTestApp::Render()
+void gpu_texture_test::render()
 {
 	float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-	oGPURenderTarget::DESC RTDesc;
-	PrimaryRenderTarget->GetDesc(&RTDesc);
-	float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
+	render_target_info RTI = PrimaryRenderTarget->get_info();
+	float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
 
-	float rotationStep = GetRotationStep();
+	float rotationStep = rotation_step();
 	float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-	CommandList->Begin();
+	CommandList->begin();
 
-	ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, white));
+	commit_buffer(CommandList.get(), TestConstants.get(), oGPUTestConstants(W, V, P, white));
 
-	CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-	CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-	CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::test_and_write);
-	CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
-	CommandList->SetBuffers(0, 1, &TestConstants);
-	ouro::gpu::sampler_type::value s = ouro::gpu::sampler_type::linear_wrap;
-	CommandList->SetSamplers(0, 1, &s);
-	CommandList->SetShaderResources(0, 1, &Texture);
-	CommandList->SetPipeline(Pipeline);
-	CommandList->SetRenderTarget(PrimaryRenderTarget);
+	CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
+	CommandList->set_blend_state(blend_state::opaque);
+	CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
+	CommandList->set_surface_state(surface_state::front_face);
+	CommandList->set_buffer(0, TestConstants);
+	CommandList->set_sampler(0, sampler_type::linear_wrap);
+	CommandList->set_shader_resource(0, Texture);
+	CommandList->set_pipeline(Pipeline);
+	CommandList->set_render_target(PrimaryRenderTarget);
 	Mesh->draw(CommandList);
 
-	CommandList->End();
-	return true;
+	CommandList->end();
 }
 
 std::shared_ptr<surface::buffer> surface_load(const path& _Path, surface::alpha_option::value _Option)
@@ -197,7 +177,7 @@ std::shared_ptr<surface::buffer> surface_load(const path& _Path, surface::alpha_
 	return surface::decode(b.get(), size, _Option);
 }
 
-std::shared_ptr<ouro::surface::buffer> make_1D(int _Width)
+std::shared_ptr<surface::buffer> make_1D(int _Width)
 {
 	surface::info si;
 	si.dimensions = int3(_Width, 1, 1);
@@ -214,3 +194,6 @@ std::shared_ptr<ouro::surface::buffer> make_1D(int _Width)
 
 	return s;
 }
+
+	} // namespace tests
+} // namespace ouro

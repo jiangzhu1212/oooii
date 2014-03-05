@@ -54,11 +54,11 @@ public:
 	// picking shader to determine if they are picked.  When drawing lines
 	// for this purpase a special mesh that is thicker than the actual line
 	// is drawn hence GetManipulatorPickLineMeshes
-	virtual void GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, std::function<void(ouro::gpu::util_mesh* _pMesh, uint _ObjectID)> _Callback) = 0;
-	virtual void GetManipulatorVisualLines(oGPUCommandList* _pCommandList, std::function<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback) = 0;
-	virtual void GetManipulatorMeshes(oGPUCommandList* _pCommandList, std::function<void(ouro::gpu::util_mesh* _pMesh, float4x4 _Transform, ouro::color _MeshColor, uint _ObjectID)> _Callback) = 0;
+	virtual void GetManipulatorPickLineMeshes(ouro::gpu::command_list* _pCommandList, std::function<void(ouro::gpu::util_mesh* _pMesh, uint _ObjectID)> _Callback) = 0;
+	virtual void GetManipulatorVisualLines(ouro::gpu::command_list* _pCommandList, std::function<void(ouro::gpu::buffer* _pLineList, uint _NumLines)> _Callback) = 0;
+	virtual void GetManipulatorMeshes(ouro::gpu::command_list* _pCommandList, std::function<void(ouro::gpu::util_mesh* _pMesh, float4x4 _Transform, ouro::color _MeshColor, uint _ObjectID)> _Callback) = 0;
 };
 
-oAPI bool oGfxManipulatorCreate(const char* _Name, const oGfxManipulator::DESC& _Desc, oGPUDevice* _pDevice, oGfxManipulator** _ppManipulator);
+bool oGfxManipulatorCreate(const char* _Name, const oGfxManipulator::DESC& _Desc, ouro::gpu::device* _pDevice, oGfxManipulator** _ppManipulator);
 
 #endif

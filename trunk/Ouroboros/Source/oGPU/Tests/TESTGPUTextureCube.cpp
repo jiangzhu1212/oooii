@@ -26,16 +26,19 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const bool kIsDevMode = false;
 
-struct GPU_TextureCube_App : public oGPUTextureTestApp
+struct gpu_test_texturecube : public gpu_texture_test
 {
-	GPU_TextureCube_App() : oGPUTextureTestApp("GPU_TextureCube", kIsDevMode) {}
+	gpu_test_texturecube() : gpu_texture_test("GPU test: texturecube", kIsDevMode) {}
 
-	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_CUBE; }
-	bool CreateTexture() override
+	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_CUBE; }
+	std::shared_ptr<texture> make_test_texture() override
 	{
 		auto _0 = surface_load(filesystem::data_path() / "Test/Textures/CubePosX.png", surface::alpha_option::force_alpha);
 		auto _1 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegX.png", surface::alpha_option::force_alpha);
@@ -44,27 +47,22 @@ struct GPU_TextureCube_App : public oGPUTextureTestApp
 		auto _4 = surface_load(filesystem::data_path() / "Test/Textures/CubePosZ.png", surface::alpha_option::force_alpha);
 		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", surface::alpha_option::force_alpha);
 
-		const ouro::surface::buffer* images[6];
-		images[0] = _0.get();
-		images[1] = _1.get();
-		images[2] = _2.get();
-		images[3] = _3.get();
-		images[4] = _4.get();
-		images[5] = _5.get();
-
-		Texture = ouro::gpu::make_texture(Device, "Test cube", images, oCOUNTOF(images), ouro::gpu::texture_type::default_cube);
-		return true;
+		const surface::buffer* images[6] = { _0.get(), _1.get(), _2.get(), _3.get(), _4.get(), _5.get() };
+		return make_texture(Device, "Test cube", images, oCOUNTOF(images), texture_type::default_cube);
 	}
 
-	float GetRotationStep() override
+	float rotation_step() override
 	{
-		float rotationStep = (Device->GetFrameID()-1) * 1.0f;
-		if (Device->GetFrameID()==0)
+		float rotationStep = (Device->frame_id()-1) * 1.0f;
+		if (Device->frame_id()==0)
 			rotationStep = 774.0f;
-		else if (Device->GetFrameID()==2)
+		else if (Device->frame_id()==2)
 			rotationStep = 1036.0f;
 		return rotationStep;
 	}
 };
 
-oDEFINE_GPU_TEST(GPU_TextureCube)
+oGPU_COMMON_TEST(texturecube);
+
+	} // namespace tests
+} // namespace ouro
