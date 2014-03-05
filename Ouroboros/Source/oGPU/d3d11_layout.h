@@ -27,11 +27,12 @@
 #ifndef oGPU_d3d11_layout_h
 #define oGPU_d3d11_layout_h
 
-#include <oBasis/oGPUConcepts.h>
+#include <oGPU/oGPU.h>
 #include <d3d11.h>
 
 namespace ouro {
-	namespace d3d11 {
+	namespace gpu {
+		namespace d3d11 {
 
 const char* get_semantic(mesh::semantic::value& _Semantic);
 
@@ -42,7 +43,8 @@ const char* get_semantic(mesh::semantic::value& _Semantic);
 intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice
 	, const void* _pVertexShaderByteCode, const mesh::layout_array& _VertexLayouts);
 
-	} // namespace d3d11
+		} // namespace d3d11
+	} // namespace gpu
 } // namespace ouro
 
 #endif

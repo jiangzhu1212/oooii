@@ -23,20 +23,21 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oD3D11ComputeShader_h
-#define oD3D11ComputeShader_h
+#ifndef oGPU_computer_kernel_h
+#define oGPU_computer_kernel_h
 
 #include "oGPUCommon.h"
-#include <d3d11.h>
 
-// {17749C8B-0641-4A8B-A4A5-8456C6B7D586}
-oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(oD3D11, ComputeShader, 0x17749c8b, 0x641, 0x4a8b, 0xa4, 0xa5, 0x84, 0x56, 0xc6, 0xb7, 0xd5, 0x86)
+oGPU_NAMESPACE_BEGIN
+
+oDEVICE_CHILD_CLASS(compute_kernel)
 {
-	oDEFINE_GPUDEVICECHILD_INTERFACE();
-	oDECLARE_GPUDEVICECHILD_CTOR(oD3D11, ComputeShader);
-	void GetDesc(DESC* _pDesc) const threadsafe override;
-	ouro::intrusive_ptr<ID3D11ComputeShader> ComputeShader;
-	ouro::sstring DebugName;
+	oDEVICE_CHILD_DECLARATION(compute_kernel)
+	compute_kernel_info get_info() const override;
+	intrusive_ptr<ID3D11ComputeShader> ComputeShader;
+	sstring DebugName;
 };
+
+oGPU_NAMESPACE_END
 
 #endif

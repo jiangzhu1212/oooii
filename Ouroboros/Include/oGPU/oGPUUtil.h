@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Utility code that uses oGPU_ to implement extended functionality.
+// Utility code that uses oGPU to implement extended functionality.
 #pragma once
 #ifndef oGPUUtil_h
 #define oGPUUtil_h
@@ -40,26 +40,31 @@ namespace ouro {
 
 // Commit the contents of regular memory to device memory. Mainly this is 
 // intended to be used with the templated types below.
-void commit_buffer(oGPUCommandList* _pCommandList, oGPUBuffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs);
-void commit_buffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs);
-template<typename T> void commit_buffer(oGPUCommandList* _pCommandList, oGPUBuffer* _pBuffer, const T& _Struct) { commit_buffer(_pCommandList, _pBuffer, &_Struct, sizeof(_Struct), 1); }
-template<typename T> void commit_buffer(oGPUCommandList* _pCommandList, oGPUBuffer* _pBuffer, const T* _pStructArray, uint _NumStructs) { commit_buffer(_pCommandList, _pBuffer, _pStructArray, sizeof(T), _NumStructs); }
-template<typename T> void commit_buffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const T& _Struct) { commit_buffer(_pDevice, _pBuffer, &_Struct, sizeof(_Struct), 1); }
-template<typename T> void commit_buffer(oGPUDevice* _pDevice, oGPUBuffer* _pBuffer, const T* _pStructArray, uint _NumStructs) { commit_buffer(_pDevice, _pBuffer, _pStructArray, sizeof(T), _NumStructs); }
+void commit_buffer(command_list* _pCommandList, buffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs);
+void commit_buffer(device* _pDevice, buffer* _pBuffer, const void* _pStruct, uint _SizeofStruct, uint _NumStructs);
+template<typename T> void commit_buffer(command_list* _pCommandList, buffer* _pBuffer, const T& _Struct) { commit_buffer(_pCommandList, _pBuffer, &_Struct, sizeof(_Struct), 1); }
+template<typename T> void commit_buffer(command_list* _pCommandList, buffer* _pBuffer, const T* _pStructArray, uint _NumStructs) { commit_buffer(_pCommandList, _pBuffer, _pStructArray, sizeof(T), _NumStructs); }
+template<typename T> void commit_buffer(device* _pDevice, buffer* _pBuffer, const T& _Struct) { commit_buffer(_pDevice, _pBuffer, &_Struct, sizeof(_Struct), 1); }
+template<typename T> void commit_buffer(device* _pDevice, buffer* _pBuffer, const T* _pStructArray, uint _NumStructs) { commit_buffer(_pDevice, _pBuffer, _pStructArray, sizeof(T), _NumStructs); }
 
 // Commit _MappedSubresource to _pIndexBuffer handling 16-bit to 32-bit and vice 
 // versa converstions between the source and destination.
-void commit_index_buffer(oGPUCommandList* _pCommandList
+void commit_index_buffer(command_list* _pCommandList
 	, const surface::const_mapped_subresource& _MappedSubresource
-	, oGPUBuffer* _pIndexBuffer);
+	, buffer* _pIndexBuffer);
 
-inline void commit_index_buffer(oGPUDevice* _pDevice
+inline void commit_index_buffer(device* _pDevice
 	, const surface::const_mapped_subresource& _MappedSubresource
-	, oGPUBuffer* _pIndexBuffer)
+	, buffer* _pIndexBuffer)
 {
-	intrusive_ptr<oGPUCommandList> ICL;
-	_pDevice->GetImmediateCommandList(&ICL);
-	commit_index_buffer(ICL, _MappedSubresource, _pIndexBuffer);
+	commit_index_buffer(_pDevice->immediate(), _MappedSubresource, _pIndexBuffer);
+}
+
+inline void commit_index_buffer(device* _pDevice
+	, const surface::const_mapped_subresource& _MappedSubresource
+	, std::shared_ptr<buffer>& _pIndexBuffer)
+{
+	commit_index_buffer(_pDevice->immediate(), _MappedSubresource, _pIndexBuffer.get());
 }
 
 // Client code must define a function that given a vertex trait returns a mapping
@@ -67,29 +72,40 @@ inline void commit_index_buffer(oGPUDevice* _pDevice
 // values for that vertex trait will be set to 0 in _pVertexBuffer. No conversions
 // will be done in this function so if a trait is asked for in a compressed format
 // the returned mapping is expected to be in that compressed format.
-void commit_vertex_buffer(oGPUCommandList* _pCommandList, const mesh::layout::value& _Layout, const mesh::source& _Source, oGPUBuffer* _pVertexBuffer);
-inline void commit_vertex_buffer(oGPUDevice* _pDevice, const mesh::layout::value& _Layout, const mesh::source& _Source, oGPUBuffer* _pVertexBuffer)
+void commit_vertex_buffer(command_list* _pCommandList, const mesh::layout::value& _Layout, const mesh::source& _Source, buffer* _pVertexBuffer);
+inline void commit_vertex_buffer(device* _pDevice, const mesh::layout::value& _Layout, const mesh::source& _Source, buffer* _pVertexBuffer)
 {
-	intrusive_ptr<oGPUCommandList> ICL;
-	_pDevice->GetImmediateCommandList(&ICL);
-	commit_vertex_buffer(ICL, _Layout, _Source, _pVertexBuffer);
+	commit_vertex_buffer(_pDevice->immediate(), _Layout, _Source, _pVertexBuffer);
+}
+
+inline void commit_vertex_buffer(device* _pDevice, const mesh::layout::value& _Layout, const mesh::source& _Source, std::shared_ptr<buffer>& _pVertexBuffer)
+{
+	commit_vertex_buffer(_pDevice->immediate(), _Layout, _Source, _pVertexBuffer.get());
 }
 
 // Create an index buffer based on the parameters. If _MappedSubresource.pData
 // is not null commit_index_buffer() is called on that data. If it is null then 
 // only the creation is done.
-intrusive_ptr<oGPUBuffer> make_index_buffer(oGPUDevice* _pDevice, const char* _Name, uint _NumIndices, uint _NumVertices
+std::shared_ptr<buffer> make_index_buffer(device* _pDevice, const char* _Name, uint _NumIndices, uint _NumVertices
 	, const surface::const_mapped_subresource& _MappedSubresource = surface::const_mapped_subresource());
+
+inline std::shared_ptr<buffer> make_index_buffer(std::shared_ptr<device>& _pDevice, const char* _Name, uint _NumIndices, uint _NumVertices
+	, const surface::const_mapped_subresource& _MappedSubresource = surface::const_mapped_subresource())
+{ return make_index_buffer(_pDevice.get(), _Name, _NumIndices, _NumVertices, _MappedSubresource); }
 
 // Creates a vertex buffer based on the parameters. If _GetElementData is valid 
 // then commit_vertex_buffer is called.
-intrusive_ptr<oGPUBuffer> make_vertex_buffer(oGPUDevice* _pDevice, const char* _Name, const mesh::layout::value& _Layout
+std::shared_ptr<buffer> make_vertex_buffer(device* _pDevice, const char* _Name, const mesh::layout::value& _Layout
 	, uint _NumVertices, const mesh::source& _Source = mesh::source());
+
+inline std::shared_ptr<buffer> make_vertex_buffer(std::shared_ptr<device>& _pDevice, const char* _Name, const mesh::layout::value& _Layout
+	, uint _NumVertices, const mesh::source& _Source = mesh::source())
+{ return make_vertex_buffer(_pDevice.get(), _Name, _Layout, _NumVertices, _Source); }
 
 // Creates a readback buffer or texture sized to be able to completely contain the 
 // specified source.
-intrusive_ptr<oGPUBuffer> make_readback_copy(oGPUBuffer* _pSource);
-intrusive_ptr<oGPUTexture> make_readback_copy(oGPUTexture* _pSource);
+std::shared_ptr<buffer> make_readback_copy(buffer* _pSource);
+std::shared_ptr<texture> make_readback_copy(texture* _pSource);
 
 // Optionally allocates a new buffer and reads the counter from the specified 
 // buffer into it. For performance a buffer can be specified to receive the 
@@ -101,25 +117,26 @@ intrusive_ptr<oGPUTexture> make_readback_copy(oGPUTexture* _pSource);
 // BE CALLED AFTER A FLUSH OF ALL COMMANDLISTS THAT WOULD UPDATE THE COUNTER. 
 // i.e. the entire app should use the immediate command list, otherwise this 
 // could be sampling stale data. If using the immediate command list everywhere 
-// is not an option, this must be called after Device::EndFrame() to have valid 
+// is not an option, this must be called after Device::end_frame() to have valid 
 // values.
-uint read_back_counter(oGPUBuffer* _pUnorderedBuffer, oGPUBuffer* _pPreallocatedReadbackBuffer = nullptr);
+uint read_back_counter(buffer* _pUnorderedBuffer, buffer* _pPreallocatedReadbackBuffer = nullptr);
 
 // Reads the source resource into the memory pointed at in the destination struct. 
 // Since this is often used for textures flip vertically can do an in-place/
-// during-copy flip. This returns the result of MapRead. 
-bool read(oGPUResource* _pSourceResource, int _Subresource, ouro::surface::mapped_subresource& _Destination, bool _FlipVertically = false);
+// during-copy flip. This returns the result of map_read. 
+bool read(resource* _pSourceResource, int _Subresource, ouro::surface::mapped_subresource& _Destination, bool _FlipVertically = false);
 
 // _____________________________________________________________________________
 // Texture convenience functions
 
 // Creates a texture and fills it with source image data according to the type specified. 
 // NOTE: render target and readback not tested.
-intrusive_ptr<oGPUTexture> make_texture(oGPUDevice* _pDevice, const char* _Name, const surface::buffer* const* _ppSourceImages, uint _NumImages, texture_type::value _Type);
+std::shared_ptr<texture> make_texture(device* _pDevice, const char* _Name, const surface::buffer* const* _ppSourceImages, uint _NumImages, texture_type::value _Type);
+inline std::shared_ptr<texture> make_texture(std::shared_ptr<device>& _pDevice, const char* _Name, const surface::buffer* const* _ppSourceImages, uint _NumImages, texture_type::value _Type) { return make_texture(_pDevice.get(), _Name, _ppSourceImages, _NumImages, _Type); }
 
 // Creates a surface buffer and copies the specified subresource to it. If _Subresource is
 // invalid all subresources are copied.
-std::shared_ptr<surface::buffer> copy_to_surface_buffer(oGPUTexture* _pSource, int _Subresource = invalid);
+std::shared_ptr<surface::buffer> copy_to_surface_buffer(texture* _pSource, int _Subresource = invalid);
 
 	} // namespace gpu
 } // namespace ouro
@@ -127,17 +144,17 @@ std::shared_ptr<surface::buffer> copy_to_surface_buffer(oGPUTexture* _pSource, i
 #if 0
 
 // Binds the readable (samplable) shader resources from a render target in order
-inline void oGPURenderTargetSetShaderResources(oGPUCommandList* _pCommandList, int _StartSlot, bool _IncludeDepthStencil, oGPURenderTarget* _pRenderTarget)
+inline void oGPURenderTargetSetShaderResources(command_list* _pCommandList, int _StartSlot, bool _IncludeDepthStencil, oGPURenderTarget* _pRenderTarget)
 {
 	oGPURenderTarget::DESC rtd;
 	_pRenderTarget->GetDesc(&rtd);
-	ouro::intrusive_ptr<oGPUTexture> MRTs[ouro::gpu::max_num_mrts+1];
+	ouro::std::shared_ptr<texture> MRTs[ouro::gpu::max_num_mrts+1];
 	int i = 0;
 	for (; i < rtd.mrt_count; i++)
 		_pRenderTarget->GetTexture(i, &MRTs[i]);
 	if (_IncludeDepthStencil)
 		_pRenderTarget->GetDepthTexture(&MRTs[i++]);
-	_pCommandList->SetShaderResources(_StartSlot, i, (const oGPUResource* const*)MRTs);
+	_pCommandList->SetShaderResources(_StartSlot, i, (const resource* const*)MRTs);
 }
 
 // _____________________________________________________________________________

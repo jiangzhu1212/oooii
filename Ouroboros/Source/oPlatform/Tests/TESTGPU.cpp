@@ -22,38 +22,34 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+#include <oGPU/tests/oGPUTests.h>
+#include "oTestIntegration.h"
 
-using namespace ouro::gpu;
+using namespace ouro::tests;
 
-namespace ouro {
-	namespace tests {
+#define oTEST_REGISTER_GPU_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oGPU_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_GPU_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oGPU_, _Name), oCONCAT(TEST, _Name))
 
-static const bool kIsDevMode = false;
+#define oTEST_REGISTER_GPU_TEST_BUGGED0(_Name) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oGPU_, _Name), oCONCAT(TEST, _Name))
+#define oTEST_REGISTER_GPU_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oGPU_, _Name), oCONCAT(TEST, _Name))
 
-struct gpu_test_texture3dmip : public gpu_texture_test
-{
-	gpu_test_texture3dmip() : gpu_texture_test("GPU test: texture3D mip", kIsDevMode) {}
-
-	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_3D; }
-	std::shared_ptr<texture> make_test_texture() override
-	{
-		auto red = surface_load(filesystem::data_path() / "Test/Textures/Red.png", surface::alpha_option::force_alpha);
-		auto green = surface_load(filesystem::data_path() / "Test/Textures/Green.png", surface::alpha_option::force_alpha);
-		auto blue = surface_load(filesystem::data_path() / "Test/Textures/Blue.png", surface::alpha_option::force_alpha);
-
-		const surface::buffer* images[3];
-		images[0] = red.get();
-		images[1] = green.get();
-		images[2] = blue.get();
-
-		return make_texture(Device, "Test 3D mipped", images, oCOUNTOF(images), texture_type::mipped_3d);
-	}
-};
-
-oGPU_COMMON_TEST(texture3dmip);
-
-	} // namespace tests
-} // namespace ouro
+oTEST_REGISTER_GPU_TEST(bccodec);
+oTEST_REGISTER_GPU_TEST0(buffer);
+oTEST_REGISTER_GPU_TEST(clear);
+oTEST_REGISTER_GPU_TEST(device);
+oTEST_REGISTER_GPU_TEST(instanced_triangle);
+oTEST_REGISTER_GPU_TEST(lines);
+oTEST_REGISTER_GPU_TEST0(query);
+oTEST_REGISTER_GPU_TEST(render_target);
+oTEST_REGISTER_GPU_TEST(spinning_triangle);
+oTEST_REGISTER_GPU_TEST0(texture_traits);
+oTEST_REGISTER_GPU_TEST(texture1d);
+oTEST_REGISTER_GPU_TEST(texture1dmip);
+oTEST_REGISTER_GPU_TEST(texture2d);
+oTEST_REGISTER_GPU_TEST(texture2dmip);
+oTEST_REGISTER_GPU_TEST(texture3d);
+oTEST_REGISTER_GPU_TEST(texture3dmip);
+oTEST_REGISTER_GPU_TEST(texturecube);
+oTEST_REGISTER_GPU_TEST(texturecubemip);
+oTEST_REGISTER_GPU_TEST(triangle);
+oTEST_REGISTER_GPU_TEST(window_in_window);

@@ -49,6 +49,9 @@
     <ClCompile Include="oGPUUtilMesh.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="gpu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">

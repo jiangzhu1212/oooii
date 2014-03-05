@@ -28,14 +28,15 @@
 #define oGPU_d3d11_util_h
 
 #include <oSurface/buffer.h>
-#include <oBasis/oGPUConcepts.h>
+#include <oGPU/oGPU.h>
 #include <vector>
 
 #include <oCore/windows/win_error.h>
 #include <d3d11.h>
 
 namespace ouro {
-	namespace d3d11 {
+	namespace gpu {
+		namespace d3d11 {
 
 // _____________________________________________________________________________
 // Debugging API
@@ -423,7 +424,8 @@ bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, co
 
 #endif
 
-	} // namespace d3d11
+		} // namespace d3d11
+	} // namespace gpu
 } // namespace ouro
 
 // These functions repeated from <oBC6HBC7EncoderDecoder.h> in External so as

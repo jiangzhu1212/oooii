@@ -27,200 +27,152 @@
 // of oInterface, oGPUDeviceChild and oGPUResource that is typical amongst all 
 // oGPUResource types.
 #pragma once
-#ifndef oGPUCommon_h
-#define oGPUCommon_h
+#ifndef oGPU_common_h
+#define oGPU_common_h
 
 #include <oGPU/oGPU.h>
-
-#include <oBasis/oError.h>
-#include <oBasis/oInitOnce.h>
-#include <oBasis/oRefCount.h>
 #include <oBase/fixed_string.h>
 #include <oBase/fnv1a.h>
-
-#if defined(WIN32) || defined(WIN64)
-#undef interface
+#include <oBase/intrusive_ptr.h>
 #include <oCore/windows/win_util.h>
-#include <d3d11.h>
-#endif
+#include <memory>
+#include "d3d11_util.h"
 
-// Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
-// and allow for any shared code changes to happen in a central place. If the 
-// type is derived from oGPUResource, use the other version below.
-#define oDECLARE_GPUDEVICECHILD_IMPLEMENTATION(_oAPI, _ShortTypeName, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
-	oDEFINE_GUID_S(oCONCAT(_oAPI, _ShortTypeName), _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK); \
-	struct _oAPI##_ShortTypeName : oGPU##_ShortTypeName, oGPUDeviceChildMixin<oGPU##_ShortTypeName, _oAPI##_ShortTypeName>
+// _____________________________________________________________________________
+// The particular API being wrapped
 
-// Use this instead of "struct oMyDerivedClass" to enforce naming consistency 
-// and allow for any shared code changes to happen in a central place.
-#define oDECLARE_GPURESOURCE_IMPLEMENTATION(_oAPI, _ShortTypeName, _ResourceType, _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK) \
-	oDEFINE_GUID_S(oCONCAT(_oAPI, _ShortTypeName), _32BitA, _16BitB, _16BitC, _8BitD, _8BitE, _8BitF, _8BitG, _8BitH, _8BitI, _8BitJ, _8BitK); \
-	struct _oAPI##_ShortTypeName : oGPU##_ShortTypeName, oGPUResourceMixin<oGPU##_ShortTypeName, _oAPI##_ShortTypeName, _ResourceType>
+#define oIMPLEMENTATION_NAME d3d11
 
-// Place this macro in the implementation class of an oGPUDeviceChild If the 
-// derivation is also an oGPUResource, use the other macro below. Basically this 
-// defines the virtual interface in terms of the inline mixins, basically copy-
-// pasting the code into place, but the MIXIN implementations used different-
-// typed but similar structs. In this way these macros link the templated base 
-// class to the generic virtual interface in a way that does not complicate the 
-// vtable.
-#define oDEFINE_GPUDEVICECHILD_INTERFACE() \
-	int Reference() threadsafe override { return MIXINReference(); } \
-	void Release() threadsafe override { MIXINRelease(); } \
-	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override { return MIXINQueryInterface(_InterfaceID, _ppInterface); } \
-	void GetDevice(oGPUDevice** _ppDevice) const threadsafe { MIXINGetDevice(_ppDevice); } \
-	const char* GetName() const threadsafe override { return MIXINGetURI(); }
+// _____________________________________________________________________________
+// Implementation detail macros (don't use these directly)
 
-#define oDEFINE_GPUDEVICECHILD_INTERFACE_EXPLICIT_QI() \
-	int Reference() threadsafe override { return MIXINReference(); } \
-	void Release() threadsafe override { MIXINRelease(); } \
-	bool QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe override; \
-	void GetDevice(oGPUDevice** _ppDevice) const threadsafe { MIXINGetDevice(_ppDevice); } \
-	const char* GetName() const threadsafe override { return MIXINGetURI(); }
+#define oIMPLEMENTATION_PREFIX oCONCAT(d3d11,_)
 
-// Place this macro in the implementation class of an oGPUResource
-#define oDEFINE_GPURESOURCE_INTERFACE() oDEFINE_GPUDEVICECHILD_INTERFACE() \
-	ouro::gpu::resource_type::value GetType() const threadsafe override { return MIXINGetType(); } \
-	unsigned int GetID() const threadsafe override { return MIXINGetID(); } \
-	void GetDesc(interface_type::DESC* _pDesc) const threadsafe override { MIXINGetDesc(_pDesc); } \
-	int2 GetByteDimensions(int _Subresource) const threadsafe override;
+#define oDEVICE_CHILD_CLASS__(_APIPrefix, _BaseTypeName) class oCONCAT(_APIPrefix,_BaseTypeName) : public _BaseTypeName, device_child_mixin<oCONCAT(_BaseTypeName,_info), _BaseTypeName, oCONCAT(_APIPrefix,_BaseTypeName)>
+#define oRESOURCE_CLASS__(_APIPrefix, _BaseTypeName) class oCONCAT(_APIPrefix,_BaseTypeName) : public _BaseTypeName, resource_mixin<oCONCAT(_BaseTypeName,_info), _BaseTypeName, oCONCAT(_APIPrefix,_BaseTypeName), resource_type::_BaseTypeName>
+
+#define oDEVICE_CHILD_CTOR__(_APIPrefix, _BaseTypeName) oCONCAT(_APIPrefix,_BaseTypeName)(std::shared_ptr<device>& _Device, const char* _Name, const oCONCAT(_BaseTypeName,_info)& _Info);
+#define oRESOURCE_CTOR__(_APIPrefix, _BaseTypeName) oDEVICE_CHILD_CTOR__(_APIPrefix, _BaseTypeName)
+
+#define oDEVICE_CHILD_INTERFACE__ \
+	inline std::shared_ptr<device> get_device() const override { return Device; } \
+	inline const char* name() const override { return Name; }
+
+#define oRESOURCE_INTERFACE__ oDEVICE_CHILD_INTERFACE__ \
+	inline resource_type::value type() const override { return get_type(); } \
+	inline uint id() const override { return ID; } \
+	inline info_type get_info() const override { return Info; } \
+	uint2 byte_dimensions(int _Subresource) const override;
+
+#define oDEVICE_CHILD_CTOR_DEFINITION__(_APIPrefix, _BaseTypeName) oCONCAT(_APIPrefix,_BaseTypeName)::oCONCAT(_APIPrefix,_BaseTypeName)(std::shared_ptr<device>& _Device, const char* _Name, const oCONCAT(_BaseTypeName,_info)& _Info) : device_child_mixin(_Device, _Name)
+#define oRESOURCE_CTOR_DEFINITION__(_APIPrefix, _BaseTypeName) oCONCAT(_APIPrefix,_BaseTypeName)::oCONCAT(_APIPrefix,_BaseTypeName)(std::shared_ptr<device>& _Device, const char* _Name, const oCONCAT(_BaseTypeName,_info)& _Info) : resource_mixin(_Device, _Name, _Info)
+
+#define oDEFINE_DEVICE_MAKE__(_APIPrefix, _BaseTypeName) \
+	std::shared_ptr<_BaseTypeName> oCONCAT(_APIPrefix,device)::oCONCAT(make_,_BaseTypeName)(const char* _Name, const oCONCAT(_BaseTypeName,_info)& _Info) \
+	{ return std::make_shared<oCONCAT(_APIPrefix,_BaseTypeName)>(get_shared(), _Name, _Info); }
+
+// _____________________________________________________________________________
+// Device child/resource definition macros
+
+// All declarations and definitions for GPU implemenations should be wrapped in these macros
+#define oGPU_NAMESPACE_BEGIN namespace ouro { namespace gpu { namespace oIMPLEMENTATION_NAME {
+#define oGPU_NAMESPACE_END }}}
+
+#define oDEVICE_CHILD_CLASS(_BaseTypeName) oDEVICE_CHILD_CLASS__(oIMPLEMENTATION_PREFIX, _BaseTypeName)
+#define oRESOURCE_CLASS(_BaseTypeName) oRESOURCE_CLASS__(oIMPLEMENTATION_PREFIX, _BaseTypeName)
+
+#define oDEVICE_CHILD_DECLARATION(_BaseTypeName) public: oDEVICE_CHILD_INTERFACE__ oDEVICE_CHILD_CTOR__(oIMPLEMENTATION_PREFIX, _BaseTypeName)
+#define oRESOURCE_DECLARATION(_BaseTypeName) public: oRESOURCE_INTERFACE__ oRESOURCE_CTOR__(oIMPLEMENTATION_PREFIX, _BaseTypeName)
+
+#define oDEVICE_CHILD_CTOR(_BaseTypeName) oDEVICE_CHILD_CTOR_DEFINITION__(oIMPLEMENTATION_PREFIX, _BaseTypeName)
+#define oRESOURCE_CTOR(_BaseTypeName) oRESOURCE_CTOR_DEFINITION__(oIMPLEMENTATION_PREFIX, _BaseTypeName)
+
+#define oDEFINE_DEVICE_MAKE(_BaseTypeName) oDEFINE_DEVICE_MAKE__(oIMPLEMENTATION_PREFIX, _BaseTypeName)
+
+// _____________________________________________________________________________
+// Base class static mixins
+
+oGPU_NAMESPACE_BEGIN
 
 // The one true hash. This is a persistent hash that can be used at tool time 
 // and at runtime and should be capable of uniquely identifying any resource 
 // in the system.
-inline unsigned int oGPUDeviceResourceHash(const char* _SourceName, ouro::gpu::resource_type::value _Type) { return ouro::fnv1a<unsigned int>(_SourceName, static_cast<unsigned int>(strlen(_SourceName)), _Type); }
+inline uint resource_hash(const char* _SourceName, resource_type::value _Type) { return ouro::fnv1a<uint>(_SourceName, static_cast<uint>(strlen(_SourceName)), _Type); }
 
-template<typename InterfaceT, typename ImplementationT>
-struct oGPUDeviceChildMixinBase
+template<typename InfoT, typename InterfaceT, typename ImplementationT>
+class device_child_mixin_base
 {
+public:
+	typedef InfoT info_type;
 	typedef InterfaceT interface_type;
 	typedef ImplementationT implementation_type;
 
-	oGPUDeviceChildMixinBase(const oGPUDeviceChildMixinBase&)/* = delete*/;
-	const oGPUDeviceChildMixinBase& operator=(const oGPUDeviceChildMixinBase&)/* = delete*/;
-
 protected:
-	ouro::intrusive_ptr<oGPUDevice> Device;
-	oInitOnce<ouro::uri_string> Name;
-	oRefCount RefCount;
+	std::shared_ptr<device> Device;
+	uri_string Name;
 
 	// Because of the vtable and the desire to work on the actual class and not
-	// really this epherial mixin, use This() rather than 'this' for most local
-	// operations.
+	// this epherial mixin, use This() rather than 'this' for most local operations.
 	ImplementationT* This() { return static_cast<ImplementationT*>(this); }
 	const ImplementationT* This() const { return static_cast<ImplementationT*>(this); }
-	threadsafe ImplementationT* This() threadsafe { return static_cast<threadsafe ImplementationT*>(this); }
-	const threadsafe ImplementationT* This() threadsafe const { return static_cast<threadsafe ImplementationT*>(this); }
 
-	oGPUDeviceChildMixinBase(oGPUDevice* _pDevice, const char* _Name)
-		: Device(_pDevice)
+	device_child_mixin_base(std::shared_ptr<device>& _Device, const char* _Name)
+		: Device(_Device)
 		, Name(_Name)
 	{}
 
-	inline int MIXINReference() threadsafe
-	{
-		return RefCount.Reference();
-	}
-	
-	inline void MIXINRelease() threadsafe
-	{
-		if (RefCount.Release())
-			delete This();
-	}
-
-	inline void MIXINGetDevice(oGPUDevice** _ppDevice) const threadsafe
-	{
-		*_ppDevice = thread_cast<oGPUDeviceChildMixinBase*>(this)->Device; // safe because pointer never changes, and Reference() is threadsafe
-		(*_ppDevice)->Reference();
-	}
-
-	inline const char* MIXINGetURI() const threadsafe
-	{
-		return *Name;
-	}
+private:
+	device_child_mixin_base(const device_child_mixin_base&)/* = delete*/;
+	const device_child_mixin_base& operator=(const device_child_mixin_base&)/* = delete*/;
 };
 
-template<typename InterfaceT, typename ImplementationT>
-struct oGPUDeviceChildMixin : oGPUDeviceChildMixinBase<InterfaceT, ImplementationT>
+template<typename InfoT, typename InterfaceT, typename ImplementationT>
+class device_child_mixin : public device_child_mixin_base<InfoT, InterfaceT, ImplementationT>
 {
-	oGPUDeviceChildMixin(oGPUDevice* _pDevice, const char* _Name)
-		: oGPUDeviceChildMixinBase(_pDevice, _Name)
+public:
+	device_child_mixin(std::shared_ptr<device>& _Device, const char* _Name)
+		: device_child_mixin_base(_Device, _Name)
+	{}
+};
+
+template<typename InfoT, typename InterfaceT, typename ImplementationT, resource_type::value TypeT>
+class resource_mixin : public device_child_mixin_base<InfoT, InterfaceT, ImplementationT>
+{
+public:
+	typedef InfoT info_type;
+	typedef InterfaceT interface_type;
+	typedef ImplementationT implementation_type;
+
+	resource_mixin(std::shared_ptr<device>& _Device, const char* _Name, const InfoT& _Info)
+		: device_child_mixin_base(_Device, _Name)
+		, Info(_Info)
+		, ID(resource_hash(_Name, get_type()))
 	{}
 
-protected:
-
-	inline bool MIXINQueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
-	{
-		*_ppInterface = nullptr;
-
-		if (_InterfaceID == oGUID_oGPUDeviceChild || _InterfaceID == oGetGUID<InterfaceT>(0) || _InterfaceID == oGetGUID<ImplementationT>(0))
-		{
-			This()->Reference();
-			*_ppInterface = This();
-		}
-
-		else if (_InterfaceID == oGUID_oGPUDevice)
-		{
-			Device->Reference();
-			*_ppInterface = Device;
-		}
-
-		return !!*_ppInterface;
-	}
-};
-
-template<typename InterfaceT, typename ImplementationT, ouro::gpu::resource_type::value Type>
-struct oGPUResourceMixin : oGPUDeviceChildMixinBase<InterfaceT, ImplementationT>
-{
-	typedef typename InterfaceT::DESC desc_type;
-
-	oGPUResourceMixin(oGPUDevice* _pDevice, const typename InterfaceT::DESC& _Desc, const char* _Name)
-		: oGPUDeviceChildMixinBase(_pDevice, _Name)
-		, Desc(_Desc)
-		, ID(oGPUDeviceResourceHash(_Name, Type))
-	{}
-
-	inline desc_type* GetDirectDesc() { return &Desc; }
+	inline resource_type::value get_type() const { return TypeT; }
+	inline InfoT& get_info_direct() { return Info; }
 
 protected:
-
-	desc_type Desc;
-	unsigned int ID;
-
-	inline bool MIXINQueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
-	{
-		*_ppInterface = 0;
-
-		if (_InterfaceID == oGUID_oGPUDeviceChild || _InterfaceID == oGUID_oGPUResource || _InterfaceID == oGetGUID<InterfaceT>(0))
-		{
-			This()->Reference();
-			*_ppInterface = This();
-		}
-
-		else if (_InterfaceID == oGUID_oGPUDevice)
-		{
-			Device->Reference();
-			*_ppInterface = Device;
-		}
-
-		return !!*_ppInterface;
-	}
-
-	inline ouro::gpu::resource_type::value MIXINGetType() const threadsafe
-	{
-		return Type;
-	}
-
-	inline unsigned int MIXINGetID() const threadsafe
-	{
-		return ID;
-	}
-
-	inline void MIXINGetDesc(desc_type* _pDesc) const threadsafe
-	{
-		*_pDesc = thread_cast<desc_type&>(Desc); // safe because it's read-only
-	}
+	InfoT Info;
+	uint ID;
 };
+
+oGPU_NAMESPACE_END
+
+
+// declare and define the ctor interface. Opening brackets and the body must still be defined.
+#define oDEFINE_RESOURCE_CTOR(_APIPrefix, _BaseTypeName) _APIPrefix##_BaseTypeName::_APIPrefix##_BaseTypeName(std::shared_ptr<device>& _Device, const char* _Name, const _BaseTypeName##_info& _Info) : resource_mixin(_Device, _Name, _Info)
+
+// declare and define the ctor interface. Opening brackets and the body must still be defined.
+#define oDECLARE_RESOURCE_CTOR(_APIPrefix, _BaseTypeName) _APIPrefix##_BaseTypeName(std::shared_ptr<device>& _Device, const char* _Name, const _BaseTypeName##_info& _Info)
+#define oDEFINE_RESOURCE_CTOR(_APIPrefix, _BaseTypeName) _APIPrefix##_BaseTypeName::_APIPrefix##_BaseTypeName(std::shared_ptr<device>& _Device, const char* _Name, const _BaseTypeName##_info& _Info) : resource_mixin(_Device, _Name, _Info)
+
+// D3D11 simplifications of the above macros
+#define oDEFINE_D3D11_MAKE(_BaseTypeName) oDEFINE_MAKE(d3d11_, _BaseTypeName)
+
+
+
+#if 0
 
 // Macros to unify code and enforce uniformity
 
@@ -243,20 +195,21 @@ protected:
 
 // Wrap the boilerplate Create implementations in case we decide to play around 
 // with where device children's memory comes from.
-#define oDEFINE_GPUDEVICE_CREATE(_oAPI, _TypeShortName) \
-	bool _oAPI##Device::Create##_TypeShortName(const char* _Name, const oGPU##_TypeShortName::DESC& _Desc, oGPU##_TypeShortName** _pp##_TypeShortName) \
-	{	oGPU_CREATE_CHECK_PARAMETERS(_pp##_TypeShortName); \
+#define oDEFINE_GPUDEVICE_CREATE(_oAPI, _BaseTypeName) \
+	bool _oAPI##Device::Create##_BaseTypeName(const char* _Name, const oGPU##_BaseTypeName::DESC& _Desc, oGPU##_BaseTypeName** _pp##_BaseTypeName) \
+	{	oGPU_CREATE_CHECK_PARAMETERS(_pp##_BaseTypeName); \
 		bool success = false; \
-		oCONSTRUCT(_pp##_TypeShortName, _oAPI##_TypeShortName(this, _Desc, _Name, &success)); \
+		oCONSTRUCT(_pp##_BaseTypeName, _oAPI##_BaseTypeName(this, _Desc, _Name, &success)); \
 		return success; \
 	}
 
 // Centralize the signature of the ctors for base types in case system-wide 
 // changes need to be made
-#define oDECLARE_GPUDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
-#define oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGPUDeviceChildMixin(_pDevice, _Name)
+#define oDECLARE_GPUDEVICECHILD_CTOR(_oAPI, _BaseTypeName) _oAPI##_BaseTypeName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
+#define oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(_oAPI, _BaseTypeName) _oAPI##_BaseTypeName::_oAPI##_BaseTypeName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGPUDeviceChildMixin(_pDevice, _Name)
 
-#define oDECLARE_GPURESOURCE_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
-#define oBEGIN_DEFINE_GPURESOURCE_CTOR(_oAPI, _TypeShortName) _oAPI##_TypeShortName::_oAPI##_TypeShortName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGPUResourceMixin(_pDevice, _Desc, _Name)
+#define oDECLARE_GPURESOURCE_CTOR(_oAPI, _BaseTypeName) _oAPI##_BaseTypeName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
+#define oBEGIN_DEFINE_GPURESOURCE_CTOR(_oAPI, _BaseTypeName) _oAPI##_BaseTypeName::_oAPI##_BaseTypeName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGPUResourceMixin(_pDevice, _Desc, _Name)
 
+#endif
 #endif

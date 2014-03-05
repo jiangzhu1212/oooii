@@ -25,127 +25,81 @@
 #include "oD3D11RenderTarget.h"
 #include "oD3D11Device.h"
 #include "oD3D11Texture.h"
-#include <oSurface/surface.h>
 #include "dxgi_util.h"
+
 #include <oGUI/Windows/oWinWindowing.h>
 
-using namespace ouro;
-using namespace d3d11;
+oGPU_NAMESPACE_BEGIN
 
-bool oD3D11CreateRenderTarget(oGPUDevice* _pDevice, const char* _Name, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat, oGPURenderTarget** _ppRenderTarget)
+std::shared_ptr<render_target> make_render_target(std::shared_ptr<device>& _Device, const char* _Name, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat)
 {
-	oGPU_CREATE_CHECK_NAME();
 	if (!_pSwapChain)
-		return oErrorSetLast(std::errc::invalid_argument, "A valid swap chain must be specified");
-
-	bool success = false;
-	oCONSTRUCT(_ppRenderTarget, oD3D11RenderTarget(_pDevice, _pSwapChain, _DepthStencilFormat, _Name, &success)); \
-	return success;
+		oTHROW_INVARG("A valid swap chain must be specified");
+	return std::make_shared<d3d11_render_target>(_Device, _Name, _pSwapChain, _DepthStencilFormat);
 }
 
-oDEFINE_GPUDEVICE_CREATE(oD3D11, RenderTarget);
-oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, RenderTarget)
-	, Desc(_Desc)
+oDEFINE_DEVICE_MAKE(render_target)
+oDEVICE_CHILD_CTOR(render_target)
+	, Info(_Info)
 {
-	*_pSuccess = false;
-	
-	for (uint i = 0; i < oCOUNTOF(Desc.format); i++)
-	{
-		if (surface::is_yuv(Desc.format[i]))
-		{
-			oErrorSetLast(std::errc::invalid_argument, "YUV render targets are not supported (format %s specified)", as_string(Desc.format[i]));
-			return;
-		}
-	}
+	for (uint i = 0; i < oCOUNTOF(Info.format); i++)
+		if (surface::is_yuv(Info.format[i]))
+			oTHROW_INVARG("YUV render targets are not supported (format %s specified)", as_string(Info.format[i]));
 
 	// invalidate width/height to force allocation in this call to resize
-	Desc.dimensions = ushort3(0,0,0);
-	Resize(_Desc.dimensions);
-	*_pSuccess = true;
+	Info.dimensions = ushort3(0,0,0);
+	resize(_Info.dimensions);
 }
 
-oD3D11RenderTarget::oD3D11RenderTarget(oGPUDevice* _pDevice, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat, const char* _Name, bool* _pSuccess)
-	: oGPUDeviceChildMixin(_pDevice, _Name)
+d3d11_render_target::d3d11_render_target(std::shared_ptr<device>& _Device, const char* _Name, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat)
+	: device_child_mixin(_Device, _Name)
 	, SwapChain(_pSwapChain)
 {
-	*_pSuccess = false;
-
 	DXGI_SWAP_CHAIN_DESC SCD;
 	SwapChain->GetDesc(&SCD);
 
 	if (oWinIsRenderTarget(SCD.OutputWindow))
-	{
-		oErrorSetLast(std::errc::invalid_argument, "The specified window is already associated with a render target and cannot be reassociated.");
-		return;
-	}
+		oTHROW_INVARG("The specified window is already associated with a render target and cannot be reassociated.");
 	
 	oWinSetIsRenderTarget(SCD.OutputWindow);
-	Desc.depth_stencil_format = _DepthStencilFormat;
-	Desc.format[0] = dxgi::to_surface_format(SCD.BufferDesc.Format);
-	Resize(int3(SCD.BufferDesc.Width, SCD.BufferDesc.Height, 1));
-	*_pSuccess = true;
+	Info.depth_stencil_format = _DepthStencilFormat;
+	Info.format[0] = dxgi::to_surface_format(SCD.BufferDesc.Format);
+	resize(int3(SCD.BufferDesc.Width, SCD.BufferDesc.Height, 1));
 }
 
-oD3D11RenderTarget::~oD3D11RenderTarget()
+d3d11_render_target::~d3d11_render_target()
 {
 	if (SwapChain)
 	{
-		static_cast<oD3D11Device*>(Device.c_ptr())->RTReleaseSwapChain();
+		static_cast<d3d11_device*>(Device.get())->release_swap_chain();
 		DXGI_SWAP_CHAIN_DESC SCD;
 		SwapChain->GetDesc(&SCD);
 		oWinSetIsRenderTarget(SCD.OutputWindow, false);
 	}
 }
 
-bool oD3D11RenderTarget::QueryInterface(const oGUID& _InterfaceID, threadsafe void** _ppInterface) threadsafe
+render_target_info d3d11_render_target::get_info() const
 {
-	if (MIXINQueryInterface(_InterfaceID, _ppInterface))
-		return true;
-
-	else if (_InterfaceID == (const oGUID&)__uuidof(IDXGISwapChain) && SwapChain)
-	{
-		SwapChain->AddRef();
-		*_ppInterface = SwapChain;
-	}
-
-	return !!*_ppInterface;
-}
-
-void oD3D11RenderTarget::GetDesc(DESC* _pDesc) const threadsafe
-{
-	shared_lock<shared_mutex> lock(thread_cast<shared_mutex&>(DescMutex));
-	oD3D11RenderTarget* pThis = thread_cast<oD3D11RenderTarget*>(this);
-
-	*_pDesc = pThis->Desc;
-
+	render_target_info i(Info);
+	d3d11_render_target* pThis = const_cast<d3d11_render_target*>(this);
 	if (SwapChain)
 	{
-		DXGI_SWAP_CHAIN_DESC d;
-		oV(pThis->SwapChain->GetDesc(&d));
-		_pDesc->dimensions = int3(as_int(d.BufferDesc.Width), as_int(d.BufferDesc.Height), 1);
-		_pDesc->format[0] = dxgi::to_surface_format(d.BufferDesc.Format);
-
-		if (pThis->DepthStencilTexture)
-		{
-			oGPUTexture::DESC d;
-			pThis->DepthStencilTexture->GetDesc(&d);
-			_pDesc->depth_stencil_format = d.format;
-		}
-
-		else
-			_pDesc->depth_stencil_format = surface::unknown;
+		DXGI_SWAP_CHAIN_DESC SCD;
+		oV(pThis->SwapChain->GetDesc(&SCD));
+		i.dimensions = int3(as_int(SCD.BufferDesc.Width), as_int(SCD.BufferDesc.Height), 1);
+		i.format[0] = dxgi::to_surface_format(SCD.BufferDesc.Format);
+		i.depth_stencil_format = DepthStencilTexture ? pThis->DepthStencilTexture->get_info().format : surface::unknown;
 	}
+
+	return i;
 }
 
-void oD3D11RenderTarget::SetClearDesc(const gpu::clear_info& _ClearInfo) threadsafe
+void d3d11_render_target::set_clear_info(const clear_info& _ClearInfo)
 {
-	ouro::lock_guard<shared_mutex> lock(thread_cast<shared_mutex&>(DescMutex));
-	oD3D11RenderTarget* pThis = thread_cast<oD3D11RenderTarget*>(this);
-
-	pThis->Desc.clear = _ClearInfo;
+	Info.clear = _ClearInfo;
 }
 
-void oD3D11RenderTarget::ClearResources()
+void d3d11_render_target::clear_resources()
 {
 	RTVs.fill(nullptr);
 	Textures.fill(nullptr);
@@ -153,34 +107,30 @@ void oD3D11RenderTarget::ClearResources()
 	DSV = nullptr;
 }
 
-void oD3D11RenderTarget::RecreateDepthBuffer(const int2& _Dimensions)
+void d3d11_render_target::recreate_depth(const int2& _Dimensions)
 {
-	if (Desc.depth_stencil_format != surface::unknown)
+	if (Info.depth_stencil_format != surface::unknown)
 	{
-		lstring name;
-		snprintf(name, "%s.DS", GetName());
-		oD3D11DEVICE();
+		lstring n;
+		snprintf(n, "%s.DS",  name());
+		oD3D11_DEVICE();
 		DepthStencilTexture = nullptr;
 		DSV = nullptr;
 
-		gpu::texture_info d;
-		d.dimensions = ushort3(_Dimensions, 1);
-		d.array_size = 0;
-		d.format = Desc.depth_stencil_format;
-		d.type = gpu::texture_type::render_target_2d;
-		new_texture New = make_texture(D3DDevice, name, d, nullptr);
+		texture_info i;
+		i.dimensions = ushort3(_Dimensions, 1);
+		i.array_size = 0;
+		i.format = Info.depth_stencil_format;
+		i.type = texture_type::render_target_2d;
+		new_texture New = make_texture(D3DDevice, n, i, nullptr);
 		intrusive_ptr<ID3D11Texture2D> Depth = New.pTexture2D;
 		DSV = New.pDSV;
-		bool textureSuccess = false;
-		DepthStencilTexture = intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, Depth), false);
-		oASSERT(textureSuccess, "Creation of oD3D11Texture failed from ID3D11Texture2D: %s", oErrorGetLastString());
+		DepthStencilTexture = std::make_shared<d3d11_texture>(Device, name(), texture_info(), Depth);
 	}
 }
 
-void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
+void d3d11_render_target::resize(const int3& _NewDimensions)
 {
-	ouro::lock_guard<shared_mutex> lock(DescMutex);
-
 	int3 New = _NewDimensions;
 	if (SwapChain)
 	{
@@ -195,69 +145,67 @@ void oD3D11RenderTarget::Resize(const int3& _NewDimensions)
 		}
 	}
 
-	if (any(Desc.dimensions != New))
+	if (any(Info.dimensions != New))
 	{
-		oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", type_name(typeid(*this).name()), GetName(), Desc.dimensions.x, Desc.dimensions.y, Desc.dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
-		ClearResources();
+		oTRACE("%s %s Resize %dx%dx%d -> %dx%dx%d", type_name(typeid(*this).name()), name(), Info.dimensions.x, Info.dimensions.y, Info.dimensions.z, _NewDimensions.x, _NewDimensions.y, _NewDimensions.z);
+		clear_resources();
 
 		if (New.x && New.y && New.z)
 		{
 			if (SwapChain)
 			{
 				oASSERT(New.z == 1, "New.z must be set to 1 for primary render target");
+				Device->immediate()->clear_render_target_and_unordered_resources();
 				dxgi::resize_buffers(SwapChain, New.xy());
 				intrusive_ptr<ID3D11Texture2D> SwapChainTexture;
 				oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SwapChainTexture));
 				bool textureSuccess = false;
-				Textures[0] = intrusive_ptr<oGPUTexture>(new oD3D11Texture(Device, oGPUTexture::DESC(), GetName(), &textureSuccess, SwapChainTexture), false);
-				oVERIFY(textureSuccess);
-				make_rtv(GetName(), SwapChainTexture, RTVs[0]);
-				Desc.array_size = 0;
-				Desc.mrt_count = 1;
-				Desc.type = gpu::texture_type::render_target_2d;
+				Textures[0] = std::make_shared<d3d11_texture>(Device, name(), texture_info(), SwapChainTexture);
+				make_rtv(name(), SwapChainTexture, RTVs[0]);
+				Info.array_size = 0;
+				Info.mrt_count = 1;
+				Info.type = texture_type::render_target_2d;
 			}
 
 			else
 			{
-				for (int i = 0; i < Desc.mrt_count; i++)
+				for (int i = 0; i < Info.mrt_count; i++)
 				{
-					lstring name;
-					snprintf(name, "%s%02d", GetName(), i);
-					oGPUTexture::DESC d;
-					d.dimensions = New;
-					d.format = Desc.format[i];
-					d.array_size = Desc.array_size;
-					d.type = gpu::make_render_target(Desc.type);
-					oVERIFY(Device->CreateTexture(name, d, &Textures[i]));
-					make_rtv(GetName(), static_cast<oD3D11Texture*>(Textures[i].c_ptr())->Texture, RTVs[0]);
+					lstring n;
+					snprintf(n, "%s%02d", name(), i);
+					texture_info ti;
+					ti.dimensions = New;
+					ti.format = Info.format[i];
+					ti.array_size = Info.array_size;
+					ti.type = gpu::make_render_target(Info.type);
+					Textures[i] = Device->make_texture(n, ti);
+					make_rtv(name(), static_cast<d3d11_texture*>(Textures[i].get())->pTexture2D, RTVs[0]);
 				}
 			}
 
-			RecreateDepthBuffer(New.xy());
+			recreate_depth(New.xy());
 		}
 		
-		Desc.dimensions = New;
+		Info.dimensions = New;
 	}
 }
 
-void oD3D11RenderTarget::GetTexture(int _MRTIndex, oGPUTexture** _ppTexture)
+std::shared_ptr<texture> d3d11_render_target::get_texture(int _MRTIndex)
 {
-	oASSERT(_MRTIndex < Desc.mrt_count, "Invalid MRT index");
-	if (Textures[_MRTIndex])
-		Textures[_MRTIndex]->Reference();
-	*_ppTexture = Textures[_MRTIndex];
+	oCHECK(_MRTIndex < Info.mrt_count, "Invalid MRT index");
+	return Textures[_MRTIndex];
 }
 
-void oD3D11RenderTarget::GetDepthTexture(oGPUTexture** _ppTexture)
+std::shared_ptr<texture> d3d11_render_target::get_depth_texture()
 {
-	if (DepthStencilTexture)
-		DepthStencilTexture->Reference();
-	*_ppTexture = DepthStencilTexture;
+	return DepthStencilTexture;
 }
 
-std::shared_ptr<surface::buffer> oD3D11RenderTarget::CreateSnapshot(int _MRTIndex)
+std::shared_ptr<surface::buffer> d3d11_render_target::make_snapshot(int _MRTIndex)
 {
 	if (!Textures[_MRTIndex])		
 		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");
-	return make_snapshot(static_cast<oD3D11Texture*>(Textures[_MRTIndex].c_ptr())->Texture);
+	return d3d11::make_snapshot(static_cast<d3d11_texture*>(Textures[_MRTIndex].get())->pTexture2D);
 }
+
+oGPU_NAMESPACE_END

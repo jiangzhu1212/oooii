@@ -33,7 +33,7 @@ using namespace ouro::mesh;
 
 struct LineListContext
 {
-	intrusive_ptr<oGPUBuffer> LineList;
+	std::shared_ptr<buffer> LineList;
 	std::shared_ptr<util_mesh> CapMesh;
 	std::shared_ptr<util_mesh> PickMesh;
 	oURI URI;
@@ -63,20 +63,20 @@ struct oGfxManipulatorImpl : public oGfxManipulator
 	void GetTransform(float4x4 *_pTransform) const override;
 	void SetTransform(const float4x4& _Transform) override;
 	
-	void GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, std::function<void(util_mesh* _pMesh, uint _ObjectID)> _Callback) override;
-	void GetManipulatorVisualLines(oGPUCommandList* _pCommandList, std::function<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback) override;
-	void GetManipulatorMeshes(oGPUCommandList* _pCommandList, std::function<void(util_mesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback) override;
+	void GetManipulatorPickLineMeshes(command_list* _pCommandList, std::function<void(util_mesh* _pMesh, uint _ObjectID)> _Callback) override;
+	void GetManipulatorVisualLines(command_list* _pCommandList, std::function<void(buffer* _pLineList, uint _NumLines)> _Callback) override;
+	void GetManipulatorMeshes(command_list* _pCommandList, std::function<void(util_mesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback) override;
 
-	oGfxManipulatorImpl(const char* _Name, const oGfxManipulator::DESC& _Desc, oGPUDevice* _pDevice, bool* _pSuccess);
+	oGfxManipulatorImpl(const char* _Name, const oGfxManipulator::DESC& _Desc, device* _pDevice, bool* _pSuccess);
 
 	template<typename GEOMETRY_T>
-	std::shared_ptr<util_mesh> CreateGeometryMesh(oGPUDevice* _pDevice, const char* _Name, const GEOMETRY_T& _GeometryDesc);
+	std::shared_ptr<util_mesh> CreateGeometryMesh(device* _pDevice, const char* _Name, const GEOMETRY_T& _GeometryDesc);
 
 	template<typename PICK_GEOMETRY_T>
-	bool CreateAxisGeometry(oGPUDevice* _pDevice, const char* _BaseName, const PICK_GEOMETRY_T& _PickGeometryDesc, unsigned int _NumLines, oManipulator::AXIS _Axis);
+	bool CreateAxisGeometry(device* _pDevice, const char* _BaseName, const PICK_GEOMETRY_T& _PickGeometryDesc, unsigned int _NumLines, oManipulator::AXIS _Axis);
 	
 	template<typename PICK_GEOMETRY_T, typename CONE_GEOMETRY_T>
-	bool CreateAxisGeometry(oGPUDevice* _pDevice, const char* _BaseName, const PICK_GEOMETRY_T& _PickGeometryDesc, const CONE_GEOMETRY_T& _ConeGeometryDesc, unsigned int _NumLines, oManipulator::AXIS _Axis);
+	bool CreateAxisGeometry(device* _pDevice, const char* _BaseName, const PICK_GEOMETRY_T& _PickGeometryDesc, const CONE_GEOMETRY_T& _ConeGeometryDesc, unsigned int _NumLines, oManipulator::AXIS _Axis);
 
 	void Update();
 
@@ -97,7 +97,7 @@ struct oGfxManipulatorImpl : public oGfxManipulator
 
 
 template<typename GEOMETRY_T>
-std::shared_ptr<util_mesh> oGfxManipulatorImpl::CreateGeometryMesh(oGPUDevice* _pDevice, const char* _Name, const GEOMETRY_T& _GeometryDesc)
+std::shared_ptr<util_mesh> oGfxManipulatorImpl::CreateGeometryMesh(device* _pDevice, const char* _Name, const GEOMETRY_T& _GeometryDesc)
 {
 	ouro::mesh::layout::value GeoLayout = ouro::mesh::layout::pos;
 
@@ -111,20 +111,13 @@ std::shared_ptr<util_mesh> oGfxManipulatorImpl::CreateGeometryMesh(oGPUDevice* _
 }
 
 template<typename PICK_GEOMETRY_T>
-bool oGfxManipulatorImpl::CreateAxisGeometry(oGPUDevice* _pDevice, const char* _BaseName, const PICK_GEOMETRY_T& _GeometryDesc, unsigned int _NumLines, oManipulator::AXIS _Axis)
+bool oGfxManipulatorImpl::CreateAxisGeometry(device* _pDevice, const char* _BaseName, const PICK_GEOMETRY_T& _GeometryDesc, unsigned int _NumLines, oManipulator::AXIS _Axis)
 {
 	auto& Line = Lines[_Axis];
 	
-	gpu::buffer_info i;
-	i.type = gpu::buffer_type::vertex;
-	i.struct_byte_size = sizeof(vertex_pos_color);
-	i.array_size = _NumLines * 2;
-	
 	uri_string Name;
 	snprintf(Name, "%s_%s", _BaseName, ouro::as_string(_Axis));
-	if(!_pDevice->CreateBuffer(Name, i, &Line.LineList))
-		return oErrorPrefixLast("Failed to create a line list for a manipulator: ");
-
+	Line.LineList = _pDevice->make_vertex_buffer<vertex_pos_color>(Name, _NumLines * 2);
 	Line.PickMesh = CreateGeometryMesh(_pDevice, Name, _GeometryDesc);
 
 	Line.URI = Name;
@@ -133,7 +126,7 @@ bool oGfxManipulatorImpl::CreateAxisGeometry(oGPUDevice* _pDevice, const char* _
 
 
 template<typename PICK_GEOMETRY_T, typename CONE_GEOMETRY_T>
-bool oGfxManipulatorImpl::CreateAxisGeometry( oGPUDevice* _pDevice, const char* _BaseName, const PICK_GEOMETRY_T& _PickGeometryDesc, const CONE_GEOMETRY_T& _ConeGeometryDesc, unsigned int _NumLines, oManipulator::AXIS _Axis )
+bool oGfxManipulatorImpl::CreateAxisGeometry( device* _pDevice, const char* _BaseName, const PICK_GEOMETRY_T& _PickGeometryDesc, const CONE_GEOMETRY_T& _ConeGeometryDesc, unsigned int _NumLines, oManipulator::AXIS _Axis )
 {
 	if(!CreateAxisGeometry(_pDevice, _BaseName, _PickGeometryDesc, _NumLines, _Axis))
 		return false;
@@ -145,7 +138,7 @@ bool oGfxManipulatorImpl::CreateAxisGeometry( oGPUDevice* _pDevice, const char* 
 }
 
 
-oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulator::DESC& _Desc, oGPUDevice* _pDevice, bool* _pSuccess) 
+oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulator::DESC& _Desc, device* _pDevice, bool* _pSuccess) 
 	: Desc(_Desc)
 	, Transform(oIDENTITY4x4)
 	, PickedAxis((oManipulator::AXIS)(size_t)ouro::invalid)
@@ -316,7 +309,7 @@ void oGfxManipulatorImpl::Update()
 	Manipulator->Update(CurrentMousePosition, Transform, CurrentViewLH, CurrentProjectionLH);
 }
 
-void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(oGPUCommandList* _pCommandList, std::function<void(util_mesh* _pMesh, uint _ObjectID)> _Callback)
+void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(command_list* _pCommandList, std::function<void(util_mesh* _pMesh, uint _ObjectID)> _Callback)
 {
 	size_t MaxNumLines, MaxNumPickVerts;
 	Manipulator->GetMaxSizes(MaxNumLines, MaxNumPickVerts);
@@ -339,7 +332,7 @@ void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(oGPUCommandList* _pComman
 				msr.data = &VerticesWorking[0];
 				msr.row_pitch = sizeof(VerticesWorking[0]);
 				msr.depth_pitch = MeshDesc.num_vertices * msr.row_pitch;
-				_pCommandList->Commit(Mesh->vertex_buffer(0), 0, msr);
+				_pCommandList->commit(Mesh->vertex_buffer(0), 0, msr);
 				_Callback(Mesh.get(), (uint)Line.URI.Hash());
 			}
 		}
@@ -347,7 +340,7 @@ void oGfxManipulatorImpl::GetManipulatorPickLineMeshes(oGPUCommandList* _pComman
 
 }
 
-void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandList, std::function<void(oGPUBuffer* _pLineList, uint _NumLines)> _Callback)
+void oGfxManipulatorImpl::GetManipulatorVisualLines(command_list* _pCommandList, std::function<void(buffer* _pLineList, uint _NumLines)> _Callback)
 {
 	size_t MaxNumLines, MaxNumPickVerts;
 	Manipulator->GetMaxSizes(MaxNumLines, MaxNumPickVerts);
@@ -363,8 +356,7 @@ void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandLi
 			Manipulator->GetLines(Axis, &VerticesWorking[0], LineVertexCount);
 			if(LineVertexCount > 0)
 			{
-				ouro::surface::mapped_subresource msr;
-				_pCommandList->Reserve(Line.LineList, 0, &msr);
+				ouro::surface::mapped_subresource msr = _pCommandList->reserve(Line.LineList, 0);
 
 				auto LineCount = LineVertexCount == 2 ? 1 : LineVertexCount;
 
@@ -377,14 +369,14 @@ void oGfxManipulatorImpl::GetManipulatorVisualLines(oGPUCommandList* _pCommandLi
 					((vertex_pos_color*)msr.data)[2 * i + 1].color = Line.LineColor;
 				}
 
-				_pCommandList->Commit(Line.LineList, 0, msr, ouro::surface::box(as_int(LineCount * 2)));
-				_Callback(Line.LineList, as_uint(LineCount));
+				_pCommandList->commit(Line.LineList, 0, msr, ouro::surface::box(as_int(LineCount * 2)));
+				_Callback(Line.LineList.get(), as_uint(LineCount));
 			}
 		}
 	}
 }
 
-void oGfxManipulatorImpl::GetManipulatorMeshes(oGPUCommandList* _pCommandList, std::function<void(util_mesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback)
+void oGfxManipulatorImpl::GetManipulatorMeshes(command_list* _pCommandList, std::function<void(util_mesh* _pMesh, float4x4 _Transform, color _MeshColor, uint _ObjectID)> _Callback)
 {
 	for(size_t i = 0; i < oManipulator::NUM_AXES; ++i)
 	{
@@ -400,7 +392,7 @@ void oGfxManipulatorImpl::GetManipulatorMeshes(oGPUCommandList* _pCommandList, s
 	}
 }
 
-bool oGfxManipulatorCreate(const char* _Name, const oGfxManipulator::DESC& _Desc, oGPUDevice* _pDevice, oGfxManipulator** _ppManipulator)
+bool oGfxManipulatorCreate(const char* _Name, const oGfxManipulator::DESC& _Desc, device* _pDevice, oGfxManipulator** _ppManipulator)
 {
 	bool success = false;
 	oCONSTRUCT(_ppManipulator, oGfxManipulatorImpl(_Name, _Desc, _pDevice, &success));

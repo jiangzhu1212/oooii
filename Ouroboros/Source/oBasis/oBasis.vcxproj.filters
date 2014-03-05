@@ -141,9 +141,6 @@
     <ClInclude Include="..\..\Include\oBasis\oXMLSerialize.h">
       <Filter>oBasis\Serialization</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oGPUConcepts.h">
-      <Filter>oBasis\3D Math &amp; Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oContainer.h">
       <Filter>oBasis</Filter>
     </ClInclude>
@@ -277,9 +274,6 @@
     </ClCompile>
     <ClCompile Include="oCppParsing.cpp">
       <Filter>Source\String Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="oGPUConcepts.cpp">
-      <Filter>Source\3D Math &amp; Graphics</Filter>
     </ClCompile>
     <ClCompile Include="oXMLSerialize.cpp">
       <Filter>Source\Serialization</Filter>

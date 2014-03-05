@@ -22,38 +22,39 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
-
-using namespace ouro::gpu;
+// Declarations of oGPU unit tests. These throw on failure.
+#pragma once
+#ifndef oGPUTests_h
+#define oGPUTests_h
 
 namespace ouro {
+
+	class test_services;
+
 	namespace tests {
 
-static const bool kIsDevMode = false;
-
-struct gpu_test_texture3dmip : public gpu_texture_test
-{
-	gpu_test_texture3dmip() : gpu_texture_test("GPU test: texture3D mip", kIsDevMode) {}
-
-	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_3D; }
-	std::shared_ptr<texture> make_test_texture() override
-	{
-		auto red = surface_load(filesystem::data_path() / "Test/Textures/Red.png", surface::alpha_option::force_alpha);
-		auto green = surface_load(filesystem::data_path() / "Test/Textures/Green.png", surface::alpha_option::force_alpha);
-		auto blue = surface_load(filesystem::data_path() / "Test/Textures/Blue.png", surface::alpha_option::force_alpha);
-
-		const surface::buffer* images[3];
-		images[0] = red.get();
-		images[1] = green.get();
-		images[2] = blue.get();
-
-		return make_texture(Device, "Test 3D mipped", images, oCOUNTOF(images), texture_type::mipped_3d);
-	}
-};
-
-oGPU_COMMON_TEST(texture3dmip);
+		void TESTbccodec(test_services& _Services);
+		void TESTbuffer();
+		void TESTclear(test_services& _Services);
+		void TESTdevice(test_services& _Services);
+		void TESTinstanced_triangle(test_services& _Services);
+		void TESTlines(test_services& _Services);
+		void TESTquery();
+		void TESTrender_target(test_services& _Services);
+		void TESTspinning_triangle(test_services& _Services);
+		void TESTtexture_traits();
+		void TESTtexture1d(test_services& _Services);
+		void TESTtexture1dmip(test_services& _Services);
+		void TESTtexture2d(test_services& _Services);
+		void TESTtexture2dmip(test_services& _Services);
+		void TESTtexture3d(test_services& _Services);
+		void TESTtexture3dmip(test_services& _Services);
+		void TESTtexturecube(test_services& _Services);
+		void TESTtexturecubemip(test_services& _Services);
+		void TESTtriangle(test_services& _Services);
+		void TESTwindow_in_window(test_services& _Services);
 
 	} // namespace tests
 } // namespace ouro
+
+#endif

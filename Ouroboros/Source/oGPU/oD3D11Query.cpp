@@ -26,18 +26,17 @@
 #include "oD3D11Query.h"
 #include <oBase/backoff.h>
 
-using namespace ouro;
+oGPU_NAMESPACE_BEGIN
 
-oDEFINE_GPUDEVICE_CREATE(oD3D11, Query);
-oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Query)
-	, Info(_Desc)
+oDEFINE_DEVICE_MAKE(query)
+oDEVICE_CHILD_CTOR(query)
+	, Info(_Info)
 {
-	*_pSuccess = false;
-	oD3D11DEVICE();
+	oD3D11_DEVICE();
 
 	switch (Info.type)
 	{
-		case gpu::query_type::timer:
+		case query_type::timer:
 		{
 			static const D3D11_QUERY_DESC sQueryDescs[3] =
 			{
@@ -55,12 +54,9 @@ oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(oD3D11, Query)
 
 		oNODEFAULT;
 	}
-
-	*_pSuccess = true;
 }
 
-
-void oD3D11Query::Begin(ID3D11DeviceContext* _pDeviceContext)
+void d3d11_query::begin(ID3D11DeviceContext* _pDeviceContext)
 {
 	switch (Info.type)
 	{
@@ -72,7 +68,7 @@ void oD3D11Query::Begin(ID3D11DeviceContext* _pDeviceContext)
 	}
 }
 
-void oD3D11Query::End(ID3D11DeviceContext* _pDeviceContext)
+void d3d11_query::end(ID3D11DeviceContext* _pDeviceContext)
 {
 	switch (Info.type)
 	{
@@ -84,7 +80,7 @@ void oD3D11Query::End(ID3D11DeviceContext* _pDeviceContext)
 	}
 }
 
-static bool PollAsync(ID3D11DeviceContext* _pDeviceContext, ID3D11Asynchronous* _pAsync, void* _pData, uint _SizeofData)
+static bool poll_async(ID3D11DeviceContext* _pDeviceContext, ID3D11Asynchronous* _pAsync, void* _pData, uint _SizeofData)
 {
 	backoff bo;
 	HRESULT hr = S_FALSE;
@@ -100,34 +96,32 @@ static bool PollAsync(ID3D11DeviceContext* _pDeviceContext, ID3D11Asynchronous* 
 	return hr == S_OK;
 }
 
-template<typename T> bool PollAsync(ID3D11DeviceContext* _pDeviceContext, ID3D11Asynchronous* _pAsync, T* _pData)
+template<typename T> bool poll_async(ID3D11DeviceContext* _pDeviceContext, ID3D11Asynchronous* _pAsync, T* _pData)
 {
-	return PollAsync(_pDeviceContext, _pAsync, _pData, sizeof(T));
+	return poll_async(_pDeviceContext, _pAsync, _pData, sizeof(T));
 }
 
-bool oD3D11Query::ReadQuery(ID3D11DeviceContext* _pDeviceContext, void* _pData, size_t _SizeofData)
+bool d3d11_query::read_query(ID3D11DeviceContext* _pDeviceContext, void* _pData, size_t _SizeofData)
 {
 	switch (Info.type)
 	{
 		case gpu::query_type::timer:
 		{
 			if (sizeof(double) != _SizeofData)
-				return oErrorSetLast(std::errc::invalid_argument, "Timer query returns a double representing seconds");
+				oTHROW_INVARG("Timer query returns a double representing seconds");
 
 			ullong Results[TIMER_COUNT];
 			for (int i = 0; i < TIMER_DISJOINT; i++)
-			{
-				if (!PollAsync(_pDeviceContext, Queries[i], &Results[i]))
+				if (!poll_async(_pDeviceContext, Queries[i], &Results[i]))
 					return false;
-			}
 
 			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT Disjoint;
 
-			if (!PollAsync(_pDeviceContext, Queries[TIMER_DISJOINT], &Disjoint, sizeof(Disjoint)))
+			if (!poll_async(_pDeviceContext, Queries[TIMER_DISJOINT], &Disjoint, sizeof(Disjoint)))
 				return false;
 
 			if (Disjoint.Disjoint)
-				return oErrorSetLast(std::errc::protocol_error, "Timer is disjoint (laptop AC unplugged, overheating, GPU throttling)");
+				oTHROW(protocol_error, "Timer is disjoint (laptop AC unplugged, overheating, GPU throttling)");
 
 			ullong TickDelta = Results[TIMER_STOP] - Results[TIMER_START];
 			*(double*)_pData = TickDelta / double(Disjoint.Frequency);
@@ -140,3 +134,5 @@ bool oD3D11Query::ReadQuery(ID3D11DeviceContext* _pDeviceContext, void* _pData, 
 
 	return true;
 }
+
+oGPU_NAMESPACE_END

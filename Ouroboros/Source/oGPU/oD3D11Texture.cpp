@@ -27,92 +27,91 @@
 #include <oSurface/surface.h>
 #include "dxgi_util.h"
 
-using namespace ouro;
-using namespace ouro::d3d11;
+oGPU_NAMESPACE_BEGIN
 
-static bool CreateSecondTexture(oGPUDevice* _pDevice, const char* _Texture1Name, const ouro::gpu::texture_info& _Texture1Desc, oGPUTexture** _ppTexture2)
+ std::shared_ptr<texture> make_second_texture(std::shared_ptr<device>& _Device, const char* _Texture1Name, const texture_info& _Texture1Info)
 {
-	oASSERT(ouro::surface::num_subformats(_Texture1Desc.format) <= 2, "Many-plane textures not supported");
-	if (ouro::surface::num_subformats(_Texture1Desc.format) == 2)
+	oCHECK(surface::num_subformats(_Texture1Info.format) <= 2, "Many-plane textures not supported");
+	if (surface::num_subformats(_Texture1Info.format) == 2)
 	{
 		// To keep YUV textures singular to prepare for new YUV-based DXGI formats
 		// coming, create a private data companion texture.
-		ouro::gpu::texture_info Texture2Desc(_Texture1Desc);
-		Texture2Desc.format = ouro::surface::subformat(_Texture1Desc.format, 1);
-		Texture2Desc.dimensions = ouro::surface::dimensions_npot(_Texture1Desc.format, _Texture1Desc.dimensions, 0, 1);
+		texture_info Texture2Info(_Texture1Info);
+		Texture2Info.format = surface::subformat(_Texture1Info.format, 1);
+		Texture2Info.dimensions = surface::dimensions_npot(_Texture1Info.format, _Texture1Info.dimensions, 0, 1);
 
 		mstring Texture2Name(_Texture1Name);
 		sncatf(Texture2Name, ".Texture2");
-		
-		return _pDevice->CreateTexture(Texture2Name, Texture2Desc, _ppTexture2);
+
+		return _Device->make_texture(Texture2Name, Texture2Info);
 	}
 
-	return true;
+	return nullptr;
 }
 
-oDEFINE_GPUDEVICE_CREATE(oD3D11, Texture);
-oD3D11Texture::oD3D11Texture(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess, ID3D11Resource* _pTexture)
-	: oGPUResourceMixin(_pDevice, _Desc, _Name)
-	, Texture((ID3D11Texture2D*)_pTexture)
+oDEFINE_DEVICE_MAKE(texture)
+d3d11_texture::d3d11_texture(std::shared_ptr<device>& _Device, const char* _Name, const texture_info& _Info, ID3D11Resource* _pTexture)
+	: resource_mixin(_Device, _Name, _Info)
+	, pResource(_pTexture)
 {
 	// NOTE: The desc might be garbage or incorrect if a D3D texture is specified
 	// explicitly, so sync them up here.
-
-	if (_pTexture)
+	if (pResource)
 	{
-		Desc = get_texture_info(_pTexture);
+		pResource->AddRef();
 
-		if (!gpu::is_2d(Desc.type))
-		{
-			oErrorSetLast(std::errc::invalid_argument, "the specified texture must be 2D");
-			return;
-		}
+		Info = get_texture_info(pResource);
 
-		debug_name(_pTexture, _Name);
-		*_pSuccess = true;
+		if (!is_2d(Info.type))
+			oTHROW_INVARG("the specified texture must be 2D");
+		debug_name(pResource, _Name);
 	}
 
 	else
 	{
-		oD3D11DEVICE();
-		new_texture New = make_texture(D3DDevice, _Name, _Desc);
-		Texture = New.pTexture2D;
+		oD3D11_DEVICE();
+		new_texture New = make_texture(D3DDevice, _Name, _Info);
+		pResource = New.pResource;
+		pResource->AddRef();
 		SRV = New.pSRV;
-		*_pSuccess = true;
 	}
 
-	if (*_pSuccess)
+	if (!is_readback(_Info.type))
 	{
-		if (!gpu::is_readback(_Desc.type))
+		if (!SRV)
 		{
-			if (!SRV && *_pSuccess)
-			{
-				mstring name;
-				snprintf(name, "%s.SRV", _Name);
-				SRV = make_srv(name, Texture);
-			}
-
-			if (*_pSuccess && gpu::is_unordered(_Desc.type))
-				UAV = make_uav(_Name, Texture, 0, 0);
+			mstring name;
+			snprintf(name, "%s.SRV", _Name);
+			SRV = make_srv(name, pResource);
 		}
 
-		*_pSuccess = CreateSecondTexture(_pDevice, _Name, _Desc, (oGPUTexture**)&Texture2);
+		if (is_unordered(_Info.type))
+			UAV = make_uav(_Name, pResource, 0, 0);
 	}
+
+	Texture2 = make_second_texture(_Device, _Name, _Info);
 }
 
-int2 oD3D11Texture::GetByteDimensions(int _Subresource) const threadsafe
+d3d11_texture::~d3d11_texture()
 {
-	const oGPUTexture::DESC& d = thread_cast<oD3D11Texture*>(this)->Desc;
-	int numMips = ouro::surface::num_mips(gpu::is_mipped(d.type), d.dimensions); 
-	int mipLevel, sliceIndex, surfaceIndex;
-	ouro::surface::unpack_subresource(_Subresource, numMips, d.array_size, &mipLevel, &sliceIndex, &surfaceIndex);
-	if (surfaceIndex > 0)
-		return Texture2->GetByteDimensions(ouro::surface::calc_subresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, d.array_size));
-
-	ouro::surface::info inf;
-	inf.dimensions = d.dimensions;
-	inf.format = d.format;
-	inf.array_size = d.array_size;
-	inf.layout = gpu::is_mipped(d.type) ? ouro::surface::tight : ouro::surface::image;
-	return ouro::surface::byte_dimensions(inf, _Subresource);
+	if (pResource)
+		pResource->Release();
 }
+
+uint2 d3d11_texture::byte_dimensions(int _Subresource) const
+{
+	int numMips = surface::num_mips(is_mipped(Info.type), Info.dimensions); 
+	int mipLevel, sliceIndex, surfaceIndex;
+	surface::unpack_subresource(_Subresource, numMips, Info.array_size, &mipLevel, &sliceIndex, &surfaceIndex);
+	if (surfaceIndex > 0)
+		return Texture2->byte_dimensions(surface::calc_subresource(mipLevel, sliceIndex, surfaceIndex - 1, numMips, Info.array_size));
+
+	surface::info i;
+	i.dimensions = Info.dimensions;
+	i.format = Info.format;
+	i.array_size = Info.array_size;
+	i.layout = is_mipped(Info.type) ? surface::tight : surface::image;
+	return surface::byte_dimensions(i, _Subresource);
+}
+
+oGPU_NAMESPACE_END

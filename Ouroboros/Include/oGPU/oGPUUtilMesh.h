@@ -39,30 +39,33 @@ namespace ouro {
 class util_mesh
 {
 public:
-	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name, const mesh::info& _Info);
+	static std::shared_ptr<util_mesh> make(device* _pDevice, const char* _Name, const mesh::info& _Info);
 
-	static std::shared_ptr<util_mesh> make(oGPUDevice* _pDevice, const char* _Name
+	static std::shared_ptr<util_mesh> make(device* _pDevice, const char* _Name
 		, const mesh::layout_array& _VertexLayouts, const oGeometry* _pGeometry);
 
 	virtual mesh::info get_info() const = 0;
-	virtual const oGPUBuffer* index_buffer() const = 0;
-	virtual oGPUBuffer* index_buffer() = 0;
-	virtual const oGPUBuffer* vertex_buffer(uint _Index) const = 0;
-	virtual oGPUBuffer* vertex_buffer(uint _Index) = 0;
-	inline const oGPUBuffer* vertex_buffer(const mesh::usage::value& _Usage) const { return vertex_buffer((uint)_Usage); }
-	inline oGPUBuffer* vertex_buffer(const mesh::usage::value& _Usage) { return vertex_buffer((uint)_Usage); }
-	virtual void vertex_buffers(const oGPUBuffer* _Buffers[mesh::usage::count]) = 0;
-	virtual void draw(oGPUCommandList* _pCommandList) = 0;
+	virtual const buffer* index_buffer() const = 0;
+	virtual buffer* index_buffer() = 0;
+	virtual const buffer* vertex_buffer(uint _Index) const = 0;
+	virtual buffer* vertex_buffer(uint _Index) = 0;
+	inline const buffer* vertex_buffer(const mesh::usage::value& _Usage) const { return vertex_buffer((uint)_Usage); }
+	inline buffer* vertex_buffer(const mesh::usage::value& _Usage) { return vertex_buffer((uint)_Usage); }
+	virtual void vertex_buffers(const buffer* _Buffers[mesh::usage::count]) = 0;
+	virtual void draw(command_list* _pCommandList) = 0;
+	inline void draw(std::shared_ptr<command_list>& _pCommandList) { draw(_pCommandList.get()); }
 };
 
 // Creates a very simple front-facing triangle that can be rendered with all-
 // identify world, view, projection matrices. This is useful for very simple 
 // tests and first bring-up.
-std::shared_ptr<util_mesh> make_first_triangle(oGPUDevice* _pDevice);
+std::shared_ptr<util_mesh> make_first_triangle(device* _pDevice);
+inline std::shared_ptr<util_mesh> make_first_triangle(std::shared_ptr<device>& _pDevice) { return make_first_triangle(_pDevice.get()); }
 
 // Creates a very simple unit cube. This is useful for bringing up world, view,
 // projection transforms quickly.
-std::shared_ptr<util_mesh> make_first_cube(oGPUDevice* _pDevice);
+std::shared_ptr<util_mesh> make_first_cube(device* _pDevice);
+inline std::shared_ptr<util_mesh> make_first_cube(std::shared_ptr<device>& _pDevice) { return make_first_cube(_pDevice.get()); }
 
 	} // namespace gpu
 } // namespace ouro

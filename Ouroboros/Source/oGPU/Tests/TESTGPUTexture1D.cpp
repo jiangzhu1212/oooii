@@ -26,22 +26,27 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const bool kIsDevMode = false;
 
-struct GPU_Texture1D_App : public oGPUTextureTestApp
+struct gpu_test_texture1d : public gpu_texture_test
 {
-	GPU_Texture1D_App() : oGPUTextureTestApp("GPU_Texture1D", kIsDevMode) {}
+	gpu_test_texture1d() : gpu_texture_test("GPU test: texture 1D", kIsDevMode) {}
 
-	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_1D; } 
-	bool CreateTexture() override
+	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_1D; } 
+	std::shared_ptr<texture> make_test_texture() override
 	{
 		auto image = make_1D(512);
 		auto* i = image.get();
-		Texture = ouro::gpu::make_texture(Device, "Test 1D", &i, 1, ouro::gpu::texture_type::default_1d);
-		return true;
+		return make_texture(Device, "Test 1D", &i, 1, texture_type::default_1d);
 	}
 };
 
-oDEFINE_GPU_TEST(GPU_Texture1D)
+oGPU_COMMON_TEST(texture1d);
+
+	} // namespace tests
+} // namespace ouro

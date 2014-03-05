@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "d3d11_layout.h"
-#include <oBasis/oGPUConcepts.h>
+#include <oGPU/oGPU.h>
 #include "oCore/Windows/win_util.h"
 #include "d3d11_util.h"
 
@@ -43,10 +43,9 @@
 #define oD3D_COLOR32(_SemanticIndex, _InputSlot) oD3D_EL("COLOR", _SemanticIndex, DXGI_FORMAT_R32G32B32A32_FLOAT, _InputSlot) 
 #define oD3D_COLOR8(_SemanticIndex, _InputSlot) oD3D_EL("COLOR", _SemanticIndex, DXGI_FORMAT_R8G8B8A8_UNORM, _InputSlot) 
 
-using namespace ouro::gpu;
-
 namespace ouro {
-	namespace d3d11 {
+	namespace gpu {
+		namespace d3d11 {
 
 const char* get_semantic(mesh::semantic::value& _Semantic)
 {
@@ -129,5 +128,6 @@ intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice, const
 	return input_layout;
 }
 
-	} // namespace d3d11
+		} // namespace d3d11
+	} // namespace gpu
 } // namespace ouro

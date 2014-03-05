@@ -25,79 +25,78 @@
 #include <oGfx/oGfxPickBuffer.h>
 
 using namespace ouro;
+using namespace ouro::gpu;
 
-bool oGfxPickBufferCreate(oGPUDevice* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer)
+bool oGfxPickBufferCreate(device* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer)
 {
 	bool success = false;
 	oCONSTRUCT(_ppPickBuffer, oGfxPickBuffer(_pDevice, _pComputeShader, &success));
 	return success;
 }
 
-oGfxPickBuffer::oGfxPickBuffer(oGPUDevice* _pDevice, const void* _pComputeShader, bool* bSuccess)
+oGfxPickBuffer::oGfxPickBuffer(device* _pDevice, const void* _pComputeShader, bool* bSuccess)
 {
-	oGPUTexture::DESC d;
+	texture_info d;
 	d.dimensions = ushort3(oGPU_MAX_NUM_PICKS_PER_FRAME, 1, 1);
 	d.array_size = 1;
 	d.format = ouro::surface::r32g32_sint;
-	d.type = ouro::gpu::texture_type::default_2d;
-	oVERIFY(_pDevice->CreateTexture("oGfxPickBuffer.PicksInput", d, &PicksInput));
+	d.type = texture_type::default_2d;
+	PicksInput = _pDevice->make_texture("oGfxPickBuffer.PicksInput", d);
 
-	oGPUBuffer::DESC BufferDesc;
+	buffer_info BufferDesc;
 	BufferDesc.type = gpu::buffer_type::unordered_structured;
 	BufferDesc.struct_byte_size = sizeof(uint);
 	BufferDesc.array_size = oGPU_MAX_NUM_PICKS_PER_FRAME;
-	oVERIFY(_pDevice->CreateBuffer("oGfxPickBuffer.PicksOutput", BufferDesc, &PicksOutput));
+	PicksOutput = _pDevice->make_buffer("oGfxPickBuffer.PicksOutput", BufferDesc);
 
 	BufferDesc.type = gpu::buffer_type::readback;
-	oVERIFY(_pDevice->CreateBuffer("oGfxPickBuffer.PicksStaging", BufferDesc, &PicksStaging));
+	PicksStaging = _pDevice->make_buffer("oGfxPickBuffer.PicksStaging", BufferDesc);
 
-	oGPUComputeShader::DESC descComputeShader;
+	compute_kernel_info descComputeShader;
 	descComputeShader.cs = _pComputeShader;
- 	oVERIFY(_pDevice->CreateComputeShader("oGfxPickBuffer.PickResourceShader", descComputeShader, &PickResourceShader));
+ 	PickResourceShader = _pDevice->make_compute_kernel("oGfxPickBuffer.PickResourceShader", descComputeShader);
 
 	*bSuccess = true;
 }
 
-void oGfxPickBuffer::PIMap(oGPUCommandList* _pCommandList, int2** _Picks)
+void oGfxPickBuffer::PIMap(command_list* _pCommandList, int2** _Picks)
 {
 	*_Picks = (int2*)PicksInputBuffer;
 }
 
-void oGfxPickBuffer::PIUnmap(oGPUCommandList* _pCommandList)
+void oGfxPickBuffer::PIUnmap(command_list* _pCommandList)
 {
 	ouro::surface::mapped_subresource mappedInput;
 	mappedInput.data = PicksInputBuffer;
 	mappedInput.row_pitch = 0x80;
 	mappedInput.depth_pitch = 0x80;
-	_pCommandList->Commit(PicksInput, 0, mappedInput);
+	_pCommandList->commit(PicksInput, 0, mappedInput);
 }
 
-void oGfxPickBuffer::PDraw(oGPUCommandList* _pCommandList, oGPUTexture* _pPickRenderTargetTexture)
+void oGfxPickBuffer::PDraw(command_list* _pCommandList, texture* _pPickRenderTargetTexture)
 {
-	_pCommandList->SetShaderResources(0, 1, &_pPickRenderTargetTexture);
-	_pCommandList->SetShaderResources(1, 1, &PicksInput);
+	_pCommandList->set_shader_resource(0, _pPickRenderTargetTexture);
+	_pCommandList->set_shader_resource(1, PicksInput);
 
 	// @oooii-jeffrey: Shouldn't this be for both textures?
-	ouro::gpu::sampler_type::value state = ouro::gpu::sampler_type::point_clamp;
-	_pCommandList->SetSamplers(1, 1, &state);
-	_pCommandList->SetUnorderedResources(0, 1, &PicksOutput);
-	_pCommandList->Dispatch(PickResourceShader, int3(1, 1, 1));
-	_pCommandList->Copy(PicksStaging, PicksOutput);
+	sampler_type::value state = sampler_type::point_clamp;
+	_pCommandList->set_samplers(1, 1, &state);
+	_pCommandList->set_unordered_resource(0, PicksOutput);
+	_pCommandList->dispatch(PickResourceShader, int3(1, 1, 1));
+	_pCommandList->copy(PicksStaging, PicksOutput);
 }
 
 void oGfxPickBuffer::POMap(uint** _Picks) 
 {
-	intrusive_ptr<oGPUDevice> Device;
-	PicksStaging->GetDevice(&Device);
+	std::shared_ptr<device> Device = PicksStaging->get_device();
 	ouro::surface::mapped_subresource mappedStaging;
 	// @oooii-jeffrey: This call is blocking/spin-locking because that was what the original D3D11 implementation did, this may still need some thought...
-	oVERIFY(Device->MapRead(PicksStaging, 0, &mappedStaging, true));
+	oVERIFY(Device->map_read(PicksStaging, 0, &mappedStaging, true));
 	*_Picks = (uint*)mappedStaging.data;
 }
 
 void oGfxPickBuffer::POUnmap() 
 {
-	intrusive_ptr<oGPUDevice> Device;
-	PicksStaging->GetDevice(&Device);
-	Device->UnmapRead(PicksStaging, 0);
+	std::shared_ptr<device> Device = PicksStaging->get_device();
+	Device->unmap_read(PicksStaging, 0);
 }

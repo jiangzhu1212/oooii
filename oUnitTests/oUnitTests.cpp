@@ -228,23 +228,33 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	{
 		const char* sLibNames[] =
 		{
-			"oCore",
 			"oHLSL",
+			"oBase",
+			"oSurface",
+			"oMesh",
+			"oCore",
+			"oGUI",
+			"oGPU",
+
 			"oCompute",
 			"oConcurrency",
 			"oBasis",
 			"oPlatform",
-			"oGPU",
 		};
 		const char* sFilter[] =
 		{
-			"oCore_.*",
 			"oHLSL.*",
+			"oBase_.*",
+			"oSurface_.*",
+			"oMesh_.*",
+			"oCore_.*",
+			"oGUI_.*",
+			"oGPU_.*",
+
 			"oCompute_.*",
 			"oConcurrency_.*",
 			"oBasis_.*",
 			"PLATFORM_.*",
-			"GPU_.*",
 		};
 		bool HasChanges[oCOUNTOF(sLibNames)];
 		if (oSCCCheckPathHasChanges(sLibNames, HasChanges))

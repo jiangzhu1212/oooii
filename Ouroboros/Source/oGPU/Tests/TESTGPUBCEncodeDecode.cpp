@@ -27,141 +27,125 @@
 #include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oTest.h>
 
-using namespace ouro;
+#include "../../test_services.h"
 
-struct GPU_BCEncodeDecode : public oTest
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
+
+static void load_original_and_save_converted(test_services& _Services, device* _pDevice, surface::format _TargetFormat, const char* _OriginalPath, const path& _ConvertedPath)
 {
-	RESULT LoadOriginalAndSaveConverted(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, ouro::surface::format _TargetFormat, const char* _OriginalPath, const char* _ConvertedPath)
+	size_t OriginalFileSize = 0;
+	std::shared_ptr<char> OriginalFile = _Services.load_buffer(_OriginalPath, &OriginalFileSize);
+
+	texture_info i;
+	i.dimensions = ushort3(0, 0, 1);
+	i.array_size = 0;
+	i.format = surface::unknown;
+
+#if 0
+
+	std::shared_ptr<texture> OriginalAsTexture = ?;
+	oTESTB(oGPUTextureLoad(_pDevice, d, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), &OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
+
+	std::shared_ptr<texture> ConvertedTexture;
+	oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), ouro::as_string(_TargetFormat));
+
+	oStreamDelete(_ConvertedPath);
+
+	oTESTB(oGPUTextureSave(ConvertedTexture, oGPU_FILE_FORMAT_DDS, _ConvertedPath), "Failed to save %s", _ConvertedPath);
+#else
+	oTHROW(permission_denied, "oGPUTextureLoad needs a new impl");
+#endif
+}
+
+static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test_services& _Services, device* _pDevice, const char* _ConvertedPath)
+{
+	size_t ConvertedFileSize = 0;
+	std::shared_ptr<char> ConvertedFile = _Services.load_buffer(_ConvertedPath, &ConvertedFileSize);
+
+	texture_info i;
+	i.dimensions = ushort3(0, 0, 1);
+	i.array_size = 0;
+	i.format = surface::unknown;
+	i.type = texture_type::readback_2d;
+
+	std::shared_ptr<texture> ConvertedFileAsTexture;
+	std::shared_ptr<texture> BGRATexture;
+#if 0
+	oTESTB(oGPUTextureLoad(_pDevice, i, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), &ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());
+
+	oTESTB(oGPUSurfaceConvert(ConvertedFileAsTexture, surface::b8g8r8a8_unorm, &BGRATexture), "Failed to convert %s to BGRA", ConvertedFile->GetName());
+#else
+	if (1)
+		oTHROW(permission_denied, "oGPUTextureLoad needs a new impl");
+#endif
+
+	i = BGRATexture->get_info();
+
+	surface::info si;
+	si.format = i.format;
+	si.dimensions = i.dimensions;
+	std::shared_ptr<surface::buffer> ConvertedImage = surface::buffer::make(si);
+
+	surface::mapped_subresource msrSource;
+	_pDevice->map_read(BGRATexture, 0, &msrSource, true);
+	ConvertedImage->update_subresource(0, msrSource);
+	_pDevice->unmap_read(BGRATexture, 0);
+
+	return ConvertedImage;
+}
+
+static void convert_and_test(test_services& _Services, device* _pDevice, surface::format _TargetFormat, const char* _FilenameSuffix, uint _NthTest)
+{
+	path TestImagePath = "Test/Textures/lena_1.png";
+
+	char fn[64];
+	snprintf(fn, "%s%s.dds", TestImagePath.basename().c_str(), _FilenameSuffix);
+	path ConvertedPath = ouro::filesystem::temp_path() / fn;
+
+	oTRACEA("Converting image to %s (may take a while)...", as_string(_TargetFormat));
+	load_original_and_save_converted(_Services, _pDevice, _TargetFormat, TestImagePath, ConvertedPath);
+
+	oTRACEA("Converting image back from %s (may take a while)...", as_string(_TargetFormat));
+	std::shared_ptr<surface::buffer> ConvertedImage = load_converted_and_convert_to_image(_Services, _pDevice, ConvertedPath);
+
+	// Even on different series AMD cards there is a bit of variation so use a 
+	// more forgiving tolerance
+	const float MORE_FORGIVING_TOLERANCE = 7.2f;
+	if (_TargetFormat == surface::bc7_unorm)
+		_Services.check(ConvertedImage, _NthTest, MORE_FORGIVING_TOLERANCE);
+	else
+		_Services.check(ConvertedImage, _NthTest);
+}
+
+void TESTbccodec(test_services& _Services)
+{
+	std::shared_ptr<device> Device;
 	{
-		intrusive_ptr<oBuffer> OriginalFile;
-		oTESTB(oBufferLoad(_OriginalPath, &OriginalFile), "Failed to load %s", _OriginalPath);
-
-		ouro::gpu::texture_info d;
-		d.dimensions = ushort3(0, 0, 1);
-		d.array_size = 0;
-		d.format = ouro::surface::unknown;
-
-		intrusive_ptr<oGPUTexture> OriginalAsTexture;
-		oTESTB(oGPUTextureLoad(_pDevice, d, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), &OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
-
-		intrusive_ptr<oGPUTexture> ConvertedTexture;
-		oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), ouro::as_string(_TargetFormat));
-
-		oStreamDelete(_ConvertedPath);
-
-		oTESTB(oGPUTextureSave(ConvertedTexture, oGPU_FILE_FORMAT_DDS, _ConvertedPath), "Failed to save %s", _ConvertedPath);
-		return oTest::SUCCESS;
-	}
-
-	RESULT LoadConvertedAndConvertToImage(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, const char* _ConvertedPath, std::shared_ptr<ouro::surface::buffer>* _ppConvertedImage)
-	{
-		intrusive_ptr<oBuffer> ConvertedFile;
-		oTESTB(oBufferLoad(_ConvertedPath, &ConvertedFile), "Failed to load %s", _ConvertedPath);
-
-		oGPUTexture::DESC td;
-		td.dimensions = ushort3(0, 0, 1);
-		td.array_size = 0;
-		td.format = ouro::surface::unknown;
-		td.type = ouro::gpu::texture_type::readback_2d;
-
-		intrusive_ptr<oGPUTexture> ConvertedFileAsTexture;
-		oTESTB(oGPUTextureLoad(_pDevice, td, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), &ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());
-
-		intrusive_ptr<oGPUTexture> BGRATexture;
-		oTESTB(oGPUSurfaceConvert(ConvertedFileAsTexture, ouro::surface::b8g8r8a8_unorm, &BGRATexture), "Failed to convert %s to BGRA", ConvertedFile->GetName());
-
-		BGRATexture->GetDesc(&td);
-
-		ouro::surface::info si;
-		si.format = td.format;
-		si.dimensions = td.dimensions;
-		std::shared_ptr<ouro::surface::buffer> ConvertedImage = ouro::surface::buffer::make(si);
-
-		ouro::surface::mapped_subresource msrSource;
-		_pDevice->MapRead(BGRATexture, 0, &msrSource, true);
-		ConvertedImage->update_subresource(0, msrSource);
-		_pDevice->UnmapRead(BGRATexture, 0);
-
-		*_ppConvertedImage = ConvertedImage;
-		return oTest::SUCCESS;
-	}
-
-	RESULT ConvertAndTest(char* _StrStatus, size_t _SizeofStrStatus, oGPUDevice* _pDevice, ouro::surface::format _TargetFormat, const char* _FilenameSuffix, unsigned int _NthTest)
-	{
-		static const char* TestImageFilename = "Test/Textures/lena_1.png";
-
-		path ImagePath;
-		oTESTB0(FindInputFile(ImagePath, TestImageFilename));
-
-		char fn[64];
-		snprintf(fn, "%s%s.dds", ImagePath.basename().c_str(), _FilenameSuffix);
-
-		path ConvertedPath;
-		oTESTB0(BuildPath(ConvertedPath, fn, oTest::TEMP));
-
-		oTRACE("Converting image to %s (may take a while)...", ouro::as_string(_TargetFormat));
-		RESULT res = LoadOriginalAndSaveConverted(_StrStatus, _SizeofStrStatus, _pDevice, _TargetFormat, ImagePath, ConvertedPath);
-		if (SUCCESS != res)
-			return res;
-
-		oTRACE("Converting image back from %s (may take a while)...", ouro::as_string(_TargetFormat));
-		std::shared_ptr<ouro::surface::buffer> ConvertedImage;
-		res = LoadConvertedAndConvertToImage(_StrStatus, _SizeofStrStatus, _pDevice, ConvertedPath, &ConvertedImage);
-		if (SUCCESS != res)
-				return res;
-
-		// Even on different series AMD cards there is a bit of variation, so use a 
-		// more forgiving tolerance
-		if (_TargetFormat == ouro::surface::bc7_unorm)
-			oTESTI_CUSTOM_TOLERANCE(ConvertedImage, _NthTest, oDEFAULT, 7.2f, oDEFAULT);
-		else
-			oTESTI2(ConvertedImage, _NthTest);
-
-		return SUCCESS;
-	}
-
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
-	{
-		oGPUDevice::INIT DeviceInit("TESTBCEncDec Temp Device");
+		device_init i("TESTBCEncDec Temp Device");
 		#ifdef _DEBUG
-			DeviceInit.driver_debug_level = gpu::debug_level::normal;
+			i.driver_debug_level = gpu::debug_level::normal;
 		#endif
-
-		intrusive_ptr<oGPUDevice> Device;
-		if (!oGPUDeviceCreate(DeviceInit, &Device))
+		try { Device = device::make(i); }
+		catch (std::exception&)
 		{
-			#if 1
-				snprintf(_StrStatus, _SizeofStrStatus, "Non-D3D or Pre-D3D11 HW detected: Using the non-accelerated path will take too long, so this test will be skipped.");
-				return SKIPPED;
-			#else
-				DeviceInit.use_software_emulation = true;
-				oTESTB(oGPUDeviceCreate(DeviceInit, &Device), "Failed to create device");
-			#endif
+			static const char* msg = "Non-D3D or Pre-D3D11 HW detected: Using the non-accelerated path will take too long, so this test will be skipped.";
+			_Services.report(msg);
+			oTHROW(permission_denied, msg);
 		}
-
-		oGPUDevice::DESC desc;
-		Device->GetDesc(&desc);
-
-		if (desc.vendor != vendor::nvidia && desc.vendor != vendor::amd)
-		{
-			snprintf(_StrStatus, _SizeofStrStatus, "%s gpu device not trusted to run the DXSDK BC7 sample code correctly, so skip this test.", as_string(desc.vendor));
-			return SKIPPED;
-		}
-
-		RESULT res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, ouro::surface::bc7_unorm, "_BC7", 0);
-		if (SUCCESS != res)
-			return res;
-
-		res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, ouro::surface::bc6h_sf16, "_BC6HS", 1);
-		if (SUCCESS != res)
-			return res;
-
-		res = ConvertAndTest(_StrStatus, _SizeofStrStatus, Device, ouro::surface::bc6h_uf16, "_BC6HU", 2);
-		if (SUCCESS != res)
-			return res;
-
-		return SUCCESS;
 	}
-};
 
-oTEST_REGISTER(GPU_BCEncodeDecode);
+	device_info i = Device->get_info();
+
+	if (i.vendor != vendor::nvidia && i.vendor != vendor::amd)
+		oTHROW(permission_denied, "%s gpu device not trusted to run the DXSDK BC7 sample code correctly, so skip this test.", as_string(i.vendor));
+
+	convert_and_test(_Services, Device.get(), surface::bc7_unorm, "_BC7", 0);
+	convert_and_test(_Services, Device.get(), surface::bc6h_sf16, "_BC6HS", 1);
+	convert_and_test(_Services, Device.get(), surface::bc6h_uf16, "_BC6HU", 2);
+}
+
+	} // namespace tests
+} // namespace ouro

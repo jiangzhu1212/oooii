@@ -28,74 +28,66 @@
 
 #include <oBasis/oMath.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const int sSnapshotFrames[] = { 0, 2, 4, 6 };
 static const bool kIsDevMode = false;
 
-class GPU_SpinningTriangle_App : public oGPUTestApp
+class gpu_test_spinning_triangle : public gpu_test
 {
 public:
-	GPU_SpinningTriangle_App() : oGPUTestApp("GPU_SpinningTriangle", kIsDevMode, sSnapshotFrames) {}
+	gpu_test_spinning_triangle() : gpu_test("GPU test: spinning triangle", kIsDevMode, sSnapshotFrames) {}
 
-	bool Initialize() override
+	void initialize() override
 	{
-		PrimaryRenderTarget->SetClearColor(almost_black);
-
-		oGPUBuffer::DESC DCDesc;
-		DCDesc.struct_byte_size = sizeof(oGPUTestConstants);
-		if (!Device->CreateBuffer("TestConstants", DCDesc, &TestConstants))
-			return false;
-
-		oGPUPipeline::DESC pld = oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE);
-
-		if (!Device->CreatePipeline(pld.debug_name, pld, &Pipeline))
-			return false;
-		
-		Mesh = ouro::gpu::make_first_triangle(Device);
-
-		return true;
+		PrimaryRenderTarget->set_clear_color(almost_black);
+		TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
+		Pipeline = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
+		Mesh = make_first_triangle(Device);
 	}
 
-	bool Render() override
+	void render() override
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -2.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-		oGPURenderTarget::DESC RTDesc;
-		PrimaryRenderTarget->GetDesc(&RTDesc);
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTDesc.dimensions.x / oCastAsFloat(RTDesc.dimensions.y), 0.001f, 1000.0f);
+		render_target_info RTI = PrimaryRenderTarget->get_info();
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
 
-		// this is -1 because there was a code change that resulted in BeginFrame()
+		// this is -1 because there was a code change that resulted in begin_frame()
 		// being moved out of the Render function below so it updated the FrameID
 		// earlier than this code was ready for. If golden images are updated, this
 		// could go away.
-		float rotationRate = (Device->GetFrameID()-1) * 2.0f;
+		float rotationRate = (Device->frame_id()-1) * 2.0f;
 		float4x4 W = make_rotation(float3(0.0f, radians(rotationRate), 0.0f));
 
 		uint DrawID = 0;
 
-		CommandList->Begin();
+		CommandList->begin();
 
-		ouro::gpu::commit_buffer(CommandList, TestConstants, oGPUTestConstants(W, V, P, white));
+		commit_buffer(CommandList.get(), TestConstants.get(), oGPUTestConstants(W, V, P, white));
 
-		CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::test_and_write);
-		CommandList->SetSurfaceState(ouro::gpu::surface_state::two_sided);
-		CommandList->SetBuffers(0, 1, &TestConstants);
-		CommandList->SetPipeline(Pipeline);
-		CommandList->SetRenderTarget(PrimaryRenderTarget);
+		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
+		CommandList->set_blend_state(blend_state::opaque);
+		CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
+		CommandList->set_surface_state(surface_state::two_sided);
+		CommandList->set_buffer(0, TestConstants);
+		CommandList->set_pipeline(Pipeline);
+		CommandList->set_render_target(PrimaryRenderTarget);
 		Mesh->draw(CommandList);
 
-		CommandList->End();
-
-		return true;
+		CommandList->end();
 	}
 
 private:
-	intrusive_ptr<oGPUPipeline> Pipeline;
-	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
-	intrusive_ptr<oGPUBuffer> TestConstants;
+	std::shared_ptr<pipeline> Pipeline;
+	std::shared_ptr<util_mesh> Mesh;
+	std::shared_ptr<buffer> TestConstants;
 };
 
-oDEFINE_GPU_TEST(GPU_SpinningTriangle)
+oGPU_COMMON_TEST(spinning_triangle);
+
+	} // namespace tests
+} // namespace ouro

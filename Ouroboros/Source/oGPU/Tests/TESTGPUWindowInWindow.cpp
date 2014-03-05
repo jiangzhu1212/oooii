@@ -22,89 +22,89 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
+#include <oGPU/oGPU.h>
 #include <oGUI/window.h>
 #include <oGUI/Windows/oWinWindowing.h>
+#include <oCore/display.h>
 #include <oCore/system.h>
-#include <oGPU/oGPU.h>
 
-using namespace ouro;
+#include "../../test_services.h"
+
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const bool kInteractiveMode = false;
 
 class WindowInWindow
 {
 public:
-	WindowInWindow(bool* _pSuccess)
+	WindowInWindow()
 		: Counter(0)
 		, Running(true)
 	{
-		*_pSuccess = false;
-
-		// Create the parent:
-
+		// Create the parent
 		{
 			window::init i;
 			i.title = "Window-In-Window Test";
 			i.on_event = std::bind(&WindowInWindow::ParentEventHook, this, std::placeholders::_1);
-			i.shape.state = ouro::window_state::hidden;
-			i.shape.style = ouro::window_style::sizable;
+			i.shape.state = window_state::hidden;
+			i.shape.style = window_style::sizable;
 			i.shape.client_size = int2(640, 480);
-			try { ParentWindow = window::make(i); }
-			catch (std::exception& e) { oErrorSetLast(e); return; }
+			ParentWindow = window::make(i);
 		}
 
-		oGPUDevice::INIT DevInit;
-		DevInit.debug_name = "TestDevice";
-		DevInit.version = version(10, 0);
-		DevInit.driver_debug_level = gpu::debug_level::normal;
+		// Create the device
+		{
+			device_init i;
+			i.debug_name = "TestDevice";
+			i.version = version(10,0);
+			i.driver_debug_level = gpu::debug_level::normal;
+			Device = device::make(i);
+		}
 
-		if (!oGPUDeviceCreate(DevInit, &Device))
-			return; // pass through error
-
-		oGPUCommandList::DESC CLDesc;
-		CLDesc.draw_order = 0;
-		if (!Device->CreateCommandList("TestCL", CLDesc, &CommandList))
-			return; // pass through error
+		{
+			command_list_info i;
+			i.draw_order = 0;
+			CommandList = Device->make_command_list("CL0", i);
+		}
 
 		{
 			window::init i;
-			i.shape.state = ouro::window_state::restored;
-			i.shape.style = ouro::window_style::borderless;
+			i.shape.state = window_state::restored;
+			i.shape.style = window_style::borderless;
 			i.shape.client_position = int2(20,20);
 			i.shape.client_size = int2(600,480-65);
 			i.on_event = std::bind(&WindowInWindow::GPUWindowEventHook, this, std::placeholders::_1);
 
-			try { GPUWindow = window::make(i); }
-			catch (std::exception& e) { oErrorSetLast(e); return; }
-			
-			Device->CreatePrimaryRenderTarget(GPUWindow.get(), surface::unknown, true, &PrimaryRenderTarget);
+			GPUWindow = window::make(i);
+			PrimaryrenderTarget = Device->make_primary_render_target(GPUWindow, surface::unknown, true);
 			GPUWindow->parent(ParentWindow);
 		}
 
 		ParentWindow->show();
-		*_pSuccess = true;
 	}
 
-	inline bool IsRunning() const { return Running; }
+	inline bool running() const { return Running; }
 
-	void Render()
+	void render()
 	{
-		if (PrimaryRenderTarget)
+		if (PrimaryrenderTarget)
 		{
-			if (Device->BeginFrame())
+			if (Device->begin_frame())
 			{
-				ouro::gpu::clear_info ci;
+				gpu::clear_info ci;
 				ci.clear_color[0] = (Counter & 0x1) ? white : blue;
-				PrimaryRenderTarget->SetClearDesc(ci);
+				PrimaryrenderTarget->set_clear_info(ci);
 
-				CommandList->Begin();
-				CommandList->SetRenderTarget(PrimaryRenderTarget);
-				CommandList->Clear(PrimaryRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-				CommandList->End();
+				CommandList->begin();
+				CommandList->set_render_target(PrimaryrenderTarget);
+				CommandList->clear(PrimaryrenderTarget, gpu::clear_type::color_depth_stencil);
+				CommandList->end();
 
-				Device->EndFrame();
-				Device->Present(1);
+				Device->end_frame();
+				Device->present(1);
 			}
 		}
 	}
@@ -113,11 +113,11 @@ public:
 	{
 		switch (_Event.type)
 		{
-			case ouro::event_type::creating:
+			case event_type::creating:
 			{
-				ouro::control_info ButtonDesc;
+				control_info ButtonDesc;
 				ButtonDesc.parent = _Event.window;
-				ButtonDesc.type = ouro::control_type::button;
+				ButtonDesc.type = control_type::button;
 				ButtonDesc.text = "Push Me";
 				ButtonDesc.size = int2(100,25);
 				ButtonDesc.position = int2(10,480-10-ButtonDesc.size.y);
@@ -127,17 +127,17 @@ public:
 				break;
 			}
 
-			case ouro::event_type::closing:
+			case event_type::closing:
 				Running = false;
 				break;
 
-			case ouro::event_type::sized:
+			case event_type::sized:
 			{
 				if (GPUWindow)
 					GPUWindow->client_size(_Event.as_shape().shape.client_size - int2(40,65));
 
-				if (PrimaryRenderTarget)
-					PrimaryRenderTarget->Resize(int3(_Event.as_shape().shape.client_size - int2(40,65), 1));
+				if (PrimaryrenderTarget)
+					PrimaryrenderTarget->resize(int3(_Event.as_shape().shape.client_size - int2(40,65), 1));
 
 				SetWindowPos(hButton, 0, 10, _Event.as_shape().shape.client_size.y-10-25, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 				break;
@@ -152,7 +152,14 @@ public:
 	{
 	}
 
-	window* GetWindow() { return ParentWindow.get(); }
+	window* get_window() { return ParentWindow.get(); }
+
+	std::shared_ptr<surface::buffer> snapshot_and_wait()
+	{
+		future<std::shared_ptr<surface::buffer>> snapshot = ParentWindow->snapshot();
+		while (!snapshot.is_ready()) { flush_messages(); }
+		return snapshot.get();
+	}
 
 	void flush_messages()
 	{
@@ -160,67 +167,60 @@ public:
 		ParentWindow->flush_messages();
 	}
 
-	void IncrementClearCounter() { Counter++; }
+	void increment_clear_counter() { Counter++; }
 
 private:
-	intrusive_ptr<oGPUDevice> Device;
+	std::shared_ptr<device> Device;
 	std::shared_ptr<window> ParentWindow;
 	std::shared_ptr<window> GPUWindow;
-	intrusive_ptr<oGPUCommandList> CommandList;
-	intrusive_ptr<oGPURenderTarget> PrimaryRenderTarget;
+	std::shared_ptr<command_list> CommandList;
+	std::shared_ptr<render_target> PrimaryrenderTarget;
 
 	HWND hButton;
 	int Counter;
 	bool Running;
 };
 
-struct GPU_WindowInWindow : public oTest
+void TESTwindow_in_window(test_services& _Services)
 {
-	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus)
+	if (_Services.is_remote_session())
 	{
-		if (ouro::system::is_remote_session())
-		{
-			snprintf(_StrStatus, _SizeofStrStatus, "Detected remote session: differing text anti-aliasing will cause bad image compares");
-			return SKIPPED;
-		}
-
-		// Turn display power on, otherwise the test will fail
-		ouro::display::set_power_on();
-
-		bool success = false;
-		WindowInWindow test(&success);
-		oTESTB0(success);
-
-		if (kInteractiveMode)
-		{
-			while (test.IsRunning())
-			{
-				test.flush_messages();
-
-				std::this_thread::sleep_for(std::chrono::seconds(1));
-				test.IncrementClearCounter();
-
-				test.Render();
-			}
-		}
-
-		else
-		{
-			test.flush_messages();
-			test.Render();
-			ouro::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
-			while (!snapshot.is_ready()) { test.flush_messages(); }
-			oTESTFI(snapshot);
-			test.IncrementClearCounter();
-			test.flush_messages();
-			test.Render();
-			snapshot = test.GetWindow()->snapshot();
-			while (!snapshot.is_ready()) { test.flush_messages(); }
-			oTESTFI2(snapshot, 1);
-		}
-
-		return SUCCESS;
+		_Services.report("Detected remote session: differing text anti-aliasing will cause bad image compares");
+		oTHROW(not_supported, "Detected remote session: differing text anti-aliasing will cause bad image compares");
 	}
-};
 
-oTEST_REGISTER(GPU_WindowInWindow);
+	// Turn display power on, otherwise the test will fail
+	display::set_power_on();
+
+	bool success = false;
+	WindowInWindow test;
+
+	if (kInteractiveMode)
+	{
+		while (test.running())
+		{
+			test.flush_messages();
+
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			test.increment_clear_counter();
+
+			test.render();
+		}
+	}
+
+	else
+	{
+		test.flush_messages();
+		test.render();
+		std::shared_ptr<surface::buffer> snapshot = test.snapshot_and_wait();
+		_Services.check(snapshot);
+		test.increment_clear_counter();
+		test.flush_messages();
+		test.render();
+		snapshot = test.snapshot_and_wait();
+		_Services.check(snapshot, 1);
+	}
+}
+
+	} // namespace tests
+} // namespace ouro

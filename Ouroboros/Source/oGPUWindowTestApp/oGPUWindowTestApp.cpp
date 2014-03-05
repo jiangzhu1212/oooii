@@ -131,8 +131,8 @@ public:
 	window* Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const std::function<void()>& _OnThreadExit);
 	void Stop();
 
-	oGPUDevice* GetDevice() { return Device; }
-	oGPURenderTarget* GetRenderTarget() { return WindowRenderTarget; }
+	ouro::gpu::device* GetDevice() { return Device.get(); }
+	ouro::gpu::render_target* GetRenderTarget() { return WindowRenderTarget.get(); }
 
 private:
 	void OnEvent(const window::basic_event& _Event);
@@ -141,10 +141,10 @@ private:
 
 private:
 	std::shared_ptr<window> Parent;
-	intrusive_ptr<oGPUDevice> Device;
-	intrusive_ptr<oGPUCommandList> CommandList;
-	intrusive_ptr<oGPURenderTarget> WindowRenderTarget;
-	intrusive_ptr<oGPUPipeline> Pipeline;
+	std::shared_ptr<ouro::gpu::device> Device;
+	std::shared_ptr<ouro::gpu::command_list> CommandList;
+	std::shared_ptr<ouro::gpu::render_target> WindowRenderTarget;
+	std::shared_ptr<ouro::gpu::pipeline> Pipeline;
 	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
 
 	window* pGPUWindow;
@@ -161,18 +161,16 @@ oGPUWindowThread::oGPUWindowThread()
 {
 	ouro::gpu::device_init di;
 	di.driver_debug_level = gpu::debug_level::normal;
-	if (!oGPUDeviceCreate(di, &Device))
+	try { Device = ouro::gpu::device::make(di); }
+	catch (std::exception&)
 	{
-		oASSERT(false, "Could not create device:\n%s", oErrorGetLastString());
 		Running = false;
 		return;
 	}
 
-	oGPUPipeline::DESC pld = oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH);
-	oVERIFY(Device->CreatePipeline(pld.debug_name, pld, &Pipeline));
+	Pipeline = Device->make_pipeline(oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH));
 	Mesh = gpu::make_first_triangle(Device);
-
-	Device->GetImmediateCommandList(&CommandList);
+	CommandList = Device->get_immediate_command_list();
 }
 
 oGPUWindowThread::~oGPUWindowThread()
@@ -208,7 +206,7 @@ void oGPUWindowThread::OnEvent(const window::basic_event& _Event)
 		case ouro::event_type::sized:
 		{
 			if (WindowRenderTarget)
-				WindowRenderTarget->Resize(int3(_Event.as_shape().shape.client_size, 1));
+				WindowRenderTarget->resize(int3(_Event.as_shape().shape.client_size, 1));
 			break;
 		}
 
@@ -244,7 +242,7 @@ void oGPUWindowThread::Run()
 			i.alt_f4_closes = true;
 			GPUWindow = window::make(i);
 			GPUWindow->set_hotkeys(HotKeys);
-			oVERIFY(Device->CreatePrimaryRenderTarget(GPUWindow.get(), ouro::surface::d24_unorm_s8_uint, true, &WindowRenderTarget));
+			WindowRenderTarget = Device->make_primary_render_target(GPUWindow, ouro::surface::d24_unorm_s8_uint, true);
 			GPUWindow->parent(Parent);
 			GPUWindow->show(); // now that the window is a child, show it (it will only show when parent shows)
 			pGPUWindow = GPUWindow.get();
@@ -274,20 +272,20 @@ void oGPUWindowThread::Run()
 
 void oGPUWindowThread::Render()
 {
-	if (WindowRenderTarget && Device->BeginFrame())
+	if (WindowRenderTarget && Device->begin_frame())
 	{
-		CommandList->Begin();
-		CommandList->SetRenderTarget(WindowRenderTarget);
-		CommandList->Clear(WindowRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
-		CommandList->SetBlendState(ouro::gpu::blend_state::opaque);
-		CommandList->SetDepthStencilState(ouro::gpu::depth_stencil_state::none);
-		CommandList->SetSurfaceState(ouro::gpu::surface_state::front_face);
-		CommandList->SetPipeline(Pipeline);
+		CommandList->begin();
+		CommandList->set_render_target(WindowRenderTarget);
+		CommandList->clear(WindowRenderTarget, ouro::gpu::clear_type::color_depth_stencil);
+		CommandList->set_blend_state(ouro::gpu::blend_state::opaque);
+		CommandList->set_depth_stencil_state(ouro::gpu::depth_stencil_state::none);
+		CommandList->set_surface_state(ouro::gpu::surface_state::front_face);
+		CommandList->set_pipeline(Pipeline);
 
 		Mesh->draw(CommandList);
-		CommandList->End();
-		Device->EndFrame();
-		Device->Present(1);
+		CommandList->end();
+		Device->end_frame();
+		Device->present(1);
 	}
 }
 
@@ -356,7 +354,7 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 	// Now set up separate child thread for rendering. This allows UI to be 
 	// detached from potentially slow rendering.
 	pGPUWindow = GPUWindow.Start(AppWindow, std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1), [&] { Running = false; });
-	GPUWindow.GetRenderTarget()->SetClearColor(ClearToggle.Color[0]);
+	GPUWindow.GetRenderTarget()->set_clear_color(ClearToggle.Color[0]);
 	AppWindow->show();
 }
 
@@ -498,14 +496,13 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 		case ouro::event_type::timer:
 			if (_Event.as_timer().context == (uintptr_t)&ClearToggle)
 			{
-				oGPURenderTarget* pRT = GPUWindow.GetRenderTarget();
+				ouro::gpu::render_target* pRT = GPUWindow.GetRenderTarget();
 				if (pRT)
 				{
-					oGPURenderTarget::DESC RTD;
-					pRT->GetDesc(&RTD);
-					if (RTD.clear.clear_color[0] == ClearToggle.Color[0]) RTD.clear.clear_color[0] = ClearToggle.Color[1];
-					else RTD.clear.clear_color[0] = ClearToggle.Color[0];
-					pRT->SetClearDesc(RTD.clear);
+					ouro::gpu::render_target_info RTI = pRT->get_info();
+					if (RTI.clear.clear_color[0] == ClearToggle.Color[0]) RTI.clear.clear_color[0] = ClearToggle.Color[1];
+					else RTI.clear.clear_color[0] = ClearToggle.Color[0];
+					pRT->set_clear_info(RTI.clear);
 				}
 			}
 
@@ -607,9 +604,9 @@ void oGPUWindowTestApp::ActionHook(const ouro::input::action& _Action)
 						const bool checked = oGUIMenuIsChecked(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE);
 						if (checked)
 						{
-							const bool GoFullscreen = !GPUWindow.GetDevice()->IsFullscreenExclusive();
-							if (!GPUWindow.GetDevice()->SetFullscreenExclusive(GoFullscreen))
-								oTRACE("SetFullscreenExclusive(%s) failed: %s", GoFullscreen ? "true" : "false", oErrorGetLastString());
+							const bool GoFullscreen = !GPUWindow.GetDevice()->is_fullscreen_exclusive();
+							try { GPUWindow.GetDevice()->set_fullscreen_exclusive(GoFullscreen); }
+							catch (std::exception& e) { oTRACEA("SetFullscreenExclusive(%s) failed: %s", GoFullscreen ? "true" : "false", e.what()); }
 							AllowUIModeChange = !GoFullscreen;
 						}
 						else

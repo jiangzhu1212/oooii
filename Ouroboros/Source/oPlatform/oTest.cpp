@@ -728,6 +728,7 @@ oTestManager_Impl::oTestManager_Impl()
 
 oTestManager_Impl::~oTestManager_Impl()
 {
+	windows::iocp::join();
 }
 
 void oTestManager_Impl::GetDesc(DESC* _pDesc)

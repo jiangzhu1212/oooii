@@ -26,29 +26,34 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
 
-using namespace ouro;
+using namespace ouro::gpu;
+
+namespace ouro {
+	namespace tests {
 
 static const bool kIsDevMode = false;
 
-struct GPU_Texture3D_App : public oGPUTextureTestApp
+struct gpu_test_texture3d : public gpu_texture_test
 {
-	GPU_Texture3D_App() : oGPUTextureTestApp("GPU_Texture3D", kIsDevMode) {}
+	gpu_test_texture3d() : gpu_texture_test("GPU test: texture3d", kIsDevMode) {}
 
-	oGPU_TEST_PIPELINE GetPipeline() override { return oGPU_TEST_TEXTURE_3D; }
-	bool CreateTexture() override
+	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_3D; }
+	std::shared_ptr<texture> make_test_texture() override
 	{
 		auto red = surface_load(filesystem::data_path() / "Test/Textures/Red.png", surface::alpha_option::force_alpha);
 		auto green = surface_load(filesystem::data_path() / "Test/Textures/Green.png", surface::alpha_option::force_alpha);
 		auto blue = surface_load(filesystem::data_path() / "Test/Textures/Blue.png", surface::alpha_option::force_alpha);
 
-		const ouro::surface::buffer* images[3];
+		const surface::buffer* images[3];
 		images[0] = red.get();
 		images[1] = green.get();
 		images[2] = blue.get();
 
-		Texture = ouro::gpu::make_texture(Device, "Test 3D", images, oCOUNTOF(images), ouro::gpu::texture_type::default_3d);
-		return true;
+		return make_texture(Device, "Test 3D", images, oCOUNTOF(images), texture_type::default_3d);
 	}
 };
 
-oDEFINE_GPU_TEST(GPU_Texture3D)
+oGPU_COMMON_TEST(texture3d);
+
+	} // namespace tests
+} // namespace ouro

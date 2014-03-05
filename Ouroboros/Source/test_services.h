@@ -68,6 +68,8 @@ public:
 
 	virtual bool is_debugger_attached() const = 0;
 
+	virtual bool is_remote_session() const = 0;
+
 	virtual size_t total_physical_memory() const = 0;
 
 	// Returns the average and peek percent usage of the CPU by this process

@@ -26,65 +26,59 @@
 #ifndef oGPUTestCommon_h
 #define oGPUTestCommon_h
 
-#include <oPlatform/oTest.h>
-#include <oBase/future.h>
-#include <oGPU/oGPUUtil.h>
 #include <oGPU/oGPUUtilMesh.h>
 #include "oGPUTestPipelines.h"
 #include "oGPUTestHLSL.h"
-#include <oSurface/codec.h>
-#include <oCore/filesystem.h>
 
-#define oDEFINE_GPU_TEST(_TestName) \
-	struct _TestName : public oTest \
-	{ \
-		RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override \
-		{	oCONCAT(_TestName,_App) App; \
-			oTESTB0(App.Run(this)); \
-			return SUCCESS; \
-		} \
-	}; \
-	oTEST_REGISTER(_TestName);
+#include <oGPU/oGPU.h>
+#include <oGUI/window.h>
 
-class oGPUTestApp
+#include "../../test_services.h"
+
+#define oGPU_COMMON_TEST(_Name) void TEST##_Name(test_services& _Services) { gpu_test_##_Name t; t.run(_Services); }
+
+namespace ouro {
+	namespace tests {
+
+class gpu_test
 {
 public:
-	oGPUTestApp(const char* _Title, bool _DevMode, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size = int2(640, 480))
+	gpu_test(const char* _Title, bool _Interactive, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size = int2(640, 480))
 	{
-		if (!Create(_Title, _DevMode, _pSnapshotFrameIDs, _NumSnapshotFrameIDs, _Size))
-			oThrowLastError();
+		create(_Title, _Interactive, _pSnapshotFrameIDs, _NumSnapshotFrameIDs, _Size);
 	}
 	
 	template<size_t size>
-	oGPUTestApp(const char* _Title, bool _DevMode, const int (&_pSnapshotFrameIDs)[size], const int2& _Size = int2(640, 480))
+	gpu_test(const char* _Title, bool _Interactive, const int (&_pSnapshotFrameIDs)[size], const int2& _Size = int2(640, 480))
 	{
-		if (!Create(_Title, _DevMode, _pSnapshotFrameIDs, size, _Size))
-			oThrowLastError();
+		create(_Title, _Interactive, _pSnapshotFrameIDs, size, _Size);
 	}
 
-	// Called once before rendering begins
-	virtual bool Initialize() { return true; }
+	virtual ~gpu_test() {}
 
-	// Infrastructure calls BeginFrane/EndFrame, the rest is up to this function
-	virtual bool Render() = 0;
+	// Called once before rendering begins (throw on error)
+	virtual void initialize() {}
 
-	bool Run(oTest* _pTest);
+	// Infrastructure calls begin_frame/end_frame; the rest is up to this function
+	virtual void render() = 0;
 
-	ouro::window* GetWindow() { return Window.get(); }
-	oGPUDevice* GetDevice() { return Device; }
-	oGPUCommandList* GetCommandList() { return CommandList; }
-	oGPURenderTarget* GetPrimaryRenderTarget() { return PrimaryRenderTarget; }
+	void run(test_services& _Services);
+
+	window* get_window() { return Window.get(); }
+	gpu::device* get_device() { return Device.get(); }
+	gpu::command_list* get_command_list() { return CommandList.get(); }
+	gpu::render_target* get_primary_render_target() { return PrimaryRenderTarget.get(); }
 
 private:
-	void OnEvent(const ouro::window::basic_event& _Event);
-	bool Create(const char* _Title, bool _DevMode, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size);
+	void on_event(const window::basic_event& _Event);
+	void create(const char* _Title, bool _Interactive, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size);
 
-	// Call this after each Device::EndFrame() and before Device::Present to 
+	// Call this after each device::end_frame() and before device::present to 
 	// check if the current frame has been registered for testing. If so do the
-	// test, oTRACEA out any failure and flag ultimate failure for later. If an
-	// early-out is desired, response to a false return value, otherwise this will 
-	// have Run return false when it is finished.
-	bool CheckSnapshot(oTest* _pTest);
+	// test and oTRACEA out any failure and flag ultimate failure for later. If an
+	// early-out is desired respond to a false return value, otherwise this will 
+	// have run return false when it is finished.
+	void check_snapshot(test_services& _Services);
 
 	std::vector<int> SnapshotFrames;
 
@@ -94,37 +88,40 @@ private:
 	bool AllSnapshotsSucceeded;
 
 protected:
-	std::shared_ptr<ouro::window> Window;
-	ouro::intrusive_ptr<oGPUDevice> Device;
-	ouro::intrusive_ptr<oGPUCommandList> CommandList;
-	ouro::intrusive_ptr<oGPURenderTarget> PrimaryRenderTarget;
+	std::shared_ptr<window> Window;
+	std::shared_ptr<gpu::device> Device;
+	std::shared_ptr<gpu::command_list> CommandList;
+	std::shared_ptr<gpu::render_target> PrimaryRenderTarget;
 };
 
-class oGPUTextureTestApp : public oGPUTestApp
+class gpu_texture_test : public gpu_test
 {
 public:
-	oGPUTextureTestApp(const char* _Title, bool _DevMode, const int2& _Size = int2(640, 480))
-		: oGPUTestApp(_Title, _DevMode, sSnapshotFrames, oCOUNTOF(sSnapshotFrames), _Size)
+	gpu_texture_test(const char* _Title, bool _Interactive, const int2& _Size = int2(640, 480))
+		: gpu_test(_Title, _Interactive, sSnapshotFrames, oCOUNTOF(sSnapshotFrames), _Size)
 	{}
 
-	virtual oGPU_TEST_PIPELINE GetPipeline() = 0;
-	virtual bool CreateTexture() = 0;
-	virtual float GetRotationStep();
+	virtual oGPU_TEST_PIPELINE get_pipeline() = 0;
+	virtual std::shared_ptr<gpu::texture> make_test_texture() = 0;
+	virtual float rotation_step();
 
-	bool Initialize() override;
-	bool Render() override;
+	void initialize() override;
+	void render() override;
 
 protected:
-	ouro::intrusive_ptr<oGPUPipeline> Pipeline;
-	ouro::intrusive_ptr<oGPUTexture> Texture;
-	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
-	ouro::intrusive_ptr<oGPUBuffer> TestConstants;
+	std::shared_ptr<gpu::pipeline> Pipeline;
+	std::shared_ptr<gpu::texture> Texture;
+	std::shared_ptr<gpu::util_mesh> Mesh;
+	std::shared_ptr<gpu::buffer> TestConstants;
 
 	static const int sSnapshotFrames[2];
 };
 
-std::shared_ptr<ouro::surface::buffer> surface_load(const ouro::path& _Path, ouro::surface::alpha_option::value _Option = ouro::surface::alpha_option::force_alpha);
+std::shared_ptr<surface::buffer> surface_load(const path& _Path, surface::alpha_option::value _Option = surface::alpha_option::force_alpha);
 
-std::shared_ptr<ouro::surface::buffer> make_1D(int _Width);
+std::shared_ptr<surface::buffer> make_1D(int _Width);
+
+	} // namespace tests
+} // namespace ouro
 
 #endif
