@@ -27,7 +27,10 @@
 #include <oBase/byte.h>
 #include <oCore/windows/win_util.h>
 #include "dxgi_util.h"
+#include "d3d_include.h"
+#include <D3Dcompiler.h>
 #include <cerrno>
+
 
 #define oCHECK_IS_TEXTURE(_pResource) do \
 {	D3D11_RESOURCE_DIMENSION type; \
@@ -443,7 +446,239 @@ oDEFINE_MAKE_SHADER(hull_shader, HullShader)
 oDEFINE_MAKE_SHADER(domain_shader, DomainShader)
 oDEFINE_MAKE_SHADER(geometry_shader, GeometryShader)
 oDEFINE_MAKE_SHADER(pixel_shader, PixelShader)
-oDEFINE_MAKE_SHADER(compute_kernel, ComputeShader)
+oDEFINE_MAKE_SHADER(compute_shader, ComputeShader)
+
+static void d3dcompile_convert_error_buffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths)
+{
+	const char* msg = (const char*)_pErrorMessages->GetBufferPointer();
+
+	if (!_OutErrorMessageString)
+		oTHROW_INVARG0();
+
+	if (_pErrorMessages)
+	{
+		std::string tmp;
+		tmp.reserve(oKB(10));
+		tmp.assign(msg);
+		replace_all(tmp, "%", "%%");
+
+		// Now make sure header errors include their full paths
+		if (_pIncludePaths && _NumIncludePaths)
+		{
+			size_t posShortHeaderEnd = tmp.find(".h(");
+			while (posShortHeaderEnd != std::string::npos)
+			{
+				size_t posShortHeader = tmp.find_last_of("\n", posShortHeaderEnd);
+				if (posShortHeader == std::string::npos)
+					posShortHeader = 0;
+				else
+					posShortHeader++;
+
+				posShortHeaderEnd += 2; // absorb ".h" from search
+
+				size_t shortHeaderLen = posShortHeaderEnd - posShortHeader;
+
+				std::string shortPath;
+				shortPath.assign(tmp, posShortHeader, shortHeaderLen);
+				std::string path;
+				path.reserve(oKB(1));
+				
+				for (size_t i = 0; i < _NumIncludePaths; i++)
+				{
+					path.assign(_pIncludePaths[i]);
+					path.append("/");
+					path.append(shortPath);
+
+					if (filesystem::exists(path.c_str()))
+					{
+						tmp.replace(posShortHeader, shortHeaderLen, path.c_str());
+						posShortHeaderEnd = tmp.find("\n", posShortHeaderEnd); // move to end of line
+						break;
+					}
+				}
+
+				posShortHeaderEnd = tmp.find(".h(", posShortHeaderEnd);
+			}
+		}
+
+		strlcpy(_OutErrorMessageString, tmp.c_str(), _SizeofOutErrorMessageString);
+	}
+
+	else
+		*_OutErrorMessageString = 0;
+}
+
+std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const path& _ShaderSourceFilePath, const char* _ShaderSource)
+{
+	int argc = 0;
+	const char** argv = argtok(malloc, nullptr, _CommandLineOptions, &argc);
+	finally OSCFreeArgv([&] { free(argv); });
+
+	std::string UnsupportedOptions("Unsupported options: ");
+	size_t UnsupportedOptionsEmptyLen = UnsupportedOptions.size();
+
+	const char* TargetProfile = "";
+	const char* EntryPoint = "main";
+	std::vector<const char*> IncludePaths;
+	std::vector<std::pair<std::string, std::string>> Defines;
+	unsigned int Flags1 = 0, Flags2 = 0;
+
+	for (int i = 0; i < argc; i++)
+	{
+		const char* sw = argv[i];
+		const int o = to_upper(*(sw+1));
+		const int o2 = to_upper(*(sw+2));
+		const int o3 = to_upper(*(sw+3));
+
+		std::string StrSw(sw);
+
+		#define TRIML(str) ((str) + strspn(str, oWHITESPACE))
+
+		if (*sw == '/')
+		{
+			switch (o)
+			{
+				case 'T':
+					TargetProfile = TRIML(sw+2);
+					break;
+				case 'E':
+					EntryPoint = TRIML(sw+2);
+					break;
+				case 'I':
+					IncludePaths.push_back(TRIML(sw+2));
+					break;
+				case 'O':
+				{
+					switch (o2)
+					{
+						case 'D':	Flags1 |= D3DCOMPILE_SKIP_OPTIMIZATION; break;
+						case 'P':	Flags1 |= D3DCOMPILE_NO_PRESHADER; break;
+						case '0': Flags1 |= D3DCOMPILE_OPTIMIZATION_LEVEL0; break;
+						case '1': Flags1 |= D3DCOMPILE_OPTIMIZATION_LEVEL1; break;
+						case '2': Flags1 |= D3DCOMPILE_OPTIMIZATION_LEVEL2; break;
+						case '3': Flags1 |= D3DCOMPILE_OPTIMIZATION_LEVEL3; break;
+						default: UnsupportedOptions.append(" " + StrSw); break;
+					}
+
+					break;
+				}
+				case 'W':
+				{
+					if (o2 == 'X') Flags1 |= D3DCOMPILE_WARNINGS_ARE_ERRORS;
+					else UnsupportedOptions.append(" " + StrSw);
+					break;
+				}
+				case 'V':
+				{
+					if (o2 == 'D') Flags1 |= D3DCOMPILE_SKIP_VALIDATION;
+					else UnsupportedOptions.append(" " + StrSw);
+					break;
+				}
+				case 'Z':
+				{
+					switch (o2)
+					{
+						case 'I':
+							Flags1 |= D3DCOMPILE_DEBUG;
+							break;
+						case 'P':
+						{
+							switch (o3)
+							{
+								case 'R': Flags1 |= D3DCOMPILE_PACK_MATRIX_ROW_MAJOR; break;
+								case 'C': Flags1 |= D3DCOMPILE_PACK_MATRIX_COLUMN_MAJOR; break;
+								default: UnsupportedOptions.append(" " + StrSw); break;
+							}
+
+							break;
+						}
+						default: UnsupportedOptions.append(" " + StrSw); break;
+					}
+						
+					break;
+				}
+				case 'G':
+				{
+					if (o2 == 'P' && o3 == 'P') Flags1 |= D3DCOMPILE_PARTIAL_PRECISION;
+					else if (o2 == 'F' && o3 == 'A') Flags1 |= D3DCOMPILE_AVOID_FLOW_CONTROL;
+					else if (o2 == 'F' && o3 == 'P') Flags1 |= D3DCOMPILE_PREFER_FLOW_CONTROL;
+					else if (o2 == 'D' && o3 == 'P') Flags2 |= D3D10_EFFECT_COMPILE_ALLOW_SLOW_OPS;
+					else if (o2 == 'E' && o3 == 'S') Flags1 |= D3DCOMPILE_ENABLE_STRICTNESS;
+					else if (o2 == 'E' && o3 == 'C') Flags1 |= D3DCOMPILE_ENABLE_BACKWARDS_COMPATIBILITY;
+					else if (o2 == 'I' && o3 == 'S') Flags1 |= D3DCOMPILE_IEEE_STRICTNESS;
+					else if (o2 == 'C' && o3 == 'H') Flags2 |= D3D10_EFFECT_COMPILE_CHILD_EFFECT;
+					else UnsupportedOptions.append(" " + StrSw);
+					break;
+				}
+				case 'D':
+				{
+					const char* k = TRIML(sw+2);
+					const char* sep = strchr(k, '=');
+					const char* v = "1";
+					if (sep)
+						v = TRIML(v);
+					else
+						sep = k + strlen(k);
+
+					Defines.resize(Defines.size() + 1);
+					Defines.back().first.assign(k, sep-k);
+					Defines.back().second.assign(v);
+					break;
+				}
+				
+				default: UnsupportedOptions.append(" " + StrSw); break;
+			}
+		}
+	}
+
+	if (UnsupportedOptionsEmptyLen != UnsupportedOptions.size())
+		oTHROW_INVARG(UnsupportedOptions.c_str());
+
+	std::vector<D3D_SHADER_MACRO> Macros;
+	Macros.resize(Defines.size() + 1);
+	for (size_t i = 0; i < Defines.size(); i++)
+	{
+		Macros[i].Name = Defines[i].first.c_str();
+		Macros[i].Definition = Defines[i].second.c_str();
+	}
+
+	Macros.back().Name = nullptr;
+	Macros.back().Definition = nullptr;
+
+	path_string SourceName;
+	snprintf(SourceName, "%s", _ShaderSourceFilePath);
+
+	include D3DInclude(_ShaderSourceFilePath);
+	for (const path& p : IncludePaths)
+		D3DInclude.add_search_path(p);
+
+	intrusive_ptr<ID3DBlob> Code, Errors;
+	HRESULT hr = D3DCompile(_ShaderSource
+		, strlen(_ShaderSource)
+		, SourceName
+		, Macros.data()
+		, &D3DInclude
+		, EntryPoint
+		, TargetProfile
+		, Flags1
+		, Flags2
+		, &Code
+		, &Errors);
+
+	if (FAILED(hr))
+	{
+		size_t size = Errors->GetBufferSize() + 1 + oKB(10); // conversion can expand buffer, but not by very much, so pad a lot and hope expansion stays small
+
+		std::unique_ptr<char[]> Errs(new char[size]);
+		d3dcompile_convert_error_buffer(Errs.get(), size, Errors, IncludePaths.data(), IncludePaths.size());
+		oTHROW(io_error, "shader compilation error:\n%s", Errs);
+	}
+
+	std::unique_ptr<char[]> ByteCode(new char[Code->GetBufferSize()]);
+	memcpy(ByteCode.get(), Code->GetBufferPointer(), Code->GetBufferSize());
+
+	return ByteCode;
+}
 
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation)
 {
@@ -1408,68 +1643,6 @@ void check_bound_cs_uavs(ID3D11DeviceContext* _pDeviceContext, int _NumBuffers
 static const GUID oWKPDID_oBackPointer = { 0x6489b24e, 0xc12e, 0x40c2, { 0xa9, 0xef, 0x24, 0x93, 0x53, 0x88, 0x86, 0x12 } };
 
 // to oAlgorithm... should we permutate for various sources?
-bool oD3D11ConvertCompileErrorBuffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths)
-{
-	const char* msg = (const char*)_pErrorMessages->GetBufferPointer();
-
-	if (!_OutErrorMessageString)
-		return oErrorSetLast(std::errc::invalid_argument);
-
-	if (_pErrorMessages)
-	{
-		std::string tmp;
-		tmp.reserve(oKB(10));
-		tmp.assign(msg);
-		replace_all(tmp, "%", "%%");
-
-		// Now make sure header errors include their full paths
-		if (_pIncludePaths && _NumIncludePaths)
-		{
-			size_t posShortHeaderEnd = tmp.find(".h(");
-			while (posShortHeaderEnd != std::string::npos)
-			{
-				size_t posShortHeader = tmp.find_last_of("\n", posShortHeaderEnd);
-				if (posShortHeader == std::string::npos)
-					posShortHeader = 0;
-				else
-					posShortHeader++;
-
-				posShortHeaderEnd += 2; // absorb ".h" from search
-
-				size_t shortHeaderLen = posShortHeaderEnd - posShortHeader;
-
-				std::string shortPath;
-				shortPath.assign(tmp, posShortHeader, shortHeaderLen);
-				std::string path;
-				path.reserve(oKB(1));
-				
-				for (size_t i = 0; i < _NumIncludePaths; i++)
-				{
-					path.assign(_pIncludePaths[i]);
-					path.append("/");
-					path.append(shortPath);
-
-					if (oStreamExists(path.c_str()))
-					{
-						tmp.replace(posShortHeader, shortHeaderLen, path.c_str());
-						posShortHeaderEnd = tmp.find("\n", posShortHeaderEnd); // move to end of line
-						break;
-					}
-				}
-
-				posShortHeaderEnd = tmp.find(".h(", posShortHeaderEnd);
-			}
-		}
-
-		strlcpy(_OutErrorMessageString, tmp.c_str(), _SizeofOutErrorMessageString);
-	}
-
-	else
-		*_OutErrorMessageString = 0;
-
-	return true;
-}
-
 #ifdef _DEBUG
 	#define oDEBUG_CHECK_SAME_DEVICE(_pContext, _pSrc, _pDst) do \
 	{	intrusive_ptr<ID3D11Device> Dev1, Dev2, Dev3; \
@@ -1637,268 +1810,6 @@ oD3D11ScopedMessageDisabler::~oD3D11ScopedMessageDisabler()
 	#endif
 }
 
-class oD3DInclude : public ID3DInclude
-{
-public:
-	oD3DInclude(const char* _ShaderSourcePath, const std::vector<const char*>& _HeaderSearchPaths)
-		: ShaderSourcePath(_ShaderSourcePath)
-		, HeaderSearchPaths(_HeaderSearchPaths)
-	{}
-
-	~oD3DInclude();
-
-	ULONG AddRef() { return 0; }
-	ULONG Release() { return 0; }
-	IFACEMETHOD(QueryInterface)(THIS_ REFIID riid, void** ppvObject) { return ppvObject ? E_NOINTERFACE : E_POINTER; }
-	IFACEMETHOD(Open)(THIS_ D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, unsigned int *pBytes);
-	IFACEMETHOD(Close)(THIS_ LPCVOID pData);
-
-protected:
-	const char* ShaderSourcePath;
-	const std::vector<const char*>& HeaderSearchPaths;
-
-	struct BUFFER
-	{
-		BUFFER() : pData(nullptr), Size(0) {}
-		BUFFER(LPCVOID _pData, unsigned int _Size) : pData(_pData), Size(_Size) {}
-		LPCVOID pData;
-		unsigned int Size;
-	};
-
-	unordered_map<oURI, BUFFER> Cache;
-};
-
-oD3DInclude::~oD3DInclude()
-{
-	for (auto& pair : Cache)
-		free((void*)pair.second.pData);
-}
-
-HRESULT oD3DInclude::Close(LPCVOID pData)
-{
-	// don't destroy the cached files...
-	//free((void*)pData);
-	return S_OK;
-}
-
-HRESULT oD3DInclude::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, unsigned int* pBytes)
-{
-	auto it = Cache.find(pFileName);
-	if (it != Cache.end())
-	{
-		*ppData = it->second.pData;
-		*pBytes = it->second.Size;
-		return S_OK;
-	}
-
-	bool exists = oStreamExists(pFileName);
-	path_string Path;
-
-	if (exists)
-		Path = pFileName;
-	else
-	{
-		for (const char* p : HeaderSearchPaths)
-		{
-			snprintf(Path, "%s/%s", p, pFileName);
-			exists = oStreamExists(Path);
-			if (exists)
-				goto hack_break; // @oooii-tony: oFOR uses a double-for loop, so one break isn't enough. We should fix this!
-		}
-	}
-
-hack_break:
-	if (!exists)
-	{
-		oErrorSetLast(std::errc::no_such_file_or_directory, "Header %s not found in search path", pFileName);
-		oTRACE("%s", oErrorGetLastString());
-		return E_FAIL;
-	}
-
-	size_t size = 0;
-	if (!oStreamLoad(ppData, &size, malloc, free, Path, true))
-	{
-		oTRACE("%s", oErrorGetLastString());
-		return E_FAIL;
-	}
-
-	*pBytes = ounsigned int(size);
-	
-	Cache[oURI(pFileName)] = BUFFER(*ppData, *pBytes);
-	return S_OK;
-}
-
-bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, const char* _ShaderSource, oBuffer** _ppBuffer)
-{
-	int argc = 0;
-	const char** argv = oWinCommandLineToArgvA(false, _CommandLineOptions, &argc);
-	finally OSCFreeArgv([&] { oWinCommandLineToArgvAFree(argv); });
-
-	std::string UnsupportedOptions("Unsupported options: ");
-	size_t UnsupportedOptionsEmptyLen = UnsupportedOptions.size();
-
-	const char* TargetProfile = "";
-	const char* EntryPoint = "main";
-	std::vector<const char*> IncludePaths;
-	std::vector<std::pair<std::string, std::string>> Defines;
-	unsigned int Flags1 = 0, Flags2 = 0;
-
-	for (int i = 0; i < argc; i++)
-	{
-		const char* sw = argv[i];
-		const int o = toupper(*(sw+1));
-		const int o2 = toupper(*(sw+2));
-		const int o3 = toupper(*(sw+3));
-
-		std::string StrSw(sw);
-
-		#define TRIML(str) ((str) + strspn(str, oWHITESPACE))
-
-		if (*sw == '/')
-		{
-			switch (o)
-			{
-				case 'T':
-					TargetProfile = TRIML(sw+2);
-					break;
-				case 'E':
-					EntryPoint = TRIML(sw+2);
-					break;
-				case 'I':
-					IncludePaths.push_back(TRIML(sw+2));
-					break;
-				case 'O':
-				{
-					switch (o2)
-					{
-						case 'D':	Flags1 |= D3D10_SHADER_SKIP_OPTIMIZATION; break;
-						case 'P':	Flags1 |= D3D10_SHADER_NO_PRESHADER; break;
-						case '0': Flags1 |= D3D10_SHADER_OPTIMIZATION_LEVEL0; break;
-						case '1': Flags1 |= D3D10_SHADER_OPTIMIZATION_LEVEL1; break;
-						case '2': Flags1 |= D3D10_SHADER_OPTIMIZATION_LEVEL2; break;
-						case '3': Flags1 |= D3D10_SHADER_OPTIMIZATION_LEVEL3; break;
-						default: UnsupportedOptions.append(" " + StrSw); break;
-					}
-
-					break;
-				}
-				case 'W':
-				{
-					if (o2 == 'X') Flags1 |= D3D10_SHADER_WARNINGS_ARE_ERRORS;
-					else UnsupportedOptions.append(" " + StrSw);
-					break;
-				}
-				case 'V':
-				{
-					if (o2 == 'D') Flags1 |= D3D10_SHADER_SKIP_VALIDATION;
-					else UnsupportedOptions.append(" " + StrSw);
-					break;
-				}
-				case 'Z':
-				{
-					switch (o2)
-					{
-						case 'I':
-							Flags1 |= D3D10_SHADER_DEBUG;
-							break;
-						case 'P':
-						{
-							switch (o3)
-							{
-								case 'R': Flags1 |= D3D10_SHADER_PACK_MATRIX_ROW_MAJOR; break;
-								case 'C': Flags1 |= D3D10_SHADER_PACK_MATRIX_COLUMN_MAJOR; break;
-								default: UnsupportedOptions.append(" " + StrSw); break;
-							}
-
-							break;
-						}
-						default: UnsupportedOptions.append(" " + StrSw); break;
-					}
-						
-					break;
-				}
-				case 'G':
-				{
-					if (o2 == 'P' && o3 == 'P') Flags1 |= D3D10_SHADER_PARTIAL_PRECISION;
-					else if (o2 == 'F' && o3 == 'A') Flags1 |= D3D10_SHADER_AVOID_FLOW_CONTROL;
-					else if (o2 == 'F' && o3 == 'P') Flags1 |= D3D10_SHADER_PREFER_FLOW_CONTROL;
-					else if (o2 == 'D' && o3 == 'P') Flags2 |= D3D10_EFFECT_COMPILE_ALLOW_SLOW_OPS;
-					else if (o2 == 'E' && o3 == 'S') Flags1 |= D3D10_SHADER_ENABLE_STRICTNESS;
-					else if (o2 == 'E' && o3 == 'C') Flags1 |= D3D10_SHADER_ENABLE_BACKWARDS_COMPATIBILITY;
-					else if (o2 == 'I' && o3 == 'S') Flags1 |= D3D10_SHADER_IEEE_STRICTNESS;
-					else if (o2 == 'C' && o3 == 'H') Flags2 |= D3D10_EFFECT_COMPILE_CHILD_EFFECT;
-					else UnsupportedOptions.append(" " + StrSw);
-					break;
-				}
-				case 'D':
-				{
-					const char* k = TRIML(sw+2);
-					const char* sep = strchr(k, '=');
-					const char* v = "1";
-					if (sep)
-						v = TRIML(v);
-					else
-						sep = k + strlen(k);
-
-					Defines.resize(Defines.size() + 1);
-					Defines.back().first.assign(k, sep-k);
-					Defines.back().second.assign(v);
-					break;
-				}
-				
-				default: UnsupportedOptions.append(" " + StrSw); break;
-			}
-		}
-	}
-
-	if (UnsupportedOptionsEmptyLen != UnsupportedOptions.size())
-	{
-		size_t size = UnsupportedOptions.length() + 1;
-		oVERIFY(oBufferCreate("Parameter Errors", oBuffer::New(size), size, oBuffer::Delete, _ppBuffer));
-		strlcpy((char*)(*_ppBuffer)->GetData(), UnsupportedOptions.c_str(), (*_ppBuffer)->GetSize());
-		return oErrorSetLast(std::errc::invalid_argument);
-	}
-
-	std::vector<D3D_SHADER_MACRO> Macros;
-	Macros.resize(Defines.size() + 1);
-	for (size_t i = 0; i < Defines.size(); i++)
-	{
-		Macros[i].Name = Defines[i].first.c_str();
-		Macros[i].Definition = Defines[i].second.c_str();
-	}
-
-	Macros.back().Name = nullptr;
-	Macros.back().Definition = nullptr;
-
-	uri_string SourceName;
-	snprintf(SourceName, "%s", _ShaderSourceFilePath);
-
-	oD3DInclude D3DInclude(_ShaderSourceFilePath, IncludePaths);
-	intrusive_ptr<ID3DBlob> Code, Errors;
-	HRESULT hr = D3DCompile(_ShaderSource
-		, strlen(_ShaderSource)
-		, SourceName
-		, data(Macros)
-		, &D3DInclude
-		, EntryPoint
-		, TargetProfile
-		, Flags1
-		, Flags2
-		, &Code
-		, &Errors);
-
-	if (FAILED(hr))
-	{
-		size_t size = Errors->GetBufferSize() + 1 + oKB(10); // conversion can expand buffer, but not by very much, so pad a lot and hope expansion stays small
-		oVERIFY(oBufferCreate("Compile Errors", oBuffer::New(size), size, oBuffer::Delete, _ppBuffer));
-		oVERIFY(oD3D11ConvertCompileErrorBuffer((char*)(*_ppBuffer)->GetData(), (*_ppBuffer)->GetSize(), Errors, data(IncludePaths), IncludePaths.size()));
-		return oErrorSetLast(std::errc::io_error, "shader compilation error: %s", oSAFESTRN(_ShaderSourceFilePath));
-	}
-
-	oVERIFY(oBufferCreate("Compile Errors", oBuffer::New(Code->GetBufferSize()), Code->GetBufferSize(), oBuffer::Delete, _ppBuffer));
-	memcpy((*_ppBuffer)->GetData(), Code->GetBufferPointer(), (*_ppBuffer)->GetSize());
-	return true;
-}
 #endif
 
 		} // namespace d3d11

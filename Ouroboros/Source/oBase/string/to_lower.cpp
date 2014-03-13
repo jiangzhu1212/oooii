@@ -22,27 +22,15 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oD3D11ComputeShader.h"
-#include "oD3D11Device.h"
+#include <string.h>
 
-oGPU_NAMESPACE_BEGIN
+namespace ouro {
 
-oDEFINE_DEVICE_MAKE(compute_kernel)
-oDEVICE_CHILD_CTOR(compute_kernel)
-	, DebugName(_Info.debug_name)
+wchar_t to_lower(wchar_t wc)
 {
-	if (!_Info.cs)
-		oTHROW_INVARG("A buffer of valid compute shader bytecode must be specified");
-	oD3D11_DEVICE();
-	ComputeShader = make_compute_shader(D3DDevice, _Info.cs, _Info.debug_name);
+	wchar_t s[2] = { wc, 0 };
+	_wcslwr_s(s);
+	return s[0];
 }
 
-compute_kernel_info d3d11_compute_kernel::get_info() const
-{
-	compute_kernel_info i;
-	i.debug_name = DebugName;
-	i.cs = nullptr;
-	return i;
-}
-
-oGPU_NAMESPACE_END
+} // namespace ouro

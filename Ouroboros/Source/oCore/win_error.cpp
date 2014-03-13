@@ -227,6 +227,22 @@ static std::string message(HRESULT _hResult)
 	return msg;
 }
 
+std::error_code make_error_code(long _hResult)
+{
+	errno_t e = errno_from_hresult((HRESULT)_hResult);
+	if (e && e != ENOTRECOVERABLE)
+		return std::error_code(e, std::generic_category());
+	return std::error_code(_hResult, category()); 
+}
+
+std::error_condition make_error_condition(long _hResult)
+{
+	errno_t e = errno_from_hresult((HRESULT)_hResult);
+	if (e && e != ENOTRECOVERABLE)
+		return std::error_condition(e, std::generic_category());
+	return std::error_condition(_hResult, category());
+}
+
 class category_impl : public std::error_category
 {
 public:

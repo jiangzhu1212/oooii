@@ -768,15 +768,14 @@ void delete_buffer(char* _pBuffer)
 	delete [] _pBuffer;
 }
 
-shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value _LoadOption)
+unique_ptr<char[]> load(const path& _Path, size_t* _pSize, load_option::value _LoadOption)
 {
 	unsigned long long FileSize = file_size(_Path);
 
 	// in case we need a UTF32 nul terminator
 	size_t AllocSize = as_size_t(FileSize) + (_LoadOption == load_option::text_read ? 4 : 0);
 
-	char* p = new char[AllocSize];
-	shared_ptr<char> buffer(p, delete_buffer);
+	unique_ptr<char[]> p(new char[AllocSize]);
 
 	if (_LoadOption == load_option::text_read)
 	{
@@ -787,7 +786,7 @@ shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value _Loa
 	{
 		file_handle f = open(_Path, _LoadOption == load_option::text_read ? open_option::text_read : open_option::binary_read);
 		finally CloseFile([&] { close(f); });
-		if (FileSize != read(f, p, AllocSize, FileSize) && _LoadOption == load_option::binary_read)
+		if (FileSize != read(f, p.get(), AllocSize, FileSize) && _LoadOption == load_option::binary_read)
 			oTHROW(io_error, "read failed: %s", _Path.c_str());
 	}
 
@@ -798,7 +797,7 @@ shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value _Loa
 
 		if (_LoadOption == load_option::text_read)
 		{
-			utf_type::value type = utfcmp(p, __min(static_cast<size_t>(FileSize), 512));
+			utf_type::value type = utfcmp(p.get(), __min(static_cast<size_t>(FileSize), 512));
 			switch (type)
 			{
 				case utf_type::utf32be: case utf_type::utf32le: *_pSize += 4; break;
@@ -808,7 +807,7 @@ shared_ptr<char> load(const path& _Path, size_t* _pSize, load_option::value _Loa
 		}
 	}
 
-	return buffer;
+	return p;
 }
 
 	} // namespace filesystem

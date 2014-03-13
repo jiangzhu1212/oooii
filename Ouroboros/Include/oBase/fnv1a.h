@@ -28,6 +28,7 @@
 #define oBase_fnv1a_h
 
 #include <oBase/uint128.h>
+#include <oBase/string.h> // to_lower
 
 namespace ouro {
 
@@ -87,6 +88,53 @@ inline T fnv1a(const char* _String, const T& _Seed = fnv1a_traits<T>::seed)
 	while (*_String)
 	{
 		h ^= *_String++;
+		h *= fnv1a_traits<T>::value;
+	}
+	return h;
+}
+
+template<typename T>		
+inline T fnv1ai(const char* _String, const T& _Seed = fnv1a_traits<T>::seed)
+{
+	fnv1a_traits<T>::value_type h = _Seed;
+	while (*_String)
+	{
+		char c = *_String++;
+		h ^= to_lower(c);
+		h *= fnv1a_traits<T>::value;
+	}
+	return h;
+}
+
+namespace detail { union wchar_bytes { wchar_t wc; char c[2]; }; }
+
+template<typename T>		
+inline T fnv1a(const wchar_t* _String, const T& _Seed = fnv1a_traits<T>::seed)
+{
+	fnv1a_traits<T>::value_type h = _Seed;
+	while (*_String)
+	{
+		detail::wchar_bytes ch;
+		ch.wc = *_String++;
+		h ^= ch.c[0];
+		h *= fnv1a_traits<T>::value;
+		h ^= ch.c[1];
+		h *= fnv1a_traits<T>::value;
+	}
+	return h;
+}
+
+template<typename T>		
+inline T fnv1ai(const wchar_t* _String, const T& _Seed = fnv1a_traits<T>::seed)
+{
+	fnv1a_traits<T>::value_type h = _Seed;
+	while (*_String)
+	{
+		detail::wchar_bytes ch;
+		ch.wc = to_lower(*_String++);
+		h ^= ch.c[0];
+		h *= fnv1a_traits<T>::value;
+		h ^= ch.c[1];
 		h *= fnv1a_traits<T>::value;
 	}
 	return h;

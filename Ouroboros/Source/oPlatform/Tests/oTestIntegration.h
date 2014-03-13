@@ -82,7 +82,7 @@ public:
 
 		catch (std::system_error& e)
 		{
-			if (e.code() != std::errc::no_such_file_or_directory)
+			if (e.code().value() != std::errc::no_such_file_or_directory)
 				throw;
 
 			path FullPath = filesystem::data_path() / _Path;

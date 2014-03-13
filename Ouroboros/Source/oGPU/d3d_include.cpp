@@ -22,27 +22,68 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oD3D11ComputeShader.h"
-#include "oD3D11Device.h"
+#include "d3d_include.h"
+#include <oCore/filesystem.h>
 
-oGPU_NAMESPACE_BEGIN
+namespace ouro {
+	namespace gpu {
+		namespace d3d11 {
 
-oDEFINE_DEVICE_MAKE(compute_kernel)
-oDEVICE_CHILD_CTOR(compute_kernel)
-	, DebugName(_Info.debug_name)
+HRESULT include::Close(LPCVOID pData)
 {
-	if (!_Info.cs)
-		oTHROW_INVARG("A buffer of valid compute shader bytecode must be specified");
-	oD3D11_DEVICE();
-	ComputeShader = make_compute_shader(D3DDevice, _Info.cs, _Info.debug_name);
+	//free((void*)pData); // don't destroy cached files
+	return S_OK;
 }
 
-compute_kernel_info d3d11_compute_kernel::get_info() const
+HRESULT include::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, unsigned int* pBytes)
 {
-	compute_kernel_info i;
-	i.debug_name = DebugName;
-	i.cs = nullptr;
-	return i;
+	try
+	{
+		path Filename(pFileName);
+
+		auto it = Cache.find(Filename);
+		if (it != Cache.end())
+		{
+			*ppData = it->second.first.get();
+			*pBytes = it->second.second;
+			return S_OK;
+		}
+
+		path FullPath(Filename);
+		bool exists = filesystem::exists(FullPath);
+		if (!exists)
+		{
+			for (const path& p : SearchPaths)
+			{
+				FullPath = p / Filename;
+				exists = filesystem::exists(FullPath);
+				if (exists)
+					break;
+			}
+		}
+
+		if (!exists)
+			oTHROW(no_such_file_or_directory, "Header %s not found in search path", Filename.c_str());
+
+		size_t size = 0;
+		std::unique_ptr<char[]> source = filesystem::load(FullPath, &size);
+
+		*ppData = source.get();
+		*pBytes = unsigned int(size);
+
+		Cache[Filename] = cached(std::move(source), *pBytes);
+	}
+
+	catch (std::exception&)
+	{
+		*ppData = nullptr;
+		*pBytes = 0;
+		return E_FAIL;
+	}
+
+	return S_OK;
 }
 
-oGPU_NAMESPACE_END
+		} // namespace d3d11
+	} // namespace gpu
+} // namespace ouro

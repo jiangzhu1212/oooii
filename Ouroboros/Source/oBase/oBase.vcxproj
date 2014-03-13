@@ -106,6 +106,8 @@
     <ClCompile Include="string\stringize.cpp" />
     <ClCompile Include="string\stringize_hlsl.cpp" />
     <ClCompile Include="string\strtok.cpp" />
+    <ClCompile Include="string\to_lower.cpp" />
+    <ClCompile Include="string\to_upper.cpp" />
     <ClCompile Include="string\trim.cpp" />
     <ClCompile Include="string\type_name.cpp" />
     <ClCompile Include="string\wcmnroot.cpp" />

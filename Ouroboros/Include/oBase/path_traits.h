@@ -27,9 +27,10 @@
 #ifndef oBase_path_traits_h
 #define oBase_path_traits_h
 
-#include <oBase/fixed_string.h>
-#include <oBase/throw.h>
 #include <oBase/assert.h>
+#include <oBase/fixed_string.h>
+#include <oBase/fnv1a.h>
+#include <oBase/throw.h>
 
 namespace ouro {
 
@@ -50,6 +51,7 @@ struct base_path_traits
 	static char_type* empty_str();
 	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2);
 	static int compare(const char_type* a, const char_type* b); // strcmp/stricmp
+	static size_t hash(const char_type* _Path);
 };
 
 template<> struct base_path_traits<char, false>
@@ -70,6 +72,7 @@ template<> struct base_path_traits<char, false>
 	static char_type* empty_str() { return ""; }
 	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2) { return cmnroot(_Path1, _Path2); }
 	static int compare(const char_type* a, const char_type* b) { return _stricmp(a, b); }
+	static size_t hash(const char_type* _Path) { return fnv1ai<size_t>(_Path); }
 };
 
 template<> struct base_path_traits<char, true>
@@ -90,6 +93,7 @@ template<> struct base_path_traits<char, true>
 	static char_type* empty_str() { return ""; }
 	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2) { return cmnroot(_Path1, _Path2); }
 	static int compare(const char_type* a, const char_type* b) { return strcmp(a, b); }
+	static size_t hash(const char_type* _Path) { return fnv1a<size_t>(_Path); }
 };
 
 template<> struct base_path_traits<wchar_t, false>
@@ -110,6 +114,7 @@ template<> struct base_path_traits<wchar_t, false>
 	static char_type* empty_str() { return L""; }
 	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2) { return wcmnroot(_Path1, _Path2); }
 	static int compare(const char_type* a, const char_type* b) { return _wcsicmp(a, b); }
+	static size_t hash(const char_type* _Path) { return fnv1ai<size_t>(_Path); }
 };
 
 template<> struct base_path_traits<wchar_t, true>
@@ -130,6 +135,7 @@ template<> struct base_path_traits<wchar_t, true>
 	static char_type* empty_str() { return L""; };
 	static size_t cmnroot(const char_type* _Path1, const char_type* _Path2) { return wcmnroot(_Path1, _Path2); }
 	static int compare(const char_type* a, const char_type* b) { return wcscmp(a, b); }
+	static size_t hash(const char_type* _Path) { return fnv1a<size_t>(_Path); }
 };
 
 template<typename charT, bool _Posix, bool _AlwaysClean>

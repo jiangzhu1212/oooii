@@ -358,7 +358,7 @@ void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_op
 // Allocates the size of the file, reads it into memory and returns that buffer.
 // If loaded as text, the allocation will be padded and a nul terminator will be
 // added so the buffer can immediately be used as a string.
-std::shared_ptr<char> load(const path& _Path, size_t* _pSize = nullptr, load_option::value _LoadOption = load_option::binary_read);
+std::unique_ptr<char[]> load(const path& _Path, size_t* _pSize = nullptr, load_option::value _LoadOption = load_option::binary_read);
 
 class scoped_file
 {

@@ -209,7 +209,7 @@ bool oHTTPClient_Impl::FinishRequest(oHTTP_RESPONSE** _pResponse, void* _pRespon
 					while (pElement)
 					{
 						// Optimization so we can compare with lower case string matching, the actual header stays unchanged though
-						tolower(pElement);
+						to_lower(pElement);
 						
 						// keep-alive / close
 						if (strstr(pElement, "close"))
