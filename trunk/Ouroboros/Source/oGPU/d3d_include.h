@@ -22,27 +22,57 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oD3D11ComputeShader.h"
-#include "oD3D11Device.h"
+// Include interface to pass to D3DCompile
+#pragma once
+#ifndef oGPU_d3d_include_h
+#define oGPU_d3d_include_h
 
-oGPU_NAMESPACE_BEGIN
+#include <oBase/path.h>
+#include <d3d11.h>
+#include <atomic>
+#include <unordered_map>
 
-oDEFINE_DEVICE_MAKE(compute_kernel)
-oDEVICE_CHILD_CTOR(compute_kernel)
-	, DebugName(_Info.debug_name)
+namespace ouro {
+	namespace gpu {
+		namespace d3d11 {
+
+class include : public ID3DInclude
 {
-	if (!_Info.cs)
-		oTHROW_INVARG("A buffer of valid compute shader bytecode must be specified");
-	oD3D11_DEVICE();
-	ComputeShader = make_compute_shader(D3DDevice, _Info.cs, _Info.debug_name);
-}
+public:
+	enum flags
+	{
+		// if specified Release() will delete itself when the refcount is zero. If this object 
+		// is allocated on the stack omitting this flag will not allow delete to be called on this.
+		respect_refcount = 1<<0,
+	};
 
-compute_kernel_info d3d11_compute_kernel::get_info() const
-{
-	compute_kernel_info i;
-	i.debug_name = DebugName;
-	i.cs = nullptr;
-	return i;
-}
+	include(const path& _ShaderSourcePath, int _Flags = 0)
+		: RefCount(1)
+		, Flags(_Flags)
+		, ShaderSourcePath(_ShaderSourcePath)
+	{}
 
-oGPU_NAMESPACE_END
+	ULONG AddRef() { return ++RefCount; }
+	ULONG Release() { ULONG r = --RefCount; if (!r && (Flags & respect_refcount)) delete this; return r; }
+	IFACEMETHOD(QueryInterface)(THIS_ REFIID riid, void** ppvObject) { return ppvObject ? E_NOINTERFACE : E_POINTER; }
+	IFACEMETHOD(Open)(THIS_ D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID *ppData, unsigned int *pBytes);
+	IFACEMETHOD(Close)(THIS_ LPCVOID pData);
+
+	void add_search_path(const path& _SearchPath) { SearchPaths.push_back(_SearchPath); }
+	void clear_search_paths() { SearchPaths.clear(); }
+	void clear_cached_files() { Cache.clear(); }
+
+protected:
+	path ShaderSourcePath;
+	std::vector<path> SearchPaths;
+	typedef std::pair<std::unique_ptr<char[]>,unsigned int> cached;
+	std::unordered_map<path, cached> Cache;
+	int Flags;
+	std::atomic<int> RefCount;
+};
+
+		} // namespace d3d11
+	} // namespace gpu
+} // namespace ouro
+
+#endif

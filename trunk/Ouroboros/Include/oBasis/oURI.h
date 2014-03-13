@@ -52,7 +52,7 @@ struct oURIParts
 
 	// one of the good practices from http://www.textuality.com/tag/uri-comp-2.html
 	// @tony: How do case-sensitive file systems work with this?
-	inline void ToLower() { ouro::tolower(Scheme); ouro::tolower(Authority); ouro::tolower(Path);  ouro::tolower(Query); ouro::tolower(Fragment); }
+	inline void ToLower() { ouro::to_lower(Scheme); ouro::to_lower(Authority); ouro::to_lower(Path);  ouro::to_lower(Query); ouro::to_lower(Fragment); }
 	inline bool Empty() const { return Scheme.empty() && Authority.empty() && Path.empty() && Query.empty() && Fragment.empty(); }
 
 	ouro::fixed_string<char, oMAX_SCHEME> Scheme;

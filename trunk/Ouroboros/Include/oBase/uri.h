@@ -27,8 +27,8 @@
 #define oBase_uri_h
 
 #include <oBase/algorithm.h>
+#include <oBase/fnv1a.h>
 #include <oBase/path.h>
-#include <oBase/murmur3.h>
 #include <oBase/stringize.h>
 #include <oBase/uri_traits.h>
 #include <regex>
@@ -145,7 +145,7 @@ public:
 		else if (_Scheme)
 		{
 			s += _Scheme;
-			tolower(std::begin(s), std::end(s));
+			to_lower(std::begin(s), std::end(s));
 			s += traits::scheme_str();
 		}
 		else if (has_scheme())
@@ -459,20 +459,17 @@ private:
 		// const-cast of the template type so to-lower can be done in-place
 		// for now do the whole URI, but at least the scheme and percent encodings
 		// should be forced to lower-case.
-		std::match_results<char_type*>::value_type& to_lower = 
+		std::match_results<char_type*>::value_type& to_lower_range = 
 			*(std::match_results<char_type*>::value_type*)&matches[2];
 
-		tolower(to_lower.first, to_lower.second);
+		to_lower(to_lower_range.first, to_lower_range.second);
 
 		// If the whole path isn't made lower-case for case-insensitive purposes, 
 		// the percent values at least should be made lower-case (i.e. this should 
 		// be true: &7A == &7a)
 		percent_to_lower(URI, URI);
 
-		uint128 Hash128 = murmur3(URI, static_cast<size_t>(matches[0].second - matches[0].first));
-		if (sizeof(hash_type) < 16) // use upper bits because they are more random
-			Hash128 >>= 64;
-		Hash = (hash_type)Hash128;
+		Hash = fnv1a<hash_type>(URI);
 	}
 };
 
@@ -496,5 +493,12 @@ bool from_string(basic_uri<charT, TraitsT>* _pValue, const char* _StrSource)
 }
 
 } // namespace ouro
+
+namespace std {
+
+template<typename charT, typename TraitsT>
+struct hash<ouro::basic_uri<charT, TraitsT>> { std::size_t operator()(const ouro::basic_uri<charT, TraitsT>& _URI) const { return _URI.hash(); } };
+
+} // namespace std
 
 #endif

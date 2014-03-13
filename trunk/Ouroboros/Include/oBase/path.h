@@ -30,6 +30,7 @@
 #include <oBase/path_traits.h>
 #include <oBase/stringize.h>
 #include <oBase/throw.h>
+#include <functional>
 
 namespace ouro {
 
@@ -40,13 +41,14 @@ public:
 	static const size_t Capacity = _MAX_PATH;
 	typedef typename traitsT traits;
 	typedef typename traits::char_type char_type;
+	typedef size_t hash_type;
 	typedef size_t size_type;
 	typedef path_string string_type;
 	typedef std::pair<const char_type*, const char_type*> string_piece_type;
 
 	typedef const char_type(&const_array_ref)[Capacity];
 
-	basic_path() {}
+	basic_path() { clear(); }
 	basic_path(const char_type* _Start, const char_type* _End) : p(_Start, _End) { parse(); }
 	basic_path(const char_type* _That) { operator=(_That); }
 	basic_path(const basic_path& _That) { operator=(_That); }
@@ -71,6 +73,7 @@ public:
 		Length = 0;
 		RootDirOffset = ParentEndOffset = BasenameOffset = ExtensionOffset = npos;
 		HasRootName = EndsWithSep = false;
+		Hash = 0;
 	}
 
 	basic_path& assign(const char_type* _Start, const char_type* _End) { p.assign(_Start, _End); parse(); return *this; }
@@ -285,6 +288,8 @@ public:
 	bool has_extension() const { return ExtensionOffset != npos; }
 	bool has_extension(const char_type* _Extension) const { return _Extension && traits::is_dot(*_Extension) && has_extension() ? !traits::compare(&p[ExtensionOffset], _Extension) : false; }
 
+	hash_type hash() const { return Hash; }
+
 	// Returns similar to strcmp/stricmp depending on path_traits. NOTE: A clean
 	// and unclean path will not compare to be the same.
 	int compare(const basic_path& _That) const { return traits::compare(this->c_str(), _That.c_str()); }
@@ -323,6 +328,7 @@ private:
 	static const index_type npos = ~0u & 0xffff;
 	unsigned short idx(const char_type* _PtrIntoP) { return _PtrIntoP ? static_cast<unsigned short>(std::distance((const char_type*)p, _PtrIntoP)) : npos; }
 
+	hash_type Hash;
 	string_type p;
 	index_type RootDirOffset; // index of first non-root-name slash
 	index_type ParentEndOffset; // index of first right-most slash backed up past any redundant slashes
@@ -384,6 +390,7 @@ private:
 		RootDirOffset = idx(find_root_directory(p, rootname));
 		ParentEndOffset = idx(parentend);
 		EndsWithSep = Length > 1 && traits::is_sep(p[Length-1]);
+		Hash = fnv1a<hash_type>(p);
 	}
 };
 
@@ -421,5 +428,12 @@ template<typename charT, typename traitsT> struct same<basic_path<charT, traitsT
 template<typename charT, typename traitsT> struct same_i<basic_path<charT, traitsT>> { bool operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return !_stricmp(x.c_str(), y.c_str()); } };
 
 } // namespace ouro
+
+namespace std {
+
+template<typename charT, typename traitsT>
+struct hash<ouro::basic_path<charT, traitsT>> { std::size_t operator()(const ouro::basic_path<charT, traitsT>& _Path) const { return _Path.hash(); } };
+
+} // namespace std
 
 #endif

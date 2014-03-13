@@ -117,6 +117,17 @@ namespace ouro {
 // _____________________________________________________________________________
 // String formatting
 
+// tolower doesn't work on wchar_ts and std::to_lower has annoying locale required
+inline char to_lower(char c) { return (char)tolower(c); }
+inline char to_upper(char c) { return (char)toupper(c); }
+wchar_t to_lower(wchar_t wc);
+wchar_t to_upper(wchar_t wc);
+
+template<typename charT> void to_lower(charT* _String) { while (*_String) *_String++ = to_lower(*_String); }
+template<typename charT> void to_upper(charT* _String) { while (*_String) *_String++ = to_upper(*_String); }
+template<typename charT> void to_lower(charT* _Begin, charT* _End) { while (_Begin < _End) *_Begin++ = to_lower(*_Begin); }
+template<typename charT> void to_upper(charT* _Begin, charT* _End) { while (_Begin < _End) *_Begin++ = to_upper(*_Begin); }
+
 // Adds "...\0" to the end of the buffer - useful when recovering from string 
 // overruns that can be truncated.
 char* ellipsize(char* _StrDestination, size_t _SizeofStrDestination);
@@ -147,15 +158,6 @@ template<size_t size> char* format_commas(char (&_StrDestination)[size], unsigne
 
 // Returns the appropriate suffix [st nd rd th] for a number
 const char* ordinal(size_t _Number);
-
-// passing this to std::transform brings up warnings that are hard to disable,
-// so create a wrapper that is same type in and out.
-template<typename charT> charT tolower(charT c) { return (charT)::tolower(c); }
-template<typename charT> charT toupper(charT c) { return (charT)::toupper(c); }
-template<typename charT> void tolower(charT* _String) { while (*_String) *_String++ = tolower(*_String); }
-template<typename charT> void toupper(charT* _String) { while (*_String) *_String++ = toupper(*_String); }
-template<typename charT> void tolower(charT* _Begin, charT* _End) { while (_Begin < _End) *_Begin++ = tolower(*_Begin); }
-template<typename charT> void toupper(charT* _Begin, charT* _End) { while (_Begin < _End) *_Begin++ = toupper(*_Begin); }
 
 // does a formatted strcat. This returns the total new length of the string. If 
 // that length is >= _SizeofStrDestination, then the destination is not big 

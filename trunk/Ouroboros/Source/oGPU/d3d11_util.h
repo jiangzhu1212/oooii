@@ -74,7 +74,22 @@ intrusive_ptr<ID3D11HullShader> make_hull_shader(ID3D11Device* _pDevice, const v
 intrusive_ptr<ID3D11DomainShader> make_domain_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
 intrusive_ptr<ID3D11GeometryShader> make_geometry_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
 intrusive_ptr<ID3D11PixelShader> make_pixel_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
-intrusive_ptr<ID3D11ComputeShader> make_compute_kernel(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+intrusive_ptr<ID3D11ComputeShader> make_compute_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+
+template<typename ShaderT> intrusive_ptr<ShaderT> make_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
+template<> inline intrusive_ptr<ID3D11VertexShader> make_shader<ID3D11VertexShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_vertex_shader(_pDevice, _pByteCode, _DebugName); }
+template<> inline intrusive_ptr<ID3D11HullShader> make_shader<ID3D11HullShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_hull_shader(_pDevice, _pByteCode, _DebugName); }
+template<> inline intrusive_ptr<ID3D11DomainShader> make_shader<ID3D11DomainShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_domain_shader(_pDevice, _pByteCode, _DebugName); }
+template<> inline intrusive_ptr<ID3D11GeometryShader> make_shader<ID3D11GeometryShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_geometry_shader(_pDevice, _pByteCode, _DebugName); }
+template<> inline intrusive_ptr<ID3D11PixelShader> make_shader<ID3D11PixelShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_pixel_shader(_pDevice, _pByteCode, _DebugName); }
+template<> inline intrusive_ptr<ID3D11ComputeShader> make_shader<ID3D11ComputeShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_compute_shader(_pDevice, _pByteCode, _DebugName); }
+
+// Create a set of command line options that you would pass to FXC and the 
+// loaded source to compile to create a buffer filled with bytecode. If false,
+// oBuffer will be allocated and filled with a nul-terminated string that 
+// describes the error as reported from the underlying compiler. oErrorGetLast
+// will also include useful - but not as specified - information.
+std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const path& _ShaderSourceFilePath, const char* _ShaderSource);
 
 // Returns information about the specified device. There's no way to determine
 // if the device is software, so pass that through.
@@ -414,13 +429,6 @@ struct oD3D11ScopedMessageDisabler
 protected:
 	ID3D11InfoQueue* pInfoQueue;
 };
-
-// Create a set of command line options that you would pass to FXC and the 
-// loaded source to compile to create a buffer filled with bytecode. If false,
-// oBuffer will be allocated and filled with a nul-terminated string that 
-// describes the error as reported from the underlying compiler. oErrorGetLast
-// will also include useful - but not as specified - information.
-bool oFXC(const char* _CommandLineOptions, const char* _ShaderSourceFilePath, const char* _ShaderSource, oBuffer** _ppBuffer);
 
 #endif
 

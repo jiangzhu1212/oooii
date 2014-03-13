@@ -232,6 +232,12 @@
     <ClCompile Include="rgb.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
+    <ClCompile Include="string\to_lower.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
+    <ClCompile Include="string\to_upper.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">

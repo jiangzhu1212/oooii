@@ -47,8 +47,8 @@ namespace ouro {
 
 const std::error_category& category();
 
-/*constexpr*/ inline std::error_code make_error_code(long _hResult) { return std::error_code(_hResult, category()); }
-/*constexpr*/ inline std::error_condition make_error_condition(long _hResult) { return std::error_condition(_hResult, category()); }
+std::error_code make_error_code(long _hResult);
+std::error_condition make_error_condition(long _hResult);
 
 class error : public std::system_error
 {

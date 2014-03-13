@@ -96,7 +96,7 @@ void VReport( REPORT_TYPE _Type, const char* _Format, va_list _Args )
 	{
 		char msg[2048];
 		vsnprintf(msg, _Format, _Args);
-		toupper(msg);
+		to_upper(msg);
 		console::fprintf(stdout, fg[_Type], bg[_Type], msg);
 	}
 	else
