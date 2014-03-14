@@ -36,6 +36,7 @@ using namespace ouro::tests;
 oTEST_REGISTER_BASE_TEST0(aaboxf);
 oTEST_REGISTER_BASE_TEST(atof);
 oTEST_REGISTER_BASE_TEST(compression);
+oTEST_REGISTER_BASE_TEST0(concurrent_fixed_block_allocator);
 oTEST_REGISTER_BASE_TEST0(concurrent_index_allocator);
 oTEST_REGISTER_BASE_TEST0(concurrent_linear_allocator);
 oTEST_REGISTER_BASE_TEST0(countdown_latch);

@@ -770,17 +770,19 @@ void delete_buffer(char* _pBuffer)
 
 unique_ptr<char[]> load(const path& _Path, size_t* _pSize, load_option::value _LoadOption)
 {
-	unsigned long long FileSize = file_size(_Path);
+	unsigned long long FileSize = as_size_t(file_size(_Path));
+
+	size_t FileSizeT = as_size_t(FileSize);
 
 	// in case we need a UTF32 nul terminator
-	size_t AllocSize = as_size_t(FileSize) + (_LoadOption == load_option::text_read ? 4 : 0);
+	size_t AllocSize = FileSizeT + (_LoadOption == load_option::text_read ? 4 : 0);
 
 	unique_ptr<char[]> p(new char[AllocSize]);
 
 	if (_LoadOption == load_option::text_read)
 	{
 		// put enough nul terminators for a UTF32 or 16 or 8
-		p[FileSize+0] = p[FileSize+1] = p[FileSize+2] = p[FileSize+3] = '\0';
+		p[FileSizeT+0] = p[FileSizeT+1] = p[FileSizeT+2] = p[FileSizeT+3] = '\0';
 	}
 
 	{
