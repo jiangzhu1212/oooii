@@ -36,6 +36,7 @@ namespace ouro {
 		void TESTaaboxf();
 		void TESTatof(test_services& _Services);
 		void TESTcompression(test_services& _Services);
+		void TESTconcurrent_fixed_block_allocator();
 		void TESTconcurrent_index_allocator();
 		void TESTconcurrent_linear_allocator();
 		void TESTcountdown_latch();
