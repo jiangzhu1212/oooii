@@ -48,6 +48,7 @@
 #include <oBase/equal.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>
+#include <oBase/fixed_block_allocator.h>
 #include <oBase/fixed_string.h>
 #include <oBase/fixed_vector.h>
 #include <oBase/fnv1a.h>
