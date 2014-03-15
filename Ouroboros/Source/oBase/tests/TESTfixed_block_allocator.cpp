@@ -22,8 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/concurrent_fixed_block_allocator.h>
-#include <oBase/concurrency.h>
+#include <oBase/fixed_block_allocator.h>
 #include <oBase/throw.h>
 #include <vector>
 
@@ -58,7 +57,7 @@ static void test_cfba_allocate()
 	static const size_t BlockSize = sizeof(test_obj);
 	std::vector<char> scopedArena(BlockSize * NumBlocks);
 	
-	concurrent_fixed_block_allocator<unsigned char> Allocator(scopedArena.data(), BlockSize, NumBlocks);
+	fixed_block_allocator<unsigned char> Allocator(scopedArena.data(), BlockSize, NumBlocks);
 	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after init)", NumBlocks);
 
 	void* tests[NumBlocks];
@@ -83,7 +82,7 @@ static void test_cfba_create()
 {
 	static const size_t NumBlocks = 20;
 	std::vector<char> scopedArena(NumBlocks * sizeof(test_obj));
-	concurrent_fixed_block_allocator_t<unsigned short, test_obj> Allocator(scopedArena.data(), NumBlocks); 
+	fixed_block_allocator_t<unsigned short, test_obj> Allocator(scopedArena.data(), NumBlocks); 
 		
 	bool testdestroyed[NumBlocks];
 	test_obj* tests[NumBlocks];
@@ -104,41 +103,10 @@ static void test_cfba_create()
 	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after deallocate)", NumBlocks);
 }
 
-static void test_cfba_concurrency()
-{
-	static const size_t NumBlocks = 10000;
-	concurrent_fixed_block_allocator_static<unsigned short, test_obj, NumBlocks> Allocator;
-
-	bool destroyed[NumBlocks];
-	memset(destroyed, 0, sizeof(destroyed));
-
-	test_obj* tests[NumBlocks];
-	memset(tests, 0xaa, sizeof(tests));
-
-	ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
-	{
-		tests[_Index] = Allocator.create(&destroyed[_Index]);
-		tests[_Index]->Value = _Index;
-		if (_Index & 0x1)
-			Allocator.destroy(tests[_Index]);
-	});
-
-	oCHECK((NumBlocks/2) == Allocator.count_available(), "Allocation/Destroys did not occur correctly");
-
-	for (size_t i = 0; i < NumBlocks; i++)
-	{
-		if (i & 0x1)
-			oCHECK(destroyed[i], "Destruction did not occur for allocation %d", i);
-		else
-			oCHECK(tests[i]->Value == i, "Constructor did not occur for allocation %d", i);
-	}
-}
-
-void TESTconcurrent_fixed_block_allocator()
+void TESTfixed_block_allocator()
 {
 	test_cfba_allocate();
 	test_cfba_create();
-	test_cfba_concurrency();
 }
 
 	} // namespace tests

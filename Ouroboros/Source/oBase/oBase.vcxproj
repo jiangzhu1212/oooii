@@ -155,6 +155,8 @@
     <ClInclude Include="..\..\Include\oBase\equal.h" />
     <ClInclude Include="..\..\Include\oBase\event.h" />
     <ClInclude Include="..\..\Include\oBase\finally.h" />
+    <ClInclude Include="..\..\Include\oBase\fixed_block_allocator.h" />
+    <ClInclude Include="..\..\Include\oBase\fixed_block_allocator_base.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_string.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
     <ClInclude Include="..\..\Include\oBase\fnv1a.h" />

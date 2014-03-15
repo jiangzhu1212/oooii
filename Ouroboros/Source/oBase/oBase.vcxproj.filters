@@ -501,6 +501,12 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_fixed_block_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\fixed_block_allocator_base.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\fixed_block_allocator.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
