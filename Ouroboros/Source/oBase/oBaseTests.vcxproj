@@ -30,6 +30,7 @@
     <ClCompile Include="tests\TESTfixed_block_allocator.cpp" />
     <ClCompile Include="Tests\TESTfourcc.cpp" />
     <ClCompile Include="tests\TESTfuture.cpp" />
+    <ClCompile Include="tests\TESThash_map.cpp" />
     <ClCompile Include="Tests\TESTini.cpp" />
     <ClCompile Include="Tests\TESTjson.cpp" />
     <ClCompile Include="tests\TESTmath.cpp" />

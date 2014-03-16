@@ -46,6 +46,7 @@ namespace ouro {
 		void TESTfixed_block_allocator();
 		void TESTfourcc();
 		void TESTfuture(test_services& _Services);
+		void TESThash_map(test_services& _Services);
 		void TESTindex_allocator();
 		void TESTini();
 		void TESTjson();
