@@ -164,6 +164,7 @@
     <ClInclude Include="..\..\Include\oBase\future.h" />
     <ClInclude Include="..\..\Include\oBase\guid.h" />
     <ClInclude Include="..\..\Include\oBase\gzip.h" />
+    <ClInclude Include="..\..\Include\oBase\hash_map.h" />
     <ClInclude Include="..\..\Include\oBase\index_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\index_allocator_base.h" />
     <ClInclude Include="..\..\Include\oBase\ini.h" />
