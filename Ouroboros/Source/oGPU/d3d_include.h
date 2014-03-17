@@ -27,10 +27,10 @@
 #ifndef oGPU_d3d_include_h
 #define oGPU_d3d_include_h
 
+#include <oBase/hash_map.h>
 #include <oBase/path.h>
 #include <d3d11.h>
 #include <atomic>
-#include <unordered_map>
 
 namespace ouro {
 	namespace gpu {
@@ -50,6 +50,7 @@ public:
 		: RefCount(1)
 		, Flags(_Flags)
 		, ShaderSourcePath(_ShaderSourcePath)
+		, Cache(50)
 	{}
 
 	ULONG AddRef() { return ++RefCount; }
@@ -66,7 +67,7 @@ protected:
 	path ShaderSourcePath;
 	std::vector<path> SearchPaths;
 	typedef std::pair<std::unique_ptr<char[]>,unsigned int> cached;
-	std::unordered_map<path, cached> Cache;
+	hash_map<unsigned long long, cached> Cache;
 	int Flags;
 	std::atomic<int> RefCount;
 };
