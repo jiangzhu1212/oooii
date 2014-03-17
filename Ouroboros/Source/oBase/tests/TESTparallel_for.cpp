@@ -62,7 +62,7 @@ void TESTparallel_for()
 
 	parallel_for(0, mArraySize, std::bind(test_a, std::placeholders::_1, mTestArrayB));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0, 
-		"oConcurrency::parallel_for single param failed to compute singlethreaded result");
+		"ouro::parallel_for single param failed to compute singlethreaded result");
 
 	// Test two parameters
 	oFORI(i, mTestArrayA)
@@ -70,7 +70,7 @@ void TESTparallel_for()
 
 	parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
-		, "oConcurrency::parallel_for failed to compute singlethreaded result");
+		, "ouro::parallel_for failed to compute singlethreaded result");
 
 	// Test three parameters
 	oFORI(i, mTestArrayA)
@@ -78,7 +78,7 @@ void TESTparallel_for()
 
 	parallel_for(0, mArraySize, std::bind(test_abc, std::placeholders::_1, &mTestArrayB[0], 2, 7));
 	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
-		, "oConcurrency::parallel_for failed to compute singlethreaded result");
+		, "ouro::parallel_for failed to compute singlethreaded result");
 
 	parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
 };

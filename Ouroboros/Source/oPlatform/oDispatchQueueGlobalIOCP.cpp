@@ -71,7 +71,7 @@ private:
 	bool Valid;
 };
 
-bool oDispatchQueueCreateGlobalIOCP(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueGlobal** _ppDispatchQueue)
+bool oDispatchQueueCreateGlobalIOCP(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueue** _ppDispatchQueue)
 {
 	bool success = false;
 	oCONSTRUCT(_ppDispatchQueue, oDispatchQueueGlobalT<oDispatchQueueGlobalIOCP_Impl>(_DebugName, _InitialTaskCapacity, &success));

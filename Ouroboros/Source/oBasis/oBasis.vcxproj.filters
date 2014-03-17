@@ -40,9 +40,6 @@
     <Filter Include="Source\String Parsing">
       <UniqueIdentifier>{c0316e5c-66eb-484b-beb4-6509cf08af4b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Concurrency">
-      <UniqueIdentifier>{ae304858-be37-4332-948a-f8f83ee11fa8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Serialization">
       <UniqueIdentifier>{fc7f0451-3b9b-487e-bb44-83a0efd7f6da}</UniqueIdentifier>
     </Filter>
@@ -180,19 +177,7 @@
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueue.h">
       <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueConcurrent.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueConcurrentT.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobal.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobalT.h">
-      <Filter>oBasis\Concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h">
       <Filter>oBasis\Concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBasis\oInitOnce.h">
@@ -262,15 +247,6 @@
     </ClCompile>
     <ClCompile Include="oOSC.cpp">
       <Filter>Source\String Parsing</Filter>
-    </ClCompile>
-    <ClCompile Include="oDispatchQueuePrivate.cpp">
-      <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oDispatchQueueConcurrent.cpp">
-      <Filter>Source\Concurrency</Filter>
-    </ClCompile>
-    <ClCompile Include="oDispatchQueueGlobal.cpp">
-      <Filter>Source\Concurrency</Filter>
     </ClCompile>
     <ClCompile Include="oCppParsing.cpp">
       <Filter>Source\String Parsing</Filter>

@@ -25,6 +25,7 @@
 #include <oPlatform/oWebAppWindow.h>
 #include <oBasis/oLockThis.h>
 #include <oGUI/Windows/oWinWindowing.h>
+#include <oBasis/oDispatchQueue.h>
 
 enum OWEB_APP_WINDOW_CONTROLS
 {

@@ -29,8 +29,8 @@
 #ifndef oDispatchQueueGlobalIOCP_h
 #define oDispatchQueueGlobalIOCP_h
 
-#include <oBasis/oDispatchQueueGlobal.h>
+#include <oBasis/oDispatchQueue.h>
 
-oAPI bool oDispatchQueueCreateGlobalIOCP(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueueGlobal** _ppDispatchQueue);
+oAPI bool oDispatchQueueCreateGlobalIOCP(const char* _DebugName, size_t _InitialTaskCapacity, threadsafe oDispatchQueue** _ppDispatchQueue);
 
 #endif

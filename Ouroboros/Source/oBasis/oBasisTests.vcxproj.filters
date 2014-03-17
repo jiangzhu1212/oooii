@@ -7,12 +7,6 @@
     <ClCompile Include="Tests\TESTBuffer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTDispatchQueueGlobal.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTDispatchQueuePrivate.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTFilterChain.cpp">
       <Filter>Source</Filter>
     </ClCompile>

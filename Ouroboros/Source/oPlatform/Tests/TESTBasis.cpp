@@ -101,8 +101,6 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 	}; \
 	oTEST_REGISTER(oCONCAT(oBasis_, _BasisTestName))
 
-oTEST_REGISTER_BASIS_TEST(oDispatchQueueGlobal);
-oTEST_REGISTER_BASIS_TEST(oDispatchQueuePrivate);
 oTEST_REGISTER_BASIS_TEST(oFilterChain);
 oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oHash);
 oTEST_REGISTER_BASIS_TEST(oINISerialize);

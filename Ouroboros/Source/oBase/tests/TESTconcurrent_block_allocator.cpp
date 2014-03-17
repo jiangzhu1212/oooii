@@ -82,7 +82,7 @@ void TESTconcurrent_block_allocator()
 		Allocator.shrink(2);
 		oCHECK(Allocator.num_chunks() == currentNumChunks, "Unexpected number of chunks allocated (after false shrink try)"); // shouldn't modify because there is 100% allocation
 
-		oTRACE("oConcurrency::parallel_for { Allocator.Destroy }");
+		oTRACE("ouro::parallel_for { Allocator.destroy }");
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
@@ -98,7 +98,7 @@ void TESTconcurrent_block_allocator()
 		Allocator.shrink(0);
 		oCHECK(Allocator.num_chunks() == 0, "Unexpected number of chunks allocated (after 2nd shrink)");
 
-		oTRACE("oConcurrency::parallel_for { if (odd) Destroy }");
+		oTRACE("ouro::parallel_for { if (odd) destroy }");
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{

@@ -38,11 +38,7 @@
     <ClInclude Include="..\..\Include\oBasis\oContainer.h" />
     <ClInclude Include="..\..\Include\oBasis\oCppParsing.h" />
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueue.h" />
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueConcurrent.h" />
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueConcurrentT.h" />
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobal.h" />
     <ClInclude Include="..\..\Include\oBasis\oDispatchQueueGlobalT.h" />
-    <ClInclude Include="..\..\Include\oBasis\oDispatchQueuePrivate.h" />
     <ClInclude Include="..\..\Include\oBasis\oError.h" />
     <ClInclude Include="..\..\Include\oBasis\oFilterChain.h" />
     <ClInclude Include="..\..\Include\oBasis\oGeometry.h" />
@@ -89,9 +85,6 @@
     <ClCompile Include="oCameraControllerMaya.cpp" />
     <ClCompile Include="oCameraControllerMMO.cpp" />
     <ClCompile Include="oCppParsing.cpp" />
-    <ClCompile Include="oDispatchQueueConcurrent.cpp" />
-    <ClCompile Include="oDispatchQueueGlobal.cpp" />
-    <ClCompile Include="oDispatchQueuePrivate.cpp" />
     <ClCompile Include="oError.cpp" />
     <ClCompile Include="oGeometry.cpp" />
     <ClCompile Include="oINISerialize.cpp" />

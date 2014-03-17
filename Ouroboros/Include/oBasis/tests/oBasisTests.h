@@ -45,39 +45,18 @@ struct oBasisTestServices
 // to what occurred. In success the last error is set to 0.
 
 oAPI bool oBasisTest_oBuffer(const oBasisTestServices& _Services);
-oAPI bool oBasisTest_oCoroutine();
 
-// This prints a benchmark string to oErrorGetLastString() even if this function
-// returns true, so if client code is careful about passing through and doesn't
-// have any other errors, the speed of a successful run of this test will be
-// reported.
-oAPI bool oBasisTest_oDispatchQueueConcurrent();
-
-// Runs the same test as oBasisTest_oDispatchQueueConcurrent for comparison 
-// purposes and also to confirm that a platform implementation of 
-// oConcurrency::parallel_for performs correctly.
-oAPI bool oBasisTest_oDispatchQueueParallelFor();
-
-oAPI bool oBasisTest_oDispatchQueueGlobal();
-oAPI bool oBasisTest_oDispatchQueuePrivate();
 oAPI bool oBasisTest_oFilterChain();
 oAPI bool oBasisTest_oHash(const oBasisTestServices& _Services);
-oAPI bool oBasisTest_oIndexAllocator();
 oAPI bool oBasisTest_oINISerialize();
 oAPI bool oBasisTest_oJSONSerialize();
-oAPI bool oBasisTest_oLinearAllocator();
-oAPI bool oBasisTest_oConcurrentIndexAllocator();
 oAPI bool oBasisTest_oMath();
 oAPI bool oBasisTest_oOSC();
 oAPI bool oBasisTest_oRTTI();
 oAPI bool oBasisTest_oString();
-oAPI bool oBasisTest_oTaskGroup();
-oAPI bool oBasisTest_oThreadpool();
-oAPI bool oBasisTest_oThreadpoolTrivial();
 oAPI bool oBasisTest_oURI();
 oAPI bool oBasisTest_oURIQuerySerialize();
 oAPI bool oBasisTest_oXML();
 oAPI bool oBasisTest_oXMLSerialize();
-oAPI bool oBasisTest_oCountdownLatch();
 
 #endif

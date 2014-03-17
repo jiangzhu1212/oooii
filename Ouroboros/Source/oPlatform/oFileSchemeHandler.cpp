@@ -363,7 +363,7 @@ struct oFileReaderImpl : public oStreamReader
 	}
 
 	oInitOnce<oSTREAM_DESC> Desc;
-	intrusive_ptr<threadsafe oDispatchQueueGlobal> ReadQueue;
+	intrusive_ptr<threadsafe oDispatchQueue> ReadQueue;
 	typedef std::mutex mutex_t;
 	typedef std::lock_guard<mutex_t> lock_t;
 	mutex_t Mutex;
@@ -486,7 +486,7 @@ struct oFileWriterImpl : public oStreamWriter
 	oInitOnce<oURIParts> URIParts;
 	oInitOnce<path_string> ResolvedPath;
 	oHandle hFile;
-	intrusive_ptr<threadsafe oDispatchQueueGlobal> WriteQueue;
+	intrusive_ptr<threadsafe oDispatchQueue> WriteQueue;
 	typedef std::mutex mutex_t;
 	typedef std::lock_guard<mutex_t> lock_t;
 	mutex_t Mutex;

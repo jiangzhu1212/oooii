@@ -436,7 +436,7 @@ struct oGeometry_Impl : public oGeometry
 	primitive_type::value PrimitiveType;
 	aaboxf Bounds;
 	oRefCount RefCount;
-	//oConcurrency::shared_mutex Mutex;
+	//ouro::shared_mutex Mutex;
 };
 
 info oGeometry_Impl::get_info() const
@@ -457,7 +457,7 @@ info oGeometry_Impl::get_info() const
 
 void oGeometry_Impl::transform(const float4x4& _Matrix)
 {
-	//oConcurrency::lock_guard<oConcurrency::shared_mutex> lock(Mutex);
+	//std::lock_guard<ouro::shared_mutex> lock(Mutex);
 	oGeometry_Impl* pLockedThis = thread_cast<oGeometry_Impl*>(this); // @tony: safe because we locked above
 	Bounds.clear();
 	pLockedThis->transform(_Matrix, 0);

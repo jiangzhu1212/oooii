@@ -161,9 +161,6 @@
     <ClCompile Include="oRegistry.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oConcurrency.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oSingleton.cpp">
       <Filter>Source</Filter>
     </ClCompile>
