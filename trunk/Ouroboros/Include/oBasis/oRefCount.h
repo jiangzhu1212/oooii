@@ -25,7 +25,7 @@
 #ifndef oRefCount_h
 #define oRefCount_h
 
-#include <oConcurrency/thread_safe.h>
+#include <oBasis/thread_safe.h>
 #include <atomic>
 
 class oRefCount

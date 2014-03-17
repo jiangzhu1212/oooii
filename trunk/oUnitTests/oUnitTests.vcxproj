@@ -226,10 +226,7 @@
     <ProjectReference Include="..\Ouroboros\Source\oCompute\oComputeTests.vcxproj">
       <Project>{1638b61e-994a-4398-9126-08e0ad134fb9}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrency.vcxproj">
-      <Project>{08ec5ea1-284b-4688-b14b-4bd9945061fb}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrencyTBB.vcxproj">
+    <ProjectReference Include="..\Ouroboros\Source\oCore\oConcurrencyTBB.vcxproj">
       <Project>{d368fe7a-1375-4402-bdc6-955275b5e939}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oCore\oCore.vcxproj">

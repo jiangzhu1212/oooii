@@ -26,8 +26,12 @@
 #ifndef oDispatchQueue_h
 #define oDispatchQueue_h
 
-#include <oConcurrency/oConcurrency.h>
 #include <oBasis/oInterface.h>
+#include <oBase/callable.h>
+#include <functional>
+
+typedef std::function<void()> oTASK;
+typedef std::function<void(size_t _Index)> oINDEXED_TASK;
 
 // {85260463-6AA5-4BAB-951F-E1B044E9F692}
 oDEFINE_GUID_I(oDispatchQueue, 0x85260463, 0x6aa5, 0x4bab, 0x95, 0x1f, 0xe1, 0xb0, 0x44, 0xe9, 0xf6, 0x92);

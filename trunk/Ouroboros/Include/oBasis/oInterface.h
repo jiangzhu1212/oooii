@@ -34,7 +34,7 @@
 #include <oBase/guid.h>
 #include <oBase/intrusive_ptr.h>
 #include <oBasis/oError.h>
-#include <oConcurrency/thread_safe.h>
+#include <oBasis/thread_safe.h>
 
 #ifdef interface
 	#define INTERFACE_DEFINED
