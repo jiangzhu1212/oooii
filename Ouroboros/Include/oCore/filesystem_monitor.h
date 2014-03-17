@@ -47,7 +47,7 @@ class monitor
 {
 public:
 	// A file can get an added or modified event before all work on the file is 
-	// complete, so there is a polling to check if the file has settled and is 
+	// complete, so there is polling to check if the file has settled and is 
 	// ready for access by another client system.
   struct info
   {
@@ -71,7 +71,7 @@ public:
   
   // If a parent to the specified path is recursively watching, it will 
   // continue watching. This only removes entries that were previously
-  // registered with watch() or watch_recursive().
+  // registered with watch().
   virtual void unwatch(const path& _Path) = 0;
 };
 
