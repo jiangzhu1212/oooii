@@ -40,7 +40,7 @@ template<typename T, typename traits = concurrent_stack_traits64>
 class concurrent_stack
 {
 public:
-	typedef size_t size_type;
+	typedef unsigned int size_type;
 	typedef T value_type;
 	typedef value_type* pointer;
 	typedef const value_type* const_pointer;

@@ -42,7 +42,6 @@ namespace oConcurrency {
 		void TESTconcurrent_queue_tbb();
 		void TESTconcurrent_stack();
 		void TESTcoroutine();
-		void TESTfixed_block_allocator();
 
 	} // namespace tests
 } // namespace oConcurrency

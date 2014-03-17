@@ -23,7 +23,6 @@
     <ClCompile Include="Tests\TESTconcurrent_queues.cpp" />
     <ClCompile Include="Tests\TESTconcurrent_stack.cpp" />
     <ClCompile Include="Tests\TESTcoroutine.cpp" />
-    <ClCompile Include="Tests\TESTfixed_block_allocator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oConcurrency\tests\oConcurrencyTests.h" />

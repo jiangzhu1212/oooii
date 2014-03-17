@@ -28,14 +28,14 @@
 using namespace ouro;
 using namespace oConcurrency;
 
-block_allocator::block_allocator(size_t _BlockSize, size_t _NumBlocksPerChunk, const allocate_t& _Platformallocate, const deallocate_t& _Platformdeallocate)
+block_allocator::block_allocator(size_type _BlockSize, size_type _NumBlocksPerChunk, const allocate_t& _PlatformAllocate, const deallocate_t& _PlatformDeallocate)
 	: BlockSize(_BlockSize)
 	, NumBlocksPerChunk(_NumBlocksPerChunk)
-	, ChunkSize(sizeof(chunk_t) + fixed_block_allocator::calc_required_size(_BlockSize, _NumBlocksPerChunk))
+	, ChunkSize(static_cast<size_type>(byte_align(sizeof(chunk_t) + _BlockSize * _NumBlocksPerChunk, fba_t::default_alignment)))
 	, pLastAlloc(nullptr)
 	, pLastDealloc(nullptr)
-	, PlatformAllocate(_Platformallocate)
-	, PlatformDeallocate(_Platformdeallocate)
+	, PlatformAllocate(_PlatformAllocate)
+	, PlatformDeallocate(_PlatformDeallocate)
 {
 }
 
@@ -48,9 +48,9 @@ void* block_allocator::allocate()
 {
 	void* p = nullptr;
 
-	// This read is a bit racy, but it's only a hint, so use it without concern
+	// This read is a bit racy, but it's only a hint so use it without concern
 	// for its concurrent changing.
-	fixed_block_allocator* pAllocator = pLastAlloc;
+	fba_t* pAllocator = pLastAlloc;
 	if (pAllocator)
 		p = pAllocator->allocate(BlockSize);
 
@@ -63,13 +63,13 @@ void* block_allocator::allocate()
 		chunk_t* c = Chunks.peek();
 		while (c)
 		{
-			p = c->pAllocator->allocate(BlockSize);
+			p = c->Allocator.allocate(BlockSize);
 			if (p)
 			{
 				// this assignment to pLastAlloc is a bit racy, but it's only a 
 				// caching/hint, so elsewhere where this is used, just use whatever is 
 				// there at the time
-				pLastAlloc = c->pAllocator;
+				pLastAlloc = &c->Allocator;
 				break;
 			}
 
@@ -80,13 +80,13 @@ void* block_allocator::allocate()
 		if (!p)
 		{
 			chunk_t* newHead = allocate_chunk();
-			p = newHead->pAllocator->allocate(BlockSize);
+			p = newHead->Allocator.allocate(BlockSize);
 
 			// this assignment to pLastAlloc is a bit racy, but it's only a 
 			// caching/hint, so elsewhere where this is used, just use whatever is 
 			// there at the time
 			Chunks.push(newHead);
-			pLastAlloc = newHead->pAllocator;
+			pLastAlloc = &newHead->Allocator;
 		}
 	}
 
@@ -95,7 +95,7 @@ void* block_allocator::allocate()
 
 void block_allocator::deallocate(void* _Pointer)
 {
-	fixed_block_allocator* pAllocator = find_chunk_allocator(_Pointer);
+	fba_t* pAllocator = find_chunk_allocator(_Pointer);
 	if (!pAllocator)
 		throw std::runtime_error("deallocate called on a dangling pointer from a chunk that has probably been shrink()'ed");
 
@@ -109,16 +109,16 @@ void block_allocator::deallocate(void* _Pointer)
 block_allocator::chunk_t* block_allocator::allocate_chunk()
 {
 	chunk_t* c = reinterpret_cast<chunk_t*>(thread_cast<block_allocator*>(this)->PlatformAllocate(ChunkSize));
-	c->pAllocator = ::new (c+1) fixed_block_allocator(BlockSize, NumBlocksPerChunk);
+	c->Allocator = std::move(fba_t(byte_align(c+1, fba_t::default_alignment), BlockSize, NumBlocksPerChunk));
 	c->next = nullptr;
 	return c;
 }
 
-fixed_block_allocator* block_allocator::find_chunk_allocator(void* _Pointer) const
+block_allocator::fba_t* block_allocator::find_chunk_allocator(void* _Pointer) const
 {
 	// This read is a bit racy, but it's only a hint, so use it without concern
 	// for its concurrent changing.
-	fixed_block_allocator* pChunkAllocator = pLastDealloc;
+	fba_t* pChunkAllocator = pLastDealloc;
 
 	// Check a cached version to avoid a linear lookup
 	if (pChunkAllocator && in_range(_Pointer, (const void*)pChunkAllocator, ChunkSize))
@@ -130,8 +130,8 @@ fixed_block_allocator* block_allocator::find_chunk_allocator(void* _Pointer) con
 	chunk_t* c = Chunks.peek();
 	while (c)
 	{
-		if (in_range(_Pointer, c->pAllocator, ChunkSize))
-			return c->pAllocator;
+		if (c->Allocator.valid(BlockSize, NumBlocksPerChunk, _Pointer))
+			return &c->Allocator;
 		c = c->next;
 	}
 
@@ -143,30 +143,30 @@ void block_allocator::clear()
 	chunk_t* c = Chunks.peek();
 	while (c)
 	{
-		c->pAllocator = ::new (c->pAllocator) fixed_block_allocator(BlockSize, NumBlocksPerChunk);
+		c->Allocator.clear(BlockSize, NumBlocksPerChunk);
 		c = c->next;
 	}
 }
 
-void block_allocator::reserve(size_t _NumElements)
+void block_allocator::reserve(size_type _NumElements)
 {
 	bool additional = ((_NumElements % NumBlocksPerChunk) == 0) ? 0 : 1;
-	size_t NewNumChunks = additional + (_NumElements / NumBlocksPerChunk);
+	size_type NewNumChunks = additional + (_NumElements / NumBlocksPerChunk);
 
-	size_t currentSize = Chunks.size();
-	for (size_t i = currentSize; i < NewNumChunks; i++)
+	size_type currentSize = Chunks.size();
+	for (size_type i = currentSize; i < NewNumChunks; i++)
 	{
 		chunk_t* newHead = allocate_chunk();
 
 		// this assignment to pLastAlloc is a bit racy, but it's only a 
 		// caching/hint, so elsewhere where this is used, just use whatever is 
 		// there at the time
-		pLastAlloc = newHead->pAllocator;
+		pLastAlloc = &newHead->Allocator;
 		Chunks.push(newHead);
 	}
 }
 
-void block_allocator::shrink(size_t _KeepCount)
+void block_allocator::shrink(size_type _KeepCount)
 {
 	chunk_t* c = Chunks.pop_all();
 	chunk_t* toFree = nullptr;
@@ -175,7 +175,7 @@ void block_allocator::shrink(size_t _KeepCount)
 		chunk_t* tmp = c;
 		c = c->next;
 
-		if (tmp->pAllocator->count_available(BlockSize) != NumBlocksPerChunk)
+		if (!tmp->Allocator.empty(BlockSize, NumBlocksPerChunk))
 			Chunks.push(tmp);
 		else
 		{
@@ -184,7 +184,7 @@ void block_allocator::shrink(size_t _KeepCount)
 		}
 	}
 
-	size_t nChunks = Chunks.size();
+	size_type nChunks = Chunks.size();
 	c = toFree;
 
 	while (c && nChunks < _KeepCount)
@@ -214,7 +214,7 @@ bool block_allocator::valid(void* _Pointer) const
 	chunk_t* c = Chunks.peek();
 	while (c)
 	{
-		if (c->pAllocator->valid(BlockSize, NumBlocksPerChunk, _Pointer))
+		if (c->Allocator.valid(BlockSize, NumBlocksPerChunk, _Pointer))
 			return true;
 		c = c->next;
 	}
@@ -226,20 +226,20 @@ bool block_allocator::has_outstanding_allocations() const
 	chunk_t* c = Chunks.peek();
 	while (c)
 	{
-		if (c->pAllocator->count_available(BlockSize) != NumBlocksPerChunk)
+		if (!c->Allocator.empty(BlockSize, NumBlocksPerChunk))
 			return true;
 		c = c->next;
 	}
 	return false;
 }
 
-size_t block_allocator::count_available() const
+block_allocator::size_type block_allocator::count_available() const
 {
-	size_t n = 0;
+	size_type n = 0;
 	chunk_t* c = Chunks.peek();
 	while (c)
 	{
-		n += c->pAllocator->count_available(BlockSize);
+		n += c->Allocator.count_available(BlockSize);
 		c = c->next;
 	}
 	return n;

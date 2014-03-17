@@ -88,7 +88,7 @@ static void test_cfba_create()
 	test_obj* tests[NumBlocks];
 	for (size_t i = 0; i < NumBlocks; i++)
 	{
-		tests[i] = Allocator.create(&testdestroyed[i]);
+		tests[i] = Allocator.construct(&testdestroyed[i]);
 		oCHECK(tests[i], "test_obj %u should have been allocated", i);
 		oCHECK(tests[i]->Value == kMagicValue, "test_obj %u should have been constructed", i);
 		oCHECK(tests[i]->pDestroyed && false == *tests[i]->pDestroyed, "test_obj %u should have been constructed", i);

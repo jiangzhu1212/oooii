@@ -15,9 +15,6 @@
     <ClCompile Include="block_allocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="fixed_block_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
