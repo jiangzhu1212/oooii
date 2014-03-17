@@ -25,16 +25,17 @@
 // Similar to Microsoft's InterlockedSList, this provides for a concurrent 
 // singly linked list whose insertion has the behavior of a stack (LIFO).
 // This is an intrusive data structure and expects the stored type to have a 
-// member pointer "next". all allocation of nodes is the responsibility of 
+// member pointer "next". All allocation of nodes is the responsibility of 
 // the user because this data structure is often used in very low-level 
 // implementations such as allocations themselves.
-#ifndef oConcurrency_concurrent_stack_h
-#define oConcurrency_concurrent_stack_h
+#ifndef oBase_concurrent_stack_h
+#define oBase_concurrent_stack_h
 
-#include <oConcurrency/concurrent_stack_traits.h>
+#include <oBase/concurrency.h> // for is_fifo
+#include <oBase/concurrent_stack_traits.h>
 #include <stdexcept>
 
-namespace oConcurrency {
+namespace ouro {
 
 template<typename T, typename traits = concurrent_stack_traits64>
 class concurrent_stack
@@ -169,6 +170,6 @@ typename concurrent_stack<T, traits>::size_type concurrent_stack<T, traits>::siz
 	return h.size;
 }
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

@@ -29,19 +29,19 @@
 // allocation or iterating slabs to find free space. Atomics ensure 
 // concurrency.
 
-#ifndef oConcurrency_block_allocator_h
-#define oConcurrency_block_allocator_h
+#ifndef oBase_block_allocator_h
+#define oBase_block_allocator_h
 
-#include <oConcurrency/concurrent_stack.h>
+#include <oBase/concurrent_stack.h>
 #include <oBase/concurrent_fixed_block_allocator.h>
 #include <atomic>
 #include <cstdlib>
 
-namespace oConcurrency {
+namespace ouro {
 
-class block_allocator
+class concurrent_block_allocator
 {
-	typedef ouro::concurrent_fixed_block_allocator_base<unsigned short> fba_t;
+	typedef concurrent_fixed_block_allocator_base<unsigned short> fba_t;
 
 public:
 	typedef fba_t::size_type size_type;
@@ -51,12 +51,12 @@ public:
 	static const size_type max_blocks_per_chunk = fba_t::max_num_blocks;
 
 	// The specified allocate and deallocate functions must be thread safe
-	block_allocator(size_type _BlockSize
+	concurrent_block_allocator(size_type _BlockSize
 		, size_type _NumBlocksPerChunk = max_blocks_per_chunk
 		, const allocate_t& _PlatformAllocate = malloc
 		, const deallocate_t& _PlatformDeallocate = free);
 
-	~block_allocator();
+	~concurrent_block_allocator();
 
 	// Allocates a block. If there isn't enough memory, this will allocate more
 	// memory from the underlying platform. Such allocations occur in chunks. The 
@@ -141,47 +141,47 @@ private:
 	// Maps a pointer back to the chunk allocator it came from
 	fba_t* find_chunk_allocator(void* _Pointer) const;
 
-	block_allocator(const block_allocator&); /* = delete */
-	const block_allocator& operator=(const block_allocator&); /* = delete */
+	concurrent_block_allocator(const concurrent_block_allocator&); /* = delete */
+	const concurrent_block_allocator& operator=(const concurrent_block_allocator&); /* = delete */
 
-	block_allocator(block_allocator&&); /* = delete */
-	block_allocator& operator=(block_allocator&&); /* = delete */
+	concurrent_block_allocator(concurrent_block_allocator&&); /* = delete */
+	concurrent_block_allocator& operator=(concurrent_block_allocator&&); /* = delete */
 };
 
 template<unsigned int S>
-class block_allocator_s : public block_allocator
+class concurrent_block_allocator_s : public concurrent_block_allocator
 {
 public:
-	typedef block_allocator::size_type size_type;
+	typedef concurrent_block_allocator::size_type size_type;
 	const static size_type block_size = S;
 
-	block_allocator_s(size_type _NumBlocksPerChunk = max_blocks_per_chunk
+	concurrent_block_allocator_s(size_type _NumBlocksPerChunk = max_blocks_per_chunk
 		, const allocate_t& _PlatformAllocate = malloc
 		, const deallocate_t& _PlatformDeallocate = free)
-		: block_allocator(block_size, _NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)
+		: concurrent_block_allocator(block_size, _NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)
 	{}
 };
 
 template<typename T>
-class block_allocator_t : public block_allocator_s<sizeof(T)>
+class concurrent_block_allocator_t : public concurrent_block_allocator_s<sizeof(T)>
 {
-	typedef block_allocator_s<sizeof(T)> base_t;
+	typedef concurrent_block_allocator_s<sizeof(T)> base_t;
 public:
 	typedef base_t::size_type size_type;
 	typedef T value_type;
-	block_allocator_t(size_type _NumBlocksPerChunk = max_blocks_per_chunk
+	concurrent_block_allocator_t(size_type _NumBlocksPerChunk = max_blocks_per_chunk
 		, const allocate_t& _PlatformAllocate = malloc
 		, const deallocate_t& _PlatformDeallocate = free)
-		: block_allocator_s(_NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)
+		: concurrent_block_allocator_s(_NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)
 	{}
 
-	T* allocate() { return static_cast<T*>(block_allocator::allocate()); }
-	void deallocate(T* _Pointer) { block_allocator::deallocate(_Pointer); }
+	T* allocate() { return static_cast<T*>(concurrent_block_allocator::allocate()); }
+	void deallocate(T* _Pointer) { concurrent_block_allocator::deallocate(_Pointer); }
 
 	oALLOCATOR_CONSTRUCT();
 	oALLOCATOR_DESTROY();
 };
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

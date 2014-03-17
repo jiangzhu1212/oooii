@@ -44,10 +44,6 @@ typedef std::function<void(size_t _Index)> oINDEXED_TASK;
 
 namespace oConcurrency {
 
-// This function should be implemented for queue types since some "queues" have 
-// valid reasons for being LIFOs.
-template<typename T> struct is_fifo : std::true_type {};
-
 // _____________________________________________________________________________
 // Basic utilities
 

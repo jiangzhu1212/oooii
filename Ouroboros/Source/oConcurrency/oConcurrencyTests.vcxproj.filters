@@ -9,13 +9,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\TESTblock_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTconcurrent_queues.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTconcurrent_stack.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="Tests\TESTcoroutine.cpp">
