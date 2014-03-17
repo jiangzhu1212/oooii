@@ -133,6 +133,8 @@ public:
 
 	bool add(const hash_type& _Key, const value_type& _Value)
 	{
+		if (occupancy() >= 75)
+			resize(size() * 2);
 		size_type i = find_existing_or_new(_Key);
 		if (i == invalid_index || Keys[i] || Size >= (Capacity-1)) // full or exists
 			return false;
@@ -144,6 +146,8 @@ public:
 
 	bool add(const hash_type& _Key, value_type&& _Value)
 	{
+		if (occupancy() >= 75)
+			resize(size() * 2);
 		size_type i = find_existing_or_new(_Key);
 		if (i == invalid_index || Keys[i] || Size >= (Capacity-1)) // full or exists
 			return false;
