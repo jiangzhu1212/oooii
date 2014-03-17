@@ -41,11 +41,11 @@ HRESULT include::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pP
 	{
 		path Filename(pFileName);
 
-		auto it = Cache.find(Filename);
-		if (it != Cache.end())
+		cached* c = nullptr;
+		if (Cache.get_ptr(Filename.hash(), &c))
 		{
-			*ppData = it->second.first.get();
-			*pBytes = it->second.second;
+			*ppData = c->first.get();
+			*pBytes = c->second;
 			return S_OK;
 		}
 
@@ -70,8 +70,7 @@ HRESULT include::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pP
 
 		*ppData = source.get();
 		*pBytes = unsigned int(size);
-
-		Cache[Filename] = cached(std::move(source), *pBytes);
+		oCHECK(Cache.add(Filename.hash(), cached(std::move(source), *pBytes)), "add failed");
 	}
 
 	catch (std::exception&)
