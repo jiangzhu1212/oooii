@@ -187,7 +187,6 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBase.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCompute.cpp" />
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGPU.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGUI.cpp" />
@@ -232,9 +231,6 @@
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrencyTBB.vcxproj">
       <Project>{d368fe7a-1375-4402-bdc6-955275b5e939}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\Ouroboros\Source\oConcurrency\oConcurrencyTests.vcxproj">
-      <Project>{20a09cf6-97ce-4258-9f01-cfa2b1433df3}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oCore\oCore.vcxproj">
       <Project>{7dc758b0-32cf-4bbc-abde-0eb53b9ef93c}</Project>

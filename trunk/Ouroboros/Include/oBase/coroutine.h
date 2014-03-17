@@ -35,58 +35,57 @@ class MyContext : public coroutine_context
 
 void MyExecute(MyContext& _MyContext)
 {
-	oCOROUTINE_BEGIN(&_MyContext);
+	oCoBegin(&_MyContext);
 	MyASyncProcessingThatWillWriteFlagEventually(&_MyContext.Flag);
 	// this causes MyExecute to return, but it has marked where it has left off
-	oCOROUTINE_SLEEP();
+	oCoYield();
 	if (_MyContext.Flag)
 	{
 		MyOtherProcessing();
 	}
-	oCOROUTINE_END();
+	oCoEnd();
 }
 */
 #pragma once
-#ifndef oConcurrency_coroutine_h
-#define oConcurrency_coroutine_h
+#ifndef oBase_coroutine_h
+#define oBase_coroutine_h
 
-#define oCOROUTINE_INVALID_SLEEPID (-1)
-#define oCOROUTINE_INTERNAL_SLEEP(continuation,_SleepID) coroutine_context__->SetSleepID(_SleepID); continuation; return; case _SleepID:
-#define oCOROUTINE_INTERNAL_SLEEP_INSTANTIATOR(continuation, _SleepID) oCOROUTINE_INTERNAL_SLEEP(continuation, _SleepID)
+// Internal implementation details
+#define oCoYielder__(continuation,_YieldID) coroutine_context__->yield_id(_YieldID); continuation; return; case _YieldID:
+#define oCoYielderUnique__(continuation, _YieldID) oCoYielder__(continuation, _YieldID)
 
-// Pass the address of an coroutine_context derivative to begin code execution 
-// in a coroutine way.
-#define oCOROUTINE_BEGIN(_pCoroutineContext) oConcurrency::coroutine_context* coroutine_context__ = _pCoroutineContext; switch(coroutine_context__->GetSleepID()) { case oCOROUTINE_INVALID_SLEEPID:
+// Pass the address of an coroutine_context derivative to begin coroutine execution.
+#define oCoBegin(_pCoroutineContext) ouro::coroutine_context* coroutine_context__ = _pCoroutineContext; switch(coroutine_context__->yield_id()) { case -1:
 
 // End a coroutine block
-#define oCOROUTINE_END() }
+#define oCoEnd() }
 
 // Exit the coroutine block but record the location so that when reentering the 
 // coroutine block the code starts from where it left off. Because of this 
 // restart it is important to maintain all state in a class derived from 
 // coroutine_context so all the data is still there when reentering the 
 // coroutine block.
-#define oCOROUTINE_SLEEP() oCOROUTINE_INTERNAL_SLEEP_INSTANTIATOR(;,__COUNTER__)
+#define oCoYield() oCoYielderUnique__(;,__COUNTER__)
 
-// Like oCOROUTINE_SLEEP but calls a continuation function after recording the reentry point.
+// Like oCoYield but calls a continuation function after recording the reentry point.
 // This allows for safe stack-based asynchronous operations that may call back into
 // the caller.
-#define oCOROUTINE_SLEEP_CONTINUATION(continuation) oCOROUTINE_INTERNAL_SLEEP_INSTANTIATOR(continuation, __COUNTER__)
+#define oCoYieldContinuation(continuation) oCoYielderUnique__(continuation, __COUNTER__)
 
-namespace oConcurrency {
+namespace ouro {
 
 // Client code should derive a coroutine context (like a thread context) from 
 // coroutine_context and use that with macros defined below.
 class coroutine_context
 {
 	// a unique number that indicates where a coroutine left off if it sleeps
-	int SleepID;
+	int YieldID;
 public:
-	coroutine_context() : SleepID(oCOROUTINE_INVALID_SLEEPID) {}
-	void SetSleepID(int _SleepID) { SleepID = _SleepID; }
-	int GetSleepID() const { return SleepID; }
+	coroutine_context() : YieldID(-1) {}
+	inline void yield_id(int _YieldID) { YieldID = _YieldID; }
+	inline int yield_id() const { return YieldID; }
 };
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

@@ -41,6 +41,8 @@
 #include <oBase/concurrent_index_allocator.h>
 #include <oBase/concurrent_linear_allocator.h>
 #include <oBase/concurrent_object_pool.h>
+#include <oBase/concurrent_queue.h>
+#include <oBase/concurrent_queue_opt.h>
 #include <oBase/concurrent_stack.h>
 #include <oBase/countdown_latch.h>
 #include <oBase/date.h>
@@ -65,6 +67,7 @@
 #include <oBase/invalid.h>
 #include <oBase/leak_tracker.h>
 #include <oBase/linear_allocator.h>
+#include <oBase/lock_free_queue.h>
 #include <oBase/lzma.h>
 #include <oBase/macros.h>
 #include <oBase/memory.h>
@@ -82,6 +85,7 @@
 #include <oBase/std_linear_allocator.h>
 #include <oBase/string.h>
 #include <oBase/string_traits.h>
+#include <oBase/tagged_pointer.h>
 #include <oBase/text_document.h>
 #include <oBase/throw.h>
 #include <oBase/threadpool.h>

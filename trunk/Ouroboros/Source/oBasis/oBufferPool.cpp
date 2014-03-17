@@ -25,7 +25,7 @@
 #include <oBasis/oBufferPool.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oInitOnce.h>
-#include <oConcurrency/lock_free_queue.h>
+#include <oBase/lock_free_queue.h>
 #include <oBasis/oRefCount.h>
 #include <atomic>
 
@@ -45,7 +45,7 @@ struct oBufferPoolImpl : public oBufferPool
 	oInitOnce<path_string> Name;
 	oRefCount RefCount;
 	oBuffer::DeallocateFn Dealloc;
-	oConcurrency::lock_free_queue<intrusive_ptr<oBuffer>> FreeBuffers;
+	lock_free_queue<intrusive_ptr<oBuffer>> FreeBuffers;
 	std::atomic<unsigned int> BufferCount;
 	threadsafe size_t IndividualBufferSize;
 	void* pPoolBase;
@@ -128,7 +128,7 @@ void oBufferPoolImpl::DestroyBuffer(void* _pBufer) threadsafe
 		if (!oBufferCreate(*BufferName, _pBufer, thread_cast<size_t&>(IndividualBufferSize), std::bind(&oBufferPoolImpl::DestroyBuffer, this, std::placeholders::_1), &FreeBuffer))
 			return;
 
-		thread_cast<oConcurrency::lock_free_queue<intrusive_ptr<oBuffer>>&>(FreeBuffers).push( FreeBuffer );
+		thread_cast<lock_free_queue<intrusive_ptr<oBuffer>>&>(FreeBuffers).push( FreeBuffer );
 	}
 }
 
@@ -140,7 +140,7 @@ bool oBufferPoolImpl::GetFreeBuffer(threadsafe oBuffer** _ppBuffer) threadsafe
 		*_ppBuffer = nullptr;
 	}
 	intrusive_ptr<oBuffer> FreeBuffer;
-	if( !thread_cast<oConcurrency::lock_free_queue<intrusive_ptr<oBuffer>>&>(FreeBuffers).try_pop(FreeBuffer) )
+	if( !thread_cast<lock_free_queue<intrusive_ptr<oBuffer>>&>(FreeBuffers).try_pop(FreeBuffer) )
 		return oErrorSetLast(std::errc::no_buffer_space, "There are no free buffers left in the oBufferPool");
 
 	*_ppBuffer = FreeBuffer;

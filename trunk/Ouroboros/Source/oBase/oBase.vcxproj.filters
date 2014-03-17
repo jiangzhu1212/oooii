@@ -522,6 +522,21 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_block_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\tagged_pointer.h">
+      <Filter>oBase\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\lock_free_queue.h">
+      <Filter>oBase\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\concurrent_queue.h">
+      <Filter>oBase\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\concurrent_queue_opt.h">
+      <Filter>oBase\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\coroutine.h">
+      <Filter>oBase\concurrency</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

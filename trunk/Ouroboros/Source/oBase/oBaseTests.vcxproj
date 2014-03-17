@@ -25,7 +25,9 @@
     <ClCompile Include="tests\TESTconcurrent_fixed_block_allocator.cpp" />
     <ClCompile Include="tests\TESTconcurrent_index_allocator.cpp" />
     <ClCompile Include="tests\TESTconcurrent_linear_allocator.cpp" />
+    <ClCompile Include="tests\TESTconcurrent_queues.cpp" />
     <ClCompile Include="tests\TESTconcurrent_stack.cpp" />
+    <ClCompile Include="tests\TESTcoroutine.cpp" />
     <ClCompile Include="tests\TESTcountdown_latch.cpp" />
     <ClCompile Include="Tests\TESTcsv.cpp" />
     <ClCompile Include="tests\TESTdate.cpp" />

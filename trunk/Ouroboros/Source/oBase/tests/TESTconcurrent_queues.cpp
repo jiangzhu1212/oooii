@@ -22,8 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/concurrent_queue.h>
-#include <oConcurrency/concurrent_queue_opt.h>
+#include <oBase/concurrent_queue.h>
+#include <oBase/concurrent_queue_opt.h>
 #include <oBase/threadpool.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>
@@ -34,19 +34,17 @@
 #include <thread>
 #include <vector>
 
-using namespace ouro;
-
-namespace oConcurrency {
+namespace ouro {
 	namespace tests {
 
-struct oTestBuffer
+struct test_buffer
 {
 	enum Dummy_t { Dummy };
 
-	oTestBuffer(Dummy_t _Dummy) : Pointer(nullptr), pNumDeleted(nullptr) {}
-	oTestBuffer(size_t _Size, size_t* _pNumDeleted) : Pointer(new char[_Size]), pNumDeleted(_pNumDeleted) {}
-	~oTestBuffer() { (*pNumDeleted)++; delete [] Pointer; }
-	bool operator==(const oTestBuffer& _That) const { return Pointer == _That.Pointer; }
+	test_buffer(Dummy_t _Dummy) : Pointer(nullptr), pNumDeleted(nullptr) {}
+	test_buffer(size_t _Size, size_t* _pNumDeleted) : Pointer(new char[_Size]), pNumDeleted(_pNumDeleted) {}
+	~test_buffer() { (*pNumDeleted)++; delete [] Pointer; }
+	bool operator==(const test_buffer& _That) const { return Pointer == _That.Pointer; }
 
 	char* Pointer;
 	size_t* pNumDeleted;
@@ -269,9 +267,9 @@ static double test_performance(const char* _QueueName)
 	return time;
 }
 
-bool oTestBufferCreate(size_t _Size, size_t* _pNumDeleted, threadsafe oTestBuffer** _ppBuffer)
+bool test_bufferCreate(size_t _Size, size_t* _pNumDeleted, test_buffer** _ppBuffer)
 {
-	*_ppBuffer = new oTestBuffer(_Size, _pNumDeleted);
+	*_ppBuffer = new test_buffer(_Size, _pNumDeleted);
 	return true;
 }
 
@@ -288,20 +286,20 @@ static void test_nontrivial_contents(const char* _QueueName)
 	// Create a list of buffers and push them onto the queue, then lose the refs
 	// of the original buffers.
 	{
-		std::shared_ptr<threadsafe oTestBuffer> Buffers[kNumBuffers];
+		std::shared_ptr<test_buffer> Buffers[kNumBuffers];
 		for (size_t i = 0; i < kNumBuffers; i++)
 		{
-			Buffers[i] = std::make_shared<threadsafe oTestBuffer>(kBufferSize, &numDeleted);
+			Buffers[i] = std::make_shared<test_buffer>(kBufferSize, &numDeleted);
 			memset(Buffers[i]->Pointer, 123, kBufferSize);
 			q.push(Buffers[i]);
 		}
 	}
 	oCHECK(numDeleted == 0, "Test buffers were deleted when the queue should be holding a reference");
 
-	std::shared_ptr<threadsafe oTestBuffer> b;
+	std::shared_ptr<test_buffer> b;
 	while (q.try_pop(b))
 	{
-		const threadsafe char* p = b->Pointer;
+		const char* p = b->Pointer;
 		for (size_t i = 0; i < kBufferSize; i++)
 			oCHECK(*p++ == 123, "Buffer mismatch on byte %u", i);
 	}
@@ -311,13 +309,13 @@ static void test_nontrivial_contents(const char* _QueueName)
 	oCHECK(q.empty() && numDeleted == kNumBuffers, "Queue is retaining a reference to an element though it's supposed to be empty.");
 }
 
-template<typename IntQueueT, typename oTestBufferRefQueueT> void TestQueueT(const char* _QueueName)
+template<typename IntQueueT, typename test_bufferRefQueueT> void TestQueueT(const char* _QueueName)
 {
 	test_queue_basics<int, IntQueueT>(_QueueName);
 	test_concurrent_pushes<int, IntQueueT>(_QueueName);
 	test_concurrent_pops<int, IntQueueT>(_QueueName);
 	test_concurrency<int, IntQueueT>(_QueueName);
-	test_nontrivial_contents<oTestBufferRefQueueT>(_QueueName);
+	test_nontrivial_contents<test_bufferRefQueueT>(_QueueName);
 
 	// Enable this for some performance reporting (assuming it still passes the
 	// above tests!)
@@ -327,7 +325,7 @@ template<typename IntQueueT, typename oTestBufferRefQueueT> void TestQueueT(cons
 	#endif
 }
 
-#define oTEST_QUEUET(_QueueType) TestQueueT<_QueueType<int>, _QueueType<std::shared_ptr<threadsafe oTestBuffer>>>(#_QueueType)
+#define oTEST_QUEUET(_QueueType) TestQueueT<_QueueType<int>, _QueueType<std::shared_ptr<test_buffer>>>(#_QueueType)
 
 void TESTconcurrent_queue()
 {
@@ -351,7 +349,7 @@ typedef threadpool_default_traits thread_traits_t;
 // Prove concurrent_queue is dropin for concurrent_queue
 }}
 #include <concurrent_queue.h>
-namespace oConcurrency { namespace tests {
+namespace ouro { namespace tests {
 template<typename T> class concurrent_queue_concrt : private ::Concurrency::concurrent_queue<T>, public concurrent_queue_base<T, concurrent_queue_concrt<T>>
 {
 	typedef Concurrency::concurrent_queue<T> queue_t;
@@ -359,10 +357,10 @@ public:
 	oDEFINE_CONCURRENT_QUEUE_TYPE(T, queue_t::size_type);
 
 	concurrent_queue_concrt() {}
-	void push(const_reference _Element) threadsafe { oThreadsafe(this)->queue_t::push(_Element); }
-	bool try_pop(reference _Element) threadsafe { return oThreadsafe(this)->queue_t::try_pop(_Element); }
-	void clear() threadsafe { return concurrent_queue_base::clear(); }
-	bool empty() const threadsafe { return oThreadsafe(this)->queue_t::empty(); }
+	void push(const_reference _Element) { oThreadsafe(this)->queue_t::push(_Element); }
+	bool try_pop(reference _Element) { return oThreadsafe(this)->queue_t::try_pop(_Element); }
+	void clear() { return concurrent_queue_base::clear(); }
+	bool empty() const { return oThreadsafe(this)->queue_t::empty(); }
 	size_type size() const { return queue_t::unsafe_size(); }
 };
 
@@ -374,14 +372,14 @@ void TESTconcurrent_queue_concrt()
 #else
 void TESTconcurrent_queue_concrt()
 {
-	oTRACE("oErrorSetLast(std::errc::permission_denied, \"concurrent_queue_concrt test not enabled\");");
+	oTHROW(permission_denied, "concurrent_queue_concrt test not enabled");
 }
 #endif
 
 #if 0
 }}
 #include <tbb/concurrent_queue.h>
-namespace oConcurrency { namespace tests {
+namespace ouro { namespace tests {
 template<typename T> class concurrent_queue_tbb : private tbb::concurrent_queue<T>, public concurrent_queue_base<T, concurrent_queue_tbb<T>>
 {
 	typedef tbb::concurrent_queue<T> queue_t;
@@ -389,10 +387,10 @@ public:
 	oDEFINE_CONCURRENT_QUEUE_TYPE(T, queue_t::size_type);
 
 	concurrent_queue_tbb() {}
-	void push(const_reference _Element) threadsafe { oThreadsafe(this)->queue_t::push(_Element); }
-	bool try_pop(reference _Element) threadsafe { return oThreadsafe(this)->queue_t::try_pop(_Element); }
-	void clear() threadsafe { return concurrent_queue_base::clear(); }
-	bool empty() const threadsafe { return oThreadsafe(this)->queue_t::empty(); }
+	void push(const_reference _Element) { oThreadsafe(this)->queue_t::push(_Element); }
+	bool try_pop(reference _Element) { return oThreadsafe(this)->queue_t::try_pop(_Element); }
+	void clear() { return concurrent_queue_base::clear(); }
+	bool empty() const { return oThreadsafe(this)->queue_t::empty(); }
 	size_type size() const { return queue_t::unsafe_size(); }
 };
 
@@ -403,9 +401,9 @@ void TESTconcurrent_queue_tbb()
 #else
 void TESTconcurrent_queue_tbb()
 {
-	oTRACE("oErrorSetLast(std::errc::permission_denied, \"concurrent_queue_tbb test not enabled\");");
+	oTHROW(permission_denied, "concurrent_queue_tbb test not enabled");
 }
 #endif
 
 	} // namespace tests
-} // namespace oConcurrency
+} // namespace ouro

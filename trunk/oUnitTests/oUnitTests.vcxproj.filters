@@ -10,9 +10,6 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurfaceFill.cpp">
       <Filter>Source Files\Tests</Filter>
     </ClCompile>
-    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp">
-      <Filter>Source Files\Tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTBasis.cpp">
       <Filter>Source Files\Tests</Filter>
     </ClCompile>

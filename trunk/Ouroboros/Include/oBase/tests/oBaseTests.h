@@ -40,7 +40,12 @@ namespace ouro {
 		void TESTconcurrent_fixed_block_allocator();
 		void TESTconcurrent_index_allocator();
 		void TESTconcurrent_linear_allocator();
+		void TESTconcurrent_queue();
+		void TESTconcurrent_queue_concrt();
+		void TESTconcurrent_queue_opt();
+		void TESTconcurrent_queue_tbb();
 		void TESTconcurrent_stack();
+		void TESTcoroutine();
 		void TESTcountdown_latch();
 		void TESTcsv();
 		void TESTdate(test_services& _Services);

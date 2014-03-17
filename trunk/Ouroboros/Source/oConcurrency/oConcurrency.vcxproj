@@ -28,14 +28,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oConcurrency\all.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_opt.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\coroutine.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\fixed_block_allocator.h" />
     <ClInclude Include="..\..\Include\oConcurrency\joinable_threadpool_base.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\lock_free_queue.h" />
     <ClInclude Include="..\..\Include\oConcurrency\oConcurrency.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\tagged_pointer.h" />
     <ClInclude Include="..\..\Include\oConcurrency\task_group_threadpool.h" />
     <ClInclude Include="..\..\Include\oConcurrency\thread_safe.h" />
     <ClInclude Include="pch.h" />
