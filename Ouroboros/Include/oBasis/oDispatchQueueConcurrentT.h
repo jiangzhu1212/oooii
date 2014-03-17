@@ -31,7 +31,7 @@
 #include <oBasis/oDispatchQueueConcurrent.h>
 #include <oBase/fixed_string.h>
 #include <oBasis/oRefCount.h>
-#include <oConcurrency/thread_safe.h>
+#include <oBasis/thread_safe.h>
 
 template<typename ThreadpoolT> struct oDispatchQueueConcurrentT : public oDispatchQueueConcurrent
 {

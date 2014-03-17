@@ -36,7 +36,7 @@
 #include <oBase/algorithm.h>
 #include <oBasis/oError.h>
 #include <oBasis/oInitOnce.h>
-#include <oConcurrency/thread_safe.h>
+#include <oBasis/thread_safe.h>
 #include <vector>
 
 class oFilterChain

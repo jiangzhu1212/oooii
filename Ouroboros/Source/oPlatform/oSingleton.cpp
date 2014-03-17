@@ -27,7 +27,6 @@
 #include <oBase/backoff.h>
 
 using namespace ouro;
-using namespace oConcurrency;
 
 // @tony: Singletons are useful concepts and really cross-platform. It is
 // unfortunate that on at least Windows it requires important platform API calls
