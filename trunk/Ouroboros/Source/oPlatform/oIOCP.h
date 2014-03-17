@@ -27,6 +27,7 @@
 #define oIOCP_h
 
 #include <oBasis/oInterface.h>
+#include <oBasis/oDispatchQueue.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

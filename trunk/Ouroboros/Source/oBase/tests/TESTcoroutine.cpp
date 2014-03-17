@@ -68,4 +68,4 @@ void TESTcoroutine()
 }
 
 	} // namespace tests
-} // namespace oConcurrency
+} // namespace ouro

@@ -152,7 +152,6 @@
     <ClInclude Include="SoftLink\oOpenSSL.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="oConcurrency.cpp" />
     <ClCompile Include="oDispatchQueueGlobalIOCP.cpp" />
     <ClCompile Include="oEMail.cpp" />
     <ClCompile Include="oFileCache.cpp" />

@@ -27,9 +27,10 @@
 #define oDispatchQueueGlobalT_h
 
 #include <oBasis/oRefCount.h>
+#include <oBasis/oInitOnce.h>
+#include <oBasis/oDispatchQueue.h>
 #include <oBase/assert.h>
 #include <oBase/fixed_string.h>
-#include <oBasis/oInitOnce.h>
 #include <oCore/mutex.h>
 #include <list>
 #include <thread>
@@ -48,7 +49,7 @@
 // This class provides all the thread safety, you provide the actual async call, 
 // you do not need to add any additional thread safety to Issue though.
 template<typename T>
-struct oDispatchQueueGlobalT : public oDispatchQueueGlobal, T
+struct oDispatchQueueGlobalT : public oDispatchQueue, T
 {
 	int Reference() threadsafe override
 	{ 
