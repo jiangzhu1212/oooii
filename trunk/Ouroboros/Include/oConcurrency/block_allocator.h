@@ -22,22 +22,18 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// A more generic ready-to-use version of fixed_block_allocator that grows its
-// heap from a system allocator as more memory is needed.
-
-// This uses fixed_block_allocator, so it has all the same concurrency and 
-// performance features but has the additional overhead of sometimes having to
-// do a linear search through a list of those allocators to find one that has
-// memory to allocate; likewise on deallocation. Additionally the size of the 
-// reserve chunks can be dynamically altered using the grow() and shrink() 
-// functions. Be careful! They are not and assume the application is
-// in a steady state.
+// This behaves the same as a concurrent_fixed_block_allocator but this can
+// grow beyond its initial size. It does this in slabs of local fba's so if
+// one slab is full, it looks into others for allocation space. Allocation
+// and deallocation time should be mostly O(1) with the occasional new slab
+// allocation or iterating slabs to find free space. Atomics ensure 
+// concurrency.
 
 #ifndef oConcurrency_block_allocator_h
 #define oConcurrency_block_allocator_h
 
 #include <oConcurrency/concurrent_stack.h>
-#include <oConcurrency/fixed_block_allocator.h>
+#include <oBase/concurrent_fixed_block_allocator.h>
 #include <atomic>
 #include <cstdlib>
 
@@ -45,15 +41,18 @@ namespace oConcurrency {
 
 class block_allocator
 {
+	typedef ouro::concurrent_fixed_block_allocator_base<unsigned short> fba_t;
+
 public:
+	typedef fba_t::size_type size_type;
 	typedef std::function<void*(size_t _Size)> allocate_t;
 	typedef std::function<void(void* _Pointer)> deallocate_t;
 
-	static const size_t max_blocks_per_chunk = fixed_block_allocator::max_num_blocks;
+	static const size_type max_blocks_per_chunk = fba_t::max_num_blocks;
 
 	// The specified allocate and deallocate functions must be thread safe
-	block_allocator(size_t _BlockSize
-		, size_t _NumBlocksPerChunk = max_blocks_per_chunk
+	block_allocator(size_type _BlockSize
+		, size_type _NumBlocksPerChunk = max_blocks_per_chunk
 		, const allocate_t& _PlatformAllocate = malloc
 		, const deallocate_t& _PlatformDeallocate = free);
 
@@ -81,7 +80,7 @@ public:
 	// to meet the specified needs. This is not. Existing allocations
 	// will be preserved but this should not be called when other threads might be 
 	// allocating or deallocating memory.
-	void reserve(size_t _NumElements);
+	void reserve(size_type _NumElements);
 
 	// Ensures the specified number of elements can be allocated and will release
 	// all chunks not required to meet the specified needs. Only chunks with zero
@@ -89,17 +88,17 @@ public:
 	// chunks. This is not. Existing allocations will be preserved but
 	// this should not be called when other threads might be allocating or 
 	// deallocating memory.
-	void shrink(size_t _NumElements);
+	void shrink(size_type _NumElements);
 
 	// Returns true if the specified pointer was allocated by this allocator.
 	bool valid(void* _Pointer) const;
 
 	// Returns the number of blocks per chunk that was specified at construction
 	// time.
-	size_t num_blocks_per_chunk() const { return NumBlocksPerChunk; }
+	size_type num_blocks_per_chunk() const { return NumBlocksPerChunk; }
 
 	// Returns the current number of chunks in use.
-	inline size_t num_chunks() const { return Chunks.size(); }
+	inline size_type num_chunks() const { return Chunks.size(); }
 
 	// Returns true if even one allocation is valid, false if all chunks report
 	// full availability. The default behavior of this allocator is to ignore 
@@ -114,27 +113,22 @@ public:
 
 	// SLOW! Walks the freelists of all chunks and counts how many entries have
 	// not yet been allocated.
-	size_t count_available() const;
+	size_type count_available() const;
 
-	inline size_t count_allocated() const { return (num_blocks_per_chunk() * num_chunks()) - count_available(); }
+	inline size_type count_allocated() const { return (num_blocks_per_chunk() * num_chunks()) - count_available(); }
 
 private:
 	struct chunk_t
 	{
 		chunk_t* next;
-		// In the runtime case (Alloc/Dealloc) this is a-specified access
-		// from methods. However to support growable methods, we must 
-		// operate on these sometimes from non-threadsafe methods. So this pointer 
-		// is not enforced as, but is ok to use in methods 
-		// because of oConcurrentBlockAllocator implementation guarantees.
-		fixed_block_allocator* pAllocator;
+		fba_t Allocator;
 	};
 
-	std::atomic<fixed_block_allocator*> pLastAlloc;
-	std::atomic<fixed_block_allocator*> pLastDealloc;
-	size_t BlockSize;
-	size_t NumBlocksPerChunk;
-	size_t ChunkSize;
+	std::atomic<fba_t*> pLastAlloc;
+	std::atomic<fba_t*> pLastDealloc;
+	size_type BlockSize;
+	size_type NumBlocksPerChunk;
+	size_type ChunkSize;
 	oCACHE_ALIGNED(concurrent_stack<chunk_t> Chunks);
 
 	allocate_t PlatformAllocate;
@@ -145,7 +139,7 @@ private:
 	chunk_t* allocate_chunk();
 
 	// Maps a pointer back to the chunk allocator it came from
-	fixed_block_allocator* find_chunk_allocator(void* _Pointer) const;
+	fba_t* find_chunk_allocator(void* _Pointer) const;
 
 	block_allocator(const block_allocator&); /* = delete */
 	const block_allocator& operator=(const block_allocator&); /* = delete */
@@ -154,13 +148,14 @@ private:
 	block_allocator& operator=(block_allocator&&); /* = delete */
 };
 
-template<size_t S>
+template<unsigned int S>
 class block_allocator_s : public block_allocator
 {
 public:
-	const static size_t block_size = S;
+	typedef block_allocator::size_type size_type;
+	const static size_type block_size = S;
 
-	block_allocator_s(size_t _NumBlocksPerChunk = max_blocks_per_chunk
+	block_allocator_s(size_type _NumBlocksPerChunk = max_blocks_per_chunk
 		, const allocate_t& _PlatformAllocate = malloc
 		, const deallocate_t& _PlatformDeallocate = free)
 		: block_allocator(block_size, _NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)
@@ -170,9 +165,11 @@ public:
 template<typename T>
 class block_allocator_t : public block_allocator_s<sizeof(T)>
 {
+	typedef block_allocator_s<sizeof(T)> base_t;
 public:
+	typedef base_t::size_type size_type;
 	typedef T value_type;
-	block_allocator_t(size_t _NumBlocksPerChunk = max_blocks_per_chunk
+	block_allocator_t(size_type _NumBlocksPerChunk = max_blocks_per_chunk
 		, const allocate_t& _PlatformAllocate = malloc
 		, const deallocate_t& _PlatformDeallocate = free)
 		: block_allocator_s(_NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)

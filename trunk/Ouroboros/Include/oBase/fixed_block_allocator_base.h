@@ -47,8 +47,20 @@
 #define oBase_fixed_block_allocator_common_base_h
 
 #include <oBase/byte.h>
+#include <oBase/callable.h>
 #include <oBase/config.h>
 #include <stdexcept>
+
+// Defines methods for calling ctors and dtors on allocations
+#ifndef oHAS_VARIADIC_TEMPLATES
+	#define oALLOCATOR_CONSTRUCT_N(n) \
+		template<oCALLABLE_CONCAT(oARG_TYPENAMES,n)> \
+		T* construct(oCALLABLE_CONCAT(oARG_DECL,n)) { T* p = allocate(); return p ? new (p) T(oCALLABLE_CONCAT(oARG_PASS,n)) : nullptr; }
+	#define oALLOCATOR_CONSTRUCT oCALLABLE_PROPAGATE_SKIP0(oALLOCATOR_CONSTRUCT_N) T* construct() { T* p = allocate(); return p ? new (p) T() : nullptr; }
+	#define oALLOCATOR_DESTROY() void destroy(T* _Instance) {	_Instance->T::~T(); deallocate(_Instance); }
+#else
+	#error Use variadic templates to implement construct()/destroy()
+#endif
 
 namespace ouro {
 
@@ -81,8 +93,6 @@ public:
 	fixed_block_allocator_common_base(void* _pBlocks, size_type _BlockSize, size_type _NumBlocks)
 		: Blocks(_pBlocks)
 	{
-		Freelist = 0;
-
 		// check validity
 		if (_BlockSize < sizeof(index_type))
 			throw std::invalid_argument("block size must be at least the size of the index type");
@@ -91,7 +101,13 @@ public:
 		if (!byte_aligned(_pBlocks, default_alignment))
 			throw std::invalid_argument("the specified allocation of blocks must be properly aligned");
 
-		// initialize
+		clear(_BlockSize, _NumBlocks);
+	}
+
+	// Hard-resets the pool, leaving any outstanding allocation dangling. Not threadsafe.
+	void clear(size_type _BlockSize, size_type _NumBlocks)
+	{
+		Freelist = 0;
 		index_type i = 0;
 		index_type* p = static_cast<index_type*>(Blocks);
 		for (; i < (_NumBlocks-1); i++)
@@ -131,7 +147,7 @@ public:
 	// each call)
 	size_type size(size_type _BlockSize, size_type _NumBlocks) const
 	{
-		size_t nFree = 0;
+		size_type nFree = 0;
 		if (_NumBlocks)
 			nFree = count_available(_BlockSize);
 		return _NumBlocks - nFree;
@@ -140,7 +156,7 @@ public:
 	size_type max_capacity() const { return max_num_blocks; }
 
 	// (SLOW! see size())
-	bool empty(size_type _BlockSize, size_type _NumBlocks) const { return size() == 0; }
+	bool empty(size_type _BlockSize, size_type _NumBlocks) const { return size(_BlockSize, _NumBlocks) == 0; }
 
 	// Returns true if all blocks have been allocated
 	bool full() const { return Freelist.Index == invalid_index; }
@@ -178,10 +194,11 @@ public:
 	fixed_block_allocator_common_base_s(fixed_block_allocator_common_base_s&& _That) { operator=(std::move(_That)); }
 	fixed_block_allocator_common_base_s(void* _pBlocks, size_type _NumBlocks) : base_t(_pBlocks, block_size, _NumBlocks) {}
 	fixed_block_allocator_common_base_s& operator=(fixed_block_allocator_common_base_s&& _That) { return (self_t&)base_t::operator=(std::move((base_t&&)_That)); }
+	void clear(size_type _NumBlocks) { base_t::clear(block_size, _NumBlocks); }
 	bool valid() const { return base_t::valid(); }
+	bool valid(size_type _NumBlocks, void* _Pointer) const { return base_t::valid(block_size, _NumBlocks, _Pointer); }
 	void* allocate() { return base_t::allocate(block_size); }
 	void deallocate(size_type _NumBlocks, void* _Pointer) { return base_t::deallocate(block_size, _NumBlocks, _Pointer); }
-	bool valid(size_type _NumBlocks, void* _Pointer) const { return base_t::valid(block_size, _NumBlocks, _Pointer); }
 	size_type count_available() const { return base_t::count_available(block_size); }
 	size_type size(size_type _NumBlocks) const { return base_t::size(block_size, _NumBlocks); }
 	size_type max_capacity() const { return base_t::max_capacity(); }
@@ -207,20 +224,22 @@ public:
 	fixed_block_allocator_common_base_t(fixed_block_allocator_common_base_t&& _That) { operator=(std::move(_That)); }
 	fixed_block_allocator_common_base_t(void* _pBlocks, size_type _NumBlocks) : base_t(_pBlocks, _NumBlocks) {}
 	fixed_block_allocator_common_base_t& operator=(fixed_block_allocator_common_base_t&& _That) { return (self_t&)base_t::operator=(std::move((base_t&&)_That)); }
+	void clear(size_type _NumBlocks) { base_t::clear(block_size, _NumBlocks); }
 	bool valid() const { return base_t::valid(); }
+	bool valid(size_type _NumBlocks, void* _Pointer) const { return base_t::valid(block_size, _NumBlocks, _Pointer); }
 	T* allocate() { return static_cast<T*>(base_t::allocate()); }
 	void deallocate(size_type _NumBlocks, T* _Pointer) { base_t::deallocate(_NumBlocks, _Pointer); }
-	bool valid(size_type _NumBlocks, void* _Pointer) const { return base_t::valid(block_size, _NumBlocks, _Pointer); }
 	size_type count_available() const { return base_t::count_available(); }
 	size_type size(size_type _NumBlocks) const { return base_t::size(block_size, _NumBlocks); }
 	size_type max_capacity() const { return base_t::max_capacity(); }
 	bool empty(size_type _NumBlocks) const { return base_t::empty(block_size, _NumBlocks); }
 	bool full() const { return base_t::full(); }
-	T* create() { T* p = self_t::allocate(); new (p) T(); return p; }
-	T* create(const T& _That) { T* p = self_t::allocate(); new (p) T(_That); return p; }
-	T* create(T&& _That) { T* p = self_t::allocate(); new (p) T(std::move(_That)); return p; }
-	template<typename U> T* create(const U& _U) { T* p = self_t::allocate(); new (p) T(_U); return p; }
-	void destroy(size_type _NumBlocks, T* _Instance) { _Instance->T::~T(); self_t::deallocate(_NumBlocks, _Instance); }
+	oALLOCATOR_CONSTRUCT();
+	void destroy(size_type _NumBlocks, T* _Instance)
+	{
+		_Instance->T::~T();
+		deallocate(_NumBlocks, _Instance);
+	}
 };
 
 // Uses statically allocated memory
@@ -239,20 +258,19 @@ public:
 	fixed_block_allocator_static_base() : base_t(Backing, Capacity) {}
 	fixed_block_allocator_static_base(fixed_block_allocator_static_base&& _That) { operator=(std::move(_That)); }
 	fixed_block_allocator_static_base& operator=(fixed_block_allocator_static_base&& _That) { return (self_t&)base_t::operator=(std::move((base_t&&)_That)); }
+	void clear() { base_t::clear(block_size, Capacity); }
 	bool valid() const { return base_t::valid(); }
+	bool valid(void* _Pointer) const { return base_t::valid(block_size, capacity, _Pointer); }
 	T* allocate() { return base_t::allocate(); }
 	void deallocate(T* _Pointer) { base_t::deallocate(capacity, _Pointer); }
-	bool valid(void* _Pointer) const { return base_t::valid(block_size, capacity, _Pointer); }
+	void clear(size_type _NumBlocks) { base_t::clear(block_size, _NumBlocks); }
 	size_type count_available() const { return base_t::count_available(); }
 	size_type size() const { return base_t::size(block_size, capacity); }
 	size_type max_capacity() const { return base_t::max_capacity(); }
 	bool empty() const { return base_t::empty(block_size, capacity); }
 	bool full() const { return base_t::full(); }
-	T* create() { T* p = self_t::allocate(); new (p) T(); return p; }
-	T* create(const T& _That) { T* p = self_t::allocate(); new (p) T(_That); return p; }
-	T* create(T&& _That) { T* p = self_t::allocate(); new (p) T(std::move(_That)); return p; }
-	template<typename U> T* create(const U& _U) { T* p = self_t::allocate(); new (p) T(_U); return p; }
-	void destroy(T* _Instance) { _Instance->T::~T(); self_t::deallocate(_Instance); }
+	oALLOCATOR_CONSTRUCT();
+	oALLOCATOR_DESTROY();
 protected:
 	char Backing[block_size * capacity];
 };
@@ -290,10 +308,11 @@ public:
 
 	size_type max_num_blocks() const { return NumBlocks; }
 	size_type block_size() const { return BlockSize; }
+	void clear() { base_t::clear(BlockSize, NumBlocks); }
 	bool valid() const { return base_t::valid(); }
+	bool valid(void* _Pointer) const { return base_t::valid(BlockSize, NumBlocks, _Pointer); }
 	void* allocate() { return base_t::allocate(BlockSize); }
 	void deallocate(void* _Pointer) { return base_t::deallocate(BlockSize, NumBlocks, _Pointer); }
-	bool valid(void* _Pointer) const { return base_t::valid(BlockSize, NumBlocks, _Pointer); }
 	size_type count_available() const { return base_t::count_available(BlockSize); }
 	size_type size() const { return base_t::size(BlockSize, NumBlocks); }
 	size_type max_capacity() const { return base_t::max_capacity(); }

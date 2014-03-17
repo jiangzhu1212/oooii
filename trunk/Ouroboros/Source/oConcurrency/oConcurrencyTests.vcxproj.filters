@@ -9,9 +9,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\TESTfixed_block_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTblock_allocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
