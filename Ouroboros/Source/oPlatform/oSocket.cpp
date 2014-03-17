@@ -26,7 +26,7 @@
 #include <oBasis/oLockThis.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oScopedPartialTimeout.h>
-#include <oConcurrency/concurrent_queue.h>
+#include <oBase/concurrent_queue.h>
 #include <oPlatform/oSocket.h>
 #include <oCore/windows/win_winsock.h>
 #include "oIOCP.h"
@@ -1181,10 +1181,10 @@ private:
 	//This pool holds all sockets, they won't get removed until this class is destroyed.
 	//	Sockets can get left in the iocp system, and therefore not get returned to the pool
 	//	So need a way to keep track of those.
-	oConcurrency::concurrent_queue<oSocketImpl*> AllSocketsPool;
+	concurrent_queue<oSocketImpl*> AllSocketsPool;
 
 	//This is the list of sockets available for use
-	oConcurrency::concurrent_queue<oSocketImpl*> AcceptSocketsPool;
+	concurrent_queue<oSocketImpl*> AcceptSocketsPool;
 
 	ServerDisconnect ServerDisconnectFn;
 };
@@ -1300,7 +1300,7 @@ private:
 	//Once we run out of socket ops, start saving disconnects for later.
 	//	Note that before this happens, accepts will have been starved out by IssuedAcceptCount.
 	//	Disconnects themselves will start the normal accept "loop" back up.
-	oConcurrency::concurrent_queue<oSocketImpl*> PendingDisconnects;
+	concurrent_queue<oSocketImpl*> PendingDisconnects;
 };
 
 //Disconnect can take a bit of time to execute. so have a bit more accepts in flight than we have iocp threads. with this number

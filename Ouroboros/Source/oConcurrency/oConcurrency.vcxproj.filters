@@ -20,28 +20,10 @@
     <ClInclude Include="..\..\Include\oConcurrency\thread_safe.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_opt.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\fixed_block_allocator.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\lock_free_queue.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\tagged_pointer.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\joinable_threadpool_base.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\task_group_threadpool.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\coroutine.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\all.h">

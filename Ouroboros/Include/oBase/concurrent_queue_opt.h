@@ -24,19 +24,19 @@
  **************************************************************************/
 // A thread-safe queue (FIFO) that uses atomics to ensure concurrency. This 
 // implementation is advertised as more efficient than the standard MS queue
-// (oConcurrency::concurrent_queue's algorithm) because it goes to great lengths to avoid 
-// atomic activities, optimistically assuming contention does not happen and
-// going back to fix any confusion if it does. Read more about it in the link
-// in the citation below.
+// (oBase::concurrent_queue's algorithm) because it goes to great lengths to 
+// avoid atomic activities, optimistically assuming contention does not happen 
+// and going back to fix any confusion if it does. Read more about it in the 
+// link in the citation below but my benchmarks show marginal if any benefits.
 #pragma once
-#ifndef oConcurrency_concurrent_queue_opt_h
-#define oConcurrency_concurrent_queue_opt_h
+#ifndef oBase_concurrent_queue_opt_h
+#define oBase_concurrent_queue_opt_h
 
-#include <oConcurrency/oConcurrency.h>
+#include <oBase/concurrency.h>
 #include <oBase/concurrent_block_allocator.h>
-#include <oConcurrency/tagged_pointer.h>
+#include <oBase/tagged_pointer.h>
 
-namespace oConcurrency {
+namespace ouro {
 
 template<typename T>
 class concurrent_queue_opt
@@ -104,7 +104,7 @@ private:
 
 	oCACHE_ALIGNED(pointer_t Head);
 	oCACHE_ALIGNED(pointer_t Tail);
-	oCACHE_ALIGNED(ouro::concurrent_block_allocator_t<node_t> Pool);
+	oCACHE_ALIGNED(concurrent_block_allocator_t<node_t> Pool);
 
 	void internal_push(node_t* _pNode);
 	void fix_list(pointer_t _Tail, pointer_t _Head);
@@ -138,7 +138,7 @@ void concurrent_queue_opt<T>::internal_push(node_t* _pNode)
 	pointer_t t;
 	while (true)
 	{
-		t = thread_cast<pointer_t&>(Tail);
+		t = Tail;
 		_pNode->next = pointer_t(t.ptr(), t.tag()+1);
 		if (pointer_t::CAS(&Tail, pointer_t(_pNode, t.tag()+1), t))
 		{
@@ -168,7 +168,7 @@ template<typename T>
 void concurrent_queue_opt<T>::fix_list(pointer_t _Tail, pointer_t _Head)
 {
 	pointer_t curNode, curNodeNext;
-	curNode = thread_cast<pointer_t&>(_Tail);
+	curNode = _Tail;
 	while ((_Head == Head) && (curNode != _Head))
 	{
 		curNodeNext = curNode.ptr()->next;
@@ -183,8 +183,8 @@ bool concurrent_queue_opt<T>::try_pop(reference _Element)
 	pointer_t t, h, firstNodePrev;
 	while (true)
 	{
-		h = thread_cast<pointer_t&>(Head);
-		t = thread_cast<pointer_t&>(Tail);
+		h = Head;
+		t = Tail;
 		firstNodePrev = h.ptr()->prev;
 		if (h == Head)
 		{
@@ -248,6 +248,6 @@ typename concurrent_queue_opt<T>::size_type concurrent_queue_opt<T>::size() cons
 	return empty() ? 0 : (Pool.count_allocated() - 1);
 }
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

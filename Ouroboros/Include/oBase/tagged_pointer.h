@@ -25,14 +25,14 @@
 // A pointer that gives up some of its address space to protect against ABA 
 // concurrency issues.
 #pragma once
-#ifndef oConcurrency_tagged_pointer_h
-#define oConcurrency_tagged_pointer_h
+#ifndef oBase_tagged_pointer_h
+#define oBase_tagged_pointer_h
 
 #include <oBase/config.h>
 #include <atomic>
 #include <stdexcept>
 
-namespace oConcurrency {
+namespace ouro {
 
 template<
 	typename T, 
@@ -104,6 +104,6 @@ private:
 	std::atomic<uintptr_t> TagAndPointer;
 };
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

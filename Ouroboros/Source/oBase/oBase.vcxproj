@@ -146,10 +146,13 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_queue.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_queue_opt.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_stack.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_stack_traits.h" />
     <ClInclude Include="..\..\Include\oBase\config.h" />
     <ClInclude Include="..\..\Include\oBase\container_support.h" />
+    <ClInclude Include="..\..\Include\oBase\coroutine.h" />
     <ClInclude Include="..\..\Include\oBase\countdown_latch.h" />
     <ClInclude Include="..\..\Include\oBase\csv.h" />
     <ClInclude Include="..\..\Include\oBase\date.h" />
@@ -179,6 +182,7 @@
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator_base.h" />
+    <ClInclude Include="..\..\Include\oBase\lock_free_queue.h" />
     <ClInclude Include="..\..\Include\oBase\lzma.h" />
     <ClInclude Include="..\..\Include\oBase\macros.h" />
     <ClInclude Include="..\..\Include\oBase\memory.h" />
@@ -200,6 +204,7 @@
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />
     <ClInclude Include="..\..\Include\oBase\string_traits.h" />
+    <ClInclude Include="..\..\Include\oBase\tagged_pointer.h" />
     <ClInclude Include="..\..\Include\oBase\text_document.h" />
     <ClInclude Include="..\..\Include\oBase\threadpool.h" />
     <ClInclude Include="..\..\Include\oBase\throw.h" />

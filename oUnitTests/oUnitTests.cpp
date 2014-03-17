@@ -48,7 +48,7 @@ void InitEnv()
 	//
 	// In this case we're seeing that it is possible for DllMain 
 	// to be called on a thread that is NOT the main thread. Strange, no?
-	// This would cause TBB, the underlying implementation of oConcurrency::parallel_for
+	// This would cause TBB, the underlying implementation of ouro::parallel_for
 	// and friends, to be initialized in a non-main thread. This upsets TBB,
 	// so disable static init of TBB and force initialization here in a 
 	// function known to execute on the main thread.
@@ -237,7 +237,6 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			"oGPU",
 
 			"oCompute",
-			"oConcurrency",
 			"oBasis",
 			"oPlatform",
 		};
@@ -252,7 +251,6 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			"oGPU_.*",
 
 			"oCompute_.*",
-			"oConcurrency_.*",
 			"oBasis_.*",
 			"PLATFORM_.*",
 		};

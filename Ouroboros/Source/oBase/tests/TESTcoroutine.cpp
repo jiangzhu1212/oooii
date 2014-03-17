@@ -22,18 +22,50 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/tests/oConcurrencyTests.h>
-#include "oTestIntegration.h"
+#include <oBase/coroutine.h>
+#include <oBase/future.h>
+#include <thread>
 
-using namespace oConcurrency::tests;
+namespace ouro {
+	namespace tests {
 
-#define oTEST_REGISTER_CONCURRENCY_TEST0(_Name) oTEST_THROWS_REGISTER0(oCONCAT(oConcurrency_, _Name), oCONCAT(TEST, _Name))
-#define oTEST_REGISTER_CONCURRENCY_TEST(_Name) oTEST_THROWS_REGISTER(oCONCAT(oConcurrency_, _Name), oCONCAT(TEST, _Name))
-#define oTEST_REGISTER_CONCURRENCY_TEST_BUGGED0(_Name, _Bugged) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oConcurrency_, _Name), oCONCAT(TEST, _Name), _Bugged)
-#define oTEST_REGISTER_CONCURRENCY_TEST_BUGGED(_Name, _Bugged) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oConcurrency_, _Name), oCONCAT(TEST, _Name), _Bugged)
+class MyContext : public coroutine_context
+{
+public:
+	MyContext() 
+		: Flag(false)
+		, Done(false)
+		, Counter(0)
+	{}
 
-oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_queue);
-oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_queue_concrt);
-oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_queue_opt);
-oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_queue_tbb);
-oTEST_REGISTER_CONCURRENCY_TEST0(coroutine);
+	future<void> Future;
+	bool Flag;
+	bool Done;
+	int Counter;
+};
+
+void MyExecute(MyContext& _MyContext)
+{
+	_MyContext.Counter++;
+	oCoBegin(&_MyContext);
+	_MyContext.Future = ouro::async([&](){ _MyContext.Flag = true; });
+	oCoYield(); // this causes MyExecute to return, but it has marked where it has left off
+	if (!_MyContext.Future.is_ready())
+		return;
+	_MyContext.Done = true;
+	oCoEnd();
+}
+
+void TESTcoroutine()
+{
+	MyContext myContext;
+
+	while (!myContext.Done)
+	{
+		MyExecute(myContext);
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
+	}
+}
+
+	} // namespace tests
+} // namespace oConcurrency

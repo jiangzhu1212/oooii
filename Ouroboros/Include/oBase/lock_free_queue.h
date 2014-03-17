@@ -25,14 +25,14 @@
 // Single-reader, single-writer queue that uses no explicit mechanism for
 // synchronization.
 #pragma once
-#ifndef oConcurrency_lock_free_queue_h
-#define oConcurrency_lock_free_queue_h
+#ifndef oBase_lock_free_queue_h
+#define oBase_lock_free_queue_h
 
-#include <oConcurrency/oConcurrency.h>
+#include <oBase/concurrency.h>
 #include <atomic>
 #include <memory>
 
-namespace oConcurrency {
+namespace ouro {
 
 template<typename T, typename Alloc = std::allocator<T>>
 class lock_free_queue
@@ -148,6 +148,6 @@ typename lock_free_queue<T, Alloc>::size_type lock_free_queue<T, Alloc>::size() 
 	return ((Write + NumElements) - Read) % NumElements;
 }
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif

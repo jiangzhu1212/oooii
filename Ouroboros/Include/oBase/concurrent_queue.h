@@ -24,30 +24,16 @@
  **************************************************************************/
 // A thread-safe queue (FIFO) that uses atomics to ensure concurrency. This 
 // implementation is based on The Maged Michael/Michael Scott paper cited below.
-// I have benchmarked this against an implementation of the Optimistic FIFO by
-// Edya Ladan-Mozes/Nir Shavit as well as tbb's concurrent_queue and concrt's
-// concurrent_queue and found that in the types of situations I use queues, that
-// the MS-queue remains the fastest. Typically my benchmark cases allow for
-// an #ifdef exchange of queue types to test new implementations and benchmark,
-// so it is as close to apples to apples as I can get. The main benchmark case
-// I have is a single work queue thread pool, so contention on the list is high.
-// It performs within 10% (sometimes slower, sometimes faster) of Window's
-// thread pool, so I guess that one is implemented the same way and just 
-// optimized a bit better. NOTE: This thread pool is for hammering a concurrent
-// queue and for being a control case in benchmarks of queues and of other 
-// systems. When a real thread pool is required our production code currently
-// uses TBB which is a full 4x to 5x faster than Windows or the custom 
-// thread pool.
 #pragma once
-#ifndef oConcurrency_concurrent_queue_h
-#define oConcurrency_concurrent_queue_h
+#ifndef oBase_concurrent_queue_h
+#define oBase_concurrent_queue_h
 
-#include <oConcurrency/oConcurrency.h>
+#include <oBase/concurrency.h>
 #include <oBase/concurrent_block_allocator.h>
-#include <oConcurrency/tagged_pointer.h>
+#include <oBase/tagged_pointer.h>
 #include <atomic>
 
-namespace oConcurrency {
+namespace ouro {
 
 template<typename T>
 class concurrent_queue
@@ -131,7 +117,7 @@ private:
 
 	oCACHE_ALIGNED(pointer_t Head);
 	oCACHE_ALIGNED(pointer_t Tail);
-	oCACHE_ALIGNED(ouro::concurrent_block_allocator_t<node_t> Pool);
+	oCACHE_ALIGNED(concurrent_block_allocator_t<node_t> Pool);
 	
 	void internal_push(node_t* _pNode);
 };
@@ -268,6 +254,6 @@ typename concurrent_queue<T>::size_type concurrent_queue<T>::size() const
 	return Pool.count_allocated() - 1;
 }
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif
