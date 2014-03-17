@@ -22,14 +22,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/concurrent_stack.h>
+#include <oBase/concurrent_stack.h>
 #include <oBase/concurrency.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
 
-using namespace ouro;
-
-namespace oConcurrency {
+namespace ouro {
 	namespace tests {
 
 struct Node
@@ -128,4 +126,4 @@ void TESTconcurrent_stack()
 }
 
 	} // namespace tests
-} // namespace oConcurrency
+} // namespace ouro

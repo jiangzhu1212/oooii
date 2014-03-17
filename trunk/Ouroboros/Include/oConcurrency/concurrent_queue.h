@@ -43,7 +43,7 @@
 #define oConcurrency_concurrent_queue_h
 
 #include <oConcurrency/oConcurrency.h>
-#include <oConcurrency/block_allocator.h>
+#include <oBase/concurrent_block_allocator.h>
 #include <oConcurrency/tagged_pointer.h>
 #include <atomic>
 
@@ -131,7 +131,7 @@ private:
 
 	oCACHE_ALIGNED(pointer_t Head);
 	oCACHE_ALIGNED(pointer_t Tail);
-	oCACHE_ALIGNED(block_allocator_t<node_t> Pool);
+	oCACHE_ALIGNED(ouro::concurrent_block_allocator_t<node_t> Pool);
 	
 	void internal_push(node_t* _pNode);
 };

@@ -32,10 +32,8 @@ using namespace oConcurrency::tests;
 #define oTEST_REGISTER_CONCURRENCY_TEST_BUGGED0(_Name, _Bugged) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oConcurrency_, _Name), oCONCAT(TEST, _Name), _Bugged)
 #define oTEST_REGISTER_CONCURRENCY_TEST_BUGGED(_Name, _Bugged) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oConcurrency_, _Name), oCONCAT(TEST, _Name), _Bugged)
 
-oTEST_REGISTER_CONCURRENCY_TEST0(block_allocator);
 oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_queue);
 oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_queue_concrt);
 oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_queue_opt);
 oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_queue_tbb);
-oTEST_REGISTER_CONCURRENCY_TEST0(concurrent_stack);
 oTEST_REGISTER_CONCURRENCY_TEST0(coroutine);

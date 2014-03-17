@@ -22,25 +22,25 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/block_allocator.h>
+#include <oBase/concurrent_block_allocator.h>
 #include <oBase/assert.h>
 #include <oBase/concurrency.h>
 #include <oBase/throw.h>
 #include <vector>
 
-namespace oConcurrency {
+namespace ouro {
 	namespace tests {
 
-struct TestObj
+struct test_obj
 {
-	TestObj(bool* _pDestroyed)
+	test_obj(bool* _pDestroyed)
 		: Value(0xc001c0de)
 		, pDestroyed(_pDestroyed)
 	{
 		*pDestroyed = false;
 	}
 
-	~TestObj()
+	~test_obj()
 	{
 		*pDestroyed = true;
 	}
@@ -49,22 +49,22 @@ struct TestObj
 	bool* pDestroyed;
 };
 
-void TESTblock_allocator()
+void TESTconcurrent_block_allocator()
 {
 	static const int NumBlocks = 2000;
 	static const int NumBlocksPerChunk = 10;
-	std::unique_ptr<oConcurrency::block_allocator_t<TestObj>> pAllocator(new oConcurrency::block_allocator_t<TestObj>(NumBlocksPerChunk));
+	concurrent_block_allocator_t<test_obj> Allocator(NumBlocksPerChunk);
 	try 
 	{
 		bool destroyed[NumBlocks];
 		memset(destroyed, 0, sizeof(destroyed));
 
-		TestObj* tests[NumBlocks];
+		test_obj* tests[NumBlocks];
 		memset(tests, 0xaa, sizeof(tests));
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
-			tests[_Index] = pAllocator->construct(&destroyed[_Index]);
+			tests[_Index] = Allocator.construct(&destroyed[_Index]);
 			tests[_Index]->Value = _Index;
 		});
 
@@ -76,36 +76,36 @@ void TESTblock_allocator()
 		// conclusion that all chunks are exhausted and BOTH decide to create new 
 		// chunks. If that happens on the last iteration of the test, then more than
 		// expected chunks might be created.
-		size_t currentNumChunks = pAllocator->num_chunks();
+		size_t currentNumChunks = Allocator.num_chunks();
 		oCHECK(currentNumChunks >= expectedChunks, "Unexpected number of chunks allocated");
 
-		pAllocator->shrink(2);
-		oCHECK(pAllocator->num_chunks() == currentNumChunks, "Unexpected number of chunks allocated (after false shrink try)"); // shouldn't modify because there is 100% allocation
+		Allocator.shrink(2);
+		oCHECK(Allocator.num_chunks() == currentNumChunks, "Unexpected number of chunks allocated (after false shrink try)"); // shouldn't modify because there is 100% allocation
 
-		oTRACE("oConcurrency::parallel_for { pAllocator->Destroy }");
+		oTRACE("oConcurrency::parallel_for { Allocator.Destroy }");
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
-			pAllocator->destroy(tests[_Index]);
+			Allocator.destroy(tests[_Index]);
 		});
 
-		pAllocator->shrink(2);
-		oCHECK(pAllocator->num_chunks() == 2, "Unexpected number of chunks allocated (after real shrink)");
+		Allocator.shrink(2);
+		oCHECK(Allocator.num_chunks() == 2, "Unexpected number of chunks allocated (after real shrink)");
 
-		pAllocator->reserve(5 * pAllocator->num_blocks_per_chunk());
-		oCHECK(pAllocator->num_chunks() == 5, "Unexpected number of chunks allocated (after grow)");
+		Allocator.reserve(5 * Allocator.num_blocks_per_chunk());
+		oCHECK(Allocator.num_chunks() == 5, "Unexpected number of chunks allocated (after grow)");
 
-		pAllocator->shrink(0);
-		oCHECK(pAllocator->num_chunks() == 0, "Unexpected number of chunks allocated (after 2nd shrink)");
+		Allocator.shrink(0);
+		oCHECK(Allocator.num_chunks() == 0, "Unexpected number of chunks allocated (after 2nd shrink)");
 
 		oTRACE("oConcurrency::parallel_for { if (odd) Destroy }");
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
-			tests[_Index] = pAllocator->construct(&destroyed[_Index]);
+			tests[_Index] = Allocator.construct(&destroyed[_Index]);
 			tests[_Index]->Value = _Index;
 			if (_Index & 0x1)
-				pAllocator->destroy(tests[_Index]);
+				Allocator.destroy(tests[_Index]);
 		});
 
 		oTRACE("ouro::parallel_for { Destroy remaining evens }");
@@ -117,16 +117,16 @@ void TESTblock_allocator()
 			else
 			{
 				oCHECK(tests[i]->Value == i, "Constructor did not occur for allocation %d", i);
-				pAllocator->destroy(tests[i]);
+				Allocator.destroy(tests[i]);
 			}
 		}
 	}
 
 	catch (std::exception&)
 	{
-		pAllocator->clear();
+		Allocator.clear();
 	}
 }
 
 	} // namespace test
-} // namespace oConcurrency
+} // namespace ouro

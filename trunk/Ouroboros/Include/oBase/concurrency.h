@@ -35,6 +35,10 @@
 
 namespace ouro {
 
+// This function should be implemented for queue types since some "queues" have 
+// valid reasons for being LIFOs.
+template<typename T> struct is_fifo : std::true_type {};
+
 // defines a subset of functions that can be waited on.
 class task_group
 {

@@ -35,12 +35,10 @@ namespace ouro { class test_services; }
 namespace oConcurrency {
 	namespace tests {
 
-		void TESTblock_allocator();
 		void TESTconcurrent_queue();
 		void TESTconcurrent_queue_concrt();
 		void TESTconcurrent_queue_opt();
 		void TESTconcurrent_queue_tbb();
-		void TESTconcurrent_stack();
 		void TESTcoroutine();
 
 	} // namespace tests

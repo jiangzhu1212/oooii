@@ -12,18 +12,12 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="block_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\thread_safe.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\block_allocator.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue.h">
@@ -54,12 +48,6 @@
       <Filter>oConcurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oConcurrency\oConcurrency.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack.h">
-      <Filter>oConcurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack_traits.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
   </ItemGroup>

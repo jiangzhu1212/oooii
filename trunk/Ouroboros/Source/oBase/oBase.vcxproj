@@ -47,6 +47,7 @@
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="aabox.cpp" />
     <ClCompile Include="color.cpp" />
+    <ClCompile Include="concurrent_block_allocator.cpp" />
     <ClCompile Include="date.cpp" />
     <ClCompile Include="future.cpp" />
     <ClCompile Include="gzip.cpp" />
@@ -140,10 +141,13 @@
     <ClInclude Include="..\..\Include\oBase\colors.h" />
     <ClInclude Include="..\..\Include\oBase\compression.h" />
     <ClInclude Include="..\..\Include\oBase\concurrency.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_block_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_fixed_block_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_stack.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_stack_traits.h" />
     <ClInclude Include="..\..\Include\oBase\config.h" />
     <ClInclude Include="..\..\Include\oBase\container_support.h" />
     <ClInclude Include="..\..\Include\oBase\countdown_latch.h" />

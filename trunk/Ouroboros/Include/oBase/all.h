@@ -36,10 +36,12 @@
 #include <oBase/colors.h>
 #include <oBase/compression.h>
 #include <oBase/concurrency.h>
+#include <oBase/concurrent_block_allocator.h>
 #include <oBase/concurrent_fixed_block_allocator.h>
 #include <oBase/concurrent_index_allocator.h>
 #include <oBase/concurrent_linear_allocator.h>
 #include <oBase/concurrent_object_pool.h>
+#include <oBase/concurrent_stack.h>
 #include <oBase/countdown_latch.h>
 #include <oBase/date.h>
 #include <oBase/dec3n.h>

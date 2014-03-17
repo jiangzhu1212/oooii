@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="block_allocator.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -29,11 +28,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oConcurrency\all.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\block_allocator.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_opt.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack.h" />
-    <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack_traits.h" />
     <ClInclude Include="..\..\Include\oConcurrency\coroutine.h" />
     <ClInclude Include="..\..\Include\oConcurrency\fixed_block_allocator.h" />
     <ClInclude Include="..\..\Include\oConcurrency\joinable_threadpool_base.h" />

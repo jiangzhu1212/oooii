@@ -22,13 +22,12 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oConcurrency/block_allocator.h>
+#include <oBase/concurrent_block_allocator.h>
 #include <oBase/byte.h>
 
-using namespace ouro;
-using namespace oConcurrency;
+namespace ouro {
 
-block_allocator::block_allocator(size_type _BlockSize, size_type _NumBlocksPerChunk, const allocate_t& _PlatformAllocate, const deallocate_t& _PlatformDeallocate)
+concurrent_block_allocator::concurrent_block_allocator(size_type _BlockSize, size_type _NumBlocksPerChunk, const allocate_t& _PlatformAllocate, const deallocate_t& _PlatformDeallocate)
 	: BlockSize(_BlockSize)
 	, NumBlocksPerChunk(_NumBlocksPerChunk)
 	, ChunkSize(static_cast<size_type>(byte_align(sizeof(chunk_t) + _BlockSize * _NumBlocksPerChunk, fba_t::default_alignment)))
@@ -39,12 +38,12 @@ block_allocator::block_allocator(size_type _BlockSize, size_type _NumBlocksPerCh
 {
 }
 
-block_allocator::~block_allocator()
+concurrent_block_allocator::~concurrent_block_allocator()
 {
 	shrink(0);
 }
 
-void* block_allocator::allocate()
+void* concurrent_block_allocator::allocate()
 {
 	void* p = nullptr;
 
@@ -93,7 +92,7 @@ void* block_allocator::allocate()
 	return p;
 }
 
-void block_allocator::deallocate(void* _Pointer)
+void concurrent_block_allocator::deallocate(void* _Pointer)
 {
 	fba_t* pAllocator = find_chunk_allocator(_Pointer);
 	if (!pAllocator)
@@ -106,15 +105,15 @@ void block_allocator::deallocate(void* _Pointer)
 	pAllocator->deallocate(BlockSize, NumBlocksPerChunk, _Pointer);
 }
 
-block_allocator::chunk_t* block_allocator::allocate_chunk()
+concurrent_block_allocator::chunk_t* concurrent_block_allocator::allocate_chunk()
 {
-	chunk_t* c = reinterpret_cast<chunk_t*>(thread_cast<block_allocator*>(this)->PlatformAllocate(ChunkSize));
+	chunk_t* c = reinterpret_cast<chunk_t*>(PlatformAllocate(ChunkSize));
 	c->Allocator = std::move(fba_t(byte_align(c+1, fba_t::default_alignment), BlockSize, NumBlocksPerChunk));
 	c->next = nullptr;
 	return c;
 }
 
-block_allocator::fba_t* block_allocator::find_chunk_allocator(void* _Pointer) const
+concurrent_block_allocator::fba_t* concurrent_block_allocator::find_chunk_allocator(void* _Pointer) const
 {
 	// This read is a bit racy, but it's only a hint, so use it without concern
 	// for its concurrent changing.
@@ -138,7 +137,7 @@ block_allocator::fba_t* block_allocator::find_chunk_allocator(void* _Pointer) co
 	return nullptr;
 }
 
-void block_allocator::clear()
+void concurrent_block_allocator::clear()
 {
 	chunk_t* c = Chunks.peek();
 	while (c)
@@ -148,7 +147,7 @@ void block_allocator::clear()
 	}
 }
 
-void block_allocator::reserve(size_type _NumElements)
+void concurrent_block_allocator::reserve(size_type _NumElements)
 {
 	bool additional = ((_NumElements % NumBlocksPerChunk) == 0) ? 0 : 1;
 	size_type NewNumChunks = additional + (_NumElements / NumBlocksPerChunk);
@@ -166,7 +165,7 @@ void block_allocator::reserve(size_type _NumElements)
 	}
 }
 
-void block_allocator::shrink(size_type _KeepCount)
+void concurrent_block_allocator::shrink(size_type _KeepCount)
 {
 	chunk_t* c = Chunks.pop_all();
 	chunk_t* toFree = nullptr;
@@ -206,7 +205,7 @@ void block_allocator::shrink(size_type _KeepCount)
 	pLastAlloc = pLastDealloc = nullptr;
 }
 
-bool block_allocator::valid(void* _Pointer) const
+bool concurrent_block_allocator::valid(void* _Pointer) const
 {
 	if (!_Pointer)
 		return false;
@@ -221,7 +220,7 @@ bool block_allocator::valid(void* _Pointer) const
 	return false;
 }
 
-bool block_allocator::has_outstanding_allocations() const
+bool concurrent_block_allocator::has_outstanding_allocations() const
 {
 	chunk_t* c = Chunks.peek();
 	while (c)
@@ -233,7 +232,7 @@ bool block_allocator::has_outstanding_allocations() const
 	return false;
 }
 
-block_allocator::size_type block_allocator::count_available() const
+concurrent_block_allocator::size_type concurrent_block_allocator::count_available() const
 {
 	size_type n = 0;
 	chunk_t* c = Chunks.peek();
@@ -244,3 +243,5 @@ block_allocator::size_type block_allocator::count_available() const
 	}
 	return n;
 }
+
+} // namespace ouro

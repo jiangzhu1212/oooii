@@ -23,25 +23,24 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // Traits for concurrent_stack. Of note is that there's not enough bits in 
-// a 32-bit implementation, so this always uses 64-bit atomics which may not
+// a 32-bit implementation so this always uses 64-bit atomics which may not
 // be supported by simpler 32-bit architectures.
-#ifndef oConcurrency_concurrent_stack_traits_h
-#define oConcurrency_concurrent_stack_traits_h
+#ifndef oBase_concurrent_stack_traits_h
+#define oBase_concurrent_stack_traits_h
 
 #include <oBase/config.h>
-#include <oConcurrency/oConcurrency.h> // for is_fifo
 
-// @tony: there's a warning about not handling registers correctly in the 
-// 32-bit std::atomic implementation for 64-bit swaps in VS2012's xatomic.h
-// that results in registers being corrupt so fall back on basic atomics 
-// until the lib gets fixed.
+// There's a warning about not handling registers correctly in the 32-bit 
+// std::atomic implementation for 64-bit swaps in VS2012's xatomic.h that 
+// results in registers being corrupt so fall back on basic atomics until 
+// the lib gets fixed.
 #ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
 	#include <oHLSL/oHLSLAtomics.h>
 #else
 	#include <atomic>
 #endif
 
-namespace oConcurrency {
+namespace ouro {
 
 struct concurrent_stack_traits64
 {
@@ -84,6 +83,6 @@ struct concurrent_stack_traits64
 	}
 };
 
-} // namespace oConcurrency
+} // namespace ouro
 
 #endif
