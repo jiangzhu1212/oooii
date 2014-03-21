@@ -26,6 +26,7 @@
 #include <oCore/process.h>
 #include <oCore/system.h>
 #include <oCore/windows/win_error.h>
+#include <oCore/windows/win_iocp.h>
 #include <oBase/date.h>
 #include <oBase/macros.h>
 #include <oBase/string.h>
@@ -57,6 +58,17 @@ const char* as_string(const filesystem::file_type::value& _Type)
 		case filesystem::file_type::type_unknown: return "type_unknown";
 		case filesystem::file_type::read_only_directory_file: return "read_only_directory_file";
 		case filesystem::file_type::read_only_file: return "read_only_file";
+		default: break;
+	}
+	return "?";
+}
+
+const char* as_string(const filesystem::async_finally::value& _Event)
+{
+	switch (_Event)
+	{
+		case filesystem::async_finally::do_nothing: return "do_nothing";
+		case filesystem::async_finally::free_buffer: return "free_buffer";
 		default: break;
 	}
 	return "?";
@@ -810,6 +822,118 @@ unique_ptr<char[]> load(const path& _Path, size_t* _pSize, load_option::value _L
 	}
 
 	return p;
+}
+
+struct iocp_reader
+{
+	void* buffer;
+	OVERLAPPED* overlapped;
+	HANDLE handle;
+	size_t file_size;
+	path file_path;
+	int error_code;
+	bool buffered;
+	std::function<async_finally::value(const path& _Path, void* _pBuffer, size_t _Size)> completion;
+};
+
+static void iocp_close(iocp_reader* _Reader, size_t _Unused = 0)
+{
+	async_finally::value fin = async_finally::free_buffer;
+	if (_Reader->completion)
+		fin = _Reader->completion(std::ref(_Reader->file_path), _Reader->buffer, _Reader->file_size);
+
+	if (fin == async_finally::free_buffer && _Reader->buffer)
+	{
+		delete [] _Reader->buffer;
+		_Reader->buffer = nullptr;
+	}
+
+	if (_Reader->handle != INVALID_HANDLE_VALUE)
+	{
+		_Reader->error_code = CloseHandle(_Reader->handle) ? 0 : GetLastError();
+		_Reader->handle = INVALID_HANDLE_VALUE;
+	}
+
+	_Reader->file_size = 0;
+	_Reader->completion = nullptr;
+	if (_Reader->overlapped)
+		windows::iocp::disassociate(_Reader->overlapped);
+	delete _Reader;
+}
+
+static void iocp_open(iocp_reader* _Reader, bool _Buffered = true)
+{
+	_Reader->buffer = nullptr;
+	_Reader->overlapped = nullptr;
+	_Reader->buffered = _Buffered;
+	_Reader->handle = CreateFile(_Reader->file_path
+		, GENERIC_READ
+		, FILE_SHARE_READ
+		, nullptr
+		, OPEN_EXISTING
+		, FILE_FLAG_OVERLAPPED | (_Reader->buffered ? 0 : FILE_FLAG_NO_BUFFERING)
+		, nullptr);
+	if (_Reader->handle != INVALID_HANDLE_VALUE)
+	{
+		_Reader->error_code = 0;
+		DWORD hi = 0;
+		_Reader->file_size = GetFileSize(_Reader->handle, &hi);
+		if (sizeof(_Reader->file_size) > sizeof(DWORD))
+			_Reader->file_size |= ((size_t)hi << 32);
+	}
+	else
+	{
+		int errc = GetLastError();
+		iocp_close(_Reader);
+		_Reader->error_code = errc;
+	}
+}
+
+static void iocp_read(iocp_reader* _Reader, size_t _Offset = 0)
+{
+	_Reader->overlapped = windows::iocp::associate(_Reader->handle, std::bind(iocp_close, _Reader, std::placeholders::_1));
+	_Reader->overlapped->Offset = (DWORD)_Offset;
+	_Reader->overlapped->OffsetHigh = sizeof(size_t) > sizeof(DWORD) ? DWORD(_Offset >> 32) : 0;
+	if (!ReadFile(_Reader->handle, _Reader->buffer, as_uint(_Reader->file_size), nullptr, _Reader->overlapped))
+	{
+		int errc = GetLastError();
+		if (errc != ERROR_IO_PENDING)
+		{
+			iocp_close(_Reader);
+			_Reader->error_code = errc;
+		}
+	}
+}
+
+static size_t iocp_read_size(const iocp_reader* _Reader)
+{
+	return _Reader->buffered ? _Reader->file_size : byte_align(_Reader->file_size, 4096);
+}
+
+void iocp_open_and_read(void* _pContext)
+{
+	iocp_reader* r = (iocp_reader*)_pContext;
+
+	iocp_open(r, true);
+	if (!r->error_code)
+	{
+		r->buffer = new char[iocp_read_size(r)];
+		if (r->buffer)
+			iocp_read(r);
+		else
+			iocp_close(r);
+	}
+}
+
+void async_load(const path& _Path, const std::function<async_finally::value(const path& _Path, void* _pBuffer, size_t _Size)>& _OnComplete, load_option::value _LoadOption)
+{
+	if (_LoadOption != load_option::binary_read)
+		oTHROW_INVARG("only binary_read is currently supported");
+
+	iocp_reader* r = new iocp_reader();
+	r->file_path = _Path;
+	r->completion = _OnComplete;
+	windows::iocp::post(iocp_open_and_read, r);
 }
 
 	} // namespace filesystem

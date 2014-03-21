@@ -33,13 +33,24 @@
 #include <thread>
 #include <vector>
 
-#define oSHUTDOWN 1
-#define oCOMPLETION 2
-
 using namespace std;
 
 namespace ouro {
 	namespace windows {
+
+namespace op
+{	enum value {
+
+	shutdown = 1,
+	completion,
+	
+	// This is used for the numbytes field instead of the key so that both the 
+	// key and overlapped pointer-sized parameters can be used.
+	post = ~0u,
+
+};}
+
+typedef void (*task_t)(void*);
 
 struct iocp_overlapped : public OVERLAPPED
 {
@@ -67,7 +78,7 @@ public:
 	OVERLAPPED* associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _OnCompletion);
 	void disassociate(OVERLAPPED* _pOverlapped);
 	void post_completion(OVERLAPPED* _pOverlapped);
-
+	void post(task_t _Task, void* _pContext);
 private:
 	iocp_threadpool() : hIoPort(nullptr), NumRunningThreads(0), NumAssociations(0) {}
 	iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers = 0);
@@ -104,9 +115,14 @@ void iocp_threadpool::work()
 		iocp_overlapped* ol = nullptr;
 		if (GetQueuedCompletionStatus(hIoPort, &nBytes, &key, (OVERLAPPED**)&ol, INFINITE))
 		{
-			if (oSHUTDOWN == key)
+			if (nBytes == op::post)
+			{
+				task_t task = (task_t)key;
+				task((void*)ol);
+			}
+			else if (op::shutdown == key)
 				break;
-			else if (oCOMPLETION == key)
+			else if (op::completion == key)
 			{
 				if (ol->Task)
 					ol->Task(nBytes);
@@ -172,10 +188,10 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 iocp_threadpool::~iocp_threadpool()
 {
 	if (!wait_for(20000))
-		throw runtime_error("timed out waiting for iocp completion");
+		oTHROW(timed_out, "timed out waiting for iocp completion");
 
 	for (auto& w : Workers)
-		PostQueuedCompletionStatus(hIoPort, 0, oSHUTDOWN, nullptr);
+		PostQueuedCompletionStatus(hIoPort, 0, op::shutdown, nullptr);
 
 	for (auto& w : Workers)
 		w.join();
@@ -241,7 +257,7 @@ OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const function<void(size_
 	iocp_overlapped* ol = pool.allocate();
 	if (ol)
 	{
-		if (hIoPort != CreateIoCompletionPort(_Handle, hIoPort, oCOMPLETION, static_cast<DWORD>(Workers.size())))
+		if (hIoPort != CreateIoCompletionPort(_Handle, hIoPort, op::completion, static_cast<DWORD>(Workers.size())))
 		{
 			disassociate(ol);
 			oVB(false);
@@ -267,7 +283,12 @@ void iocp_threadpool::disassociate(OVERLAPPED* _pOverlapped)
 
 void iocp_threadpool::post_completion(OVERLAPPED* _pOverlapped)
 {
-	PostQueuedCompletionStatus(hIoPort, 0, oCOMPLETION, _pOverlapped);
+	PostQueuedCompletionStatus(hIoPort, 0, op::completion, _pOverlapped);
+}
+
+void iocp_threadpool::post(task_t _Task, void* _pContext)
+{
+	PostQueuedCompletionStatus(hIoPort, (DWORD)op::post, (ULONG_PTR)_Task, (OVERLAPPED*)_pContext);
 }
 
 namespace iocp {
@@ -295,6 +316,11 @@ void disassociate(OVERLAPPED* _pOverlapped)
 void post_completion(OVERLAPPED* _pOverlapped)
 {
 	iocp_threadpool::singleton().disassociate(_pOverlapped);
+}
+
+void post(task_t _Task, void* _pContext)
+{
+	iocp_threadpool::singleton().post(_Task, _pContext);
 }
 
 void wait()
