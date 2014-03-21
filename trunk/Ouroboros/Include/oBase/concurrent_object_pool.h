@@ -96,7 +96,7 @@ void concurrent_object_pool<T>::deallocate(T* _pObject)
 {
 	if (!valid(_pObject))
 		throw std::invalid_argument("invalid object");
-	unsigned int index = (unsigned int)byte_diff(_pObject, pObjects);
+	unsigned int index = (unsigned int)index_of(_pObject, pObjects);
 	Allocator.deallocate(index);
 }
 
