@@ -1874,8 +1874,6 @@ void oWinSetIconAsync(HWND _hWnd, HICON _hIcon, bool _BigIcon)
 			case control_type::icon: PostMessage(_hWnd, STM_SETICON, (WPARAM)_hIcon, 0); break;
 			default: PostMessage(_hWnd, WM_SETICON, (WPARAM)(_BigIcon ? ICON_BIG : ICON_SMALL), (LPARAM)_hIcon); break;
 		}
-
-		oTHROW0(operation_not_permitted);
 	}
 }
 
