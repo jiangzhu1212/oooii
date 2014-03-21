@@ -132,8 +132,21 @@ static bool oSCCCheckPathHasChanges(const char** _pPathParts, size_t _NumPathPar
 			ModifiedFiles.push_back(_File);
 		});
 	}
-	catch (std::exception&)
+	catch (std::system_error& e)
 	{
+		if (e.code() == std::errc::no_such_file_or_directory)
+		{
+			oTRACEA("'%s' must be in the path for filtering to work", as_string(scc->protocol()));
+			return oErrorSetLast(std::errc::io_error, "'%s' must be in the path for filtering to work", as_string(scc->protocol()));
+		}
+		else
+			oTRACEA("oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible. (%s)", as_string(scc->protocol()), e.what());
+		return oErrorSetLast(std::errc::io_error, "oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible.", as_string(scc->protocol()));
+	}
+
+	catch (std::exception& e)
+	{
+		oTRACEA("oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible. (%s)", as_string(scc->protocol()), e.what());
 		return oErrorSetLast(std::errc::io_error, "oSCCPathHasChanges could not find modified files. This may indicate %s is not accessible.", as_string(scc->protocol()));
 	}
 
