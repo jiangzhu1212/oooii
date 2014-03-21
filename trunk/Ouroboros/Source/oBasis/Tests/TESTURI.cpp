@@ -128,7 +128,7 @@ static const oStringURIPair sReferenceMakeRelativeExamples[] =
 	oStringURIPair(uri_string("file://DATA/"),										uri_string("../../")),
 };
 
-static bool Test_oURIIsURI()
+bool Test_oURIIsURI()
 {
 	// Valid URIs
 	oTESTB0(oURIIsURI("http:"));
@@ -156,7 +156,7 @@ static bool Test_oURIIsURI()
 	return true;
 }
 
-static bool Test_oURIIsAbsolute()
+bool Test_oURIIsAbsolute()
 {
 	// Valid Absolute URIs
 	oTESTB0(oURIIsAbsolute("http:"));
@@ -186,7 +186,7 @@ static bool Test_oURIIsAbsolute()
 	return true;
 }
 
-static bool Test_oURIIsSameDocument()
+bool Test_oURIIsSameDocument()
 {
 	oTESTB0(oURIIsSameDocument("", "file:///path/path2/file.txt"));
 	oTESTB0(oURIIsSameDocument("#some_item", "file:///path/path2/file.txt"));
@@ -209,7 +209,7 @@ static bool Test_oURIIsSameDocument()
 	return true;
 }
 
-static bool Test_oURIResolve()
+bool Test_oURIResolve()
 {
 	oFORI(i, sReferenceResolutionExamples)
 	{
@@ -227,7 +227,7 @@ static bool Test_oURIResolve()
 	return true;
 }
 
-static bool Test_oURIRelativize()
+bool Test_oURIRelativize()
 {
 	oFORI(i, sReferenceMakeRelativeExamples)
 	{
@@ -240,6 +240,9 @@ static bool Test_oURIRelativize()
 
 bool oBasisTest_oURI()
 {
+#ifdef _DEBUG
+	return oErrorSetLast(std::errc::permission_denied, "oURI test is deprecated and tool slow in debug");
+#else
 	oURIParts parts;
 	oFORI(i, sTestUris)
 	{
@@ -297,5 +300,6 @@ bool oBasisTest_oURI()
 
 	oErrorSetLast(0, "");
 	return true;
+#endif
 }
 
