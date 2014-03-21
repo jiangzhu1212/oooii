@@ -23,8 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/filesystem.h>
+#include <oCore/windows/win_iocp.h>
 #include <oBase/assert.h>
+#include <oBase/event.h>
 #include <oBase/finally.h>
+#include <oBase/timer.h>
 
 #include "../../test_services.h"
 
@@ -81,10 +84,39 @@ static void TESTfilesystem_map(test_services& _Services)
 	mapped = nullptr; // signal Unmap to noop
 }
 
+void TESTfilesystem_async(test_services& _Services)
+{
+	path_string StrTestPath;
+	path TestPath = _Services.test_root_path(StrTestPath, StrTestPath.capacity());
+	TestPath /= "Test/Geometry/buddha.obj";
+	if (!exists(TestPath))
+		oTHROW(no_such_file_or_directory, "not found: %s", TestPath.c_str());
+
+	event e;
+	timer t;
+	for(int i = 0; i < 32; i++)
+	{
+		async_load(TestPath, [&,i](const path& _Path, void* _pBuffer, size_t _Size)->async_finally::value
+		{
+			size_t s = _Size;
+			char* p = (char*)_pBuffer;
+			e.set(1<<i);
+			return async_finally::free_buffer;
+		});
+	}
+
+	double after = t.milliseconds();
+	oCHECK(e.wait_for(std::chrono::seconds(20), ~0u), "timed out");
+	double done = t.milliseconds();
+
+	_Services.report("all dispatches: %.02fms | all completed: %.02fms", after, done);
+}
+
 void TESTfilesystem(test_services& _Services)
 {
 	TESTfilesystem_paths();
 	TESTfilesystem_map(_Services);
+	TESTfilesystem_async(_Services);
 }
 
 	} // namespace tests

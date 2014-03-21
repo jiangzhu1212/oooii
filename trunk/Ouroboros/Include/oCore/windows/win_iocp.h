@@ -52,6 +52,9 @@ void disassociate(OVERLAPPED* _pOverlapped);
 // may not post the overlapped to IOCP for handling so call this in such cases.
 void post_completion(OVERLAPPED* _pOverlapped);
 
+// Executes the specified task on a completion port thread.
+void post(void (*_Task)(void* _pContext), void* _pContext);
+
 // Waits until all associated IO operations have completed
 void wait();
 bool wait_for(unsigned int _TimeoutMS);

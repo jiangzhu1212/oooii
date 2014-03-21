@@ -179,6 +179,12 @@ const std::error_category& filesystem_category();
 	recurse,
 };}
 
+/* enum class */ namespace async_finally
+{	enum value {
+	do_nothing, // client code owns the buffer, free it with delete []
+	free_buffer, // system frees the buffer
+};}
+
 struct space_info
 {
 	unsigned long long available;
@@ -359,6 +365,11 @@ void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_op
 // If loaded as text, the allocation will be padded and a nul terminator will be
 // added so the buffer can immediately be used as a string.
 std::unique_ptr<char[]> load(const path& _Path, size_t* _pSize = nullptr, load_option::value _LoadOption = load_option::binary_read);
+
+// Similar to load, this will load the complete file into an allocated buffer but
+// the opem, allocate, read and close occurs in another thread as well as the 
+// _OnComplete, so ensure its implementation is thread safe.
+void async_load(const path& _Path, const std::function<async_finally::value(const path& _Path, void* _pBuffer, size_t _Size)>& _OnComplete, load_option::value _LoadOption = load_option::binary_read);
 
 class scoped_file
 {
