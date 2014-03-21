@@ -72,8 +72,8 @@ private:
 
 // For Windows API that returns BOOL and uses GetLastError(), this throws on 
 // failure.
-#define oVB(_BoolWinFn) do { if (!(_BoolWinFn)) throw ouro::windows::error(); } while(false)
+#define oVB(_BoolWinFn) do { if (!(_BoolWinFn)) throw ::ouro::windows::error(); } while(false)
 
-#define oVB_MSG(_BoolWinFn, _Format, ...) do { if (!(_BoolWinFn)) { char msg[1024]; _snprintf_s(msg, sizeof(msg), _Format, ## __VA_ARGS__); throw ouro::windows::error(msg); } } while(false)
+#define oVB_MSG(_BoolWinFn, _Format, ...) do { if (!(_BoolWinFn)) { char msg[1024]; _snprintf_s(msg, sizeof(msg), _Format, ## __VA_ARGS__); throw ::ouro::windows::error(msg); } } while(false)
 
 #endif

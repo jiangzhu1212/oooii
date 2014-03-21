@@ -58,7 +58,7 @@ inline std::string formatf(const char* _Format, ...)
 #define oTHROW0(_SystemError) do { std::error_code ec = std::make_error_code(std::errc::_SystemError); throw std::system_error(ec, ec.message()); } while(false)
 #define oCHECK(_Expression, _Message, ...) do { if (!(_Expression)) oTHROW(protocol_error, _Message, ## __VA_ARGS__); } while(false)
 #define oCHECK0(_Expression) do { if (!(_Expression)) oTHROW(protocol_error, "%s", #_Expression); } while(false)
-#define oTHROW_INVARG(_Message, ...) do { throw std::invalid_argument(ouro::formatf(_Message, ## __VA_ARGS__)); } while(false)
+#define oTHROW_INVARG(_Message, ...) do { throw std::invalid_argument(::ouro::formatf(_Message, ## __VA_ARGS__)); } while(false)
 #define oTHROW_INVARG0() do { throw std::invalid_argument("invalid argument"); } while(false)
 
 #endif
