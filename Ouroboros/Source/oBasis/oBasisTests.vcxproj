@@ -27,7 +27,6 @@
     <ClCompile Include="Tests\oBasisTestStruct.cpp" />
     <ClCompile Include="Tests\TESTBuffer.cpp" />
     <ClCompile Include="Tests\TESTFilterChain.cpp" />
-    <ClCompile Include="Tests\TESTHash.cpp" />
     <ClCompile Include="Tests\TESTINISerialize.cpp" />
     <ClCompile Include="Tests\TESTJSONSerialize.cpp" />
     <ClCompile Include="Tests\TESTMath.cpp" />

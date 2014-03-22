@@ -30,28 +30,6 @@
 
 using namespace ouro;
 
-static size_t GetTotalPhysicalMemory()
-{
-	ouro::system::heap_info hi = ouro::system::get_heap_info();
-	return static_cast<size_t>(hi.total_physical);
-}
-
-static bool ResolvePath(path& _Path, const char* _RelativePath, bool _PathMustExist, oTest* _pTest)
-{
-	if (_PathMustExist)	
-		return _pTest->BuildPath(_Path, _RelativePath, oTest::DATA, oTest::FileMustExist);
-	else return _pTest->BuildPath(_Path, _RelativePath, oTest::DATA);
-}
-
-static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
-{
-	_pServices->ResolvePath = std::bind(ResolvePath, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, _pTest);
-	_pServices->AllocateAndLoadBuffer = std::bind(oStreamLoad, std::placeholders::_1, std::placeholders::_2, malloc, free, std::placeholders::_3, std::placeholders::_4);
-	_pServices->DeallocateLoadedBuffer = free;
-	_pServices->Rand = rand;
-	_pServices->GetTotalPhysicalMemory = GetTotalPhysicalMemory;
-}
-
 // Tests from oBasis follow a common form, so as a convenience and 
 // centralization, use this macro to get through the boilerplate bridging from
 // that test call to oTest's infrastructure.
@@ -102,7 +80,6 @@ static void oInitBasisServices(oTest* _pTest, oBasisTestServices* _pServices)
 	oTEST_REGISTER(oCONCAT(oBasis_, _BasisTestName))
 
 oTEST_REGISTER_BASIS_TEST(oFilterChain);
-oTEST_REGISTER_BASIS_TEST_WITH_SERVICES(oHash);
 oTEST_REGISTER_BASIS_TEST(oINISerialize);
 oTEST_REGISTER_BASIS_TEST(oJSONSerialize);
 oTEST_REGISTER_BASIS_TEST(oMath);

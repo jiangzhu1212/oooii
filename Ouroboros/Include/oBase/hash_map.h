@@ -131,9 +131,9 @@ public:
 
 	bool exists(const hash_type& _Key) const { return find_existing(_Key) != invalid_index; }
 
-	bool add(const hash_type& _Key, const value_type& _Value)
+	bool add(const hash_type& _Key, const value_type& _Value, bool _AllowResize = true)
 	{
-		if (occupancy() >= 75)
+		if (_AllowResize && occupancy() >= 75)
 			resize(size() * 2);
 		size_type i = find_existing_or_new(_Key);
 		if (i == invalid_index || Keys[i] || Size >= (Capacity-1)) // full or exists
@@ -144,9 +144,9 @@ public:
 		return true;
 	}
 
-	bool add(const hash_type& _Key, value_type&& _Value)
+	bool add(const hash_type& _Key, value_type&& _Value, bool _AllowResize = true)
 	{
-		if (occupancy() >= 75)
+		if (_AllowResize && occupancy() >= 75)
 			resize(size() * 2);
 		size_type i = find_existing_or_new(_Key);
 		if (i == invalid_index || Keys[i] || Size >= (Capacity-1)) // full or exists
