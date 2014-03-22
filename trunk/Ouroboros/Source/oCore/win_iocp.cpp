@@ -50,16 +50,11 @@ namespace op
 
 };}
 
-typedef void (*task_t)(void*);
-
 struct iocp_overlapped : public OVERLAPPED
 {
-	iocp_overlapped() { clear(); }
-
-	inline void clear() { memset(this, 0, sizeof(OVERLAPPED)); hFile = nullptr; Task = nullptr; }
-
-	HANDLE hFile;
-	function<void(size_t _NumBytes)> Task;
+	HANDLE handle;
+	iocp::completion_t completion;
+	void* context;
 };
 
 class iocp_threadpool
@@ -75,10 +70,10 @@ public:
 	bool wait_for(unsigned int _TimeoutMS);
 	void join();
 
-	OVERLAPPED* associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _OnCompletion);
+	OVERLAPPED* associate(HANDLE _Handle, iocp::completion_t _Completion, void* _pContext);
 	void disassociate(OVERLAPPED* _pOverlapped);
 	void post_completion(OVERLAPPED* _pOverlapped);
-	void post(task_t _Task, void* _pContext);
+	void post(iocp::completion_t _Completion, void* _pContext);
 private:
 	iocp_threadpool() : hIoPort(nullptr), NumRunningThreads(0), NumAssociations(0) {}
 	iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers = 0);
@@ -115,25 +110,28 @@ void iocp_threadpool::work()
 		iocp_overlapped* ol = nullptr;
 		if (GetQueuedCompletionStatus(hIoPort, &nBytes, &key, (OVERLAPPED**)&ol, INFINITE))
 		{
-			if (nBytes == op::post)
+			if (op::post == nBytes)
 			{
-				task_t task = (task_t)key;
-				task((void*)ol);
+				iocp::completion_t complete = (iocp::completion_t)key;
+				if (complete)
+					complete(ol, 0);
 			}
+
 			else if (op::shutdown == key)
 				break;
+			
 			else if (op::completion == key)
 			{
-				if (ol->Task)
-					ol->Task(nBytes);
+				if (ol->completion)
+					ol->completion(ol->context, nBytes);
 			}
 			else
 				oTHROW(operation_not_supported, "CompletionKey %p not supported", key);
 		}
 		else if (ol)
 		{
-			if (ol->Task)
-				ol->Task(0);
+			if (ol->completion)
+				ol->completion(ol->context, 0);
 		}
 	}
 	NumRunningThreads--;
@@ -251,7 +249,7 @@ void iocp_threadpool::join()
 		process_heap::deallocate(pInstance);
 }
 
-OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _OnCompletion)
+OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, iocp::completion_t _Completion, void* _pContext)
 {
 	NumAssociations++;
 	iocp_overlapped* ol = pool.allocate();
@@ -263,8 +261,10 @@ OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const function<void(size_
 			oVB(false);
 		}
 
-		ol->hFile = _Handle;
-		ol->Task = _OnCompletion;
+		memset(ol, 0, sizeof(OVERLAPPED));
+		ol->handle = _Handle;
+		ol->completion = _Completion;
+		ol->context = _pContext;
 	}
 
 	else
@@ -276,7 +276,6 @@ OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, const function<void(size_
 void iocp_threadpool::disassociate(OVERLAPPED* _pOverlapped)
 {
 	iocp_overlapped* ol = static_cast<iocp_overlapped*>(_pOverlapped);
-	ol->clear();
 	pool.deallocate(ol);
 	NumAssociations--;
 }
@@ -286,9 +285,9 @@ void iocp_threadpool::post_completion(OVERLAPPED* _pOverlapped)
 	PostQueuedCompletionStatus(hIoPort, 0, op::completion, _pOverlapped);
 }
 
-void iocp_threadpool::post(task_t _Task, void* _pContext)
+void iocp_threadpool::post(iocp::completion_t _Completion, void* _pContext)
 {
-	PostQueuedCompletionStatus(hIoPort, (DWORD)op::post, (ULONG_PTR)_Task, (OVERLAPPED*)_pContext);
+	PostQueuedCompletionStatus(hIoPort, (DWORD)op::post, (ULONG_PTR)_Completion, (OVERLAPPED*)_pContext);
 }
 
 namespace iocp {
@@ -303,9 +302,9 @@ void ensure_initialized()
 	iocp_threadpool::singleton();
 }
 
-OVERLAPPED* associate(HANDLE _Handle, const function<void(size_t _NumBytes)>& _OnCompletion)
+OVERLAPPED* associate(HANDLE _Handle, completion_t _Completion, void* _pContext)
 {
-	return iocp_threadpool::singleton().associate(_Handle, _OnCompletion);
+	return iocp_threadpool::singleton().associate(_Handle, _Completion, _pContext);
 }
 
 void disassociate(OVERLAPPED* _pOverlapped)
@@ -318,9 +317,9 @@ void post_completion(OVERLAPPED* _pOverlapped)
 	iocp_threadpool::singleton().disassociate(_pOverlapped);
 }
 
-void post(task_t _Task, void* _pContext)
+void post(completion_t _Completion, void* _pContext)
 {
-	iocp_threadpool::singleton().post(_Task, _pContext);
+	iocp_threadpool::singleton().post(_Completion, _pContext);
 }
 
 void wait()

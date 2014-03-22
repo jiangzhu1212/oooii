@@ -836,7 +836,7 @@ struct iocp_reader
 	std::function<async_finally::value(const path& _Path, void* _pBuffer, size_t _Size)> completion;
 };
 
-static void iocp_close(iocp_reader* _Reader, size_t _Unused = 0)
+static void iocp_close(iocp_reader* _Reader, unsigned long long _Unused = 0)
 {
 	async_finally::value fin = async_finally::free_buffer;
 	if (_Reader->completion)
@@ -891,7 +891,7 @@ static void iocp_open(iocp_reader* _Reader, bool _Buffered = true)
 
 static void iocp_read(iocp_reader* _Reader, size_t _Offset = 0)
 {
-	_Reader->overlapped = windows::iocp::associate(_Reader->handle, std::bind(iocp_close, _Reader, std::placeholders::_1));
+	_Reader->overlapped = windows::iocp::associate(_Reader->handle, iocp_close, _Reader);
 	_Reader->overlapped->Offset = (DWORD)_Offset;
 	_Reader->overlapped->OffsetHigh = sizeof(size_t) > sizeof(DWORD) ? DWORD(_Offset >> 32) : 0;
 	if (!ReadFile(_Reader->handle, _Reader->buffer, as_uint(_Reader->file_size), nullptr, _Reader->overlapped))
@@ -910,7 +910,7 @@ static size_t iocp_read_size(const iocp_reader* _Reader)
 	return _Reader->buffered ? _Reader->file_size : byte_align(_Reader->file_size, 4096);
 }
 
-void iocp_open_and_read(void* _pContext)
+void iocp_open_and_read(void* _pContext, unsigned long long _Unused = 0)
 {
 	iocp_reader* r = (iocp_reader*)_pContext;
 
