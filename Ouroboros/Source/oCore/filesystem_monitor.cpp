@@ -106,7 +106,9 @@ private:
 	char BufferIndex;
 
 	void process(FILE_NOTIFY_INFORMATION* _pNotify);
-	void on_complete(size_t _NumBytes);
+
+	static void static_on_complete(void* _pContext, unsigned long long _NumBytes) { ((watcher*)_pContext)->on_complete(_NumBytes); }
+	void on_complete(unsigned long long _NumBytes);
 };
 
 class monitor_impl : public monitor
@@ -188,8 +190,7 @@ watcher::watcher(monitor_impl* _pMonitor, const path& _Path, bool _Recursive, si
 
 	oVB(hDirectory != INVALID_HANDLE_VALUE);
 
-	pOverlapped = windows::iocp::associate
-		(hDirectory, std::bind(&watcher::on_complete, this, std::placeholders::_1));
+	pOverlapped = windows::iocp::associate(hDirectory, watcher::static_on_complete, this);
 
 	if (!pOverlapped)
 		oTHROW(operation_would_block, "OVERLAPPED allocation failed");
@@ -237,7 +238,7 @@ void watcher::unwatch_changes()
 	CancelIoEx(hDirectory, pOverlapped);
 }
 
-void watcher::on_complete(size_t _NumBytes)
+void watcher::on_complete(unsigned long long _NumBytes)
 {
 	bool DeleteThis = _NumBytes == 0;
 	if (_NumBytes)
