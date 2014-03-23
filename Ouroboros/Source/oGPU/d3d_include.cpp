@@ -41,11 +41,11 @@ HRESULT include::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pP
 	{
 		path Filename(pFileName);
 
-		cached* c = nullptr;
+		scoped_allocation* c = nullptr;
 		if (Cache.get_ptr(Filename.hash(), &c))
 		{
-			*ppData = c->first.get();
-			*pBytes = c->second;
+			*ppData = *c;
+			*pBytes = as_uint(c->size());
 			return S_OK;
 		}
 
@@ -65,12 +65,11 @@ HRESULT include::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pP
 		if (!exists)
 			oTHROW(no_such_file_or_directory, "Header %s not found in search path", Filename.c_str());
 
-		size_t size = 0;
-		std::unique_ptr<char[]> source = filesystem::load(FullPath, &size);
+		scoped_allocation source = filesystem::load(FullPath);
 
-		*ppData = source.get();
-		*pBytes = unsigned int(size);
-		oCHECK(Cache.add(Filename.hash(), cached(std::move(source), *pBytes)), "add failed");
+		*ppData = source;
+		*pBytes = as_uint(source.size());
+		oCHECK(Cache.add(Filename.hash(), std::move(source)), "add failed");
 	}
 
 	catch (std::exception&)

@@ -36,9 +36,8 @@ static const surface::filter::value kFilter = surface::filter::lanczos2;
 
 static std::shared_ptr<surface::buffer> surface_load(test_services& _Services, const path& _Path, surface::alpha_option::value _Option = surface::alpha_option::preserve)
 {
-	size_t size = 0;
-	auto b = _Services.load_buffer(_Path, &size);
-	return surface::decode(b.get(), size, _Option);
+	scoped_allocation b = _Services.load_buffer(_Path);
+	return surface::decode(b, b.size(), _Option);
 }
 
 static std::shared_ptr<surface::buffer> make_test_1d(int _Width)

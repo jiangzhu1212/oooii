@@ -69,13 +69,12 @@ static void test_correctness(const std::shared_ptr<obj_test>& _Expected, const s
 
 static void obj_load(test_services& _Services, const char* _Path, double* _pLoadTime = nullptr)
 {
-	size_t Size = 0;
 	double start = timer::now();
-	std::shared_ptr<char> b = _Services.load_buffer(_Path, &Size);
+	scoped_allocation b = _Services.load_buffer(_Path);
 
 	mesh::obj::init init;
 	init.calc_normals_on_error = false; // buddha doesn't have normals and is 300k faces... let's not sit in the test suite calculating such a large test case
-	std::shared_ptr<mesh::obj::mesh> obj = mesh::obj::mesh::make(init, _Path, b.get());
+	std::shared_ptr<mesh::obj::mesh> obj = mesh::obj::mesh::make(init, _Path, b);
 
 	if (_pLoadTime)
 		*_pLoadTime = timer::now() - start;

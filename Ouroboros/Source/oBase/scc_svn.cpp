@@ -45,9 +45,9 @@ namespace ouro {
 #define SVN_THROWO(_ExitCode, _StdOut) throw scc_exception(scc_error::scc_exe_error, formatf("svn exited with code %d\n  stdout: %s", _ExitCode, _StdOut.c_str()))
 #define SVN_THROWF(_SCCError, _Format, ...) throw scc_exception(scc_error::_SCCError, vformatf(_Format, ## __VA_ARGS__ ))
 
-std::shared_ptr<scc> make_scc_svn(const scc_spawn& _Spawn)
+std::shared_ptr<scc> make_scc_svn(const scc_spawn& _Spawn, unsigned int _TimeoutMS)
 {
-	return std::make_shared<scc_svn>(_Spawn);
+	return std::make_shared<scc_svn>(_Spawn, _TimeoutMS);
 }
 
 static bool svn_is_error(const char* _StdOut)
@@ -190,7 +190,7 @@ static char* svn_parse_status_line(char* _StatusBuffer, unsigned int _UpToRevisi
 	}
 
 	_File.status = get_status(s[0]);
-	oASSERT(s[1] == ' ', "haven't thought about this yet:\n s[1]=%c %s", s[1], _StatusBuffer);
+	oASSERT(s[1] == ' ' || (s[0] == 's' && s[1] == 'v' && s[2] == 'n'), "haven't thought about this yet:\n s[1]=%c %s", s[1], _StatusBuffer);
 	if (s[8] == '*') _File.status = scc_status::out_of_date;
 	s += 9;
 	s += strspn(s, oWHITESPACE);

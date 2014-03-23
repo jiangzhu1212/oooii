@@ -65,9 +65,8 @@ static void TESTsurface_resize_test_filter(test_services& _Services
 
 void TESTsurface_resize(test_services& _Services)
 {
-	size_t Size = 0;
-	std::shared_ptr<char> b = _Services.load_buffer("Test/Textures/lena_1.png", &Size);
-	std::shared_ptr<surface::buffer> s = surface::decode(b.get(), Size);
+	scoped_allocation b = _Services.load_buffer("Test/Textures/lena_1.png");
+	std::shared_ptr<surface::buffer> s = surface::decode(b, b.size());
 
 	int NthImage = 0;
 	for (int i = 0; i < surface::filter::filter_count; i++, NthImage += 2)

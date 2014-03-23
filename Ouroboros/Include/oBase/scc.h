@@ -189,7 +189,7 @@ public:
 	virtual void revert(const char* _Path) = 0;
 };
 
-std::shared_ptr<scc> make_scc(scc_protocol::value _Protocol, const scc_spawn& _Spawn);
+std::shared_ptr<scc> make_scc(scc_protocol::value _Protocol, const scc_spawn& _Spawn, unsigned int _TimeoutMS = 5000);
 
 } // namespace ouro
 

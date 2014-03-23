@@ -66,8 +66,7 @@ public:
 protected:
 	path ShaderSourcePath;
 	std::vector<path> SearchPaths;
-	typedef std::pair<std::unique_ptr<char[]>,unsigned int> cached;
-	hash_map<unsigned long long, cached> Cache;
+	hash_map<unsigned long long, scoped_allocation> Cache;
 	int Flags;
 	std::atomic<int> RefCount;
 };

@@ -63,17 +63,6 @@ const char* as_string(const filesystem::file_type::value& _Type)
 	return "?";
 }
 
-const char* as_string(const filesystem::async_finally::value& _Event)
-{
-	switch (_Event)
-	{
-		case filesystem::async_finally::do_nothing: return "do_nothing";
-		case filesystem::async_finally::free_buffer: return "free_buffer";
-		default: break;
-	}
-	return "?";
-}
-
 } // namespace ouro
 
 #define oFSTHROW0(_ErrCode) throw filesystem_error(make_error_code(errc::_ErrCode))
@@ -780,73 +769,58 @@ void delete_buffer(char* _pBuffer)
 	delete [] _pBuffer;
 }
 
-unique_ptr<char[]> load(const path& _Path, size_t* _pSize, load_option::value _LoadOption)
+scoped_allocation load(const path& _Path, load_option::value _LoadOption, const allocator& _Allocator)
 {
 	unsigned long long FileSize = as_size_t(file_size(_Path));
-
-	size_t FileSizeT = as_size_t(FileSize);
-
 	// in case we need a UTF32 nul terminator
-	size_t AllocSize = FileSizeT + (_LoadOption == load_option::text_read ? 4 : 0);
+	size_t AllocSize = FileSize + (_LoadOption == load_option::text_read ? 4 : 0);
+	scoped_allocation p = _Allocator.scoped_allocate(AllocSize);
 
-	unique_ptr<char[]> p(new char[AllocSize]);
-
+	// put enough nul terminators for a UTF32 or 16 or 8
 	if (_LoadOption == load_option::text_read)
-	{
-		// put enough nul terminators for a UTF32 or 16 or 8
-		p[FileSizeT+0] = p[FileSizeT+1] = p[FileSizeT+2] = p[FileSizeT+3] = '\0';
-	}
+		*(int*)&(((char*)p)[FileSize]) = 0;
 
 	{
 		file_handle f = open(_Path, _LoadOption == load_option::text_read ? open_option::text_read : open_option::binary_read);
 		finally CloseFile([&] { close(f); });
-		if (FileSize != read(f, p.get(), AllocSize, FileSize) && _LoadOption == load_option::binary_read)
+		if (FileSize != read(f, p, AllocSize, FileSize) && _LoadOption == load_option::binary_read)
 			oTHROW(io_error, "read failed: %s", _Path.c_str());
 	}
 
 	// record honest size (tools like FXC crash if any larger size is given)
-	if (_pSize)
-	{
-		*_pSize = as_size_t(FileSize);
+	size_t HonestSize = as_size_t(FileSize);
 
-		if (_LoadOption == load_option::text_read)
+	if (_LoadOption == load_option::text_read)
+	{
+		utf_type::value type = utfcmp(p, __min(HonestSize, 512));
+		switch (type)
 		{
-			utf_type::value type = utfcmp(p.get(), __min(static_cast<size_t>(FileSize), 512));
-			switch (type)
-			{
-				case utf_type::utf32be: case utf_type::utf32le: *_pSize += 4; break;
-				case utf_type::utf16be: case utf_type::utf16le: *_pSize += 2; break;
-				case utf_type::ascii: *_pSize += 1; break;
-			}
+			case utf_type::utf32be: case utf_type::utf32le: HonestSize += 4; break;
+			case utf_type::utf16be: case utf_type::utf16le: HonestSize += 2; break;
+			case utf_type::ascii: HonestSize += 1; break;
 		}
 	}
 
-	return p;
+	return scoped_allocation(p.release(), HonestSize, p.get_deallocate());
 }
 
 struct iocp_reader
 {
-	void* buffer;
+	scoped_allocation buffer;
 	OVERLAPPED* overlapped;
 	HANDLE handle;
 	size_t file_size;
 	path file_path;
+	allocator allocator;
 	int error_code;
 	bool buffered;
-	std::function<async_finally::value(const path& _Path, void* _pBuffer, size_t _Size)> completion;
+	std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size)> completion;
 };
 
 static void iocp_close(iocp_reader* _Reader, unsigned long long _Unused = 0)
 {
-	async_finally::value fin = async_finally::free_buffer;
 	if (_Reader->completion)
-		fin = _Reader->completion(std::ref(_Reader->file_path), _Reader->buffer, _Reader->file_size);
-
-	if (fin == async_finally::free_buffer && _Reader->buffer)
-	{
-		delete [] _Reader->buffer;
-		_Reader->buffer = nullptr;
-	}
+		_Reader->completion(std::ref(_Reader->file_path), std::ref(_Reader->buffer), _Reader->file_size);
 
 	if (_Reader->handle != INVALID_HANDLE_VALUE)
 	{
@@ -863,7 +837,7 @@ static void iocp_close(iocp_reader* _Reader, unsigned long long _Unused = 0)
 
 static void iocp_open(iocp_reader* _Reader, bool _Buffered = true)
 {
-	_Reader->buffer = nullptr;
+	_Reader->buffer.release();
 	_Reader->overlapped = nullptr;
 	_Reader->buffered = _Buffered;
 	_Reader->handle = CreateFile(_Reader->file_path
@@ -917,7 +891,7 @@ void iocp_open_and_read(void* _pContext, unsigned long long _Unused = 0)
 	iocp_open(r, true);
 	if (!r->error_code)
 	{
-		r->buffer = new char[iocp_read_size(r)];
+		r->buffer = std::move(r->allocator.scoped_allocate(iocp_read_size(r)));
 		if (r->buffer)
 			iocp_read(r);
 		else
@@ -925,13 +899,17 @@ void iocp_open_and_read(void* _pContext, unsigned long long _Unused = 0)
 	}
 }
 
-void async_load(const path& _Path, const std::function<async_finally::value(const path& _Path, void* _pBuffer, size_t _Size)>& _OnComplete, load_option::value _LoadOption)
+void load_async(const path& _Path
+								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size)>& _OnComplete
+								, load_option::value _LoadOption
+								, const allocator& _Allocator)
 {
 	if (_LoadOption != load_option::binary_read)
 		oTHROW_INVARG("only binary_read is currently supported");
 
 	iocp_reader* r = new iocp_reader();
 	r->file_path = _Path;
+	r->allocator = _Allocator;
 	r->completion = _OnComplete;
 	windows::iocp::post(iocp_open_and_read, r);
 }

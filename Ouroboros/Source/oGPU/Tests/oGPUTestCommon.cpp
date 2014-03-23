@@ -172,9 +172,8 @@ void gpu_texture_test::render()
 
 std::shared_ptr<surface::buffer> surface_load(const path& _Path, surface::alpha_option::value _Option)
 {
-	size_t size = 0;
-	auto b = filesystem::load(_Path, &size);
-	return surface::decode(b.get(), size, _Option);
+	scoped_allocation b = filesystem::load(_Path);
+	return surface::decode(b, b.size(), _Option);
 }
 
 std::shared_ptr<surface::buffer> make_1D(int _Width)

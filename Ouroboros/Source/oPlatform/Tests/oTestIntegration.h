@@ -72,21 +72,17 @@ public:
 		return strlcpy(_StrDestination, filesystem::data_path().c_str(), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 	}
 
-	std::shared_ptr<char> load_buffer(const char* _Path, size_t* _pSize = nullptr) override
+	scoped_allocation load_buffer(const char* _Path) override
 	{
-		std::shared_ptr<char> b;
-		try
-		{
-			b = filesystem::load(_Path, _pSize);
-		}
-
+		scoped_allocation b;
+		try { b = filesystem::load(_Path); }
 		catch (std::system_error& e)
 		{
 			if (e.code().value() != std::errc::no_such_file_or_directory)
 				throw;
 
 			path FullPath = filesystem::data_path() / _Path;
-			b = filesystem::load(FullPath, _pSize);
+			b = filesystem::load(FullPath);
 		}
 		return b;
 	}
