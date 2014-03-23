@@ -38,6 +38,15 @@ void default_deallocate(const void* _Pointer)
 	_aligned_free((void*)_Pointer);
 }
 
+void* noop_allocate(size_t _Size, unsigned int _Options)
+{
+	return nullptr;
+}
+
+void noop_deallocate(const void* _Pointer)
+{
+}
+
 allocator default_allocator(default_allocate, default_deallocate);
 	
 const char* as_string(const memory_alignment::value& _Alignment)

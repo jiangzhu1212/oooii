@@ -804,8 +804,15 @@ scoped_allocation load(const path& _Path, load_option::value _LoadOption, const 
 	return scoped_allocation(p.release(), HonestSize, p.get_deallocate());
 }
 
-struct iocp_reader
+struct iocp_file
 {
+	enum open
+	{
+		open_read,
+		open_read_unbuffered,
+		open_write,
+	};
+
 	scoped_allocation buffer;
 	OVERLAPPED* overlapped;
 	HANDLE handle;
@@ -813,89 +820,133 @@ struct iocp_reader
 	path file_path;
 	allocator allocator;
 	int error_code;
-	bool buffered;
+	open open_type;
 	std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size)> completion;
 };
 
-static void iocp_close(iocp_reader* _Reader, unsigned long long _Unused = 0)
+static void iocp_close(iocp_file* f, unsigned long long _Unused = 0)
 {
-	if (_Reader->completion)
-		_Reader->completion(std::ref(_Reader->file_path), std::ref(_Reader->buffer), _Reader->file_size);
+	if (f->completion)
+		f->completion(std::ref(f->file_path), std::ref(f->buffer), f->file_size);
 
-	if (_Reader->handle != INVALID_HANDLE_VALUE)
+	if (f->handle != INVALID_HANDLE_VALUE)
 	{
-		_Reader->error_code = CloseHandle(_Reader->handle) ? 0 : GetLastError();
-		_Reader->handle = INVALID_HANDLE_VALUE;
+		f->error_code = CloseHandle(f->handle) ? 0 : GetLastError();
+		f->handle = INVALID_HANDLE_VALUE;
 	}
 
-	_Reader->file_size = 0;
-	_Reader->completion = nullptr;
-	if (_Reader->overlapped)
-		windows::iocp::disassociate(_Reader->overlapped);
-	delete _Reader;
+	f->file_size = 0;
+	f->completion = nullptr;
+	if (f->overlapped)
+		windows::iocp::disassociate(f->overlapped);
+	delete f;
 }
 
-static void iocp_open(iocp_reader* _Reader, bool _Buffered = true)
+static void iocp_open(iocp_file* f, iocp_file::open _Open)
 {
-	_Reader->buffer.release();
-	_Reader->overlapped = nullptr;
-	_Reader->buffered = _Buffered;
-	_Reader->handle = CreateFile(_Reader->file_path
-		, GENERIC_READ
+	f->buffer.release();
+	f->overlapped = nullptr;
+	f->open_type = _Open;
+	f->handle = CreateFile(f->file_path
+		, _Open == iocp_file::open_write ? GENERIC_WRITE : GENERIC_READ
 		, FILE_SHARE_READ
 		, nullptr
 		, OPEN_EXISTING
-		, FILE_FLAG_OVERLAPPED | (_Reader->buffered ? 0 : FILE_FLAG_NO_BUFFERING)
+		, FILE_FLAG_OVERLAPPED | (f->open_type == iocp_file::open_read_unbuffered ? FILE_FLAG_NO_BUFFERING : 0)
 		, nullptr);
-	if (_Reader->handle != INVALID_HANDLE_VALUE)
+	if (f->handle != INVALID_HANDLE_VALUE)
 	{
-		_Reader->error_code = 0;
+		f->error_code = 0;
 		DWORD hi = 0;
-		_Reader->file_size = GetFileSize(_Reader->handle, &hi);
-		if (sizeof(_Reader->file_size) > sizeof(DWORD))
-			_Reader->file_size |= ((size_t)hi << 32);
+		f->file_size = GetFileSize(f->handle, &hi);
+		if (sizeof(f->file_size) > sizeof(DWORD))
+			f->file_size |= ((size_t)hi << 32);
 	}
 	else
 	{
 		int errc = GetLastError();
-		iocp_close(_Reader);
-		_Reader->error_code = errc;
+		iocp_close(f);
+		f->error_code = errc;
 	}
 }
 
-static void iocp_read(iocp_reader* _Reader, size_t _Offset = 0)
+static size_t iocp_io_size(const iocp_file* f)
 {
-	_Reader->overlapped = windows::iocp::associate(_Reader->handle, iocp_close, _Reader);
-	_Reader->overlapped->Offset = (DWORD)_Offset;
-	_Reader->overlapped->OffsetHigh = sizeof(size_t) > sizeof(DWORD) ? DWORD(_Offset >> 32) : 0;
-	if (!ReadFile(_Reader->handle, _Reader->buffer, as_uint(_Reader->file_size), nullptr, _Reader->overlapped))
+	return f->open_type == iocp_file::open_read_unbuffered ? byte_align(f->file_size, 4096) : f->file_size;
+}
+
+static void iocp_read(iocp_file* f, size_t _Offset = 0, size_t _ReadSize = size_t(-1))
+{
+	f->overlapped = windows::iocp::associate(f->handle, iocp_close, f);
+	f->overlapped->Offset = (DWORD)_Offset;
+	f->overlapped->OffsetHigh = sizeof(size_t) > sizeof(DWORD) ? DWORD(_Offset >> 32) : 0;
+	if (_ReadSize == size_t(-1))
+		_ReadSize = iocp_io_size(f);
+	if (!ReadFile(f->handle, f->buffer, as_uint(_ReadSize), nullptr, f->overlapped))
 	{
 		int errc = GetLastError();
 		if (errc != ERROR_IO_PENDING)
 		{
-			iocp_close(_Reader);
-			_Reader->error_code = errc;
+			iocp_close(f);
+			f->error_code = errc;
 		}
 	}
 }
 
-static size_t iocp_read_size(const iocp_reader* _Reader)
+static void iocp_write(iocp_file* f, size_t _Offset = size_t(-1), size_t _WriteSize = size_t(-1))
 {
-	return _Reader->buffered ? _Reader->file_size : byte_align(_Reader->file_size, 4096);
+	f->overlapped = windows::iocp::associate(f->handle, iocp_close, f);
+	f->overlapped->Offset = (DWORD)_Offset;
+	f->overlapped->OffsetHigh = sizeof(size_t) > sizeof(DWORD) ? DWORD(_Offset >> 32) : 0;
+
+	if (_WriteSize == size_t(-1))
+		_WriteSize = f->buffer.size();
+	
+	if (!WriteFile(f->handle, f->buffer, as_uint(_WriteSize), nullptr, f->overlapped))
+	{
+		int errc = GetLastError();
+		if (errc != ERROR_IO_PENDING)
+		{
+			iocp_close(f);
+			f->error_code = errc;
+		}
+	}
 }
 
-void iocp_open_and_read(void* _pContext, unsigned long long _Unused = 0)
+static void iocp_open_and_read(void* _pContext, unsigned long long _Unused = 0)
 {
-	iocp_reader* r = (iocp_reader*)_pContext;
+	iocp_file* f = (iocp_file*)_pContext;
 
-	iocp_open(r, true);
-	if (!r->error_code)
+	iocp_open(f, iocp_file::open_read);
+	if (!f->error_code)
 	{
-		r->buffer = std::move(r->allocator.scoped_allocate(iocp_read_size(r)));
-		if (r->buffer)
-			iocp_read(r);
+		f->buffer = std::move(f->allocator.scoped_allocate(iocp_io_size(f)));
+		if (f->buffer)
+			iocp_read(f);
 		else
-			iocp_close(r);
+			iocp_close(f);
+	}
+}
+
+static void iocp_open_and_write(void* _pContext, unsigned long long _Unused = 0)
+{
+	iocp_file* f = (iocp_file*)_pContext;
+	if (f->buffer)
+	{
+		iocp_open(f, iocp_file::open_write);
+		if (!f->error_code)
+			iocp_write(f);
+	}
+}
+
+static void iocp_open_and_append(void* _pContext, unsigned long long _Unused = 0)
+{
+	iocp_file* f = (iocp_file*)_pContext;
+	if (f->buffer)
+	{
+		iocp_open(f, iocp_file::open_write);
+		if (!f->error_code)
+			iocp_write(f);
 	}
 }
 
@@ -907,11 +958,27 @@ void load_async(const path& _Path
 	if (_LoadOption != load_option::binary_read)
 		oTHROW_INVARG("only binary_read is currently supported");
 
-	iocp_reader* r = new iocp_reader();
+	iocp_file* r = new iocp_file();
 	r->file_path = _Path;
 	r->allocator = _Allocator;
 	r->completion = _OnComplete;
 	windows::iocp::post(iocp_open_and_read, r);
+}
+
+void save_async(const path& _Path
+								, scoped_allocation&& _Buffer
+								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size)>& _OnComplete
+								, save_option::value _SaveOption)
+{
+	if (_SaveOption != save_option::text_write && _SaveOption != save_option::text_append)
+		oTHROW_INVARG("only binary_write and binary_append is currently supported");
+
+	iocp_file* r = new iocp_file();
+	r->file_path = _Path;
+	r->buffer = std::move(_Buffer);
+	r->allocator = allocator();
+	r->completion = _OnComplete;
+	windows::iocp::post(_SaveOption == save_option::binary_write ? iocp_open_and_write : iocp_open_and_append, r);
 }
 
 	} // namespace filesystem
