@@ -28,19 +28,19 @@
 #ifndef oBase_lock_free_queue_h
 #define oBase_lock_free_queue_h
 
+#include <oBase/allocate.h>
 #include <oBase/concurrency.h>
 #include <atomic>
 #include <memory>
 
 namespace ouro {
 
-template<typename T, typename Alloc = std::allocator<T>>
+template<typename T>
 class lock_free_queue
 {
 	// single reader, single writer queue using memory barriers to guarantee thread safety
 	// (no locks or atomics)
 public:
-	typedef Alloc allocator_type;
 	typedef size_t size_type;
 	typedef T value_type;
 	typedef value_type& reference;
@@ -48,7 +48,7 @@ public:
 	typedef value_type* pointer;
 	typedef const value_type* const_pointer;
 
-	lock_free_queue(size_type _Capacity = 10000, const allocator_type& _Allocator = allocator_type());
+	lock_free_queue(size_type _Capacity = 10000, const allocator& _Allocator = default_allocator);
 	~lock_free_queue();
 
 	// Push an element into the queue.
@@ -71,35 +71,32 @@ private:
 	size_type NumElements;
 	volatile size_type Read;
 	volatile size_type Write;
-	Alloc Allocator;
+	allocator Allocator;
 };
 
-template<typename T, typename Alloc>
-lock_free_queue<T, Alloc>::lock_free_queue(size_type _Capacity, const allocator_type& _Allocator)
+template<typename T>
+lock_free_queue<T>::lock_free_queue(size_type _Capacity, const allocator& _Allocator)
 	: Allocator(_Allocator)
-	, ElementPool(Allocator.allocate(_Capacity))
+	, ElementPool(Allocator.construct_array<T>(_Capacity))
 	, NumElements(_Capacity)
 	, Read(0)
 	, Write(0)
-{
-	for (size_type i = 0; i < NumElements; i++)
-		new(ElementPool + i) T();
-}
+{}
 
-template<typename T, typename Alloc>
-lock_free_queue<T, Alloc>::~lock_free_queue()
+template<typename T>
+lock_free_queue<T>::~lock_free_queue()
 {
 	if (!empty())
 		throw std::length_error("container not empty");
 
 	Read = Write = 0;
-	Allocator.deallocate(ElementPool, NumElements);
+	Allocator.destroy_array(ElementPool, NumElements);
 	ElementPool = 0;
 	NumElements = 0;
 }
 
-template<typename T, typename Alloc>
-void lock_free_queue<T, Alloc>::push(const_reference _Element)
+template<typename T>
+void lock_free_queue<T>::push(const_reference _Element)
 {
 	size_type r = Read;
 	size_type w = Write;
@@ -116,8 +113,8 @@ void lock_free_queue<T, Alloc>::push(const_reference _Element)
 		throw std::overflow_error("lock_free_queue cannot hold any more elements");
 }
 
-template<typename T, typename Alloc>
-bool lock_free_queue<T, Alloc>::try_pop(reference _Element)
+template<typename T>
+bool lock_free_queue<T>::try_pop(reference _Element)
 {
 	bool popped = false;
 	size_type r = Read;
@@ -136,14 +133,14 @@ bool lock_free_queue<T, Alloc>::try_pop(reference _Element)
 	return popped;
 }
 
-template<typename T, typename Alloc>
-bool lock_free_queue<T, Alloc>::empty() const
+template<typename T>
+bool lock_free_queue<T>::empty() const
 {
 	return Read == Write;
 }
 
-template<typename T, typename Alloc>
-typename lock_free_queue<T, Alloc>::size_type lock_free_queue<T, Alloc>::size() const
+template<typename T>
+typename lock_free_queue<T>::size_type lock_free_queue<T>::size() const
 {
 	return ((Write + NumElements) - Read) % NumElements;
 }
