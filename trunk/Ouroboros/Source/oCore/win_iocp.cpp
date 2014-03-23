@@ -75,7 +75,7 @@ public:
 	void post_completion(OVERLAPPED* _pOverlapped);
 	void post(iocp::completion_t _Completion, void* _pContext);
 private:
-	iocp_threadpool() : hIoPort(nullptr), NumRunningThreads(0), NumAssociations(0) {}
+	iocp_threadpool() : hIoPort(INVALID_HANDLE_VALUE), NumRunningThreads(0), NumAssociations(0) {}
 	iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers = 0);
 	~iocp_threadpool();
 	iocp_threadpool(iocp_threadpool&& _That) { operator=(move(_That)); }

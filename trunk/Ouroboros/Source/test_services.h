@@ -35,6 +35,7 @@
 #ifndef Ouroboros_test_services_h
 #define Ouroboros_test_services_h
 
+#include <oBase/allocate.h>
 #include <cstdarg>
 #include <memory>
 
@@ -64,7 +65,7 @@ public:
 
 	// Load the entire contents of the specified file into a newly allocated 
 	// buffer.
-	virtual std::shared_ptr<char> load_buffer(const char* _Path, size_t* _pSize = nullptr) = 0;
+	virtual ouro::scoped_allocation load_buffer(const char* _Path) = 0;
 
 	virtual bool is_debugger_attached() const = 0;
 

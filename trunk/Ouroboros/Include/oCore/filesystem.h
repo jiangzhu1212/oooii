@@ -27,6 +27,7 @@
 #ifndef oCore_filesystem_h
 #define oCore_filesystem_h
 
+#include <oBase/allocate.h>
 #include <oBase/path.h>
 #include <functional>
 #include <cstdio>
@@ -177,12 +178,6 @@ const std::error_category& filesystem_category();
 	none,
 	no_recurse = none,
 	recurse,
-};}
-
-/* enum class */ namespace async_finally
-{	enum value {
-	do_nothing, // client code owns the buffer, free it with delete []
-	free_buffer, // system frees the buffer
 };}
 
 struct space_info
@@ -357,20 +352,6 @@ unsigned long long write(file_handle _hFile
 	, unsigned long long _WriteSize
 	, bool _Flush = false);
 
-// Writes the entire buffer to the specified file. Open is specified to allow 
-// text and write v. append specification.
-void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_option::value _SaveOption = save_option::binary_write);
-
-// Allocates the size of the file, reads it into memory and returns that buffer.
-// If loaded as text, the allocation will be padded and a nul terminator will be
-// added so the buffer can immediately be used as a string.
-std::unique_ptr<char[]> load(const path& _Path, size_t* _pSize = nullptr, load_option::value _LoadOption = load_option::binary_read);
-
-// Similar to load, this will load the complete file into an allocated buffer but
-// the opem, allocate, read and close occurs in another thread as well as the 
-// _OnComplete, so ensure its implementation is thread safe.
-void async_load(const path& _Path, const std::function<async_finally::value(const path& _Path, void* _pBuffer, size_t _Size)>& _OnComplete, load_option::value _LoadOption = load_option::binary_read);
-
 class scoped_file
 {
 public:
@@ -395,6 +376,23 @@ private:
 	scoped_file(const scoped_file&);
 	const scoped_file& operator=(const scoped_file&);
 };
+
+// Writes the entire buffer to the specified file. Open is specified to allow 
+// text and write v. append specification.
+void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_option::value _SaveOption = save_option::binary_write);
+
+// Allocates the size of the file reads it into memory and returns that buffer.
+// If loaded as text, the allocation will be padded and a nul terminator will be
+// added so the buffer can immediately be used as a string.
+scoped_allocation load(const path& _Path, load_option::value _LoadOption = load_option::binary_read, const allocator& _Allocator = default_allocator);
+
+// Similar to load, this will load the complete file into an allocated buffer but
+// the open, allocate, read and close occurs in another thread as well as the 
+// _OnComplete, so ensure its implementation is thread safe.
+void load_async(const path& _Path
+								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size)>& _OnComplete
+								, load_option::value _LoadOption = load_option::binary_read
+								, const allocator& _Allocator = default_allocator);
 
 	} // namespace filesystem
 } // namespace ouro

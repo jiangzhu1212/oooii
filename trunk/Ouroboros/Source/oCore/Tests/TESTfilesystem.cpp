@@ -71,13 +71,12 @@ static void TESTfilesystem_map(test_services& _Services)
 		oTHROW(protocol_error, "map failed");
 	finally Unmap([&] { if (mapped) unmap(mapped); }); // safety unmap if we fail for some non-mapping reason
 
-	size_t Size = 0;
-	std::shared_ptr<char> loaded = load(TestPath, &Size);
+	scoped_allocation loaded = load(TestPath);
 
-	if (Size != size)
+	if (loaded.size() != size)
 		oTHROW(io_error, "mismatch: mapped and loaded file sizes");
 
-	if (memcmp(loaded.get(), mapped, Size))
+	if (memcmp(loaded, mapped, loaded.size()))
 		oTHROW(protocol_error, "memcmp failed between mapped and loaded files");
 		
 	unmap(mapped);
@@ -96,12 +95,11 @@ void TESTfilesystem_async(test_services& _Services)
 	timer t;
 	for(int i = 0; i < 32; i++)
 	{
-		async_load(TestPath, [&,i](const path& _Path, void* _pBuffer, size_t _Size)->async_finally::value
+		load_async(TestPath, [&,i](const path& _Path, scoped_allocation& _Buffer, size_t _Size)
 		{
 			size_t s = _Size;
-			char* p = (char*)_pBuffer;
+			char* p = (char*)_Buffer;
 			e.set(1<<i);
-			return async_finally::free_buffer;
 		});
 	}
 

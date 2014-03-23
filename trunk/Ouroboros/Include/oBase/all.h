@@ -29,6 +29,7 @@
 #define oBase_all_h
 #include <oBase/aabox.h>
 #include <oBase/algorithm.h>
+#include <oBase/allocate.h>
 #include <oBase/assert.h>
 #include <oBase/atof.h>
 #include <oBase/byte.h>

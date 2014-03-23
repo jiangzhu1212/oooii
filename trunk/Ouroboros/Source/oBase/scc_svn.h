@@ -55,7 +55,7 @@ private:
 	void spawn(const char* _Command, ouro::xlstring& _Stdout) const;
 };
 
-std::shared_ptr<scc> make_scc_svn(const scc_spawn& _Spawn);
+std::shared_ptr<scc> make_scc_svn(const scc_spawn& _Spawn, unsigned int _TimeoutMS);
 
 	} // namespace detail
 } // namespace ouro

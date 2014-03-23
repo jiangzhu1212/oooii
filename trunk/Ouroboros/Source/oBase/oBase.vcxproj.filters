@@ -241,6 +241,9 @@
     <ClCompile Include="concurrent_block_allocator.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
+    <ClCompile Include="allocate.cpp">
+      <Filter>Source\allocator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -536,6 +539,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\coroutine.h">
       <Filter>oBase\concurrency</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\allocate.h">
+      <Filter>oBase\allocator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

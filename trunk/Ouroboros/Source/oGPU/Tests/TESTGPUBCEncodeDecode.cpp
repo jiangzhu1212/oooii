@@ -36,8 +36,7 @@ namespace ouro {
 
 static void load_original_and_save_converted(test_services& _Services, device* _pDevice, surface::format _TargetFormat, const char* _OriginalPath, const path& _ConvertedPath)
 {
-	size_t OriginalFileSize = 0;
-	std::shared_ptr<char> OriginalFile = _Services.load_buffer(_OriginalPath, &OriginalFileSize);
+	scoped_allocation OriginalFile = _Services.load_buffer(_OriginalPath);
 
 	texture_info i;
 	i.dimensions = ushort3(0, 0, 1);
@@ -62,8 +61,7 @@ static void load_original_and_save_converted(test_services& _Services, device* _
 
 static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test_services& _Services, device* _pDevice, const char* _ConvertedPath)
 {
-	size_t ConvertedFileSize = 0;
-	std::shared_ptr<char> ConvertedFile = _Services.load_buffer(_ConvertedPath, &ConvertedFileSize);
+	scoped_allocation ConvertedFile = _Services.load_buffer(_ConvertedPath);
 
 	texture_info i;
 	i.dimensions = ushort3(0, 0, 1);

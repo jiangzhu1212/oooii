@@ -471,11 +471,11 @@ bool oTest::TestImage(const surface::buffer* _pTestImage
 	std::shared_ptr<surface::buffer> GoldenImage;
 	{
 		size_t bSize = 0;
-		std::shared_ptr<char> b;
-		try { b = filesystem::load(_GoldenImagePath, &bSize); }
+		scoped_allocation b;
+		try { b = filesystem::load(_GoldenImagePath); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Load failed: (Golden)...%s", gPath); }
 
-		try { GoldenImage = surface::decode(b.get(), bSize, ao); }
+		try { GoldenImage = surface::decode(b, b.size(), ao); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::protocol_error, "Corrupt Image: (Golden)...%s", gPath); }
 	}
 

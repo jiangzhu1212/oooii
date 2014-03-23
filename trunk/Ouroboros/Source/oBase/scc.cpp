@@ -96,13 +96,13 @@ const std::error_category& scc_category()
 	return sSingleton;
 }
 
-std::shared_ptr<scc> make_scc(scc_protocol::value _Protocol, const scc_spawn& _Spawn)
+std::shared_ptr<scc> make_scc(scc_protocol::value _Protocol, const scc_spawn& _Spawn, unsigned int _TimeoutMS)
 {
 	switch (_Protocol)
 	{
-		case scc_protocol::svn: return detail::make_scc_svn(_Spawn);
-		//case scc_protocol::perforce: return detail::make_scc_p4(_Spawn);
-		//case scc_protocol::git: return detail::make_scc_git(_Spawn);
+		case scc_protocol::svn: return detail::make_scc_svn(_Spawn, _TimeoutMS);
+		//case scc_protocol::perforce: return detail::make_scc_p4(_Spawn, _TimeoutMS);
+		//case scc_protocol::git: return detail::make_scc_git(_Spawn, _TimeoutMS);
 		default: break;
 	}
 	oTHROW0(protocol_not_supported);

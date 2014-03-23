@@ -59,25 +59,24 @@ void TESTcompression(test_services& _Services)
 {
 	static const char* TestPath = "Test/Geometry/buddha.obj";
 
-	size_t Size = 0;
-	std::shared_ptr<char> pOBJBuffer = _Services.load_buffer(TestPath, &Size);
+	scoped_allocation OBJBuffer = _Services.load_buffer(TestPath);
 
 	double timeSnappy, timeLZMA, timeGZip;
 	size_t CompressedSize0, CompressedSize1, CompressedSize2;
 
 	timer t;
-	TestCompress(pOBJBuffer.get(), Size, snappy_compress, snappy_decompress, &CompressedSize0);
+	TestCompress(OBJBuffer, OBJBuffer.size(), snappy_compress, snappy_decompress, &CompressedSize0);
 	timeSnappy = t.seconds();
 	t.reset();
-	TestCompress(pOBJBuffer.get(), Size, lzma_compress, lzma_decompress, &CompressedSize1);
+	TestCompress(OBJBuffer, OBJBuffer.size(), lzma_compress, lzma_decompress, &CompressedSize1);
 	timeLZMA = t.seconds();
 	t.reset();
-	TestCompress(pOBJBuffer.get(), Size, gzip_compress, gzip_decompress, &CompressedSize2);
+	TestCompress(OBJBuffer, OBJBuffer.size(), gzip_compress, gzip_decompress, &CompressedSize2);
 	timeGZip = t.seconds();
 	t.reset();
 
 	sstring strUncompressed, strSnappy, strLZMA, strGZip, strSnappyTime, strLZMATime, strGZipTime;
-	format_bytes(strUncompressed, Size, 2);
+	format_bytes(strUncompressed, OBJBuffer.size(), 2);
 	format_bytes(strSnappy, CompressedSize0, 2);
 	format_bytes(strLZMA, CompressedSize1, 2);
 	format_bytes(strGZip, CompressedSize2, 2);
