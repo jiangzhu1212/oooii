@@ -171,6 +171,9 @@ struct allocator
 void* default_allocate(size_t _Size, unsigned int _Options);
 void default_deallocate(const void* _Pointer);
 
+void* noop_allocate(size_t _Size, unsigned int _Options);
+void noop_deallocate(const void* _Pointer);
+
 extern allocator default_allocator;
 
 } // namespace ouro

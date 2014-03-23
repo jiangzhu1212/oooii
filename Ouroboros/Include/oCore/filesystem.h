@@ -388,7 +388,9 @@ scoped_allocation load(const path& _Path, load_option::value _LoadOption = load_
 
 // Similar to load, this will load the complete file into an allocated buffer but
 // the open, allocate, read and close occurs in another thread as well as the 
-// _OnComplete, so ensure its implementation is thread safe.
+// _OnComplete so ensure its implementation is thread safe. The scoped_allocation
+// can either be moved in the _OnComplete or left alone where the system will
+// auot-free it when the _OnCompletion goes out of scope.
 void load_async(const path& _Path
 								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size)>& _OnComplete
 								, load_option::value _LoadOption = load_option::binary_read
