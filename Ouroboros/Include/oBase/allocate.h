@@ -166,6 +166,24 @@ struct allocator
 	deallocate_fn deallocate;
 
 	scoped_allocation scoped_allocate(size_t _Size, unsigned int _Options = memory_alignment::align_to_default) const { return scoped_allocation(allocate(_Size, _Options), _Size, deallocate); }
+
+	template<typename T>
+	T* construct(unsigned int _Options = memory_alignment::align_to_default) { void* p = allocate(sizeof(T), _Options); return (T*)new (p) T(); }
+	
+	template<typename T>
+	T* construct_array(size_t _Capacity, unsigned int _Options = memory_alignment::align_to_default)
+	{
+		T* p = (T*)allocate(sizeof(T) * _Capacity, _Options);
+		for (size_t i = 0; i < _Capacity; i++)
+			new (p + i) T();
+		return p;
+	}
+
+	template<typename T>
+	void destroy(T* p) { if (p) p->~T(); }
+
+	template<typename T>
+	void destroy_array(T* p, size_t _Capacity) { if (p) { for (size_t i = 0; i < _Capacity; i++) p[i].~T(); deallocate(p); } }
 };
 
 void* default_allocate(size_t _Size, unsigned int _Options);

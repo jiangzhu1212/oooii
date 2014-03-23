@@ -31,13 +31,14 @@
 #ifndef oBase_hash_map_h
 #define oBase_hash_map_h
 
+#include <oBase/allocate.h>
 #include <functional>
 #include <memory.h>
 #include <stdlib.h>
 
 namespace ouro {
 
-template<typename HashT, typename ValueT, typename AllocatorT = std::allocator<ValueT>>
+template<typename HashT, typename ValueT>
 class hash_map
 {
 	hash_map(const hash_map&);/* = delete; */
@@ -47,17 +48,16 @@ public:
 	typedef unsigned int size_type;
 	typedef HashT hash_type;
 	typedef ValueT value_type;
-	typedef AllocatorT allocator_type;
 
 	// Lifetime management
 	hash_map() : Keys(nullptr), Values(nullptr), Size(0), Capacity(0) {}
 	hash_map(hash_map&& _That) { operator=(std::move(_That)); }
-	hash_map(size_type _IntendedMaxEntries, const allocator_type& _Allocator = allocator_type()) 
+	hash_map(size_type _IntendedMaxEntries, const allocator& _Allocator = default_allocator) 
 		: Keys(nullptr)
 		, Values(nullptr)
 		, Size(0)
 		, Capacity(0)
-		, Allocator(std::move(_Allocator))
+		, Allocator(_Allocator)
 	{
 		static_assert(std::is_integral<hash_type>::value, "hash type must be an integral");
 		allocate(optimal_capacity(_IntendedMaxEntries));
@@ -78,17 +78,10 @@ public:
 
 	~hash_map()
 	{
-		if (Keys)
-		{
-			auto a = allocator_type::rebind<hash_type>::other(Allocator);
-			a.deallocate(Keys, Capacity);
-		}
-		if (Values)
-		{
-			for (size_type i = 0; i < Capacity; i++)
-				Allocator.destroy(&Values[i]);
-			Allocator.deallocate(Values, Capacity);
-		}
+		Allocator.destroy_array(Keys, Capacity);
+		Keys = nullptr;
+		Allocator.destroy_array(Values, Capacity);
+		Values = nullptr;
 		Size = 0;
 		Capacity = 0;
 	}
@@ -358,18 +351,16 @@ private:
 
 	void allocate(const size_type& _Capacity)
 	{
-		Keys = allocator_type::rebind<hash_type>::other(Allocator).allocate(_Capacity);
-		Values = Allocator.allocate(_Capacity);
+		Keys = Allocator.construct_array<hash_type>(_Capacity, memory_alignment::align_to_default);
+		Values = Allocator.construct_array<value_type>(_Capacity, memory_alignment::align_to_default);
 		Capacity = _Capacity;
 		Size = 0;
 		memset(Keys, 0, sizeof(hash_type) * Capacity);
-		for (size_type i = 0; i < Capacity; i++)
-			Allocator.construct(&Values[i]);
 	}
 
 	hash_type* Keys;
 	value_type* Values;
-	allocator_type Allocator;
+	allocator Allocator;
 	size_type Size;
 	size_type Capacity;
 };
