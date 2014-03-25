@@ -35,10 +35,9 @@ template<typename IndexAllocatorT>
 static void test_index_allocator()
 {
 	const size_t CAPACITY = 4;
-	const size_t ARENA_BYTES = CAPACITY * IndexAllocatorT::index_size;
-	std::vector<unsigned char> buffer(1024, 0xcc);
+	std::vector<unsigned int> buffer(256, 0xcccccccc);
 
-	IndexAllocatorT a(&buffer[0], ARENA_BYTES);
+	IndexAllocatorT a(buffer.data(), CAPACITY);
 
 	oCHECK(a.empty(), "index_allocator did not initialize correctly.");
 	oCHECK(a.capacity() == CAPACITY, "Capacity mismatch.");

@@ -26,86 +26,85 @@
 #ifndef oBase_concurrent_object_pool
 #define oBase_concurrent_object_pool
 
-#include <oBase/concurrent_index_allocator.h>
+#include <oBase/object_pool.h>
+#include <atomic>
 
 namespace ouro {
 
-template<typename T>
-class concurrent_object_pool
+template<typename ObjectT>
+class concurrent_object_pool : public object_pool_base<unsigned int, ObjectT, std::atomic<unsigned int>, 0x00ffffff>
 {
+	typedef object_pool_base<unsigned int, ObjectT, std::atomic<unsigned int>, 0x00ffffff> base_t;
+	typedef concurrent_object_pool<ObjectT> self_t;
+	static const unsigned int tag_mask = ~index_mask;
+	static const unsigned int tag_one = 0x01000000;
+
 public:
-	concurrent_object_pool() : pObjects(nullptr) {}
-	~concurrent_object_pool();
-	concurrent_object_pool(size_t _NumObjects);
+	concurrent_object_pool() {}
 	concurrent_object_pool(concurrent_object_pool&& _That) { operator=(std::move(_That)); }
-	concurrent_object_pool& operator=(concurrent_object_pool&& _That)
+	concurrent_object_pool& operator=(concurrent_object_pool&& _That) { return (self_t&)base_t::operator=(std::move((base_t&&)_That)); }
+	concurrent_object_pool(void* _pObjects, size_type _NumObjects) : base_t(_pObjects, _NumObjects) {}
+
+	// allocate an index that could be used with at()
+	index_type allocate_index()
 	{
-		if (this != &_That)
+		index_type i, newI, oldI = Freelist;
+		do
 		{
-			Allocator = std::move(_That.Allocator);
-			pObjects = _That.pObjects; _That.pObjects = nullptr;
-		}
-		return *this;
+			i = oldI & index_mask;
+			if (i == invalid_index)
+				return i;
+			index_type* p = at(i);
+			newI = *p | ((oldI + tag_one) & tag_mask);
+
+		} while (!Freelist.compare_exchange_strong(oldI, newI));
+		return i;
 	}
 
-	bool operator!() const { return !pObjects; }
+	// allocate a block or return nullptr if no available room and also return the new index
+	object_type* allocate(index_type* _pIndex)
+	{
+		index_type* p = nullptr;
+		index_type newI, oldI = Freelist;
+		do
+		{
+			*_pIndex = oldI & index_mask;
+			if (*_pIndex == invalid_index)
+				return nullptr;
+			p = at(*_pIndex);
+			newI = *p | ((oldI + tag_one) & tag_mask);
 
-	T* allocate();
-	void deallocate(T* _pObject);
-	bool valid(T* _pObject) const;
+		} while (!Freelist.compare_exchange_strong(oldI, newI));
+		return new (p) object_type();
+	}
 
-private:
-	concurrent_index_allocator Allocator;
-	T* pObjects;
+	// allocate a block or return nullptr if no available room
+	object_type* allocate() { index_type i; return allocate(&i); }
 
-	concurrent_object_pool(const concurrent_object_pool& _That); /* = delete; */
-	const concurrent_object_pool& operator=(const concurrent_object_pool& _That); /* = delete; */
+	// mark a block as available by index
+	void deallocate_index(index_type _Index)
+	{
+		if (!valid(_Index))
+			throw std::out_of_range("the specified index was not allocated from this allocator");
+		object_type* o = (object_type*)at(_Index);
+		deallocate(o);
+	}
+
+	// mark a block as available by pointer
+	void deallocate(object_type* _pObject)
+	{
+		if (!valid(_pObject))
+			throw std::out_of_range("the specified pointer was not allocated from this allocator");
+		_pObject->~object_type();
+		index_type i = (index_type)index_of(_pObject, Objects, object_size);
+		index_type newI, oldI = Freelist;
+		do
+		{
+			*(index_type*)_pObject = oldI & index_mask;
+			newI = i | ((oldI + tag_one) & tag_mask);
+		} while (!Freelist.compare_exchange_strong(oldI, newI));
+	}
 };
-
-template<typename T>
-concurrent_object_pool<T>::concurrent_object_pool(size_t _NumObjects)
-	: pObjects(nullptr)
-{
-	pObjects = new T[_NumObjects];
-	void* pArena = new unsigned int[_NumObjects];
-	Allocator = std::move(concurrent_index_allocator(pArena, sizeof(unsigned int) * _NumObjects));
-}
-
-template<typename T>
-concurrent_object_pool<T>::~concurrent_object_pool()
-{
-	unsigned int* pArena = (unsigned int*)Allocator.get_arena();
-	Allocator = concurrent_index_allocator();
-
-	delete [] pArena;
-	delete [] pObjects;
-}
-
-template<typename T>
-T* concurrent_object_pool<T>::allocate()
-{
-	T* o = nullptr;
-	unsigned int index = Allocator.allocate();
-	if (index != concurrent_index_allocator::invalid_index)
-		o = pObjects + index;
-	return o;
-}
-
-template<typename T>
-void concurrent_object_pool<T>::deallocate(T* _pObject)
-{
-	if (!valid(_pObject))
-		throw std::invalid_argument("invalid object");
-	unsigned int index = (unsigned int)index_of(_pObject, pObjects);
-	Allocator.deallocate(index);
-}
-
-template<typename T>
-bool concurrent_object_pool<T>::valid(T* _pObject) const
-{
-	return _pObject >= pObjects && _pObject < (pObjects + Allocator.capacity());
-}
-
+		
 } // namespace ouro
-
 #endif
