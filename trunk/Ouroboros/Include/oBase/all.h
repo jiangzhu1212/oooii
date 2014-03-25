@@ -41,7 +41,6 @@
 #include <oBase/concurrent_fixed_block_allocator.h>
 #include <oBase/concurrent_index_allocator.h>
 #include <oBase/concurrent_linear_allocator.h>
-#include <oBase/concurrent_object_pool.h>
 #include <oBase/concurrent_queue.h>
 #include <oBase/concurrent_queue_opt.h>
 #include <oBase/concurrent_stack.h>

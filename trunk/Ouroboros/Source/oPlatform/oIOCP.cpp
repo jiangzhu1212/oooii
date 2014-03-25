@@ -398,7 +398,7 @@ oIOCPContext::oIOCPContext(struct oIOCP_Impl* _pParent)
 #else
 	pSocketOps = new oIOCPOp[Desc.MaxOperations];
 	pSocketIndices = new unsigned int[Desc.MaxOperations];
-	pSocketAllocator = new concurrent_index_allocator(pSocketIndices, Desc.MaxOperations * sizeof(unsigned int));
+	pSocketAllocator = new concurrent_index_allocator(pSocketIndices, Desc.MaxOperations);
 #endif
 
 
@@ -419,7 +419,7 @@ oIOCPContext::oIOCPContext(struct oIOCP_Impl* _pParent)
 
 oIOCPContext::~oIOCPContext()
 {
-	pSocketAllocator->reset();
+	pSocketAllocator->clear();
 	size_t OpCount = pSocketAllocator->capacity();
 	for(size_t i = 0; i < OpCount; ++i)
 	{

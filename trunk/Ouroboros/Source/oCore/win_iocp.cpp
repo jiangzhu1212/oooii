@@ -146,7 +146,7 @@ iocp_threadpool& iocp_threadpool::singleton()
 			"iocp"
 			, process_heap::per_process
 			, process_heap::leak_tracked
-			, [=](void* _pMemory) { new (_pMemory) iocp_threadpool(oKB(512)); }
+			, [=](void* _pMemory) { new (_pMemory) iocp_threadpool(128); }
 			, [=](void* _pMemory) { ((iocp_threadpool*)_pMemory)->~iocp_threadpool(); }
 			, &sInstance);
 	}
@@ -164,8 +164,11 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 	: hIoPort(nullptr)
 	, NumRunningThreads(0)
 	, NumAssociations(0)
-	, pool(_OverlappedCapacity)
 {
+	size_t SizeofPoolArena = sizeof(iocp_overlapped) * _OverlappedCapacity;
+	void* PoolArena = new char[SizeofPoolArena];
+	pool = std::move(concurrent_object_pool<iocp_overlapped>(PoolArena, as_uint(_OverlappedCapacity)));
+
 	reporting::ensure_initialized();
 
 	const size_t NumWorkers = _NumWorkers ? _NumWorkers : thread::hardware_concurrency();
@@ -198,6 +201,8 @@ iocp_threadpool::~iocp_threadpool()
 	{
 		CloseHandle(hIoPort);
 	}
+
+	delete [] (char*)pool.get_objects_pointer();
 }
 
 iocp_threadpool& iocp_threadpool::operator=(iocp_threadpool&& _That)

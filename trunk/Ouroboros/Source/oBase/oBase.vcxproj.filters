@@ -543,6 +543,9 @@
     <ClInclude Include="..\..\Include\oBase\allocate.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\object_pool.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
