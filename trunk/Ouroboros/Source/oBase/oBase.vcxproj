@@ -194,6 +194,7 @@
     <ClInclude Include="..\..\Include\oBase\scc.h" />
     <ClInclude Include="..\..\Include\oBase\snappy.h" />
     <ClInclude Include="..\..\Include\oBase\sphere.h" />
+    <ClInclude Include="..\..\Include\oBase\std_cbegin.h" />
     <ClInclude Include="..\..\Include\oBase\std_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\std_make_unique.h" />
     <ClInclude Include="..\..\Include\oBase\string.h" />

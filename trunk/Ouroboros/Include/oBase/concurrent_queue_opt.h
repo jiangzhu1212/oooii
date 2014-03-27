@@ -33,7 +33,7 @@
 #define oBase_concurrent_queue_opt_h
 
 #include <oBase/concurrency.h>
-#include <oBase/concurrent_block_allocator.h>
+#include <oBase/concurrent_growable_object_pool.h>
 #include <oBase/tagged_pointer.h>
 
 namespace ouro {

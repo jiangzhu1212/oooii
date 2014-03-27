@@ -30,6 +30,7 @@
 #include <oBase/config.h>
 #include <oBase/macros.h>
 #include <oBase/container_support.h>
+#include <ctype.h>
 #include <functional>
 
 // The most-standard (but not standard) secure strcpy/strcats. The 3rd parameter
