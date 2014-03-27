@@ -773,7 +773,7 @@ scoped_allocation load(const path& _Path, load_option::value _LoadOption, const 
 {
 	unsigned long long FileSize = as_size_t(file_size(_Path));
 	// in case we need a UTF32 nul terminator
-	size_t AllocSize = FileSize + (_LoadOption == load_option::text_read ? 4 : 0);
+	size_t AllocSize = as_size_t(FileSize + (_LoadOption == load_option::text_read ? 4 : 0));
 	scoped_allocation p = _Allocator.scoped_allocate(AllocSize);
 
 	// put enough nul terminators for a UTF32 or 16 or 8
@@ -816,7 +816,7 @@ struct iocp_file
 	scoped_allocation buffer;
 	OVERLAPPED* overlapped;
 	HANDLE handle;
-	size_t file_size;
+	unsigned int file_size;
 	path file_path;
 	allocator allocator;
 	int error_code;
@@ -860,7 +860,7 @@ static void iocp_open(iocp_file* f, iocp_file::open _Open)
 		DWORD hi = 0;
 		f->file_size = GetFileSize(f->handle, &hi);
 		if (sizeof(f->file_size) > sizeof(DWORD))
-			f->file_size |= ((size_t)hi << 32);
+			f->file_size |= ((unsigned long long)hi << 32);
 	}
 	else
 	{
@@ -870,17 +870,17 @@ static void iocp_open(iocp_file* f, iocp_file::open _Open)
 	}
 }
 
-static size_t iocp_io_size(const iocp_file* f)
+static unsigned int iocp_io_size(const iocp_file* f)
 {
 	return f->open_type == iocp_file::open_read_unbuffered ? byte_align(f->file_size, 4096) : f->file_size;
 }
 
-static void iocp_read(iocp_file* f, size_t _Offset = 0, size_t _ReadSize = size_t(-1))
+static void iocp_read(iocp_file* f, unsigned int _Offset = 0, unsigned int _ReadSize = invalid)
 {
 	f->overlapped = windows::iocp::associate(f->handle, iocp_close, f);
 	f->overlapped->Offset = (DWORD)_Offset;
-	f->overlapped->OffsetHigh = sizeof(size_t) > sizeof(DWORD) ? DWORD(_Offset >> 32) : 0;
-	if (_ReadSize == size_t(-1))
+	f->overlapped->OffsetHigh = 0;
+	if (_ReadSize == invalid)
 		_ReadSize = iocp_io_size(f);
 	if (!ReadFile(f->handle, f->buffer, as_uint(_ReadSize), nullptr, f->overlapped))
 	{
@@ -893,14 +893,14 @@ static void iocp_read(iocp_file* f, size_t _Offset = 0, size_t _ReadSize = size_
 	}
 }
 
-static void iocp_write(iocp_file* f, size_t _Offset = size_t(-1), size_t _WriteSize = size_t(-1))
+static void iocp_write(iocp_file* f, unsigned int _Offset = invalid, unsigned int _WriteSize = invalid)
 {
 	f->overlapped = windows::iocp::associate(f->handle, iocp_close, f);
 	f->overlapped->Offset = (DWORD)_Offset;
-	f->overlapped->OffsetHigh = sizeof(size_t) > sizeof(DWORD) ? DWORD(_Offset >> 32) : 0;
+	f->overlapped->OffsetHigh = 0;
 
 	if (_WriteSize == size_t(-1))
-		_WriteSize = f->buffer.size();
+		_WriteSize = as_uint(f->buffer.size());
 	
 	if (!WriteFile(f->handle, f->buffer, as_uint(_WriteSize), nullptr, f->overlapped))
 	{
