@@ -39,9 +39,6 @@
     <ClCompile Include="tests\TESTcountdown_latch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tests\TESTconcurrent_index_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="tests\TESTconcurrent_linear_allocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -64,9 +61,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTconcurrent_fixed_block_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTfixed_block_allocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESThash_map.cpp">
