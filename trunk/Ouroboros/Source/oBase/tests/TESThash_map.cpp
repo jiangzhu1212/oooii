@@ -151,7 +151,7 @@ void TESThash_map(test_services& _Services)
 		oCHECK(map.add(Hashes[i], Strings[i]) || map.exists(Hashes[i]), "failed to add entry");
 
 	oCHECK(map.size() == Strings.size(), "unexpected map size");
-	int CountedEntries = 0;
+	size_t CountedEntries = 0;
 	map.enumerate_const([&](const hash_t& _HashKey, const std::string& _Value)->bool
 	{
 		oCHECK(std::find(Hashes.begin(), Hashes.end(), _HashKey) != Hashes.end(), "traversing a hash that was not inserted");

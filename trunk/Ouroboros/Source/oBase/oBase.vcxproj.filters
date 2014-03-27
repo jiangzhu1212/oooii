@@ -238,9 +238,6 @@
     <ClCompile Include="string\to_upper.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
-    <ClCompile Include="concurrent_block_allocator.cpp">
-      <Filter>Source\allocator</Filter>
-    </ClCompile>
     <ClCompile Include="allocate.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
@@ -360,15 +357,6 @@
     <ClInclude Include="..\..\Include\oBase\resized_type.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_index_allocator.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\index_allocator.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\index_allocator_base.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\linear_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
@@ -376,9 +364,6 @@
       <Filter>oBase\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\linear_allocator_base.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\container_support.h">
@@ -504,15 +489,6 @@
     <ClInclude Include="..\..\Include\oBase\std_linear_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_fixed_block_allocator.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\fixed_block_allocator_base.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\fixed_block_allocator.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\hash_map.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
@@ -543,7 +519,7 @@
     <ClInclude Include="..\..\Include\oBase\allocate.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\object_pool.h">
+    <ClInclude Include="..\..\Include\oBase\pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
   </ItemGroup>
