@@ -52,13 +52,42 @@ struct test_obj
 	bool* pDestroyed;
 };
 
-static void test_cfba_allocate()
+template<typename IndexPoolT>
+static void test_index_pool()
+{
+	const size_t CAPACITY = 4;
+	std::vector<unsigned int> buffer(256, 0xcccccccc);
+
+	IndexPoolT a(buffer.data(), CAPACITY);
+
+	oCHECK(a.empty(), "index_allocator did not initialize correctly.");
+	oCHECK(a.capacity() == CAPACITY, "Capacity mismatch.");
+
+	unsigned int index[4];
+	oFORI(i, index)
+		index[i] = a.allocate();
+
+	oCHECK(a.invalid_index == a.allocate(), "allocate succeed past allocator capacity");
+
+	oFORI(i, index)
+		oCHECK(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);
+
+	a.deallocate(index[1]);
+	a.deallocate(index[0]);
+	a.deallocate(index[2]);
+	a.deallocate(index[3]);
+
+	oCHECK(a.empty(), "A deallocate failed.");
+}
+
+template<typename test_block_poolT>
+static void test_allocate()
 {
 	static const size_t NumBlocks = 20;
 	static const size_t BlockSize = sizeof(test_obj);
 	std::vector<char> scopedArena(BlockSize * NumBlocks);
 	
-	block_pool<BlockSize> Allocator(scopedArena.data(), NumBlocks);
+	test_block_poolT Allocator(scopedArena.data(), NumBlocks);
 	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after init)", NumBlocks);
 
 	void* tests[NumBlocks];
@@ -79,11 +108,12 @@ static void test_cfba_allocate()
 	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after deallocate)", NumBlocks);
 }
 
-static void test_cfba_create()
+template<typename test_obj_poolT>
+static void test_create()
 {
 	static const size_t NumBlocks = 20;
 	std::vector<char> scopedArena(NumBlocks * sizeof(test_obj));
-	object_pool<test_obj> Allocator(scopedArena.data(), NumBlocks); 
+	test_obj_poolT Allocator(scopedArena.data(), NumBlocks); 
 		
 	bool testdestroyed[NumBlocks];
 	test_obj* tests[NumBlocks];
@@ -104,7 +134,7 @@ static void test_cfba_create()
 	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after deallocate)", NumBlocks);
 }
 
-static void test_cfba_concurrency()
+static void test_concurrency()
 {
 	static const size_t NumBlocks = 10000;
 	std::vector<char> scopedArena(NumBlocks * sizeof(test_obj));
@@ -135,11 +165,16 @@ static void test_cfba_concurrency()
 	}
 }
 
-void TESTconcurrent_fixed_block_allocator()
+void TESTpool()
 {
-	test_cfba_allocate();
-	test_cfba_create();
-	test_cfba_concurrency();
+	test_index_pool<index_pool<unsigned int>>();
+	test_index_pool<concurrent_index_pool<unsigned int>>();
+
+	test_allocate<block_pool<sizeof(test_obj)>>();
+	test_create<object_pool<test_obj>>();
+	test_allocate<concurrent_block_pool<sizeof(test_obj)>>();
+	test_create<concurrent_object_pool<test_obj>>();
+	test_concurrency();
 }
 
 	} // namespace tests

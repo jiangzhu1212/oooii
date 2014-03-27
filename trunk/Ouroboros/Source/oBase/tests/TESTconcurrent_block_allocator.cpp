@@ -49,7 +49,7 @@ struct test_obj
 	bool* pDestroyed;
 };
 
-void TESTconcurrent_block_allocator()
+void TESTconcurrent_growable_object_pool()
 {
 	static const int NumBlocks = 2000;
 	static const int NumBlocksPerChunk = 10;

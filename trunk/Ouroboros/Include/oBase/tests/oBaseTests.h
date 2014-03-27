@@ -36,9 +36,7 @@ namespace ouro {
 		void TESTaaboxf();
 		void TESTatof(test_services& _Services);
 		void TESTcompression(test_services& _Services);
-		void TESTconcurrent_block_allocator();
-		void TESTconcurrent_fixed_block_allocator();
-		void TESTconcurrent_index_allocator();
+		void TESTconcurrent_growable_object_pool();
 		void TESTconcurrent_linear_allocator();
 		void TESTconcurrent_queue();
 		void TESTconcurrent_queue_concrt();
@@ -54,11 +52,11 @@ namespace ouro {
 		void TESTfourcc();
 		void TESTfuture(test_services& _Services);
 		void TESThash_map(test_services& _Services);
-		void TESTindex_allocator();
 		void TESTini();
 		void TESTjson();
 		void TESTparallel_for();
 		void TESTpath();
+		void TESTpool();
 		void TESTtask_group();
 		void TESTtlsf_allocator(test_services& _Services);
 		void TESTthreadpool();
