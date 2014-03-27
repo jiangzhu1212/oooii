@@ -96,6 +96,8 @@
 		#define oHAS_MAKE_EXCEPTION_PTR 1
 	#endif
 
+#define oNEEDS_CBEGIN
+
 #else
 	#define override
 #endif
@@ -134,23 +136,6 @@
 #ifndef oHAS_MAKE_EXCEPTION_PTR
 	#include <exception>
 	namespace std { inline exception_ptr make_exception_ptr(exception e) { return copy_exception(e); } }
-#endif
-
-#ifndef oHAS_CONST_BEGIN_END
-	#include <iterator>
-	#include <array>
-	namespace std {
-		template<typename T> auto cbegin(const T& x) -> decltype(x.cbegin()) { return x.cbegin(); }
-		template<typename T> auto cend(const T& x) -> decltype(x.cend()) { return x.cend(); }
-		template<typename T, size_t size> auto cbegin(const array<T, size>& x) -> decltype(x.cbegin()) { return x.cbegin(); }
-		template<typename T, size_t size> auto cend(const array<T, size>& x) -> decltype(x.cend()) { return x.cend(); }
-		template<typename T, int size> const T* cbegin(const T (&x)[size]) { return &x[0]; }
-		template<typename T, int size> const T* cend(const T (&x)[size]) { return &x[size]; }
-		template<typename T, size_t size> auto crbegin(const array<T, size>& x) -> decltype(x.crbegin()) { return x.crbegin(); }
-		template<typename T, size_t size> auto crend(const array<T, size>& x) -> decltype(x.crend()) { return x.crend(); }
-		template<typename T> auto crbegin(const T& x) -> decltype(x.crbegin()) { return x.crbegin(); }
-		template<typename T> auto crend(const T& x) -> decltype(x.crend()) { return x.crend(); }
-	} // namespace std
 #endif
 
 #if !defined(oHAS_MOVE_CTOR) || oHAS_MOVE_CTOR != 1

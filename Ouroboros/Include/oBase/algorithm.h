@@ -37,6 +37,7 @@
 #include <vector>
 #include <oBase/fixed_vector.h>
 #include <oBase/throw.h>
+#include <oBase/std_cbegin.h>
 #include <oBase/types.h>
 #include <oBase/unordered_map.h>
 

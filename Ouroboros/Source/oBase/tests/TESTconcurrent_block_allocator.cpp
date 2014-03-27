@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/concurrent_block_allocator.h>
+#include <oBase/concurrent_growable_object_pool.h>
 #include <oBase/assert.h>
 #include <oBase/concurrency.h>
 #include <oBase/throw.h>

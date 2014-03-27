@@ -35,6 +35,7 @@
 #include <oBase/uint128.h>
 #include <chrono>
 #include <climits>
+#include <string>
 
 namespace ouro {
 

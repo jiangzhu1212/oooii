@@ -522,6 +522,9 @@
     <ClInclude Include="..\..\Include\oBase\pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\std_cbegin.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
