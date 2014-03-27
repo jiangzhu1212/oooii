@@ -53,7 +53,7 @@ void TESTconcurrent_block_allocator()
 {
 	static const int NumBlocks = 2000;
 	static const int NumBlocksPerChunk = 10;
-	concurrent_block_allocator<test_obj> Allocator(NumBlocksPerChunk);
+ 	concurrent_growable_object_pool<test_obj> Allocator(NumBlocksPerChunk);
 	try 
 	{
 		bool destroyed[NumBlocks];
