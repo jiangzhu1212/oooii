@@ -60,13 +60,7 @@
     <ClCompile Include="tests\TESTmath.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tests\TESTconcurrent_fixed_block_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="tests\TESThash_map.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTconcurrent_block_allocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTconcurrent_stack.cpp">
@@ -76,6 +70,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTcoroutine.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TESTconcurrent_growable_object_pool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TESTpool.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
