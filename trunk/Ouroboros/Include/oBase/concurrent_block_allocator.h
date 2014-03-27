@@ -29,8 +29,8 @@
 // allocation or iterating slabs to find free space. Atomics ensure 
 // concurrency.
 
-#ifndef oBase_block_allocator_h
-#define oBase_block_allocator_h
+#ifndef oBase_concurrent_growable_object_pool_h
+#define oBase_concurrent_growable_object_pool_h
 
 #include <oBase/allocate.h>
 #include <oBase/concurrent_stack.h>
@@ -40,7 +40,7 @@
 namespace ouro {
 
 template<typename T>
-class concurrent_block_allocator
+class concurrent_growable_object_pool
 {
 	typedef concurrent_block_pool<sizeof(T)> chunk_alloc_t;
 
@@ -49,9 +49,9 @@ public:
 	static const size_type max_blocks_per_chunk = chunk_alloc_t::max_blocks;
 
 	// The specified allocate and deallocate functions must be thread safe
-	concurrent_block_allocator(size_type _NumBlocksPerChunk = max_blocks_per_chunk, const allocator& _Allocator = default_allocator);
+	concurrent_growable_object_pool(size_type _NumBlocksPerChunk = max_blocks_per_chunk, const allocator& _Allocator = default_allocator);
 
-	~concurrent_block_allocator();
+	~concurrent_growable_object_pool();
 
 	oPOOL_CREATE();
 	oPOOL_DESTROY();
@@ -137,15 +137,15 @@ private:
 	// Maps a pointer back to the chunk allocator it came from
 	chunk_alloc_t* find_chunk_allocator(void* _Pointer) const;
 
-	concurrent_block_allocator(const concurrent_block_allocator&); /* = delete */
-	const concurrent_block_allocator& operator=(const concurrent_block_allocator&); /* = delete */
+	concurrent_growable_object_pool(const concurrent_growable_object_pool&); /* = delete */
+	const concurrent_growable_object_pool& operator=(const concurrent_growable_object_pool&); /* = delete */
 
-	concurrent_block_allocator(concurrent_block_allocator&&); /* = delete */
-	concurrent_block_allocator& operator=(concurrent_block_allocator&&); /* = delete */
+	concurrent_growable_object_pool(concurrent_growable_object_pool&&); /* = delete */
+	concurrent_growable_object_pool& operator=(concurrent_growable_object_pool&&); /* = delete */
 };
 
 template<typename T>
-concurrent_block_allocator<T>::concurrent_block_allocator(size_type _NumBlocksPerChunk, const allocator& _Allocator)
+concurrent_growable_object_pool<T>::concurrent_growable_object_pool(size_type _NumBlocksPerChunk, const allocator& _Allocator)
 	: NumBlocksPerChunk(_NumBlocksPerChunk)
 	, ChunkSize(static_cast<size_type>(byte_align(sizeof(chunk_t) + sizeof(T) * _NumBlocksPerChunk, oDEFAULT_MEMORY_ALIGNMENT)))
 	, pLastAlloc(nullptr)
@@ -154,13 +154,13 @@ concurrent_block_allocator<T>::concurrent_block_allocator(size_type _NumBlocksPe
 {}
 
 template<typename T>
-concurrent_block_allocator<T>::~concurrent_block_allocator()
+concurrent_growable_object_pool<T>::~concurrent_growable_object_pool()
 {
 	shrink(0);
 }
 
 template<typename T>
-void concurrent_block_allocator<T>::clear()
+void concurrent_growable_object_pool<T>::clear()
 {
 	chunk_t* c = Chunks.peek();
 	while (c)
@@ -171,7 +171,7 @@ void concurrent_block_allocator<T>::clear()
 }
 
 template<typename T>
-void concurrent_block_allocator<T>::reserve(size_type _NumElements)
+void concurrent_growable_object_pool<T>::reserve(size_type _NumElements)
 {
 	bool additional = ((_NumElements % NumBlocksPerChunk) == 0) ? 0 : 1;
 	size_type NewNumChunks = additional + (_NumElements / NumBlocksPerChunk);
@@ -186,7 +186,7 @@ void concurrent_block_allocator<T>::reserve(size_type _NumElements)
 }
 
 template<typename T>
-void concurrent_block_allocator<T>::shrink(size_type _KeepCount)
+void concurrent_growable_object_pool<T>::shrink(size_type _KeepCount)
 {
 	chunk_t* c = Chunks.pop_all();
 	chunk_t* toFree = nullptr;
@@ -227,7 +227,7 @@ void concurrent_block_allocator<T>::shrink(size_type _KeepCount)
 }
 
 template<typename T>
-bool concurrent_block_allocator<T>::valid(T* _Pointer) const
+bool concurrent_growable_object_pool<T>::valid(T* _Pointer) const
 {
 	if (_Pointer)
 	{
@@ -243,7 +243,7 @@ bool concurrent_block_allocator<T>::valid(T* _Pointer) const
 }
 
 template<typename T>
-bool concurrent_block_allocator<T>::has_outstanding_allocations() const
+bool concurrent_growable_object_pool<T>::has_outstanding_allocations() const
 {
 	chunk_t* c = Chunks.peek();
 	while (c)
@@ -256,7 +256,7 @@ bool concurrent_block_allocator<T>::has_outstanding_allocations() const
 }
 
 template<typename T>
-typename concurrent_block_allocator<T>::size_type concurrent_block_allocator<T>::count_available() const
+typename concurrent_growable_object_pool<T>::size_type concurrent_growable_object_pool<T>::count_available() const
 {
 	size_type n = 0;
 	chunk_t* c = Chunks.peek();
@@ -269,7 +269,7 @@ typename concurrent_block_allocator<T>::size_type concurrent_block_allocator<T>:
 }
 
 template<typename T>
-typename concurrent_block_allocator<T>::chunk_t* concurrent_block_allocator<T>::allocate_chunk()
+typename concurrent_growable_object_pool<T>::chunk_t* concurrent_growable_object_pool<T>::allocate_chunk()
 {
 	chunk_t* c = reinterpret_cast<chunk_t*>(Allocator.allocate(ChunkSize, memory_alignment::align_to_cache_line));
 	c->allocator = std::move(chunk_alloc_t(byte_align(c+1, oDEFAULT_MEMORY_ALIGNMENT), NumBlocksPerChunk));
@@ -278,7 +278,7 @@ typename concurrent_block_allocator<T>::chunk_t* concurrent_block_allocator<T>::
 }
 
 template<typename T>
-void* concurrent_block_allocator<T>::allocate()
+void* concurrent_growable_object_pool<T>::allocate()
 {
 	void* p = nullptr;
 
@@ -324,7 +324,7 @@ void* concurrent_block_allocator<T>::allocate()
 }
 
 template<typename T>
-void concurrent_block_allocator<T>::deallocate(void* _Pointer)
+void concurrent_growable_object_pool<T>::deallocate(void* _Pointer)
 {
 	chunk_alloc_t* pAllocator = find_chunk_allocator(_Pointer);
 	if (!pAllocator)
@@ -334,7 +334,7 @@ void concurrent_block_allocator<T>::deallocate(void* _Pointer)
 }
 
 template<typename T>
-typename concurrent_block_allocator<T>::chunk_alloc_t* concurrent_block_allocator<T>::find_chunk_allocator(void* _Pointer) const
+typename concurrent_growable_object_pool<T>::chunk_alloc_t* concurrent_growable_object_pool<T>::find_chunk_allocator(void* _Pointer) const
 {
 	chunk_alloc_t* pChunkAllocator = pLastDealloc; // racy but only an optimization hint
 

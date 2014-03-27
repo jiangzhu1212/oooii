@@ -117,7 +117,7 @@ private:
 
 	oCACHE_ALIGNED(pointer_t Head);
 	oCACHE_ALIGNED(pointer_t Tail);
-	oCACHE_ALIGNED(concurrent_block_allocator<node_t> Pool);
+	oCACHE_ALIGNED(concurrent_growable_object_pool<node_t> Pool);
 	
 	void internal_push(node_t* _pNode);
 };

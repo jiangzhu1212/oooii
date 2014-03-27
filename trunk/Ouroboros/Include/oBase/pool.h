@@ -361,6 +361,7 @@ public:
 	void* const get_index_pointer() const { return base_t::get_block_pointer(); }
 };
 
+// non-concurrent object pool with calls to ctors and dtors
 template<typename T>
 class object_pool : private block_pool<sizeof(T)>
 {
@@ -383,6 +384,7 @@ public:
 	void* const get_object_pointer() const { return base_t::get_block_pointer(); }
 };
 
+// concurrent object pool with calls to ctors and dtors
 template<typename T>
 class concurrent_object_pool : private concurrent_block_pool<sizeof(T)>
 {
