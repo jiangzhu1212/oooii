@@ -117,7 +117,7 @@ private:
 
 	oCACHE_ALIGNED(pointer_t Head);
 	oCACHE_ALIGNED(pointer_t Tail);
-	oCACHE_ALIGNED(concurrent_block_allocator_t<node_t> Pool);
+	oCACHE_ALIGNED(concurrent_block_allocator<node_t> Pool);
 	
 	void internal_push(node_t* _pNode);
 };
@@ -125,7 +125,7 @@ private:
 template<typename T>
 concurrent_queue<T>::concurrent_queue()
 {
-	node_t* n = Pool.construct(T());
+	node_t* n = Pool.create(T());
 	
 	// There's no potential for double-freeing here, so set it up for immediate 
 	// deallocation in try_pop code.
@@ -174,13 +174,13 @@ void concurrent_queue<T>::internal_push(node_t* _pNode)
 template<typename T>
 void concurrent_queue<T>::push(const_reference _Element)
 {
-	internal_push(Pool.construct(_Element));
+	internal_push(Pool.create(_Element));
 }
 
 template<typename T>
 void concurrent_queue<T>::push(value_type&& _Element)
 {
-	internal_push(Pool.construct(std::move(_Element)));
+	internal_push(Pool.create(std::move(_Element)));
 }
 
 template<typename T>

@@ -32,31 +32,29 @@
 #ifndef oBase_block_allocator_h
 #define oBase_block_allocator_h
 
+#include <oBase/allocate.h>
 #include <oBase/concurrent_stack.h>
-#include <oBase/concurrent_fixed_block_allocator.h>
-#include <atomic>
+#include <oBase/pool.h>
 #include <cstdlib>
 
 namespace ouro {
 
+template<typename T>
 class concurrent_block_allocator
 {
-	typedef concurrent_fixed_block_allocator_base<unsigned short> fba_t;
+	typedef concurrent_block_pool<sizeof(T)> chunk_alloc_t;
 
 public:
-	typedef fba_t::size_type size_type;
-	typedef std::function<void*(size_t _Size)> allocate_t;
-	typedef std::function<void(void* _Pointer)> deallocate_t;
-
-	static const size_type max_blocks_per_chunk = fba_t::max_num_blocks;
+	typedef typename chunk_alloc_t::size_type size_type;
+	static const size_type max_blocks_per_chunk = chunk_alloc_t::max_blocks;
 
 	// The specified allocate and deallocate functions must be thread safe
-	concurrent_block_allocator(size_type _BlockSize
-		, size_type _NumBlocksPerChunk = max_blocks_per_chunk
-		, const allocate_t& _PlatformAllocate = malloc
-		, const deallocate_t& _PlatformDeallocate = free);
+	concurrent_block_allocator(size_type _NumBlocksPerChunk = max_blocks_per_chunk, const allocator& _Allocator = default_allocator);
 
 	~concurrent_block_allocator();
+
+	oPOOL_CREATE();
+	oPOOL_DESTROY();
 
 	// Allocates a block. If there isn't enough memory, this will allocate more
 	// memory from the underlying platform. Such allocations occur in chunks. The 
@@ -91,7 +89,7 @@ public:
 	void shrink(size_type _NumElements);
 
 	// Returns true if the specified pointer was allocated by this allocator.
-	bool valid(void* _Pointer) const;
+	bool valid(T* _Pointer) const;
 
 	// Returns the number of blocks per chunk that was specified at construction
 	// time.
@@ -120,26 +118,24 @@ public:
 private:
 	struct chunk_t
 	{
+		chunk_alloc_t allocator;
 		chunk_t* next;
-		fba_t Allocator;
 	};
 
-	std::atomic<fba_t*> pLastAlloc;
-	std::atomic<fba_t*> pLastDealloc;
-	size_type BlockSize;
+	std::atomic<chunk_alloc_t*> pLastAlloc;
+	std::atomic<chunk_alloc_t*> pLastDealloc;
 	size_type NumBlocksPerChunk;
 	size_type ChunkSize;
 	oCACHE_ALIGNED(concurrent_stack<chunk_t> Chunks);
 
-	allocate_t PlatformAllocate;
-	deallocate_t PlatformDeallocate;
+	allocator Allocator;
 
 	// Allocates and initializes a new chunk. Use this when out of currently 
 	// reserved memory.
 	chunk_t* allocate_chunk();
 
 	// Maps a pointer back to the chunk allocator it came from
-	fba_t* find_chunk_allocator(void* _Pointer) const;
+	chunk_alloc_t* find_chunk_allocator(void* _Pointer) const;
 
 	concurrent_block_allocator(const concurrent_block_allocator&); /* = delete */
 	const concurrent_block_allocator& operator=(const concurrent_block_allocator&); /* = delete */
@@ -148,39 +144,217 @@ private:
 	concurrent_block_allocator& operator=(concurrent_block_allocator&&); /* = delete */
 };
 
-template<unsigned int S>
-class concurrent_block_allocator_s : public concurrent_block_allocator
-{
-public:
-	typedef concurrent_block_allocator::size_type size_type;
-	const static size_type block_size = S;
-
-	concurrent_block_allocator_s(size_type _NumBlocksPerChunk = max_blocks_per_chunk
-		, const allocate_t& _PlatformAllocate = malloc
-		, const deallocate_t& _PlatformDeallocate = free)
-		: concurrent_block_allocator(block_size, _NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)
-	{}
-};
+template<typename T>
+concurrent_block_allocator<T>::concurrent_block_allocator(size_type _NumBlocksPerChunk, const allocator& _Allocator)
+	: NumBlocksPerChunk(_NumBlocksPerChunk)
+	, ChunkSize(static_cast<size_type>(byte_align(sizeof(chunk_t) + sizeof(T) * _NumBlocksPerChunk, oDEFAULT_MEMORY_ALIGNMENT)))
+	, pLastAlloc(nullptr)
+	, pLastDealloc(nullptr)
+	, Allocator(_Allocator)
+{}
 
 template<typename T>
-class concurrent_block_allocator_t : public concurrent_block_allocator_s<sizeof(T)>
+concurrent_block_allocator<T>::~concurrent_block_allocator()
 {
-	typedef concurrent_block_allocator_s<sizeof(T)> base_t;
-public:
-	typedef base_t::size_type size_type;
-	typedef T value_type;
-	concurrent_block_allocator_t(size_type _NumBlocksPerChunk = max_blocks_per_chunk
-		, const allocate_t& _PlatformAllocate = malloc
-		, const deallocate_t& _PlatformDeallocate = free)
-		: concurrent_block_allocator_s(_NumBlocksPerChunk, _PlatformAllocate, _PlatformDeallocate)
-	{}
+	shrink(0);
+}
 
-	T* allocate() { return static_cast<T*>(concurrent_block_allocator::allocate()); }
-	void deallocate(T* _Pointer) { concurrent_block_allocator::deallocate(_Pointer); }
+template<typename T>
+void concurrent_block_allocator<T>::clear()
+{
+	chunk_t* c = Chunks.peek();
+	while (c)
+	{
+		c->allocator.clear();
+		c = c->next;
+	}
+}
 
-	oALLOCATOR_CONSTRUCT();
-	oALLOCATOR_DESTROY();
-};
+template<typename T>
+void concurrent_block_allocator<T>::reserve(size_type _NumElements)
+{
+	bool additional = ((_NumElements % NumBlocksPerChunk) == 0) ? 0 : 1;
+	size_type NewNumChunks = additional + (_NumElements / NumBlocksPerChunk);
+
+	size_type currentSize = Chunks.size();
+	for (size_type i = currentSize; i < NewNumChunks; i++)
+	{
+		chunk_t* c = allocate_chunk();
+		pLastAlloc = &c->allocator; // racy but only an optimization hint
+		Chunks.push(c);
+	}
+}
+
+template<typename T>
+void concurrent_block_allocator<T>::shrink(size_type _KeepCount)
+{
+	chunk_t* c = Chunks.pop_all();
+	chunk_t* toFree = nullptr;
+	while (c)
+	{
+		chunk_t* tmp = c;
+		c = c->next;
+
+		if (!tmp->allocator.empty())
+			Chunks.push(tmp);
+		else
+		{
+			tmp->next = toFree;
+			toFree = tmp;
+		}
+	}
+
+	size_type nChunks = Chunks.size();
+	c = toFree;
+
+	while (c && nChunks < _KeepCount)
+	{
+		chunk_t* tmp = c;
+		c = c->next;
+		Chunks.push(tmp);
+		nChunks++;
+	}
+
+	while (c)
+	{
+		chunk_t* tmp = c;
+		c = c->next;
+		Allocator.deallocate(tmp);
+	}
+
+	// reset out cached values
+	pLastAlloc = pLastDealloc = nullptr;
+}
+
+template<typename T>
+bool concurrent_block_allocator<T>::valid(T* _Pointer) const
+{
+	if (_Pointer)
+	{
+		chunk_t* c = Chunks.peek();
+		while (c)
+		{
+			if (c->Allocator.valid(_Pointer))
+				return true;
+			c = c->next;
+		}
+	}
+	return false;
+}
+
+template<typename T>
+bool concurrent_block_allocator<T>::has_outstanding_allocations() const
+{
+	chunk_t* c = Chunks.peek();
+	while (c)
+	{
+		if (!c->allocator.empty())
+			return true;
+		c = c->next;
+	}
+	return false;
+}
+
+template<typename T>
+typename concurrent_block_allocator<T>::size_type concurrent_block_allocator<T>::count_available() const
+{
+	size_type n = 0;
+	chunk_t* c = Chunks.peek();
+	while (c)
+	{
+		n += c->allocator.count_available();
+		c = c->next;
+	}
+	return n;
+}
+
+template<typename T>
+typename concurrent_block_allocator<T>::chunk_t* concurrent_block_allocator<T>::allocate_chunk()
+{
+	chunk_t* c = reinterpret_cast<chunk_t*>(Allocator.allocate(ChunkSize, memory_alignment::align_to_cache_line));
+	c->allocator = std::move(chunk_alloc_t(byte_align(c+1, oDEFAULT_MEMORY_ALIGNMENT), NumBlocksPerChunk));
+	c->next = nullptr;
+	return c;
+}
+
+template<typename T>
+void* concurrent_block_allocator<T>::allocate()
+{
+	void* p = nullptr;
+
+	// check cached last-used chunk (racy but it's only an optimization hint)
+	chunk_alloc_t* pAllocator = pLastAlloc;
+	if (pAllocator)
+		p = pAllocator->allocate();
+
+	// search for another chunk
+	if (!p)
+	{
+		// iterating over the list inside the stack is safe because we're only
+		// ever going to allow growth of the list which since it occurs on top
+		// of any prior head means the rest of the list remains valid for traversal
+		chunk_t* c = Chunks.peek();
+		while (c)
+		{
+			p = c->allocator.allocate();
+			if (p)
+			{
+				pLastAlloc = &c->allocator; // racy but only an optimization hint
+				break;
+			}
+
+			c = c->next;
+		}
+
+		// still no memory? add another chunk
+		if (!p)
+		{
+			chunk_t* newHead = allocate_chunk();
+			p = newHead->allocator.allocate();
+
+			// this assignment to pLastAlloc is a bit racy, but it's only a 
+			// caching/hint, so elsewhere where this is used, just use whatever is 
+			// there at the time
+			Chunks.push(newHead);
+			pLastAlloc = &newHead->allocator;
+		}
+	}
+
+	return p;
+}
+
+template<typename T>
+void concurrent_block_allocator<T>::deallocate(void* _Pointer)
+{
+	chunk_alloc_t* pAllocator = find_chunk_allocator(_Pointer);
+	if (!pAllocator)
+		throw std::runtime_error("deallocate called on a dangling pointer from a chunk that has probably been shrink()'ed");
+	pLastDealloc = pAllocator; // racy but only an optimization hint
+	pAllocator->deallocate(_Pointer);
+}
+
+template<typename T>
+typename concurrent_block_allocator<T>::chunk_alloc_t* concurrent_block_allocator<T>::find_chunk_allocator(void* _Pointer) const
+{
+	chunk_alloc_t* pChunkAllocator = pLastDealloc; // racy but only an optimization hint
+
+	// Check the cached version to avoid a linear lookup
+	if (pChunkAllocator && pChunkAllocator->valid(_Pointer))
+		return pChunkAllocator;
+
+	// iterating over the list inside the stack is safe because we're only
+	// ever going to allow growth of the list which since it occurs on top
+	// of any prior head means the rest of the list remains valid for traversal
+	chunk_t* c = Chunks.peek();
+	while (c)
+	{
+		if (c->allocator.valid(_Pointer))
+			return &c->allocator;
+		c = c->next;
+	}
+
+	return nullptr;
+}
 
 } // namespace ouro
 

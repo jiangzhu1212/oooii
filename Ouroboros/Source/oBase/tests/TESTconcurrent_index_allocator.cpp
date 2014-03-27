@@ -22,8 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/concurrent_index_allocator.h>
-#include <oBase/index_allocator.h>
+#include <oBase/pool.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
 #include <vector>
@@ -61,12 +60,12 @@ static void test_index_allocator()
 
 void TESTindex_allocator()
 {
-	test_index_allocator<index_allocator>();
+	test_index_allocator<index_pool<unsigned int>>();
 }
 
 void TESTconcurrent_index_allocator()
 {
-	test_index_allocator<concurrent_index_allocator>();
+	test_index_allocator<concurrent_index_pool<unsigned int>>();
 }
 
 	} // namespace tests

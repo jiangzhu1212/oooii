@@ -104,7 +104,7 @@ private:
 
 	oCACHE_ALIGNED(pointer_t Head);
 	oCACHE_ALIGNED(pointer_t Tail);
-	oCACHE_ALIGNED(concurrent_block_allocator_t<node_t> Pool);
+	oCACHE_ALIGNED(concurrent_block_allocator<node_t> Pool);
 
 	void internal_push(node_t* _pNode);
 	void fix_list(pointer_t _Tail, pointer_t _Head);
@@ -114,7 +114,7 @@ private:
 template<typename T>
 concurrent_queue_opt<T>::concurrent_queue_opt()
 {
-	Head = Tail = pointer_t(Pool.construct(T()), 0);
+	Head = Tail = pointer_t(Pool.create(T()), 0);
 }
 
 template<typename T>
@@ -155,13 +155,13 @@ void concurrent_queue_opt<T>::internal_push(node_t* _pNode)
 template<typename T>
 void concurrent_queue_opt<T>::push(const_reference _Element)
 {
-	internal_push(Pool.construct(_Element));
+	internal_push(Pool.create(_Element));
 }
 
 template<typename T>
 void concurrent_queue_opt<T>::push(value_type&& _Element)
 {
-	internal_push(Pool.construct(std::move(_Element)));
+	internal_push(Pool.create(std::move(_Element)));
 }
 
 template<typename T>

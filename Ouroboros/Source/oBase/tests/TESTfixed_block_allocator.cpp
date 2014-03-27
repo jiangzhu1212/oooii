@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/fixed_block_allocator.h>
+#include <oBase/pool.h>
 #include <oBase/throw.h>
 #include <vector>
 
@@ -57,7 +57,7 @@ static void test_cfba_allocate()
 	static const size_t BlockSize = sizeof(test_obj);
 	std::vector<char> scopedArena(BlockSize * NumBlocks);
 	
-	fixed_block_allocator<unsigned char> Allocator(scopedArena.data(), BlockSize, NumBlocks);
+	block_pool<1> Allocator(scopedArena.data(), NumBlocks);
 	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after init)", NumBlocks);
 
 	void* tests[NumBlocks];
@@ -82,13 +82,13 @@ static void test_cfba_create()
 {
 	static const size_t NumBlocks = 20;
 	std::vector<char> scopedArena(NumBlocks * sizeof(test_obj));
-	fixed_block_allocator_t<unsigned short, test_obj> Allocator(scopedArena.data(), NumBlocks); 
+	object_pool<test_obj> Allocator(scopedArena.data(), NumBlocks); 
 		
 	bool testdestroyed[NumBlocks];
 	test_obj* tests[NumBlocks];
 	for (size_t i = 0; i < NumBlocks; i++)
 	{
-		tests[i] = Allocator.construct(&testdestroyed[i]);
+		tests[i] = Allocator.create(&testdestroyed[i]);
 		oCHECK(tests[i], "test_obj %u should have been allocated", i);
 		oCHECK(tests[i]->Value == kMagicValue, "test_obj %u should have been constructed", i);
 		oCHECK(tests[i]->pDestroyed && false == *tests[i]->pDestroyed, "test_obj %u should have been constructed", i);
@@ -96,7 +96,7 @@ static void test_cfba_create()
 
 	for (size_t i = 0; i < NumBlocks; i++)
 	{
-		Allocator.destroy(NumBlocks, tests[i]);
+		Allocator.destroy(tests[i]);
 		oCHECK(testdestroyed[i] == true, "test_obj %u should have been destroyed", i);
 	}
 

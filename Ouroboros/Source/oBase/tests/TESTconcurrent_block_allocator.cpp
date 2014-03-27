@@ -53,7 +53,7 @@ void TESTconcurrent_block_allocator()
 {
 	static const int NumBlocks = 2000;
 	static const int NumBlocksPerChunk = 10;
-	concurrent_block_allocator_t<test_obj> Allocator(NumBlocksPerChunk);
+	concurrent_block_allocator<test_obj> Allocator(NumBlocksPerChunk);
 	try 
 	{
 		bool destroyed[NumBlocks];
@@ -64,7 +64,7 @@ void TESTconcurrent_block_allocator()
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
-			tests[_Index] = Allocator.construct(&destroyed[_Index]);
+			tests[_Index] = Allocator.create(&destroyed[_Index]);
 			tests[_Index]->Value = _Index;
 		});
 
@@ -102,7 +102,7 @@ void TESTconcurrent_block_allocator()
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{
-			tests[_Index] = Allocator.construct(&destroyed[_Index]);
+			tests[_Index] = Allocator.create(&destroyed[_Index]);
 			tests[_Index]->Value = _Index;
 			if (_Index & 0x1)
 				Allocator.destroy(tests[_Index]);

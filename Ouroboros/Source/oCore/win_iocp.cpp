@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oCore/windows/win_iocp.h>
 #include <oBase/backoff.h>
-#include <oBase/concurrent_object_pool.h>
+#include <oBase/pool.h>
 #include <oBase/invalid.h>
 #include <oCore/debugger.h>
 #include <oCore/process_heap.h>
@@ -202,7 +202,7 @@ iocp_threadpool::~iocp_threadpool()
 		CloseHandle(hIoPort);
 	}
 
-	delete [] (char*)pool.get_objects_pointer();
+	delete [] (char*)pool.get_object_pointer();
 }
 
 iocp_threadpool& iocp_threadpool::operator=(iocp_threadpool&& _That)
@@ -257,7 +257,7 @@ void iocp_threadpool::join()
 OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, iocp::completion_t _Completion, void* _pContext)
 {
 	NumAssociations++;
-	iocp_overlapped* ol = pool.allocate();
+	iocp_overlapped* ol = pool.create();
 	if (ol)
 	{
 		if (hIoPort != CreateIoCompletionPort(_Handle, hIoPort, op::completion, static_cast<DWORD>(Workers.size())))
@@ -280,8 +280,7 @@ OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, iocp::completion_t _Compl
 
 void iocp_threadpool::disassociate(OVERLAPPED* _pOverlapped)
 {
-	iocp_overlapped* ol = static_cast<iocp_overlapped*>(_pOverlapped);
-	pool.deallocate(ol);
+	pool.destroy(static_cast<iocp_overlapped*>(_pOverlapped));
 	NumAssociations--;
 }
 
