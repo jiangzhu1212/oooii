@@ -142,7 +142,7 @@
     <ClInclude Include="..\..\Include\oBase\colors.h" />
     <ClInclude Include="..\..\Include\oBase\compression.h" />
     <ClInclude Include="..\..\Include\oBase\concurrency.h" />
-    <ClInclude Include="..\..\Include\oBase\concurrent_block_allocator.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_growable_object_pool.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_queue.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_queue_opt.h" />
@@ -159,6 +159,7 @@
     <ClInclude Include="..\..\Include\oBase\endian.h" />
     <ClInclude Include="..\..\Include\oBase\equal.h" />
     <ClInclude Include="..\..\Include\oBase\event.h" />
+    <ClInclude Include="..\..\Include\oBase\filter_chain.h" />
     <ClInclude Include="..\..\Include\oBase\finally.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_string.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />

@@ -78,6 +78,9 @@
     <ClCompile Include="tests\TESTpool.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TESTfilter_chain.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\tests\oBaseTests.h">

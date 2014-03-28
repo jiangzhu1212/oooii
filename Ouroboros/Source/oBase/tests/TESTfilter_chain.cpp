@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oFilterChain.h>
+#include <oBase/filter_chain.h>
 #include <oBase/throw.h>
 
 using namespace ouro;

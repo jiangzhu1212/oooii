@@ -29,6 +29,7 @@
     <ClCompile Include="tests\TESTcountdown_latch.cpp" />
     <ClCompile Include="Tests\TESTcsv.cpp" />
     <ClCompile Include="tests\TESTdate.cpp" />
+    <ClCompile Include="tests\TESTfilter_chain.cpp" />
     <ClCompile Include="Tests\TESTfourcc.cpp" />
     <ClCompile Include="tests\TESTfuture.cpp" />
     <ClCompile Include="tests\TESThash_map.cpp" />

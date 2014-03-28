@@ -28,7 +28,7 @@
 #ifndef oTest_h
 #define oTest_h
 
-#include <oBasis/oFilterChain.h>
+#include <oBase/filter_chain.h>
 #include <oPlatform/oSingleton.h> // @tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 #include <oBase/path.h>
 #include <oCore/process.h>

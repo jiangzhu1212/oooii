@@ -37,7 +37,6 @@
 #include <oBasis/oContainer.h>
 #include <oBasis/oCppParsing.h>
 #include <oBasis/oError.h>
-#include <oBasis/oFilterChain.h>
 #include <oBasis/oGeometry.h>
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oInterface.h>

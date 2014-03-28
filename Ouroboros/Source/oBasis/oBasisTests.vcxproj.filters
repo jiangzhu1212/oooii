@@ -7,9 +7,6 @@
     <ClCompile Include="Tests\TESTBuffer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTFilterChain.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTMath.cpp">
       <Filter>Source</Filter>
     </ClCompile>
