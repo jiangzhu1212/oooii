@@ -26,6 +26,7 @@
 #include <oPlatform/oFileCacheMonitoring.h>
 #include <oPlatform/oStream.h>
 #include <oBasis/oLockThis.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oOSC.h>
 #include <oBase/string.h>
 

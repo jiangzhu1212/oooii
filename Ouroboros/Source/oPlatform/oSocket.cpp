@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oSocket.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oLockThis.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oScopedPartialTimeout.h>

@@ -79,7 +79,6 @@ using namespace ouro;
 	}; \
 	oTEST_REGISTER(oCONCAT(oBasis_, _BasisTestName))
 
-oTEST_REGISTER_BASIS_TEST(oFilterChain);
 oTEST_REGISTER_BASIS_TEST(oINISerialize);
 oTEST_REGISTER_BASIS_TEST(oJSONSerialize);
 oTEST_REGISTER_BASIS_TEST(oMath);

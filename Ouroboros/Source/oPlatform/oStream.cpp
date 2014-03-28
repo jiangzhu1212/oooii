@@ -27,6 +27,7 @@
 
 #include <oBase/algorithm.h>
 #include <oBasis/oLockThis.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oRefCount.h>
 #include <mutex>
 #include <vector>

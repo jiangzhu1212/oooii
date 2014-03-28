@@ -23,18 +23,21 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oFilterChain.h>
-#include <oBasis/oError.h>
+#include <oBase/throw.h>
 
 using namespace ouro;
 
-bool oBasisTest_oFilterChain()
+namespace ouro {
+	namespace tests {
+
+void TESTfilter_chain()
 {
-	oFilterChain::FILTER filters[] =
+	filter_chain::filter filters[] =
 	{
-		{ ".*", oFilterChain::INCLUDE1 },
-		{ "a+.*", oFilterChain::EXCLUDE1 },
-		{ "(ab)+.*", oFilterChain::INCLUDE1 },
-		{ "aabc", oFilterChain::INCLUDE1 },
+		{ ".*", filter_chain::include1 },
+		{ "a+.*", filter_chain::exclude1 },
+		{ "(ab)+.*", filter_chain::include1 },
+		{ "aabc", filter_chain::include1 },
 	};
 
 	const char* symbols[] =
@@ -56,15 +59,11 @@ bool oBasisTest_oFilterChain()
 	};
 
 	char err[1024];
-	bool success = false;
-	oFilterChain FilterChain(filters, err, &success);
-	if (!success)
-		return oErrorSetLast(std::errc::protocol_error, "Regex compile error in oFilterChain");
-
+	filter_chain FilterChain(filters, err);
 	oFORI(i, symbols)
-		if (FilterChain.Passes(symbols[i]) != expected[i])
-			return oErrorSetLast(std::errc::protocol_error, "Failed filter on %d%s symbol", i, ordinal(i));
-
-	oErrorSetLast(0, "");
-	return true;
+		if (FilterChain.passes(symbols[i]) != expected[i])
+			oTHROW(protocol_error, "Failed filter on %d%s symbol", i, ordinal(i));
 }
+
+	} // namespace tests
+} // namespace ouro

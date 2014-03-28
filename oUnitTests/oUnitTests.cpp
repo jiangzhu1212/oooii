@@ -95,7 +95,7 @@ void InitEnv()
 
 struct PARAMETERS
 {
-	std::vector<oFilterChain::FILTER> Filters;
+	std::vector<ouro::filter_chain::filter> Filters;
 	const char* SpecialMode;
 	const char* DataPath;
 	const char* GoldenBinariesPath;
@@ -197,16 +197,16 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			case 'i':
 			{
 				_pParameters->Filters.resize(_pParameters->Filters.size() + 1);
-				_pParameters->Filters.back().Type = oFilterChain::INCLUDE1;
-				_pParameters->Filters.back().RegularExpression = value;
+				_pParameters->Filters.back().type = ouro::filter_chain::include1;
+				_pParameters->Filters.back().regex = value;
 				break;
 			}
 
 			case 'e':
 			{
 				_pParameters->Filters.resize(_pParameters->Filters.size() + 1);
-				_pParameters->Filters.back().Type = oFilterChain::EXCLUDE1;
-				_pParameters->Filters.back().RegularExpression = value;
+				_pParameters->Filters.back().type = ouro::filter_chain::exclude1;
+				_pParameters->Filters.back().regex = value;
 				break;
 			}
 
@@ -283,8 +283,8 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 				if (!ThisHasChanges && oSTRVALID(sFilter))
 				{
 					auto pFilter = append(_pParameters->Filters);
-					pFilter->Type = oFilterChain::EXCLUDE1;
-					pFilter->RegularExpression = sFilter[i];
+					pFilter->type = ouro::filter_chain::exclude1;
+					pFilter->regex = sFilter[i];
 				}
 			}
 		}
