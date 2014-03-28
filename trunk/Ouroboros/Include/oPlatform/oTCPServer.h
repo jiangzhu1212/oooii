@@ -25,6 +25,7 @@
 #pragma once
 #ifndef oTCPServer_h
 #define oTCPServer_h
+#include <oBasis/oInitOnce.h>
 #include <oPlatform/oSocket.h>
 #include <set>
 

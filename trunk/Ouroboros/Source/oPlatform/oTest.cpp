@@ -256,7 +256,7 @@ struct oTestManager_Impl : public oTestManager
 	void GetDesc(DESC* _pDesc) override;
 	void SetDesc(DESC* _pDesc) override;
 
-	oTest::RESULT RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters) override;
+	oTest::RESULT RunTests(ouro::filter_chain::filter* _pTestFilters, size_t _SizeofTestFilters) override;
 	oTest::RESULT RunSpecialMode(const char* _Name) override;
 	oTest::RESULT RunTest(RegisterTestBase* _pRegisterTestBase, char* _StatusMessage, size_t _SizeofStatusMessage);
 
@@ -273,7 +273,7 @@ struct oTestManager_Impl : public oTestManager
 
 	// Returns the number of tests that will run based on num iterations and 
 	// discounting filtered tests.
-	size_t CalculateNumTests(const oTestManager::DESC& _Desc, threadsafe oFilterChain* _pFilterChain);
+	size_t CalculateNumTests(const oTestManager::DESC& _Desc, ouro::filter_chain* _pFilterChain);
 
 	typedef std::vector<RegisterTestBase*> tests_t;
 	tests_t Tests;
@@ -288,7 +288,7 @@ struct oTestManager_Impl : public oTestManager
 	path_string TempPath;
 	std::string InputPath;
 	std::string OutputPath;
-	typedef std::vector<oFilterChain::FILTER> filters_t;
+	typedef std::vector<ouro::filter_chain::filter> filters_t;
 	filters_t Filters;
 
 	typedef std::tr1::unordered_map<std::string, RegisterTestBase*> specialmodes_t;
@@ -994,7 +994,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 	return result;
 }
 
-size_t oTestManager_Impl::CalculateNumTests(const oTestManager::DESC& _Desc, threadsafe oFilterChain* _pFilterChain)
+size_t oTestManager_Impl::CalculateNumTests(const oTestManager::DESC& _Desc, ouro::filter_chain* _pFilterChain)
 {
 	size_t nTests = 0;
 	for (auto pRTB : Tests)
@@ -1004,7 +1004,7 @@ size_t oTestManager_Impl::CalculateNumTests(const oTestManager::DESC& _Desc, thr
 			mstring TestName;
 			TestName = type_name(pRTB->GetTypename());
 			
-			if (!_pFilterChain || _pFilterChain->Passes(TestName, 0))
+			if (!_pFilterChain || _pFilterChain->passes(TestName, 0))
 				nTests++;
 		}
 	}
@@ -1033,7 +1033,7 @@ static void oTraceCPUFeatures()
 	});
 }
 
-oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters)
+oTest::RESULT oTestManager_Impl::RunTests(ouro::filter_chain::filter* _pTestFilters, size_t _SizeofTestFilters)
 {
 	if (!adapter::all_up_to_date())
 	{
@@ -1090,8 +1090,15 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 	// regex weren't statically compiled, it would either be slow or could report
 	// as a leak if it were a function-local static.
 	char fcErr[1024];
-	bool fcSuccess = false;
-	oFilterChain filterChain(_pTestFilters, _SizeofTestFilters, fcErr, oCOUNTOF(fcErr), &fcSuccess);
+	ouro::filter_chain filterChain;
+	
+	try { filterChain = std::move(ouro::filter_chain(_pTestFilters, _SizeofTestFilters, fcErr, oCOUNTOF(fcErr))); }
+	catch (std::exception& e)
+	{
+		Report(oConsoleReporting::ERR, "%s\n", e.what());
+		return oTest::FAILURE;
+	}
+
 
 	// @tony: For testing progress bar functionality. If we like this as
 	// a feature of the unit test, we should expose it through the DESC.
@@ -1201,7 +1208,7 @@ oTest::RESULT oTestManager_Impl::RunTests(oFilterChain::FILTER* _pTestFilters, s
 				oTest::RESULT result = oTest::FILTERED;
 				oConsoleReporting::REPORT_TYPE ReportType = oConsoleReporting::DEFAULT;
 
-				if (filterChain.Passes(TestName, 0)) // put in skip filter here
+				if (filterChain.passes(TestName, 0)) // put in skip filter here
 				{
 					if (pRTB->GetBugNumber() == 0)
 					{

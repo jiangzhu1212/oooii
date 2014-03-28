@@ -48,6 +48,7 @@ namespace ouro {
 		void TESTcsv();
 		void TESTdate(test_services& _Services);
 		void TESTequal();
+		void TESTfilter_chain();
 		void TESTfixed_block_allocator();
 		void TESTfourcc();
 		void TESTfuture(test_services& _Services);

@@ -26,6 +26,7 @@
 #include "oDispatchQueueGlobalIOCP.h"
 #include "oIOCP.h"
 #include <oCore/windows/win_error.h>
+#include <oBasis/oInitOnce.h>
 
 using namespace ouro;
 using namespace std;

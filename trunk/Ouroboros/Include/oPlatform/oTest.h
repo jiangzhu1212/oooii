@@ -325,8 +325,8 @@ interface oTestManager
 
 	// RunTests can fail due to a bad compilation of filters. If this returns -1, check oErrorGetLast() for more
 	// details.
-	virtual oTest::RESULT RunTests(oFilterChain::FILTER* _pTestFilters, size_t _SizeofTestFilters) = 0;
-	template<size_t size> oTest::RESULT RunTests(oFilterChain::FILTER (&_pTestFilters)[size]) { return RunTests(_pDesc, _pTestFilters, size); }
+	virtual oTest::RESULT RunTests(ouro::filter_chain::filter* _pTestFilters, size_t _SizeofTestFilters) = 0;
+	template<size_t size> oTest::RESULT RunTests(ouro::filter_chain::filter (&_pTestFilters)[size]) { return RunTests(_pDesc, _pTestFilters, size); }
 
 	// Special mode re-runs the test exe for tests that need a client-server 
 	// multi-process setup.

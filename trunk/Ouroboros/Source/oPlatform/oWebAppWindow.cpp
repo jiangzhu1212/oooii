@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oWebAppWindow.h>
+#include <oBasis/oInitOnce.h>
 #include <oBasis/oLockThis.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oBasis/oDispatchQueue.h>

@@ -46,7 +46,6 @@ struct oBasisTestServices
 
 oAPI bool oBasisTest_oBuffer(const oBasisTestServices& _Services);
 
-oAPI bool oBasisTest_oFilterChain();
 oAPI bool oBasisTest_oINISerialize();
 oAPI bool oBasisTest_oJSONSerialize();
 oAPI bool oBasisTest_oMath();
