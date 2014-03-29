@@ -105,6 +105,7 @@ void iocp_threadpool::work()
 	NumRunningThreads++;
 	while (true)
 	{
+		bool CallCompletion = false;
 		DWORD nBytes = 0;
 		ULONG_PTR key = 0;
 		iocp_overlapped* ol = nullptr;
@@ -112,26 +113,42 @@ void iocp_threadpool::work()
 		{
 			if (op::post == nBytes)
 			{
-				iocp::completion_t complete = (iocp::completion_t)key;
-				if (complete)
-					complete(ol, 0);
+				try
+				{
+					iocp::completion_t complete = (iocp::completion_t)key;
+					if (complete)
+						complete(ol, 0);
+				}
+
+				catch (std::exception& e)
+				{
+					oTRACEA("iocp post failed: %s", e.what());
+				}
 			}
 
 			else if (op::shutdown == key)
 				break;
 			
 			else if (op::completion == key)
-			{
-				if (ol->completion)
-					ol->completion(ol->context, nBytes);
-			}
+				CallCompletion = true;
 			else
 				oTHROW(operation_not_supported, "CompletionKey %p not supported", key);
 		}
 		else if (ol)
+				CallCompletion = true;
+
+		if (CallCompletion)
 		{
-			if (ol->completion)
-				ol->completion(ol->context, 0);
+			try
+			{
+				if (ol->completion)
+					ol->completion(ol->context, nBytes);
+			}
+
+			catch (std::exception& e)
+			{
+				oTRACEA("iocp completion failed: %s", e.what());
+			}
 		}
 	}
 	NumRunningThreads--;

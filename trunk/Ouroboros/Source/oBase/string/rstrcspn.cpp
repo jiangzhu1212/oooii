@@ -22,39 +22,28 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+
+#include <oBase/string.h>
 #include <memory.h>
-#include <oBase/macros.h>
 
 namespace ouro {
 
-char* next_matching(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace);
-
-char* zero_block_comments(char* _String, const char* _OpenBrace, const char* _CloseBrace, char _Replacement)
+size_t rstrcspn(const char* _BufferStart, const char* _String1, const char* _String2)
 {
-	char* cur = _String;
-	while (*cur)
+	size_t n = 0;
+	while (_String1 >= _BufferStart)
 	{
-		cur = strstr(_String, _OpenBrace);
-		if (!cur)
-			break;
-
-		char* close = next_matching(cur, _OpenBrace, _CloseBrace);
-		if (!close)
-			return nullptr;
-
-		close += strlen(_CloseBrace);
-
-		// preserve newlines since they might be used to report line numbers in compile errors
-		while (cur < close)
-		{
-			size_t offset = __min(strcspn(cur, oNEWLINE), static_cast<size_t>(close-cur));
-			memset(cur, _Replacement, offset);
-			cur += offset;
-			cur += strspn(cur, oNEWLINE);
-		}
+		if (strchr(_String2, *_String1))
+			return n - 1;
+		n++;
+		_String1--;
 	}
+	return n - 1;
+}
 
-	return _String;
+size_t rstrcspn(char* _BufferStart, char* _String1, const char* _String2)
+{
+	return rstrcspn(static_cast<const char*>(_BufferStart), static_cast<const char*>(_String1), _String2);
 }
 
 } // namespace ouro

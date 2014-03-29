@@ -810,6 +810,8 @@ struct iocp_file
 	{
 		open_read,
 		open_read_unbuffered,
+		open_read_text,
+		open_read_unbuffered_text,
 		open_write,
 	};
 
@@ -826,6 +828,14 @@ struct iocp_file
 
 static void iocp_close(iocp_file* f, unsigned long long _Unused = 0)
 {
+	if (!f->error_code && (f->open_type == iocp_file::open_read_text || f->open_type == iocp_file::open_read_unbuffered_text))
+	{
+		char* p = (char*)f->buffer;
+		*(int*)&(p[f->file_size]) = 0;
+		// the above implies support for UTF32, but this replace does not
+		replace(p, f->file_size + 4, p, "\r\n", "\n");
+	}
+
 	if (f->completion)
 		f->completion(std::ref(f->file_path), std::ref(f->buffer), f->file_size);
 
@@ -852,7 +862,7 @@ static void iocp_open(iocp_file* f, iocp_file::open _Open)
 		, FILE_SHARE_READ
 		, nullptr
 		, OPEN_EXISTING
-		, FILE_FLAG_OVERLAPPED | (f->open_type == iocp_file::open_read_unbuffered ? FILE_FLAG_NO_BUFFERING : 0)
+		, FILE_FLAG_OVERLAPPED | ((f->open_type == iocp_file::open_read_unbuffered || f->open_type == iocp_file::open_read_unbuffered_text) ? FILE_FLAG_NO_BUFFERING : 0)
 		, nullptr);
 	if (f->handle != INVALID_HANDLE_VALUE)
 	{
@@ -870,9 +880,26 @@ static void iocp_open(iocp_file* f, iocp_file::open _Open)
 	}
 }
 
+static unsigned int iocp_allocation_size(const iocp_file* f)
+{
+	unsigned int size = f->file_size;
+	if (f->open_type == iocp_file::open_read_text || iocp_file::open_read_unbuffered_text)
+		size += 4; // worst-case nul terminator for Unicode 32
+
+	if (f->open_type == iocp_file::open_read_unbuffered || f->open_type == iocp_file::open_read_unbuffered_text)
+		size = byte_align(size, 4096);
+
+	return size;
+}
+
 static unsigned int iocp_io_size(const iocp_file* f)
 {
-	return f->open_type == iocp_file::open_read_unbuffered ? byte_align(f->file_size, 4096) : f->file_size;
+	unsigned int size = f->file_size;
+
+	if (f->open_type == iocp_file::open_read_unbuffered || f->open_type == iocp_file::open_read_unbuffered_text)
+		size = byte_align(size, 4096);
+
+	return size;
 }
 
 static void iocp_read(iocp_file* f, unsigned int _Offset = 0, unsigned int _ReadSize = invalid)
@@ -913,19 +940,29 @@ static void iocp_write(iocp_file* f, unsigned int _Offset = invalid, unsigned in
 	}
 }
 
-static void iocp_open_and_read(void* _pContext, unsigned long long _Unused = 0)
+static void iocp_open_and_read_shared(iocp_file::open _OpenType, void* _pContext, unsigned long long _Unused = 0)
 {
 	iocp_file* f = (iocp_file*)_pContext;
 
-	iocp_open(f, iocp_file::open_read);
+	iocp_open(f, _OpenType);
 	if (!f->error_code)
 	{
-		f->buffer = std::move(f->allocator.scoped_allocate(iocp_io_size(f)));
+		f->buffer = std::move(f->allocator.scoped_allocate(iocp_allocation_size(f)));
 		if (f->buffer)
-			iocp_read(f);
+			iocp_read(f);			
 		else
 			iocp_close(f);
 	}
+}
+
+static void iocp_open_and_read(void* _pContext, unsigned long long _Unused = 0)
+{
+	iocp_open_and_read_shared(iocp_file::open_read, _pContext, _Unused);
+}
+
+static void iocp_open_and_read_text(void* _pContext, unsigned long long _Unused = 0)
+{
+	iocp_open_and_read_shared(iocp_file::open_read_text, _pContext, _Unused);
 }
 
 static void iocp_open_and_write(void* _pContext, unsigned long long _Unused = 0)
@@ -955,14 +992,11 @@ void load_async(const path& _Path
 								, load_option::value _LoadOption
 								, const allocator& _Allocator)
 {
-	if (_LoadOption != load_option::binary_read)
-		oTHROW_INVARG("only binary_read is currently supported");
-
 	iocp_file* r = new iocp_file();
 	r->file_path = _Path;
 	r->allocator = _Allocator;
 	r->completion = _OnComplete;
-	windows::iocp::post(iocp_open_and_read, r);
+	windows::iocp::post(_LoadOption == load_option::binary_read ? iocp_open_and_read : iocp_open_and_read_text, r);
 }
 
 void save_async(const path& _Path

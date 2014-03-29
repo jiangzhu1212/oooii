@@ -101,6 +101,7 @@
     <ClCompile Include="string\prev_matching.cpp" />
     <ClCompile Include="string\relativize_path.cpp" />
     <ClCompile Include="string\replace.cpp" />
+    <ClCompile Include="string\rstrcspn.cpp" />
     <ClCompile Include="string\rstrstr.cpp" />
     <ClCompile Include="string\search_path.cpp" />
     <ClCompile Include="string\split_path.cpp" />
