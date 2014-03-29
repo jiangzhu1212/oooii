@@ -28,53 +28,53 @@
 
 namespace ouro {
 
-const char* next_matching(const char* _pPointingAtOpenBrace, char _CloseBrace)
+const char* prev_matching(const char* _BufferStart, const char* _pPointingAtCloseBrace, char _OpenBrace)
 {
-	int open = 1;
-	char open_brace = *_pPointingAtOpenBrace;
-	const char* cur = _pPointingAtOpenBrace + 1;
-	while (*cur && open > 0)
+	int close = 1;
+	char close_brace = *_pPointingAtCloseBrace;
+	const char* cur = _pPointingAtCloseBrace - 1;
+	while (cur >= _BufferStart && close > 0)
 	{
-		if (*cur == _CloseBrace)
-			open--;
-		else if (*cur == open_brace)
-			open++;
-		cur++;
+		if (*cur == _OpenBrace)
+			close--;
+		else if (*cur == close_brace)
+			close++;
+		cur--;
 	}
 
-	if (open > 0)
+	if (close > 0)
 		return nullptr;
-	return cur - 1;
+	return cur + 1;
 }
 
-char* next_matching(char* _pPointingAtOpenBrace, char _CloseBrace)
+char* prev_matching(char* _BufferStart, char* _pPointingAtCloseBrace, char _OpenBrace)
 {
-	return const_cast<char*>(next_matching(static_cast<const char*>(_pPointingAtOpenBrace), _CloseBrace));
+	return const_cast<char*>(prev_matching(static_cast<const char*>(_BufferStart), static_cast<const char*>(_pPointingAtCloseBrace), _OpenBrace));
 }
 
-const char* next_matching(const char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace)
+const char* prev_matching(const char* _BufferStart, const char* _pPointingAtCloseBrace, const char* _OpenBrace, const char* _CloseBrace)
 {
-	int open = 1;
+	int close = 1;
 	size_t lOpen = strlen(_OpenBrace);
 	size_t lClose = strlen(_CloseBrace);
-	const char* cur = _pPointingAtOpenBrace + lOpen;
-	while (*cur && open > 0)
+	const char* cur = _pPointingAtCloseBrace;
+	while (cur >= _BufferStart && close > 0)
 	{
 		if (!memcmp(cur, _CloseBrace, lClose))
-			open--;
+			close++;
 		else if (!memcmp(cur, _OpenBrace, lOpen))
-			open++;
-		cur++;
+			close--;
+		cur--;
 	}
 
-	if (open > 0)
+	if (close > 0)
 		return nullptr;
-	return cur - 1;
+	return cur + 1;
 }
 
-char* next_matching(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace)
+char* prev_matching(char* _BufferStart, char* _pPointingAtCloseBrace, const char* _OpenBrace, const char* _CloseBrace)
 {
-	return const_cast<char*>(next_matching(static_cast<const char*>(_pPointingAtOpenBrace), _OpenBrace, _CloseBrace));
+	return const_cast<char*>(prev_matching(static_cast<const char*>(_BufferStart), static_cast<const char*>(_pPointingAtCloseBrace), _OpenBrace, _CloseBrace));
 }
 
 } // namespace ouro

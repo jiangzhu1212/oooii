@@ -98,6 +98,7 @@
     <ClCompile Include="string\ordinal.cpp" />
     <ClCompile Include="string\percent_decode.cpp" />
     <ClCompile Include="string\percent_encode.cpp" />
+    <ClCompile Include="string\prev_matching.cpp" />
     <ClCompile Include="string\relativize_path.cpp" />
     <ClCompile Include="string\replace.cpp" />
     <ClCompile Include="string\rstrstr.cpp" />

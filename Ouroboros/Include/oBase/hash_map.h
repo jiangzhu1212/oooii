@@ -86,6 +86,8 @@ public:
 		Capacity = 0;
 	}
 
+	allocator& get_allocator() { return Allocator; }
+
 	size_type size() const { return Size; }
 	size_type capacity() const { return Capacity; }
 	bool empty() const { return size() == 0; }
