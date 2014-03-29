@@ -214,6 +214,11 @@ template<size_t size> char* clean_whitespace(char (&_StrDestination)[size], cons
 const char* rstrstr(const char* _String, const char* _Substring);
 char* rstrstr(char* _String, const char* _Substring);
 
+// behaves like strcspn but starts are _String1 and goes through the string in
+// reverse until _BufferStart is reached.
+size_t rstrcspn(const char* _BufferStart, const char* _String1, const char* _String2);
+size_t rstrcspn(char* _BufferStart, char* _String1, const char* _String2);
+
 // Insert one string into another in-place. _InsertionPoint must point into 
 // _StrSource. If _ReplacementLength is non-zero then that number of characters 
 // from _InsertionPoint on will be overwritten by the _Insertion. This returns
@@ -286,9 +291,10 @@ const char* type_name(const char* _TypeinfoName);
 // "'" or "--" for other languages.
 char* zero_line_comments(char* _String, const char* _CommentPrefix, char _Replacement = ' ');
 
-// Zeros-out the entire section delimited by the open and close braces, useful
-// for getting rid of block comments or #if 0/#endif blocks
-char* zero_block_comments(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace, char _Replacement = ' ');
+// Zeros-out all text sections delimited by the open and close braces, useful for 
+// getting rid of block comments or #if 0/#endif blocks. This preserves newlines so 
+// accurate line numbers can be reported in case of subsequent compile errors.
+char* zero_block_comments(char* _String, const char* _OpenBrace, const char* _CloseBrace, char _Replacement = ' ');
 
 // This function uses the specified macros to go through and evaluate C-style
 // #if* statements (#if, #ifdef, #elif, #else, #endif) to zero out undefined
@@ -300,6 +306,16 @@ struct macro
 };
 
 char* zero_ifdefs(char* _StrSourceCode, const macro* _pMacros, char _Replacement);
+
+// Combine the above 3 functions for the typical use case
+inline char* zero_non_code(char* _StrSourceCode, const macro* _pMacros, char _Replacement = ' ')
+{
+	if (zero_block_comments(_StrSourceCode, "/*", "*/", _Replacement)
+		&& zero_ifdefs(_StrSourceCode, _pMacros, _Replacement)
+		&& zero_line_comments(_StrSourceCode, "//", _Replacement))
+			return _StrSourceCode;
+	return nullptr;
+}
 
 // Convert a buffer into a C++ array. This is useful when you want to embed data 
 // in code itself. This fills the destination string with a declaration of the 
