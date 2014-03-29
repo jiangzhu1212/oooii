@@ -241,6 +241,9 @@
     <ClCompile Include="allocate.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
+    <ClCompile Include="string\prev_matching.cpp">
+      <Filter>Source\string</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">

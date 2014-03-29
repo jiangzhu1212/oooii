@@ -238,11 +238,22 @@ template<size_t size> errno_t replace(char (&_StrResult)[size], const char* oRES
 const char* next_matching(const char* _pPointingAtOpenBrace, char _CloseBrace);
 char* next_matching(char* _pPointingAtOpenBrace, char _CloseBrace);
 
-// Same as the single-char next_matching, but operates on braces that are 
-// multiple characters. (c-style comments, #if #endif <!-- --> and other such 
-// delimiters).
+// first param must be pointing into a string at the close brace. From there this
+// will find the brace at the same level of recursion - internal pairs are ignored.
+// The 'brace' can be any single character. This will return nullptr if the braces
+// are unbalanced.
+const char* prev_matching(const char* _BufferStart, const char* _pPointingAtCloseBrace, char _OpenBrace);
+char* prev_matching(char* _BufferStart, char* _pPointingAtCloseBrace, char _OpenBrace);
+
+// Same as the single-char next_matching but operates on braces that are multiple 
+// characters. (c-style comments, #if #endif <!-- --> and other such delimiters).
 const char* next_matching(const char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace);
 char* next_matching(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace);
+
+// Same as the single-char prev_matching but operates on braces that are multiple 
+// characters. (c-stle comments, #if #endif <!-- --> and other such delimiters).
+const char* prev_matching(const char* _BufferStart, const char* _pPointingAtCloseBrace, const char* _OpenBrace, const char* _CloseBrace);
+char* prev_matching(char* _BufferStart, char* _pPointingAtCloseBrace, const char* _OpenBrace, const char* _CloseBrace);
 
 // _____________________________________________________________________________
 // Parsing
@@ -299,12 +310,12 @@ char* zero_ifdefs(char* _StrSourceCode, const macro* _pMacros, char _Replacement
 // that can be externed and used to access the buffer. Any extension '.' in the
 // specified bufferName will be replaced with '_', so get_MyFile_txt(...)
 
-size_t oCodifyData(char* _StrDestination
-	, size_t _SizeofStrDestination
-	, const char* _BufferName
-	, const void* _pBuffer
-	, size_t _SizeofBuffer
-	, size_t _WordSize);
+size_t codify_data(char* _StrDestination
+									 , size_t _SizeofStrDestination
+									 , const char* _BufferName
+									 , const void* _pBuffer
+									 , size_t _SizeofBuffer
+									 , size_t _WordSize);
 
 // _____________________________________________________________________________
 // Encoding
