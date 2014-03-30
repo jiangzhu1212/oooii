@@ -52,15 +52,6 @@ typedef size_t (*decompress_fn)(
 	void* oRESTRICT _pDestination, size_t _SizeofDestination
 	, const void* oRESTRICT _pSource, size_t _SizeofSource);
 
-// Implementation helpers. Prefer these to keep implementations consistent.
-
-// use this for checking either compress/decompress destination
-#define oCOMPRESSION_CHECK_DEST(_DataSize) \
-	if (_pDestination && _SizeofDestination < _DataSize) \
-	{	oErrorSetLast(std::errc::no_buffer_space); \
-		return 0; \
-	}
-
 } // namespace ouro
 
 #endif
