@@ -170,46 +170,4 @@ oGPU_NAMESPACE_END
 // D3D11 simplifications of the above macros
 #define oDEFINE_D3D11_MAKE(_BaseTypeName) oDEFINE_MAKE(d3d11_, _BaseTypeName)
 
-
-
-#if 0
-
-// Macros to unify code and enforce uniformity
-
-#define DEVICE(_API) static_cast<oCONCAT(oCONCAT(o, _API), Device)>(Device.c_ptr())->oCONCAT(_API, Device)
-
-// Confirm that _Name is a valid string
-#define oGPU_CREATE_CHECK_NAME() do { \
-	if (!oSTRVALID(_Name)) \
-	{ return oErrorSetLast(std::errc::invalid_argument, "A proper name must be specified"); \
-	}} while(0)
-
-// Confirm the output has been specified
-#define oGPU_CREATE_CHECK_OUTPUT(_ppOut) do { \
-	if (!_ppOut) \
-	{ return oErrorSetLast(std::errc::invalid_argument, "A valid address for an output pointer must be specified"); \
-	}} while(0)
-
-// Check all things typical in Create<resource>() functions
-#define oGPU_CREATE_CHECK_PARAMETERS(_ppOut) oGPU_CREATE_CHECK_NAME(); oGPU_CREATE_CHECK_OUTPUT(_ppOut)
-
-// Wrap the boilerplate Create implementations in case we decide to play around 
-// with where device children's memory comes from.
-#define oDEFINE_GPUDEVICE_CREATE(_oAPI, _BaseTypeName) \
-	bool _oAPI##Device::Create##_BaseTypeName(const char* _Name, const oGPU##_BaseTypeName::DESC& _Desc, oGPU##_BaseTypeName** _pp##_BaseTypeName) \
-	{	oGPU_CREATE_CHECK_PARAMETERS(_pp##_BaseTypeName); \
-		bool success = false; \
-		oCONSTRUCT(_pp##_BaseTypeName, _oAPI##_BaseTypeName(this, _Desc, _Name, &success)); \
-		return success; \
-	}
-
-// Centralize the signature of the ctors for base types in case system-wide 
-// changes need to be made
-#define oDECLARE_GPUDEVICECHILD_CTOR(_oAPI, _BaseTypeName) _oAPI##_BaseTypeName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
-#define oBEGIN_DEFINE_GPUDEVICECHILD_CTOR(_oAPI, _BaseTypeName) _oAPI##_BaseTypeName::_oAPI##_BaseTypeName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGPUDeviceChildMixin(_pDevice, _Name)
-
-#define oDECLARE_GPURESOURCE_CTOR(_oAPI, _BaseTypeName) _oAPI##_BaseTypeName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess);
-#define oBEGIN_DEFINE_GPURESOURCE_CTOR(_oAPI, _BaseTypeName) _oAPI##_BaseTypeName::_oAPI##_BaseTypeName(oGPUDevice* _pDevice, const DESC& _Desc, const char* _Name, bool* _pSuccess) : oGPUResourceMixin(_pDevice, _Desc, _Name)
-
-#endif
 #endif

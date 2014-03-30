@@ -816,7 +816,7 @@ static void parse_materials(std::vector<material_info>& _Materials, const path& 
 
 				#define oOBJTEX(_Name) do \
 				{	if (!parse_texture_info(buf + 1, &_Materials.back()._Name)) \
-						return oErrorSetLast(std::errc::io_error, "Failed to parse \"%s\"", r); \
+						oTHROW(io_error, "Failed to parse \"%s\"", r); \
 				} while(false)
 				
 				if (!_memicmp("map_Ka", r, 6)) _Materials.back().ambient = parse_texture_info(buf + 1);
