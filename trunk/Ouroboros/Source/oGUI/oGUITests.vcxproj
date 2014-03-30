@@ -25,6 +25,7 @@
   <ItemGroup>
     <ClCompile Include="tests\TESTWindowControls.cpp" />
     <ClCompile Include="tests\TESTWindowSysDialog.cpp" />
+    <ClCompile Include="tests\TEST_surface_fill.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{3982DDF0-20F5-4181-97B7-CD20212ECDF4}</ProjectGuid>
