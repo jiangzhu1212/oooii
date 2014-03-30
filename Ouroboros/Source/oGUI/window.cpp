@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oGUI/window.h>
 #include <oGUI/oGUIMenu.h>
-#include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/win_as_string.h>
 #include <oGUI/Windows/oWinCursor.h>
 #include <oGUI/Windows/oWinKey.h>

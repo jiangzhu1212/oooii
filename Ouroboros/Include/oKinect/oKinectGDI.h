@@ -29,7 +29,7 @@
 
 #include <oBasis/oAirKeyboard.h>
 #include <oKinect/oKinect.h>
-#include <oGUI/Windows/oGDI.h>
+#include <oGUI/Windows/win_gdi.h>
 
 static const int oGDI_KINECT_DRAW_SKELETON = 1;
 static const int oGDI_KINECT_DRAW_CLIPPING = 2;

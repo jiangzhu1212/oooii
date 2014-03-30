@@ -792,6 +792,21 @@ bool oWinControlClampPositionToSelected(HWND _hControl);
 // useful for fullscreen apps.
 void oWinMoveMouseCursorOffscreen();
 
+// Captures image data of the specified window and fills _pImageBuffer.
+// pImageBuffer can be NULL, in which case only _pBitmapInfo is filled out.
+// For RECT, either specify a client-space rectangle, or NULL to capture the 
+// window including the frame.
+void oGDIScreenCaptureWindow(HWND _hWnd, const RECT* _pRect, void* _pImageBuffer, size_t _SizeofImageBuffer, BITMAPINFO* _pBitmapInfo, bool _RedrawWindow, bool _FlipV);
+
+// Given an allocator, this will allocate the properly-sized buffer and fill it
+// with the captured window image using the above oGDIScreenCaptureWindow() API.
+// If the buffer is fwritten to a file, it would be a .bmp. This function 
+// internally set *_ppBuffer to nullptr. Later when the allocation happens, 
+// there is still a chance of failure so if this throws an exception check 
+// *_ppBuffer and if not nullptr then ensure it is freed to prevent a memory 
+// leak.
+void oGDIScreenCaptureWindow(HWND _hWnd, bool _IncludeBorder, std::function<void*(size_t _Size)> _Allocate, void** _ppBuffer, size_t* _pBufferSize, bool _RedrawWindow, bool _FlipV);
+
 // _____________________________________________________________________________
 // @tony: Dialog-related stuff. I still don't quite understand the 
 // difference between a window and a dialog - it seems like dialogs were once a 
