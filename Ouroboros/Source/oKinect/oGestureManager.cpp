@@ -100,7 +100,7 @@ struct oGestureManagerImpl : oGestureManager
 	bool SetCurrentKeyset(const char* _KeysetName);
 	bool SetCurrentInputSet(const oRTTI* _pDynamicEnum);
 
-	bool OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI) override;
+	bool OnFileChange(ouro::filesystem::file_event::value _Event, const ouro::path& _Path) override;
 
 private:
 
@@ -207,16 +207,10 @@ oGestureManagerImpl::oGestureManagerImpl(const oGESTURE_MANAGER_INIT& _Init, con
 	// @tony: todo: make this respect oStream's path stuff.
 	// !!! un-hard-code the paths to oPlayer2 stuff !!!
 	{
-		uri_string dev_uri(ouro::filesystem::dev_path());
-
-		uri_string AirKB = dev_uri;
-		sncatf(AirKB, "oooii/Source/oPlayer2/AirKeyboards.xml");
-		if (!OnFileChange(oSTREAM_ACCESSIBLE, AirKB))
+		ouro::path devPath(ouro::filesystem::dev_path());
+		if (!OnFileChange(ouro::filesystem::file_event::accessible, devPath / "oooii/Source/oPlayer2/AirKeyboards.xml" ))
 			return; // pass through error
-
-		uri_string Inputs = dev_uri;
-		sncatf(Inputs, "oooii/Source/oPlayer2/Inputs.xml");
-		if (!OnFileChange(oSTREAM_ACCESSIBLE, Inputs))
+		if (!OnFileChange(ouro::filesystem::file_event::accessible, devPath / "oooii/Source/oPlayer2/Inputs.xml"))
 			return; // pass through error
 	}
 
@@ -864,25 +858,23 @@ bool oGestureManagerImpl::ReloadInputs(const uri_string& _Inputs_xml)
 	return true;
 }
 
-bool oGestureManagerImpl::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI)
+bool oGestureManagerImpl::OnFileChange(ouro::filesystem::file_event::value _Event, const ouro::path& _Path)
 {
 	switch (_Event)
 	{
-		case oSTREAM_ACCESSIBLE:
+		case ouro::filesystem::file_event::accessible:
 		{
-			uri URI(_ChangedURI);
-			path path = URI.path();
-			auto filename = path.filename();
+			auto filename = _Path.filename();
 
 			if (!_stricmp("Inputs.xml", filename))
 			{
-				if (!ReloadInputs(_ChangedURI))
+				if (!ReloadInputs(_Path))
 					return false; // pass through error
 			}
 
 			else if (!_stricmp("AirKeyboards.xml", filename))
 			{
-				if (!ReloadAirKeySets(_ChangedURI))
+				if (!ReloadAirKeySets(_Path))
 					return false; // pass through error
 			}
 
