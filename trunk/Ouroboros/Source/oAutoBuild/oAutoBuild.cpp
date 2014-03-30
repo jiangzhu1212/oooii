@@ -48,21 +48,21 @@ using namespace ouro;
 bool oINIFindPath( char* _StrDestination, size_t _SizeofStrDestination, const char* _pININame )
 {
 	snprintf(_StrDestination, _SizeofStrDestination, "../%s", _pININame);
-	if(oStreamExists(_StrDestination))
+	if(ouro::filesystem::exists(_StrDestination))
 		return true;
 
 	path AppDir = filesystem::app_path();
 
 	snprintf(_StrDestination, _SizeofStrDestination, "%s/../%s", AppDir, _pININame);
-	if(oStreamExists(_StrDestination))
+	if(ouro::filesystem::exists(_StrDestination))
 		return true;
 
 	snprintf(_StrDestination, _SizeofStrDestination, "%s", _pININame);
-	if(oStreamExists(_StrDestination))
+	if(ouro::filesystem::exists(_StrDestination))
 		return true;
 
 	snprintf(_StrDestination, _SizeofStrDestination, "%s/%s", AppDir, _pININame);
-	if(oStreamExists(_StrDestination))
+	if(ouro::filesystem::exists(_StrDestination))
 		return true;
 
 	return oErrorSetLast(std::errc::no_such_file_or_directory, "No ini file %s found.", _pININame);
@@ -370,17 +370,19 @@ void oAutoBuildLogHandler::OnGet(CommonParams& _CommonParams) const
 
 	// TODO: Look into using the FileCache for this as well (oWebServer is also
 	// using it, so perhaps there is a way to share that)
-	intrusive_ptr<oBuffer> cacheBuffer;
-	if (!oBufferLoad(filepathAbsolute, &cacheBuffer))
-		return;
-
 	path P(filepathAbsolute);
+	scoped_allocation cacheBuffer;
+	try
+	{
+		scoped_allocation cacheBuffer = ouro::filesystem::load(P);
+	}
+	catch (...) { return; }
 
 	oMIMEFromExtension(&_CommonParams.pResponse->Content.Type, P.extension());
-	_CommonParams.pResponse->Content.Length = static_cast<int>(cacheBuffer->GetSize());
+	_CommonParams.pResponse->Content.Length = static_cast<int>(cacheBuffer.size());
 	_CommonParams.pResponse->StatusLine.StatusCode = oHTTP_OK;
- 	_CommonParams.AllocateResponse(cacheBuffer->GetSize());
- 	memcpy(_CommonParams.pResponse->Content.pData, cacheBuffer->GetData(), cacheBuffer->GetSize());
+ 	_CommonParams.AllocateResponse(cacheBuffer.size());
+ 	memcpy(_CommonParams.pResponse->Content.pData, cacheBuffer, cacheBuffer.size());
 }
 
 class oAutoBuildCaptureRemaining : public oHTTPURICapture
@@ -408,7 +410,7 @@ bool oAutoBuildCaptureRemaining::AttemptCapture(const char* _URI, const char** _
 	return true;
 }
 
-void OnNewVersion(oSTREAM_EVENT _Event, const uri_string& _ChangedURI, oWebAppWindow* _pAppWindow)
+void OnNewVersion(ouro::filesystem::file_event::value _Event, const path& _Path, oWebAppWindow* _pAppWindow)
 {
 	oASSERT(false, "Disabled until version packing gets resurrected.");
 #if 0
@@ -459,9 +461,12 @@ int main(int argc, const char* argv[])
 	if (!oINIFindPath(IniPath, "oAutoBuild.ini"))
 		return false; // Pass error
 
-	std::shared_ptr<ini> INI = oINILoad(IniPath);
-	if (!INI)
-		return false; // PassError
+	std::unique_ptr<ini> INI;
+	try { INI = ouro::filesystem::load_ini(ouro::path(IniPath)); }
+	catch (std::exception& e)
+	{
+		return oErrorSetLast(e);
+	}
 
 	oBUILD_TOOL_SERVER_SETTINGS Settings;
 	ini::section section = INI->first_section();
@@ -552,14 +557,20 @@ int main(int argc, const char* argv[])
 	path MonitorPath = filesystem::app_path(true);
 	MonitorPath.replace_filename("../*.exe");
 
-	oSTREAM_MONITOR_DESC md;
-	md.Monitor = MonitorPath;
-	md.TraceEvents = true;
-	md.WatchSubtree = false;
+	std::shared_ptr<ouro::filesystem::monitor> NewVersionMonitor;
+	{
+		ouro::filesystem::monitor::info i;
+		try
+		{
+			NewVersionMonitor = ouro::filesystem::monitor::make(i, std::bind(OnNewVersion, std::placeholders::_1, std::placeholders::_2, Window));
+			NewVersionMonitor->watch(MonitorPath, oKB(10), false);
+		}
 
-	intrusive_ptr<threadsafe oStreamMonitor> NewVersionMonitor;
-	if (!oStreamMonitorCreate(md, std::bind(OnNewVersion, std::placeholders::_1, std::placeholders::_2, Window), &NewVersionMonitor))
-		msgbox(msg_type::warn, nullptr, nullptr, "Error starting OnNewVersion monitor.\n%s", oErrorGetLastString());
+		catch (std::exception& e)
+		{
+			msgbox(msg_type::warn, nullptr, nullptr, "Error starting OnNewVersion monitor.\n%s", e.what());
+		}
+	}
 
 	int WorkCountUILast = -1;
 	uint LastP4CheckMS = 0;

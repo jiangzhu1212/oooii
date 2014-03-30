@@ -39,8 +39,6 @@
 #include <oGUI/console.h>
 #include <oGUI/msgbox.h> // only used to notify about zombies
 #include <oGUI/progress_bar.h> // only really so it itself can be tested, but perhaps this can be moved to a unit test?
-#include <oPlatform/oStream.h> // oStreamExists
-#include <oPlatform/oStreamUtil.h> // used for loading buffers
 #include <oCore/windows/win_crt_heap.h>
 #include <algorithm>
 #include <unordered_map>
@@ -396,18 +394,20 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 			filesystem::save(path(output), _pBuffer, _SizeofBuffer, filesystem::save_option::binary_write);
 	});
 
-	intrusive_ptr<oBuffer> GoldenBinary;
+	scoped_allocation GoldenBinary;
 	{
 		if (Vendor == vendor::amd)
 		{
 			// Try to load a more-specific golden binary, but if it's not there it's
 			// ok to try to use the default one.
-			oBufferLoad(goldenAMD, &GoldenBinary);
+			try { GoldenBinary = ouro::filesystem::load(ouro::path(goldenAMD)); } catch (...) {}
 		}
 
 		if (!GoldenBinary)
 		{
-			if (!oBufferLoad(golden, &GoldenBinary))
+			try { GoldenBinary = ouro::filesystem::load(ouro::path(goldenAMD)); } catch (...) {}
+
+			if (!GoldenBinary)
 			{
 				if (Vendor != vendor::nvidia)
 				{
@@ -424,16 +424,16 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 		}
 	}
 
-	if (_SizeofBuffer != GoldenBinary->GetSize())
+	if (_SizeofBuffer != GoldenBinary.size())
 	{
 		sstring testSize, goldenSize;
 		format_bytes(testSize, _SizeofBuffer, 2);
-		format_bytes(goldenSize, GoldenBinary->GetSize(), 2);
+		format_bytes(goldenSize, GoldenBinary.size(), 2);
 		bSaveTestBuffer = true;
 		return oErrorSetLast(std::errc::protocol_error, "Golden binary compare failed because the binaries are different sizes (test is %s, golden is %s)", testSize.c_str(), goldenSize.c_str());
 	}
 
-	if (memcmp(_pBuffer, GoldenBinary->GetData(), GoldenBinary->GetSize()))
+	if (memcmp(_pBuffer, GoldenBinary, GoldenBinary.size()))
 	{
 		bSaveTestBuffer = true;
 		return oErrorSetLast(std::errc::protocol_error, "Golden binary compare failed because the bytes differ");
@@ -1402,7 +1402,7 @@ bool oTestManager_Impl::BuildPath(path& _FullPath, const path& _RelativePath, oT
 	}
 
 	_FullPath /= _RelativePath;
-	if (_FileMustExist && !oStreamExists(_FullPath))
+	if (_FileMustExist && !ouro::filesystem::exists(_FullPath))
 		return oErrorSetLast(std::errc::no_such_file_or_directory, "not found: %s", _FullPath.c_str());
 	return true;
 }

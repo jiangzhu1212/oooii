@@ -762,7 +762,7 @@ bool oP4ChangelistBuilderImpl::ParseAutoBuildResults(const char* _pAbsolutePath,
 	_pInfo->TestTime = 0;
 	_pInfo->PackTime = 0;
 
-	shared_ptr<xml> XML = oXMLLoad(_pAbsolutePath);
+	unique_ptr<xml> XML = ouro::filesystem::load_xml(_pAbsolutePath);
 	if (!XML)
 		return false;
 

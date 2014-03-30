@@ -22,15 +22,31 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Convenience "all headers" header for precompiled header files. Do NOT use 
-// this to be lazy when including headers in .cpp files. Be explicit.
+// Wrappers for some commonly loaded file types
 #pragma once
-#ifndef oPlatform_all_h
-#define oPlatform_all_h
-#include <oGUI/console.h>
-#include <oPlatform/oMirroredArena.h>
-#include <oPlatform/oP4.h>
-#include <oPlatform/oRegistry.h>
-#include <oPlatform/oSocket.h>
-#include <oPlatform/oTest.h>
+#ifndef oCore_filesystem_util_h
+#define oCore_filesystem_util_h
+
+#include <oCore/filesystem.h>
+#include <oBase/ini.h>
+#include <oBase/xml.h>
+
+namespace ouro {
+	namespace filesystem {
+
+inline std::unique_ptr<xml> load_xml(const path& _Path)
+{
+	scoped_allocation a = load(_Path, load_option::text_read);
+	return std::unique_ptr<xml>(new xml(_Path, (char*)a.release(), a.get_deallocate()));
+}
+
+inline std::unique_ptr<ini> load_ini(const path& _Path)
+{
+	scoped_allocation a = load(_Path, load_option::text_read);
+	return std::unique_ptr<ini>(new ini(_Path, (char*)a.release(), a.get_deallocate()));
+}
+
+	} // namespace filesystem
+} // namespace ouro
+
 #endif

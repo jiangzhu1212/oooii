@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStream.h>
-#include <oPlatform/oStreamUtil.h>
 #include <oBase/countdown_latch.h>
 
 struct PLATFORM_FileAsync : public oTest
@@ -176,10 +175,10 @@ struct PLATFORM_FileAsync : public oTest
 			Latch.wait();	
 
 		}
-		oGUID LoadWrite;
-		oTESTB0( oStreamLoadPartial(&LoadWrite, sizeof(oGUID), TempFilePath) );
-		oTESTB( TestGUID == LoadWrite, "Write failed to write correct GUID");
-		oStreamDelete(TempFilePath);
+
+		ouro::scoped_allocation LoadedGUID = ouro::filesystem::load(TempFilePath);
+		oTESTB( *(oGUID*)LoadedGUID == TestGUID, "Write failed to write correct GUID");		
+		ouro::filesystem::remove(TempFilePath);
 
 		const unsigned int TESTAsyncWrite[] = 
 		{ 
@@ -255,9 +254,8 @@ struct PLATFORM_FileAsync : public oTest
 		}
 
 		{
-			unsigned int LoadTest[oCOUNTOF(TESTAsyncWrite)];
-			oTESTB( oStreamLoadPartial(&LoadTest, oCOUNTOF(TESTAsyncWrite), TempFilePath), oErrorGetLastString() );
-			oTESTB( memcmp(&TESTAsyncWrite, &LoadTest, oCOUNTOF(TESTAsyncWrite)) == 0, "Write failed to write correct large file");
+			ouro::scoped_allocation LoadTest = ouro::filesystem::load(TempFilePath);
+			oTESTB( memcmp(&TESTAsyncWrite, LoadTest, oCOUNTOF(TESTAsyncWrite)) == 0, "Write failed to write correct large file");
 		}
 
 		return SUCCESS;

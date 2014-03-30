@@ -28,7 +28,6 @@
 #include <oGUI/oGUIMenu.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
-#include <oPlatform/oStream.h>
 #include <oGUI/window.h>
 #include "resource.h"
 #include <atomic>

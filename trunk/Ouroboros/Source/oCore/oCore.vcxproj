@@ -63,6 +63,7 @@
     <ClInclude Include="..\..\Include\oCore\display.h" />
     <ClInclude Include="..\..\Include\oCore\filesystem.h" />
     <ClInclude Include="..\..\Include\oCore\filesystem_monitor.h" />
+    <ClInclude Include="..\..\Include\oCore\filesystem_util.h" />
     <ClInclude Include="..\..\Include\oCore\module.h" />
     <ClInclude Include="..\..\Include\oCore\mutex.h" />
     <ClInclude Include="..\..\Include\oCore\page_allocator.h" />
