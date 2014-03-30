@@ -43,7 +43,10 @@
 #ifndef oGestureManager_h
 #define oGestureManager_h
 
-#include <oPlatform/oStream.h>
+#include <oBase/path.h>
+#include <oCore/filesystem_monitor.h>
+#include <oBasis/oRTTI.h>
+#include <oBasis/oInterface.h>
 #include <oGUI/window.h>
 
 enum oGESTURE_VISUALIZATION
@@ -168,7 +171,7 @@ interface oGestureManager : oInterface
 
 	// Call this from an oStreamMonitor callback to handle the reload of 
 	// airkeyboard and combo files.
-	virtual bool OnFileChange(oSTREAM_EVENT _Event, const ouro::uri_string& _ChangedURI) = 0;
+	virtual bool OnFileChange(ouro::filesystem::file_event::value _Event, const ouro::path& _Path) = 0;
 };
 
 bool oGestureManagerCreate(const oGESTURE_MANAGER_INIT& _Init, const std::shared_ptr<ouro::window>& _Window, oGestureManager** _ppGestureManager);

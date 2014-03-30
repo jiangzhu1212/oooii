@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPU.h>
-#include <oPlatform/oStream.h>
 #include <oPlatform/oTest.h>
 
 #include "../../test_services.h"
