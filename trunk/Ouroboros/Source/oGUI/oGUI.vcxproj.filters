@@ -18,9 +18,6 @@
     <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h">
       <Filter>oGUI</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGUI\Windows\oGDI.h">
-      <Filter>oGUI\Windows</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinControlSet.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
@@ -97,9 +94,6 @@
   <ItemGroup>
     <ClCompile Include="oGUIMenu.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oGDI.cpp">
-      <Filter>Source\Windows</Filter>
     </ClCompile>
     <ClCompile Include="oWinWindowing.cpp">
       <Filter>Source\Windows</Filter>

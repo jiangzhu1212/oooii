@@ -30,7 +30,6 @@
     <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h" />
     <ClInclude Include="..\..\Include\oGUI\progress_bar.h" />
     <ClInclude Include="..\..\Include\oGUI\window.h" />
-    <ClInclude Include="..\..\Include\oGUI\Windows\oGDI.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinControlSet.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinCursor.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinDialog.h" />
@@ -53,7 +52,6 @@
     <ClCompile Include="msgbox.cpp" />
     <ClCompile Include="msgbox_reporting.cpp" />
     <ClCompile Include="notification_area.cpp" />
-    <ClCompile Include="oGDI.cpp" />
     <ClCompile Include="oGUI.cpp" />
     <ClCompile Include="oGUIMenu.cpp" />
     <ClCompile Include="oWinControlSet.cpp" />

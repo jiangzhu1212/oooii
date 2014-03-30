@@ -27,7 +27,6 @@
 #include <oBase/colors.h>
 #include <oBase/timer.h>
 #include <oGUI/window.h>
-#include <oGUI/Windows/oGDI.h>
 #include <oGUI/Windows/win_common_dialog.h>
 #include <oGUI/Windows/win_gdi_draw.h>
 #include <oGUI/Windows/oWinWindowing.h>

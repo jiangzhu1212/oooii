@@ -26,7 +26,6 @@
 #include <oGUI/Windows/win_gdi.h>
 #include <oGUI/Windows/win_gdi_bitmap.h>
 #include <oGUI/Windows/win_gdi_draw.h>
-#include <oGUI/Windows/oGDI.h>
 
 using namespace ouro::windows::gdi;
 
