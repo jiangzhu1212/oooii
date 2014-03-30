@@ -34,6 +34,7 @@
 #include <oCore/display.h>
 #include <oCore/filesystem.h>
 #include <oCore/filesystem_monitor.h>
+#include <oCore/filesystem_util.h>
 #include <oCore/module.h>
 #include <oCore/mutex.h>
 #include <oCore/page_allocator.h>

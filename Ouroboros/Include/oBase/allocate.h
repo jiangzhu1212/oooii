@@ -142,7 +142,9 @@ public:
 		std::swap(Deallocate, _That.Deallocate);
 	}
 
-	void* release() { void* p = Pointer; Pointer = nullptr; Size = 0; Deallocate = nullptr; return p; }
+	// Don't eviscerate size and deallocate functions so that release() can be passed as a parameter
+	// to a function that might also want to take results from size() and get_deallocate()
+	void* release() { void* p = Pointer; Pointer = nullptr; /*Size = 0; Deallocate = nullptr;*/ return p; }
 
 	operator bool() const { return !!Pointer; }
 	template<typename T> operator T*() const { return static_cast<T*>(Pointer); }

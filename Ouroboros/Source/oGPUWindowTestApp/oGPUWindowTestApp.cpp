@@ -27,7 +27,6 @@
 #include <oGUI/msgbox_reporting.h>
 #include <oGUI/Windows/win_gdi_bitmap.h>
 #include <oGUI/oGUIMenu.h>
-#include <oPlatform/oStream.h>
 #include <oGUI/window.h>
 #include "resource.h"
 

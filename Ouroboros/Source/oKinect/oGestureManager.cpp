@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oKinect/oGestureManager.h>
-#include <oPlatform/oStreamUtil.h>
 #include <oGUI/windows/win_gdi_bitmap.h>
 #include <oGUI/windows/win_gdi_draw.h>
 #include <oKinect/oKinectGDI.h>
@@ -31,6 +30,7 @@
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oRefCount.h>
 #include <oCompute/oComputeUtil.h>
+#include <oCore/filesystem_util.h>
 #include <oCore/windows/win_error.h>
 #include <oCore/windows/win_skeleton.h>
 
@@ -123,8 +123,8 @@ private:
 
 	sstring CurrentKeysetName;
 	const oRTTI* pCurrentInputSet;
-	std::shared_ptr<xml> Keysets;
-	std::shared_ptr<xml> Inputs;
+	std::unique_ptr<xml> Keysets;
+	std::unique_ptr<xml> Inputs;
 	std::array<sstring, 2> ComboMessage;
 	sstring NoKinectMessage;
 
@@ -828,11 +828,10 @@ void oGestureManagerImpl::OnDeviceChange(const window::basic_event& _Event)
 
 bool oGestureManagerImpl::ReloadAirKeySets(const uri_string& _AirKeySets_xml)
 {
-	std::shared_ptr<xml> XML;
+	std::unique_ptr<xml> XML;
 	try
 	{
-		intrusive_ptr<threadsafe oAirKeySet> KeySet;
-		XML = oXMLLoad(_AirKeySets_xml);
+		XML = ouro::filesystem::load_xml(ouro::path(_AirKeySets_xml));
 	}
 
 	catch (std::exception& e)
@@ -840,7 +839,7 @@ bool oGestureManagerImpl::ReloadAirKeySets(const uri_string& _AirKeySets_xml)
 		return oErrorSetLast(e);
 	}
 
-	Keysets = XML;
+	Keysets = std::move(XML);
 	if (!SetCurrentKeyset(CurrentKeysetName))
 		return false; // pass through error
 	return true;
@@ -848,11 +847,10 @@ bool oGestureManagerImpl::ReloadAirKeySets(const uri_string& _AirKeySets_xml)
 
 bool oGestureManagerImpl::ReloadInputs(const uri_string& _Inputs_xml)
 {
-	std::shared_ptr<xml> XML;
+	std::unique_ptr<xml> XML;
 	try
 	{
-		intrusive_ptr<threadsafe oInputSet> InputSet;
-		XML = oXMLLoad(_Inputs_xml);
+		XML = filesystem::load_xml(ouro::path(_Inputs_xml));
 	}
 
 	catch (std::exception& e)
@@ -860,7 +858,7 @@ bool oGestureManagerImpl::ReloadInputs(const uri_string& _Inputs_xml)
 		return oErrorSetLast(e);
 	}
 
-	Inputs = XML;
+	Inputs = std::move(XML);
 	if (!SetCurrentInputSet(pCurrentInputSet))
 		return false; // pass through error
 	return true;

@@ -240,11 +240,14 @@ bool oMSBuildAndLog(const oMSBUILD_SETTINGS& _Settings, const char* _LogFolder, 
 
 bool oMSBuildParseLogfile(path_string _Logfile, bool _IncludeWarnings, std::function<bool(o_msbuild_stdout_t _WarningOrError)> _Output)
 {
-	intrusive_ptr<oBuffer> Buffer;
-	if (!oBufferLoad(_Logfile, &Buffer, true))
+	scoped_allocation Buffer;
+	try { Buffer = ouro::filesystem::load(ouro::path(_Logfile), ouro::filesystem::load_option::text_read); }
+	catch (std::exception&)
+	{
 		return false;
+	}
 
-	const char* pLog = (const char*)Buffer->GetData();
+	const char* pLog = (const char*)Buffer;
 	while(*pLog)
 	{
 		const char* pEnd = strchr(pLog, '\n');

@@ -63,9 +63,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oEMail.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h">
-      <Filter>Headers\IO</Filter>
-    </ClInclude>
     <ClInclude Include="oHTTPInternal.h">
       <Filter>Source\IO</Filter>
     </ClInclude>
@@ -138,9 +135,6 @@
       <Filter>Source\IO</Filter>
     </ClCompile>
     <ClCompile Include="oStream.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oStreamUtil.cpp">
       <Filter>Source\IO</Filter>
     </ClCompile>
     <ClCompile Include="oWebAppWindow.cpp">

@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oGPU/oGPU.h>
 #include <oPlatform/oStream.h>
-#include <oPlatform/oStreamUtil.h>
 #include <oPlatform/oTest.h>
 
 #include "../../test_services.h"
@@ -51,7 +50,7 @@ static void load_original_and_save_converted(test_services& _Services, device* _
 	std::shared_ptr<texture> ConvertedTexture;
 	oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), ouro::as_string(_TargetFormat));
 
-	oStreamDelete(_ConvertedPath);
+	filesystem::remove(_ConvertedPath);
 
 	oTESTB(oGPUTextureSave(ConvertedTexture, oGPU_FILE_FORMAT_DDS, _ConvertedPath), "Failed to save %s", _ConvertedPath);
 #else

@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oPlatform/oStream.h>
-#include <oPlatform/oStreamUtil.h>
 
 struct PLATFORM_FileSync : public oTest
 {
@@ -106,9 +105,9 @@ struct PLATFORM_FileSync : public oTest
 
 			oTESTB(WriteFile->Write(StreamWrite), "Test Failed: Write failed");
 		}
-		oGUID LoadWrite;
-		oTESTB( oStreamLoadPartial(&LoadWrite, sizeof(oGUID), TempFilePath), oErrorGetLastString() );
-		oTESTB( TestGUID == LoadWrite, "Write failed to write correct GUID");		
+
+		ouro::scoped_allocation LoadedGUID = ouro::filesystem::load(TempFilePath);
+		oTESTB( *(oGUID*)LoadedGUID == TestGUID, "Write failed to write correct GUID");		
 		
 		return SUCCESS;
 	};

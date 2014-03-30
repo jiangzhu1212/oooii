@@ -138,7 +138,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSocket.h" />
     <ClInclude Include="..\..\Include\oPlatform\oStream.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oStreamUtil.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTCPServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
     <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
@@ -169,7 +168,6 @@
     <ClCompile Include="oSingleton.cpp" />
     <ClCompile Include="oSocket.cpp" />
     <ClCompile Include="oStream.cpp" />
-    <ClCompile Include="oStreamUtil.cpp" />
     <ClCompile Include="oTest.cpp" />
     <ClCompile Include="oWebAppWindow.cpp" />
     <ClCompile Include="oWebServer.cpp" />

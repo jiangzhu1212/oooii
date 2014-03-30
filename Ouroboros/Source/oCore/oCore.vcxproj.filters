@@ -194,5 +194,8 @@
     <ClInclude Include="..\..\Include\oCore\mutex.h">
       <Filter>oCore</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oCore\filesystem_util.h">
+      <Filter>oCore</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

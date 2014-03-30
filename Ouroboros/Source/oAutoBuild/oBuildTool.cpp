@@ -54,7 +54,7 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	_pResults->TimePassedSeconds = 0.0f;
 
 	// Clean the failed image directory
-	oStreamDelete(_TestSettings.FailedImageCompares);
+	ouro::filesystem::remove_directory(ouro::path(_TestSettings.FailedImageCompares));
 
 	path_string command_line = _TestSettings.CommandLine;
 	sncatf(command_line, " -z -l %soUnitTests.txt", _BuildRoot);
@@ -96,20 +96,25 @@ bool oRunTestingStage(const oBUILD_TOOL_TESTING_SETTINGS& _TestSettings, const c
 	oURIFromAbsolutePath(FailedImagesSource, _TestSettings.FailedImageCompares);
 	uri_string FailedImagesDestination;
 	oURIFromAbsolutePath(FailedImagesDestination, _BuildRoot);
-	oStreamCopy(FailedImagesSource, FailedImagesDestination);
+	
+	ouro::filesystem::copy_all(ouro::path(FailedImagesSource), ouro::path(FailedImagesDestination), ouro::filesystem::copy_option::overwrite_if_exists);
+	
 	_pResults->FailedImagePath = _BuildRoot;
 
 	// Parse log file
 	_pResults->ParseLogfileSucceeded = true;
-	intrusive_ptr<oBuffer> TestResultsBuffer;
-	if (!oBufferLoad(_pResults->StdoutLogfile, &TestResultsBuffer, true))
+
+	scoped_allocation TestResultsBuffer;
+	try { TestResultsBuffer = ouro::filesystem::load(ouro::path(_pResults->StdoutLogfile), ouro::filesystem::load_option::text_read); }
+	catch (std::exception& e)
 	{
+		oErrorSetLast(e);
 		_pResults->ParseLogfileSucceeded = false;
 		oErrorPrefixLast("Failed to load log file %s because ", _pResults->StdoutLogfile.c_str());
 		return false;
 	}
 
-	std::string TestResults = (const char*)TestResultsBuffer->GetData();
+	std::string TestResults = (const char*)TestResultsBuffer;
 
 	const std::regex_token_iterator<std::string::iterator> end;
 	int arr[] = {1, 2, 3}; 

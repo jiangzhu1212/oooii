@@ -27,9 +27,8 @@
 #include <oKinect/oKinectGDI.h>
 #include <oGUI/Windows/win_gdi_draw.h>
 #include <oCore/windows/win_skeleton.h>
+#include <oCore/filesystem_monitor.h>
 #include <oGUI/Windows/oWinRect.h>
-#include <oPlatform/oStream.h>
-#include <oPlatform/oStreamUtil.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
 #include <oGUI/window.h>
@@ -190,7 +189,7 @@ private:
 	scoped_pen hKinectPen;
 	scoped_brush hKinectBrush;
 
-	intrusive_ptr<threadsafe oStreamMonitor> StreamMonitor;
+	std::shared_ptr<ouro::filesystem::monitor> StreamMonitor;
 	intrusive_ptr<threadsafe oAirKeyboard> AirKeyboard;
 
 	bool Ready;
@@ -210,7 +209,7 @@ private:
 			w.Window->trigger(_Action);
 	}
 
-	void OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI);
+	void OnFileChange(ouro::filesystem::file_event::value _Event, const ouro::path& _Path);
 
 	void OnPaint(HWND _hWnd
 		, const int2& _ClientSize
@@ -301,14 +300,13 @@ oKinectTestApp::oKinectTestApp()
 
 	// Register input handlers
 
-	uri_string dev_uri(filesystem::dev_path());
+	ouro_path devPath(filesystem::dev_path());
 	
 	{
 		oVERIFY(oAirKeyboardCreate(&AirKeyboard));
 		AirKeyboard->HookActions(std::bind(&oKinectTestApp::BroadcastActions, this, std::placeholders::_1));
-		uri_string AirKB = dev_uri;
-		sncatf(AirKB, "Ouroboros/Source/oKinectTestApp/AirKeyboards.xml");
-		OnFileChange(oSTREAM_ACCESSIBLE, AirKB);
+		ouro::path AirKB = devPath / "Ouroboros/Source/oKinectTestApp/AirKeyboards.xml";
+		OnFileChange(ouro::filesystem::file_event::accessible, AirKB);
 	}
 
 	{
@@ -318,18 +316,14 @@ oKinectTestApp::oKinectTestApp()
 			w.InputMapper->HookActions(std::bind(&oKinectTestApp::BroadcastActions, this, std::placeholders::_1));
 		}
 
-		uri_string Inputs = dev_uri;
-		sncatf(Inputs, "Ouroboros/Source/oKinectTestApp/Inputs.xml");
-		OnFileChange(oSTREAM_ACCESSIBLE, Inputs);
+		ouro::path Inputs = devPath / "Ouroboros/Source/oKinectTestApp/Inputs.xml";
+		OnFileChange(ouro::filesystem::file_event::accessible, Inputs);
 	}
 
 	{
-		oSTREAM_MONITOR_DESC smd;
-		smd.Monitor = dev_uri;
-		sncatf(smd.Monitor, "Ouroboros/Source/oKinectTestApp/*.xml");
-		smd.TraceEvents = false;
-		smd.WatchSubtree = false;
-		oVERIFY(oStreamMonitorCreate(smd, std::bind(&oKinectTestApp::OnFileChange, this, std::placeholders::_1, std::placeholders::_2), &StreamMonitor));
+		ouro::filesystem::monitor::info i;
+		StreamMonitor = ouro::filesystem::monitor::make(i, std::bind(&oKinectTestApp::OnFileChange, this, std::placeholders::_1, std::placeholders::_2));
+		StreamMonitor->watch(devPath / "Ouroboros/Source/oKinectTestApp/*.xml", oKB(10), false); 
 	}
 	
 	Ready = true;
@@ -538,16 +532,19 @@ void oKinectTestApp::MainActionHook(const input::action& _Action, int _Index)
 	}
 }
 
-void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _ChangedURI)
+void oKinectTestApp::OnFileChange(ouro::filesystem::file_event::value _Event, const ouro::path& _Path)
 {
-	if (_Event == oSTREAM_ACCESSIBLE)
+	if (_Event == ouro::filesystem::file_event::accessible)
 	{
-		if (strstr(_ChangedURI, "Inputs.xml"))
+		if (strstr(_Path , "Inputs.xml"))
 		{
 			try 
 			{
 				intrusive_ptr<threadsafe oInputSet> InputSet;
-				std::shared_ptr<xml> XML = oXMLLoad(_ChangedURI);
+				
+				scoped_allocation alloc = ouro::filesystem::load(_Path);
+				std::shared_ptr<xml> XML = std::make_shared<xml>(_Path, alloc, alloc.get_deallocate());
+				alloc.release();
 				if (oParseInputSetList(*XML
 					, XML->first_child(XML->root(), "oInputSetList")
 					#ifdef oUSE_MEDIA_INPUT
@@ -559,27 +556,29 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 				{
 					for (auto& w : KinectWindows)
 						w.InputMapper->SetInputSet(InputSet);
-					oTRACE("%s reloaded successfully.", _ChangedURI.c_str());
+					oTRACE("%s reloaded successfully.", _Path.c_str());
 				}
 
 				else
-					msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to parse input set list file %s.\n%s", _ChangedURI.c_str(), oErrorGetLastString());
+					msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to parse input set list file %s.\n%s", _Path.c_str(), oErrorGetLastString());
 			}
 
 			catch (std::exception& e)
 			{
-				msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
+				msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _Path.c_str(), e.what());
 			}
 		}
 
-		else if (strstr(_ChangedURI, "AirKeyboards.xml"))
+		else if (strstr(_Path, "AirKeyboards.xml"))
 		{
 			AirKeyboard->SetKeySet(nullptr);
 
 			try
 			{
 				intrusive_ptr<threadsafe oAirKeySet> KeySet;
-				std::shared_ptr<xml> XML = oXMLLoad(_ChangedURI);
+				scoped_allocation alloc = ouro::filesystem::load(_Path);
+				std::shared_ptr<xml> XML = std::make_shared<xml>(_Path, alloc, alloc.get_deallocate());
+				alloc.release();
 				if (oParseAirKeySetsList(*XML
 					, XML->first_child(XML->root(), "oAirKeySetList")
 					#ifdef oUSE_MEDIA_INPUT
@@ -590,13 +589,13 @@ void oKinectTestApp::OnFileChange(oSTREAM_EVENT _Event, const uri_string& _Chang
 					, &KeySet))
 				{
 					AirKeyboard->SetKeySet(KeySet);
-					oTRACE("%s reloaded successfully.", _ChangedURI.c_str());
+					oTRACE("%s reloaded successfully.", _Path.c_str());
 				}
 
 			}
 			catch (std::exception& e)
 			{
-				msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _ChangedURI.c_str(), e.what());
+				msgbox(msg_type::error, nullptr, "oKinect Test App", "Failed to reload %s.\n%s", _Path.c_str(), e.what());
 			}
 		}
 	}
