@@ -49,6 +49,10 @@ inline size_t index_of(void* el, void* base, size_t elSize) { return byte_diff(e
 template<typename T> size_t index_of(T* el, T* base) { return index_of(el, base, sizeof(T)); }
 template<typename T> bool is_pow2(const T& n) { return n ? (((n) & ((n)-1)) == 0) : false; }
 
+// from: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
+inline unsigned int next_pow2(unsigned int n) { n--; n |= n >> 1; n |= n >> 2; n |= n >> 4; n |= n >> 8; n |= n >> 16; return ++n;}
+inline unsigned long long next_pow2(unsigned long long n) { n--; n |= n >> 1; n |= n >> 2; n |= n >> 4; n |= n >> 8; n |= n >> 16; n |= n >> 32; return ++n; }
+
 // Validation
 inline bool in_range(const void* _TestPointer, const void* _BasePointer, size_t _SizeofRange) { return (_TestPointer >= _BasePointer) && (_TestPointer < byte_add(_BasePointer, _SizeofRange)); }
 inline bool in_range(const void* _TestPointer, const void* _BasePointer, const void* _EndPointer) { return (_TestPointer >= _BasePointer) && (_TestPointer < _EndPointer); }

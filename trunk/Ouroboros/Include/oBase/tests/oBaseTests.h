@@ -37,6 +37,7 @@ namespace ouro {
 		void TESTatof(test_services& _Services);
 		void TESTcompression(test_services& _Services);
 		void TESTconcurrent_growable_object_pool();
+		void TESTconcurrent_hash_map(test_services& _Services);
 		void TESTconcurrent_linear_allocator();
 		void TESTconcurrent_queue();
 		void TESTconcurrent_queue_concrt();
