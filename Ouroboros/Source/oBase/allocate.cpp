@@ -48,6 +48,7 @@ void noop_deallocate(const void* _Pointer)
 }
 
 allocator default_allocator(default_allocate, default_deallocate);
+allocator noop_allocator(noop_allocate, noop_deallocate);
 	
 const char* as_string(const memory_alignment::value& _Alignment)
 {

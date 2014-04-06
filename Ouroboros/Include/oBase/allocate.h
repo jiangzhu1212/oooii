@@ -195,6 +195,7 @@ void* noop_allocate(size_t _Size, unsigned int _Options);
 void noop_deallocate(const void* _Pointer);
 
 extern allocator default_allocator;
+extern allocator noop_allocator;
 
 } // namespace ouro
 

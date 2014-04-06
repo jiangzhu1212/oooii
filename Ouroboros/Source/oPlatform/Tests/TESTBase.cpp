@@ -37,6 +37,7 @@ oTEST_REGISTER_BASE_TEST0(aaboxf);
 oTEST_REGISTER_BASE_TEST(atof);
 oTEST_REGISTER_BASE_TEST(compression);
 oTEST_REGISTER_BASE_TEST0(concurrent_growable_object_pool);
+oTEST_REGISTER_BASE_TEST(concurrent_hash_map);
 oTEST_REGISTER_BASE_TEST0(concurrent_linear_allocator);
 oTEST_REGISTER_BASE_TEST0(concurrent_queue);
 oTEST_REGISTER_BASE_TEST0(concurrent_queue_concrt);
