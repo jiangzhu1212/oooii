@@ -34,7 +34,7 @@ namespace ouro {
 /* enum class */ namespace memory_alignment
 {	enum value {
 
-	align_to_1,
+	align_to_default,
 	align_to_2,
 	align_to_4,
 	align_to_8,
@@ -49,7 +49,7 @@ namespace ouro {
 	align_to_4096,
 
 	count,
-	align_to_default = align_to_16,
+	default_alignment = align_to_16,
 	align_to_cache_line = align_to_64,
 
 };}
@@ -58,6 +58,11 @@ namespace ouro {
 {	enum value {
 
 	default_memory,
+	io_read_write,
+	binary_read_write,
+	gpu_write_only,
+	gpu_read_write,
+	gpu_on_chip,
 
 	count,
 
@@ -68,6 +73,7 @@ namespace ouro {
 
 	ai,
 	app,
+	bookkeeping,
 	cpu,
 	input,
 	io,
@@ -90,6 +96,8 @@ union allocate_options
 		unsigned int subsystem : 4; // subsystem::value
 		unsigned int usage : 6; // subsystem-specific (thus often user-defined)
 		unsigned int extra : 14; // passed through: can be used for user-data
+	
+		memory_alignment::value get_alignment() const { return static_cast<memory_alignment::value>(alignment ? memory_alignment::default_alignment : 1 << alignment); }
 	};
 };
 
