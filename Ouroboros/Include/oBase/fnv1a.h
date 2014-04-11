@@ -140,6 +140,11 @@ inline T fnv1ai(const wchar_t* _String, const T& _Seed = fnv1a_traits<T>::seed)
 	return h;
 }
 
+// npot bitcount hashes: http://www.isthe.com/chongo/tech/comp/fnv/
+// (use next-higher type and xor reduce)
+template<typename T, typename U>
+T fnv1a_reduced(const U& _Fnv1aHash, int _NumBits) { return static_cast<T>((_Fnv1aHash >> _NumBits) ^ (U(1) << _NumBits)); }
+
 } // namespace ouro
 
 #endif
