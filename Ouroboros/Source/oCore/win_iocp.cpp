@@ -219,7 +219,7 @@ iocp_threadpool::~iocp_threadpool()
 		CloseHandle(hIoPort);
 	}
 
-	delete [] (char*)pool.get_object_pointer();
+	delete [] (char*)pool.get_memory_pointer();
 }
 
 iocp_threadpool& iocp_threadpool::operator=(iocp_threadpool&& _That)

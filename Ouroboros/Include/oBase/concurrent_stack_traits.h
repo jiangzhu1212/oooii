@@ -63,7 +63,7 @@ struct concurrent_stack_traits64
 		{
 			type tag : tag_bits;
 			type size : size_bits;
-			type head : pointer_bits;
+			type next : pointer_bits;
 		};
 	};
 
@@ -80,6 +80,34 @@ struct concurrent_stack_traits64
 		#else
 			return _Head.compare_exchange_strong(_Expected, _Desired);
 		#endif
+	}
+};
+
+struct concurrent_stack_traits32
+{
+	typedef unsigned int type;
+	typedef std::atomic<type> atomic_type;
+
+	static const size_t tag_bits = 4;
+	static const size_t size_bits = 14;
+	static const size_t pointer_bits = 14;
+
+	union head_type
+	{
+		type all;
+		struct
+		{
+			type tag : tag_bits;
+			type size : size_bits;
+			type next : pointer_bits;
+		};
+	};
+
+	// returns true if swap succeeded. In either case _Expected is 
+	// updated with the loaded value of _Head.
+	inline static bool cas(atomic_type& _Head, type& _Expected, type _Desired)
+	{
+		return _Head.compare_exchange_strong(_Expected, _Desired);
 	}
 };
 

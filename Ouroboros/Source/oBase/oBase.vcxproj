@@ -137,6 +137,7 @@
     <ClInclude Include="..\..\Include\oBase\all_libc.h" />
     <ClInclude Include="..\..\Include\oBase\assert.h" />
     <ClInclude Include="..\..\Include\oBase\atof.h" />
+    <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h" />
     <ClInclude Include="..\..\Include\oBase\backoff.h" />
     <ClInclude Include="..\..\Include\oBase\byte.h" />
     <ClInclude Include="..\..\Include\oBase\callable.h" />

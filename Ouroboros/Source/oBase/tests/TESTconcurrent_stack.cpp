@@ -22,42 +22,75 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+#include <oBase/assert.h>
 #include <oBase/concurrent_stack.h>
 #include <oBase/concurrency.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
+#include <vector>
 
 namespace ouro {
 	namespace tests {
 
 struct Node
 {
+	Node() { memset(this, 0xaa, sizeof(Node)); }
 	Node* next;
-	size_t Value;
+	size_t value;
 };
 
 static void test_basics()
 {
+	std::vector<char> buffer;
+	buffer.resize(concurrent_stack<Node, concurrent_stack_traits32>::calc_size(5));
+	concurrent_stack<Node, concurrent_stack_traits32> s(buffer.data(), 5);
+	oCHECK(s.empty(), "Stack should be empty (init)");
+
+	for (size_t i = 0; i < 5; i++)
+	{
+		Node n;
+		n.next = nullptr;
+		n.value = i;
+		s.push(n);
+	}
+
+	oCHECK(s.size() == 5, "Stack size is not correct");
+
+	Node n;
+	oCHECK(s.pop(n), "Stack should not be empty (pop 1)");
+	oCHECK(n.value == 4, "Stack value is not correct (pop 1)");
+
+	oCHECK(s.pop(n), "Stack should not be empty (pop 2)");
+	oCHECK(n.value == 3, "Stack value is not correct (pop 2)");
+
+	oCHECK(s.pop(n), "Stack should not be empty (pop 3)");
+	oCHECK(s.pop(n), "Stack should not be empty (pop 4)");
+	oCHECK(s.pop(n), "Stack should not be empty (pop 5)");
+	oCHECK(s.empty(), "Stack should be empty (after pops)");
+}
+
+static void test_intrusive_basics()
+{
 	Node values[5];
-	concurrent_stack<Node> s;
+	concurrent_intrusive_stack<Node> s;
 	oCHECK(s.empty(), "Stack should be empty (init)");
 
 	oFORI(i, values)
 	{
-		values[i].Value = i;
+		values[i].value = i;
 		s.push(&values[i]);
 	}
 
 	oCHECK(s.size() == oCOUNTOF(values), "Stack size is not correct");
 
 	Node* v = s.peek();
-	oCHECK(v && v->Value == oCOUNTOF(values)-1, "Stack value is not correct (peek)");
+	oCHECK(v && v->value == oCOUNTOF(values)-1, "Stack value is not correct (peek)");
 
 	v = s.pop();
-	oCHECK(v && v->Value == oCOUNTOF(values)-1, "Stack value is not correct (pop 1)");
+	oCHECK(v && v->value == oCOUNTOF(values)-1, "Stack value is not correct (pop 1)");
 
 	v = s.pop();
-	oCHECK(v && v->Value == oCOUNTOF(values)-2, "Stack value is not correct (pop 2)");
+	oCHECK(v && v->value == oCOUNTOF(values)-2, "Stack value is not correct (pop 2)");
 
 	for (size_t i = 2; i < oCOUNTOF(values); i++)
 		s.pop();
@@ -67,7 +100,7 @@ static void test_basics()
 	// reinitialize
 	oFORI(i, values)
 	{
-		values[i].Value = i;
+		values[i].value = i;
 		s.push(&values[i]);
 	}
 
@@ -76,53 +109,94 @@ static void test_basics()
 	size_t i = oCOUNTOF(values);
 	while (v)
 	{
-		oCHECK(v->Value == --i, "Stack value is not correct (pop_all)");
+		oCHECK(v->value == --i, "Stack value is not correct (pop_all)");
 		v = v->next;
 	}
 }
 
 static void test_concurrency()
 {
+	typedef concurrent_stack<Node> stack_t;
+
+	std::vector<char> buffer;
+	buffer.resize(stack_t::calc_size(60));
+	stack_t s(buffer.data(), 60);
+
+	ouro::parallel_for(0, s.capacity(), [&](size_t _Index)
+	{
+		Node n;
+		n.value = _Index;
+		s.push(n);
+	});
+
+	oCHECK(s.capacity() == s.size(), "not all pushes worked");
+
+	s.pop_all_and_enumerate([&](stack_t::reference _Value, void* _pUserData)
+	{
+		oTRACEA("Enumerate %d", _Value.value);
+
+	}, nullptr, 10);
+
+	oCHECK(s.size() == s.capacity() - 10, "pop_all didn't reinsert correctly");
+	
+	Node n;
+	size_t count = 0;
+	while (s.pop(n))
+		count++;
+
+	//ouro::parallel_for(0, s.capacity() - 10, [&](size_t _Index)
+	//{
+	//	Node n;
+	//	oCHECK(s.pop(n), "A pop failed unexpectedly");
+	//});
+	
+	oCHECK(s.empty(), "Stack should be empty");
+}
+
+static void test_intrusive_concurrency()
+{
 	Node nodes[40];
 	memset(nodes, 0xaa, sizeof(nodes));
 
-	concurrent_stack<Node> s;
+	concurrent_intrusive_stack<Node> s;
 
 	ouro::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
 	{
-		nodes[_Index].Value = _Index;
+		nodes[_Index].value = _Index;
 		s.push(&nodes[_Index]);
 	});
 
 	Node* n = s.peek();
 	while (n)
 	{
-		n->Value = 0xc001c0de;
+		n->value = 0xc001c0de;
 		n = n->next;
 	}
 
 	oFORI(i, nodes)
 	{
-		oCHECK(nodes[i].Value != 0xaaaaaaa, "Node %d was never processed by task system", i);
-		oCHECK(nodes[i].Value == 0xc001c0de, "Node %d was never inserted into stack", i);
+		oCHECK(nodes[i].value != 0xaaaaaaa, "Node %d was never processed by task system", i);
+		oCHECK(nodes[i].value == 0xc001c0de, "Node %d was never inserted into stack", i);
 	}
 	
 	ouro::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
 	{
 		Node* popped = s.pop();
-		popped->Value = 0xdeaddead;
+		popped->value = 0xdeaddead;
 	});
 	
 	oCHECK(s.empty(), "Stack should be empty");
 
 	oFORI(i, nodes)
-		oCHECK(nodes[i].Value == 0xdeaddead, "Node %d was not popped correctly", i);
+		oCHECK(nodes[i].value == 0xdeaddead, "Node %d was not popped correctly", i);
 }
 
 void TESTconcurrent_stack()
 {
 	test_basics();
 	test_concurrency();
+	test_intrusive_basics();
+	test_intrusive_concurrency();
 }
 
 	} // namespace tests
