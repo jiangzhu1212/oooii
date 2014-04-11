@@ -76,7 +76,12 @@ const char* as_string(const memory_type::value& _Alignment)
 {
 	static const char* names[] = 
 	{
-		"default",
+		"default_memory",
+		"io_read_write",
+		"binary_read_write",
+		"gpu_write_only",
+		"gpu_read_write",
+		"gpu_on_chip",
 	};
 	static_assert(oCOUNTOF(names) == memory_type::count, "array mismatch");
 	return names[_Alignment];
@@ -88,6 +93,7 @@ const char* as_string(const subsystem::value& _Subsystem)
 	{
 		"ai",
 		"app",
+		"bookkeeping",
 		"cpu",
 		"input",
 		"io",
