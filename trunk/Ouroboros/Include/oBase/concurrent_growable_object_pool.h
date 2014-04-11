@@ -126,7 +126,7 @@ private:
 	std::atomic<chunk_alloc_t*> pLastDealloc;
 	size_type NumBlocksPerChunk;
 	size_type ChunkSize;
-	oCACHE_ALIGNED(concurrent_stack<chunk_t> Chunks);
+	concurrent_intrusive_stack<chunk_t> Chunks;
 
 	allocator Allocator;
 

@@ -42,13 +42,17 @@
 
 // the type must defined base_t and self_t and have no additional members (otherwise move is incomplete)
 #define oPOOL_BOILERPLATE(_Type) \
+	static size_type calc_size(size_type _Capacity) { return base_t::calc_size(_Capacity); } \
 	_Type() {} \
 	_Type(_Type&& _That) { operator=(std::move(_That)); } \
 	_Type& operator=(_Type&& _That) { return (self_t&)base_t::operator=(std::move((base_t&&)_That)); } \
 	_Type(void* _pPool, size_type _NumPooled) : base_t(_pPool, _NumPooled) {} \
+	void* const get_memory_pointer() const { return base_t::get_memory_pointer(); } \
 	void clear() { return base_t::clear(); } \
 	bool valid() const { return base_t::valid(); } \
 	bool valid(index_type _Index) const { return base_t::valid(_Index); } \
+	index_type index(void* _Pointer) const { return base_t::index(_Pointer); } \
+	void* pointer(index_type _Index) const { return base_t::pointer(_Index); } \
 	size_type count_available() const { return base_t::count_available(); } \
 	size_type size() const { return base_t::size(); } \
 	size_type capacity() const { return base_t::capacity(); } \
@@ -80,7 +84,8 @@ class block_pool_base
 public:
 	typedef unsigned int size_type;
 	
-	typedef typename std::conditional<ConcurrencyTagMask != 0, std::atomic<unsigned int>, unsigned int>::type freelist_declaration_type;
+	typedef typename std::conditional<ConcurrencyTagMask != 0, std::atomic<unsigned int>, 
+		unsigned int>::type freelist_declaration_type;
 	
 	// shrink the index type if necessary for very small block sizes
 	typedef typename std::conditional<BlockSize < sizeof(unsigned short), unsigned char, 
@@ -92,6 +97,12 @@ public:
 	static const freelist_type max_index = invalid_index - 1;
 	static const size_type index_size = sizeof(index_type);
 	static const size_type block_size = size_type(BlockSize);
+
+	// returns the number of bytes required to contain the blocks
+	static size_type calc_size(size_type _Capacity)
+	{
+		return block_size * _Capacity;
+	}
 
 	block_pool_base() : Blocks(nullptr), NumBlocks(0) { Freelist = 0; }
 	block_pool_base(block_pool_base&& _That) { operator=(std::move(_That)); }
@@ -106,6 +117,7 @@ public:
 
 		return *this;
 	}
+
 	block_pool_base(void* _pBlocks, size_type _NumBlocks)
 		: Blocks(_pBlocks)
 		, NumBlocks(_NumBlocks)
@@ -135,6 +147,12 @@ public:
 
 	// returns true if the specified pointer was allocated from this allocator
 	bool valid(void* _Pointer) const { return in_range(_Pointer, Blocks, NumBlocks * block_size) && ((byte_diff(_Pointer, Blocks) % block_size) == 0); }
+
+	// returns the index of a pointer allocated from this pool
+	index_type index(void* _Pointer) const { return static_cast<index_type>(byte_diff(_Pointer, Blocks) / block_size); }
+
+	// returns a pointer to the entry at the specified index
+	void* pointer(index_type _Index) const { return static_cast<void*>(byte_add(Blocks, block_size, _Index)); }
 
 	// SLOW! This walks the free list counting how many members there are. This is
 	// designed for out-of-performance-critical code such as garbage collecting to
@@ -175,7 +193,7 @@ public:
 
 	// retrieves the pointer used during construction so it can be 
 	// be freed if no other reference is available.
-	void* const get_block_pointer() const { return Blocks; }
+	void* const get_memory_pointer() const { return Blocks; }
 
 	// return a pointer to the nth entry
 	index_type* at(size_type _Index) { return static_cast<index_type*>(byte_add(Blocks, block_size, _Index)); }
@@ -246,7 +264,6 @@ public:
 	}
 
 	bool valid(void* _pObject) const { return base_t::valid(_pObject); }
-	void* const get_block_pointer() const { return base_t::get_block_pointer(); }
 };
 
 // concurrent version of a fixed-sized block allocator
@@ -322,7 +339,6 @@ public:
 	}
 
 	bool valid(void* _pObject) const { return base_t::valid(_pObject); }
-	void* const get_block_pointer() const { return base_t::get_block_pointer(); }
 };
 
 // non-concurrent index allocator with no store other than the freelist
@@ -340,7 +356,7 @@ public:
 
 	index_type allocate() { return base_t::allocate_index(); }
 	void deallocate(index_type _Index) { base_t::deallocate_index(_Index); }
-	void* const get_index_pointer() const { return base_t::get_block_pointer(); }
+	void* const get_index_pointer() const { return base_t::get_memory_pointer(); }
 };
 
 // concurrent index allocator with no store other than the freelist
@@ -358,7 +374,7 @@ public:
 
 	index_type allocate() { return base_t::allocate_index(); }
 	void deallocate(index_type _Index) { base_t::deallocate_index(_Index); }
-	void* const get_index_pointer() const { return base_t::get_block_pointer(); }
+	void* const get_index_pointer() const { return base_t::get_memory_pointer(); }
 };
 
 // non-concurrent object pool with calls to ctors and dtors
@@ -381,7 +397,6 @@ public:
 	oPOOL_DESTROY();
 
 	bool valid(object_type* _pObject) const { return base_t::valid(_pObject); }
-	void* const get_object_pointer() const { return base_t::get_block_pointer(); }
 };
 
 // concurrent object pool with calls to ctors and dtors
@@ -404,7 +419,6 @@ public:
 	oPOOL_DESTROY();
 
 	bool valid(object_type* _pObject) const { return base_t::valid(_pObject); }
-	void* const get_object_pointer() const { return base_t::get_block_pointer(); }
 };
 
 } // namespace ouro
