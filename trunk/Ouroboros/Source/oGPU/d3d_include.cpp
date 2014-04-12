@@ -63,7 +63,20 @@ HRESULT include::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pP
 		}
 
 		if (!exists)
-			oTHROW(no_such_file_or_directory, "Header %s not found in search path", Filename.c_str());
+		{
+			std::string err(Filename);
+			err += " not found in search path: ";
+			if (SearchPaths.empty())
+				err += "<empty>";
+			else
+				for (const path& p : SearchPaths)
+				{
+					err += p.c_str();
+					err += ";";
+				}
+			
+			oTHROW(no_such_file_or_directory, "%s", err.c_str());
+		}
 
 		scoped_allocation source = filesystem::load(FullPath);
 

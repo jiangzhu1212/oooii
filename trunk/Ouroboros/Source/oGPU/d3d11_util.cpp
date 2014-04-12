@@ -501,14 +501,19 @@ static void d3dcompile_convert_error_buffer(char* _OutErrorMessageString, size_t
 			}
 		}
 
-		strlcpy(_OutErrorMessageString, tmp.c_str(), _SizeofOutErrorMessageString);
+		const char* start = tmp.c_str();
+		const char* TruncatedPath = strstr(start, "?????");
+		if (TruncatedPath)
+			start = TruncatedPath + 5;
+
+		strlcpy(_OutErrorMessageString, start, _SizeofOutErrorMessageString);
 	}
 
 	else
 		*_OutErrorMessageString = 0;
 }
 
-std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const path& _ShaderSourceFilePath, const char* _ShaderSource)
+scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _ShaderSourceFilePath, const char* _ShaderSource, const allocator& _Allocator)
 {
 	int argc = 0;
 	const char** argv = argtok(malloc, nullptr, _CommandLineOptions, &argc);
@@ -525,6 +530,7 @@ std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const pa
 
 	for (int i = 0; i < argc; i++)
 	{
+		const char* inc = nullptr;
 		const char* sw = argv[i];
 		const int o = to_upper(*(sw+1));
 		const int o2 = to_upper(*(sw+2));
@@ -540,12 +546,19 @@ std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const pa
 			{
 				case 'T':
 					TargetProfile = TRIML(sw+2);
+					if (!*TargetProfile)
+						TargetProfile = argv[i+1];
 					break;
 				case 'E':
 					EntryPoint = TRIML(sw+2);
+					if (!*EntryPoint)
+						EntryPoint = argv[i+1];
 					break;
 				case 'I':
-					IncludePaths.push_back(TRIML(sw+2));
+					inc = TRIML(sw+2);
+					if (!*inc)
+						inc = argv[i+1];
+					IncludePaths.push_back(inc);
 					break;
 				case 'O':
 				{
@@ -613,6 +626,8 @@ std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const pa
 				case 'D':
 				{
 					const char* k = TRIML(sw+2);
+					if (!*k)
+						k = argv[i+1];
 					const char* sep = strchr(k, '=');
 					const char* v = "1";
 					if (sep)
@@ -632,7 +647,7 @@ std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const pa
 	}
 
 	if (UnsupportedOptionsEmptyLen != UnsupportedOptions.size())
-		oTHROW_INVARG(UnsupportedOptions.c_str());
+		oTHROW_INVARG("%s", UnsupportedOptions.c_str());
 
 	std::vector<D3D_SHADER_MACRO> Macros;
 	Macros.resize(Defines.size() + 1);
@@ -674,10 +689,10 @@ std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const pa
 		oTHROW(io_error, "shader compilation error:\n%s", Errs);
 	}
 
-	std::unique_ptr<char[]> ByteCode(new char[Code->GetBufferSize()]);
-	memcpy(ByteCode.get(), Code->GetBufferPointer(), Code->GetBufferSize());
+	void* buffer = _Allocator.allocate(Code->GetBufferSize(), 0);
+	memcpy(buffer, Code->GetBufferPointer(), Code->GetBufferSize());
 
-	return ByteCode;
+	return scoped_allocation(buffer, Code->GetBufferSize(), _Allocator.deallocate);
 }
 
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation)

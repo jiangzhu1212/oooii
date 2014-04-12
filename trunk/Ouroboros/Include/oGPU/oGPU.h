@@ -28,6 +28,7 @@
 #ifndef oGPU_h
 #define oGPU_h
 
+#include <oBase/allocate.h>
 #include <oBase/dec3n.h>
 #include <oBase/invalid.h>
 #include <oBase/macros.h>
@@ -1109,34 +1110,28 @@ public:
 	virtual void present(uint _PresentInterval) = 0;
 };
 
+// Compiles a shader and returns the binary byte code. _IncludePaths is a semi-colon 
+// delimited list of include paths to search. _Defines is a semi-colon delimited list
+// of defines. Also required is the full path to the shader source for resolving local
+// includes, the entry point to compile and the source of the shader itself. This will
+// use the file system to load dependent headers. The final buffer will be allocated
+// using the specified allocator. _EntryPoint must begin with two letters that describe
+scoped_allocation compile_shader(const char* _IncludePaths
+																 , const char* _Defines
+																 , const char* _ShaderSourcePath
+																 , const pipeline_stage::value& _Stage
+																 , const char* _EntryPoint
+																 , const char* _ShaderSource
+																 , const allocator& _Allocator = default_allocator);
+
 	} // namespace gpu
 } // namespace ouro
-
-
 
 #if 0
 
 #include <oBasis/oBuffer.h>
 #include <oSurface/surface.h>
 #include <oGUI/window.h>
-
-/// Compiles a shader to its driver-specific bytecode. To make parsing easy, 
-// there are two lists of defines that can be specified. These are concatenated
-// internally.
-bool oGPUCompileShader(
-	const char* _IncludePaths // semi-colon delimited list of paths to look in. 
-	                          // Use %DEV% for oSYSPATH_DEV
-	, const char* _CommonDefines // semi-colon delimited list of symbols (= value) 
-	, const char* _SpecificDefines // semi-colon delimited list of symbols (= value)
-	, const version& _TargetShaderModel // shader model version to compile against
-	, pipeline_stage::value _Stage // type of shader to compile
-	, const char* _ShaderPath // full path to shader - mostly for error reporting
-	, const char* _EntryPoint // name of the top-level shader function to use
-	, const char* _ShaderBody // a string of the loaded shader file (NOTE: This 
-	                          // still goes out to includes, so this will still 
-	                          // touch the file system.
-	, oBuffer** _ppByteCode // if successful, this is a buffer of byte code
-	, oBuffer** _ppErrors); // if failure this is filled with an error string
 
 // @tony: I'm not sure if these APIs belong here at all, in oGPU, or 
 // oGPUUtil. I do know they don't belong where they were before, which was 
