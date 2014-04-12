@@ -84,10 +84,6 @@ template<> inline intrusive_ptr<ID3D11GeometryShader> make_shader<ID3D11Geometry
 template<> inline intrusive_ptr<ID3D11PixelShader> make_shader<ID3D11PixelShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_pixel_shader(_pDevice, _pByteCode, _DebugName); }
 template<> inline intrusive_ptr<ID3D11ComputeShader> make_shader<ID3D11ComputeShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_compute_shader(_pDevice, _pByteCode, _DebugName); }
 
-// Create a set of command line options that you would pass to FXC and the 
-// loaded source to compile to create a buffer filled with bytecode. 
-scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _ShaderSourceFilePath, const char* _ShaderSource, const allocator& _Allocator);
-
 // Returns information about the specified device. There's no way to determine
 // if the device is software, so pass that through.
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation);
@@ -104,14 +100,6 @@ unsigned int num_elements(D3D_PRIMITIVE_TOPOLOGY _PrimitiveTopology, unsigned in
 
 // Given a shader model (i.e. 4.0) return a feature level (i.e. D3D_FEATURE_LEVEL_10_1)
 D3D_FEATURE_LEVEL feature_level(const version& _ShaderModel);
-
-// Returns the shader profile for the specified stage of the specified feature
-// level. If the specified feature level does not support the specified stage,
-// this will return nullptr.
-const char* shader_profile(D3D_FEATURE_LEVEL _Level, gpu::pipeline_stage::value _Stage);
-
-// Given a buffer of compiled byte code, return its size.
-size_t byte_code_size(const void* _pByteCode);
 
 // _____________________________________________________________________________
 // Buffer API
