@@ -22,79 +22,35 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "d3d_include.h"
-#include <oCore/filesystem.h>
+// Treat D3DCompile and associated API more uniformly with FXC.
+#pragma once
+#ifndef oGPU_d3d_compile_h
+#define oGPU_d3d_compile_h
+
+#include <oBase/allocate.h>
+#include <oBase/path.h>
+#include <oGPU/oGPU.h>
+#include <d3d11.h>
 
 namespace ouro {
 	namespace gpu {
 		namespace d3d {
 
-HRESULT include::Close(LPCVOID pData)
-{
-	//free((void*)pData); // don't destroy cached files
-	return S_OK;
-}
+// Create a set of command line options that you would pass to fxc and the 
+// loaded source to compile to returns the compiled bytecode allocated from
+// the specified allocator.
+scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _ShaderSourceFilePath, const char* _ShaderSource, const allocator& _Allocator);
 
-HRESULT include::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pParentData, LPCVOID* ppData, unsigned int* pBytes)
-{
-	try
-	{
-		path Filename(pFileName);
+// Returns the shader profile for the specified stage of the specified feature
+// level. If the specified feature level does not support the specified stage,
+// this will return nullptr.
+const char* shader_profile(D3D_FEATURE_LEVEL _Level, pipeline_stage::value _Stage);
 
-		scoped_allocation* c = nullptr;
-		if (Cache.get_ptr(Filename.hash(), &c))
-		{
-			*ppData = *c;
-			*pBytes = as_uint(c->size());
-			return S_OK;
-		}
-
-		path FullPath(Filename);
-		bool exists = filesystem::exists(FullPath);
-		if (!exists)
-		{
-			for (const path& p : SearchPaths)
-			{
-				FullPath = p / Filename;
-				exists = filesystem::exists(FullPath);
-				if (exists)
-					break;
-			}
-		}
-
-		if (!exists)
-		{
-			std::string err(Filename);
-			err += " not found in search path: ";
-			if (SearchPaths.empty())
-				err += "<empty>";
-			else
-				for (const path& p : SearchPaths)
-				{
-					err += p.c_str();
-					err += ";";
-				}
-			
-			oTHROW(no_such_file_or_directory, "%s", err.c_str());
-		}
-
-		scoped_allocation source = filesystem::load(FullPath);
-
-		*ppData = source;
-		*pBytes = as_uint(source.size());
-		oCHECK(Cache.add(Filename.hash(), std::move(source)), "add failed");
-	}
-
-	catch (std::exception&)
-	{
-		*ppData = nullptr;
-		*pBytes = 0;
-		return E_FAIL;
-	}
-
-	return S_OK;
-}
+// Given a buffer of compiled byte code, return its size.
+unsigned int byte_code_size(const void* _pByteCode);
 
 		} // namespace d3d
 	} // namespace gpu
 } // namespace ouro
+
+#endif

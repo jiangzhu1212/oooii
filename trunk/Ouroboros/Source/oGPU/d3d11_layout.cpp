@@ -26,6 +26,7 @@
 #include <oGPU/oGPU.h>
 #include "oCore/Windows/win_util.h"
 #include "d3d11_util.h"
+#include "d3d_compile.h"
 
 #define oD3D_EL(_Semantic, _SemanticIndex, _Format, _InputSlot) { _Semantic, _SemanticIndex, _Format, _InputSlot, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 #define oD3D_NULL oD3D_EL(0, 0, DXGI_FORMAT_UNKNOWN, 0)
@@ -124,7 +125,7 @@ intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice, const
 	}
 
 	intrusive_ptr<ID3D11InputLayout> input_layout;
-	oV(_pDevice->CreateInputLayout(Elements, Offset, _pVertexShaderByteCode, d3d11::byte_code_size(_pVertexShaderByteCode), &input_layout));
+	oV(_pDevice->CreateInputLayout(Elements, Offset, _pVertexShaderByteCode, d3d::byte_code_size(_pVertexShaderByteCode), &input_layout));
 	return input_layout;
 }
 

@@ -34,7 +34,7 @@
 
 namespace ouro {
 	namespace gpu {
-		namespace d3d11 {
+		namespace d3d {
 
 class include : public ID3DInclude
 {
@@ -71,7 +71,7 @@ protected:
 	std::atomic<int> RefCount;
 };
 
-		} // namespace d3d11
+		} // namespace d3d
 	} // namespace gpu
 } // namespace ouro
 

@@ -28,6 +28,7 @@
 #include "oD3D11RenderTarget.h"
 
 #include "d3d11_util.h"
+#include "d3d_compile.h"
 #include "dxgi_util.h"
 #include "CSNoop.h"
 
@@ -54,7 +55,7 @@ scoped_allocation compile_shader(const char* _IncludePaths
 	std::string cmdline;
 	cmdline.reserve(2048);
 	cmdline = "/O3 /T ";
-	cmdline += d3d11::shader_profile(D3D_FEATURE_LEVEL_11_0, _Stage);
+	cmdline += d3d::shader_profile(D3D_FEATURE_LEVEL_11_0, _Stage);
 	cmdline += " /E ";
 	cmdline += _EntryPoint;
 
@@ -87,7 +88,7 @@ scoped_allocation compile_shader(const char* _IncludePaths
 		}
 	}
 
-	return d3d11::compile_shader(cmdline.c_str(), _ShaderSourcePath, _ShaderSource, _Allocator);
+	return d3d::compile_shader(cmdline.c_str(), _ShaderSourcePath, _ShaderSource, _Allocator);
 }
 
 	} // namespace gpu
@@ -290,8 +291,7 @@ d3d11_device::d3d11_device(const device_init& _Init)
 
 	// Set up a noop compute shader to flush for SetCounter()
 	{
-		oV(D3DDevice->CreateComputeShader(CSNoop, byte_code_size(CSNoop), nullptr, &NoopCS));
-
+		NoopCS = d3d11::make_compute_shader(D3DDevice, CSNoop, "CSNoop");
 		sstring CSName;
 		debug_name(CSName, D3DDevice);
 		sncatf(CSName, "NoopCS");
