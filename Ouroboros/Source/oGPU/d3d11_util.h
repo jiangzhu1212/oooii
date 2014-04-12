@@ -85,11 +85,8 @@ template<> inline intrusive_ptr<ID3D11PixelShader> make_shader<ID3D11PixelShader
 template<> inline intrusive_ptr<ID3D11ComputeShader> make_shader<ID3D11ComputeShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_compute_shader(_pDevice, _pByteCode, _DebugName); }
 
 // Create a set of command line options that you would pass to FXC and the 
-// loaded source to compile to create a buffer filled with bytecode. If false,
-// oBuffer will be allocated and filled with a nul-terminated string that 
-// describes the error as reported from the underlying compiler. oErrorGetLast
-// will also include useful - but not as specified - information.
-std::unique_ptr<char[]> compile_shader(const char* _CommandLineOptions, const path& _ShaderSourceFilePath, const char* _ShaderSource);
+// loaded source to compile to create a buffer filled with bytecode. 
+scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _ShaderSourceFilePath, const char* _ShaderSource, const allocator& _Allocator);
 
 // Returns information about the specified device. There's no way to determine
 // if the device is software, so pass that through.
