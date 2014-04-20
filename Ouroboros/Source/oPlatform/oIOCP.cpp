@@ -72,7 +72,7 @@ private:
 
 	oIOCPOp* pSocketOps;
 	unsigned int* pSocketIndices;
-	concurrent_index_pool<unsigned short>* pSocketAllocator;
+	concurrent_pool<unsigned short>* pSocketAllocator;
 	struct oIOCP_Impl* pParent;
 	oRefCount ParentRefCount;
 };
@@ -369,7 +369,7 @@ bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oIOCP**
 oIOCPOp* oIOCPContext::GetOp()
 {
 	unsigned int AllocIndex = pSocketAllocator->allocate();
-	if (AllocIndex == index_pool<unsigned short>::invalid_index)
+	if (AllocIndex == pool<unsigned short>::invalid_index)
 		return nullptr;
 
 	return &pSocketOps[AllocIndex];
@@ -398,7 +398,7 @@ oIOCPContext::oIOCPContext(struct oIOCP_Impl* _pParent)
 #else
 	pSocketOps = new oIOCPOp[Desc.MaxOperations];
 	pSocketIndices = new unsigned int[Desc.MaxOperations];
-	pSocketAllocator = new concurrent_index_pool<unsigned short>(pSocketIndices, Desc.MaxOperations);
+	pSocketAllocator = new concurrent_pool<unsigned short>(pSocketIndices, Desc.MaxOperations);
 #endif
 
 
@@ -419,7 +419,7 @@ oIOCPContext::oIOCPContext(struct oIOCP_Impl* _pParent)
 
 oIOCPContext::~oIOCPContext()
 {
-	pSocketAllocator->clear();
+	pSocketAllocator->reset();
 	size_t OpCount = pSocketAllocator->capacity();
 	for(size_t i = 0; i < OpCount; ++i)
 	{

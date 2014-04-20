@@ -42,11 +42,11 @@ namespace ouro {
 template<typename T>
 class concurrent_growable_object_pool
 {
-	typedef concurrent_block_pool<sizeof(T)> chunk_alloc_t;
+	typedef concurrent_pool<T> chunk_alloc_t;
 
 public:
 	typedef typename chunk_alloc_t::size_type size_type;
-	static const size_type max_blocks_per_chunk = chunk_alloc_t::max_blocks;
+	static const size_type max_blocks_per_chunk = chunk_alloc_t::max_capacity_;
 
 	// The specified allocate and deallocate functions must be thread safe
 	concurrent_growable_object_pool(size_type _NumBlocksPerChunk = max_blocks_per_chunk, const allocator& _Allocator = default_allocator);
@@ -60,7 +60,7 @@ public:
 	// memory from the underlying platform. Such allocations occur in chunks. The 
 	// memory is not yielded back to the platform automatically. Use shrink() to 
 	// explicitly deallocate chunks.
-	void* allocate();
+	void* allocate_ptr();
 
 	// Deallocates a pointer allocated from this allocator.
 	void deallocate(void* _Pointer);
@@ -165,7 +165,7 @@ void concurrent_growable_object_pool<T>::clear()
 	chunk_t* c = Chunks.peek();
 	while (c)
 	{
-		c->allocator.clear();
+		c->allocator.reset();
 		c = c->next;
 	}
 }
@@ -272,20 +272,20 @@ template<typename T>
 typename concurrent_growable_object_pool<T>::chunk_t* concurrent_growable_object_pool<T>::allocate_chunk()
 {
 	chunk_t* c = reinterpret_cast<chunk_t*>(Allocator.allocate(ChunkSize, memory_alignment::align_to_cache_line));
-	c->allocator = std::move(chunk_alloc_t(byte_align(c+1, oDEFAULT_MEMORY_ALIGNMENT), NumBlocksPerChunk));
+	c->allocator.initialize(byte_align(c+1, oDEFAULT_MEMORY_ALIGNMENT), NumBlocksPerChunk);
 	c->next = nullptr;
 	return c;
 }
 
 template<typename T>
-void* concurrent_growable_object_pool<T>::allocate()
+void* concurrent_growable_object_pool<T>::allocate_ptr()
 {
 	void* p = nullptr;
 
 	// check cached last-used chunk (racy but it's only an optimization hint)
 	chunk_alloc_t* pAllocator = pLastAlloc;
 	if (pAllocator)
-		p = pAllocator->allocate();
+		p = pAllocator->allocate_ptr();
 
 	// search for another chunk
 	if (!p)
@@ -296,7 +296,7 @@ void* concurrent_growable_object_pool<T>::allocate()
 		chunk_t* c = Chunks.peek();
 		while (c)
 		{
-			p = c->allocator.allocate();
+			p = c->allocator.allocate_ptr();
 			if (p)
 			{
 				pLastAlloc = &c->allocator; // racy but only an optimization hint
@@ -310,7 +310,7 @@ void* concurrent_growable_object_pool<T>::allocate()
 		if (!p)
 		{
 			chunk_t* newHead = allocate_chunk();
-			p = newHead->allocator.allocate();
+			p = newHead->allocator.allocate_ptr();
 
 			// this assignment to pLastAlloc is a bit racy, but it's only a 
 			// caching/hint, so elsewhere where this is used, just use whatever is 

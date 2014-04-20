@@ -202,7 +202,7 @@ concurrent_stack<T, traits>::concurrent_stack(void* _pMemory, size_type _Capacit
 	if (!byte_aligned(_pMemory, oDEFAULT_MEMORY_ALIGNMENT))
 		throw std::invalid_argument("memory must be default-aligned");
 	Pool = std::move(concurrent_object_pool<T>(_pMemory, _Capacity));
-	Next = static_cast<index_type*>(byte_add(Pool.get_memory_pointer(), sizeof(T), _Capacity));
+	Next = static_cast<index_type*>(byte_add(_pMemory, sizeof(T), _Capacity));
 	initialize();
 }
 
@@ -260,7 +260,7 @@ bool concurrent_stack<T, traits>::pop(reference _Value)
 		New.size = Old.size - 1;
 		New.next = Next[i];
 	} while (!traits::cas(Head, Old.all, New.all));
-	value_type* v = (value_type*)Pool.pointer(i);
+	value_type* v = (value_type*)Pool.at(i);
 	_Value = std::move(*v);
 	Pool.destroy(v);
 	return true;
@@ -285,7 +285,7 @@ typename concurrent_stack<T, traits>::size_type concurrent_stack<T, traits>::pop
 	size_type n = 0;
 	while (n < _MaxToVisit && i != invalid_index)
 	{
-		value_type* v = (value_type*)Pool.pointer(i);
+		value_type* v = (value_type*)Pool.at(i);
 		_Visitor(*v, _pUserData);
 		i = Next[i];
 		Pool.destroy(v);
@@ -324,7 +324,7 @@ void concurrent_stack<T, traits>::initialize()
 	h.size = 0;
 	h.next = invalid_index;
 	Head.store(h.all);
-	Pool.clear();
+	Pool.reset();
 	const size_t Capacity = Pool.capacity();
 	for (size_t i = 0; i < Capacity; i++)
 		Next[i] = invalid_index;

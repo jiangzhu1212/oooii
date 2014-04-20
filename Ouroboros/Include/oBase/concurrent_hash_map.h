@@ -35,8 +35,9 @@
 
 #include <oBase/allocate.h>
 #include <oBase/byte.h>
-#include <stdexcept>
 #include <atomic>
+#include <stdexcept>
+#include <type_traits>
 
 namespace ouro {
 
@@ -50,29 +51,25 @@ public:
 
 	static const value_type invalid_value = value_type(-1);
 
-	// returns the number of entries required to performantly store the specified amount of entries
-	static size_type capacity_required(size_type _MaxEntries)
-	{
-		// keep plenty of hash space and then make it a power of two for quick modding
-		return __max(8, next_pow2(_MaxEntries * 2));
-	}
-
 	// returns the number of bytes required to performantly store the specified amount of entries
 	// use this to allocate a memory buffer and pass it to the constructor.
-	static size_type bytes_required(size_type _MaxEntries)
+	static size_type calc_size(size_type _MaxEntries)
 	{
-		size_type capacity = capacity_required(_MaxEntries);
-		return sizeof(key_type) * capacity + sizeof(value_type) * capacity;
+		static_assert(std::is_integral<key_type>::value, "key must be integral type");
+		static_assert(std::is_integral<value_type>::value, "value must be integral type");
+
+		size_type n = __max(8, next_pow2(_MaxEntries * 2));
+		return sizeof(std::atomic<key_type>) * n + sizeof(std::atomic<value_type>) * n;
 	}
 
 	// Default empty ctor
 	concurrent_hash_map() : Allocator(noop_allocator), ModuloMask(0), Keys(nullptr), Values(nullptr) {}
 
-	// _pArena should point to memory allocated to at least bytes_required() 
-	concurrent_hash_map(void* _pArena, size_type _MaxEntries) : Allocator(noop_allocator) { initialize(_pArena, _MaxEntries); }
+	// _pMemory should point to memory allocated to at least calc_size() 
+	concurrent_hash_map(void* _pMemory, size_type _MaxEntries) : Allocator(noop_allocator) { initialize(_pMemory, _MaxEntries); }
 
 	// given an allocator, this will make the proper allocations and free them upon exit.
-	concurrent_hash_map(allocator _Allocator, size_type _MaxEntries) : Allocator(_Allocator) { initialize(_Allocator.allocate(bytes_required(_MaxEntries), 0), _MaxEntries); }
+	concurrent_hash_map(allocator _Allocator, size_type _MaxEntries) : Allocator(_Allocator) { initialize(_Allocator.allocate(calc_size(_MaxEntries), 0), _MaxEntries); }
 
 	concurrent_hash_map(concurrent_hash_map&& _That) { operator=(std::move(_That)); }
 
@@ -98,8 +95,8 @@ public:
 	void clear()
 	{
 		const size_type nEntries = ModuloMask+1;
-		memset(Keys, 0, sizeof(key_type) * nEntries);
-		memset(Values, -1, sizeof(value_type) * nEntries);
+		memset(Values, -1, sizeof(std::atomic<value_type>) * nEntries);
+		memset(Keys, 0, sizeof(std::atomic<key_type>) * nEntries);
 	}
 
 	// concurrent: returns the max number of items that can be stored.
@@ -226,12 +223,12 @@ private:
 	concurrent_hash_map(const concurrent_hash_map&);
 	const concurrent_hash_map& operator=(const concurrent_hash_map&);
 
-	void initialize(void* _pArena, size_type _MaxEntries)
+	void initialize(void* _pMemory, size_type _MaxEntries)
 	{
-		size_type Capacity = capacity_required(_MaxEntries);
+		size_type Capacity = next_pow2(_MaxEntries * 2);
 		ModuloMask = Capacity - 1;
-		Keys = (std::atomic<key_type>*)_pArena;
-		Values = byte_add((std::atomic<value_type>*)Keys, sizeof(key_type), Capacity);
+		Keys = (std::atomic<key_type>*)_pMemory;
+		Values = byte_add((std::atomic<value_type>*)Keys, sizeof(std::atomic<key_type>), Capacity);
 		clear();
 	}
 };
