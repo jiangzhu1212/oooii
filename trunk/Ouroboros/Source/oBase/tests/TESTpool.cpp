@@ -93,11 +93,11 @@ static void test_allocate()
 	void* tests[NumBlocks];
 	for (size_t i = 0; i < NumBlocks; i++)
 	{
-		tests[i] = Allocator.allocate();
+		tests[i] = Allocator.allocate_ptr();
 		oCHECK(tests[i], "test_obj %u should have been allocated", i);
 	}
 
-	void* shouldBeNull = Allocator.allocate();
+	void* shouldBeNull = Allocator.allocate_ptr();
 	oCHECK(!shouldBeNull, "Allocation should have failed");
 
 	oCHECK(0 == Allocator.count_available(), "There should be 0 available blocks");
@@ -161,18 +161,25 @@ static void test_concurrency()
 		if (i & 0x1)
 			oCHECK(destroyed[i], "Destruction did not occur for allocation %d", i);
 		else
+		{
 			oCHECK(tests[i]->Value == i, "Constructor did not occur for allocation %d", i);
+			Allocator.deallocate(tests[i]);
+		}
 	}
+
+	oCHECK(Allocator.empty(), "allocator should be empty");
+
+	Allocator.deinitialize();
 }
 
 void TESTpool()
 {
-	test_index_pool<index_pool<unsigned int>>();
-	test_index_pool<concurrent_index_pool<unsigned int>>();
+	test_index_pool<pool<unsigned int>>();
+	test_index_pool<concurrent_pool<unsigned int>>();
 
-	test_allocate<block_pool<sizeof(test_obj)>>();
+	test_allocate<pool<test_obj>>();
 	test_create<object_pool<test_obj>>();
-	test_allocate<concurrent_block_pool<sizeof(test_obj)>>();
+	test_allocate<concurrent_pool<test_obj>>();
 	test_create<concurrent_object_pool<test_obj>>();
 	test_concurrency();
 }
