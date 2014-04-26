@@ -22,7 +22,8 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/pool.h>
+#include <oBase/concurrent_pool.h>
+#include <oBase/concurrent_object_pool.h>
 #include <oBase/concurrency.h>
 #include <oBase/throw.h>
 #include <vector>
@@ -57,17 +58,16 @@ static void test_index_pool()
 {
 	const size_t CAPACITY = 4;
 	std::vector<unsigned int> buffer(256, 0xcccccccc);
+	IndexPoolT a(buffer.data(), sizeof(concurrent_pool::index_type), CAPACITY);
 
-	IndexPoolT a(buffer.data(), CAPACITY);
-
-	oCHECK(a.empty(), "index_allocator did not initialize correctly.");
+	oCHECK(a.full(), "index_allocator did not initialize correctly.");
 	oCHECK(a.capacity() == CAPACITY, "Capacity mismatch.");
 
 	unsigned int index[4];
 	oFORI(i, index)
 		index[i] = a.allocate();
 
-	oCHECK(a.invalid_index == a.allocate(), "allocate succeed past allocator capacity");
+	oCHECK(a.nullidx == a.allocate(), "allocate succeed past allocator capacity");
 
 	oFORI(i, index)
 		oCHECK(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);
@@ -77,7 +77,7 @@ static void test_index_pool()
 	a.deallocate(index[2]);
 	a.deallocate(index[3]);
 
-	oCHECK(a.empty(), "A deallocate failed.");
+	oCHECK(a.full(), "A deallocate failed.");
 }
 
 template<typename test_block_poolT>
@@ -87,25 +87,25 @@ static void test_allocate()
 	static const size_t BlockSize = sizeof(test_obj);
 	std::vector<char> scopedArena(BlockSize * NumBlocks);
 	
-	test_block_poolT Allocator(scopedArena.data(), NumBlocks);
-	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after init)", NumBlocks);
+	test_block_poolT Allocator(scopedArena.data(), BlockSize, NumBlocks);
+	oCHECK(NumBlocks == Allocator.count_free(), "There should be %u available blocks (after init)", NumBlocks);
 
 	void* tests[NumBlocks];
 	for (size_t i = 0; i < NumBlocks; i++)
 	{
-		tests[i] = Allocator.allocate_ptr();
+		tests[i] = Allocator.allocate_pointer();
 		oCHECK(tests[i], "test_obj %u should have been allocated", i);
 	}
 
-	void* shouldBeNull = Allocator.allocate_ptr();
+	void* shouldBeNull = Allocator.allocate_pointer();
 	oCHECK(!shouldBeNull, "Allocation should have failed");
 
-	oCHECK(0 == Allocator.count_available(), "There should be 0 available blocks");
+	oCHECK(0 == Allocator.count_free(), "There should be 0 available blocks");
 
 	for (size_t i = 0; i < NumBlocks; i++)
 		Allocator.deallocate(tests[i]);
 
-	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after deallocate)", NumBlocks);
+	oCHECK(NumBlocks == Allocator.count_free(), "There should be %u available blocks (after deallocate)", NumBlocks);
 }
 
 template<typename test_obj_poolT>
@@ -131,14 +131,14 @@ static void test_create()
 		oCHECK(testdestroyed[i] == true, "test_obj %u should have been destroyed", i);
 	}
 
-	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after deallocate)", NumBlocks);
+	oCHECK(NumBlocks == Allocator.count_free(), "There should be %u available blocks (after deallocate)", NumBlocks);
 }
 
 static void test_concurrency()
 {
 	static const size_t NumBlocks = 10000;
 	std::vector<char> scopedArena(NumBlocks * sizeof(test_obj));
-	concurrent_object_pool_old<test_obj> Allocator(scopedArena.data(), NumBlocks);
+	concurrent_object_pool<test_obj> Allocator(scopedArena.data(), NumBlocks);
 
 	bool destroyed[NumBlocks];
 	memset(destroyed, 0, sizeof(destroyed));
@@ -154,7 +154,7 @@ static void test_concurrency()
 			Allocator.destroy(tests[_Index]);
 	});
 
-	oCHECK((NumBlocks/2) == Allocator.count_available(), "Allocation/Destroys did not occur correctly");
+	oCHECK((NumBlocks/2) == Allocator.count_free(), "Allocation/Destroys did not occur correctly");
 
 	for (size_t i = 0; i < NumBlocks; i++)
 	{
@@ -167,20 +167,16 @@ static void test_concurrency()
 		}
 	}
 
-	oCHECK(Allocator.empty(), "allocator should be empty");
+	oCHECK(Allocator.full(), "allocator should be full");
 
 	Allocator.deinitialize();
 }
 
-void TESTpool()
+void TESTconcurrent_pool()
 {
-	test_index_pool<pool<unsigned int>>();
-	test_index_pool<concurrent_pool_old<unsigned int>>();
-
-	test_allocate<pool<test_obj>>();
-	test_create<object_pool<test_obj>>();
-	test_allocate<concurrent_pool_old<test_obj>>();
-	test_create<concurrent_object_pool_old<test_obj>>();
+	test_index_pool<concurrent_pool>();
+	test_allocate<concurrent_pool>();
+	test_create<concurrent_object_pool<test_obj>>();
 	test_concurrency();
 }
 

@@ -36,8 +36,6 @@ template<typename traits>
 class linear_allocator_base
 {
 public:
-	static const size_t default_alignment = oDEFAULT_MEMORY_ALIGNMENT;
-
 	linear_allocator_base() : pHead(nullptr), pTail(nullptr), pEnd(nullptr) {}
 	linear_allocator_base(void* _pArena, size_t _Size) { initialize(_pArena, _Size); }
 	linear_allocator_base(linear_allocator_base&& _That) { operator=(std::move(_That)); }

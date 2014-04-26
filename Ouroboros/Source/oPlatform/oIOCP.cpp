@@ -23,8 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oIOCP.h"
-#include <oBase/pool.h>
 #include <oBase/backoff.h>
+#include <oBase/concurrent_pool.h>
 #include <oBase/fixed_string.h>
 #include <oCore/thread_traits.h>
 #include <oBasis/oRefCount.h>
@@ -72,7 +72,7 @@ private:
 
 	oIOCPOp* pSocketOps;
 	unsigned int* pSocketIndices;
-	concurrent_pool<unsigned short>* pSocketAllocator;
+	concurrent_pool* pSocketAllocator;
 	struct oIOCP_Impl* pParent;
 	oRefCount ParentRefCount;
 };
@@ -183,36 +183,8 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 	~oIOCP_Singleton()
 	{
-		for (std::thread& Thread : WorkerThreads)
-		{
-			// Post a shutdown message for each worker to unblock and disable it.
-			PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, nullptr);
-		}
-
-		// been having problems with this... there seems to be something racy in the new std::thread
-		// so this is deadlocking. Since oICOP will be replaced with win_iocp soon, don't try too 
-		// hard to make this clean.
-		event AllJoined;
-		std::thread t([&]
-		{
-			for (std::thread& Thread : WorkerThreads)
-				Thread.join();
-
-			AllJoined.set();
-		});
-
-		AllJoined.wait_for(std::chrono::seconds(1));
-		
-		try
-		{
-			t.detach();
-			for (std::thread& Thread : WorkerThreads)
-				Thread.detach();
-		}
-
-		catch (std::exception&)
-		{
-		}
+		if (WorkerThreads[0].joinable())
+			std::terminate(); // must call join before this exists otherwise a deadlock with CRT can occur
 
 		if (INVALID_HANDLE_VALUE != hIOCP)
 			CloseHandle(hIOCP);
@@ -246,6 +218,18 @@ struct oIOCP_Singleton : public oProcessSingleton<oIOCP_Singleton>
 
 		lock_guard<mutex> lock(Mutex);
 		CheckForOrphans(true);
+	}
+
+	void Join()
+	{
+		for (std::thread& Thread : WorkerThreads)
+		{
+			// Post a shutdown message for each worker to unblock and disable it.
+			PostQueuedCompletionStatus(hIOCP, 0, IOCPKEY_SHUTDOWN, nullptr);
+		}
+
+		for (std::thread& Thread : WorkerThreads)
+			Thread.join();
 	}
 
 	oIOCPContext* NewIOCPContext(oIOCP_Impl* _pIOCP)
@@ -369,7 +353,7 @@ bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oIOCP**
 oIOCPOp* oIOCPContext::GetOp()
 {
 	unsigned int AllocIndex = pSocketAllocator->allocate();
-	if (AllocIndex == pool<unsigned short>::invalid_index)
+	if (AllocIndex == pSocketAllocator->nullidx)
 		return nullptr;
 
 	return &pSocketOps[AllocIndex];
@@ -377,7 +361,7 @@ oIOCPOp* oIOCPContext::GetOp()
 
 void oIOCPContext::ReturnOp(oIOCPOp* _pOP)
 {
-	unsigned short Index = static_cast<unsigned short>(_pOP - pSocketOps);
+	unsigned int Index = static_cast<unsigned int>(_pOP - pSocketOps);
 	_pOP->Reset();
 	pSocketAllocator->deallocate(Index);
 }
@@ -398,7 +382,7 @@ oIOCPContext::oIOCPContext(struct oIOCP_Impl* _pParent)
 #else
 	pSocketOps = new oIOCPOp[Desc.MaxOperations];
 	pSocketIndices = new unsigned int[Desc.MaxOperations];
-	pSocketAllocator = new concurrent_pool<unsigned short>(pSocketIndices, Desc.MaxOperations);
+	pSocketAllocator = new concurrent_pool(pSocketIndices, sizeof(concurrent_pool::index_type), Desc.MaxOperations);
 #endif
 
 
@@ -419,7 +403,6 @@ oIOCPContext::oIOCPContext(struct oIOCP_Impl* _pParent)
 
 oIOCPContext::~oIOCPContext()
 {
-	pSocketAllocator->reset();
 	size_t OpCount = pSocketAllocator->capacity();
 	for(size_t i = 0; i < OpCount; ++i)
 	{
@@ -432,7 +415,7 @@ oIOCPContext::~oIOCPContext()
 
 #ifdef DEBUG_IOCP_ALLOCATIONS
 
-	pSocketAllocator->~oConcurrentIndexAllocator();
+	pSocketAllocator->~concurrent_pool();
 	oDebuggerGuardedFree(pSocketAllocator);
 	oDebuggerGuardedFree(pSocketIndices);
 	for(unsigned int i = 0; i < OpCount; ++i)
@@ -442,8 +425,8 @@ oIOCPContext::~oIOCPContext()
 
 #else
 	delete pSocketAllocator;
-	delete pSocketIndices;
-	delete pSocketOps;
+	delete [] pSocketIndices;
+	delete [] pSocketOps;
 #endif
 }
 
@@ -557,4 +540,9 @@ void InitializeIOCP()
 void FlushIOCP()
 {
 	oIOCP_Singleton::Singleton()->Flush();
+}
+
+void oIOCPJoin()
+{
+	oIOCP_Singleton::Singleton()->Join();
 }

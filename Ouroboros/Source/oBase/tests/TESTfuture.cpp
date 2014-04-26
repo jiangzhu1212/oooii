@@ -88,7 +88,7 @@ static void test_workstealing(ouro::test_services& _Services)
 		else
 		{
 			char buf[128];
-			snprintf(buf, "Failed to achieve 100%s CPU utilization. Peaked at %.01f%s", "%%", CPUpeak, "%%");
+			snprintf(buf, "Failed to achieve 100%% CPU utilization. Peaked at %.01f%%", CPUpeak);
 			oTHROW(protocol_error, buf);
 		}
 	}

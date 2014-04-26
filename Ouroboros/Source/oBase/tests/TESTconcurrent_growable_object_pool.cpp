@@ -25,6 +25,7 @@
 #include <oBase/concurrent_growable_object_pool.h>
 #include <oBase/assert.h>
 #include <oBase/concurrency.h>
+#include <oCore/windows/win_crt_leak_tracker.h>
 #include <oBase/throw.h>
 #include <vector>
 
@@ -90,9 +91,9 @@ void TESTconcurrent_growable_object_pool()
 		});
 
 		Allocator.shrink(2);
-		oCHECK(Allocator.num_chunks() == 2, "Unexpected number of chunks allocated (after real shrink)");
+		oCHECK(Allocator.num_chunks() == 1, "Unexpected number of chunks allocated (after real shrink)");
 
-		Allocator.reserve(5 * Allocator.num_blocks_per_chunk());
+		Allocator.grow(5 * Allocator.chunk_capacity());
 		oCHECK(Allocator.num_chunks() == 5, "Unexpected number of chunks allocated (after grow)");
 
 		Allocator.shrink(0);
@@ -124,7 +125,6 @@ void TESTconcurrent_growable_object_pool()
 
 	catch (std::exception&)
 	{
-		Allocator.clear();
 	}
 }
 

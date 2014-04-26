@@ -69,7 +69,7 @@ public:
 	{
 		#ifdef _DEBUG
 		if (((uintptr_t)_Pointer & tag_mask) != 0)
-			throw std::runtime_error("tagged_pointer pointers must be aligned to allow room for the tag");
+			throw std::runtime_error("tagged_pointer pointers must be aligned to 8-bytes allow room for the tag");
 		#endif
 		TagAndPointer = (uintptr_t)_Pointer 
 		#ifdef o32BIT
@@ -80,7 +80,9 @@ public:
 	}
 		
 	tagged_pointer(const tagged_pointer& _That) : TagAndPointer((uintptr_t)_That.TagAndPointer) {}
+	tagged_pointer(tagged_pointer&& _That) : TagAndPointer((uintptr_t)_That.TagAndPointer) { _That.TagAndPointer = 0; }
 	const tagged_pointer<T>& operator=(const tagged_pointer<T>& _That) { TagAndPointer = (uintptr_t)_That.TagAndPointer; return *this; }
+	tagged_pointer<T>& operator=(tagged_pointer<T>&& _That) { TagAndPointer = (uintptr_t)_That.TagAndPointer; _That.TagAndPointer = 0; return *this; }
 	bool operator==(const tagged_pointer<T>& _That) const { return TagAndPointer == _That.TagAndPointer; }
 	bool operator!=(const tagged_pointer<T>& _That) const { return TagAndPointer != _That.TagAndPointer; }
 	size_t tag() const

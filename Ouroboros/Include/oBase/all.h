@@ -32,6 +32,7 @@
 #include <oBase/allocate.h>
 #include <oBase/assert.h>
 #include <oBase/atof.h>
+#include <oBase/bit.h>
 #include <oBase/byte.h>
 #include <oBase/color.h>
 #include <oBase/colors.h>

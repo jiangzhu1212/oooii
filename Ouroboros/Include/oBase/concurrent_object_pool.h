@@ -22,52 +22,55 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#ifndef oBase_concurrent_growable_object_pool_h
-#define oBase_concurrent_growable_object_pool_h
+// provides typed simplification of some concurrent_pool APIs as well as 
+// create/destroy for constructor/destructor semantics.
+#pragma once
+#ifndef oBase_concurrent_object_pool_h
+#define oBase_concurrent_object_pool_h
 
 #include <oBase/callable.h>
-#include <oBase/concurrent_growable_pool.h>
-
-#include <oBase/config.h>
+#include <oBase/concurrent_pool.h>
 
 // emulate variadic macros for passing various parameters to create()
-#define oCONCURRENT_GROWABLE_OBJECT_POOL_CREATE_N(n) \
+#define oCONCURRENT_OBJECT_POOL_CREATE_N(n) \
 	template<oCALLABLE_CONCAT(oARG_TYPENAMES,n)> \
 	T* create(oCALLABLE_CONCAT(oARG_DECL,n)) { void* p = allocate_pointer(); return p ? new (p) T(oCALLABLE_CONCAT(oARG_PASS,n)) : nullptr; }
-#define oCONCURRENT_GROWABLE_OBJECT_POOL_CREATE_DESTROY \
-	oCALLABLE_PROPAGATE_SKIP0(oCONCURRENT_GROWABLE_OBJECT_POOL_CREATE_N) \
+#define oCONCURRENT_OBJECT_POOL_CREATE_DESTROY \
+	oCALLABLE_PROPAGATE_SKIP0(oCONCURRENT_OBJECT_POOL_CREATE_N) \
 	T* create() { void* p = allocate_pointer(); return p ? new (p) T() : nullptr; } \
 	void destroy(T* _Pointer) { _Pointer->T::~T(); deallocate(_Pointer); }
 
 namespace ouro {
 
 template<typename T>
-class concurrent_growable_object_pool : public concurrent_growable_pool
+class concurrent_object_pool : public concurrent_pool
 {
 public:
+	typedef concurrent_pool::index_type index_type;
 	typedef concurrent_pool::size_type size_type;
 	typedef T value_type;
 
-
+	
 	// non-concurrent api
 
-	concurrent_growable_object_pool() {}
-	concurrent_growable_object_pool(concurrent_growable_object_pool&& _That) : concurrent_growable_pool(std::move((concurrent_growable_pool&&)_That)) {}
-	concurrent_growable_object_pool(size_type capacity) : concurrent_growable_pool(sizeof(T), capacity, alignof(value_type)) {}
-	concurrent_growable_object_pool(size_type capacity, size_type alignment) : concurrent_growable_pool(sizeof(T), capacity, alignment) {}
-	~concurrent_growable_object_pool() {}
-	concurrent_growable_object_pool& operator=(concurrent_growable_object_pool&& _That) { return (concurrent_growable_object_pool&)concurrent_growable_pool::operator=(std::move((concurrent_growable_pool&&)_That)); }
-
-	bool initialize(size_type capacity_per_chunk) { return concurrent_growable_pool::initialize(sizeof(T), capacity_per_chunk); }
-
+	concurrent_object_pool() {}
+	concurrent_object_pool(concurrent_object_pool&& _That) : concurrent_pool(std::move((concurrent_pool&&)_That)) {}
+	concurrent_object_pool(void* memory, size_type capacity) : concurrent_pool(memory, sizeof(T), capacity) {}
+	concurrent_object_pool(size_type capacity) : concurrent_pool(sizeof(T), capacity) {}
+	~concurrent_object_pool() { ((concurrent_pool*)this)->~concurrent_pool(); }
+	concurrent_object_pool& operator=(concurrent_object_pool&& _That) { return (concurrent_object_pool&)concurrent_pool::operator=(std::move((concurrent_pool&&)_That)); }
+	index_type initialize(void* memory, size_type capacity) { return initialize(memory, sizeof(T), capacity); }
+	size_type initialize(size_type capacity) { return concurrent_pool::initialize(sizeof(T), capacity); }
 
 	// concurrent api
 
-	oCONCURRENT_GROWABLE_OBJECT_POOL_CREATE_DESTROY
+	// define destroy(T* p) which calls the dtor before deallocating
+	// define create( ... ) which takes whatever ctor parameters type T provides
+	oCONCURRENT_OBJECT_POOL_CREATE_DESTROY
 
 private:
-	concurrent_growable_object_pool(const concurrent_growable_object_pool&); /* = delete; */
-	const concurrent_growable_object_pool& operator=(const concurrent_growable_object_pool&); /* = delete; */
+	concurrent_object_pool(const concurrent_object_pool&); /* = delete; */
+	const concurrent_object_pool& operator=(const concurrent_object_pool&); /* = delete; */
 };
 
 } // namespace ouro

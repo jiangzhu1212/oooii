@@ -28,8 +28,7 @@
 #ifndef oBase_config_h
 #define oBase_config_h
 
-// machine-specific
-#define oDEFAULT_CACHE_LINE_SIZE 64
+#include <oBase/memcfg.h>
 
 #if defined(_DEBUG) && defined(NDEBUG)
 	#error both _DEBUG and NDEBUG are defined
@@ -41,10 +40,11 @@
 
 #ifdef _MSC_VER
 
+	// @todo: replace usage with alignas and memcfg values
 	#define oALIGN(amount) __declspec(align(amount))
 	#define oCACHE_ALIGNED(_Declaration) \
 		__pragma(warning(disable:4324)) /* structure was padded due to _declspec(align()) */ \
-		oALIGN(oDEFAULT_CACHE_LINE_SIZE) _Declaration; \
+		oALIGN(oCACHE_LINE_SIZE) _Declaration; \
 		__pragma(warning(default:4324))
 	
 	#if _MSC_VER >= 1600
@@ -55,11 +55,7 @@
 	#endif
 
 	#ifdef _WIN64
-		#define o64BIT 1
-		#define oDEFAULT_MEMORY_ALIGNMENT 16
 	#else
-		#define o32BIT 1
-		#define oDEFAULT_MEMORY_ALIGNMENT 4
 		#define oHAS_DOUBLE_WIDE_ATOMIC_BUG 1
 	#endif
 
@@ -104,6 +100,14 @@
 
 #ifndef oHAS_NULLPTR
 	#define nullptr NULL
+#endif
+
+#ifndef oHAS_ALIGNAS
+	#define alignas(x) __declspec(align(x))
+#endif
+
+#ifndef oHAS_ALIGNOF
+	#define alignof __alignof
 #endif
 
 #ifdef oHAS_NOEXCEPT

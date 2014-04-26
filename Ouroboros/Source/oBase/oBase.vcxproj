@@ -48,6 +48,8 @@
     <ClCompile Include="aabox.cpp" />
     <ClCompile Include="allocate.cpp" />
     <ClCompile Include="color.cpp" />
+    <ClCompile Include="concurrent_growable_pool.cpp" />
+    <ClCompile Include="concurrent_pool.cpp" />
     <ClCompile Include="date.cpp" />
     <ClCompile Include="future.cpp" />
     <ClCompile Include="gzip.cpp" />
@@ -139,6 +141,7 @@
     <ClInclude Include="..\..\Include\oBase\atof.h" />
     <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h" />
     <ClInclude Include="..\..\Include\oBase\backoff.h" />
+    <ClInclude Include="..\..\Include\oBase\bit.h" />
     <ClInclude Include="..\..\Include\oBase\byte.h" />
     <ClInclude Include="..\..\Include\oBase\callable.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
@@ -146,8 +149,12 @@
     <ClInclude Include="..\..\Include\oBase\compression.h" />
     <ClInclude Include="..\..\Include\oBase\concurrency.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_object_pool.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_hash_map.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_intrusive_stack.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h" />
+    <ClInclude Include="..\..\Include\oBase\concurrent_pool.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_queue.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_queue_opt.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_stack.h" />
@@ -184,6 +191,7 @@
     <ClInclude Include="..\..\Include\oBase\lock_free_queue.h" />
     <ClInclude Include="..\..\Include\oBase\lzma.h" />
     <ClInclude Include="..\..\Include\oBase\macros.h" />
+    <ClInclude Include="..\..\Include\oBase\memcfg.h" />
     <ClInclude Include="..\..\Include\oBase\memory.h" />
     <ClInclude Include="..\..\Include\oBase\moving_average.h" />
     <ClInclude Include="..\..\Include\oBase\murmur3.h" />

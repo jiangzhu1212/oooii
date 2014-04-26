@@ -506,7 +506,8 @@ mesh_impl::mesh_impl(const init& _Init, const path& _OBJPath, const char* _OBJSt
 		if (IndexMapMallocBytes)
 		{
 			mstring reserved, additional;
-			oTRACE("obj: %s index map allocated %s additional indices beyond the initial EstimatedNumIndices=%s", oSAFESTRN(_OBJPath), format_commas(additional, as_uint(IndexMapMallocBytes / sizeof(uint))), format_commas(reserved, _Init.est_num_vertices));
+			const char* n = oSAFESTRN(_OBJPath); // passing the macro directly causes win32 to throw an exception
+			oTRACE("obj: %s index map allocated %s additional indices beyond the initial est_num_vertices=%s", n, format_commas(additional, as_uint(IndexMapMallocBytes / sizeof(uint))), format_commas(reserved, _Init.est_num_vertices));
 		}
 	#endif
 

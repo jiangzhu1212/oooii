@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oCore/windows/win_iocp.h>
 #include <oBase/backoff.h>
-#include <oBase/pool.h>
+#include <oBase/concurrent_object_pool.h>
 #include <oBase/invalid.h>
 #include <oCore/debugger.h>
 #include <oCore/process_heap.h>
@@ -68,6 +68,7 @@ public:
 	// Waits for all work to be completed
 	void wait() { wait_for(infinite); }
 	bool wait_for(unsigned int _TimeoutMS);
+	bool joinable() const;
 	void join();
 
 	OVERLAPPED* associate(HANDLE _Handle, iocp::completion_t _Completion, void* _pContext);
@@ -162,7 +163,7 @@ iocp_threadpool& iocp_threadpool::singleton()
 		process_heap::find_or_allocate(
 			"iocp"
 			, process_heap::per_process
-			, process_heap::leak_tracked
+			, process_heap::garbage_collected
 			, [=](void* _pMemory) { new (_pMemory) iocp_threadpool(128); }
 			, [=](void* _pMemory) { ((iocp_threadpool*)_pMemory)->~iocp_threadpool(); }
 			, &sInstance);
@@ -182,10 +183,9 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 	, NumRunningThreads(0)
 	, NumAssociations(0)
 {
-	size_t SizeofPoolArena = sizeof(iocp_overlapped) * _OverlappedCapacity;
-	void* PoolArena = new char[SizeofPoolArena];
-	pool = std::move(concurrent_object_pool<iocp_overlapped>(PoolArena, as_uint(_OverlappedCapacity)));
-
+	if (!pool.initialize(as_uint(_OverlappedCapacity)))
+		throw std::exception("iocp pool init failed");
+	
 	reporting::ensure_initialized();
 
 	const size_t NumWorkers = _NumWorkers ? _NumWorkers : thread::hardware_concurrency();
@@ -205,21 +205,10 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 
 iocp_threadpool::~iocp_threadpool()
 {
-	if (!wait_for(20000))
-		oTHROW(timed_out, "timed out waiting for iocp completion");
+	if (joinable())
+		std::terminate();
 
-	for (auto& w : Workers)
-		PostQueuedCompletionStatus(hIoPort, 0, op::shutdown, nullptr);
-
-	for (auto& w : Workers)
-		w.join();
-
-	if (INVALID_HANDLE_VALUE != hIoPort)
-	{
-		CloseHandle(hIoPort);
-	}
-
-	delete [] (char*)pool.deinitialize();
+	pool.deinitialize();
 }
 
 iocp_threadpool& iocp_threadpool::operator=(iocp_threadpool&& _That)
@@ -264,11 +253,27 @@ bool iocp_threadpool::wait_for(unsigned int _TimeoutMS)
 	return true;
 }
 
+bool iocp_threadpool::joinable() const
+{
+	return INVALID_HANDLE_VALUE != hIoPort;
+}
+
 void iocp_threadpool::join()
 {
-	void* pInstance = find_instance();
-	if (pInstance)
-		process_heap::deallocate(pInstance);
+	if (!wait_for(20000))
+		oTHROW(timed_out, "timed out waiting for iocp completion");
+
+	for (auto& w : Workers)
+		PostQueuedCompletionStatus(hIoPort, 0, op::shutdown, nullptr);
+
+	for (auto& w : Workers)
+		w.join();
+
+	if (INVALID_HANDLE_VALUE != hIoPort)
+	{
+		CloseHandle(hIoPort);
+		hIoPort = INVALID_HANDLE_VALUE;
+	}
 }
 
 OVERLAPPED* iocp_threadpool::associate(HANDLE _Handle, iocp::completion_t _Completion, void* _pContext)
@@ -355,7 +360,7 @@ bool wait_for(unsigned int _TimeoutMS)
 
 bool joinable()
 {
-	return !!iocp_threadpool::find_instance();
+	return iocp_threadpool::singleton().joinable();
 }
 
 void join()

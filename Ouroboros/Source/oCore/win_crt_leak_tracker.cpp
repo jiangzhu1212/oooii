@@ -112,6 +112,14 @@ context::context()
 {
 	ouro::reporting::ensure_initialized();
 
+	// This touches conCRT to ensure the lib is loaded. If not it can grab the CRT mutex
+	// and can do so from the leak tracker inside an alloc, thus causing a deadlock.
+	//{
+	//	recursive_mutex m;
+	//	m.lock();
+	//	m.unlock();
+	//}
+
 	leak_tracker::info lti;
 	lti.allocate = untracked_malloc;
 	lti.deallocate = untracked_free;

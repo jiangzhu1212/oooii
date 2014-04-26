@@ -100,4 +100,6 @@ oAPI bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oI
 //Useful to avoid over subscription issues. Can use to decide the best number of iocp operations to have in flight at once.
 oAPI int oIOCPThreadCount();
 
+oAPI void oIOCPJoin();
+
 #endif // oIOCP_h

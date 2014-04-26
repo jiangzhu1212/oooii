@@ -978,7 +978,7 @@ oTest::RESULT oTestManager_Impl::RunTest(RegisterTestBase* _pRegisterTestBase, c
 	// memory leaks.
 	// @tony: This isn't the only culprit. Maybe we should move all these
 	// into oCRTLeakTracker so the dependency on reporting seems explicit.
-	extern void FlushIOCP();
+	void FlushIOCP();
 	FlushIOCP();
 
 	if (!windows::iocp::wait_for(20000))
@@ -1333,6 +1333,9 @@ oTest::RESULT oTestManager_Impl::RunTests(ouro::filter_chain::filter* _pTestFilt
 		format_duration(timeMessage, round(timer::now() - allIterationsStartTime));
 		Report(oConsoleReporting::INFO, "========== %u Iterations: %u succeeded, %u failed, %u leaked, %u skipped in %s ==========\n", Desc.NumRunIterations, TotalNumSucceeded, TotalNumFailed, TotalNumLeaks, TotalNumSkipped, timeMessage.c_str());
 	}
+
+	void oIOCPJoin();
+	oIOCPJoin();
 
 	if ((TotalNumSucceeded + TotalNumFailed + TotalNumLeaks) == 0)
 		return oTest::NOTFOUND;

@@ -23,8 +23,11 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/assert.h>
+#include <oBase/allocate.h>
 #include <oBase/concurrent_stack.h>
+#include <oBase/concurrent_intrusive_stack.h>
 #include <oBase/concurrency.h>
+#include <oBase/finally.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
 #include <vector>
@@ -71,34 +74,35 @@ static void test_basics()
 
 static void test_intrusive_basics()
 {
-	Node values[5];
+	Node* values = (Node*)default_allocate(sizeof(Node) * 5, memory_alignment::align_to_8);
+	finally dealloc([&] { default_deallocate(values); });
 	concurrent_intrusive_stack<Node> s;
 	oCHECK(s.empty(), "Stack should be empty (init)");
 
-	oFORI(i, values)
+	for (int i = 0; i < 5; i++)
 	{
 		values[i].value = i;
 		s.push(&values[i]);
 	}
 
-	oCHECK(s.size() == oCOUNTOF(values), "Stack size is not correct");
+ 	oCHECK(s.size() == 5, "Stack size is not correct");
 
 	Node* v = s.peek();
-	oCHECK(v && v->value == oCOUNTOF(values)-1, "Stack value is not correct (peek)");
+	oCHECK(v && v->value == 4, "Stack value is not correct (peek)");
 
 	v = s.pop();
-	oCHECK(v && v->value == oCOUNTOF(values)-1, "Stack value is not correct (pop 1)");
+	oCHECK(v && v->value == 4, "Stack value is not correct (pop 1)");
 
 	v = s.pop();
-	oCHECK(v && v->value == oCOUNTOF(values)-2, "Stack value is not correct (pop 2)");
+	oCHECK(v && v->value == 3, "Stack value is not correct (pop 2)");
 
-	for (size_t i = 2; i < oCOUNTOF(values); i++)
+	for (size_t i = 2; i < 5; i++)
 		s.pop();
 
 	oCHECK(s.empty(), "Stack should be empty (after pops)");
 
 	// reinitialize
-	oFORI(i, values)
+	for (int i = 0; i < 5; i++)
 	{
 		values[i].value = i;
 		s.push(&values[i]);
@@ -106,7 +110,7 @@ static void test_intrusive_basics()
 
 	v = s.pop_all();
 
-	size_t i = oCOUNTOF(values);
+	size_t i = 5;
 	while (v)
 	{
 		oCHECK(v->value == --i, "Stack value is not correct (pop_all)");
@@ -155,12 +159,14 @@ static void test_concurrency()
 
 static void test_intrusive_concurrency()
 {
-	Node nodes[40];
+	Node* nodes = (Node*)default_allocate(sizeof(Node) * 40, memory_alignment::align_to_8);
+	finally dealloc([&] { default_deallocate(nodes); });
+
 	memset(nodes, 0xaa, sizeof(nodes));
 
 	concurrent_intrusive_stack<Node> s;
 
-	ouro::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
+	ouro::parallel_for(0, 40, [&](size_t _Index)
 	{
 		nodes[_Index].value = _Index;
 		s.push(&nodes[_Index]);
@@ -173,13 +179,13 @@ static void test_intrusive_concurrency()
 		n = n->next;
 	}
 
-	oFORI(i, nodes)
+	for (int i = 0; i < 40; i++)
 	{
 		oCHECK(nodes[i].value != 0xaaaaaaa, "Node %d was never processed by task system", i);
 		oCHECK(nodes[i].value == 0xc001c0de, "Node %d was never inserted into stack", i);
 	}
 	
-	ouro::parallel_for(0, oCOUNTOF(nodes), [&](size_t _Index)
+	ouro::parallel_for(0, 40, [&](size_t _Index)
 	{
 		Node* popped = s.pop();
 		popped->value = 0xdeaddead;
@@ -187,7 +193,7 @@ static void test_intrusive_concurrency()
 	
 	oCHECK(s.empty(), "Stack should be empty");
 
-	oFORI(i, nodes)
+	for (int i = 0; i < 40; i++)
 		oCHECK(nodes[i].value == 0xdeaddead, "Node %d was not popped correctly", i);
 }
 

@@ -110,9 +110,9 @@ private:
 	void fix_list(pointer_t _Tail, pointer_t _Head);
 };
 
-// @tony: TODO: Respect _Capacity
 template<typename T>
 concurrent_queue_opt<T>::concurrent_queue_opt()
+	: Pool(concurrent_growable_pool::max_blocks_per_chunk, tagged_pointer<node_t>::required_alignment)
 {
 	Head = Tail = pointer_t(Pool.create(T()), 0);
 }
@@ -245,7 +245,7 @@ template<typename T>
 typename concurrent_queue_opt<T>::size_type concurrent_queue_opt<T>::size() const
 {
 	// There's a dummy/extra node retained by this queue, so don't count that one.
-	return empty() ? 0 : (Pool.count_allocated() - 1);
+	return empty() ? 0 : (Pool.size() - 1);
 }
 
 } // namespace ouro
