@@ -233,7 +233,7 @@ public:
 };
 
 template<typename T>
-class concurrent_pool : public pool_base<T, true>
+class concurrent_pool_old : public pool_base<T, true>
 {
 	typedef pool_base<T, true> base_t;
 
@@ -244,11 +244,11 @@ public:
 
 	static size_type calc_size(size_type _Capacity) { return base_t::calc_size(_Capacity); }
 
-	concurrent_pool() {}
-	~concurrent_pool() { oCHECK_EMPTY(); }
-	concurrent_pool(void* _pMemory, size_type _Capacity) : base_t(_pMemory, _Capacity) {}
-	concurrent_pool(concurrent_pool&& _That) { operator=(std::move(_That)); }
-	concurrent_pool& operator=(concurrent_pool&& _That) { return (concurrent_pool&)base_t::operator=(std::move((base_t&&)_That)); }
+	concurrent_pool_old() {}
+	~concurrent_pool_old() { oCHECK_EMPTY(); }
+	concurrent_pool_old(void* _pMemory, size_type _Capacity) : base_t(_pMemory, _Capacity) {}
+	concurrent_pool_old(concurrent_pool_old&& _That) { operator=(std::move(_That)); }
+	concurrent_pool_old& operator=(concurrent_pool_old&& _That) { return (concurrent_pool_old&)base_t::operator=(std::move((base_t&&)_That)); }
 
 	// allocate an index from the freelist
 	index_type allocate()
@@ -306,9 +306,9 @@ public:
 };
 
 template<typename T>
-class concurrent_object_pool : public concurrent_pool<T>
+class concurrent_object_pool_old : public concurrent_pool_old<T>
 {
-	typedef concurrent_pool<T> base_t;
+	typedef concurrent_pool_old<T> base_t;
 
 public:
 	typedef typename base_t::size_type size_type;
@@ -317,11 +317,11 @@ public:
 
 	static size_type calc_size(size_type _Capacity) { return base_t::calc_size(_Capacity); }
 
-	concurrent_object_pool() {}
-	~concurrent_object_pool() { oCHECK_EMPTY(); }
-	concurrent_object_pool(void* _pMemory, size_type _Capacity) : base_t(_pMemory, _Capacity) {}
-	concurrent_object_pool(concurrent_object_pool&& _That) { operator=(std::move(_That)); }
-	concurrent_object_pool& operator=(concurrent_object_pool&& _That) { return (concurrent_object_pool&)base_t::operator=(std::move((base_t&&)_That)); }
+	concurrent_object_pool_old() {}
+	~concurrent_object_pool_old() { oCHECK_EMPTY(); }
+	concurrent_object_pool_old(void* _pMemory, size_type _Capacity) : base_t(_pMemory, _Capacity) {}
+	concurrent_object_pool_old(concurrent_object_pool_old&& _That) { operator=(std::move(_That)); }
+	concurrent_object_pool_old& operator=(concurrent_object_pool_old&& _That) { return (concurrent_object_pool_old&)base_t::operator=(std::move((base_t&&)_That)); }
 
 	oPOOL_CREATE();
 	oPOOL_DESTROY();

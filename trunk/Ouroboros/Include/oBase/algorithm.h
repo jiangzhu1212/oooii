@@ -331,20 +331,6 @@ void for_each(Container& _Container, const Callable& _Callable)
 template <typename Container, typename Callable>
 void for_each_value(Container& _Container, const Callable& _Callable) { std::for_each(std::begin(_Container), std::end(_Container), [&](const Container::reference _Arg) { _Callable(_Arg.second); }); }
 
-// Quickly remove an element from a vector O(1) if you don't care about the 
-// order of the elements in the vector. Works on any container that supports 
-// pop_back and back operations.
-template <class Container, class Iterator>
-void unordered_erase(Container& _Container, Iterator& _Iterator)
-{
-	#ifdef oHAS_MOVE_CTOR
-		*_Iterator = std::move(_Container.back());
-	#else
-		*_Iterator = _Container.back();
-	#endif
-	_Container.pop_back();
-}
-
 // Simplify the erase remove idiom
 template <typename Container>
 void erase_remove(Container& _Container, typename Container::value_type _Value)

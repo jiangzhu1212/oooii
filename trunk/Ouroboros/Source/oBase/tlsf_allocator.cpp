@@ -152,7 +152,7 @@ void tlsf_allocator::reset()
 	if (!pArena || !Size)
 		throw std::runtime_error("allocator not valid");
 
-	void* pAlignedArena = byte_align(pArena, oDEFAULT_MEMORY_ALIGNMENT);
+	void* pAlignedArena = byte_align(pArena, default_alignment);
 	size_t alignedArenaSize = Size - std::distance((char*)pArena, (char*)pAlignedArena);
 	hHeap = tlsf_create(pAlignedArena, alignedArenaSize);
 	Stats = stats();

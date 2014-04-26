@@ -36,9 +36,8 @@
 // the lib gets fixed.
 #ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
 	#include <oHLSL/oHLSLAtomics.h>
-#else
-	#include <atomic>
 #endif
+#include <atomic>
 
 namespace ouro {
 

@@ -79,6 +79,13 @@ void dispatch(const std::function<void()>& _Task);
 // from _Begin to _End.
 void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
 
+// For debugging
+inline void serial_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
+{
+	for (size_t i = 0; i < _End; i++)
+		_Task(i);
+}
+
 // Runs a task when the calling thread exits.
 void at_thread_exit(const std::function<void()>& _Task);
 

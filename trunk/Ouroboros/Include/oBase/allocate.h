@@ -88,6 +88,9 @@ namespace ouro {
 
 union allocate_options
 {
+	allocate_options() : options(0) {}
+	operator unsigned int() const { return options; }
+
 	unsigned int options;
 	struct
 	{

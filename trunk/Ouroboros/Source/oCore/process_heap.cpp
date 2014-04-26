@@ -54,8 +54,6 @@ class context
 public:
 	static context& singleton();
 
-	context();
-
 	void reference();
 	void release();
 
@@ -79,6 +77,8 @@ public:
 	void report();
 
 private:
+	context();
+
 	static const size_t max_stack_depth = 32;
 	static const size_t std_bind_internal_offset = 5; // number of symbols internal to std::bind to skip
 	static bool valid;

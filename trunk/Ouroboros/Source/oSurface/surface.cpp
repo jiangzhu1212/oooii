@@ -604,7 +604,7 @@ static int offset_image(const info& _SurfaceInfo, int _MipLevel, int _Subsurface
 	oASSERT(_MipLevel == 0, "layout::image doesn't have mip levels");
 	int offset = 0;
 	for (int i = 0; i < _SubsurfaceIndex; i++)
-		offset += byte_align(total_size(_SurfaceInfo, i), oDEFAULT_MEMORY_ALIGNMENT);
+		offset += byte_align(total_size(_SurfaceInfo, i), default_alignment);
 	return offset;
 }
 
@@ -738,7 +738,7 @@ uint total_size(const info& _SurfaceInfo, int _SubsurfaceIndex)
 			// byte_align is needed here to avoid a memory corruption crash. I'm not 
 			// sure why it is needed, but I think that size is a memory structure 
 			// containing all surface sizes, so they are all expected to be aligned.
-			size += byte_align(total_size(_SurfaceInfo, i), oDEFAULT_MEMORY_ALIGNMENT);
+			size += byte_align(total_size(_SurfaceInfo, i), default_alignment);
 		}
 		return size;
 	}

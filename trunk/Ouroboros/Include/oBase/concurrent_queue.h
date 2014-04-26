@@ -124,6 +124,7 @@ private:
 
 template<typename T>
 concurrent_queue<T>::concurrent_queue()
+	: Pool(concurrent_growable_pool::max_blocks_per_chunk, tagged_pointer<node_t>::required_alignment)
 {
 	node_t* n = Pool.create(T());
 	
@@ -251,7 +252,7 @@ template<typename T>
 typename concurrent_queue<T>::size_type concurrent_queue<T>::size() const
 {
 	// There's a dummy/extra node retained by this queue, so don't count that one.
-	return Pool.count_allocated() - 1;
+	return Pool.size() - 1;
 }
 
 } // namespace ouro
