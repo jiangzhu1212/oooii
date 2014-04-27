@@ -129,16 +129,16 @@ void concurrent_intrusive_stack<T>::push(pointer element)
 	tagged_pointer<T> n, o(head); 
 	do 
 	{	o = head;
-		element->next = reinterpret_cast<pointer>(o.ptr());
+		element->next = reinterpret_cast<pointer>(o.pointer());
 		n = tagged_pointer<T>(element, o.tag() + 1);
-	} while (!tagged_pointer<T>::CAS(&head, n, o));
+	} while (!head.cas(o, n));
 }
 
 template<typename T>
 typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::peek() const
 {
 	tagged_pointer<T> o(head);
-	return reinterpret_cast<pointer>(o.ptr());
+	return reinterpret_cast<pointer>(o.pointer());
 }
 
 template<typename T>
@@ -148,11 +148,11 @@ typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::p
 	pointer element = nullptr;
 	do 
 	{	o = head;
-		if (!o.ptr())
+		if (!o.pointer())
 			return nullptr;
-		element = reinterpret_cast<pointer>(o.ptr());
+		element = reinterpret_cast<pointer>(o.pointer());
 		n = tagged_pointer<T>(element->next, o.tag() + 1);
-	} while (!tagged_pointer<T>::CAS(&head, n, o));
+	} while (!head.cas(o, n));
 	return element;
 }
 
@@ -160,7 +160,7 @@ template<typename T>
 bool concurrent_intrusive_stack<T>::empty() const
 {
 	tagged_pointer<T> o(head);
-	return !o.ptr();
+	return !o.pointer();
 }
 
 template<typename T>
@@ -169,10 +169,10 @@ typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::p
 	pointer element = nullptr;
 	tagged_pointer<T> n, o(head);
 	do 
-	{	o = head;
-		element = reinterpret_cast<pointer>(o.ptr());
+	{	o = head;		
+		element = reinterpret_cast<pointer>(o.pointer());
 		n = tagged_pointer<T>(nullptr, o.tag() + 1);
-	} while (!tagged_pointer<T>::CAS(&head, n, o));
+	} while (!head.cas(o, n));
 	return element;
 }
 
