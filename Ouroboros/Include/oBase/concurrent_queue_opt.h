@@ -96,15 +96,15 @@ private:
 	struct node_t : node_base_t
 	{
 		node_t(const T& _Element) : node_base_t(_Element) {}
-		char padding[tagged_pointer<node_t>::required_alignment-(sizeof(node_base_t)%tagged_pointer<node_t>::required_alignment)];
+		char padding[oTAGGED_POINTER_ALIGNMENT - (sizeof(node_base_t) % oTAGGED_POINTER_ALIGNMENT)];
 	};
-	static_assert((sizeof(node_t) % tagged_pointer<node_t>::required_alignment) == 0, "node_t not properly aligned");
+	static_assert((sizeof(node_t) % oTAGGED_POINTER_ALIGNMENT) == 0, "node_t not properly aligned");
 
 	typedef tagged_pointer<node_t> pointer_t;
 
-	oCACHE_ALIGNED(pointer_t Head);
-	oCACHE_ALIGNED(pointer_t Tail);
-	oCACHE_ALIGNED(concurrent_growable_object_pool<node_t> Pool);
+	oALIGNAS(oCACHE_LINE_SIZE) pointer_t Head;
+	oALIGNAS(oCACHE_LINE_SIZE) pointer_t Tail;
+	oALIGNAS(oCACHE_LINE_SIZE) concurrent_growable_object_pool<node_t> Pool;
 
 	void internal_push(node_t* _pNode);
 	void fix_list(pointer_t _Tail, pointer_t _Head);
@@ -112,7 +112,7 @@ private:
 
 template<typename T>
 concurrent_queue_opt<T>::concurrent_queue_opt()
-	: Pool(concurrent_growable_pool::max_blocks_per_chunk, tagged_pointer<node_t>::required_alignment)
+	: Pool(concurrent_growable_pool::max_blocks_per_chunk, oTAGGED_POINTER_ALIGNMENT)
 {
 	Head = Tail = pointer_t(Pool.create(T()), 0);
 }
