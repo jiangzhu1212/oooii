@@ -25,8 +25,11 @@
 #include <oCore/filesystem.h>
 #include <oCore/windows/win_iocp.h>
 #include <oBase/assert.h>
+#include <oBase/byte.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>
+#include <oBase/guid.h>
+#include <oBase/murmur3.h>
 #include <oBase/timer.h>
 
 #include "../../test_services.h"
@@ -54,6 +57,63 @@ static void TESTfilesystem_paths()
 	oTRACE("DESKTOP: %s", path.c_str());
 	path = data_path();
 	oTRACE("DATA: %s", path.c_str());
+}
+
+static void TESTfilesystem_read(test_services& _Services)
+{
+	static const unsigned int kNumReads = 5;
+
+	path_string StrTestPath;
+	path TestPath = _Services.test_root_path(StrTestPath, StrTestPath.capacity());
+	TestPath /= "oooii.ico";
+	if (!exists(TestPath))
+		oTHROW(no_such_file_or_directory, "not found: %s", TestPath.c_str());
+
+	scoped_file ReadFile(TestPath, open_option::binary_read);
+	const auto FileSize = file_size(ReadFile);
+
+	size_t BytesPerRead = static_cast<size_t>(FileSize) / kNumReads;
+	int ActualReadCount = kNumReads + (((FileSize % kNumReads) > 0) ? 1 : 0);
+
+	char TempFileBlob[1024 * 32];
+	void* pHead = TempFileBlob;
+
+	size_t r = 0;
+	long long Offset = 0;
+	for (int i = 0; i < kNumReads; ++i, r += BytesPerRead)
+	{
+		seek(ReadFile, Offset, seek_origin::set);
+		auto BytesRead = read(ReadFile, pHead, BytesPerRead, BytesPerRead);
+		oCHECK(BytesRead == BytesPerRead, "failed to read correctly");
+		pHead = ouro::byte_add(pHead, BytesPerRead);
+		Offset += BytesPerRead;
+	}
+
+	auto RemainingBytes = FileSize - r;
+	if (RemainingBytes > 0)
+		read(ReadFile, pHead, byte_diff(pHead, TempFileBlob), RemainingBytes);
+
+	static const uint128 ExpectedFileHash(13254728276562583748ull, 8059648572410507760ull);
+	oCHECK(murmur3(TempFileBlob, static_cast<unsigned int>(FileSize)) == ExpectedFileHash, "Test failed to compute correct hash");
+}
+
+static void TESTfilesystem_write()
+{
+	path TempFilePath = temp_path() / "TESTfilesystem_write.bin";
+	remove(TempFilePath);
+	oCHECK(!exists(TempFilePath), "remove failed: %s", TempFilePath.c_str());
+
+	static const guid TestGUID = { 0x9aab7fc7, 0x6ad8, 0x4260, { 0x98, 0xef, 0xfd, 0x93, 0xda, 0x8e, 0xdc, 0x3c } };
+
+	{
+		scoped_file WriteFile(TempFilePath, open_option::binary_write);
+
+		auto BytesWritten = write(WriteFile, &TestGUID, sizeof(TestGUID));
+		oCHECK(BytesWritten == sizeof(TestGUID), "write failed");
+	}
+
+	scoped_allocation LoadedGUID = load(TempFilePath);
+	oCHECK(*(guid*)LoadedGUID == TestGUID, "Write failed to write correct guid");
 }
 
 static void TESTfilesystem_map(test_services& _Services)
@@ -93,7 +153,7 @@ void TESTfilesystem_async(test_services& _Services)
 
 	event e;
 	timer t;
-	for(int i = 0; i < 32; i++)
+	for (int i = 0; i < 32; i++)
 	{
 		load_async(TestPath, [&,i](const path& _Path, scoped_allocation& _Buffer, size_t _Size)
 		{
@@ -104,7 +164,7 @@ void TESTfilesystem_async(test_services& _Services)
 	}
 
 	double after = t.milliseconds();
-	oCHECK(e.wait_for(std::chrono::seconds(20), ~0u), "timed out");
+	oCHECK(e.wait_for (std::chrono::seconds(20), ~0u), "timed out");
 	double done = t.milliseconds();
 
 	_Services.report("all dispatches: %.02fms | all completed: %.02fms", after, done);
@@ -113,6 +173,8 @@ void TESTfilesystem_async(test_services& _Services)
 void TESTfilesystem(test_services& _Services)
 {
 	TESTfilesystem_paths();
+	TESTfilesystem_read(_Services);
+	TESTfilesystem_write();
 	TESTfilesystem_map(_Services);
 	TESTfilesystem_async(_Services);
 }
