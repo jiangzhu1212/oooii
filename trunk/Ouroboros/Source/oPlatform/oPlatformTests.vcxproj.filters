@@ -15,9 +15,6 @@
     <ClCompile Include="Tests\TESTFileAsync.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTFileSync.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTHTTP.cpp">
       <Filter>Source</Filter>
     </ClCompile>
