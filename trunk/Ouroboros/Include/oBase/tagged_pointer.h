@@ -32,6 +32,12 @@
 #include <atomic>
 #include <exception>
 
+#if o32BIT == 1
+	#define oTAGGED_POINTER_ALIGNMENT 8
+#else
+	#define oTAGGED_POINTER_ALIGNMENT 1
+#endif
+
 namespace ouro {
 
 template<typename T>
@@ -41,11 +47,9 @@ public:
 	#if o32BIT == 1
 		static const size_t tag_bits = 3;
 		static const size_t tag_shift = 0;
-		static const size_t required_alignment = 1 << tag_bits; // in bytes
 	#else
 		static const size_t tag_bits = 8;
 		static const size_t tag_shift = (sizeof(void*) * 8) - tag_bits;
-		static const size_t required_alignment = oDEFAULT_MEMORY_ALIGNMENT; // in bytes
 	#endif
 	static const size_t tag_mask = ((1ull << tag_bits) - 1ull) << tag_shift;
 

@@ -63,12 +63,9 @@
 #define oASSUME(x) __assume(x)
 #define oFORCEINLINE __forceinline
 
-#define oCACHE_ALIGNED(_Declaration) \
-	__pragma(warning(disable:4324)) /* structure was padded due to _declspec(align()) */ \
-	oALIGNAS(oCACHE_LINE_SIZE) _Declaration; \
-	__pragma(warning(default:4324))
-	
+// disable warnings that don't seem to be squelched in project settings
 #pragma warning(disable:4481) // nonstandard extension used: override specifier 'override'
+#pragma warning(disable:4324) // structure was padded due to _declspec(align())
 
 #else
 	#error unsupported compiler

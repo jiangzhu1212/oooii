@@ -83,54 +83,50 @@ public:
 private:
 	// alignment is required so that pointers to node_t's are at least 8-bytes.
 	// This allows tagged_pointer to use the bottom 3-bits for its tag.
-	#if o32BIT == 1
-		#pragma warning(disable:4324) // structure was padded due to __declspec(align())
-		oALIGNAS(8) 
-	#endif
-	struct node_t
+	
+	oALIGNAS(oTAGGED_POINTER_ALIGNMENT) struct node_t
 	{
 		node_t(const T& _Element)
 			: next(nullptr, 0)
 			, value(_Element)
-		{ Flag.clear(); }
+		{ flag.clear(); }
 
 		node_t(T&& _Element)
 			: next(nullptr, 0)
 			, value(std::move(_Element))
-		{ Flag.clear(); }
+		{ flag.clear(); }
 
 		tagged_pointer<node_t> next;
 		value_type value;
-		std::atomic_flag Flag;
 
 		// A two-step trivial ref count. In try_pop, the race condition described in 
 		// the original paper for non-trivial destructors is addressed by flagging 
 		// which of the two conditions/code paths should be allowed to free the 
 		// memory, so calling this query is destructive (thus the non-constness).
-		bool ShouldDeallocate() { return Flag.test_and_set(); }
+		bool should_deallocate() { return flag.test_and_set(); }
+
+	private:
+		std::atomic_flag flag;
 	};
-	#if o32BIT == 1
-		#pragma warning(default:4324) // structure was padded due to __declspec(align())
-	#endif
 
 	typedef tagged_pointer<node_t> pointer_t;
 
-	oCACHE_ALIGNED(pointer_t Head);
-	oCACHE_ALIGNED(pointer_t Tail);
-	oCACHE_ALIGNED(concurrent_growable_object_pool<node_t> Pool);
+	oALIGNAS(oCACHE_LINE_SIZE) pointer_t Head;
+	oALIGNAS(oCACHE_LINE_SIZE) pointer_t Tail;
+	oALIGNAS(oCACHE_LINE_SIZE) concurrent_growable_object_pool<node_t> Pool;
 	
 	void internal_push(node_t* _pNode);
 };
 
 template<typename T>
 concurrent_queue<T>::concurrent_queue()
-	: Pool(concurrent_growable_pool::max_blocks_per_chunk, tagged_pointer<node_t>::required_alignment)
+	: Pool(concurrent_growable_pool::max_blocks_per_chunk, oTAGGED_POINTER_ALIGNMENT)
 {
 	node_t* n = Pool.create(T());
 	
 	// There's no potential for double-freeing here, so set it up for immediate 
 	// deallocation in try_pop code.
-	n->ShouldDeallocate();
+	n->should_deallocate();
 	Head = Tail = pointer_t(n, 0);
 }
 
@@ -209,13 +205,13 @@ bool concurrent_queue<T>::try_pop(reference _Element)
 					// but we've worked around that so we can also call the destructor
 					// here protected by the above CAS by flagging when the destructor
 					// is done and the memory can truly be reclaimed, so the 
-					// ShouldDeallocate() calls have been added to either clean up the
+					// should_deallocate() calls have been added to either clean up the
 					// memory immediately now that the CAS has made next the dummy Head,
 					// or clean it up lazily later at the bottom. Either way, do it only 
 					// once.
 					_Element = std::move(next.pointer()->value);
 					next.pointer()->value.~T();
-					if (next.pointer()->ShouldDeallocate())
+					if (next.pointer()->should_deallocate())
 						Pool.deallocate(next.pointer());
 
 					break;
@@ -224,7 +220,7 @@ bool concurrent_queue<T>::try_pop(reference _Element)
 		}
 	}
 
-	if (h.pointer()->ShouldDeallocate())
+	if (h.pointer()->should_deallocate())
 		Pool.deallocate(h.pointer()); // dtor called explicitly above so just deallocate
 	return true;
 }
