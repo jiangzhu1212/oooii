@@ -25,7 +25,7 @@
 #include <oBase/tlsf_allocator.h>
 #include <oBase/assert.h>
 #include <oBase/byte.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <oBase/fixed_string.h>
 #include <oBase/throw.h>
 #include <tlsf.h>
@@ -152,7 +152,7 @@ void tlsf_allocator::reset()
 	if (!pArena || !Size)
 		throw std::runtime_error("allocator not valid");
 
-	void* pAlignedArena = byte_align(pArena, default_alignment);
+	void* pAlignedArena = byte_align(pArena, oDEFAULT_MEMORY_ALIGNMENT);
 	size_t alignedArenaSize = Size - std::distance((char*)pArena, (char*)pAlignedArena);
 	hHeap = tlsf_create(pAlignedArena, alignedArenaSize);
 	Stats = stats();

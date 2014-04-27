@@ -25,7 +25,8 @@
 #include <oBase/concurrent_growable_pool.h>
 #include <oBase/allocate.h>
 #include <oBase/byte.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
+#include <oBase/macros.h>
 #include <stdexcept>
 
 namespace ouro {
@@ -85,7 +86,7 @@ bool concurrent_growable_pool::initialize(size_type _block_size, size_type _capa
 	last_allocate = nullptr;
 	last_deallocate = nullptr;
 	block_size = _block_size;
-	block_alignment = __max(_block_alignment, default_alignment);
+	block_alignment = __max(_block_alignment, oDEFAULT_MEMORY_ALIGNMENT);
 	capacity_per_chunk = _capacity_per_chunk;
 	grow(capacity_per_chunk);
 	return true;
@@ -102,7 +103,7 @@ concurrent_growable_pool::chunk_t* concurrent_growable_pool::allocate_chunk()
 {
 	concurrent_pool pool;
 	size_type req = pool.initialize(nullptr, block_size, capacity_per_chunk);
-	req = byte_align((size_type)sizeof(chunk_t), cache_line_size) + byte_align(req, block_alignment);
+	req = byte_align((size_type)sizeof(chunk_t), oCACHE_LINE_SIZE) + byte_align(req, block_alignment);
 	chunk_t* c = new (default_allocate(req, memory_alignment::align_to_cache_line)) chunk_t();
 	void* p = byte_align(c + 1, block_alignment);
 	c->pool.initialize(p, block_size, capacity_per_chunk, block_alignment);

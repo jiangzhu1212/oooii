@@ -41,6 +41,9 @@ float4 PSWhite() : SV_Target { return oWHITE4; }
 float4 PSRed() : SV_Target { return oRED4; }
 float4 PSGreen() : SV_Target { return oGREEN4; }
 float4 PSBlue() : SV_Target { return oBLUE4; }
+float4 PSYellow() : SV_Target { return oYELLOW4; }
+float4 PSMagenta() : SV_Target { return oMAGENTA4; }
+float4 PSCyan() : SV_Target { return oCYAN4; }
 
 struct oGFX_INSTANCE
 {

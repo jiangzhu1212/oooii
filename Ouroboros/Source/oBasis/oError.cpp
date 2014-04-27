@@ -102,7 +102,7 @@ struct ERROR_CONTEXT
 
 ERROR_CONTEXT* GetErrorContext()
 {
-	static thread_local ERROR_CONTEXT* pErrorContext = nullptr;
+	static oTHREAD_LOCAL ERROR_CONTEXT* pErrorContext = nullptr;
 	if (!pErrorContext)
 	{
 		process_heap::find_or_allocate(

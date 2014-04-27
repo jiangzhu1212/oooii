@@ -28,7 +28,7 @@
 #ifndef oBase_tagged_pointer_h
 #define oBase_tagged_pointer_h
 
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <atomic>
 #include <stdexcept>
 
@@ -42,7 +42,7 @@ template<
 	// assumption is that there won't be that much concurrency on 32-bit systems
 	// anymore, since what is all that processing power working on? Not more than
 	// 4 GB of memory!
-	#ifdef o32BIT
+	#if o32BIT == 1
 		3
 	#else 
 		8
@@ -50,7 +50,7 @@ template<
 >
 class tagged_pointer
 {
-	#ifdef o32BIT
+	#if o32BIT == 1
 		static const size_t tag_shift = 0;
 	#else
 		static const size_t tag_shift = (sizeof(void*) * 8) - TagBits;
@@ -58,7 +58,7 @@ class tagged_pointer
 	static const size_t tag_mask = ((1ull << TagBits) - 1ull) << tag_shift;
 
 public:
-	#ifdef o32BIT
+	#if o32BIT == 1
 		static const size_t required_alignment = 1 << TagBits; // in bytes
 	#else
 		static const size_t required_alignment = oDEFAULT_MEMORY_ALIGNMENT; // in bytes
@@ -72,7 +72,7 @@ public:
 			throw std::runtime_error("tagged_pointer pointers must be aligned to 8-bytes allow room for the tag");
 		#endif
 		TagAndPointer = (uintptr_t)_Pointer 
-		#ifdef o32BIT
+		#if o32BIT == 1
 			| (uintptr_t)(_Tag & tag_mask);
 		#else
 			| (uintptr_t)(_Tag << tag_shift);
@@ -87,7 +87,7 @@ public:
 	bool operator!=(const tagged_pointer<T>& _That) const { return TagAndPointer != _That.TagAndPointer; }
 	size_t tag() const
 	{
-		#ifdef o32BIT
+		#if o32BIT == 1
 			return TagAndPointer & tag_mask;
 		#else
 			return TagAndPointer >> tag_shift;

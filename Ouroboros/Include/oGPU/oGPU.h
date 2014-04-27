@@ -39,6 +39,8 @@
 #include <oSurface/buffer.h>
 #include <array>
 
+#include <oGPU/shader.h>
+
 #include <oGUI/oGUI.h> // only for ouro::draw_context_handle... can it be abstracted
 
 namespace ouro {
@@ -52,9 +54,6 @@ static const uint max_num_samplers = 16;
 static const uint max_num_mrts = 8;
 static const uint max_num_unordered_buffers = 8;
 static const uint max_num_viewports = 16;
-static const uint max_num_thread_groups_per_dimension = 65535;
-static const uint max_num_thread_groups_per_dimension_mask = 0xffff;
-static const uint max_num_thread_groups_per_dimension_shift = 16;
 
 // _____________________________________________________________________________
 // Device concepts
@@ -710,12 +709,13 @@ namespace pipeline_stage
 	domain,
 	geometry,
 	pixel,
+	compute,
 
 	count,
 
 };}
 
-struct basic_pipeline_info
+struct basic_pipeline1_info
 {
 	const char* debug_name;
 	mesh::layout_array vertex_layouts;
@@ -723,9 +723,9 @@ struct basic_pipeline_info
 	const void* vs, *hs, *ds, *gs, *ps;
 };
 
-struct pipeline_info : public basic_pipeline_info
+struct pipeline1_info : public basic_pipeline1_info
 {
-	pipeline_info()
+	pipeline1_info()
 	{
 		debug_name = "unnamed pipeline";
 		vertex_layouts.fill(mesh::layout::none);
@@ -749,12 +749,12 @@ struct compute_kernel_info : public basic_compute_kernel_info
 	}
 };
 
-class pipeline : public device_child 
+class pipeline1 : public device_child 
 {
 	// A pipeline is the result of setting all stages of the programmable pipeline 
 	// (all shaders) and the vertex input format to that pipeline.
 public:
-	virtual pipeline_info get_info() const = 0;
+	virtual pipeline1_info get_info() const = 0;
 };
 
 class compute_kernel : public device_child 
@@ -943,8 +943,8 @@ public:
 	// _____________________________________________________________________________
 	// Rasterization-specific
 
-	virtual void set_pipeline(const pipeline* _pPipeline) = 0;
-	inline void set_pipeline(const std::shared_ptr<pipeline>& _pPipeline) { set_pipeline(_pPipeline.get()); }
+	virtual void set_pipeline(const pipeline1* _pPipeline) = 0;
+	inline void set_pipeline(const std::shared_ptr<pipeline1>& _pPipeline) { set_pipeline(_pPipeline.get()); }
 
 	// Set the rasterization state in this context
 	virtual void set_surface_state(const surface_state::value& _State) = 0;
@@ -1060,7 +1060,7 @@ public:
 	inline std::shared_ptr<render_target> make_primary_render_target(std::shared_ptr<window>& _pWindow, surface::format _DepthStencilFormat, bool _EnableOSRendering) { return make_primary_render_target(_pWindow.get(), _DepthStencilFormat, _EnableOSRendering); }
 
 	virtual std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) = 0;
-	virtual std::shared_ptr<pipeline> make_pipeline(const char* _Name, const pipeline_info& _Info) = 0;
+	virtual std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) = 0;
 	virtual std::shared_ptr<compute_kernel> make_compute_kernel(const char* _Name, const compute_kernel_info& _Info) = 0;
 	virtual std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) = 0;
 	virtual std::shared_ptr<render_target> make_render_target(const char* _Name, const render_target_info& _Info) = 0;
@@ -1069,7 +1069,7 @@ public:
 
 	// convenience versions of the above
 	inline std::shared_ptr<command_list> make_command_list(const char* _Name, short _DrawOrder = 0) { command_list_info i; i.draw_order = _DrawOrder; return make_command_list(_Name, i); } 
-	inline std::shared_ptr<pipeline> make_pipeline(const pipeline_info& _Info) { return make_pipeline(_Info.debug_name, _Info); }
+	inline std::shared_ptr<pipeline1> make_pipeline1(const pipeline1_info& _Info) { return make_pipeline1(_Info.debug_name, _Info); }
 	inline std::shared_ptr<compute_kernel> make_compute_kernel(const compute_kernel_info& _Info) { return make_compute_kernel(_Info.debug_name, _Info); }
 	template<typename T> std::shared_ptr<buffer> make_buffer(const char* _Name, uint _ArraySize = 1) { buffer_info i; i.struct_byte_size = sizeof(T); i.array_size = _ArraySize; return make_buffer(_Name, i); }
 	template<typename T> std::shared_ptr<buffer> make_index_buffer(const char* _Name, uint _ArraySize = 1) { buffer_info i; i.type = buffer_type::index; i.struct_byte_size = sizeof(T); i.array_size = _ArraySize; return make_buffer(_Name, i); }
@@ -1123,6 +1123,10 @@ scoped_allocation compile_shader(const char* _IncludePaths
 																 , const char* _EntryPoint
 																 , const char* _ShaderSource
 																 , const allocator& _Allocator = default_allocator);
+
+
+void* create_shader(device* _pDevice, const pipeline_stage::value& _Stage, const void* _pByteCode, const char* _DebugName = nullptr);
+void destroy_shader(void* _pVertexShader);
 
 	} // namespace gpu
 } // namespace ouro

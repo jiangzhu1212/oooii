@@ -55,7 +55,7 @@ public:
 
 	void initialize()
 	{
-		Pipeline = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR));
+		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR));
 		LineList = Device->make_vertex_buffer<oGPU_LINE_VERTEX>("LineList", 6);
 	}
 
@@ -94,7 +94,7 @@ public:
 	}
 
 private:
-	std::shared_ptr<pipeline> Pipeline;
+	std::shared_ptr<pipeline1> Pipeline;
 	std::shared_ptr<buffer> LineList;
 };
 

@@ -74,6 +74,6 @@ enum oGPU_TEST_PIPELINE
 	oGPU_TEST_NUM_PIPELINES,
 };
 
-ouro::gpu::pipeline_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline);
+ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline);
 
 #endif

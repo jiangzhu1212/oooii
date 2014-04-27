@@ -25,7 +25,7 @@
 #include <oCore/windows/win_com.h>
 #include <oCore/windows/win_error.h>
 #include <oCore/process_heap.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <ObjBase.h>
@@ -53,7 +53,7 @@ private:
 			
 void ensure_initialized()
 {
-	static thread_local context* sInstance = nullptr;
+	static oTHREAD_LOCAL context* sInstance = nullptr;
 	if (!sInstance)
 	{
 		process_heap::find_or_allocate(

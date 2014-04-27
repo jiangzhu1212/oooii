@@ -83,9 +83,9 @@ public:
 private:
 	// alignment is required so that pointers to node_t's are at least 8-bytes.
 	// This allows tagged_pointer to use the bottom 3-bits for its tag.
-	#ifdef o32BIT
+	#if o32BIT == 1
 		#pragma warning(disable:4324) // structure was padded due to __declspec(align())
-		oALIGN(8) 
+		oALIGNAS(8) 
 	#endif
 	struct node_t
 	{
@@ -109,7 +109,7 @@ private:
 		// memory, so calling this query is destructive (thus the non-constness).
 		bool ShouldDeallocate() { return Flag.test_and_set(); }
 	};
-	#ifdef o32BIT
+	#if o32BIT == 1
 		#pragma warning(default:4324) // structure was padded due to __declspec(align())
 	#endif
 

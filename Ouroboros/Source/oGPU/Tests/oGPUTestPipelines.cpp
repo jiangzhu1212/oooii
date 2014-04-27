@@ -40,9 +40,9 @@
 #include <VSTestWhite.h>
 #include <PSTestWhite.h>
 
-ouro::gpu::pipeline_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
+ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 {
-	ouro::gpu::pipeline_info i;
+	ouro::gpu::pipeline1_info i;
 
 	switch (_Pipeline)
 	{

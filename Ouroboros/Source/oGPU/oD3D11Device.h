@@ -59,7 +59,7 @@ public:
 
 	std::shared_ptr<render_target> make_primary_render_target(window* _pWindow, surface::format _DepthStencilFormat, bool _EnableOSRendering) override;
 	std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) override;
-	std::shared_ptr<pipeline> make_pipeline(const char* _Name, const pipeline_info& _Info) override;
+	std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) override;
 	std::shared_ptr<compute_kernel> make_compute_kernel(const char* _Name, const compute_kernel_info& _Info) override;
 	std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) override;
 	std::shared_ptr<render_target> make_render_target(const char* _Name, const render_target_info& _Info) override;

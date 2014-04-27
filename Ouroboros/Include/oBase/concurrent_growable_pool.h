@@ -47,7 +47,7 @@ public:
 	concurrent_growable_pool(concurrent_growable_pool&& _That);
 
 	// ctor creates as a valid pool using internally allocated memory
-	concurrent_growable_pool(size_type block_size, size_type capacity_per_chunk, size_type block_alignment = default_alignment);
+	concurrent_growable_pool(size_type block_size, size_type capacity_per_chunk, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
 
 	// dtor
 	~concurrent_growable_pool();
@@ -56,7 +56,7 @@ public:
 	concurrent_growable_pool& operator=(concurrent_growable_pool&& _That);
 
 	// self-allocates and manages memory used, otherwise this is like the other initialize()
-	bool initialize(size_type block_size, size_type capacity_per_chunk, size_type block_alignment = default_alignment);
+	bool initialize(size_type block_size, size_type capacity_per_chunk, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
 
 	// deinitializes the pool, returning it to a default-constructed state.
 	void deinitialize();

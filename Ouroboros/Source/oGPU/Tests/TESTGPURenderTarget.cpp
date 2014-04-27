@@ -50,9 +50,9 @@ struct gpu_test_render_target : public gpu_test
 		i.draw_order = 0;
 		CLRenderTarget = Device->make_command_list("CLRenderTarget", i);
 		TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
-		PLPassThrough = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
+		PLPassThrough = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
 		Triangle = make_first_triangle(Device);
-		PLTexture = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D));
+		PLTexture = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D));
 		Cube = make_first_cube(Device);
 
 		clear_info ci;
@@ -94,8 +94,8 @@ struct gpu_test_render_target : public gpu_test
 private:
 	std::shared_ptr<command_list> CLMainScene;
 	std::shared_ptr<command_list> CLRenderTarget;
-	std::shared_ptr<pipeline> PLPassThrough;
-	std::shared_ptr<pipeline> PLTexture;
+	std::shared_ptr<pipeline1> PLPassThrough;
+	std::shared_ptr<pipeline1> PLTexture;
 	std::shared_ptr<render_target> RenderTarget;
 	std::shared_ptr<util_mesh> Cube;
 	std::shared_ptr<util_mesh> Triangle;

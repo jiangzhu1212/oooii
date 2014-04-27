@@ -27,6 +27,8 @@
 #ifndef oGPU_d3d11_util_h
 #define oGPU_d3d11_util_h
 
+#include <oBase/intrusive_ptr.h>
+#include <oCore/windows/win_util.h>
 #include <oSurface/buffer.h>
 #include <oGPU/oGPU.h>
 #include <vector>
@@ -40,19 +42,6 @@ namespace ouro {
 
 // _____________________________________________________________________________
 // Debugging API
-
-// Set/Get a name that appears in D3D11's debug layer
-void debug_name(ID3D11Device* _pDevice, const char* _Name);
-void debug_name(ID3D11DeviceChild* _pDeviceChild, const char* _Name);
-
-char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11Device* _pDevice);
-template<size_t size> char* debug_name(char (&_StrDestination)[size], const ID3D11Device* _pDevice) { return debug_name(_StrDestination, size, _pDevice); }
-template<size_t capacity> char* debug_name(fixed_string<char, capacity>& _StrDestination, const ID3D11Device* _pDevice) { return debug_name(_StrDestination, _StrDestination.capacity(), _pDevice); }
-
-// Fills the specified buffer with the string set with oD3D11SetDebugName().
-char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild);
-template<size_t size> char* debug_name(char (&_StrDestination)[size], const ID3D11DeviceChild* _pDeviceChild) { return debug_name(_StrDestination, size, _pDeviceChild); }
-template<size_t capacity> char* debug_name(fixed_string<char, capacity>& _StrDestination, const ID3D11DeviceChild* _pDeviceChild) { return debug_name(_StrDestination, _StrDestination.capacity(), _pDeviceChild); }
 
 // Use ID3D11InfoQueue::AddApplicationMessage to trace user errors.
 int vtrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args);

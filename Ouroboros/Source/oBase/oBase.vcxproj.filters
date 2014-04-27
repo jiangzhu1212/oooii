@@ -459,9 +459,6 @@
     <ClInclude Include="..\..\Include\oBase\callable.h">
       <Filter>oBase\c++ support</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\config.h">
-      <Filter>oBase\c++ support</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\finally.h">
       <Filter>oBase\c++ support</Filter>
     </ClInclude>
@@ -543,6 +540,9 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_hash_map.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h">
+      <Filter>oBase\concurrency</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_pool.h">
       <Filter>oBase\allocator</Filter>
@@ -561,6 +561,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\bit.h">
       <Filter>oBase\memory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\compiler_config.h">
+      <Filter>oBase\c++ support</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -647,6 +650,9 @@
     </Filter>
     <Filter Include="Source\geometry">
       <UniqueIdentifier>{13e44b8d-05da-492b-abf5-482a968e929c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\containers">
+      <UniqueIdentifier>{1898cd4f-ca80-45c7-910a-31a29fdf3867}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

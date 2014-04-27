@@ -152,6 +152,26 @@ public:
 		return true;
 	}
 
+	void add_or_set(const hash_type& _Key, const value_type& _Value, bool _AllowResize = true)
+	{
+		if (_AllowResize && occupancy() >= 75)
+			resize(size() * 2);
+		size_type i = find_existing_or_new(_Key);
+		Keys[i] = _Key;
+		Values[i] = _Value;
+		Size++;
+	}
+
+	void add_or_set(const hash_type& _Key, value_type&& _Value, bool _AllowResize = true)
+	{
+		if (_AllowResize && occupancy() >= 75)
+			resize(size() * 2);
+		size_type i = find_existing_or_new(_Key);
+		Keys[i] = _Key;
+		Values[i] = std::move(_Value);
+		Size++;
+	}
+
 	bool remove(const hash_type& _Key)
 	{
 		size_type i = find_existing(_Key);
@@ -245,6 +265,14 @@ public:
 		size_type i = find_existing(_Key);
 		if (i == invalid_index)
 			throw std::invalid_argument("key not found");
+		return &Values[i];
+	}
+
+	value_type* get_existing_or_new_ptr(const hash_type& _Key, bool* _pIsNew)
+	{
+		size_type i = find_existing_or_new(_Key);
+		*_pNew = !Keys[i];
+		if (*_pNew) Keys[i] = _Key;
 		return &Values[i];
 	}
 

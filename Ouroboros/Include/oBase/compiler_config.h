@@ -22,36 +22,56 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Define some very basic information about memory access for this platform.
+// compiler-dependent definitions
 #pragma once
-#ifndef oBase_memcfg_h
-#define oBase_memcfg_h
+#ifndef oBase_compiler_h
+#define oBase_compiler_h
 
-#ifdef _WIN64
-	#define o64BIT 1
-#else
-	#define o32BIT 1
-#endif
+#define oVS2010_VER 1600
+#define oVS2012_VER 1700
+#define oVS2013_VER 1800
+
+#if defined(_MSC_VER) && _MSC_VER == oVS2012_VER
 
 #define oCACHE_LINE_SIZE 64
 
-#if o64BIT == 1
+#if defined(_WIN64) || defined(WIN64)
+	#define o64BIT 1
+	#define o32BIT 0
 	#define oDEFAULT_MEMORY_ALIGNMENT 16
-#elif o32BIT == 1
+	#define oHAS_DOUBLE_WIDE_ATOMIC_BUG 0
+#elif defined(_WIN32) || defined(WIN32)
+	#define o64BIT 0
+	#define o32BIT 1
 	#define oDEFAULT_MEMORY_ALIGNMENT 4
+	#define oHAS_DOUBLE_WIDE_ATOMIC_BUG 1
 #else
-#error undefined platform
+	#error unsupported platform
 #endif
 
-// helper for implementing move operators where the eviscerated value is typically zero
-#define oMOVE0(field) do { field = _That.field; _That.field = 0; } while (false)
-#define oMOVE_ATOMIC0(field) do { field = _That.field.exchange(0); } while (false)
+#define oDEBUGBREAK __debugbreak()
 
-namespace ouro {
+// C++11 support
+#define oALIGNAS(x) __declspec(align(x))
+#define oALIGNOF(x) __alignof(x)
+#define oNOEXCEPT
+#define oTHREAD_LOCAL __declspec(thread)
+#define oHAS_CBEGIN 0
 
-static const int cache_line_size = oCACHE_LINE_SIZE;
-static const int default_alignment = oDEFAULT_MEMORY_ALIGNMENT;
+// low-level optimization support
+#define oRESTRICT __restrict
+#define oASSUME(x) __assume(x)
+#define oFORCEINLINE __forceinline
 
-} // namespace ouro
+#define oCACHE_ALIGNED(_Declaration) \
+	__pragma(warning(disable:4324)) /* structure was padded due to _declspec(align()) */ \
+	oALIGNAS(oCACHE_LINE_SIZE) _Declaration; \
+	__pragma(warning(default:4324))
+	
+#pragma warning(disable:4481) // nonstandard extension used: override specifier 'override'
+
+#else
+	#error unsupported compiler
+#endif
 
 #endif

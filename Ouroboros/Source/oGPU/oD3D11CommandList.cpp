@@ -29,6 +29,15 @@
 #include "oD3D11Texture.h"
 #include "oD3D11Query.h"
 #include "dxgi_util.h"
+#include "d3d_types.h"
+
+namespace ouro {
+	namespace gpu {
+
+d3d::DeviceContext* get_device_context(device_context* _pDeviceContext) { return ((d3d11::d3d11_command_list*)_pDeviceContext)->Context; }
+
+	} // namespace gpu
+} // namespace ouro
 
 oGPU_NAMESPACE_BEGIN
 
@@ -364,11 +373,11 @@ void d3d11_command_list::set_render_target_and_unordered_resources(render_target
 	}
 }
 
-void d3d11_command_list::set_pipeline(const pipeline* _pPipeline)
+void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 {
 	if (_pPipeline)
 	{
-		d3d11_pipeline* p = (d3d11_pipeline*)_pPipeline;
+		d3d11_pipeline1* p = (d3d11_pipeline1*)_pPipeline;
 		PrimitiveTopology = p->InputTopology;
 		Context->IASetPrimitiveTopology(p->InputTopology);
 		Context->IASetInputLayout(p->InputLayout);

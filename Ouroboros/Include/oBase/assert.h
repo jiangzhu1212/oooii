@@ -30,7 +30,7 @@
 #ifndef oBase_assert_h
 #define oBase_assert_h
 
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <cstdarg>
 #include <cstdlib>
 
@@ -85,7 +85,7 @@ namespace ouro {
 		if (!oAssert_IgnoreFuture) \
 		{	ouro::assert_context assertion__; assertion__.expression = _StrCondition; assertion__.function = __FUNCTION__; assertion__.filename = __FILE__; assertion__.line = __LINE__; assertion__.type = _Type; assertion__.default_response = _DefaultResponse; \
 			ouro::assert_action::value action__ = ouro::tracef(assertion__, _Format "\n", ## __VA_ARGS__); \
-			switch (action__) { case ouro::assert_action::abort: abort(); break; case ouro::assert_action::debug: oDEBUG_BREAK(); break; case ouro::assert_action::ignore_always: oAssert_IgnoreFuture = true; break; default: break; } \
+			switch (action__) { case ouro::assert_action::abort: abort(); break; case ouro::assert_action::debug: oDEBUGBREAK; break; case ouro::assert_action::ignore_always: oAssert_IgnoreFuture = true; break; default: break; } \
 		} \
 	} while(false)
 #endif
@@ -96,15 +96,15 @@ namespace ouro {
 #if oENABLE_RELEASE_ASSERTS == 1 || oENABLE_ASSERTS == 1
 	#define oASSERTA(_Condition, _Format, ...) do { if (!(_Condition)) { oASSERT_TRACE(ouro::assert_type::assertion, ouro::assert_action::abort, #_Condition, _Format, ## __VA_ARGS__); } } while(false)
 #else
-	#define oASSERTA(_Format, ...) oNOOP
+	#define oASSERTA(_Format, ...) do {} while(false)
 #endif
 
 #if oENABLE_RELEASE_TRACES == 1 || oENABLE_TRACES == 1
 	#define oTRACEA(_Format, ...) oASSERT_TRACE(ouro::assert_type::trace, ouro::assert_action::ignore, "", _Format, ## __VA_ARGS__)
 	#define oTRACEA_ONCE(_Format, ...) oASSERT_TRACE(ouro::assert_type::trace, ouro::assert_action::ignore_always, "", _Format, ## __VA_ARGS__)
 #else
-	#define oTRACEA(_Format, ...) oNOOP
-	#define oTRACEA_ONCE(_Format, ...) oNOOP
+	#define oTRACEA(_Format, ...) do {} while(false)
+	#define oTRACEA_ONCE(_Format, ...) do {} while(false)
 #endif
 
 // _____________________________________________________________________________
@@ -113,15 +113,15 @@ namespace ouro {
 #if oENABLE_ASSERTS == 1
 	#define oASSERT(_Condition, _Format, ...) do { if (!(_Condition)) { oASSERT_TRACE(ouro::assert_type::assertion, ouro::assert_action::abort, #_Condition, _Format, ## __VA_ARGS__); } } while(false)
 #else
-	#define oASSERT(_Format, ...) oNOOP
+	#define oASSERT(_Format, ...) do {} while(false)
 #endif
 
 #if oENABLE_TRACES == 1
 	#define oTRACE(_Format, ...) oASSERT_TRACE(ouro::assert_type::trace, ouro::assert_action::ignore, "", _Format, ## __VA_ARGS__)
 	#define oTRACE_ONCE(_Format, ...) oASSERT_TRACE(ouro::assert_type::trace, ouro::assert_action::ignore_always, "", _Format, ## __VA_ARGS__)
 #else
-	#define oTRACE(_Format, ...) oNOOP
-	#define oTRACE_ONCE(_Format, ...) oNOOP
+	#define oTRACE(_Format, ...) do {} while(false)
+	#define oTRACE_ONCE(_Format, ...) do {} while(false)
 #endif
 
 #endif

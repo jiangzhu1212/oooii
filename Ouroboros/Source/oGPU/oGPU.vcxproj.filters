@@ -58,6 +58,12 @@
     <ClCompile Include="d3d_compile.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
+    <ClCompile Include="d3d_debug.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="shader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -122,6 +128,15 @@
     </ClInclude>
     <ClInclude Include="d3d_compile.h">
       <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_debug.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_types.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\shader.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

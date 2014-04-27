@@ -28,13 +28,13 @@
 #ifndef oBase_concurrent_stack_traits_h
 #define oBase_concurrent_stack_traits_h
 
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 
 // There's a warning about not handling registers correctly in the 32-bit 
 // std::atomic implementation for 64-bit swaps in VS2012's xatomic.h that 
 // results in registers being corrupt so fall back on basic atomics until 
 // the lib gets fixed.
-#ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
+#if oHAS_DOUBLE_WIDE_ATOMIC_BUG == 1
 	#include <oHLSL/oHLSLAtomics.h>
 #endif
 #include <atomic>
@@ -45,7 +45,7 @@ struct concurrent_stack_traits64
 {
 	typedef unsigned long long type;
 
-	#ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
+	#if oHAS_DOUBLE_WIDE_ATOMIC_BUG == 1
 		typedef type atomic_type;
 	#else
 		typedef std::atomic<type> atomic_type;
@@ -70,7 +70,7 @@ struct concurrent_stack_traits64
 	// updated with the loaded value of _Head.
 	inline static bool cas(atomic_type& _Head, type& _Expected, type _Desired)
 	{
-		#ifdef oHAS_DOUBLE_WIDE_ATOMIC_BUG
+		#if oHAS_DOUBLE_WIDE_ATOMIC_BUG == 1
 			unsigned long long Orig = 0;
 			InterlockedCompareExchange(_Head, _Expected, _Desired, Orig);
 			bool Exchanged = Orig == _Expected;

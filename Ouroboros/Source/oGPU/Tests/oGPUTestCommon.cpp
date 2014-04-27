@@ -128,7 +128,7 @@ const int gpu_texture_test::sSnapshotFrames[2] = { 0, 2 };
 void gpu_texture_test::initialize()
 {
 	TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
-	Pipeline = Device->make_pipeline(oGPUTestGetPipeline(get_pipeline()));
+	Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(get_pipeline()));
 	Mesh = make_first_cube(Device);
 	Texture = make_test_texture();
 }

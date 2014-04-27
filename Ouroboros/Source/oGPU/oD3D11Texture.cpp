@@ -26,6 +26,9 @@
 #include "oD3D11Device.h"
 #include <oSurface/surface.h>
 #include "dxgi_util.h"
+#include "d3d_debug.h"
+
+using namespace ouro::gpu::d3d;
 
 oGPU_NAMESPACE_BEGIN
 

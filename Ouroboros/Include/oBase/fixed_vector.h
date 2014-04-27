@@ -29,7 +29,7 @@
 #ifndef oBase_fixed_vector_h
 #define oBase_fixed_vector_h
 
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <oBase/stringize.h>
 #include <array>
 #include <stdexcept>

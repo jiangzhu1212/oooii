@@ -53,8 +53,8 @@ public:
 	}
 	
 	// Allocates memory or nullptr if out of memory.
-	void* allocate(size_t _Size, size_t _Alignment = default_alignment);
-	template<typename T> T* allocate(size_t _Size = sizeof(T), size_t _Alignment = default_alignment) { return (T*)allocate(_Size, _Alignment); }
+	void* allocate(size_t _Size, size_t _Alignment = oDEFAULT_MEMORY_ALIGNMENT);
+	template<typename T> T* allocate(size_t _Size = sizeof(T), size_t _Alignment = oDEFAULT_MEMORY_ALIGNMENT) { return (T*)allocate(_Size, _Alignment); }
 
 	// Reset the linear allocator to full availability
 	void reset();

@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/assert.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <oBase/fixed_string.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
@@ -41,7 +41,7 @@ void TESTtlsf_allocator(test_services& _Services)
 {
 	bool EnoughPhysRamForFullTest = true;
 
-	#ifdef o64BIT
+	#if o64BIT == 1
 		// Allocating more memory than physically available is possible,
 		// but really slowing, so leave some RAM for the operating system.
 

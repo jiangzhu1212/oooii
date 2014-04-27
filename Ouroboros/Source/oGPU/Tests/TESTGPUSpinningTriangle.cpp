@@ -45,7 +45,7 @@ public:
 	{
 		PrimaryRenderTarget->set_clear_color(almost_black);
 		TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
-		Pipeline = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
+		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
 		Mesh = make_first_triangle(Device);
 	}
 
@@ -82,7 +82,7 @@ public:
 	}
 
 private:
-	std::shared_ptr<pipeline> Pipeline;
+	std::shared_ptr<pipeline1> Pipeline;
 	std::shared_ptr<util_mesh> Mesh;
 	std::shared_ptr<buffer> TestConstants;
 };
