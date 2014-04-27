@@ -52,7 +52,7 @@ static void generate_strings(test_services& _Services, std::vector<std::string>&
 
 void TEST_chm_basics(test_services& _Services)
 {
-	concurrent_hash_map<unsigned long long, unsigned int> h(default_allocator, 12);
+	concurrent_hash_map h(12);
 	oCHECK(h.capacity() == 31, "pow-of-two rounding failed");
 	oCHECK(h.size() == 0, "should be empty");
 
