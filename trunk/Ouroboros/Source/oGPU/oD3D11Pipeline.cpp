@@ -28,8 +28,8 @@
 
 oGPU_NAMESPACE_BEGIN
 
-oDEFINE_DEVICE_MAKE(pipeline)
-oDEVICE_CHILD_CTOR(pipeline)
+oDEFINE_DEVICE_MAKE(pipeline1)
+oDEVICE_CHILD_CTOR(pipeline1)
 	, InputTopology(from_primitive_type(_Info.primitive_type))
 	, VertexLayouts(_Info.vertex_layouts)
 	, DebugName(_Info.debug_name)
@@ -66,9 +66,9 @@ oDEVICE_CHILD_CTOR(pipeline)
 	PixelShader = make_pixel_shader(D3DDevice, _Info.ps, _Info.debug_name);
 }
 
-pipeline_info d3d11_pipeline::get_info() const 
+pipeline1_info d3d11_pipeline1::get_info() const 
 {
-	pipeline_info i;
+	pipeline1_info i;
 	i.debug_name = DebugName;
 	i.vertex_layouts = VertexLayouts;
 	i.primitive_type = to_primitive_type(InputTopology);

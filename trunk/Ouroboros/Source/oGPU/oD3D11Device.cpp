@@ -29,10 +29,14 @@
 
 #include "d3d11_util.h"
 #include "d3d_compile.h"
+#include "d3d_debug.h"
+#include "d3d_types.h"
 #include "dxgi_util.h"
 #include "CSNoop.h"
 
 #include <oGUI/window.h>
+
+using namespace ouro::gpu::d3d;
 
 namespace ouro {
 	namespace gpu {
@@ -44,52 +48,7 @@ std::shared_ptr<device> device::make(const device_init& _Init)
 	return p;
 }
 
-scoped_allocation compile_shader(const char* _IncludePaths
-																 , const char* _Defines
-																 , const char* _ShaderSourcePath
-																 , const pipeline_stage::value& _Stage
-																 , const char* _EntryPoint
-																 , const char* _ShaderSource
-																 , const allocator& _Allocator)
-{
-	std::string cmdline;
-	cmdline.reserve(2048);
-	cmdline = "/O3 /T ";
-	cmdline += d3d::shader_profile(D3D_FEATURE_LEVEL_11_0, _Stage);
-	cmdline += " /E ";
-	cmdline += _EntryPoint;
-
-	// Add defines
-	cmdline += " /D oHLSL ";
-	if (_Defines)
-	{
-		char* ctx = nullptr;
-		std::string defs(_Defines);
-		char* def = strtok_r((char*)defs.c_str(), ";", &ctx);
-		while (def)
-		{
-			cmdline += " /D ";
-			cmdline += def;
-			def = strtok_r(nullptr, ";", &ctx);
-		}
-	}
-	
-	// Add includes
-	if (_IncludePaths)
-	{
-		char* ctx = nullptr;
-		std::string incs(_IncludePaths);
-		char* inc = strtok_r((char*)incs.c_str(), ";", &ctx);
-		while (inc)
-		{
-			cmdline += " /I ";
-			cmdline += inc;
-			inc = strtok_r(nullptr, ";", &ctx);
-		}
-	}
-
-	return d3d::compile_shader(cmdline.c_str(), _ShaderSourcePath, _ShaderSource, _Allocator);
-}
+d3d::Device* get_device(device* _pDevice) { return ((d3d11::d3d11_device*)_pDevice)->d3d_device(); }
 
 	} // namespace gpu
 } // namespace ouro

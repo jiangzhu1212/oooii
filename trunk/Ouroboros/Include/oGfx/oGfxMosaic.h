@@ -50,6 +50,6 @@ interface oGfxMosaic : oInterface
 	inline void Draw(ouro::gpu::command_list* _pCommandList, ouro::gpu::render_target* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const std::shared_ptr<ouro::gpu::texture>* _ppTextures) { Draw(_pCommandList, _pRenderTarget, _TextureStartSlot, _NumTextures, (const ouro::gpu::texture* const*)_ppTextures); }
 };
 
-ouro::intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(ouro::gpu::device* _pDevice, const ouro::gpu::pipeline_info& _Info);
+ouro::intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(ouro::gpu::device* _pDevice, const ouro::gpu::pipeline1_info& _Info);
 
 #endif

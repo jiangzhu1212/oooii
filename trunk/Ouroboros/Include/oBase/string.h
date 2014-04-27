@@ -27,7 +27,7 @@
 #ifndef oBase_string_h
 #define oBase_string_h
 
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <oBase/macros.h>
 #include <oBase/container_support.h>
 #include <ctype.h>
@@ -530,9 +530,9 @@ template<> struct same_i<const char*> { bool operator()(const char* x, const cha
 #define oDEFINE_WHITESPACE_FUNCTION(_Name, _Criteria) inline void _Name(const char** _ppString) { while (**_ppString && _Criteria(**_ppString)) ++*_ppString; }
 #define oDEFINE_WHITESPACE_PARSING() \
 	namespace { \
-		oALIGN(16) static const unsigned char is_whitespace__[256] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, oZ16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, oZ16, oZ16_12 }; \
-		oALIGN(16) static const unsigned char is_line_whitespace__[256] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, oZ16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, oZ16, oZ16_12 }; \
-		oALIGN(16) static const unsigned char is_newline__[256] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, oZ16, oZ16, oZ16, oZ16_12 }; \
+		oALIGNAS(16) static const unsigned char is_whitespace__[256] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, oZ16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, oZ16, oZ16_12 }; \
+		oALIGNAS(16) static const unsigned char is_line_whitespace__[256] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, oZ16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, oZ16, oZ16_12 }; \
+		oALIGNAS(16) static const unsigned char is_newline__[256] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, oZ16, oZ16, oZ16, oZ16_12 }; \
 	} namespace ouro { \
 		inline bool is_whitespace(int c) { return !!is_whitespace__[c]; } \
 		inline bool is_line_whitespace(int c) { return !!is_line_whitespace__[c]; } \

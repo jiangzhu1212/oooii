@@ -756,7 +756,7 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 	else
 	{
 		path_string exes(defaultDataPath);
-		#ifdef o64BIT
+		#if o64BIT == 1
 			strlcat(exes, "../bin/x64/");
 		#elif o32BIT
 			strlcat(exes, "../bin/win32/");
@@ -772,7 +772,7 @@ void oTestManager_Impl::SetDesc(DESC* _pDesc)
 	InputPath = _pDesc->InputPath ? _pDesc->InputPath : DataPath;
 	OutputPath = _pDesc->OutputPath ? _pDesc->OutputPath : (DataPath + "FailedImageCompares/");
 
-	#ifdef o64BIT
+	#if o64BIT == 1
 		OutputPath += "x64/";
 	#else
 		OutputPath += "win32/";

@@ -51,9 +51,9 @@ typedef unsigned char BYTE;
 using namespace ouro::gpu;
 using namespace ouro::mesh;
 
-pipeline_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
+pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 {
-	pipeline_info i;
+	pipeline1_info i;
 
 	#define oPL_RIGID(_Enum, _PS) do { \
 		i.debug_name = #_Enum; \

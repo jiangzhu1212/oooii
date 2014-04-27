@@ -22,36 +22,83 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// All compression wrappers should comply with this API definition. Compression
-// wrappers are named for their algorithm (i.e. gzip.h or snappy.h).
-#pragma once
-#ifndef oBase_compression_h
-#define oBase_compression_h
+// Encapsulate compiled shader code into a C++-accessible form.
 
-#include <oBase/compiler_config.h>
+#ifndef oGfxShaders_h
+#define oGfxShaders_h
+
+#include <oGPU/oGPU.h>
 
 namespace ouro {
+	namespace gfx {
 
-// If _pDestination is nullptr, this will return an estimation of the size 
-// _pDestination should be. If _pDestination is valid, this will return the 
-// actual compressed size. In either case if there is a failure this will throw.
-typedef size_t (*compress_fn)(
-	void* oRESTRICT _pDestination, size_t _SizeofDestination
-	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+namespace vertex_shader
+{	enum value {
 
-// Returns the uncompressed size of _pSource. Call this first with 
-// _pDestination = nullptr to get the size value to properly allocate a 
-// destination buffer then pass that as _pDestination to finish the decompres-
-// sion. NOTE: _pSource must have been a buffer produced with compress_fn 
-// because its implementation may have tacked on extra information to the buffer 
-// and thus only the paired implementation of decompress knows how to access 
-// such a buffer correctly. (Implementation note: if an algorithm doesn't store 
-// the uncompressed size, then it should be tacked onto the compressed buffer 
-// and accessible by this function to comply with the API specification.)
-typedef size_t (*decompress_fn)(
-	void* oRESTRICT _pDestination, size_t _SizeofDestination
-	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+	pos_pass_through, // passes POSITION unmodified
 
+	count,
+
+};}
+
+namespace hull_shader
+{	enum value {
+
+	null,
+	count,
+
+};}
+
+namespace domain_shader
+{	enum value {
+
+	null,
+	count,
+
+};}
+
+namespace geometry_shader
+{	enum value {
+
+	null,
+	count,
+
+};}
+
+namespace pixel_shader
+{	enum value {
+
+	black,
+	white,
+	red,
+	green,
+	blue,
+	yellow,
+	magenta,
+	cyan,
+
+	count,
+
+};}
+
+namespace compute_shader
+{	enum value {
+
+	null,
+	count,
+
+};}
+
+// returns the buffer of bytecode compiled during executable compilation time
+// (not runtime compilation)
+const void* byte_code(const vertex_shader::value& _Shader);
+const void* byte_code(const hull_shader::value& _Shader);
+const void* byte_code(const domain_shader::value& _Shader);
+const void* byte_code(const geometry_shader::value& _Shader);
+const void* byte_code(const pixel_shader::value& _Shader);
+const void* byte_code(const compute_shader::value& _Shader);
+
+	} // namespace gfx
 } // namespace ouro
 
 #endif

@@ -40,7 +40,7 @@ struct gpu_test_triangle : public gpu_test
 
 	void initialize() override
 	{
-		Pipeline = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
+		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
 		Mesh = make_first_triangle(Device);
 	}
 
@@ -58,7 +58,7 @@ struct gpu_test_triangle : public gpu_test
 	}
 
 private:
-	std::shared_ptr<pipeline> Pipeline;
+	std::shared_ptr<pipeline1> Pipeline;
 	std::shared_ptr<util_mesh> Mesh;
 };
 

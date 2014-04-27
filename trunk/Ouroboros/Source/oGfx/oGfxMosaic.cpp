@@ -34,7 +34,7 @@ struct oGfxMosaicImpl : oGfxMosaic
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
 	oDEFINE_NOOP_QUERYINTERFACE();
 
-	oGfxMosaicImpl(ouro::gpu::device* _pDevice, const pipeline_info& _pPipelineDesc, bool* _pSuccess);
+	oGfxMosaicImpl(ouro::gpu::device* _pDevice, const pipeline1_info& _pPipelineDesc, bool* _pSuccess);
 
 	bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const ouro::rect* _AdditionalSourceImageSpaces, const ouro::rect* const* _pAdditionalSourceRectArrays) override;
 	void Draw(command_list* _pCommandList, render_target* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const texture* const* _ppTextures) override;
@@ -43,7 +43,7 @@ struct oGfxMosaicImpl : oGfxMosaic
 
 private:
 	std::shared_ptr<ouro::gpu::device> Device;
-	std::shared_ptr<ouro::gpu::pipeline> Pipeline;
+	std::shared_ptr<ouro::gpu::pipeline1> Pipeline;
 	std::shared_ptr<ouro::gpu::buffer> Indices;
 	std::shared_ptr<ouro::gpu::buffer> Vertices[2];
 	uint NumPrimitives;
@@ -51,17 +51,17 @@ private:
 	oRefCount RefCount;
 };
 
-oGfxMosaicImpl::oGfxMosaicImpl(device* _pDevice, const pipeline_info& _PipelineInfo, bool* _pSuccess)
+oGfxMosaicImpl::oGfxMosaicImpl(device* _pDevice, const pipeline1_info& _PipelineInfo, bool* _pSuccess)
 	: Device(_pDevice)
 	, NumPrimitives(0)
 	, BlendState(blend_state::opaque)
 {
 	*_pSuccess = false;
-	Pipeline = Device->make_pipeline("MosaicExPL", _PipelineInfo);
+	Pipeline = Device->make_pipeline1("MosaicExPL", _PipelineInfo);
 	*_pSuccess = true;
 }
 
-intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(device* _pDevice, const pipeline_info& _Info)
+intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(device* _pDevice, const pipeline1_info& _Info)
 {
 	intrusive_ptr<oGfxMosaic> m;
 	bool success = false;
@@ -92,7 +92,7 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	MSRGeo.depth_pitch = MSRGeo.row_pitch * GeoInfo.num_indices;
 	Indices = make_index_buffer(Device, "MosaicIB", GeoInfo.num_indices, GeoInfo.num_vertices, MSRGeo);
 
-	pipeline_info pi = Pipeline->get_info();
+	pipeline1_info pi = Pipeline->get_info();
 
 	Vertices[0] = make_vertex_buffer(Device, "MosaicVB", GeoInfo.vertex_layouts[0], GeoInfo.num_vertices, GeoSource);
 

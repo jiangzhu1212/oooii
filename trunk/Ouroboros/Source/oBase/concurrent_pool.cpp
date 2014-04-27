@@ -26,12 +26,12 @@
 #include <oBase/allocate.h>
 #include <oBase/bit.h>
 #include <oBase/byte.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <stdexcept>
 
 namespace ouro {
 
-static_assert(sizeof(concurrent_pool) == cache_line_size, "unexpected class size");
+static_assert(sizeof(concurrent_pool) == oCACHE_LINE_SIZE, "unexpected class size");
 static_assert(sizeof(std::atomic_uint) == sizeof(unsigned int), "mismatch atomic size");
 
 struct tagged

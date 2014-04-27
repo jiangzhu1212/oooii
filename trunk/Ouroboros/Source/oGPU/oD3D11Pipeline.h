@@ -30,10 +30,10 @@
 
 oGPU_NAMESPACE_BEGIN
 
-oDEVICE_CHILD_CLASS(pipeline)
+oDEVICE_CHILD_CLASS(pipeline1)
 {
-	oDEVICE_CHILD_DECLARATION(pipeline)
-	pipeline_info get_info() const override;
+	oDEVICE_CHILD_DECLARATION(pipeline1)
+	pipeline1_info get_info() const override;
 	intrusive_ptr<ID3D11InputLayout> InputLayout;
 	intrusive_ptr<ID3D11VertexShader> VertexShader;
 	intrusive_ptr<ID3D11HullShader> HullShader;

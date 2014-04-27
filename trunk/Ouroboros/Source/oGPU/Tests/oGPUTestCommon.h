@@ -109,7 +109,7 @@ public:
 	void render() override;
 
 protected:
-	std::shared_ptr<gpu::pipeline> Pipeline;
+	std::shared_ptr<gpu::pipeline1> Pipeline;
 	std::shared_ptr<gpu::texture> Texture;
 	std::shared_ptr<gpu::util_mesh> Mesh;
 	std::shared_ptr<gpu::buffer> TestConstants;

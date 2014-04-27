@@ -403,9 +403,9 @@ msg_result::value assert_dialog(msg_type::value _Type, const char* _Caption, con
 
 namespace WFNWCV
 {
-	static thread_local HWND hParent = nullptr;
-	static thread_local WNDPROC OrigWndProc = nullptr;
-	static thread_local HHOOK Hook = nullptr;
+	static oTHREAD_LOCAL HWND hParent = nullptr;
+	static oTHREAD_LOCAL WNDPROC OrigWndProc = nullptr;
+	static oTHREAD_LOCAL HHOOK Hook = nullptr;
 
 	LRESULT CALLBACK WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam)
 	{

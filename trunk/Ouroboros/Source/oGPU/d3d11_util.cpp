@@ -28,8 +28,10 @@
 #include <oCore/windows/win_util.h>
 #include "dxgi_util.h"
 #include "d3d_compile.h"
+#include "d3d_debug.h"
 #include <cerrno>
 
+using namespace ouro::gpu::d3d;
 
 #define oCHECK_IS_TEXTURE(_pResource) do \
 {	D3D11_RESOURCE_DIMENSION type; \
@@ -146,81 +148,6 @@ const char* as_string(const D3D11_USAGE& _Usage)
 
 	namespace gpu {
 		namespace d3d11 {
-
-static bool muting_infos_or_state_creation(ID3D11Device* _pDevice)
-{
-#if 0 // not working with 8.1 SDK "Incorrect function."
-
-	intrusive_ptr<ID3D11InfoQueue> InfoQueue;
-	oV(_pDevice->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&InfoQueue));
-	SIZE_T size = 0;
-	oV(InfoQueue->GetStorageFilter(nullptr, &size));
-	D3D11_INFO_QUEUE_FILTER* f = (D3D11_INFO_QUEUE_FILTER*)alloca(size);
-	oV(InfoQueue->GetStorageFilter(f, &size));
-	for (unsigned int i = 0 ; i < f->DenyList.NumSeverities; i++)
-		if (f->DenyList.pSeverityList[i] == D3D11_MESSAGE_SEVERITY_INFO)
-			return true;
-	for (unsigned int i = 0 ; i < f->DenyList.NumCategories; i++)
-		if (f->DenyList.pCategoryList[i] == D3D11_MESSAGE_CATEGORY_STATE_CREATION)
-			return true;
-#endif
-
-	return true;
-}
-
-static void trace_debug_name(ID3D11Device* _pDevice, const char* _Name)
-{
-	if ((_pDevice->GetCreationFlags() & D3D11_CREATE_DEVICE_DEBUG) && !muting_infos_or_state_creation(_pDevice))
-		oTRACEA("d3d11: INFO: Name Buffer: Name=\"%s\", Addr=0x%p, ExtRef=1, IntRef=0 [ STATE_CREATION INFO #OURO: NAME_BUFFER ]", _Name, _pDevice);
-}
-
-void debug_name(ID3D11Device* _pDevice, const char* _Name)
-{
-	unsigned int CreationFlags = _pDevice->GetCreationFlags();
-	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-	{
-		sstring Buffer(_Name); // if strings aren't the same size, D3D issues a warning
-		oV(_pDevice->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Buffer.capacity()), Buffer.c_str()));
-	}
-	trace_debug_name(_pDevice, _Name);
-}
-
-char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11Device* _pDevice)
-{
-	unsigned int size = as_uint(_SizeofStrDestination);
-	unsigned int CreationFlags = const_cast<ID3D11Device*>(_pDevice)->GetCreationFlags();
-	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-		oV(const_cast<ID3D11Device*>(_pDevice)->GetPrivateData(WKPDID_D3DDebugObjectName, &size, _StrDestination));
-	else if (strlcpy(_StrDestination, "non-debug device", _SizeofStrDestination) >= _SizeofStrDestination)
-		oTHROW0(no_buffer_space);
-	return _StrDestination;
-}
-
-void debug_name(ID3D11DeviceChild* _pDeviceChild, const char* _Name)
-{
-	intrusive_ptr<ID3D11Device> Device;
-	_pDeviceChild->GetDevice(&Device);
-	unsigned int CreationFlags = Device->GetCreationFlags();
-	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-	{
-		sstring Buffer(_Name); // if strings aren't the same size, D3D issues a warning
-		oV(_pDeviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Buffer.capacity()), Buffer.c_str()));
-	}
-	trace_debug_name(Device, _Name);
-}
-
-char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const ID3D11DeviceChild* _pDeviceChild)
-{
-	unsigned int size = as_uint(_SizeofStrDestination);
-	intrusive_ptr<ID3D11Device> Device;
-	const_cast<ID3D11DeviceChild*>(_pDeviceChild)->GetDevice(&Device);
-	unsigned int CreationFlags = Device->GetCreationFlags();
-	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-		oV(const_cast<ID3D11DeviceChild*>(_pDeviceChild)->GetPrivateData(WKPDID_D3DDebugObjectName, &size, _StrDestination));
-	else if (strlcpy(_StrDestination, "non-debug device child", _SizeofStrDestination) >= _SizeofStrDestination)
-		oTHROW0(no_buffer_space);
-	return _StrDestination;
-}
 
 int vtrace(ID3D11InfoQueue* _pInfoQueue, D3D11_MESSAGE_SEVERITY _Severity, const char* _Format, va_list _Args)
 {
@@ -434,7 +361,7 @@ intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init)
 	intrusive_ptr<ID3D11##TitleName> make_##std_name(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) \
 	{	intrusive_ptr<ID3D11##TitleName> Shader; \
 		if (_pByteCode) \
-		{	oV(_pDevice->Create##TitleName(_pByteCode, d3d::byte_code_size(_pByteCode), 0, &Shader)); \
+		{	oV(_pDevice->Create##TitleName(_pByteCode, byte_code_size(_pByteCode), 0, &Shader)); \
 			if (_DebugName) debug_name(Shader, _DebugName); \
 		} \
 		return Shader; \

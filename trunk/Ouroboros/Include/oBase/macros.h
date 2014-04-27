@@ -27,7 +27,7 @@
 #ifndef oBase_macros_h
 #define oBase_macros_h
 
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <cstddef>
 
 // _____________________________________________________________________________
@@ -84,6 +84,10 @@
 // It is often used to test for a null or empty string, so encapsulate the 
 // pattern in a more self-documenting macro.
 #define oSTRVALID(str) ((str) && (str)[0] != '\0')
+
+// Helpers for implementing move operators where the eviscerated value is typically zero
+#define oMOVE0(field) do { field = _That.field; _That.field = 0; } while (false)
+#define oMOVE_ATOMIC0(field) do { field = _That.field.exchange(0); } while (false)
 
 // _____________________________________________________________________________
 // Declaration macros

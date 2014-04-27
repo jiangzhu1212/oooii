@@ -48,7 +48,7 @@ struct gpu_test_instanced_triangle : public gpu_test
 			TestConstants = Device->make_buffer("TestConstants", i);
 		}
 
-		Pipeline = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
+		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
 		InstanceList = Device->make_buffer<oGPU_TEST_INSTANCE>("Instances", 2);
 		Mesh = make_first_triangle(Device);
 	}
@@ -95,7 +95,7 @@ struct gpu_test_instanced_triangle : public gpu_test
 	}
 
 private:
-	std::shared_ptr<pipeline> Pipeline;
+	std::shared_ptr<pipeline1> Pipeline;
 	std::shared_ptr<buffer> InstanceList;
 	std::shared_ptr<util_mesh> Mesh;
 	std::shared_ptr<buffer> TestConstants;

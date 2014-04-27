@@ -24,6 +24,7 @@
  **************************************************************************/
 #include "d3dx11_util.h"
 #include "d3d11_util.h"
+#include "d3d_debug.h"
 #include <oBase/assert.h>
 
 namespace ouro {
@@ -202,7 +203,7 @@ intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
 	D3DX11_IMAGE_LOAD_INFO li = get_image_load_info(_Info);
 	intrusive_ptr<ID3D11Resource> Texture;
 	oV(D3DX11CreateTextureFromFile(_pDevice, _Path, &li, nullptr, &Texture, nullptr));
-	d3d11::debug_name(Texture, _DebugName);
+	d3d::debug_name(Texture, _DebugName);
 	return Texture;
 }
 
@@ -215,7 +216,7 @@ intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
 	D3DX11_IMAGE_LOAD_INFO li = get_image_load_info(_Info);
 	intrusive_ptr<ID3D11Resource> Texture;
 	oV(D3DX11CreateTextureFromMemory(_pDevice, _pBuffer, _SizeofBuffer, &li, nullptr, &Texture, nullptr));
-	d3d11::debug_name(Texture, _DebugName);
+	d3d::debug_name(Texture, _DebugName);
 	return Texture;
 }
 

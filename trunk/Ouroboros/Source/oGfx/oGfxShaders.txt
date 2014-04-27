@@ -1,3 +1,12 @@
+GSVertexTangents
+PSBlack
+PSWhite
+PSRed
+PSGreen
+PSBlue
+PSYellow
+PSMagenta
+PSCyan
 VSLines
 VSPassThrough
 VSPosition
@@ -6,12 +15,6 @@ VSRigid
 VSRigidInstanced
 VSShadow
 GSVertexNormals
-GSVertexTangents
-PSBlack
-PSWhite
-PSRed
-PSGreen
-PSBlue
 PSColor
 PSGrid
 PSHero

@@ -52,7 +52,7 @@ void TESTbuffer()
 	i.array_size = 1;
 
 	std::shared_ptr<buffer> AppendBufferCount = Device->make_buffer("BufferAppendCount", i);
-	std::shared_ptr<pipeline> Pipeline = Device->make_pipeline(oGPUTestGetPipeline(oGPU_TEST_BUFFER));
+	std::shared_ptr<pipeline1> Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_BUFFER));
 	std::shared_ptr<command_list> CommandList = Device->get_immediate_command_list();
 
 	Device->begin_frame();

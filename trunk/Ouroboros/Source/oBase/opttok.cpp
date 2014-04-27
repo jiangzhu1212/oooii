@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/opttok.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <oBase/string.h>
 
 namespace ouro {
@@ -33,12 +33,12 @@ static inline bool islongopt(const char* arg) { return *arg == '-' && *(arg+1) =
 
 char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option* _pOptions, size_t _NumOptions)
 {
-	thread_local static const char** local_argv = 0;
-	thread_local static int local_argc = 0;
-	thread_local static const option* local_options = 0;
-	thread_local static size_t num_options = 0;
+	oTHREAD_LOCAL static const char** local_argv = 0;
+	oTHREAD_LOCAL static int local_argc = 0;
+	oTHREAD_LOCAL static const option* local_options = 0;
+	oTHREAD_LOCAL static size_t num_options = 0;
 
-	thread_local static int i = 0;
+	oTHREAD_LOCAL static int i = 0;
 
 	*_ppValue = "";
 

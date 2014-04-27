@@ -371,7 +371,7 @@ private:
 	std::shared_ptr<ouro::gpu::device> Device;
 	std::shared_ptr<ouro::gpu::command_list> CommandList;
 	std::shared_ptr<ouro::gpu::render_target> WindowRenderTarget;
-	std::shared_ptr<ouro::gpu::pipeline> Pipeline;
+	std::shared_ptr<ouro::gpu::pipeline1> Pipeline;
 	std::shared_ptr<ouro::gpu::util_mesh> Mesh;
 
 	window* pGPUWindow;
@@ -395,7 +395,7 @@ oGPUWindowThread::oGPUWindowThread()
 		return;
 	}
 
-	Pipeline = Device->make_pipeline(oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH));
+	Pipeline = Device->make_pipeline1(oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH));
 	Mesh = gpu::make_first_triangle(Device);
 	CommandList = Device->get_immediate_command_list();
 }

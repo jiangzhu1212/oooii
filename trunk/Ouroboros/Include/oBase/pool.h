@@ -31,7 +31,7 @@
 
 #include <oBase/byte.h>
 #include <oBase/callable.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <atomic>
 #include <type_traits>
 

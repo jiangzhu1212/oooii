@@ -27,7 +27,7 @@
 #ifndef oBase_concurrent_intrusive_stack_h
 #define oBase_concurrent_intrusive_stack_h
 
-#include <oBase/memcfg.h>
+#include <oBase/compiler_config.h>
 #include <atomic>
 #include <stdexcept>
 
@@ -39,7 +39,7 @@ template<typename T>
 class concurrent_intrusive_stack
 {
 public:
-	#ifdef o64BIT
+	#if o64BIT == 1
 		static const size_t required_next_alignment = sizeof(void*);
 	#else
 		static const size_t required_next_alignment = 16; // leaves room for tag
@@ -87,7 +87,7 @@ public:
 private:
 
 	tagged_pointer<T> head;
-	char cache_line_padding[cache_line_size - sizeof(std::atomic_uintptr_t)];
+	char cache_line_padding[oCACHE_LINE_SIZE - sizeof(std::atomic_uintptr_t)];
 
 	concurrent_intrusive_stack(const concurrent_intrusive_stack&); /* = delete; */
 	const concurrent_intrusive_stack& operator=(const concurrent_intrusive_stack&); /* = delete; */

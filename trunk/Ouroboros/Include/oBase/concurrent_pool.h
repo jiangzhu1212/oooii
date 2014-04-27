@@ -28,7 +28,7 @@
 #ifndef oBase_concurrent_pool_h
 #define oBase_concurrent_pool_h
 
-#include <oBase/memcfg.h>
+#include <oBase/compiler_config.h>
 #include <atomic>
 
 namespace ouro {
@@ -59,10 +59,10 @@ public:
 	concurrent_pool(concurrent_pool&& _That);
 
 	// ctor creates as a valid pool using external memory
-	concurrent_pool(void* memory, size_type block_size, size_type capacity, size_type block_alignment = default_alignment);
+	concurrent_pool(void* memory, size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
 
 	// ctor creates as a valid pool using internally allocated memory
-	concurrent_pool(size_type block_size, size_type capacity, size_type block_alignment = default_alignment);
+	concurrent_pool(size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
 
 	// dtor
 	~concurrent_pool();
@@ -72,10 +72,10 @@ public:
 
 	// returns the bytes required for this class. If memory is not nullptr then the class
 	// is initialized as a full pool of memory blocks.
-	size_type initialize(void* memory, size_type block_size, size_type capacity, size_type block_alignment = default_alignment);
+	size_type initialize(void* memory, size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
 
 	// self-allocates and manages memory used, otherwise this is like the other initialize()
-	size_type initialize(size_type block_size, size_type capacity, size_type block_alignment = default_alignment);
+	size_type initialize(size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
 
 	// deinitializes the pool, returning it to a default-constructed state. This returns the
 	// memory used in initialize or nullptr if self-allocated memory was used.
@@ -122,7 +122,7 @@ private:
 	size_type nblocks;
 	std::atomic_uint head;
 	bool owns_memory;
-	char cache_padding[cache_line_size - (sizeof(void*) + 2*sizeof(size_type) + sizeof(unsigned int) + sizeof(bool))];
+	char cache_padding[oCACHE_LINE_SIZE - (sizeof(void*) + 2*sizeof(size_type) + sizeof(std::atomic_uint) + sizeof(bool))];
 
 	concurrent_pool(const concurrent_pool&); /* = delete; */
 	const concurrent_pool& operator=(const concurrent_pool&); /* = delete; */

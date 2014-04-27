@@ -29,7 +29,7 @@
 #define oBase_memory_h
 
 #include <oBase/byte.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <memory.h>
 
 namespace ouro {

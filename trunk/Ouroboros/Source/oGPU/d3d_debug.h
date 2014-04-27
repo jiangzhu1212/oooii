@@ -22,36 +22,32 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// All compression wrappers should comply with this API definition. Compression
-// wrappers are named for their algorithm (i.e. gzip.h or snappy.h).
+// Set/Get a name that shows up in driver tty.
 #pragma once
-#ifndef oBase_compression_h
-#define oBase_compression_h
+#ifndef oGPU_d3d_debug_h
+#define oGPU_d3d_debug_h
 
-#include <oBase/compiler_config.h>
+#include "d3d_types.h"
 
 namespace ouro {
+	namespace gpu {
+		namespace d3d {
 
-// If _pDestination is nullptr, this will return an estimation of the size 
-// _pDestination should be. If _pDestination is valid, this will return the 
-// actual compressed size. In either case if there is a failure this will throw.
-typedef size_t (*compress_fn)(
-	void* oRESTRICT _pDestination, size_t _SizeofDestination
-	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+// Set/Get a name that appears in D3D11's debug layer
+void debug_name(Device* _pDevice, const char* _Name);
+void debug_name(DeviceChild* _pDeviceChild, const char* _Name);
 
-// Returns the uncompressed size of _pSource. Call this first with 
-// _pDestination = nullptr to get the size value to properly allocate a 
-// destination buffer then pass that as _pDestination to finish the decompres-
-// sion. NOTE: _pSource must have been a buffer produced with compress_fn 
-// because its implementation may have tacked on extra information to the buffer 
-// and thus only the paired implementation of decompress knows how to access 
-// such a buffer correctly. (Implementation note: if an algorithm doesn't store 
-// the uncompressed size, then it should be tacked onto the compressed buffer 
-// and accessible by this function to comply with the API specification.)
-typedef size_t (*decompress_fn)(
-	void* oRESTRICT _pDestination, size_t _SizeofDestination
-	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const Device* _pDevice);
+template<size_t size> char* debug_name(char (&_StrDestination)[size], const Device* _pDevice) { return debug_name(_StrDestination, size, _pDevice); }
+template<size_t capacity> char* debug_name(fixed_string<char, capacity>& _StrDestination, const Device* _pDevice) { return debug_name(_StrDestination, _StrDestination.capacity(), _pDevice); }
 
+// Fills the specified buffer with the string set with oD3D11SetDebugName().
+char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const	DeviceChild* _pDeviceChild);
+template<size_t size> char* debug_name(char (&_StrDestination)[size], const DeviceChild* _pDeviceChild) { return debug_name(_StrDestination, size, _pDeviceChild); }
+template<size_t capacity> char* debug_name(fixed_string<char, capacity>& _StrDestination, const DeviceChild* _pDeviceChild) { return debug_name(_StrDestination, _StrDestination.capacity(), _pDeviceChild); }
+
+		} // namespace d3d
+	} // namespace gpu
 } // namespace ouro
 
 #endif

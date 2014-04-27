@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/text_document.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 
 namespace ouro
 {

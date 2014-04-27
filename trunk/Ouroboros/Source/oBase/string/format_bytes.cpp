@@ -25,7 +25,7 @@
 #include <oBase/string.h>
 #include <oBase/equal.h>
 #include <oBase/macros.h>
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 
 int ouro::format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits)
 {

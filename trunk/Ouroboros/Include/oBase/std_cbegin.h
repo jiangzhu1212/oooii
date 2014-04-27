@@ -26,11 +26,11 @@
 #pragma once
 #ifndef oBase_std_cbegin_h
 #define oBase_std_cbegin_h
-#include <oBase/config.h>
+#include <oBase/compiler_config.h>
 #include <iterator>
 #include <array>
 
-#ifdef oNEEDS_CBEGIN
+#if oHAS_CBEGIN == 0
 	namespace std {
 		template<typename T> auto cbegin(const T& x) -> decltype(x.cbegin()) { return x.cbegin(); }
 		template<typename T> auto cend(const T& x) -> decltype(x.cend()) { return x.cend(); }

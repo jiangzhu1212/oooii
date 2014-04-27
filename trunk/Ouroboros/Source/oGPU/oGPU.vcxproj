@@ -130,12 +130,15 @@
     <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h" />
+    <ClInclude Include="..\..\Include\oGPU\shader.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h" />
     <ClInclude Include="d3d11_layout.h" />
     <ClInclude Include="d3d11_util.h" />
     <ClInclude Include="d3dx11_util.h" />
     <ClInclude Include="d3d_compile.h" />
+    <ClInclude Include="d3d_debug.h" />
     <ClInclude Include="d3d_include.h" />
+    <ClInclude Include="d3d_types.h" />
     <ClInclude Include="dxgi_util.h" />
     <ClInclude Include="oD3D11Buffer.h" />
     <ClInclude Include="oD3D11CommandList.h" />
@@ -153,6 +156,7 @@
     <ClCompile Include="d3d11_util.cpp" />
     <ClCompile Include="d3dx11_util.cpp" />
     <ClCompile Include="d3d_compile.cpp" />
+    <ClCompile Include="d3d_debug.cpp" />
     <ClCompile Include="d3d_include.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
     <ClCompile Include="gpu.cpp" />
@@ -173,6 +177,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="shader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="oGPUShaders.hlsl">

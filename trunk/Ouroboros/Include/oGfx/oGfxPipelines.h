@@ -105,6 +105,6 @@ enum oGFX_PIPELINE
 	oGFX_PIPELINE_RIGID_HERO,
 };
 
-ouro::gpu::pipeline_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline);
+ouro::gpu::pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline);
 
 #endif
