@@ -140,7 +140,7 @@ concurrent_queue<T>::~concurrent_queue()
 	if (!empty())
 		throw std::length_error("container not empty");
 
-	node_t* n = Head.ptr();
+	node_t* n = Head.pointer();
 	Head = Tail = pointer_t(0, 0);
 	
 	// because the head value is destroyed in try_pop, don't double-destroy here.
@@ -155,21 +155,21 @@ void concurrent_queue<T>::internal_push(node_t* _pNode)
 	while (1)
 	{
 		t = Tail;
-		next = t.ptr()->next;
+		next = t.pointer()->next;
 		if (t == Tail)
 		{
-			if (!next.ptr())
+			if (!next.pointer())
 			{
-				if (pointer_t::CAS(&Tail.ptr()->next, pointer_t(_pNode, next.tag()+1), next))
+				if (Tail.pointer()->next.cas(next, pointer_t(_pNode, next.tag()+1)))
 					break;
 			}
 
 			else
-				pointer_t::CAS(&Tail, pointer_t(next.ptr(), t.tag()+1), t);
+				Tail.cas(t, pointer_t(next.pointer(), t.tag()+1));
 		}
 	}
 
-	pointer_t::CAS(&Tail, pointer_t(_pNode, t.tag()+1), t);
+	Tail.cas(t, pointer_t(_pNode, t.tag()+1));
 }
 
 template<typename T>
@@ -192,18 +192,18 @@ bool concurrent_queue<T>::try_pop(reference _Element)
 	{
 		h = Head;
 		t = Tail;
-		next = h.ptr()->next;
+		next = h.pointer()->next;
 		if (h == Head)
 		{
-			if (h.ptr() == t.ptr())
+			if (h.pointer() == t.pointer())
 			{
-				if (!next.ptr()) return false;
-				pointer_t::CAS(&Tail, pointer_t(next.ptr(), t.tag()+1), t);
+				if (!next.pointer()) return false;
+				Tail.cas(t, pointer_t(next.pointer(), t.tag()+1));
 			}
 
 			else
 			{
-				if (pointer_t::CAS(&Head, pointer_t(next.ptr(), h.tag()+1), h))
+				if (Head.cas(h, pointer_t(next.pointer(), h.tag()+1)))
 				{
 					// Yes, the paper says the assignment should be outside the CAS,
 					// but we've worked around that so we can also call the destructor
@@ -213,10 +213,10 @@ bool concurrent_queue<T>::try_pop(reference _Element)
 					// memory immediately now that the CAS has made next the dummy Head,
 					// or clean it up lazily later at the bottom. Either way, do it only 
 					// once.
-					_Element = std::move(next.ptr()->value);
-					next.ptr()->value.~T();
-					if (next.ptr()->ShouldDeallocate())
-						Pool.deallocate(next.ptr());
+					_Element = std::move(next.pointer()->value);
+					next.pointer()->value.~T();
+					if (next.pointer()->ShouldDeallocate())
+						Pool.deallocate(next.pointer());
 
 					break;
 				}
@@ -224,8 +224,8 @@ bool concurrent_queue<T>::try_pop(reference _Element)
 		}
 	}
 
-	if (h.ptr()->ShouldDeallocate())
-		Pool.deallocate(h.ptr()); // dtor called explicitly above so just deallocate
+	if (h.pointer()->ShouldDeallocate())
+		Pool.deallocate(h.pointer()); // dtor called explicitly above so just deallocate
 	return true;
 }
 
