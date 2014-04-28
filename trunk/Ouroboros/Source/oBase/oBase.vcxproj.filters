@@ -253,10 +253,10 @@
     <ClCompile Include="concurrent_growable_pool.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
-    <ClCompile Include="concurrent_hash.cpp">
+    <ClCompile Include="concurrent_registry.cpp">
       <Filter>Source\containers</Filter>
     </ClCompile>
-    <ClCompile Include="concurrent_registry.cpp">
+    <ClCompile Include="concurrent_hash_map.cpp">
       <Filter>Source\containers</Filter>
     </ClCompile>
   </ItemGroup>

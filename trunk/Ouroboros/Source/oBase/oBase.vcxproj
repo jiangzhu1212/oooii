@@ -49,7 +49,7 @@
     <ClCompile Include="allocate.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="concurrent_growable_pool.cpp" />
-    <ClCompile Include="concurrent_hash.cpp" />
+    <ClCompile Include="concurrent_hash_map.cpp" />
     <ClCompile Include="concurrent_pool.cpp" />
     <ClCompile Include="concurrent_registry.cpp" />
     <ClCompile Include="date.cpp" />
