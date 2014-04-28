@@ -25,7 +25,7 @@
 #include <oBase/assert.h>
 #include <oBase/allocate.h>
 #include <oBase/concurrent_object_pool.h>
-#include <oBase/concurrent_intrusive_stack.h>
+#include <oBase/concurrent_stack.h>
 #include <oBase/concurrency.h>
 #include <oBase/finally.h>
 #include <oBase/macros.h>
@@ -46,7 +46,7 @@ static void test_intrusive_basics()
 {
 	Node* values = (Node*)default_allocate(sizeof(Node) * 5, memory_alignment::align_to_8);
 	finally dealloc([&] { default_deallocate(values); });
-	concurrent_intrusive_stack<Node> s;
+	concurrent_stack<Node> s;
 	oCHECK(s.empty(), "Stack should be empty (init)");
 
 	for (int i = 0; i < 5; i++)
@@ -95,7 +95,7 @@ static void test_intrusive_concurrency()
 
 	memset(nodes, 0xaa, sizeof(nodes));
 
-	concurrent_intrusive_stack<Node> s;
+	concurrent_stack<Node> s;
 
 	ouro::parallel_for(0, 40, [&](size_t _Index)
 	{

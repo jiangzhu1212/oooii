@@ -550,9 +550,6 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_intrusive_stack.h">
-      <Filter>oBase\containers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
@@ -563,6 +560,9 @@
       <Filter>oBase\c++ support</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_registry.h">
+      <Filter>oBase\containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\concurrent_stack.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
   </ItemGroup>

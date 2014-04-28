@@ -25,7 +25,7 @@
 #ifndef oBase_concurrent_growable_pool_h
 #define oBase_concurrent_growable_pool_h
 
-#include <oBase/concurrent_intrusive_stack.h>
+#include <oBase/concurrent_stack.h>
 #include <oBase/concurrent_pool.h>
 
 namespace ouro {
@@ -119,7 +119,7 @@ private:
 	size_type block_alignment;
 	size_type capacity_per_chunk;
 
-	concurrent_intrusive_stack<chunk_t> chunks;
+	concurrent_stack<chunk_t> chunks;
 
 	// allocates and initializes a new chunk for when out of currently reserved memory
 	chunk_t* allocate_chunk();
