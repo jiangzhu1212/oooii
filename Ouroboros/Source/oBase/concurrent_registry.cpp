@@ -64,6 +64,20 @@ concurrent_registry::concurrent_registry(concurrent_registry&& _That)
 	lifetime = std::move(_That.lifetime);
 }
 
+concurrent_registry::concurrent_registry(void* memory, size_type capacity
+	, const lifetime_t& lifetime
+	, placeholder_source_t& placeholder_source)
+{
+	if (!initialize(memory, capacity, lifetime, placeholder_source))
+		throw std::invalid_argument("concurrent_registry initialize failed");
+}
+
+concurrent_registry::concurrent_registry(size_type capacity, const lifetime_t& lifetime, placeholder_source_t& placeholder_source)
+{
+	if (!initialize(capacity, lifetime, placeholder_source))
+		throw std::invalid_argument("concurrent_registry initialize failed");
+}
+
 concurrent_registry::~concurrent_registry()
 {
 	deinitialize();
@@ -85,14 +99,6 @@ concurrent_registry& concurrent_registry::operator=(concurrent_registry&& _That)
 		oMOVE0(owns_memory);
 	}
 	return *this;
-}
-
-concurrent_registry::concurrent_registry(void* memory, size_type capacity
-	, const lifetime_t& lifetime
-	, placeholder_source_t& placeholder_source)
-{
-	if (!initialize(memory, capacity, lifetime, placeholder_source))
-		throw std::invalid_argument("concurrent_registry initialize failed");
 }
 
 concurrent_registry::size_type concurrent_registry::initialize(void* memory, size_type capacity, const lifetime_t& lifetime, placeholder_source_t& placeholder_source)
@@ -137,26 +143,30 @@ concurrent_registry::size_type concurrent_registry::initialize(size_type capacit
 
 void* concurrent_registry::deinitialize()
 {
-	if (!makes.empty() || !unmakes.empty())
-		throw std::exception("concurrent_registry should have been flushed before destruction");
-
-	unmake_all();
-
-	if (missing) { lifetime.destroy(missing); making = nullptr; }
-	if (failed)	{ lifetime.destroy(failed); making = nullptr; }
-	if (making)	{ lifetime.destroy(making); making = nullptr; }
-
-	memset(entries, 0, sizeof(void*) * pool.capacity());
-	entries = nullptr;
-	lifetime = lifetime_t();
-	lookup.deinitialize();
-
-	void* p = pool.deinitialize();
-	if (owns_memory)
+	void* p = nullptr;
+	if (entries)
 	{
-		default_deallocate(p);
-		owns_memory = false;
-		p = nullptr;
+		if (!makes.empty() || !unmakes.empty())
+			throw std::exception("concurrent_registry should have been flushed before destruction");
+
+		unmake_all();
+
+		if (missing) { lifetime.destroy(missing); making = nullptr; }
+		if (failed)	{ lifetime.destroy(failed); making = nullptr; }
+		if (making)	{ lifetime.destroy(making); making = nullptr; }
+
+		memset(entries, 0, sizeof(void*) * pool.capacity());
+		entries = nullptr;
+		lifetime = lifetime_t();
+		lookup.deinitialize();
+
+		p = pool.deinitialize();
+		if (owns_memory)
+		{
+			default_deallocate(p);
+			owns_memory = false;
+			p = nullptr;
+		}
 	}
 
 	return p;
