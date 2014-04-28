@@ -1015,5 +1015,27 @@ void save_async(const path& _Path
 	windows::iocp::post(_SaveOption == save_option::binary_write ? iocp_open_and_write : iocp_open_and_append, r);
 }
 
+void wait()
+{
+	windows::iocp::wait();
+}
+
+bool wait_for(unsigned int _TimeoutMS)
+{
+	return windows::iocp::wait_for(_TimeoutMS);
+}
+
+bool joinable()
+{
+	return windows::iocp::joinable();
+}
+
+void join()
+{
+	windows::iocp::join();
+}
+
+
+
 	} // namespace filesystem
 } // namespace ouro
