@@ -396,6 +396,17 @@ void load_async(const path& _Path
 								, load_option::value _LoadOption = load_option::binary_read
 								, const allocator& _Allocator = default_allocator);
 
+// Waits until all async operations have completed
+void wait();
+bool wait_for(unsigned int _TimeoutMS);
+
+// returns if IO threads are running
+bool joinable();
+
+// waits for all associated IO operations to complete then joins all IO threads. If load_async is used
+// this must be called before the application ends.
+void join();
+
 	} // namespace filesystem
 } // namespace ouro
 
