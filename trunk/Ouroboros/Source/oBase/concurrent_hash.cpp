@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oBase/concurrent_hash_map.h>
 #include <oBase/byte.h>
+#include <oBase/macros.h>
 #include <atomic>
 
 #define DECLARE_KV std::atomic<key_type>* keys = (std::atomic<key_type>*)this->keys; std::atomic<value_type>* values = (std::atomic<value_type>*)this->values;
@@ -62,6 +63,20 @@ concurrent_hash_map::concurrent_hash_map(size_type capacity)
 concurrent_hash_map::~concurrent_hash_map()
 {
 	deinitialize();
+}
+
+concurrent_hash_map& concurrent_hash_map::operator=(concurrent_hash_map&& _That)
+{
+	if (this != &_That)
+	{
+		deinitialize();
+
+		oMOVE0(modulo_mask);
+		oMOVE0(owns_memory);
+		oMOVE0(keys);
+		oMOVE0(values);
+	}
+	return *this;
 }
 
 concurrent_hash_map::size_type concurrent_hash_map::initialize(void* memory, size_type capacity)

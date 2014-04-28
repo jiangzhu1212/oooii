@@ -27,6 +27,7 @@
 #include <oBase/bit.h>
 #include <oBase/byte.h>
 #include <oBase/compiler_config.h>
+#include <oBase/macros.h>
 #include <stdexcept>
 
 namespace ouro {
@@ -104,10 +105,10 @@ concurrent_pool& concurrent_pool::operator=(concurrent_pool&& _That)
 	{
 		deinitialize();
 
-		blocks = _That.blocks; _That.blocks = nullptr;
-		stride = _That.stride; _That.stride = 0;
-		nblocks = _That.nblocks; _That.nblocks = 0;
-		owns_memory = _That.owns_memory; _That.owns_memory = false;
+		oMOVE0(blocks);
+		oMOVE0(stride);
+		oMOVE0(nblocks);
+		oMOVE0(owns_memory);
 		head = _That.head; _That.head = nullidx;
 	}
 

@@ -134,54 +134,11 @@ static void test_create()
 	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after deallocate)", NumBlocks);
 }
 
-static void test_concurrency()
-{
-	static const size_t NumBlocks = 10000;
-	std::vector<char> scopedArena(NumBlocks * sizeof(test_obj));
-	concurrent_object_pool_old<test_obj> Allocator(scopedArena.data(), NumBlocks);
-
-	bool destroyed[NumBlocks];
-	memset(destroyed, 0, sizeof(destroyed));
-
-	test_obj* tests[NumBlocks];
-	memset(tests, 0xaa, sizeof(tests));
-
-	ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
-	{
-		tests[_Index] = Allocator.create(&destroyed[_Index]);
-		tests[_Index]->Value = _Index;
-		if (_Index & 0x1)
-			Allocator.destroy(tests[_Index]);
-	});
-
-	oCHECK((NumBlocks/2) == Allocator.count_available(), "Allocation/Destroys did not occur correctly");
-
-	for (size_t i = 0; i < NumBlocks; i++)
-	{
-		if (i & 0x1)
-			oCHECK(destroyed[i], "Destruction did not occur for allocation %d", i);
-		else
-		{
-			oCHECK(tests[i]->Value == i, "Constructor did not occur for allocation %d", i);
-			Allocator.deallocate(tests[i]);
-		}
-	}
-
-	oCHECK(Allocator.empty(), "allocator should be empty");
-
-	Allocator.deinitialize();
-}
-
 void TESTpool()
 {
 	test_index_pool<pool<unsigned int>>();
-	test_index_pool<concurrent_pool_old<unsigned int>>();
-
 	test_allocate<pool<test_obj>>();
 	test_create<object_pool<test_obj>>();
-	test_allocate<concurrent_pool_old<test_obj>>();
-	test_create<concurrent_object_pool_old<test_obj>>();
-	test_concurrency();
 }
 
 	} // namespace tests

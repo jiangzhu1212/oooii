@@ -233,57 +233,6 @@ public:
 };
 
 template<typename T>
-class concurrent_pool_old : public pool_base<T, true>
-{
-	typedef pool_base<T, true> base_t;
-
-public:
-	typedef typename base_t::size_type size_type;
-	typedef typename base_t::index_type index_type;
-	typedef T value_type;
-
-	static size_type calc_size(size_type _Capacity) { return base_t::calc_size(_Capacity); }
-
-	concurrent_pool_old() {}
-	~concurrent_pool_old() { oCHECK_EMPTY(); }
-	concurrent_pool_old(void* _pMemory, size_type _Capacity) : base_t(_pMemory, _Capacity) {}
-	concurrent_pool_old(concurrent_pool_old&& _That) { operator=(std::move(_That)); }
-	concurrent_pool_old& operator=(concurrent_pool_old&& _That) { return (concurrent_pool_old&)base_t::operator=(std::move((base_t&&)_That)); }
-
-	// allocate an index from the freelist
-	index_type allocate()
-	{
-		index_type* p, i;
-		size_type newI, oldI = Freelist;
-		do
-		{	i = index_type(oldI & index_mask);
-			if (i == invalid_index)
-				return invalid_index;
-			p = (index_type*)at(i);
-			newI = *p | ((oldI + tag_one) & tag_mask);
-		} while (!Freelist.compare_exchange_strong(oldI, newI));
-		return i;
-	}
-
-	// return an index to the freelist
-	void deallocate(index_type _Index)
-	{
-		if (!valid(_Index))
-			throw std::out_of_range("the specified index was not allocated from this allocator");
-		size_type newI, oldI = Freelist;
-		index_type* p = (index_type*)at(_Index);
-		do
-		{
-			*p = index_type(oldI & index_mask);
-			newI = _Index | ((oldI + tag_one) & tag_mask);
-		} while (!Freelist.compare_exchange_strong(oldI, newI));
-	}
-
-	void* allocate_ptr() { return at(allocate()); }
-	void deallocate(void* _Pointer) { deallocate(index(_Pointer)); }
-};
-
-template<typename T>
 class object_pool : public pool<T>
 {
 	typedef pool<T> base_t;
@@ -300,28 +249,6 @@ public:
 	object_pool(void* _pMemory, size_type _Capacity) : base_t(_pMemory, _Capacity) {}
 	object_pool(object_pool&& _That) { operator=(std::move(_That)); }
 	object_pool& operator=(object_pool&& _That) { return (object_pool&)base_t::operator=(std::move((base_t&&)_That)); }
-
-	oPOOL_CREATE();
-	oPOOL_DESTROY();
-};
-
-template<typename T>
-class concurrent_object_pool_old : public concurrent_pool_old<T>
-{
-	typedef concurrent_pool_old<T> base_t;
-
-public:
-	typedef typename base_t::size_type size_type;
-	typedef typename base_t::index_type index_type;
-	typedef T value_type;
-
-	static size_type calc_size(size_type _Capacity) { return base_t::calc_size(_Capacity); }
-
-	concurrent_object_pool_old() {}
-	~concurrent_object_pool_old() { oCHECK_EMPTY(); }
-	concurrent_object_pool_old(void* _pMemory, size_type _Capacity) : base_t(_pMemory, _Capacity) {}
-	concurrent_object_pool_old(concurrent_object_pool_old&& _That) { operator=(std::move(_That)); }
-	concurrent_object_pool_old& operator=(concurrent_object_pool_old&& _That) { return (concurrent_object_pool_old&)base_t::operator=(std::move((base_t&&)_That)); }
 
 	oPOOL_CREATE();
 	oPOOL_DESTROY();
