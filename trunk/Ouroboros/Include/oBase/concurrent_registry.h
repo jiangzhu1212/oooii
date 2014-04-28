@@ -31,7 +31,7 @@
 #include <oBase/allocate.h>
 #include <oBase/concurrent_hash_map.h>
 #include <oBase/concurrent_object_pool.h>
-#include <oBase/concurrent_intrusive_stack.h>
+#include <oBase/concurrent_stack.h>
 #include <oBase/path.h>
 #include <oBase/pool.h>
 #include <functional>
@@ -146,8 +146,8 @@ private:
 	
 	concurrent_object_pool<file_info> pool;
 	concurrent_hash_map lookup;
-	concurrent_intrusive_stack<file_info> makes;
-	concurrent_intrusive_stack<file_info> unmakes;
+	concurrent_stack<file_info> makes;
+	concurrent_stack<file_info> unmakes;
 	lifetime_t lifetime;
 	void** entries;
 	void* missing;

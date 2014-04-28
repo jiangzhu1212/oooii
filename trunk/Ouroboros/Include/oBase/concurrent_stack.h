@@ -24,8 +24,8 @@
  **************************************************************************/
 // A concurrent stack that assumes a struct with a next pointer. No 
 // memory management is done by the class itself.
-#ifndef oBase_concurrent_intrusive_stack_h
-#define oBase_concurrent_intrusive_stack_h
+#ifndef oBase_concurrent_stack_h
+#define oBase_concurrent_stack_h
 
 #include <oBase/compiler_config.h>
 #include <atomic>
@@ -36,7 +36,7 @@
 namespace ouro {
 
 template<typename T>
-class concurrent_intrusive_stack
+class concurrent_stack
 {
 public:
 	#if o64BIT == 1
@@ -56,10 +56,10 @@ public:
 	// non-concurrent api
 
 	// initialized to a valid empty stack
-	concurrent_intrusive_stack();
-	concurrent_intrusive_stack(concurrent_intrusive_stack&& _That);
-	~concurrent_intrusive_stack();
-	concurrent_intrusive_stack& operator=(concurrent_intrusive_stack&& _That);
+	concurrent_stack();
+	concurrent_stack(concurrent_stack&& _That);
+	~concurrent_stack();
+	concurrent_stack& operator=(concurrent_stack&& _That);
 
 	// returns the top of the stack without removing the item from the stack
 	pointer peek() const;
@@ -93,19 +93,19 @@ private:
 	tagged_pointer<T> head;
 	char cache_line_padding[oCACHE_LINE_SIZE - sizeof(std::atomic_uintptr_t)];
 
-	concurrent_intrusive_stack(const concurrent_intrusive_stack&); /* = delete; */
-	const concurrent_intrusive_stack& operator=(const concurrent_intrusive_stack&); /* = delete; */
+	concurrent_stack(const concurrent_stack&); /* = delete; */
+	const concurrent_stack& operator=(const concurrent_stack&); /* = delete; */
 };
 
 template<typename T>
-concurrent_intrusive_stack<T>::concurrent_intrusive_stack()
+concurrent_stack<T>::concurrent_stack()
 {
 	for (char& c : cache_line_padding)
 		c = 0;
 }
 
 template<typename T>
-concurrent_intrusive_stack<T>::concurrent_intrusive_stack(concurrent_intrusive_stack&& _That)
+concurrent_stack<T>::concurrent_stack(concurrent_stack&& _That)
 {
 	head = std::move(_That.head);
 	for (char& c : cache_line_padding)
@@ -113,14 +113,14 @@ concurrent_intrusive_stack<T>::concurrent_intrusive_stack(concurrent_intrusive_s
 }
 
 template<typename T>
-concurrent_intrusive_stack<T>::~concurrent_intrusive_stack()
+concurrent_stack<T>::~concurrent_stack()
 {
 	if (!empty())
-		throw std::length_error("concurrent_intrusive_stack not empty");
+		throw std::length_error("concurrent_stack not empty");
 }
 
 template<typename T>
-typename concurrent_intrusive_stack<T>& concurrent_intrusive_stack<T>::operator=(concurrent_intrusive_stack&& _That)
+typename concurrent_stack<T>& concurrent_stack<T>::operator=(concurrent_stack&& _That)
 {
 	if (this != &_That)
 		head = std::move(_That.head);
@@ -128,7 +128,7 @@ typename concurrent_intrusive_stack<T>& concurrent_intrusive_stack<T>::operator=
 }
 
 template<typename T>
-void concurrent_intrusive_stack<T>::push(pointer element)
+void concurrent_stack<T>::push(pointer element)
 {
 	tagged_pointer<T> n, o(head); 
 	do 
@@ -139,14 +139,14 @@ void concurrent_intrusive_stack<T>::push(pointer element)
 }
 
 template<typename T>
-typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::peek() const
+typename concurrent_stack<T>::pointer concurrent_stack<T>::peek() const
 {
 	tagged_pointer<T> o(head);
 	return reinterpret_cast<pointer>(o.pointer());
 }
 
 template<typename T>
-typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::pop()
+typename concurrent_stack<T>::pointer concurrent_stack<T>::pop()
 {
 	tagged_pointer<T> n, o(head); 
 	pointer element = nullptr;
@@ -162,7 +162,7 @@ typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::p
 }
 
 template<typename T>
-bool concurrent_intrusive_stack<T>::pop(pointer* element)
+bool concurrent_stack<T>::pop(pointer* element)
 {
 	tagged_pointer<T> n, o(head); 
 	do 
@@ -177,14 +177,14 @@ bool concurrent_intrusive_stack<T>::pop(pointer* element)
 }
 
 template<typename T>
-bool concurrent_intrusive_stack<T>::empty() const
+bool concurrent_stack<T>::empty() const
 {
 	tagged_pointer<T> o(head);
 	return !o.pointer();
 }
 
 template<typename T>
-typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::pop_all()
+typename concurrent_stack<T>::pointer concurrent_stack<T>::pop_all()
 {
 	pointer element = nullptr;
 	tagged_pointer<T> n, o(head);
@@ -197,7 +197,7 @@ typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::p
 }
 
 template<typename T>
-typename concurrent_intrusive_stack<T>::size_type concurrent_intrusive_stack<T>::size()
+typename concurrent_stack<T>::size_type concurrent_stack<T>::size()
 {
 	pointer p = peek();
 	size_type n = 0;
