@@ -77,6 +77,10 @@ public:
 	// if there are no elements this return nullptr
 	pointer pop();
 
+	// if there are no elements this returns false, else it fills the address
+	// with a pointer to the element popped.
+	bool pop(pointer* element);
+
 	// returns true if no elements are in the stack
 	bool empty() const;
 
@@ -153,7 +157,23 @@ typename concurrent_intrusive_stack<T>::pointer concurrent_intrusive_stack<T>::p
 		element = reinterpret_cast<pointer>(o.pointer());
 		n = tagged_pointer<T>(element->next, o.tag() + 1);
 	} while (!head.cas(o, n));
+	element->next = nullptr;
 	return element;
+}
+
+template<typename T>
+bool concurrent_intrusive_stack<T>::pop(pointer* element)
+{
+	tagged_pointer<T> n, o(head); 
+	do 
+	{	o = head;
+		if (!o.pointer())
+			return false;
+		*element = reinterpret_cast<pointer>(o.pointer());
+		n = tagged_pointer<T>((*element)->next, o.tag() + 1);
+	} while (!head.cas(o, n));
+	(*element)->next = nullptr;
+	return true;
 }
 
 template<typename T>

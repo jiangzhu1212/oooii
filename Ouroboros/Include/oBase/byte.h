@@ -45,8 +45,8 @@ template<typename T, typename U> T* byte_add(T* _RelativePointer, U* _BasePointe
 template<typename T> T* byte_add(T* _Pointer, size_t _Stride, size_t _Count) { return reinterpret_cast<T*>(((char*)_Pointer) + _Stride * _Count); }
 template<typename T, typename U> ptrdiff_t byte_diff(T* t, U* u) { return (ptrdiff_t)((char*)t - (char*)u); }
 template<typename T> size_t byte_padding(T value, size_t alignment) { return oSizeT(static_cast<T>(byte_align(value, alignment)) - value); }
-inline size_t index_of(void* el, void* base, size_t elSize) { return byte_diff(el, base) / elSize; }
-template<typename T> size_t index_of(T* el, T* base) { return index_of(el, base, sizeof(T)); }
+inline size_t index_of(const void* el, const void* base, size_t elSize) { return byte_diff(el, base) / elSize; }
+template<typename T> size_t index_of(const T* el, const T* base) { return index_of(el, base, sizeof(T)); }
 template<typename T> bool is_pow2(const T& n) { return n ? (((n) & ((n)-1)) == 0) : false; }
 
 // from: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2

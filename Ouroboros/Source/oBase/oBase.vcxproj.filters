@@ -256,6 +256,9 @@
     <ClCompile Include="concurrent_hash.cpp">
       <Filter>Source\containers</Filter>
     </ClCompile>
+    <ClCompile Include="concurrent_registry.cpp">
+      <Filter>Source\containers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -504,12 +507,6 @@
     <ClInclude Include="..\..\Include\oBase\hash_map.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_stack.h">
-      <Filter>oBase\containers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_stack_traits.h">
-      <Filter>oBase\containers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\tagged_pointer.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
@@ -559,14 +556,14 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\memcfg.h">
-      <Filter>oBase\memory</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\bit.h">
       <Filter>oBase\memory</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\compiler_config.h">
       <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\concurrent_registry.h">
+      <Filter>oBase\containers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBase/assert.h>
 #include <oBase/allocate.h>
-#include <oBase/concurrent_stack.h>
+#include <oBase/concurrent_object_pool.h>
 #include <oBase/concurrent_intrusive_stack.h>
 #include <oBase/concurrency.h>
 #include <oBase/finally.h>
@@ -41,36 +41,6 @@ struct Node
 	Node* next;
 	size_t value;
 };
-
-static void test_basics()
-{
-	std::vector<char> buffer;
-	buffer.resize(concurrent_stack<Node, concurrent_stack_traits32>::calc_size(5));
-	concurrent_stack<Node, concurrent_stack_traits32> s(buffer.data(), 5);
-	oCHECK(s.empty(), "Stack should be empty (init)");
-
-	for (size_t i = 0; i < 5; i++)
-	{
-		Node n;
-		n.next = nullptr;
-		n.value = i;
-		s.push(n);
-	}
-
-	oCHECK(s.size() == 5, "Stack size is not correct");
-
-	Node n;
-	oCHECK(s.pop(n), "Stack should not be empty (pop 1)");
-	oCHECK(n.value == 4, "Stack value is not correct (pop 1)");
-
-	oCHECK(s.pop(n), "Stack should not be empty (pop 2)");
-	oCHECK(n.value == 3, "Stack value is not correct (pop 2)");
-
-	oCHECK(s.pop(n), "Stack should not be empty (pop 3)");
-	oCHECK(s.pop(n), "Stack should not be empty (pop 4)");
-	oCHECK(s.pop(n), "Stack should not be empty (pop 5)");
-	oCHECK(s.empty(), "Stack should be empty (after pops)");
-}
 
 static void test_intrusive_basics()
 {
@@ -118,45 +88,6 @@ static void test_intrusive_basics()
 	}
 }
 
-static void test_concurrency()
-{
-	typedef concurrent_stack<Node> stack_t;
-
-	std::vector<char> buffer;
-	buffer.resize(stack_t::calc_size(60));
-	stack_t s(buffer.data(), 60);
-
-	ouro::parallel_for(0, s.capacity(), [&](size_t _Index)
-	{
-		Node n;
-		n.value = _Index;
-		s.push(n);
-	});
-
-	oCHECK(s.capacity() == s.size(), "not all pushes worked");
-
-	s.pop_all_and_enumerate([&](stack_t::reference _Value, void* _pUserData)
-	{
-		oTRACEA("Enumerate %d", _Value.value);
-
-	}, nullptr, 10);
-
-	oCHECK(s.size() == s.capacity() - 10, "pop_all didn't reinsert correctly");
-	
-	Node n;
-	size_t count = 0;
-	while (s.pop(n))
-		count++;
-
-	//ouro::parallel_for(0, s.capacity() - 10, [&](size_t _Index)
-	//{
-	//	Node n;
-	//	oCHECK(s.pop(n), "A pop failed unexpectedly");
-	//});
-	
-	oCHECK(s.empty(), "Stack should be empty");
-}
-
 static void test_intrusive_concurrency()
 {
 	Node* nodes = (Node*)default_allocate(sizeof(Node) * 40, memory_alignment::align_to_8);
@@ -199,8 +130,6 @@ static void test_intrusive_concurrency()
 
 void TESTconcurrent_stack()
 {
-	test_basics();
-	test_concurrency();
 	test_intrusive_basics();
 	test_intrusive_concurrency();
 }

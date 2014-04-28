@@ -59,7 +59,7 @@ public:
 	concurrent_object_pool(size_type capacity) : concurrent_pool(sizeof(T), capacity) {}
 	~concurrent_object_pool() { ((concurrent_pool*)this)->~concurrent_pool(); }
 	concurrent_object_pool& operator=(concurrent_object_pool&& _That) { return (concurrent_object_pool&)concurrent_pool::operator=(std::move((concurrent_pool&&)_That)); }
-	index_type initialize(void* memory, size_type capacity) { return initialize(memory, sizeof(T), capacity); }
+	index_type initialize(void* memory, size_type capacity) { return concurrent_pool::initialize(memory, sizeof(T), capacity); }
 	size_type initialize(size_type capacity) { return concurrent_pool::initialize(sizeof(T), capacity); }
 
 	// concurrent api
@@ -67,6 +67,8 @@ public:
 	// define destroy(T* p) which calls the dtor before deallocating
 	// define create( ... ) which takes whatever ctor parameters type T provides
 	oCONCURRENT_OBJECT_POOL_CREATE_DESTROY
+
+	T* typed_pointer(index_type index) const { return (T*)concurrent_pool::pointer(index); }
 
 private:
 	concurrent_object_pool(const concurrent_object_pool&); /* = delete; */

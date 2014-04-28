@@ -62,6 +62,9 @@ public:
 	// dtor
 	~concurrent_hash_map();
 
+	// calls deinit on this, moves that's memory under the same config
+	concurrent_hash_map& operator=(concurrent_hash_map&& _That);
+
 	// initialize the hash map with external memory. Returns required 
 	// size for the specified capacity. Pass nullptr for memory to 
 	// calculate the size only. Note: This calculates size for optimal 
@@ -128,7 +131,6 @@ private:
 	void* values;
 
 	concurrent_hash_map(const concurrent_hash_map&);
-	concurrent_hash_map& operator=(concurrent_hash_map&&);
 	const concurrent_hash_map& operator=(const concurrent_hash_map&);
 };
 
