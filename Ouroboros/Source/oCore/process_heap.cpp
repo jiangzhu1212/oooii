@@ -205,7 +205,7 @@ void context::collect_garbage()
 			frees.push_back(pair.second.pointer);
 
 	// in LIFO order
-	std::sort(std::begin(frees), std::end(frees));
+	std::sort(std::begin(frees), std::end(frees), std::greater<const void*>());
 
 	for (void* p : frees)
 		deallocate(p);
