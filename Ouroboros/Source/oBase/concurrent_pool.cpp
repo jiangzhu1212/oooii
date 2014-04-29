@@ -26,7 +26,6 @@
 #include <oBase/allocate.h>
 #include <oBase/bit.h>
 #include <oBase/byte.h>
-#include <oBase/compiler_config.h>
 #include <oBase/macros.h>
 #include <stdexcept>
 
