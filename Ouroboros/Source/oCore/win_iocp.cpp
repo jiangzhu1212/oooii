@@ -205,6 +205,14 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 
 iocp_threadpool::~iocp_threadpool()
 {
+	// there was a race condition where the leak tracker was inside crt malloc, which was holding a mutex, then
+	// iocp threads would do something that triggered an init of a static mutex, which tried to load concrt which
+	// then would grab the crt mutex and deadlock on malloc's mutex. To get around this, all iocp threads should
+	// be dead before static deinit - but that's app-specific. I just fixed a bug in process_heap destruction order
+	// that may make the issue go away, so join here for now and see if the race condition pops back up.
+	// If it doesn't, look for exposed uses of join (filesystem) and remove them to simplify user requirements.
+	join();
+
 	if (joinable())
 		std::terminate();
 
