@@ -155,8 +155,10 @@ void TESTfilesystem_async(test_services& _Services)
 	timer t;
 	for (int i = 0; i < 32; i++)
 	{
-		load_async(TestPath, [&,i](const path& _Path, scoped_allocation& _Buffer, size_t _Size)
+		load_async(TestPath, [&,i](const path& _Path, scoped_allocation& _Buffer, size_t _Size, const std::system_error* _pError)
 		{
+			if (_pError)
+				return;
 			size_t s = _Size;
 			char* p = (char*)_Buffer;
 			e.set(1<<i);

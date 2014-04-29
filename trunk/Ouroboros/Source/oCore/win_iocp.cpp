@@ -211,7 +211,8 @@ iocp_threadpool::~iocp_threadpool()
 	// be dead before static deinit - but that's app-specific. I just fixed a bug in process_heap destruction order
 	// that may make the issue go away, so join here for now and see if the race condition pops back up.
 	// If it doesn't, look for exposed uses of join (filesystem) and remove them to simplify user requirements.
-	join();
+	if (joinable())
+		join();
 
 	if (joinable())
 		std::terminate();
