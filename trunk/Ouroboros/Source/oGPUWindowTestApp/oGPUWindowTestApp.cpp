@@ -42,234 +42,6 @@
 #include <oGPU/oGPUUtil.h>
 #include <oGPU/oGPUUtilMesh.h>
 
-#if 0
-// everything is a lib of multiple assets
-
-// 1. request load
-// 2. async load calls cont
-// 3. cont calls forker -> forker analyzes file format for subassets
-// 4. for each asset, call compile(type, file, subtypeptr)
-// 5. each asset once compiled queues binary
-
-
-
-class asset_factory_interface
-{
-public:
-	virtual int get_type(const path& _Path) const = 0;
-	virtual int default_asset(int _Type) const = 0;
-	virtual int error_asset(int _Type) const = 0;
-
-	virtual void* allocate(size_t _NumBytes, unsigned int _Options) = 0;
-	virtual void deallocate(const void* _Pointer) = 0;
-
-	virtual scoped_allocation compile(int _Type, scoped_allocation& _MemFile) = 0;
-	virtual void* make_device_object(int _Type, scoped_allocation& _Compiled) = 0;
-	virtual void update_device_object(int _Type, void* _pDeviceObject) = 0;
-	virtual void unmake_device_object(int _Type, void* _pDeviceObject) = 0;
-};
-
-
-namespace asset_type
-{	enum value {
-
-	unknown = 0, // required value
-
-	shader,
-	texture,
-
-	count,
-
-};}
-
-void* asset_allocate(size_t _NumBytes, unsigned int _Options)
-{
-	allocate_options o; o.options = _Options;
-	memory_type::value MemType = o.type;
-	int AssetType = o.extra;
-	size_t alignment = o.get_alignment();
-
-	switch (AssetType)
-	{
-		case asset_type::shader:
-		case asset_type::texture:
-			break;
-	}
-
-	return malloc(_NumBytes);
-};
-
-void asset_deallocate(const void* _Pointer)
-{
-	free(const_cast<void*>(_Pointer));
-}
-
-scoped_allocation asset_compile(int _Type, scoped_allocation& _MemFile)
-{
-	switch (_Type)
-	{
-		case asset_type::shader:
-			// for each entry, compile entry... each needs to be its own scoped_allocations
-			// though I could allocate an array of binaries
-			break;
-		case asset_type::texture:
-
-			// pump allocator through surface code
-			std::shared_ptr<buffer> compiled = decode(_MemFile, _MemFile.size());
-			break;
-	}
-}
-
-
-class asset_manager
-{
-public:
-	int load(const path& _Path);
-
-	std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size)> OnLoaded;
-};
-
-asset_manager::asset_manager()
-{
-	OnLoaded = std::bind(&asset_manager::on_loaded, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
-};
-
-void asset_manager::on_loaded(const path& _Path, scoped_allocation& _Buffer, size_t _Size)
-{
-	oTRACEA("Load complete: %s %u bytes", _Path.c_str(), _Size);
-}
-
-int asset_manager::load(const path& _Path)
-{
-	bool IsNew = false;
-	int& id = *Lookup.get_existing_or_new_ptr(_Path.hash(), &IsNew);
-	if (IsNew) id = Pool.allocate();
-
-	auto& runtime = RuntimeEntries[id];
-	auto& lifetime = LifetimeEntries[id];
-	auto modified = filesystem::last_write_time(_Path);
-	
-	if (modified != lifetime.modified)
-	{
-		runtime.type = get_type(_Path);
-		runtime.state = asset_state::loading;
-		lifetime.modified = modified;
-		lifetime.path = _Path;
-		filesystem::load_async(_Path, OnLoaded, is_text(runtime.type) ? filesystem::load_option::text_read : filesystem::load_option::binary_read, Allocator);
-	}
-
-	return id;
-}
-
-bool asset_manager::reload(const char& _Path)
-{
-	bool IsNew = false;
-	int& id = *Lookup.get_existing_or_new_ptr(_Path.hash(), &IsNew);
-	if (IsNew) return false;
-
-	auto& runtime = RuntimeEntries[id];
-	auto& lifetime = LifetimeEntries[id];
-	auto modified = filesystem::last_write_time(_Path);
-	
-	if (modified != lifetime.modified)
-	{
-		runtime.type = get_type(_Path);
-		runtime.state = asset_state::loading;
-		lifetime.modified = modified;
-		lifetime.path = _Path;
-		filesystem::load_async(_Path, OnLoaded, is_text(runtime.type) ? filesystem::load_option::text_read : filesystem::load_option::binary_read, Allocator);
-		return true;
-	}
-
-	return false;
-}
-
-void asset_manager::reload(int _ID)
-{
-	if (!Pool.valid(_ID))
-		throw std::invalid_argument("invalid id");
-	auto& runtime RuntimeEntries[_ID];
-	auto& lifetime LifetimeEntries[_ID];
-
-	auto modified = filesystem::last_write_time(lifetime.Path);
-	
-	if (modified != lifetime.modified)
-	{
-		runtime.state = asset_state::loading;
-		lifetime.modified = modified;
-		filesystem::load_async(lifetime.Path, OnLoaded, is_text(runtime.type) ? filesystem::load_option::text_read : filesystem::load_option::binary_read, Allocator);
-	}
-}
-
-int asset_manager::make(const path& _Path, scoped_allocation& _Compiled)
-{
-	bool IsNew = false;
-	int id = *Lookup.get_existing_or_new_ptr(_Path.hash(), &IsNew);
-	if (!IsNew)
-		return invalid;
-
-	auto& runtime = RuntimeEntries[id];
-	auto& lifetime = LifetimeEntries[id];
-
-	lifetime.modified = time(nullptr);
-	lifetime.path = _Path;
-	runtime.state = asset_state::make_queued;
-	runtime.type = get_type(_Path);
-	runtime.entry = std::move(_Compiled);
-	MakeQueue.push(id);
-	return id;
-}
-
-bool asset_manager::update(int _ID, scoped_allocation& _Compiled)
-{
-	bool IsNew = false;
-	int id = *Lookup.get_existing_or_new_ptr(_Path.hash(), &IsNew);
-	if (IsNew) return false;
-
-	auto& runtime = RuntimeEntries[id];
-	auto& lifetime = LifetimeEntries[id];
-
-	lifetime.modified = time(nullptr);
-	runtime.entry = std::move(_Compiled);
-	runtime.state = asset_state::update_queued;
-	UpdateQueue.push(id);
-	return id;
-}
-
-void asset_manager::remove(int _ID)
-{
-	if (!Pool.valid(_ID))
-		throw std::invalid_argument("invalid id");
-	auto& runtime = RuntimeEntries[_ID];
-	runtime.state = asset_state::unmake_queued;
-	UnmakeQueue.push(_ID);
-}
-
-void asset_manager::flush_lifetimes(unsigned int _MaxNumMakes, unsigned int _MaxNumUnmakes)
-{
-	int id = invalid;
-	while (_MaxNumUnmakes && UnmakeQueue.pop(id))
-	{
-		auto& runtime = RuntimeEntries[id];
-		auto& lifetime = LifetimeEntries[id];
-		oASSERT(runtime.state == asset_state::unmake_queued, "");
-		unmake(lifetime.type, runtime.entry);
-		_MaxNumUnmakes--;
-	}
-	
-	while (_MaxNumMakes > 0 && MakeQueue.pop(id))
-	{
-		auto& runtime = RuntimeEntries[id];
-		auto& lifetime = LifetimeEntries[id];
-		oASSERT(runtime.state == asset_state::update_queued, "");
-		runtime.entry = std::move(make(lifetype.type, runtime.entry));
-		_MaxNumMakes--;
-	}
-}
-
-
-#endif
-
 using namespace ouro;
 using namespace ouro::windows::gdi;
 
@@ -904,7 +676,6 @@ void enumerate_shader_entries(const char* _ShaderSourceString, const std::functi
 				{
 					Stage = gpu::pipeline_stage::value(Profile - sProfiles);
 					_Enumerator(Entry, Stage);
-			
 				}
 			}
 		}
@@ -912,22 +683,28 @@ void enumerate_shader_entries(const char* _ShaderSourceString, const std::functi
 	}
 }
 
-void ShaderOnLoaded(const path& _Path, scoped_allocation& _Buffer, size_t _Size)
+void ShaderOnLoaded(const path& _Path, scoped_allocation& _Buffer, size_t _Size, const std::system_error* _pError)
 {
+	if (_pError)
+	{
+		oTRACEA("Load '%s' failed: %s", _Path.c_str(), _pError->what());
+		return;
+	}
+
+	lstring IncludePaths, Defines;
+	IncludePaths += filesystem::dev_path() / "Ouroboros/Include;";
+
 	enumerate_shader_entries((char*)_Buffer, [&](const char* _EntryPoint, gpu::pipeline_stage::value _Stage)
 	{
 		try
 		{
-			lstring IncludePaths, Defines;
-			IncludePaths += "C:/dev/oooii/Ouroboros/Include;";
-
 			scoped_allocation bytecode = gpu::compile_shader(IncludePaths, Defines, _Path, _Stage, _EntryPoint, (const char*)_Buffer);
 			oTRACEA("Insert \"%s\" from %s", _EntryPoint, _Path.c_str());
 		}
 			
-		catch (std::exception&)
+		catch (std::exception& e)
 		{
-			//oTRACEA("%s Error: %s", _EntryPoint, e.what());
+			oTRACEA("%s Error: %s", _EntryPoint, e.what());
 		}
 
 	});
@@ -941,8 +718,9 @@ int main(int argc, const char* argv[])
 	// jist: load the library file knowing all registries where content will go.
 	// there is a registry per shader type. Shaders are registered by entry point 
 	// name.
-	filesystem::load_async("C:/dev/oooii/Ouroboros/Source/oGfx/oGfxShaders.hlsl"
-		, std::bind(ShaderOnLoaded, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
+
+	filesystem::load_async(filesystem::dev_path() / "Ouroboros/Source/oGfx/oGfxShaders.hlsl"
+		, std::bind(ShaderOnLoaded, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4)
 		, filesystem::load_option::text_read);
 
 	oGPUWindowTestApp App;
