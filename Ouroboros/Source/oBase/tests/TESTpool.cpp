@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/pool.h>
-#include <oBase/concurrency.h>
+#include <oBase/object_pool.h>
 #include <oBase/throw.h>
 #include <vector>
 
@@ -58,16 +58,16 @@ static void test_index_pool()
 	const size_t CAPACITY = 4;
 	std::vector<unsigned int> buffer(256, 0xcccccccc);
 
-	IndexPoolT a(buffer.data(), CAPACITY);
+	IndexPoolT a(buffer.data(), sizeof(unsigned int), CAPACITY);
 
-	oCHECK(a.empty(), "index_allocator did not initialize correctly.");
+	oCHECK(a.full(), "index_allocator did not initialize correctly.");
 	oCHECK(a.capacity() == CAPACITY, "Capacity mismatch.");
 
 	unsigned int index[4];
 	oFORI(i, index)
 		index[i] = a.allocate();
 
-	oCHECK(a.invalid_index == a.allocate(), "allocate succeed past allocator capacity");
+	oCHECK(a.nullidx == a.allocate(), "allocate succeed past allocator capacity");
 
 	oFORI(i, index)
 		oCHECK(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);
@@ -77,7 +77,7 @@ static void test_index_pool()
 	a.deallocate(index[2]);
 	a.deallocate(index[3]);
 
-	oCHECK(a.empty(), "A deallocate failed.");
+	oCHECK(a.full(), "A deallocate failed.");
 }
 
 template<typename test_block_poolT>
@@ -88,24 +88,24 @@ static void test_allocate()
 	std::vector<char> scopedArena(BlockSize * NumBlocks);
 	
 	test_block_poolT Allocator(scopedArena.data(), NumBlocks);
-	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after init)", NumBlocks);
+	oCHECK(NumBlocks == Allocator.size_free(), "There should be %u available blocks (after init)", NumBlocks);
 
 	void* tests[NumBlocks];
 	for (size_t i = 0; i < NumBlocks; i++)
 	{
-		tests[i] = Allocator.allocate_ptr();
+		tests[i] = Allocator.allocate_pointer();
 		oCHECK(tests[i], "test_obj %u should have been allocated", i);
 	}
 
-	void* shouldBeNull = Allocator.allocate_ptr();
+	void* shouldBeNull = Allocator.allocate_pointer();
 	oCHECK(!shouldBeNull, "Allocation should have failed");
 
-	oCHECK(0 == Allocator.count_available(), "There should be 0 available blocks");
+	oCHECK(0 == Allocator.size_free(), "There should be 0 available blocks");
 
 	for (size_t i = 0; i < NumBlocks; i++)
 		Allocator.deallocate(tests[i]);
 
-	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after deallocate)", NumBlocks);
+	oCHECK(NumBlocks == Allocator.size_free(), "There should be %u available blocks (after deallocate)", NumBlocks);
 }
 
 template<typename test_obj_poolT>
@@ -131,13 +131,13 @@ static void test_create()
 		oCHECK(testdestroyed[i] == true, "test_obj %u should have been destroyed", i);
 	}
 
-	oCHECK(NumBlocks == Allocator.count_available(), "There should be %u available blocks (after deallocate)", NumBlocks);
+	oCHECK(NumBlocks == Allocator.size_free(), "There should be %u available blocks (after deallocate)", NumBlocks);
 }
 
 void TESTpool()
 {
-	test_index_pool<pool<unsigned int>>();
-	test_allocate<pool<test_obj>>();
+	test_index_pool<pool>();
+	test_allocate<object_pool<test_obj>>();
 	test_create<object_pool<test_obj>>();
 }
 
