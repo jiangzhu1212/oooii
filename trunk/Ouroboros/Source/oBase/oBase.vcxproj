@@ -76,6 +76,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="plane.cpp" />
+    <ClCompile Include="pool.cpp" />
     <ClCompile Include="quat.cpp" />
     <ClCompile Include="rgb.cpp" />
     <ClCompile Include="scc.cpp" />
@@ -195,6 +196,7 @@
     <ClInclude Include="..\..\Include\oBase\memory.h" />
     <ClInclude Include="..\..\Include\oBase\moving_average.h" />
     <ClInclude Include="..\..\Include\oBase\murmur3.h" />
+    <ClInclude Include="..\..\Include\oBase\object_pool.h" />
     <ClInclude Include="..\..\Include\oBase\operators.h" />
     <ClInclude Include="..\..\Include\oBase\opttok.h" />
     <ClInclude Include="..\..\Include\oBase\path.h" />
