@@ -116,6 +116,7 @@ context::context()
 
 context::~context()
 {
+	std::set_terminate(nullptr);
 }
 
 oDEFINE_PROCESS_SINGLETON("ouro::reporting", context);
