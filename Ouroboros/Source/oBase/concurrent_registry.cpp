@@ -23,6 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/concurrent_registry.h>
+#include <oBase/byte.h>
+
 namespace ouro {
 
 namespace state
