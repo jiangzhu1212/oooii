@@ -161,7 +161,7 @@ void gpu_texture_test::render()
 	CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 	CommandList->set_surface_state(surface_state::front_face);
 	CommandList->set_buffer(0, TestConstants);
-	CommandList->set_sampler(0, sampler_type::linear_wrap);
+	CommandList->set_sampler(0, sampler_state::linear_wrap);
 	CommandList->set_shader_resource(0, Texture);
 	CommandList->set_pipeline(Pipeline);
 	CommandList->set_render_target(PrimaryRenderTarget);

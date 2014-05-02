@@ -79,7 +79,7 @@ void oGfxPickBuffer::PDraw(command_list* _pCommandList, texture* _pPickRenderTar
 	_pCommandList->set_shader_resource(1, PicksInput);
 
 	// @oooii-jeffrey: Shouldn't this be for both textures?
-	sampler_type::value state = sampler_type::point_clamp;
+	sampler_state::value state = sampler_state::point_clamp;
 	_pCommandList->set_samplers(1, 1, &state);
 	_pCommandList->set_unordered_resource(0, PicksOutput);
 	_pCommandList->dispatch(PickResourceShader, int3(1, 1, 1));

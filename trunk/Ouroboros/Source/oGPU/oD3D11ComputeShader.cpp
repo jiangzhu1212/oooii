@@ -34,7 +34,7 @@ oDEVICE_CHILD_CTOR(compute_kernel)
 	if (!_Info.cs)
 		oTHROW_INVARG("A buffer of valid compute shader bytecode must be specified");
 	oD3D11_DEVICE();
-	ComputeShader = make_compute_shader(D3DDevice, _Info.cs, _Info.debug_name);
+	ComputeShader = (ID3D11ComputeShader*)make_shader(_Device.get(), shader_type::compute, _Info.cs, _Info.debug_name);
 }
 
 compute_kernel_info d3d11_compute_kernel::get_info() const

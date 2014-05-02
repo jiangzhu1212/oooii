@@ -36,11 +36,13 @@ namespace ouro {
 oDECLARE_HANDLE(vertex_layout);
 
 class device;
-class device_context;
+class command_list;
 
 vertex_layout make_vertex_layout(device* _pDevice, mesh::layout_array& _VertexLayouts, const void* _pVSByteCode);
 
 void unmake_vertex_layout(vertex_layout _VertexLayout);
+
+void bind_vertex_layout(command_list* _pCommandList, vertex_layout _VertexLayout);
 
 #ifndef oHLSL
 	} // namespace gpu

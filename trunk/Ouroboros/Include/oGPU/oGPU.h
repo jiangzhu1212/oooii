@@ -39,7 +39,10 @@
 #include <oSurface/buffer.h>
 #include <array>
 
+#include <oGPU/sampler.h>
 #include <oGPU/shader.h>
+#include <oGPU/vertex_layout.h>
+#include <oGPU/vertex_layouts.h>
 
 #include <oGUI/oGUI.h> // only for ouro::draw_context_handle... can it be abstracted
 
@@ -208,7 +211,7 @@ class device;
 
 // Main SW abstraction for a single thread of graphics command preparation. This object
 // is defined below since it uses all other objecsts defined in this header.
-class device_context;
+class command_list;
 
 class device_child
 {
@@ -634,73 +637,6 @@ namespace blend_state
 
 };}
 
-namespace sampler_type
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	// Use 100% of the texel nearest to the sample point. If the sample is outside 
-	// the texture, use an edge texel.
-	point_clamp, 
-	
-	// Use 100% of the texel nearest to the sample point. Use only the fractional 
-	// part of the sample point.
-	point_wrap,
-	
-	// Trilinear sample texels around sample point. If the sample is outside the 
-	// texture, use an edge texel.
-	linear_clamp,
-	
-	// Trilinear sample texels around sample point. Use only the fractional part 
-	// of the sample point.
-	linear_wrap,
-	
-	// Anisotropically sample texels around sample point. If the sample is outside 
-	// the texture, use an edge texel.
-	aniso_clamp,
-	
-	// Anisotropically sample texels around sample point. Use only the fractional 
-	// part of the sample point.
-	aniso_wrap,
-
-	// Same as above, but with a mip bias that evaluates to one mip level higher
-	// than that which is ideal for hardware. (sharper, more shimmer)
-	point_clamp_bias_up1,
-	point_wrap_bias_up1,
-	linear_clamp_bias_up1,
-	linear_wrap_bias_up1,
-	aniso_clamp_bias_up1,
-	aniso_wrap_bias_up1,
-
-	// Same as above, but with a mip bias that evaluates to one mip level lower
-	// than that which is ideal for hardware. (blurrier, less shimmer)
-	point_clamp_bias_down1,
-	point_wrap_bias_down1,
-	linear_clamp_bias_down1,
-	linear_wrap_bias_down1,
-	aniso_clamp_bias_down1,
-	aniso_wrap_bias_down1,
-
-	// Same as above, but with a mip bias that evaluates to two mip levels higher
-	// than that which is ideal for hardware. (shader, more shimmer)
-	point_clamp_bias_up2,
-	point_wrap_bias_up2,
-	linear_clamp_bias_up2,
-	linear_wrap_bias_up2,
-	aniso_clamp_bias_up2,
-	aniso_wrap_bias_up2,
-
-	// Same as above, but with a mip bias that evaluates to two mip levels lower
-	// than that which is ideal for hardware. (blurrier, less shimmer)
-	point_clamp_bias_down2,
-	point_wrap_bias_down2,
-	linear_clamp_bias_down2,
-	linear_wrap_bias_down2,
-	aniso_clamp_bias_down2,
-	aniso_wrap_bias_down2,
-
-	count,
-
-};}
-
 namespace pipeline_stage
 { oDECLARE_SMALL_ENUM(value, uchar) {
 	
@@ -873,8 +809,8 @@ public:
 	inline void set_counters(resource* _pResource, uint _Value) { set_counters(1, &_pResource, &_Value); }
 
 	// Set the texture sampler states in this context
-	virtual void set_samplers(uint _StartSlot, uint _NumStates, const sampler_type::value* _pSamplerState) = 0;
-	inline void set_sampler(uint _StartSlot, const sampler_type::value& _SamplerState) { set_samplers(_StartSlot, 1, &_SamplerState); }
+	virtual void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) = 0;
+	inline void set_sampler(uint _StartSlot, const sampler_state::value& _SamplerState) { set_samplers(_StartSlot, 1, &_SamplerState); }
 
 	// Set any shader resources (textures or buffers not accessed as constants)
 	virtual void set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources) = 0;

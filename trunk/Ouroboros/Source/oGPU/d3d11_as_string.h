@@ -22,53 +22,22 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Include interface to pass to D3DCompile
+// as_string for d3d11 enums
 #pragma once
-#ifndef oGPU_d3d_types_h
-#define oGPU_d3d_types_h
+#ifndef oGPU_d3d11_as_string_h
+#define oGPU_d3d11_as_string_h
 
-struct ID3D11Device;
-struct ID3D11DeviceChild;
-struct ID3D11DeviceContext;
-struct ID3D11SamplerState;
-struct ID3D11InputLayout;
-struct ID3D11VertexShader;
-struct ID3D11HullShader;
-struct ID3D11DomainShader;
-struct ID3D11GeometryShader;
-struct ID3D11PixelShader;
-struct ID3D11ComputeShader;
-struct ID3D11Resource;
-struct ID3D11Buffer;
-struct ID3D11Texture1D;
-struct ID3D11Texture2D;
-struct ID3D11Texture3D;
-struct ID3D11Query;
+#include <d3d11.h>
 
 namespace ouro {
-	namespace gpu {
-		namespace d3d {
 
-typedef ID3D11Device Device;
-typedef ID3D11DeviceChild DeviceChild;
-typedef ID3D11DeviceContext DeviceContext;
-typedef ID3D11SamplerState SamplerState;
-typedef ID3D11InputLayout InputLayout;
-typedef ID3D11VertexShader VertexShader;
-typedef ID3D11HullShader HullShader;
-typedef ID3D11DomainShader DomainShader;
-typedef ID3D11GeometryShader GeometryShader;
-typedef ID3D11PixelShader PixelShader;
-typedef ID3D11ComputeShader ComputeShader;
-typedef ID3D11Resource Resource;
-typedef ID3D11Buffer Buffer;
-typedef ID3D11Texture1D Texture1D;
-typedef ID3D11Texture2D Texture2D;
-typedef ID3D11Texture3D Texture3D;
-typedef ID3D11Query Query;
+const char* as_string(const D3D11_BIND_FLAG& _Flag);
+const char* as_string(const D3D11_CPU_ACCESS_FLAG& _Flag);
+const char* as_string(const D3D11_RESOURCE_MISC_FLAG& _Flag);
+const char* as_string(const D3D11_RESOURCE_DIMENSION& _Type);
+const char* as_string(const D3D11_UAV_DIMENSION& _Type);
+const char* as_string(const D3D11_USAGE& _Usage);
 
-		} // namespace d3d
-	} // namespace gpu
 } // namespace ouro
 
 #endif

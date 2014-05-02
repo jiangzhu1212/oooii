@@ -46,7 +46,7 @@ oDECLARE_DERIVED_HANDLE(shader, pixel_shader);
 oDECLARE_DERIVED_HANDLE(shader, compute_shader);
 
 class device;
-class device_context;
+class command_list;
 
 namespace shader_type
 { oDECLARE_SMALL_ENUM(value, uchar) {
@@ -74,33 +74,33 @@ struct pipeline
 };
 
 // Binds the shader for use during subsequent draw calls
-void bind_shader(device_context* _pContext, vertex_shader _Shader);
-void bind_shader(device_context* _pContext, hull_shader _Shader);
-void bind_shader(device_context* _pContext, domain_shader _Shader);
-void bind_shader(device_context* _pContext, geometry_shader _Shader);
-void bind_shader(device_context* _pContext, pixel_shader _Shader);
-void bind_shader(device_context* _pContext, compute_shader _Shader);
+void bind_shader(command_list* _pCommandList, vertex_shader _Shader);
+void bind_shader(command_list* _pCommandList, hull_shader _Shader);
+void bind_shader(command_list* _pCommandList, domain_shader _Shader);
+void bind_shader(command_list* _pCommandList, geometry_shader _Shader);
+void bind_shader(command_list* _pCommandList, pixel_shader _Shader);
+void bind_shader(command_list* _pCommandList, compute_shader _Shader);
 
-inline void bind_shader(device_context* _pContext, const shader_type::value& _Type, shader _Shader)
+inline void bind_shader(command_list* _pCommandList, const shader_type::value& _Type, shader _Shader)
 {	switch (_Type)
-	{	case shader_type::vertex: bind_shader(_pContext, (vertex_shader)_Shader); break;
-		case shader_type::hull: bind_shader(_pContext, (hull_shader)_Shader); break;
-		case shader_type::domain: bind_shader(_pContext, (domain_shader)_Shader); break;
-		case shader_type::geometry: bind_shader(_pContext, (geometry_shader)_Shader); break;
-		case shader_type::pixel: bind_shader(_pContext, (pixel_shader)_Shader); break;
-		case shader_type::compute: bind_shader(_pContext, (compute_shader)_Shader); break;
+	{	case shader_type::vertex: bind_shader(_pCommandList, (vertex_shader)_Shader); break;
+		case shader_type::hull: bind_shader(_pCommandList, (hull_shader)_Shader); break;
+		case shader_type::domain: bind_shader(_pCommandList, (domain_shader)_Shader); break;
+		case shader_type::geometry: bind_shader(_pCommandList, (geometry_shader)_Shader); break;
+		case shader_type::pixel: bind_shader(_pCommandList, (pixel_shader)_Shader); break;
+		case shader_type::compute: bind_shader(_pCommandList, (compute_shader)_Shader); break;
 	};
 }
 
 // binds all rasterization shaders at once
-inline void bind_shaders(device_context* _pContext, const pipeline& _Pipeline)
+inline void bind_shaders(command_list* _pCommandList, const pipeline& _Pipeline)
 {
 	const shader* s = (shader*)&_Pipeline;
-	bind_shader(_pContext, _Pipeline.vs);
-	bind_shader(_pContext, _Pipeline.hs);
-	bind_shader(_pContext, _Pipeline.ds);
-	bind_shader(_pContext, _Pipeline.gs);
-	bind_shader(_pContext, _Pipeline.ps);
+	bind_shader(_pCommandList, _Pipeline.vs);
+	bind_shader(_pCommandList, _Pipeline.hs);
+	bind_shader(_pCommandList, _Pipeline.ds);
+	bind_shader(_pCommandList, _Pipeline.gs);
+	bind_shader(_pCommandList, _Pipeline.ps);
 }
 
 // Creates a runtime object for the shader described by the specified bytecode.

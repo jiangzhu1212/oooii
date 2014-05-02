@@ -57,7 +57,7 @@ oDEVICE_CHILD_CLASS(command_list)
 	void copy(buffer* _pDestination, uint _DestinationOffsetBytes, buffer* _pSource, uint _SourceOffsetBytes, uint _SizeBytes) override;
 	void copy_counter(buffer* _pDestination, uint _DestinationAlignedOffset, buffer* _pUnorderedSource) override;
 	void set_counters(uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pValues) override;
-	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_type::value* _pSamplerState) override;
+	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) override;
 	void set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources) override;
 	void set_buffers(uint _StartSlot, uint _NumBuffers, const buffer* const* _ppBuffers) override;
 	void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
