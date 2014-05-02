@@ -122,7 +122,7 @@ void enumerate_shader_entries(const char* _ShaderSourceString, const std::functi
 	}
 }
 
-void shader_on_loaded(concurrent_registry& _Registry, const path& _Path, scoped_allocation& _Buffer, size_t _Size, const std::system_error* _pError)
+void shader_on_loaded(concurrent_registry& _Registry, const path& _Path, scoped_allocation& _Buffer, const std::system_error* _pError)
 {
 	if (_pError)
 	{
@@ -291,7 +291,7 @@ oGPUWindowThread::oGPUWindowThread()
 	// there is a registry per shader type. Shaders are registered by entry point 
 	// name.
 	filesystem::load_async("C:/dev/oooii/Ouroboros/Source/oGfx/oGfxShaders.hlsl"
-		, std::bind(shader_on_loaded, std::ref(PixelShaders), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4)
+		, std::bind(shader_on_loaded, std::ref(PixelShaders), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 		, filesystem::load_option::text_read);
 }
 

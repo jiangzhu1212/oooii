@@ -806,7 +806,7 @@ scoped_allocation load(const path& _Path, load_option::value _LoadOption, const 
 
 struct iocp_file
 {
-	iocp_file(const path& _Path, const allocator& _Allocator, const std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size, const std::system_error* _pError)>& _OnComplete)
+	iocp_file(const path& _Path, const allocator& _Allocator, const std::function<void(const path& _Path, scoped_allocation& _Buffer, const std::system_error* _pError)>& _OnComplete)
 		: overlapped(nullptr)
 		, handle(INVALID_HANDLE_VALUE)
 		, file_size(0)
@@ -834,7 +834,7 @@ struct iocp_file
 	allocator allocator;
 	long error_code;
 	open open_type;
-	std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size, const std::system_error* _pError)> completion;
+	std::function<void(const path& _Path, scoped_allocation& _Buffer, const std::system_error* _pError)> completion;
 };
 
 static void iocp_close(iocp_file* f, unsigned long long _Unused = 0)
@@ -849,13 +849,21 @@ static void iocp_close(iocp_file* f, unsigned long long _Unused = 0)
 
 	if (f->completion)
 	{
+		if (!f->error_code)
+		{
+			DWORD dwNumBytes = 0;
+			if (!GetOverlappedResult(f->handle, f->overlapped, &dwNumBytes, FALSE))
+				f->error_code = GetLastError();
+		}
+
 		if (f->error_code)
 		{
 			windows::error winerr(f->error_code);
-			f->completion(std::ref(f->file_path), std::ref(f->buffer), f->file_size, &winerr);
+			oASSERT(f->file_size == f->buffer.size(), "size mismatch");
+			f->completion(std::ref(f->file_path), std::ref(f->buffer), &winerr);
 		}
 		else
-			f->completion(std::ref(f->file_path), std::ref(f->buffer), f->file_size, nullptr);
+			f->completion(std::ref(f->file_path), std::ref(f->buffer), nullptr);
 	}
 
 	if (f->handle != INVALID_HANDLE_VALUE)
@@ -873,14 +881,13 @@ static void iocp_close(iocp_file* f, unsigned long long _Unused = 0)
 
 static void iocp_open(iocp_file* f, iocp_file::open _Open)
 {
-	f->buffer.release();
 	f->overlapped = nullptr;
 	f->open_type = _Open;
 	f->handle = CreateFile(f->file_path
 		, _Open == iocp_file::open_write ? GENERIC_WRITE : GENERIC_READ
 		, FILE_SHARE_READ
 		, nullptr
-		, OPEN_EXISTING
+		, _Open == iocp_file::open_write ? CREATE_ALWAYS : OPEN_EXISTING
 		, FILE_FLAG_OVERLAPPED | ((f->open_type == iocp_file::open_read_unbuffered || f->open_type == iocp_file::open_read_unbuffered_text) ? FILE_FLAG_NO_BUFFERING : 0)
 		, nullptr);
 	if (f->handle != INVALID_HANDLE_VALUE)
@@ -901,7 +908,7 @@ static void iocp_open(iocp_file* f, iocp_file::open _Open)
 static unsigned int iocp_allocation_size(const iocp_file* f)
 {
 	unsigned int size = f->file_size;
-	if (f->open_type == iocp_file::open_read_text || iocp_file::open_read_unbuffered_text)
+	if (f->open_type == iocp_file::open_read_text || f->open_type == iocp_file::open_read_unbuffered_text)
 		size += 4; // worst-case nul terminator for Unicode 32
 
 	if (f->open_type == iocp_file::open_read_unbuffered || f->open_type == iocp_file::open_read_unbuffered_text)
@@ -944,10 +951,10 @@ static void iocp_write(iocp_file* f, unsigned int _Offset = invalid, unsigned in
 	f->overlapped->Offset = (DWORD)_Offset;
 	f->overlapped->OffsetHigh = 0;
 
-	if (_WriteSize == size_t(-1))
+	if (_WriteSize == invalid)
 		_WriteSize = as_uint(f->buffer.size());
 	
-	if (!WriteFile(f->handle, f->buffer, as_uint(_WriteSize), nullptr, f->overlapped))
+	if (!WriteFile(f->handle, f->buffer, _WriteSize, nullptr, f->overlapped))
 	{
 		int errc = GetLastError();
 		if (errc != ERROR_IO_PENDING)
@@ -990,7 +997,7 @@ static void iocp_open_and_write(void* _pContext, unsigned long long _Unused = 0)
 	{
 		iocp_open(f, iocp_file::open_write);
 		if (!f->error_code)
-			iocp_write(f);
+			iocp_write(f, 0);
 	}
 }
 
@@ -1006,7 +1013,7 @@ static void iocp_open_and_append(void* _pContext, unsigned long long _Unused = 0
 }
 
 void load_async(const path& _Path
-								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size, const std::system_error* _pError)>& _OnComplete
+								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, const std::system_error* _pError)>& _OnComplete
 								, load_option::value _LoadOption
 								, const allocator& _Allocator)
 {
@@ -1016,10 +1023,10 @@ void load_async(const path& _Path
 
 void save_async(const path& _Path
 								, scoped_allocation&& _Buffer
-								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size, const std::system_error* _pError)>& _OnComplete
+								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, const std::system_error* _pError)>& _OnComplete
 								, save_option::value _SaveOption)
 {
-	if (_SaveOption != save_option::text_write && _SaveOption != save_option::text_append)
+	if (_SaveOption != save_option::binary_write && _SaveOption != save_option::binary_append)
 		oTHROW_INVARG("only binary_write and binary_append is currently supported");
 
 	iocp_file* r = new iocp_file(_Path, allocator(), _OnComplete);
