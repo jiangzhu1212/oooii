@@ -97,7 +97,7 @@
 namespace ouro {
 	namespace surface {
 
-oDECLARE_SMALL_ENUM(format, unsigned char)
+oDECLARE_SMALL_ENUM(format, uchar)
 {
 	unknown,
 	r32g32b32a32_typeless,
