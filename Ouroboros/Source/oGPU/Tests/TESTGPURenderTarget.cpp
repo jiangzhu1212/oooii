@@ -133,7 +133,7 @@ private:
 		_pCommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 		_pCommandList->set_surface_state(surface_state::front_face);
 		_pCommandList->set_buffer(0, TestConstants);
-		_pCommandList->set_sampler(0, sampler_type::linear_wrap);
+		_pCommandList->set_sampler(0, sampler_state::linear_wrap);
 		_pCommandList->set_shader_resource(0, _pTexture);
 		_pCommandList->set_pipeline(PLTexture);
 		_pCommandList->set_render_target(_pTarget);

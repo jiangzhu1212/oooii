@@ -170,8 +170,8 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 
 void oGfxMosaicImpl::Draw(command_list* _pCommandList, render_target* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const texture* const* _ppTextures)
 {
-	std::array<sampler_type::value, max_num_samplers> samplers;
-	samplers.fill(sampler_type::linear_clamp);
+	std::array<sampler_state::value, max_num_samplers> samplers;
+	samplers.fill(sampler_state::linear_clamp);
 	if (_pRenderTarget)
 		_pCommandList->set_render_target(_pRenderTarget);
 	_pCommandList->set_blend_state(BlendState);

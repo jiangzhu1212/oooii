@@ -263,48 +263,6 @@ const char* as_string(const gpu::blend_state::value& _Value)
 
 STR_SUPPORT(gpu::blend_state::value, gpu::blend_state::count);
 
-const char* as_string(const gpu::sampler_type::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::sampler_type::point_clamp: return "point_clamp"; 
-		case gpu::sampler_type::point_wrap: return "point_wrap";
-		case gpu::sampler_type::linear_clamp: return "linear_clamp";
-		case gpu::sampler_type::linear_wrap: return "linear_wrap";
-		case gpu::sampler_type::aniso_clamp: return "aniso_clamp";
-		case gpu::sampler_type::aniso_wrap: return "aniso_wrap";
-		case gpu::sampler_type::point_clamp_bias_up1: return "point_clamp_bias_up1";
-		case gpu::sampler_type::point_wrap_bias_up1: return "point_wrap_bias_up1";
-		case gpu::sampler_type::linear_clamp_bias_up1: return "linear_clamp_bias_up1";
-		case gpu::sampler_type::linear_wrap_bias_up1: return "linear_wrap_bias_up1";
-		case gpu::sampler_type::aniso_clamp_bias_up1: return "aniso_clamp_bias_up1";
-		case gpu::sampler_type::aniso_wrap_bias_up1: return "aniso_wrap_bias_up1";
-		case gpu::sampler_type::point_clamp_bias_down1: return "point_clamp_bias_down1";
-		case gpu::sampler_type::point_wrap_bias_down1: return "point_wrap_bias_down1";
-		case gpu::sampler_type::linear_clamp_bias_down1: return "linear_clamp_bias_down1";
-		case gpu::sampler_type::linear_wrap_bias_down1: return "linear_wrap_bias_down1";
-		case gpu::sampler_type::aniso_clamp_bias_down1: return "aniso_clamp_bias_down1";
-		case gpu::sampler_type::aniso_wrap_bias_down1: return "aniso_wrap_bias_down1";
-		case gpu::sampler_type::point_clamp_bias_up2: return "point_clamp_bias_up2";
-		case gpu::sampler_type::point_wrap_bias_up2: return "point_wrap_bias_up2";
-		case gpu::sampler_type::linear_clamp_bias_up2: return "linear_clamp_bias_up2";
-		case gpu::sampler_type::linear_wrap_bias_up2: return "linear_wrap_bias_up2";
-		case gpu::sampler_type::aniso_clamp_bias_up2: return "aniso_clamp_bias_up2";
-		case gpu::sampler_type::aniso_wrap_bias_up2: return "aniso_wrap_bias_up2";
-		case gpu::sampler_type::point_clamp_bias_down2: return "point_clamp_bias_down2";
-		case gpu::sampler_type::point_wrap_bias_down2: return "point_wrap_bias_down2";
-		case gpu::sampler_type::linear_clamp_bias_down2: return "linear_clamp_bias_down2";
-		case gpu::sampler_type::linear_wrap_bias_down2: return "linear_wrap_bias_down2";
-		case gpu::sampler_type::aniso_clamp_bias_down2: return "aniso_clamp_bias_down2";
-		case gpu::sampler_type::aniso_wrap_bias_down2: return "aniso_wrap_bias_down2";
-
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(gpu::sampler_type::value, gpu::sampler_type::count);
-
 const char* as_string(const gpu::pipeline_stage::value& _Value)
 {
 	switch (_Value)

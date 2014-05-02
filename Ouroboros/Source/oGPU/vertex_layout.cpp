@@ -50,7 +50,7 @@ namespace ouro {
 	namespace gpu {
 
 Device* get_device(device* _pDevice);
-DeviceContext* get_device_context(device_context* _pDeviceContext);
+DeviceContext* get_device_context(command_list* _pCommandList);
 
 const char* get_semantic(mesh::semantic::value& _Semantic)
 {
@@ -132,6 +132,11 @@ vertex_layout make_vertex_layout(device* _pDevice, mesh::layout_array& _VertexLa
 	ID3D11InputLayout* input_layout = nullptr;
 	oV(pDevice->CreateInputLayout(Elements, Offset, _pVSByteCode, d3d::byte_code_size(_pVSByteCode), &input_layout));
 	return (vertex_layout)input_layout;
+}
+
+void bind_vertex_layout(command_list* _pCommandList, vertex_layout _VertexLayout)
+{
+	get_device_context(_pCommandList)->IASetInputLayout((InputLayout*)_VertexLayout);
 }
 
 	} // namespace gpu

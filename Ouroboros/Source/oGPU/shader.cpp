@@ -35,32 +35,35 @@ namespace ouro {
 	namespace gpu {
 
 Device* get_device(device* _pDevice);
-DeviceContext* get_device_context(device_context* _pDeviceContext);
+DeviceContext* get_device_context(command_list* _pCommandList);
 
-void bind_shader(device_context* _pContext, vertex_shader _Shader) { get_device_context(_pContext)->VSSetShader((VertexShader*)_Shader, nullptr, 0); }
-void bind_shader(device_context* _pContext, hull_shader _Shader) { get_device_context(_pContext)->HSSetShader((HullShader*)_Shader, nullptr, 0); }
-void bind_shader(device_context* _pContext, domain_shader _Shader) { get_device_context(_pContext)->DSSetShader((DomainShader*)_Shader, nullptr, 0); }
-void bind_shader(device_context* _pContext, geometry_shader _Shader) { get_device_context(_pContext)->GSSetShader((GeometryShader*)_Shader, nullptr, 0); }
-void bind_shader(device_context* _pContext, pixel_shader _Shader) { get_device_context(_pContext)->PSSetShader((PixelShader*)_Shader, nullptr, 0); }
-void bind_shader(device_context* _pContext, compute_shader _Shader) { get_device_context(_pContext)->CSSetShader((ComputeShader*)_Shader, nullptr, 0); }
+void bind_shader(command_list* _pCommandList, vertex_shader _Shader) { get_device_context(_pCommandList)->VSSetShader((VertexShader*)_Shader, nullptr, 0); }
+void bind_shader(command_list* _pCommandList, hull_shader _Shader) { get_device_context(_pCommandList)->HSSetShader((HullShader*)_Shader, nullptr, 0); }
+void bind_shader(command_list* _pCommandList, domain_shader _Shader) { get_device_context(_pCommandList)->DSSetShader((DomainShader*)_Shader, nullptr, 0); }
+void bind_shader(command_list* _pCommandList, geometry_shader _Shader) { get_device_context(_pCommandList)->GSSetShader((GeometryShader*)_Shader, nullptr, 0); }
+void bind_shader(command_list* _pCommandList, pixel_shader _Shader) { get_device_context(_pCommandList)->PSSetShader((PixelShader*)_Shader, nullptr, 0); }
+void bind_shader(command_list* _pCommandList, compute_shader _Shader) { get_device_context(_pCommandList)->CSSetShader((ComputeShader*)_Shader, nullptr, 0); }
 	
 shader make_shader(device* _pDevice, const shader_type::value& _Type, const void* _pByteCode, const char* _DebugName)
 {
 	DeviceChild* pShader = nullptr;
-	Device* pDevice = get_device(_pDevice);
-	switch (_Type)
+	if (_pByteCode)
 	{
-		case shader_type::vertex: oV(pDevice->CreateVertexShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (VertexShader**)&pShader)); break;
-		case shader_type::hull: oV(pDevice->CreateHullShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (HullShader**)&pShader)); break;
-		case shader_type::domain: oV(pDevice->CreateDomainShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (DomainShader**)&pShader)); break;
-		case shader_type::geometry: oV(pDevice->CreateGeometryShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (GeometryShader**)&pShader)); break;
-		case shader_type::pixel: oV(pDevice->CreatePixelShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (PixelShader**)&pShader)); break;
-		case shader_type::compute: oV(pDevice->CreateComputeShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (ComputeShader**)&pShader)); break;
-		default: oTHROW_INVARG0();
-	};
+		Device* pDevice = get_device(_pDevice);
+		switch (_Type)
+		{
+			case shader_type::vertex: oV(pDevice->CreateVertexShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (VertexShader**)&pShader)); break;
+			case shader_type::hull: oV(pDevice->CreateHullShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (HullShader**)&pShader)); break;
+			case shader_type::domain: oV(pDevice->CreateDomainShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (DomainShader**)&pShader)); break;
+			case shader_type::geometry: oV(pDevice->CreateGeometryShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (GeometryShader**)&pShader)); break;
+			case shader_type::pixel: oV(pDevice->CreatePixelShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (PixelShader**)&pShader)); break;
+			case shader_type::compute: oV(pDevice->CreateComputeShader(_pByteCode, byte_code_size(_pByteCode), nullptr, (ComputeShader**)&pShader)); break;
+			default: oTHROW_INVARG0();
+		};
 
-	if (_DebugName)
-		debug_name(pShader, _DebugName);
+		if (_DebugName)
+			debug_name(pShader, _DebugName);
+	}
 	return (shader)pShader;
 }
 

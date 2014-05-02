@@ -113,7 +113,7 @@ protected:
 	intrusive_ptr<ID3D11BlendState> BlendStates[blend_state::count];
 	intrusive_ptr<ID3D11RasterizerState> SurfaceStates[surface_state::count];
 	intrusive_ptr<ID3D11DepthStencilState> DepthStencilStates[depth_stencil_state::count];
-	intrusive_ptr<ID3D11SamplerState> SamplerStates[sampler_type::count];
+	intrusive_ptr<ID3D11SamplerState> SamplerStates[sampler_state::count];
 
 	// used to flush an explicit setting of a UAV counter.
 	intrusive_ptr<ID3D11ComputeShader> NoopCS;

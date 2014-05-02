@@ -56,14 +56,12 @@ oDEVICE_CHILD_CTOR(pipeline1)
 			break;
 	}
 
-	oD3D11_DEVICE();
-
 	InputLayout = (ID3D11InputLayout*)make_vertex_layout(_Device.get(), VertexLayouts, _Info.vs);
-	VertexShader = make_vertex_shader(D3DDevice, _Info.vs, _Info.debug_name);
-	HullShader = make_hull_shader(D3DDevice, _Info.hs, _Info.debug_name);
-	DomainShader = make_domain_shader(D3DDevice, _Info.ds, _Info.debug_name);
-	GeometryShader = make_geometry_shader(D3DDevice, _Info.gs, _Info.debug_name);
-	PixelShader = make_pixel_shader(D3DDevice, _Info.ps, _Info.debug_name);
+	VertexShader = (ID3D11VertexShader*)make_shader(_Device.get(), shader_type::vertex, _Info.vs, _Info.debug_name);
+	HullShader = (ID3D11HullShader*)make_shader(_Device.get(), shader_type::hull, _Info.hs, _Info.debug_name);
+	DomainShader = (ID3D11DomainShader*)make_shader(_Device.get(), shader_type::domain, _Info.ds, _Info.debug_name);
+	GeometryShader = (ID3D11GeometryShader*)make_shader(_Device.get(), shader_type::geometry, _Info.gs, _Info.debug_name);
+	PixelShader = (ID3D11PixelShader*)make_shader(_Device.get(), shader_type::pixel, _Info.ps, _Info.debug_name);
 }
 
 pipeline1_info d3d11_pipeline1::get_info() const 

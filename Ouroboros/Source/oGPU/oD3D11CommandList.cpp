@@ -34,7 +34,7 @@
 namespace ouro {
 	namespace gpu {
 
-d3d::DeviceContext* get_device_context(device_context* _pDeviceContext) { return ((d3d11::d3d11_command_list*)_pDeviceContext)->Context; }
+d3d::DeviceContext* get_device_context(command_list* _pCommandList) { return ((d3d11::d3d11_command_list*)_pCommandList)->Context; }
 
 	} // namespace gpu
 } // namespace ouro
@@ -247,14 +247,14 @@ void d3d11_command_list::set_counters(uint _NumUnorderedResources, resource** _p
 	Context->Dispatch(1, 1, 1);
 }
 
-void d3d11_command_list::set_samplers(uint _StartSlot, uint _NumStates, const sampler_type::value* _pSamplerState)
+void d3d11_command_list::set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState)
 {
-	ID3D11SamplerState* Samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+	sampler Samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
 	oCHECK(oCOUNTOF(Samplers) >= _NumStates, "Too many samplers specified");
 	for (uint i = 0; i < _NumStates; i++)
-		Samplers[i] = dev()->SamplerStates[_pSamplerState[i]];
+		Samplers[i] = (sampler)dev()->SamplerStates[_pSamplerState[i]].c_ptr();
 	
-	d3d11::set_samplers(Context, as_uint(_StartSlot), as_uint(_NumStates), Samplers);
+	bind_samplers(this, _StartSlot, Samplers, _NumStates);
 }
 
 void d3d11_command_list::set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources)

@@ -22,52 +22,41 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Include interface to pass to D3DCompile
 #pragma once
-#ifndef oGPU_d3d_types_h
-#define oGPU_d3d_types_h
+#ifndef oGPU_sampler_h
+#define oGPU_sampler_h
 
-struct ID3D11Device;
-struct ID3D11DeviceChild;
-struct ID3D11DeviceContext;
-struct ID3D11SamplerState;
-struct ID3D11InputLayout;
-struct ID3D11VertexShader;
-struct ID3D11HullShader;
-struct ID3D11DomainShader;
-struct ID3D11GeometryShader;
-struct ID3D11PixelShader;
-struct ID3D11ComputeShader;
-struct ID3D11Resource;
-struct ID3D11Buffer;
-struct ID3D11Texture1D;
-struct ID3D11Texture2D;
-struct ID3D11Texture3D;
-struct ID3D11Query;
+#include <oBase/macros.h>
+#include <oMesh/mesh.h>
 
 namespace ouro {
 	namespace gpu {
-		namespace d3d {
 
-typedef ID3D11Device Device;
-typedef ID3D11DeviceChild DeviceChild;
-typedef ID3D11DeviceContext DeviceContext;
-typedef ID3D11SamplerState SamplerState;
-typedef ID3D11InputLayout InputLayout;
-typedef ID3D11VertexShader VertexShader;
-typedef ID3D11HullShader HullShader;
-typedef ID3D11DomainShader DomainShader;
-typedef ID3D11GeometryShader GeometryShader;
-typedef ID3D11PixelShader PixelShader;
-typedef ID3D11ComputeShader ComputeShader;
-typedef ID3D11Resource Resource;
-typedef ID3D11Buffer Buffer;
-typedef ID3D11Texture1D Texture1D;
-typedef ID3D11Texture2D Texture2D;
-typedef ID3D11Texture3D Texture3D;
-typedef ID3D11Query Query;
+namespace sampler_state
+{ oDECLARE_SMALL_ENUM(value, uchar) {
 
-		} // namespace d3d
+  point_clamp,
+  point_wrap,
+  linear_clamp,
+  linear_wrap,
+  aniso_clamp,
+  aniso_wrap,
+
+	count,
+
+};}
+
+oDECLARE_HANDLE(sampler);
+
+class device;
+class command_list;
+
+sampler make_sampler_state(device* _pDevice, const sampler_state::value& _Sampler);
+
+void unmake_vertex_layout(sampler _SamplerState);
+
+void bind_samplers(command_list* _pCommandList, uint _StartSlot, const sampler* _pSamplerStates, uint _NumSamplerStates);
+
 	} // namespace gpu
 } // namespace ouro
 

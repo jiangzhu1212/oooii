@@ -34,6 +34,8 @@
 #include "dxgi_util.h"
 #include "CSNoop.h"
 
+#include <oGPU/sampler.h>
+
 #include <oGUI/window.h>
 
 using namespace ouro::gpu::d3d;
@@ -176,65 +178,8 @@ d3d11_device::d3d11_device(const device_init& _Init)
 		}
 	}
 
-	// Sampler States
-	{
-		static const int NUM_ADDRESS_STATES = 6;
-		static const int NUM_MIP_BIAS_LEVELS = sampler_type::count / NUM_ADDRESS_STATES;
-
-		static const D3D11_FILTER sFilters[] = 
-		{
-			D3D11_FILTER_MIN_MAG_MIP_POINT,
-			D3D11_FILTER_MIN_MAG_MIP_POINT,
-			D3D11_FILTER_MIN_MAG_MIP_LINEAR,
-			D3D11_FILTER_MIN_MAG_MIP_LINEAR,
-			D3D11_FILTER_COMPARISON_ANISOTROPIC,
-			D3D11_FILTER_COMPARISON_ANISOTROPIC,
-		};
-		static_assert(oCOUNTOF(sFilters) == NUM_ADDRESS_STATES, "# sampler states mismatch");
-
-		static const D3D11_TEXTURE_ADDRESS_MODE sAddresses[] = 
-		{
-			D3D11_TEXTURE_ADDRESS_CLAMP,
-			D3D11_TEXTURE_ADDRESS_WRAP,
-			D3D11_TEXTURE_ADDRESS_CLAMP,
-			D3D11_TEXTURE_ADDRESS_WRAP,
-			D3D11_TEXTURE_ADDRESS_CLAMP,
-			D3D11_TEXTURE_ADDRESS_WRAP,
-		};
-		static_assert(oCOUNTOF(sAddresses) == NUM_ADDRESS_STATES, "# sampler states mismatch");
-
-		static const FLOAT sBiases[] =
-		{
-			0.0f,
-			-1.0f,
-			-2.0f,
-			1.0f,
-			2.0f,
-		};
-		static_assert(oCOUNTOF(sBiases) == NUM_MIP_BIAS_LEVELS, "# mip bias levels mismatch");
-
-		D3D11_SAMPLER_DESC desc;
-		memset(&desc, 0, sizeof(desc));
-		mstring StateName;
-
-		for (size_t bias = 0, i = 0; bias < NUM_MIP_BIAS_LEVELS; bias++)
-		{
-			desc.MipLODBias = sBiases[bias];
-			for (size_t state = 0; state < NUM_ADDRESS_STATES; state++)
-			{
-				desc.Filter = sFilters[state];
-				desc.AddressU = desc.AddressV = desc.AddressW = sAddresses[state];
-				desc.MaxLOD = FLT_MAX; // documented default
-				desc.MaxAnisotropy = 16; // documented default
-				desc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // documented default
-
-				snprintf(StateName, "%s.%s", _Init.debug_name.c_str(), as_string(sampler_type::value(NUM_ADDRESS_STATES * bias + state)));
-				oV(D3DDevice->CreateSamplerState(&desc, &SamplerStates[i]));
-				debug_name(SamplerStates[i], StateName);
-				i++;
-			}
-		}
-	}
+	for (int s = 0; s < sampler_state::count; s++)
+		SamplerStates[s] = (ID3D11SamplerState*)make_sampler_state(this, (const sampler_state::value)s);
 	
 	// Set up some null buffers that will be used to reset parts of the API that
 	// do no easily transition between compute and rasterization pipelines.
@@ -250,7 +195,7 @@ d3d11_device::d3d11_device(const device_init& _Init)
 
 	// Set up a noop compute shader to flush for SetCounter()
 	{
-		NoopCS = d3d11::make_compute_shader(D3DDevice, CSNoop, "CSNoop");
+		NoopCS = (ID3D11ComputeShader*)make_shader(this, shader_type::compute, CSNoop, "CSNoop");
 		sstring CSName;
 		debug_name(CSName, D3DDevice);
 		sncatf(CSName, "NoopCS");
