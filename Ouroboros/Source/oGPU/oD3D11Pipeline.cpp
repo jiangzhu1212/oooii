@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "oD3D11Pipeline.h"
 #include "oD3D11Device.h"
-#include "d3d11_layout.h"
+#include <oGPU/vertex_layout.h>
 
 oGPU_NAMESPACE_BEGIN
 
@@ -58,7 +58,7 @@ oDEVICE_CHILD_CTOR(pipeline1)
 
 	oD3D11_DEVICE();
 
-	InputLayout = make_input_layout(D3DDevice, _Info.vs, VertexLayouts);
+	InputLayout = (ID3D11InputLayout*)make_vertex_layout(_Device.get(), VertexLayouts, _Info.vs);
 	VertexShader = make_vertex_shader(D3DDevice, _Info.vs, _Info.debug_name);
 	HullShader = make_hull_shader(D3DDevice, _Info.hs, _Info.debug_name);
 	DomainShader = make_domain_shader(D3DDevice, _Info.ds, _Info.debug_name);

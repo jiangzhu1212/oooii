@@ -22,11 +22,13 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "d3d11_layout.h"
-#include <oGPU/oGPU.h>
+#include <oGPU/vertex_layout.h>
 #include "oCore/Windows/win_util.h"
 #include "d3d11_util.h"
 #include "d3d_compile.h"
+#include "d3d_types.h"
+
+using namespace ouro::gpu::d3d;
 
 #define oD3D_EL(_Semantic, _SemanticIndex, _Format, _InputSlot) { _Semantic, _SemanticIndex, _Format, _InputSlot, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 #define oD3D_NULL oD3D_EL(0, 0, DXGI_FORMAT_UNKNOWN, 0)
@@ -46,7 +48,9 @@
 
 namespace ouro {
 	namespace gpu {
-		namespace d3d11 {
+
+Device* get_device(device* _pDevice);
+DeviceContext* get_device_context(device_context* _pDeviceContext);
 
 const char* get_semantic(mesh::semantic::value& _Semantic)
 {
@@ -100,7 +104,7 @@ static_assert(oCOUNTOF(sInputElements) == mesh::layout::count, "array mismatch")
 static uchar sInputElementCounts[] = { 0, 1, 1, 2, 2, 3, 4, 4, 2, 2, 1, 1, 2, 2, };
 static_assert(oCOUNTOF(sInputElementCounts) == mesh::layout::count, "array mismatch");
 
-intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice, const void* _pVertexShaderByteCode, const mesh::layout_array& _VertexLayouts)
+vertex_layout make_vertex_layout(device* _pDevice, mesh::layout_array& _VertexLayouts, const void* _pVSByteCode)
 {
 	D3D11_INPUT_ELEMENT_DESC Elements[16];
 	memset(Elements, 0, sizeof(Elements));
@@ -124,11 +128,11 @@ intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice, const
 		Offset += nElements;
 	}
 
-	intrusive_ptr<ID3D11InputLayout> input_layout;
-	oV(_pDevice->CreateInputLayout(Elements, Offset, _pVertexShaderByteCode, d3d::byte_code_size(_pVertexShaderByteCode), &input_layout));
-	return input_layout;
+	Device* pDevice = get_device(_pDevice);
+	ID3D11InputLayout* input_layout = nullptr;
+	oV(pDevice->CreateInputLayout(Elements, Offset, _pVSByteCode, d3d::byte_code_size(_pVSByteCode), &input_layout));
+	return (vertex_layout)input_layout;
 }
 
-		} // namespace d3d11
 	} // namespace gpu
 } // namespace ouro

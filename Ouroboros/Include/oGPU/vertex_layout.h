@@ -22,29 +22,28 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Simplify the complex state definition of D3D to be accessed by gpu enums.
 #pragma once
-#ifndef oGPU_d3d11_layout_h
-#define oGPU_d3d11_layout_h
+#ifndef oGPU_vertex_layout_h
+#define oGPU_vertex_layout_h
 
-#include <oGPU/oGPU.h>
-#include <d3d11.h>
+#include <oGPU/vertex_layouts.h>
+#include <oBase/macros.h>
+#include <oMesh/mesh.h>
 
 namespace ouro {
 	namespace gpu {
-		namespace d3d11 {
 
-const char* get_semantic(mesh::semantic::value& _Semantic);
+oDECLARE_HANDLE(vertex_layout);
 
-// ouro::gpu assumes vertex buffers will be created by usage, so a single mesh might have 
-// several vertex buffers. When this is set up D3D requires one input layout to describe
-// it all, so here create an ID3D11InputLayout based on the vertex layouts of each usage
-// type and the byte code for the vertex shader that will use it.
-intrusive_ptr<ID3D11InputLayout> make_input_layout(ID3D11Device* _pDevice
-	, const void* _pVertexShaderByteCode, const mesh::layout_array& _VertexLayouts);
+class device;
+class device_context;
 
-		} // namespace d3d11
+vertex_layout make_vertex_layout(device* _pDevice, mesh::layout_array& _VertexLayouts, const void* _pVSByteCode);
+
+void unmake_vertex_layout(vertex_layout _VertexLayout);
+
+#ifndef oHLSL
 	} // namespace gpu
 } // namespace ouro
-
+#endif
 #endif

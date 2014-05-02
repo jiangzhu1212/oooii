@@ -43,9 +43,6 @@
     <ClCompile Include="d3dx11_util.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
-    <ClCompile Include="d3d11_layout.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
     <ClCompile Include="oGPUUtilMesh.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -62,6 +59,9 @@
       <Filter>Source\D3D11</Filter>
     </ClCompile>
     <ClCompile Include="shader.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="vertex_layout.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -114,9 +114,6 @@
     <ClInclude Include="d3dx11_util.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
-    <ClInclude Include="d3d11_layout.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -136,6 +133,9 @@
       <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\shader.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\vertex_layout.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
