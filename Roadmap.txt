@@ -3,6 +3,18 @@
 This is a brief discussion on the direction of Ouroboros in the foreseeable 
 future.
 
+== LIBRARY HIERARCHY ==
+
+             oHLSL
+           /   ^   \
+oBase     /    |    \
+   ^     /     |     \
+   oSurface  oMesh  oCompute
+       ^   \   ^
+       |    \  |
+		 oCore   oGPU
+			 \    /  ^
+		    oGUI  oGfx
 
 == oBase == 
 
@@ -36,9 +48,7 @@ unapologetically Windows-specific and have it all in this one lib for GUI stuff.
 Sony Playstation 2 and 3 programmers will be familiar with the concept as it is 
 fully separate from the GPU on those platforms. Basically stream computing is 
 about a small algorithm and a whole lot of data being fed through that 
-algorithm. It could be rasterization, raytracing, fourier transforms, protein 
-folding, whatever - there's a lot of data to get through, though the algorithm 
-once refined is relatively small.
+algorithm.
 
 The intent in Ouroboros is to make the stream programming model available 
 everywhere as technologies emerge. HLSL, GLSL and OpenCL are all very similar 
@@ -62,46 +72,11 @@ should also have native quaternion and simple volume types.
 Does not exist yet. oFramework will be allowed to make more system-wide 
 assumptions as it ties more building blocks together.
 
-== Features ==
 
-SDL and other "creative programming" starting libraries are missing 2 important 
-things in my opinion and providiing something I don't want:
-1. SDL provides a media window, but not a regular OS window for tools creation.
-2. SDL does not have an asset paging/caching system.
+== Legacy Libraries ==
 
-If you called #1 HTML5 and #2 the file cache implemented in webkit/ browsers it 
-becomes clear why browser-based technology is gaining popularity - someone 
-solved the hard problems of cross-platform windowing, file I/O from any source 
-and smart use of disk space for remote data. The intent of Ouroboros is to be 
-similar to this, but to outpace HTML5/WebGL's slow pace due to massive cross-
-platform compatibility requirements as well as large design-by-commitee 
-standards boards.
-
-The part of SDL and the like I don't want is that often these systems come with 
-some trivial material system that often has a specular color and one texture. A 
-lot of code is written around a material system that seems to me people will 
-outgrow in the first month of bring-up.
-
-For this reason, the main focus of the next year will be to enhance the oGfx 
-layer with robust support for basic 3D graphics assets management. We expect to 
-define an optimized binary format for:
-1. simple/typical meshes
-2. textures
-3. user-definable materials
-
-We will still be treating shaders as code for the foreseeable future, but the 
-discussion about treating it more dynamically to enable fast-reload and 
-iteration continues.
-
-We also expect to define an XML-based scene file format for the development of 
-simple scenes. Because of our video product UI scenes will be the first to get 
-attention. So basically we're building a big sprite engine with attention 
-towards moving to true 3D immediately afterwards.
-
-That's as far into Ouroboros's future as I can see right now. If you have a 
-project you'd like to build using Ouroboros and there are significant missing 
-elements you'd like to see authored or wish to contribute yourself, please 
-contact me at arciuolo@gmail.com.
-
-Sincerely,
-Tony
+oBasis, oPlatform, oConcurrency, oKinect are legacy libraries that are slowly
+but surely being refactored. Some of the bigger subsystems like anything to do 
+with networking are being left to last because there isn't a big test case right 
+now to exercise the changes, so leave it alone until real attention can use 
+cases can be used to enhance it.

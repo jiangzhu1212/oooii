@@ -390,12 +390,23 @@ scoped_allocation load(const path& _Path, load_option::value _LoadOption = load_
 // the open, allocate, read and close occurs in another thread as well as the 
 // _OnComplete so ensure its implementation is thread safe. The scoped_allocation
 // can either be moved in the _OnComplete or left alone where the system will
-// auto-free it when the _OnCompletion goes out of scope. In success cases _Error 
-// will be nullptr, but if it is valid, then _Buffer and _Size are invalid.
+// auto-free it when the _OnCompletion goes out of scope. In success cases _pError 
+// will be nullptr, but if it is valid then _Buffer is invalid.
 void load_async(const path& _Path
-								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, size_t _Size, const std::system_error* _pError)>& _OnComplete
+								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, const std::system_error* _pError)>& _OnComplete
 								, load_option::value _LoadOption = load_option::binary_read
 								, const allocator& _Allocator = default_allocator);
+
+// Similar to save, this will save the specified buffer call _OnComplete. The open
+// write and close will occur on another thread so ensure _OnComplete's implementation
+// is thread safe. The scoped_allocation must be moved initially, but will resurface
+// in _OnComplete at which point the application can grab it again or allow it to 
+// go out of scope and free itself. In success cases _pError is nullptr but if it is 
+// valid then _Buffer is invalid.
+void save_async(const path& _Path
+								, scoped_allocation&& _Buffer
+								, const std::function<void(const path& _Path, scoped_allocation& _Buffer, const std::system_error* _pError)>& _OnComplete
+								, save_option::value _SaveOption = save_option::binary_write);
 
 // Waits until all async operations have completed
 void wait();
