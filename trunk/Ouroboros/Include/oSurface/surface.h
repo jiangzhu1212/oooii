@@ -91,6 +91,7 @@
 #include <oBase/color.h>
 #include <oBase/fourcc.h>
 #include <oBase/macros.h>
+#include <oBase/types.h>
 #include <oHLSL/oHLSLMath.h>
 #include <functional>
 
@@ -234,7 +235,7 @@ oDECLARE_SMALL_ENUM(format, uchar)
 	format_count,
 };
 
-oDECLARE_SMALL_ENUM(layout, unsigned char)
+oDECLARE_SMALL_ENUM(layout, uchar)
 {
 	// image: no mip chain, so RowSize == RowPitch
 	// tight: mips are right after each other, the naive/initial thing a person
