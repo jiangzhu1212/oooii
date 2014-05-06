@@ -60,7 +60,7 @@ void TESTbuffer()
 
 	CommandList->set_blend_state(blend_state::opaque);
 	CommandList->set_depth_stencil_state(depth_stencil_state::none);
-	CommandList->set_surface_state(surface_state::two_sided);
+	CommandList->set_rasterizer_state(rasterizer_state::two_sided);
 
 	buffer* b = AppendBuffer.get();
 	CommandList->set_render_target_and_unordered_resources(nullptr, 0, nullptr, false, 0, 1, &b);

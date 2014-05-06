@@ -46,9 +46,6 @@ scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _S
 // this will return nullptr.
 const char* shader_profile(D3D_FEATURE_LEVEL _Level, pipeline_stage::value _Stage);
 
-// Given a buffer of compiled byte code, return its size.
-unsigned int byte_code_size(const void* _pByteCode);
-
 		} // namespace d3d
 	} // namespace gpu
 } // namespace ouro

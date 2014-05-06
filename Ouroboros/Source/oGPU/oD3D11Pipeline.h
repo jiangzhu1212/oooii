@@ -35,11 +35,11 @@ oDEVICE_CHILD_CLASS(pipeline1)
 	oDEVICE_CHILD_DECLARATION(pipeline1)
 	pipeline1_info get_info() const override;
 	intrusive_ptr<ID3D11InputLayout> InputLayout;
-	intrusive_ptr<ID3D11VertexShader> VertexShader;
-	intrusive_ptr<ID3D11HullShader> HullShader;
-	intrusive_ptr<ID3D11DomainShader> DomainShader;
-	intrusive_ptr<ID3D11GeometryShader> GeometryShader;
-	intrusive_ptr<ID3D11PixelShader> PixelShader;
+	unique_vertex_shader_ptr VertexShader;
+	unique_hull_shader_ptr HullShader;
+	unique_domain_shader_ptr DomainShader;
+	unique_geometry_shader_ptr GeometryShader;
+	unique_pixel_shader_ptr PixelShader;
 	D3D_PRIMITIVE_TOPOLOGY InputTopology;
 	mesh::layout_array VertexLayouts;
 	sstring DebugName;

@@ -209,60 +209,6 @@ const char* as_string(const gpu::query_type::value& _Value)
 
 STR_SUPPORT(gpu::query_type::value, gpu::query_type::count);
 
-const char* as_string(const gpu::surface_state::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::surface_state::front_face: return "front_face";
-		case gpu::surface_state::back_face: return "back_face"; 
-		case gpu::surface_state::two_sided: return "two_sided";
-		case gpu::surface_state::front_wireframe: return "front_wireframe";
-		case gpu::surface_state::back_wireframe: return "back_wireframe"; 
-		case gpu::surface_state::two_sided_wireframe: return "two_sided_wireframe";
-
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(gpu::surface_state::value, gpu::surface_state::count);
-
-const char* as_string(const gpu::depth_stencil_state::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::depth_stencil_state::none: return "none";
-		case gpu::depth_stencil_state::test_and_write: return "test_and_write";
-		case gpu::depth_stencil_state::test: return "test";
-
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(gpu::depth_stencil_state::value, gpu::depth_stencil_state::count);
-
-const char* as_string(const gpu::blend_state::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::blend_state::opaque: return "opaque";
-		case gpu::blend_state::alpha_test: return "alpha_test";
-		case gpu::blend_state::accumulate: return "accumulate";
-		case gpu::blend_state::additive: return "additive";
-		case gpu::blend_state::multiply: return "multiply";
-		case gpu::blend_state::screen: return "screen";
-		case gpu::blend_state::translucent: return "translucent";
-		case gpu::blend_state::min_: return "min";
-		case gpu::blend_state::max_: return "max";
-
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(gpu::blend_state::value, gpu::blend_state::count);
-
 const char* as_string(const gpu::pipeline_stage::value& _Value)
 {
 	switch (_Value)

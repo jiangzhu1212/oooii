@@ -57,25 +57,6 @@ inline int trace(ID3D11DeviceContext* _pDeviceContext, D3D11_MESSAGE_SEVERITY _S
 // Creates a device with the specified description.
 intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init);
 
-
-#if 0
-// Convenience wrappers that create and name a particular type of shader.
-intrusive_ptr<ID3D11VertexShader> make_vertex_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
-intrusive_ptr<ID3D11HullShader> make_hull_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
-intrusive_ptr<ID3D11DomainShader> make_domain_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
-intrusive_ptr<ID3D11GeometryShader> make_geometry_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
-intrusive_ptr<ID3D11PixelShader> make_pixel_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
-intrusive_ptr<ID3D11ComputeShader> make_compute_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
-
-template<typename ShaderT> intrusive_ptr<ShaderT> make_shader(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName);
-template<> inline intrusive_ptr<ID3D11VertexShader> make_shader<ID3D11VertexShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_vertex_shader(_pDevice, _pByteCode, _DebugName); }
-template<> inline intrusive_ptr<ID3D11HullShader> make_shader<ID3D11HullShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_hull_shader(_pDevice, _pByteCode, _DebugName); }
-template<> inline intrusive_ptr<ID3D11DomainShader> make_shader<ID3D11DomainShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_domain_shader(_pDevice, _pByteCode, _DebugName); }
-template<> inline intrusive_ptr<ID3D11GeometryShader> make_shader<ID3D11GeometryShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_geometry_shader(_pDevice, _pByteCode, _DebugName); }
-template<> inline intrusive_ptr<ID3D11PixelShader> make_shader<ID3D11PixelShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_pixel_shader(_pDevice, _pByteCode, _DebugName); }
-template<> inline intrusive_ptr<ID3D11ComputeShader> make_shader<ID3D11ComputeShader>(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) { return make_compute_shader(_pDevice, _pByteCode, _DebugName); }
-#endif
-
 // Returns information about the specified device. There's no way to determine
 // if the device is software, so pass that through.
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation);
@@ -309,7 +290,6 @@ inline void set_constant_buffers(ID3D11DeviceContext* _pDeviceContext
 	, intrusive_ptr<ID3D11Buffer>* _ppConstantBuffers) 
 		{ set_constant_buffers(_pDeviceContext, _StartSlot, _NumBuffers, (const ID3D11Buffer* const*)_ppConstantBuffers); }
 
-#if 0
 // Sets the specified sampler sates on all pipeline stages. This may not be the 
 // most efficient thing to do, but is convenient during initial renderer 
 // bringup.
@@ -323,7 +303,6 @@ inline void set_samplers(ID3D11DeviceContext* _pDeviceContext
 	, unsigned int _NumSamplers
 	, intrusive_ptr<ID3D11SamplerState>* _ppSamplers) 
 		{ set_samplers(_pDeviceContext, _StartSlot, _NumSamplers, (const ID3D11SamplerState* const*)_ppSamplers); }
-#endif
 
 // Sets the specified SRVs on all pipeline stages. This may not be the most 
 // efficient thing to do, but is convenient during initial renderer bringup.

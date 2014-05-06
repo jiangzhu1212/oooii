@@ -175,7 +175,7 @@ void oGfxMosaicImpl::Draw(command_list* _pCommandList, render_target* _pRenderTa
 	if (_pRenderTarget)
 		_pCommandList->set_render_target(_pRenderTarget);
 	_pCommandList->set_blend_state(BlendState);
-	_pCommandList->set_surface_state(surface_state::two_sided);
+	_pCommandList->set_rasterizer_state(rasterizer_state::two_sided);
 	_pCommandList->set_depth_stencil_state(depth_stencil_state::none);
 	_pCommandList->set_samplers(0, as_uint(samplers.size()), samplers.data());
 	_pCommandList->set_shader_resources(_TextureStartSlot, _NumTextures, _ppTextures);

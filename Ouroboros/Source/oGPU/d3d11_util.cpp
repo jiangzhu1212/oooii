@@ -261,23 +261,6 @@ intrusive_ptr<ID3D11Device> make_device(const gpu::device_init& _Init)
 	return Device;
 }
 
-#define oDEFINE_MAKE_SHADER(std_name, TitleName) \
-	intrusive_ptr<ID3D11##TitleName> make_##std_name(ID3D11Device* _pDevice, const void* _pByteCode, const char* _DebugName) \
-	{	intrusive_ptr<ID3D11##TitleName> Shader; \
-		if (_pByteCode) \
-		{	oV(_pDevice->Create##TitleName(_pByteCode, byte_code_size(_pByteCode), 0, &Shader)); \
-			if (_DebugName) debug_name(Shader, _DebugName); \
-		} \
-		return Shader; \
-	}
-
-oDEFINE_MAKE_SHADER(vertex_shader, VertexShader)
-oDEFINE_MAKE_SHADER(hull_shader, HullShader)
-oDEFINE_MAKE_SHADER(domain_shader, DomainShader)
-oDEFINE_MAKE_SHADER(geometry_shader, GeometryShader)
-oDEFINE_MAKE_SHADER(pixel_shader, PixelShader)
-oDEFINE_MAKE_SHADER(compute_shader, ComputeShader)
-
 gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation)
 {
 	gpu::device_info d;
@@ -1082,7 +1065,6 @@ void set_constant_buffers(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->CSSetConstantBuffers(_StartSlot, _NumBuffers, ppConstantBuffers);
 }
 
-#if 0
 void set_samplers(ID3D11DeviceContext* _pDeviceContext
 	, unsigned int _StartSlot
 	, unsigned int _NumSamplers
@@ -1096,7 +1078,7 @@ void set_samplers(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->PSSetSamplers(_StartSlot, _NumSamplers, ppSamplers);
 	_pDeviceContext->CSSetSamplers(_StartSlot, _NumSamplers, ppSamplers);
 }
-#endif
+
 void set_srvs(ID3D11DeviceContext* _pDeviceContext
 	, unsigned int _StartSlot
 	, unsigned int _NumShaderResourceViews

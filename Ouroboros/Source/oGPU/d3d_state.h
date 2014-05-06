@@ -22,56 +22,65 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Include interface to pass to D3DCompile
 #pragma once
-#ifndef oGPU_d3d_types_h
-#define oGPU_d3d_types_h
+#ifndef oGPU_d3d_state_h
+#define oGPU_d3d_state_h
 
-struct ID3D11Device;
-struct ID3D11DeviceChild;
-struct ID3D11DeviceContext;
-struct ID3D11InputLayout;
-struct ID3D11VertexShader;
-struct ID3D11HullShader;
-struct ID3D11DomainShader;
-struct ID3D11GeometryShader;
-struct ID3D11PixelShader;
-struct ID3D11ComputeShader;
-struct ID3D11Resource;
-struct ID3D11Buffer;
-struct ID3D11Texture1D;
-struct ID3D11Texture2D;
-struct ID3D11Texture3D;
-struct ID3D11Query;
-struct ID3D11SamplerState;
-struct ID3D11RasterizerState;
-struct ID3D11BlendState;
-struct ID3D11DepthStencilState;
+#include <oGPU/state.h>
+#include <d3d11.h>
+#include "d3d_types.h"
 
 namespace ouro {
 	namespace gpu {
 		namespace d3d {
 
-typedef ID3D11Device Device;
-typedef ID3D11DeviceChild DeviceChild;
-typedef ID3D11DeviceContext DeviceContext;
-typedef ID3D11InputLayout InputLayout;
-typedef ID3D11VertexShader VertexShader;
-typedef ID3D11HullShader HullShader;
-typedef ID3D11DomainShader DomainShader;
-typedef ID3D11GeometryShader GeometryShader;
-typedef ID3D11PixelShader PixelShader;
-typedef ID3D11ComputeShader ComputeShader;
-typedef ID3D11Resource Resource;
-typedef ID3D11Buffer Buffer;
-typedef ID3D11Texture1D Texture1D;
-typedef ID3D11Texture2D Texture2D;
-typedef ID3D11Texture3D Texture3D;
-typedef ID3D11Query Query;
-typedef ID3D11SamplerState SamplerState;
-typedef ID3D11RasterizerState RasterizerState;
-typedef ID3D11BlendState BlendState;
-typedef ID3D11DepthStencilState DepthStencilState;
+class sampler_state_registry
+{
+public:
+	sampler_state_registry() { states.fill(nullptr); }
+	~sampler_state_registry() { deinitialize(); }
+	void initialize(Device* dev);
+	void deinitialize() { if (states[0]) { for (auto& s : states) { s->Release(); s = nullptr; } } }
+	SamplerState* operator[](const sampler_state::value& state) const { return states[state]; }
+private:
+	std::array<SamplerState*, sampler_state::count> states;
+};
+
+class rasterizer_state_registry
+{
+public:
+	rasterizer_state_registry() { states.fill(nullptr); }
+	~rasterizer_state_registry() { deinitialize(); }
+	void initialize(Device* dev);
+	void deinitialize() { if (states[0]) { for (auto& s : states) { s->Release(); s = nullptr; } } }
+	RasterizerState* operator[](const rasterizer_state::value& state) const { return states[state]; }
+private:
+	std::array<RasterizerState*, rasterizer_state::count> states;
+};
+
+class blend_state_registry
+{
+public:
+	blend_state_registry() { states.fill(nullptr); }
+	~blend_state_registry() { deinitialize(); }
+	void initialize(Device* dev);
+	void deinitialize() { if (states[0]) { for (auto& s : states) { s->Release(); s = nullptr; } } }
+	BlendState* operator[](const blend_state::value& state) const { return states[state]; }
+private:
+	std::array<BlendState*, blend_state::count> states;
+};
+
+class depth_stencil_state_registry
+{
+public:
+	depth_stencil_state_registry() { states.fill(nullptr); }
+	~depth_stencil_state_registry() { deinitialize(); }
+	void initialize(Device* dev);
+	void deinitialize() { if (states[0]) { for (auto& s : states) { s->Release(); s = nullptr; } } }
+	DepthStencilState* operator[](const depth_stencil_state::value& state) const { return states[state]; }
+private:
+	std::array<DepthStencilState*, depth_stencil_state::count> states;
+};
 
 		} // namespace d3d
 	} // namespace gpu

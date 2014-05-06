@@ -24,6 +24,7 @@
  **************************************************************************/
 #include "d3d_compile.h"
 #include "d3d_include.h"
+#include "d3d_shader.h"
 #include <oCore/windows/win_util.h>
 #include <D3Dcompiler.h>
 
@@ -304,12 +305,6 @@ const char* shader_profile(D3D_FEATURE_LEVEL _Level, gpu::pipeline_stage::value 
 	}
 
 	return profile;
-}
-
-unsigned int byte_code_size(const void* _pByteCode)
-{
-	// Discovered empirically
-	return _pByteCode ? ((const unsigned int*)_pByteCode)[6] : 0;
 }
 
 		} // namespace d3d

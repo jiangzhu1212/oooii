@@ -22,47 +22,27 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
-
-using namespace ouro::gpu;
+// Enumeration of common gpu apis
+#pragma once
+#ifndef oBase_gpu_api_h
+#define oBase_gpu_api_h
 
 namespace ouro {
-	namespace tests {
 
-static const int sSnapshotFrames[] = { 0 };
-static const bool kIsDevMode = false;
+/* enum class */ namespace gpu_api
+{ enum value {
 
-struct gpu_test_triangle : public gpu_test
-{
-	gpu_test_triangle() : gpu_test("GPU test: triangle", kIsDevMode, sSnapshotFrames) {}
+	unknown,
+	d3d11,
+	ogl,
+	ogles,
+	webgl,
+	custom,
 
-	void initialize() override
-	{
-		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
-		Mesh = make_first_triangle(Device);
-	}
+	count,
 
-	void render() override
-	{
-		CommandList->begin();
-		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
-		CommandList->set_blend_state(blend_state::opaque);
-		CommandList->set_depth_stencil_state(depth_stencil_state::none);
-		CommandList->set_rasterizer_state(rasterizer_state::front_face);
-		CommandList->set_pipeline(Pipeline);
-		CommandList->set_render_target(PrimaryRenderTarget);
-		Mesh->draw(CommandList);
-		CommandList->end();
-	}
+};}
 
-private:
-	std::shared_ptr<pipeline1> Pipeline;
-	std::shared_ptr<util_mesh> Mesh;
-};
-
-oGPU_COMMON_TEST(triangle);
-
-	} // namespace tests
 } // namespace ouro
+
+#endif

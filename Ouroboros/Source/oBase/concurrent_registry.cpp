@@ -127,7 +127,7 @@ concurrent_registry::size_type concurrent_registry::initialize(void* memory, siz
 		missing = lifetime.create(placeholder_source.compiled_missing, "missing_placeholder");
 		failed = lifetime.create(placeholder_source.compiled_failed, "failed_placeholder");
 		making = lifetime.create(placeholder_source.compiled_making, "making_placeholder");
-
+		
 		for (index_type i = 0; i < capacity; i++)
 			entries[i] = missing;
 	}
@@ -153,8 +153,8 @@ void* concurrent_registry::deinitialize()
 
 		unmake_all();
 
-		if (missing) { lifetime.destroy(missing); making = nullptr; }
-		if (failed)	{ lifetime.destroy(failed); making = nullptr; }
+		if (missing) { lifetime.destroy(missing); missing = nullptr; }
+		if (failed)	{ lifetime.destroy(failed); failed = nullptr; }
 		if (making)	{ lifetime.destroy(making); making = nullptr; }
 
 		memset(entries, 0, sizeof(void*) * pool.capacity());

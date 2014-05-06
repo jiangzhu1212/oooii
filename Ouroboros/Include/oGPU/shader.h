@@ -29,24 +29,24 @@
 #include <oBase/allocate.h>
 #include <oBase/macros.h>
 #include <oBase/types.h>
+#include <oMesh/mesh.h>
 
 namespace ouro {
 	namespace gpu {
 
-static const uint max_num_thread_groups_per_dimension = 65535;
-static const uint max_num_thread_groups_per_dimension_mask = 0xffff;
-static const uint max_num_thread_groups_per_dimension_shift = 16;
-
-oDECLARE_HANDLE(shader);
-oDECLARE_DERIVED_HANDLE(shader, vertex_shader);
-oDECLARE_DERIVED_HANDLE(shader, hull_shader);
-oDECLARE_DERIVED_HANDLE(shader, domain_shader);
-oDECLARE_DERIVED_HANDLE(shader, geometry_shader);
-oDECLARE_DERIVED_HANDLE(shader, pixel_shader);
-oDECLARE_DERIVED_HANDLE(shader, compute_shader);
+static const uint max_vertex_elements = 16;
+static const uint3 max_dispatches = uint3(65535, 65535, 65535);
+static const uint3 max_num_group_threads = uint3(1024, 1024, 64);
 
 class device;
-class command_list;
+class vertex_layout;
+class shader {};
+class vertex_shader : shader {};
+class hull_shader : shader {};
+class domain_shader : shader {};
+class geometry_shader : shader {};
+class pixel_shader : shader {};
+class compute_shader : shader {};
 
 namespace shader_type
 { oDECLARE_SMALL_ENUM(value, uchar) {
@@ -62,52 +62,24 @@ namespace shader_type
 
 };}
 
-struct pipeline
-{
-	pipeline() : vs(nullptr), hs(nullptr), ds(nullptr), gs(nullptr), ps(nullptr) {}
+vertex_layout* make_vertex_layout(device* dev, mesh::layout_array& layout, const void* vs_bytecode, const char* debug_name = "");
+vertex_shader* make_vertex_shader(device* dev, const void* bytecode, const char* debug_name = "");
+hull_shader* make_hull_shader(device* dev, const void* bytecode, const char* debug_name = "");
+domain_shader* make_domain_shader(device* dev, const void* bytecode, const char* debug_name = "");
+geometry_shader* make_geometry_shader(device* dev, const void* bytecode, const char* debug_name = "");
+pixel_shader* make_pixel_shader(device* dev, const void* bytecode, const char* debug_name = "");
+compute_shader* make_compute_shader(device* dev, const void* bytecode, const char* debug_name = "");
 
-	vertex_shader vs;
-	hull_shader hs;
-	domain_shader ds;
-	geometry_shader gs;
-	pixel_shader ps;
-};
+void unmake_vertex_layout(vertex_layout* layout);
+void unmake_shader(shader* s);
 
-// Binds the shader for use during subsequent draw calls
-void bind_shader(command_list* _pCommandList, vertex_shader _Shader);
-void bind_shader(command_list* _pCommandList, hull_shader _Shader);
-void bind_shader(command_list* _pCommandList, domain_shader _Shader);
-void bind_shader(command_list* _pCommandList, geometry_shader _Shader);
-void bind_shader(command_list* _pCommandList, pixel_shader _Shader);
-void bind_shader(command_list* _pCommandList, compute_shader _Shader);
-
-inline void bind_shader(command_list* _pCommandList, const shader_type::value& _Type, shader _Shader)
-{	switch (_Type)
-	{	case shader_type::vertex: bind_shader(_pCommandList, (vertex_shader)_Shader); break;
-		case shader_type::hull: bind_shader(_pCommandList, (hull_shader)_Shader); break;
-		case shader_type::domain: bind_shader(_pCommandList, (domain_shader)_Shader); break;
-		case shader_type::geometry: bind_shader(_pCommandList, (geometry_shader)_Shader); break;
-		case shader_type::pixel: bind_shader(_pCommandList, (pixel_shader)_Shader); break;
-		case shader_type::compute: bind_shader(_pCommandList, (compute_shader)_Shader); break;
-	};
-}
-
-// binds all rasterization shaders at once
-inline void bind_shaders(command_list* _pCommandList, const pipeline& _Pipeline)
-{
-	const shader* s = (shader*)&_Pipeline;
-	bind_shader(_pCommandList, _Pipeline.vs);
-	bind_shader(_pCommandList, _Pipeline.hs);
-	bind_shader(_pCommandList, _Pipeline.ds);
-	bind_shader(_pCommandList, _Pipeline.gs);
-	bind_shader(_pCommandList, _Pipeline.ps);
-}
-
-// Creates a runtime object for the shader described by the specified bytecode.
-shader make_shader(device* _pDevice, const shader_type::value& _Type, const void* _pByteCode, const char* _DebugName = nullptr);
-
-// Destroys a shader created with create_shader
-void unmake_shader(shader _Shader);
+template<typename shaderT> struct delete_shader { void operator()(shaderT* s) const { unmake_shader((shader*)s); } };
+typedef std::unique_ptr<vertex_shader, delete_shader<vertex_shader>> unique_vertex_shader_ptr;
+typedef std::unique_ptr<hull_shader, delete_shader<hull_shader>> unique_hull_shader_ptr;
+typedef std::unique_ptr<domain_shader, delete_shader<domain_shader>> unique_domain_shader_ptr;
+typedef std::unique_ptr<geometry_shader, delete_shader<geometry_shader>> unique_geometry_shader_ptr;
+typedef std::unique_ptr<pixel_shader, delete_shader<pixel_shader>> unique_pixel_shader_ptr;
+typedef std::unique_ptr<compute_shader, delete_shader<compute_shader>> unique_compute_shader_ptr;
 
 // Compiles a shader and returns the binary byte code. _IncludePaths is a semi-colon 
 // delimited list of include paths to search. _Defines is a semi-colon delimited list

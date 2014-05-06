@@ -81,7 +81,7 @@ struct gpu_test_instanced_triangle : public gpu_test
 		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
 		CommandList->set_blend_state(blend_state::opaque);
 		CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
-		CommandList->set_surface_state(surface_state::two_sided);
+		CommandList->set_rasterizer_state(rasterizer_state::two_sided);
 		
 		const buffer* CBs[2] = { TestConstants.get(), InstanceList.get() };
 		

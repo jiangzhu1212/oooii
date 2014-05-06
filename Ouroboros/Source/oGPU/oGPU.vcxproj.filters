@@ -61,13 +61,16 @@
     <ClCompile Include="shader.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="vertex_layout.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="sampler.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="d3d11_as_string.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="state.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d_state.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d_shader.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
   </ItemGroup>
@@ -141,13 +144,16 @@
     <ClInclude Include="..\..\Include\oGPU\shader.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\vertex_layout.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\sampler.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="d3d11_as_string.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\state.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_state.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_shader.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
   </ItemGroup>

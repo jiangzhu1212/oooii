@@ -30,11 +30,9 @@
 #include "d3d11_util.h"
 #include "d3d_compile.h"
 #include "d3d_debug.h"
-#include "d3d_types.h"
+#include "d3d_state.h"
 #include "dxgi_util.h"
 #include "CSNoop.h"
-
-#include <oGPU/sampler.h>
 
 #include <oGUI/window.h>
 
@@ -80,107 +78,6 @@ d3d11_device::d3d11_device(const device_init& _Init)
 
 	D3DDevice->GetImmediateContext(&ImmediateContext);
 	
-	lstring StateName;
-
-	// Blend States
-	{
-		static const D3D11_RENDER_TARGET_BLEND_DESC sBlends[] =
-		{
-			{ FALSE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
-			{ FALSE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
-			{ TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
-			{ TRUE, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
-			{ TRUE, D3D11_BLEND_DEST_COLOR, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
-			{ TRUE, D3D11_BLEND_INV_DEST_COLOR, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
-			{ TRUE, D3D11_BLEND_SRC_ALPHA, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD, D3D11_BLEND_ZERO, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_COLOR_WRITE_ENABLE_ALL },
-			{ TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MIN, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MIN, D3D11_COLOR_WRITE_ENABLE_ALL },
-			{ TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MAX, D3D11_BLEND_ONE, D3D11_BLEND_ONE, D3D11_BLEND_OP_MAX, D3D11_COLOR_WRITE_ENABLE_ALL },
-		};
-		static_assert(oCOUNTOF(sBlends) == blend_state::count, "# blend states mismatch");
-
-		D3D11_BLEND_DESC desc = {0};
-		oFORI(i, BlendStates)
-		{
-			desc.AlphaToCoverageEnable = FALSE;
-			desc.IndependentBlendEnable = FALSE;
-
-			for (uint j = 0; j < oCOUNTOF(desc.RenderTarget); j++)
-				desc.RenderTarget[j] = sBlends[i];
-
-			oV(D3DDevice->CreateBlendState(&desc, &BlendStates[i]));
-
-			if (!state_exists(i, BlendStates))
-			{
-				snprintf(StateName, "%s.%s", _Init.debug_name.c_str(), as_string((blend_state::value)i));
-				debug_name(BlendStates[i], StateName);
-			}
-		}
-	}
-
-	// Depth States
-	{
-		static const D3D11_DEPTH_STENCIL_DESC sDepthStencils[] = 
-		{
-			{ FALSE, D3D11_DEPTH_WRITE_MASK_ALL, D3D11_COMPARISON_ALWAYS, FALSE, 0xFF, 0XFF, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS },
-			{ TRUE, D3D11_DEPTH_WRITE_MASK_ALL, D3D11_COMPARISON_LESS_EQUAL, FALSE, 0xFF, 0XFF, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS },
-			{ TRUE, D3D11_DEPTH_WRITE_MASK_ZERO, D3D11_COMPARISON_LESS_EQUAL, FALSE, 0xFF, 0XFF, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS },
-		};
-		oFORI(i, DepthStencilStates)
-		{
-			oV(D3DDevice->CreateDepthStencilState(&sDepthStencils[i], &DepthStencilStates[i]));
-			if (!state_exists(i, DepthStencilStates))
-			{
-				snprintf(StateName, "%s.%s", _Init.debug_name.c_str(), as_string((depth_stencil_state::value)i));
-				debug_name(DepthStencilStates[i], StateName);
-			}
-		}
-	}
-	// Surface States
-	{
-		static const D3D11_FILL_MODE sFills[] = 
-		{
-			D3D11_FILL_SOLID,
-			D3D11_FILL_SOLID,
-			D3D11_FILL_SOLID,
-			D3D11_FILL_WIREFRAME,
-			D3D11_FILL_WIREFRAME,
-			D3D11_FILL_WIREFRAME,
-		};
-		static_assert(oCOUNTOF(sFills) == surface_state::count, "# surface states mismatch");
-
-		static const D3D11_CULL_MODE sCulls[] = 
-		{
-			D3D11_CULL_BACK,
-			D3D11_CULL_FRONT,
-			D3D11_CULL_NONE,
-			D3D11_CULL_BACK,
-			D3D11_CULL_FRONT,
-			D3D11_CULL_NONE,
-		};
-		static_assert(oCOUNTOF(sCulls) == surface_state::count, "# surface states mismatch");
-
-		D3D11_RASTERIZER_DESC desc;
-		memset(&desc, 0, sizeof(desc));
-		desc.FrontCounterClockwise = FALSE;
-		desc.DepthClipEnable = TRUE;
-
-		for (size_t i = 0; i < oCOUNTOF(SurfaceStates); i++)
-		{
-			desc.FillMode = sFills[i];
-			desc.CullMode = sCulls[i];
-			oV(D3DDevice->CreateRasterizerState(&desc, &SurfaceStates[i]));
-	
-			if (!state_exists(i, SurfaceStates))
-			{
-				snprintf(StateName, "%s.%s", _Init.debug_name.c_str(), as_string((surface_state::value)i));
-				debug_name(SurfaceStates[i], StateName);
-			}
-		}
-	}
-
-	for (int s = 0; s < sampler_state::count; s++)
-		SamplerStates[s] = (ID3D11SamplerState*)make_sampler_state(this, (const sampler_state::value)s);
-	
 	// Set up some null buffers that will be used to reset parts of the API that
 	// do no easily transition between compute and rasterization pipelines.
 	{
@@ -195,12 +92,17 @@ d3d11_device::d3d11_device(const device_init& _Init)
 
 	// Set up a noop compute shader to flush for SetCounter()
 	{
-		NoopCS = (ID3D11ComputeShader*)make_shader(this, shader_type::compute, CSNoop, "CSNoop");
+		NoopCS = std::move(unique_compute_shader_ptr(make_compute_shader(this, CSNoop, "CSNoop")));
 		sstring CSName;
 		debug_name(CSName, D3DDevice);
-		sncatf(CSName, "NoopCS");
-		debug_name(NoopCS, CSName);
+		sncatf(CSName, ".NoopCS");
+		debug_name((ComputeShader*)NoopCS.get(), CSName);
 	}
+
+	SamplerStates.initialize(D3DDevice);
+	RasterizerStates.initialize(D3DDevice);
+	BlendStates.initialize(D3DDevice);
+	DepthStencilStates.initialize(D3DDevice);
 }
 
 void d3d11_device::intialize_immediate_context()

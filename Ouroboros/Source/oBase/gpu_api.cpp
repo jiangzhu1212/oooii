@@ -22,30 +22,23 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oGPU_vertex_layout_h
-#define oGPU_vertex_layout_h
-
-#include <oGPU/vertex_layouts.h>
-#include <oBase/macros.h>
-#include <oMesh/mesh.h>
+#include <oBase/gpu_api.h>
 
 namespace ouro {
-	namespace gpu {
 
-oDECLARE_HANDLE(vertex_layout);
+const char* as_string(const gpu_api::value& _Value)
+{
+	switch (_Value)
+	{
+		case gpu_api::unknown: return "unknown";
+		case gpu_api::d3d11: return "d3d11";
+		case gpu_api::ogl: return "ogl";
+		case gpu_api::ogles: return "ogles";
+		case gpu_api::webgl: return "webgl";
+		case gpu_api::custom: return "custom";
+		default: break;
+	}
+	return "?";
+}
 
-class device;
-class command_list;
-
-vertex_layout make_vertex_layout(device* _pDevice, mesh::layout_array& _VertexLayouts, const void* _pVSByteCode);
-
-void unmake_vertex_layout(vertex_layout _VertexLayout);
-
-void bind_vertex_layout(command_list* _pCommandList, vertex_layout _VertexLayout);
-
-#ifndef oHLSL
-	} // namespace gpu
 } // namespace ouro
-#endif
-#endif
