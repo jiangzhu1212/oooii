@@ -243,18 +243,18 @@ void d3d11_command_list::set_counters(uint _NumUnorderedResources, resource** _p
 	// a false setting here, and then flush it with a dispatch of a noop.
 	Context->CSSetUnorderedAccessViews(0, max_num_unordered_buffers, dev()->NullUAVs, dev()->NoopUAVInitialCounts); // clear any conflicting binding
 	Context->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, _NumUnorderedResources, UAVs, _pValues); // set up binding
-	Context->CSSetShader(dev()->NoopCS, nullptr, 0);
+	Context->CSSetShader((d3d::ComputeShader*)dev()->NoopCS.get(), nullptr, 0);
 	Context->Dispatch(1, 1, 1);
 }
 
 void d3d11_command_list::set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState)
 {
-	sampler Samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
+	d3d::SamplerState* Samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
 	oCHECK(oCOUNTOF(Samplers) >= _NumStates, "Too many samplers specified");
 	for (uint i = 0; i < _NumStates; i++)
-		Samplers[i] = (sampler)dev()->SamplerStates[_pSamplerState[i]].c_ptr();
+		Samplers[i] = dev()->SamplerStates[_pSamplerState[i]];
 	
-	bind_samplers(this, _StartSlot, Samplers, _NumStates);
+	d3d11::set_samplers(Context, _StartSlot, _NumStates, Samplers);
 }
 
 void d3d11_command_list::set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources)
@@ -381,11 +381,11 @@ void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 		PrimitiveTopology = p->InputTopology;
 		Context->IASetPrimitiveTopology(p->InputTopology);
 		Context->IASetInputLayout(p->InputLayout);
-		Context->VSSetShader(p->VertexShader, 0, 0);
-		Context->HSSetShader(p->HullShader, 0, 0);
-		Context->DSSetShader(p->DomainShader, 0, 0);
-		Context->GSSetShader(p->GeometryShader, 0, 0);
-		Context->PSSetShader(p->PixelShader, 0, 0);
+		Context->VSSetShader((d3d::VertexShader*)p->VertexShader.get(), 0, 0);
+		Context->HSSetShader((d3d::HullShader*)p->HullShader.get(), 0, 0);
+		Context->DSSetShader((d3d::DomainShader*)p->DomainShader.get(), 0, 0);
+		Context->GSSetShader((d3d::GeometryShader*)p->GeometryShader.get(), 0, 0);
+		Context->PSSetShader((d3d::PixelShader*)p->PixelShader.get(), 0, 0);
 	}
 
 	else
@@ -401,9 +401,9 @@ void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 	}
 }
 
-void d3d11_command_list::set_surface_state(const surface_state::value& _State)
+void d3d11_command_list::set_rasterizer_state(const rasterizer_state::value& _State)
 {
-	Context->RSSetState(dev()->SurfaceStates[_State]);
+	Context->RSSetState(dev()->RasterizerStates[_State]);
 }
 
 void d3d11_command_list::set_blend_state(const blend_state::value& _State)

@@ -54,6 +54,7 @@
     <ClCompile Include="concurrent_registry.cpp" />
     <ClCompile Include="date.cpp" />
     <ClCompile Include="future.cpp" />
+    <ClCompile Include="gpu_api.cpp" />
     <ClCompile Include="gzip.cpp" />
     <ClCompile Include="input.cpp" />
     <ClCompile Include="leak_tracker.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="..\..\Include\oBase\fnv1a.h" />
     <ClInclude Include="..\..\Include\oBase\fourcc.h" />
     <ClInclude Include="..\..\Include\oBase\future.h" />
+    <ClInclude Include="..\..\Include\oBase\gpu_api.h" />
     <ClInclude Include="..\..\Include\oBase\guid.h" />
     <ClInclude Include="..\..\Include\oBase\gzip.h" />
     <ClInclude Include="..\..\Include\oBase\hash_map.h" />

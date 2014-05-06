@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "oD3D11Pipeline.h"
 #include "oD3D11Device.h"
-#include <oGPU/vertex_layout.h>
+#include <oGPU/shader.h>
 
 oGPU_NAMESPACE_BEGIN
 
@@ -57,11 +57,13 @@ oDEVICE_CHILD_CTOR(pipeline1)
 	}
 
 	InputLayout = (ID3D11InputLayout*)make_vertex_layout(_Device.get(), VertexLayouts, _Info.vs);
-	VertexShader = (ID3D11VertexShader*)make_shader(_Device.get(), shader_type::vertex, _Info.vs, _Info.debug_name);
-	HullShader = (ID3D11HullShader*)make_shader(_Device.get(), shader_type::hull, _Info.hs, _Info.debug_name);
-	DomainShader = (ID3D11DomainShader*)make_shader(_Device.get(), shader_type::domain, _Info.ds, _Info.debug_name);
-	GeometryShader = (ID3D11GeometryShader*)make_shader(_Device.get(), shader_type::geometry, _Info.gs, _Info.debug_name);
-	PixelShader = (ID3D11PixelShader*)make_shader(_Device.get(), shader_type::pixel, _Info.ps, _Info.debug_name);
+	InputLayout->Release();
+
+	VertexShader.reset(make_vertex_shader(_Device.get(), _Info.vs, _Info.debug_name));
+	HullShader.reset(make_hull_shader(_Device.get(), _Info.hs, _Info.debug_name));
+	DomainShader.reset(make_domain_shader(_Device.get(), _Info.ds, _Info.debug_name));
+	GeometryShader.reset(make_geometry_shader(_Device.get(), _Info.gs, _Info.debug_name));
+	PixelShader.reset(make_pixel_shader(_Device.get(), _Info.ps, _Info.debug_name));
 }
 
 pipeline1_info d3d11_pipeline1::get_info() const 

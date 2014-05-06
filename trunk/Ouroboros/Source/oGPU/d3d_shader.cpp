@@ -22,47 +22,32 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
-
-using namespace ouro::gpu;
+#include "d3d_shader.h"
+#include "d3d_debug.h"
+#include <oBase/macros.h>
+#include <oCore/windows/win_util.h>
+#include <d3d11.h>
 
 namespace ouro {
-	namespace tests {
+	namespace gpu {
+		namespace d3d {
 
-static const int sSnapshotFrames[] = { 0 };
-static const bool kIsDevMode = false;
+#define MAKE_SH(type, fn) type* fn(Device* dev, const void* bytecode, const char* name) { type* sh = nullptr; if (!bytecode) return nullptr; if (FAILED(dev->Create##type(bytecode, bytecode_size(bytecode), nullptr, &sh))) return nullptr; if (name) debug_name(sh, name); return sh; }
 
-struct gpu_test_triangle : public gpu_test
+MAKE_SH(VertexShader, make_vertex_shader)
+MAKE_SH(HullShader, make_hull_shader)
+MAKE_SH(DomainShader, make_domain_shader)
+MAKE_SH(GeometryShader, make_geometry_shader)
+MAKE_SH(PixelShader, make_pixel_shader)
+MAKE_SH(ComputeShader, make_compute_shader)
+
+// Return the size stored inside D3D11-era bytecode. This can be used anywhere bytecode size is expected.
+unsigned int bytecode_size(const void* bytecode)
 {
-	gpu_test_triangle() : gpu_test("GPU test: triangle", kIsDevMode, sSnapshotFrames) {}
+	// Discovered empirically
+	return bytecode ? ((const unsigned int*)bytecode)[6] : 0;
+}
 
-	void initialize() override
-	{
-		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
-		Mesh = make_first_triangle(Device);
-	}
-
-	void render() override
-	{
-		CommandList->begin();
-		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
-		CommandList->set_blend_state(blend_state::opaque);
-		CommandList->set_depth_stencil_state(depth_stencil_state::none);
-		CommandList->set_rasterizer_state(rasterizer_state::front_face);
-		CommandList->set_pipeline(Pipeline);
-		CommandList->set_render_target(PrimaryRenderTarget);
-		Mesh->draw(CommandList);
-		CommandList->end();
-	}
-
-private:
-	std::shared_ptr<pipeline1> Pipeline;
-	std::shared_ptr<util_mesh> Mesh;
-};
-
-oGPU_COMMON_TEST(triangle);
-
-	} // namespace tests
+		} // namespace d3d
+	} // namespace gpu
 } // namespace ouro

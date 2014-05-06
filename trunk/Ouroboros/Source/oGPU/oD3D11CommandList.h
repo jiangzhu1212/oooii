@@ -66,7 +66,7 @@ oDEVICE_CHILD_CLASS(command_list)
 	// Rasterization-specific
 
 	void set_pipeline(const pipeline1* _pPipeline) override;
-	void set_surface_state(const surface_state::value& _State) override;
+	void set_rasterizer_state(const rasterizer_state::value& _State) override;
 	void set_blend_state(const blend_state::value& _State) override;
 	void set_depth_stencil_state(const depth_stencil_state::value& _State) override;
 	void clear(render_target* _pRenderTarget, const clear_type::value& _Clear) override;

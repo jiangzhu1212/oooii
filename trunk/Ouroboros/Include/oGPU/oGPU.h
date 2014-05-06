@@ -39,9 +39,8 @@
 #include <oSurface/buffer.h>
 #include <array>
 
-#include <oGPU/sampler.h>
 #include <oGPU/shader.h>
-#include <oGPU/vertex_layout.h>
+#include <oGPU/state.h>
 #include <oGPU/vertex_layouts.h>
 
 #include <oGUI/oGUI.h> // only for ouro::draw_context_handle... can it be abstracted
@@ -53,7 +52,6 @@ class window;
 	namespace gpu {
 
 static const uint max_num_input_slots = 3;
-static const uint max_num_samplers = 16;
 static const uint max_num_mrts = 8;
 static const uint max_num_unordered_buffers = 8;
 static const uint max_num_viewports = 16;
@@ -584,59 +582,6 @@ namespace query_type
 
 };}
 
-namespace surface_state
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	// Front-facing is clockwise winding order. Back-facing is counter-clockwise.
-
-	front_face, // Draws all faces whose normal points towards the viewer
-	back_face,  // Draws all faces whose normal points away from the viewer
-	two_sided, // Draws all faces
-	front_wireframe, // Draws the borders of all faces whose normal points towards the viewer
-	back_wireframe,  // Draws the borders of all faces whose normal points away from the viewer
-	two_sided_wireframe, // Draws the borders of all faces
-
-	count,
-
-};}
-
-namespace depth_stencil_state
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	// No depth or stencil operation.
-	none,
-
-	// normal z-buffering mode where if occluded or same value (<= less_equal 
-	// comparison), exit else render and write new Z value. No stencil operation.
-	test_and_write,
-	
-	// test depth only using same method as test-and-write but do not write. No 
-	// stencil operation.
-	test,
-	
-	count,
-
-};}
-
-namespace blend_state
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	// Blend mode math from http://en.wikipedia.org/wiki/Blend_modes
-
-	opaque, // Output.rgba = Source.rgba
-	alpha_test, // Same as opaque, test is done in user code
-	accumulate, // Output.rgba = Source.rgba + Destination.rgba
-	additive, // Output.rgb = Source.rgb * Source.a + Destination.rgb
-	multiply, // Output.rgb = Source.rgb * Destination.rgb
-	screen, // Output.rgb = Source.rgb * (1 - Destination.rgb) + Destination.rgb (as reduced from webpage's 255 - [((255 - Src)*(255 - Dst))/255])
-	translucent, // Output.rgb = Source.rgb * Source.a + Destination.rgb * (1 - Source.a)
-	min_, // Output.rgba = min(Source.rgba, Destination.rgba)
-	max_, // Output.rgba = max(Source.rgba, Destination.rgba)
-
-	count,
-
-};}
-
 namespace pipeline_stage
 { oDECLARE_SMALL_ENUM(value, uchar) {
 	
@@ -883,7 +828,7 @@ public:
 	inline void set_pipeline(const std::shared_ptr<pipeline1>& _pPipeline) { set_pipeline(_pPipeline.get()); }
 
 	// Set the rasterization state in this context
-	virtual void set_surface_state(const surface_state::value& _State) = 0;
+	virtual void set_rasterizer_state(const rasterizer_state::value& _State) = 0;
 
 	// Set the output merger (blend) state in this context
 	virtual void set_blend_state(const blend_state::value& _State) = 0;

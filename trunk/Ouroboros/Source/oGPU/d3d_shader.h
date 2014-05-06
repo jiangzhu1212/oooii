@@ -22,47 +22,29 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+#pragma once
+#ifndef oGPU_d3d_shader_h
+#define oGPU_d3d_shader_h
 
-using namespace ouro::gpu;
+#include "d3d_types.h"
+#include <d3dcommon.h>
 
 namespace ouro {
-	namespace tests {
+	namespace gpu {
+		namespace d3d {
 
-static const int sSnapshotFrames[] = { 0 };
-static const bool kIsDevMode = false;
+VertexShader* make_vertex_shader(Device* dev, const void* bytecode, const char* debug_name);
+HullShader* make_hull_shader(Device* dev, const void* bytecode, const char* debug_name);
+DomainShader* make_domain_shader(Device* dev, const void* bytecode, const char* debug_name);
+GeometryShader* make_geometry_shader(Device* dev, const void* bytecode, const char* debug_name);
+PixelShader* make_pixel_shader(Device* dev, const void* bytecode, const char* debug_name);
+ComputeShader* make_compute_shader(Device* dev, const void* bytecode, const char* debug_name);
 
-struct gpu_test_triangle : public gpu_test
-{
-	gpu_test_triangle() : gpu_test("GPU test: triangle", kIsDevMode, sSnapshotFrames) {}
+// return the size of the specified bytecode
+unsigned int bytecode_size(const void* bytecode);
 
-	void initialize() override
-	{
-		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
-		Mesh = make_first_triangle(Device);
-	}
-
-	void render() override
-	{
-		CommandList->begin();
-		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
-		CommandList->set_blend_state(blend_state::opaque);
-		CommandList->set_depth_stencil_state(depth_stencil_state::none);
-		CommandList->set_rasterizer_state(rasterizer_state::front_face);
-		CommandList->set_pipeline(Pipeline);
-		CommandList->set_render_target(PrimaryRenderTarget);
-		Mesh->draw(CommandList);
-		CommandList->end();
-	}
-
-private:
-	std::shared_ptr<pipeline1> Pipeline;
-	std::shared_ptr<util_mesh> Mesh;
-};
-
-oGPU_COMMON_TEST(triangle);
-
-	} // namespace tests
+		} // namespace d3d
+	} // namespace gpu
 } // namespace ouro
+
+#endif

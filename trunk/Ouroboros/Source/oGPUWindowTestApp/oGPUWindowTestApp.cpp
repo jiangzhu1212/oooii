@@ -62,8 +62,8 @@ static concurrent_registry make_pixel_shader_registry(gpu::device* _pDevice)
 	source.compiled_making = std::move(making);
 
 	concurrent_registry::lifetime_t lifetime;
-	lifetime.create = [=](scoped_allocation& _Compiled, const char* _Name)->void* { return (void*)gpu::make_shader(_pDevice, gpu::shader_type::pixel, _Compiled, _Name); };
-	lifetime.destroy = [=](void* _pEntry) { gpu::unmake_shader((gpu::shader)_pEntry); };
+	lifetime.create = [=](scoped_allocation& _Compiled, const char* _Name)->void* { return (void*)gpu::make_pixel_shader(_pDevice, _Compiled, _Name); };
+	lifetime.destroy = [=](void* _pEntry) { gpu::unmake_shader((gpu::shader*)_pEntry); };
 
 	concurrent_registry PixelShaders(kCapacity, lifetime, source);
 
@@ -137,7 +137,7 @@ void shader_on_loaded(concurrent_registry& _Registry, const path& _Path, scoped_
 		try
 		{
 			lstring IncludePaths, Defines;
-			IncludePaths += "C:/dev/oooii/Ouroboros/Include;";
+			IncludePaths += filesystem::dev_path() / "Ouroboros/Include;";
 
 			scoped_allocation bytecode = gpu::compile_shader(IncludePaths, Defines, _Path, _Stage, _EntryPoint, (const char*)_Buffer);
 			oTRACEA("Insert \"%s\" from %s", _EntryPoint, _Path.c_str());
@@ -290,7 +290,7 @@ oGPUWindowThread::oGPUWindowThread()
 	// jist: load the library file knowing all registries where content will go.
 	// there is a registry per shader type. Shaders are registered by entry point 
 	// name.
-	filesystem::load_async("C:/dev/oooii/Ouroboros/Source/oGfx/oGfxShaders.hlsl"
+	filesystem::load_async(filesystem::dev_path() / "Ouroboros/Source/oGfx/oGfxShaders.hlsl"
 		, std::bind(shader_on_loaded, std::ref(PixelShaders), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 		, filesystem::load_option::text_read);
 }
@@ -407,7 +407,7 @@ void oGPUWindowThread::Render()
 		CommandList->clear(WindowRenderTarget, gpu::clear_type::color_depth_stencil);
 		CommandList->set_blend_state(gpu::blend_state::opaque);
 		CommandList->set_depth_stencil_state(gpu::depth_stencil_state::none);
-		CommandList->set_surface_state(gpu::surface_state::front_face);
+		CommandList->set_rasterizer_state(gpu::rasterizer_state::front_face);
 		CommandList->set_pipeline(Pipeline);
 
 		Mesh->draw(CommandList);
