@@ -32,6 +32,19 @@
 
 #define TEST_FILE "PLATFORM_oHTTP.png"
 
+void* new_allocate(size_t _Size, unsigned int _Options)
+{
+	oASSERT(_Options == 0, "alignment not supported");
+	return new char[_Size];
+}
+
+void new_deallocate(const void* _Pointer)
+{
+	delete [] (const char*)_Pointer;
+}
+
+ouro::allocator new_allocator(new_allocate, new_deallocate);
+
 struct PLATFORM_oHTTP : public oTest
 {
 	void StartResponse(const oHTTP_REQUEST& _Request, const oNetHost& _Client, oHTTP_RESPONSE* _pResponse)
@@ -44,7 +57,7 @@ struct PLATFORM_oHTTP : public oTest
 			{
 				const char *indexHtmlPage = "<html><head><title>Received Post</title></head><body><p>Image compare successful</p></body></html>";
 				int size = (int)strlen(indexHtmlPage) + 1;
-				_pResponse->Content.pData = new char[size];
+				_pResponse->Content.pData = new_allocate(size, 0);
 
 				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
@@ -55,7 +68,7 @@ struct PLATFORM_oHTTP : public oTest
 			{
 				const char *indexHtmlPage = "<html><head><title>500 Internal Server Error</title></head><body><p>Internal Server Error, image compare failed.</p></body></html>";
 				int size = (int)strlen(indexHtmlPage) + 1;
-				_pResponse->Content.pData = new char[size];
+				_pResponse->Content.pData = new_allocate(size, 0);
 
 				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->StatusLine.StatusCode = oHTTP_INTERNAL_SERVER_ERROR;
@@ -77,14 +90,14 @@ struct PLATFORM_oHTTP : public oTest
 				_pResponse->Content.Length = static_cast<unsigned int>(size);
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;
 				_pResponse->Content.Type = oMIME_IMAGE_ICO;
-				_pResponse->Content.pData = new char[_pResponse->Content.Length];
+				_pResponse->Content.pData = new_allocate(_pResponse->Content.Length, 0);
 				memcpy(_pResponse->Content.pData, pBuffer, _pResponse->Content.Length);
 			}
 			else if (strcmp(_Request.RequestLine.RequestURI, "/ ") == 0 || strcmp(_Request.RequestLine.RequestURI, "/") == 0 || strcmp(_Request.RequestLine.RequestURI, "/index.html") == 0)
 			{
 				const char *indexHtmlPage = "<html><head><title>Test Page</title></head><body><p>Welcome to OOOii test HTTP server<br/><img src=\"" TEST_FILE "\"/></p></body></html>";
 				int size = (int)strlen(indexHtmlPage) + 1;
-				_pResponse->Content.pData = new char[size];
+				_pResponse->Content.pData = new_allocate(size, 0);
 
 				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->Content.Type = oMIME_TEXT_HTML;
@@ -99,21 +112,11 @@ struct PLATFORM_oHTTP : public oTest
 				ouro::path_string golden;
 				snprintf(golden, "%sGoldenImages%s", defaultDataPath.c_str(), _Request.RequestLine.RequestURI.c_str());
 
-				if (oStreamReaderCreate(golden, &FileReader))
-				{
-					_pResponse->Content.Type = oMIME_IMAGE_PNG;
-					_pResponse->StatusLine.StatusCode = oHTTP_OK;
-					oSTREAM_DESC desc;
-					FileReader->GetDesc(&desc);
-					_pResponse->Content.Length = static_cast<unsigned int>(desc.Size);
-
-					_pResponse->Content.pData = new char[(int)desc.Size];
-					memset(_pResponse->Content.pData, NULL, static_cast<size_t>(desc.Size));
-					oSTREAM_READ r;
-					r.pData = _pResponse->Content.pData;
-					r.Range = desc;
-					FileReader->Read(r);
-				}
+				ouro::scoped_allocation alloc = ouro::filesystem::load(ouro::path(golden), new_allocator);
+				_pResponse->Content.Type = oMIME_IMAGE_PNG;
+				_pResponse->StatusLine.StatusCode = oHTTP_OK;
+				_pResponse->Content.Length = static_cast<unsigned int>(alloc.size());
+				_pResponse->Content.pData = alloc.release();
 			}
 		}
 	}
@@ -123,7 +126,7 @@ struct PLATFORM_oHTTP : public oTest
 		if (_pMIMEData != 0)
 			oTRACE("Finished Sending Message: %p - %s", _pMIMEData, (const char*)_pMIMEData);
 		// if we were using dynamic memory, free it here
-		delete[] _pMIMEData;
+		new_deallocate(_pMIMEData);
 	}
 
 	RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) override
@@ -165,7 +168,7 @@ struct PLATFORM_oHTTP : public oTest
 
 			// Create a new buffer based on the header from the head command
 			int bufferSize = (int)response.Content.Length;
-			char *pBuffer = new char[bufferSize];
+			char *pBuffer = (char*)new_allocate(bufferSize, 0);
 			memset(pBuffer, NULL, bufferSize);
 			ouro::intrusive_ptr<oBuffer> imageBuffer;
 			oBufferCreate("test get buffer", pBuffer, bufferSize, oBuffer::Delete, &imageBuffer);
@@ -180,25 +183,12 @@ struct PLATFORM_oHTTP : public oTest
 			ouro::path defaultDataPath = ouro::filesystem::data_path();
 			ouro::path_string golden;
 			snprintf(golden, "%sGoldenImages/" TEST_FILE, defaultDataPath.c_str());
-			if (oStreamReaderCreate(golden, &FileReader))
-			{
-				oSTREAM_DESC fileDesc;
-				FileReader->GetDesc(&fileDesc);
 
-				void *pImageFile = new char[(int)fileDesc.Size];
-				memset(pImageFile, NULL, static_cast<size_t>(fileDesc.Size));
-				ouro::intrusive_ptr<oBuffer> postImageBuffer;
-				oBufferCreate("test post buffer", pImageFile, static_cast<size_t>(fileDesc.Size), oBuffer::Delete, &postImageBuffer);
+			ouro::scoped_allocation alloc = ouro::filesystem::load(ouro::path(golden), new_allocator);
 
-				oSTREAM_READ r;
-				r.pData = pImageFile;
-				r.Range = fileDesc; 
-				FileReader->Read(r);
-				
-				char PostBuffer[2048];
-				Client->Post("/", oMIME_IMAGE_PNG, postImageBuffer->GetData(), (int)postImageBuffer->GetSize(), &response, &PostBuffer, 2048);
-				oTESTB(response.StatusLine.StatusCode == oHTTP_OK, "Server image compare failed.");
-			}
+			char PostBuffer[2048];
+			Client->Post("/", oMIME_IMAGE_PNG, alloc, (int)alloc.size(), &response, &PostBuffer, 2048);
+			oTESTB(response.StatusLine.StatusCode == oHTTP_OK, "Server image compare failed.");
 		}
 
 		// In development mode run the server forever and server up responses to http requests
@@ -207,8 +197,6 @@ struct PLATFORM_oHTTP : public oTest
 
 		return SUCCESS;
 	}
-
-	ouro::intrusive_ptr<threadsafe oStreamReader> FileReader;
 };
 
 struct PLATFORM_oHTTPLarge : public oTest

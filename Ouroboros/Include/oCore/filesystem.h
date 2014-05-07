@@ -385,6 +385,7 @@ void save(const path& _Path, const void* _pSource, size_t _SizeofSource, save_op
 // If loaded as text, the allocation will be padded and a nul terminator will be
 // added so the buffer can immediately be used as a string.
 scoped_allocation load(const path& _Path, load_option::value _LoadOption = load_option::binary_read, const allocator& _Allocator = default_allocator);
+inline scoped_allocation load(const path& _Path, const allocator& _Allocator) { return load(_Path, load_option::binary_read, _Allocator); }
 
 // Similar to load, this will load the complete file into an allocated buffer but
 // the open, allocate, read and close occurs in another thread as well as the 
