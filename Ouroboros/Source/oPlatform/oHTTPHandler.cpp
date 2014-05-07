@@ -38,21 +38,16 @@ oRTTI_COMPOUND_END_DESCRIPTION(oHTTPHandlerCommonQueryParams)
 
 void oHTTPHandlerBuildStaticFileResponse(const char* _FullPath, oHTTPHandler::CommonParams& _CommonParams)
 {
-	intrusive_ptr<threadsafe oStreamReader> reader;
-	if(!oStreamReaderCreate(_FullPath, &reader))
+	try
+	{
+		scoped_allocation alloc = filesystem::load(path(_FullPath));
+		_CommonParams.AllocateResponse(alloc.size());
+		memcpy(_CommonParams.pResponse->Content.pData, alloc, alloc.size());
+	}
+	catch (std::exception&)
+	{
 		return;
-
-	oSTREAM_DESC streamDesc;
-	reader->GetDesc(&streamDesc);
-
-	_CommonParams.AllocateResponse(as_size_t(streamDesc.Size));
-	oSTREAM_READ read;
-	read.pData = _CommonParams.pResponse->Content.pData;
-	read.Range.Offset = 0;
-	read.Range.Size = streamDesc.Size;
-	if(!reader->Read(read))
-		return;
-
+	}
 	oMIMEFromExtension(&_CommonParams.pResponse->Content.Type, path(_FullPath).extension());
 	_CommonParams.pResponse->StatusLine.StatusCode = oHTTP_OK;
 }
