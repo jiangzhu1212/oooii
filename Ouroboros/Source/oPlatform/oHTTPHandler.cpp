@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oHTTPHandler.h>
-#include <oPlatform/oStream.h>
 #include <oBasis/oRTTI.h>
 
 using namespace ouro;
