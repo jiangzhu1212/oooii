@@ -128,34 +128,23 @@
   <ItemGroup>
     <ClInclude Include="..\..\Include\oPlatform\all.h" />
     <ClInclude Include="..\..\Include\oPlatform\oEMail.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oFileCache.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTP.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPClient.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPHandler.h" />
     <ClInclude Include="..\..\Include\oPlatform\oHTTPServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oMirroredArena.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oRegistry.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSocket.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oStream.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTCPServer.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h" />
-    <ClInclude Include="..\..\Include\oPlatform\oWebServer.h" />
     <ClInclude Include="..\..\Include\oPlatform\oP4.h" />
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h" />
     <ClInclude Include="..\..\Include\oPlatform\oTest.h" />
-    <ClInclude Include="oDispatchQueueGlobalIOCP.h" />
     <ClInclude Include="oHTTPInternal.h" />
     <ClInclude Include="oIOCP.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SoftLink\oOpenSSL.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="oDispatchQueueGlobalIOCP.cpp" />
     <ClCompile Include="oEMail.cpp" />
-    <ClCompile Include="oFileCache.cpp" />
-    <ClCompile Include="oFileCacheMonitoring.cpp" />
-    <ClCompile Include="oFileSchemeHandler.cpp" />
     <ClCompile Include="oHTTP.cpp" />
     <ClCompile Include="oHTTPClient.cpp" />
     <ClCompile Include="oHTTPHandler.cpp" />
@@ -164,13 +153,9 @@
     <ClCompile Include="oIOCP.cpp" />
     <ClCompile Include="oMirroredArena.cpp" />
     <ClCompile Include="oP4.cpp" />
-    <ClCompile Include="oRegistry.cpp" />
     <ClCompile Include="oSingleton.cpp" />
     <ClCompile Include="oSocket.cpp" />
-    <ClCompile Include="oStream.cpp" />
     <ClCompile Include="oTest.cpp" />
-    <ClCompile Include="oWebAppWindow.cpp" />
-    <ClCompile Include="oWebServer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

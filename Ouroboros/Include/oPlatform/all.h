@@ -30,7 +30,6 @@
 #include <oGUI/console.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oP4.h>
-#include <oPlatform/oRegistry.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>
 #endif
