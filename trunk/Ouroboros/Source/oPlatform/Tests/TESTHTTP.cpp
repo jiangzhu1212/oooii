@@ -26,7 +26,6 @@
 #include <oPlatform/oHTTPClient.h>
 #include <oPlatform/oHTTPServer.h>
 #include <oGUI/msgbox.h>
-#include <oPlatform/oStream.h>
 #include <oBase/finally.h>
 #include <oSurface/codec.h>
 
@@ -295,8 +294,6 @@ struct PLATFORM_oHTTPLarge : public oTest
 
 		return SUCCESS;
 	}
-
-	ouro::intrusive_ptr<threadsafe oStreamReader> FileReader;
 };
 
 oTEST_REGISTER(PLATFORM_oHTTP);
