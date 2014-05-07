@@ -8,7 +8,6 @@
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
 #include <oPlatform/oTest.h>
-#include <oPlatform/oStream.h>
 #include <oGUI/Windows/win_gdi.h>
 #include <oGUI/Windows/win_gdi_bitmap.h>
 #include "resource.h"
@@ -373,13 +372,6 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 		dataPath = _pParameters->DataPath;
 	else
 		dataPath = filesystem::data_path();
-
-	// @tony: This is important to be here for now because it touches the 
-	// underlying singleton so it doesn't appear in unit tests as a leak. Also
-	// this should become where the paths to all source data should be registered
-	// and thus each test can be simpler and remove BuildPath and other weird
-	// one-offy APIs.
-	oVERIFY(oStreamSetURIBaseSearchPath(""));
 
 	oTestManager::DESC desc;
 	desc.TestSuiteName = sTITLE;

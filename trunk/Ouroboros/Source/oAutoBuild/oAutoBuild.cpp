@@ -23,14 +23,13 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oP4ChangelistBuilder.h"
-#include <oPlatform/oWebAppWindow.h>
 #include <oBasis/oINISerialize.h>
 #include <oBasis/oJSONSerialize.h>
 #include <oBasis/oURIQuerySerialize.h>
 #include <oPlatform/oHTTPHandler.h>
-#include <oPlatform/oWebServer.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
+#include <oPlatform/oHTTPServer.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -410,7 +409,7 @@ bool oAutoBuildCaptureRemaining::AttemptCapture(const char* _URI, const char** _
 	return true;
 }
 
-void OnNewVersion(ouro::filesystem::file_event::value _Event, const path& _Path, oWebAppWindow* _pAppWindow)
+void OnNewVersion(ouro::filesystem::file_event::value _Event, const path& _Path, class oWebAppWindow* _pAppWindow)
 {
 	oASSERT(false, "Disabled until version packing gets resurrected.");
 #if 0
@@ -481,9 +480,16 @@ int main(int argc, const char* argv[])
 		section = INI->next_section(section);
 	}
 
-	intrusive_ptr<oWebAppWindow> Window;
+	// Disabled all webserver and webappwindow code. This will need to be resurrected
+
+	// intrusive_ptr<oWebAppWindow> Window;
+
+#if 0 // disabled
 	if (!oWebAppWindowCreate("oAutoBuild", Settings.Port, &Window))
+#endif
 		return -1;
+
+#if 0
 
 	path logroot = uri(Settings.BuildLogsURI).path();
 	filesystem::create_directories(logroot.parent_path());
@@ -504,9 +510,12 @@ int main(int argc, const char* argv[])
 	intrusive_ptr<oHTTPURICapture> Captures[1];
 	Captures[0] = intrusive_ptr<oHTTPURICapture>(new oAutoBuildCaptureRemaining(), false);
 
+#if 0 // disabled
 	intrusive_ptr<threadsafe oWebServer> WebServer;
+#endif
 	intrusive_ptr<oHTTPServer> BuildServer;
 
+#if 0 // disabled
 	oWebServer::DESC ServerDesc;
 	ServerDesc.AllocBufferCallback = [](size_t _BufferSize) { return new char[_BufferSize]; };
 	ServerDesc.DefaultURIReference = "index.html";
@@ -518,6 +527,12 @@ int main(int argc, const char* argv[])
 		msgbox(msg_type::warn, nullptr, nullptr, "Couldn't start build server: %s", oErrorGetLastString());
 		return -1;
 	}
+#else
+		msgbox(msg_type::warn, nullptr, nullptr, "Couldn't start build server: %s", oErrorGetLastString());
+		return -1;
+#endif
+
+#if 0
 
 	// 2) Hook up our handlers
 	for(int i = 0; i < oCOUNTOF(Handlers); ++i)
@@ -530,7 +545,7 @@ int main(int argc, const char* argv[])
 		auto Capturer = Captures[i];
 		WebServer->AddURICaptureHandler(Capturer);
 	}
-
+#endif
 	// 3) Start the server
 	{
 		oHTTPServer::DESC HTTPServerDesc;
@@ -538,7 +553,7 @@ int main(int argc, const char* argv[])
 		HTTPServerDesc.SupportedMethods = oHTTP_GET;
 		HTTPServerDesc.StartResponse = [&](const oHTTP_REQUEST& _Request, const oNetHost& _Client, oHTTP_RESPONSE* _pResponse)
 		{
-			WebServer->Retrieve(_Request, _pResponse);
+			// WebServer->Retrieve(_Request, _pResponse); // disabled
 		};
 
 		HTTPServerDesc.FinishResponse = [=](const void* _pContentBody)
@@ -562,7 +577,7 @@ int main(int argc, const char* argv[])
 		ouro::filesystem::monitor::info i;
 		try
 		{
-			NewVersionMonitor = ouro::filesystem::monitor::make(i, std::bind(OnNewVersion, std::placeholders::_1, std::placeholders::_2, Window));
+			//NewVersionMonitor = ouro::filesystem::monitor::make(i, std::bind(OnNewVersion, std::placeholders::_1, std::placeholders::_2, Window)); // disabled
 			NewVersionMonitor->watch(MonitorPath, oKB(10), false);
 		}
 
@@ -574,6 +589,8 @@ int main(int argc, const char* argv[])
 
 	int WorkCountUILast = -1;
 	uint LastP4CheckMS = 0;
+
+#if 0
 	Window->show();
 	while(Window->IsRunning())
 	{
@@ -599,5 +616,7 @@ int main(int argc, const char* argv[])
 		CLManager->MainThreadYield(500);
 	}
 	CLManager->Cancel();
+#endif
 	return 0;
+#endif
 } 

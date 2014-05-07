@@ -13,17 +13,11 @@
     <Filter Include="Headers\Memory">
       <UniqueIdentifier>{407e7a63-710b-49c2-97b3-d6280cb12154}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers\UI">
-      <UniqueIdentifier>{af021ec5-012f-4603-b440-708fe0820896}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source\Memory">
       <UniqueIdentifier>{45248250-dc89-44c5-b6e0-92e5be162ba2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\IO">
       <UniqueIdentifier>{685fc8a1-0c84-4c3c-afa4-45a91c20182b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\UI">
-      <UniqueIdentifier>{11903540-3ad2-4b3d-9d43-540e9b8b885f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\Windows Soft Link">
       <UniqueIdentifier>{4f23875d-6e9f-491f-b4bb-c2e3d3d000b5}</UniqueIdentifier>
@@ -40,15 +34,6 @@
       <Filter>Headers\IO</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oP4.h">
-      <Filter>Headers\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oStream.h">
-      <Filter>Headers\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="oDispatchQueueGlobalIOCP.h">
-      <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oFileSchemeHandler.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oHTTP.h">
@@ -69,22 +54,10 @@
     <ClInclude Include="..\..\Include\oPlatform\oTCPServer.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oWebAppWindow.h">
-      <Filter>Headers\UI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oWebServer.h">
-      <Filter>Headers\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oFileCache.h">
-      <Filter>Headers\IO</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oHTTPHandler.h">
       <Filter>Headers\IO</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\all.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oPlatform\oRegistry.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oPlatform\oSingleton.h">
@@ -93,11 +66,11 @@
     <ClInclude Include="..\..\Include\oPlatform\oTest.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="oIOCP.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="SoftLink\oOpenSSL.h">
       <Filter>Source\Windows Soft Link</Filter>
+    </ClInclude>
+    <ClInclude Include="oIOCP.h">
+      <Filter>Source\IO</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -107,16 +80,10 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oDispatchQueueGlobalIOCP.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oMirroredArena.cpp">
       <Filter>Source\Memory</Filter>
     </ClCompile>
     <ClCompile Include="oEMail.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oFileSchemeHandler.cpp">
       <Filter>Source\IO</Filter>
     </ClCompile>
     <ClCompile Include="oHTTP.cpp">
@@ -134,26 +101,8 @@
     <ClCompile Include="oP4.cpp">
       <Filter>Source\IO</Filter>
     </ClCompile>
-    <ClCompile Include="oStream.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oWebAppWindow.cpp">
-      <Filter>Source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="oWebServer.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oFileCacheMonitoring.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oFileCache.cpp">
-      <Filter>Source\IO</Filter>
-    </ClCompile>
     <ClCompile Include="oHTTPHandler.cpp">
       <Filter>Source\IO</Filter>
-    </ClCompile>
-    <ClCompile Include="oRegistry.cpp">
-      <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="oSingleton.cpp">
       <Filter>Source</Filter>
@@ -161,11 +110,11 @@
     <ClCompile Include="oTest.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oIOCP.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="SoftLink\oOpenSSL.cpp">
       <Filter>Source\Windows Soft Link</Filter>
+    </ClCompile>
+    <ClCompile Include="oIOCP.cpp">
+      <Filter>Source\IO</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
