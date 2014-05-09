@@ -25,6 +25,7 @@
 #include "d3dx11_util.h"
 #include "d3d11_util.h"
 #include "d3d_debug.h"
+#include "d3d_resource.h"
 #include <oBase/assert.h>
 
 namespace ouro {
@@ -125,7 +126,7 @@ static intrusive_ptr<ID3D11Resource> prepare_source(ID3D11Resource* _pResource
 	intrusive_ptr<ID3D11Device> Device;
 	_pResource->GetDevice(&Device);
 	Device->GetImmediateContext(_ppDeviceContext);
-	gpu::texture_info i = d3d11::get_texture_info(_pResource);
+	gpu::texture_info i = d3d::get_texture_info(_pResource);
 	if (surface::is_block_compressed(i.format) && _Format != D3DX11_IFF_DDS)
 		throw std::invalid_argument("D3DX11 can save block compressed formats only to .dds files.");
 	intrusive_ptr<ID3D11Resource> Source = gpu::is_readback(i.type) ? _pResource : d3d11::make_cpu_copy(_pResource);

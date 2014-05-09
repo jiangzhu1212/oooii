@@ -27,6 +27,7 @@
 #include <oSurface/surface.h>
 #include "dxgi_util.h"
 #include "d3d_debug.h"
+#include "d3d_resource.h"
 
 using namespace ouro::gpu::d3d;
 

@@ -29,6 +29,7 @@
 #include "dxgi_util.h"
 #include "d3d_compile.h"
 #include "d3d_debug.h"
+#include "d3d_resource.h"
 #include <cerrno>
 
 using namespace ouro::gpu::d3d;
@@ -331,22 +332,6 @@ D3D_FEATURE_LEVEL feature_level(const version& _ShaderModel)
 	return level;
 }
 
-// {13BA565C-4766-49C4-8C1C-C1F459F00A65}
-static const GUID oWKPDID_oGPU_BUFFER_INFO = { 0x13ba565c, 0x4766, 0x49c4, { 0x8c, 0x1c, 0xc1, 0xf4, 0x59, 0xf0, 0xa, 0x65 } };
-
-void set_info(ID3D11Resource* _pBuffer, const gpu::buffer_info& _Desc)
-{
-	oV(_pBuffer->SetPrivateData(oWKPDID_oGPU_BUFFER_INFO, sizeof(_Desc), &_Desc));
-}
-
-gpu::buffer_info get_info(const ID3D11Resource* _pBuffer)
-{
-	unsigned int size = sizeof(gpu::buffer_info);
-	gpu::buffer_info i;
-	oV(const_cast<ID3D11Resource*>(_pBuffer)->GetPrivateData(oWKPDID_oGPU_BUFFER_INFO, &size, &i));
-	return i;
-}
-
 static unsigned int cpu_write_flags(D3D11_USAGE _Usage)
 {
 	switch (_Usage)
@@ -458,7 +443,7 @@ intrusive_ptr<ID3D11Buffer> make_buffer(ID3D11Device* _pDevice
 	// around a bit longer until it can truly be orphaned.
 	gpu::buffer_info i(_Info);
 	i.struct_byte_size = as_ushort(ElementStride);
-	set_info(Buffer, i);
+	d3d::set_info(Buffer, i);
 
 	if (_Info.type >= gpu::buffer_type::unordered_raw)
 	{
@@ -615,97 +600,6 @@ void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix
 	#undef oD3D11_TRACE_UINT
 	#undef oD3D11_TRACE_ENUM
 	#undef oD3D11_TRACE_FLAGS
-}
-
-template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, bool _AsArray, gpu::texture_type::value _BasicType, gpu::texture_info* _pInfo)
-{
-	if (_Desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE)
-		_BasicType = gpu::texture_type::default_cube;
-
-	_pInfo->format = dxgi::to_surface_format(_Desc.Format);
-
-	_pInfo->type = _BasicType;
-	if (_Desc.MipLevels > 1)
-		_pInfo->type = gpu::add_mipped(_pInfo->type);
-
-	if (_AsArray)
-		_pInfo->type = gpu::add_array(_pInfo->type);
-	else
-		_pInfo->array_size = 0;
-
-	if (_Desc.Usage == D3D11_USAGE_STAGING)
-		_pInfo->type = gpu::make_readback(_pInfo->type);
-
-	if (_Desc.BindFlags & (D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL))
-		_pInfo->type = gpu::make_render_target(_pInfo->type);
-
-	if (_Desc.BindFlags & D3D11_BIND_UNORDERED_ACCESS)
-	{
-		oASSERT(_pInfo->type == gpu::texture_type::default_2d, "Invalid/unhandled type");
-		_pInfo->type = gpu::texture_type::unordered_2d;
-	}
-}
-
-gpu::texture_info get_texture_info(ID3D11Resource* _pResource, bool _AsArray, D3D11_USAGE* _pUsage)
-{
-	gpu::texture_info info;
-
-	D3D11_RESOURCE_DIMENSION type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
-	_pResource->GetType(&type);
-	switch (type)
-	{
-		case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
-		{
-			D3D11_TEXTURE1D_DESC desc;
-			static_cast<ID3D11Texture1D*>(_pResource)->GetDesc(&desc);
-			info.dimensions = ushort3(static_cast<unsigned short>(desc.Width), 1, 1);
-			info.array_size = static_cast<unsigned short>(desc.ArraySize);
-			fill_non_dimensions(desc, _AsArray || desc.ArraySize > 1, gpu::texture_type::default_1d, &info);
-			if (_pUsage) *_pUsage = desc.Usage;
-			break;
-		}
-
-		case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
-		{
-			D3D11_TEXTURE2D_DESC desc;
-			static_cast<ID3D11Texture2D*>(_pResource)->GetDesc(&desc);
-			info.dimensions = ushort3(static_cast<unsigned short>(desc.Width)
-				, static_cast<unsigned short>(desc.Height), 1);
-			info.array_size = static_cast<unsigned short>(desc.ArraySize);
-			fill_non_dimensions(desc, _AsArray || desc.ArraySize > 1, gpu::texture_type::default_2d, &info);
-			if (_pUsage) *_pUsage = desc.Usage;
-			break;
-		}
-
-		case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
-		{
-			D3D11_TEXTURE3D_DESC desc;
-			static_cast<ID3D11Texture3D*>(_pResource)->GetDesc(&desc);
-			info.dimensions = ushort3(static_cast<unsigned short>(desc.Width)
-				, static_cast<unsigned short>(desc.Height)
-				, static_cast<unsigned short>(desc.Depth));
-			info.array_size = 1;
-			fill_non_dimensions(desc, false, gpu::texture_type::default_3d, &info);
-			if (_pUsage) *_pUsage = desc.Usage;
-			break;
-		}
-
-		case D3D11_RESOURCE_DIMENSION_BUFFER:
-		{
-			gpu::buffer_info i = get_info(_pResource);
-			D3D11_BUFFER_DESC desc;
-			static_cast<ID3D11Buffer*>(_pResource)->GetDesc(&desc);
-			info.dimensions = ushort3(i.struct_byte_size, static_cast<ushort>(i.array_size), 1);
-			info.array_size = i.array_size;
-			info.format = i.format;
-			if (_pUsage) *_pUsage = desc.Usage;
-			break;
-		};
-
-		oNODEFAULT;
-	}
-
-	return info;
 }
 
 static D3D11_SHADER_RESOURCE_VIEW_DESC get_srv_desc(const gpu::texture_info& _Info, D3D11_RESOURCE_DIMENSION _Type)
@@ -1016,7 +910,7 @@ intrusive_ptr<ID3D11Resource> make_cpu_copy(ID3D11Resource* _pResource)
 
 	try
 	{
-		gpu::buffer_info i = get_info(_pResource);
+		gpu::buffer_info i = d3d::get_info(_pResource);
 		set_info(CPUCopy, i);
 	}
 	catch(std::exception&) {}
