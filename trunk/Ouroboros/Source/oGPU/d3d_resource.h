@@ -22,26 +22,28 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oD3D11Buffer.h"
-#include "oD3D11Device.h"
-#include "d3d_resource.h"
+#pragma once
+#ifndef oGPU_d3d_resource_h
+#define oGPU_d3d_resource_h
 
-oGPU_NAMESPACE_BEGIN
+#include "d3d_types.h"
+#include <d3d11.h>
 
-oDEFINE_DEVICE_MAKE(buffer)
-oRESOURCE_CTOR(buffer)
-{
-	oD3D11_DEVICE();
-	ID3D11UnorderedAccessView** ppUAV = Info.type == buffer_type::unordered_structured_append ? &UAVAppend : &UAV;
-	Buffer = d3d11::make_buffer(D3DDevice, _Name, Info, nullptr, ppUAV, &SRV);
-	Info = d3d::get_info(Buffer);
-	if (Info.type == buffer_type::unordered_structured_append)
-		UAV = make_unflagged_copy(*ppUAV);
-}
+#include <oGPU/oGPU.h> // texture_type, buffer_info, texture_info
 
-uint2 d3d11_buffer::byte_dimensions(int _Subresource) const
-{
-	return uint2(Info.struct_byte_size, Info.array_size);
-}
+namespace ouro {
+	namespace gpu {
+		namespace d3d {
 
-oGPU_NAMESPACE_END
+// Allow ID3D11Buffers to be a bit more self-describing - mainly for index buffers.
+void set_info(Resource* _pBuffer, const buffer_info& _Desc);
+gpu::buffer_info get_info(const Resource* _pBuffer);
+
+// returns a unified info for any type of resource
+texture_info get_texture_info(Resource* _pResource, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr);
+
+		} // namespace d3d
+	} // namespace gpu
+} // namespace ouro
+
+#endif

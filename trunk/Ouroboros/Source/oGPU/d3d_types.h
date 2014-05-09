@@ -47,6 +47,11 @@ struct ID3D11SamplerState;
 struct ID3D11RasterizerState;
 struct ID3D11BlendState;
 struct ID3D11DepthStencilState;
+struct ID3D11DepthStencilView;
+struct ID3D11RenderTargetView;
+struct ID3D11ShaderResourceView;
+struct ID3D11UnorderedAccessView;
+struct ID3D11View;
 
 namespace ouro {
 	namespace gpu {
@@ -72,6 +77,11 @@ typedef ID3D11SamplerState SamplerState;
 typedef ID3D11RasterizerState RasterizerState;
 typedef ID3D11BlendState BlendState;
 typedef ID3D11DepthStencilState DepthStencilState;
+typedef ID3D11DepthStencilView DepthStencilView;
+typedef ID3D11RenderTargetView RenderTargetView;
+typedef ID3D11ShaderResourceView ShaderResourceView;
+typedef ID3D11UnorderedAccessView UnorderedAccessView;
+typedef ID3D11View View;
 
 		} // namespace d3d
 	} // namespace gpu

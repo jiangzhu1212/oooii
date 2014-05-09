@@ -39,6 +39,7 @@
 #include <oSurface/buffer.h>
 #include <array>
 
+#include <oGPU/render_target.h>
 #include <oGPU/shader.h>
 #include <oGPU/state.h>
 #include <oGPU/vertex_layouts.h>
@@ -52,9 +53,9 @@ class window;
 	namespace gpu {
 
 static const uint max_num_input_slots = 3;
-static const uint max_num_mrts = 8;
 static const uint max_num_unordered_buffers = 8;
 static const uint max_num_viewports = 16;
+static const uint max_num_mrts = 8;
 
 // _____________________________________________________________________________
 // Device concepts

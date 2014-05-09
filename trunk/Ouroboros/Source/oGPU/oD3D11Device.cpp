@@ -30,6 +30,7 @@
 #include "d3d11_util.h"
 #include "d3d_compile.h"
 #include "d3d_debug.h"
+#include "d3d_resource.h"
 #include "d3d_state.h"
 #include "dxgi_util.h"
 #include "CSNoop.h"
@@ -273,7 +274,7 @@ void d3d11_device::commit(ID3D11DeviceContext* _pDeviceContext, resource* _pReso
 		resource_type::value type = _pResource->type();
 		if (type == resource_type::buffer)
 		{
-			buffer_info i = d3d11::get_info(static_cast<ID3D11Buffer*>(pD3DResource));
+			buffer_info i = d3d::get_info(static_cast<ID3D11Buffer*>(pD3DResource));
 			StructureByteStride = __max(1, i.struct_byte_size);
 			oASSERT(_Subregion.top == 0 && _Subregion.bottom == 1, "Buffer subregion must have top == 0 and bottom == 1");
 		}

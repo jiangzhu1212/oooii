@@ -77,11 +77,6 @@ D3D_FEATURE_LEVEL feature_level(const version& _ShaderModel);
 // _____________________________________________________________________________
 // Buffer API
 
-// Allow ID3D11Buffers to be a bit more self-describing - mainly for index 
-// buffers.
-void set_info(ID3D11Resource* _pBuffer, const gpu::buffer_info& _Info);
-gpu::buffer_info get_info(const ID3D11Resource* _pBuffer);
-
 // Create common interfaces. NOTE: It is often benchmarked as faster due to 
 // driver PCIE usage to use D3D11_USAGE_DEFAULT and UpdateSubresource rather 
 // than D3D11_USAGE_DYNAMIC and Map/Unmap. Benchmark to be sure, but it is 
@@ -162,13 +157,6 @@ void update_index_buffer(ID3D11DeviceContext* _pDeviceContext
 
 // Uses oTRACE to display the fields of the specified desc.
 void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix = "\t");
-
-// Fills the specified texture_info with the description from the specified 
-// resource. The resource can be: ID3D11Texture1D, ID3D11Texture2D
-// ID3D11Texture3D or ID3D11Buffer. If an ID3D11Buffer the size of a single
-// struct is in dimensions.x, and the number of structures is in dimensions.y.
-// The y value will be replicated in array_size as well.
-gpu::texture_info get_texture_info(ID3D11Resource* _pResource, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr);
 
 // This converts back from a texture_info to typical fields in texture-related
 // structs (including D3DX11_IMAGE_LOAD_INFO, specify the info's format as 
