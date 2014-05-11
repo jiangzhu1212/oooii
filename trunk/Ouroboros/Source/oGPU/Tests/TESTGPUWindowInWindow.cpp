@@ -94,9 +94,7 @@ public:
 		{
 			if (Device->begin_frame())
 			{
-				gpu::clear_info ci;
-				ci.clear_color[0] = (Counter & 0x1) ? white : blue;
-				PrimaryrenderTarget->set_clear_info(ci);
+				PrimaryrenderTarget->set_clear_color((Counter & 0x1) ? white : blue);
 
 				CommandList->begin();
 				CommandList->set_render_target(PrimaryrenderTarget);

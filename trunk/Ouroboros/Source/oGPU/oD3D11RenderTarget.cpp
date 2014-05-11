@@ -94,9 +94,15 @@ render_target_info d3d11_render_target::get_info() const
 	return i;
 }
 
-void d3d11_render_target::set_clear_info(const clear_info& _ClearInfo)
+void d3d11_render_target::set_clear_depth_stencil(float _Depth, uchar _Stencil)
 {
-	Info.clear = _ClearInfo;
+	Info.depth_clear_value = _Depth;
+	Info.stencil_clear_value = _Stencil;
+}
+
+void d3d11_render_target::set_clear_color(uint _Index, color _Color)
+{
+	Info.clear_color[_Index] = _Color;
 }
 
 void d3d11_render_target::clear_resources()
@@ -163,13 +169,12 @@ void d3d11_render_target::resize(const int3& _NewDimensions)
 				Textures[0] = std::make_shared<d3d11_texture>(Device, name(), texture_info(), SwapChainTexture);
 				make_rtv(name(), SwapChainTexture, RTVs[0]);
 				Info.array_size = 0;
-				Info.mrt_count = 1;
-				Info.type = texture_type::render_target_2d;
+				Info.num_mrts = 1;
 			}
 
 			else
 			{
-				for (int i = 0; i < Info.mrt_count; i++)
+				for (int i = 0; i < Info.num_mrts; i++)
 				{
 					lstring n;
 					snprintf(n, "%s%02d", name(), i);
@@ -177,7 +182,7 @@ void d3d11_render_target::resize(const int3& _NewDimensions)
 					ti.dimensions = New;
 					ti.format = Info.format[i];
 					ti.array_size = Info.array_size;
-					ti.type = gpu::make_render_target(Info.type);
+					ti.type = Info.has_mips ? texture_type::mipped_render_target_2d : texture_type::render_target_2d;
 					Textures[i] = Device->make_texture(n, ti);
 					make_rtv(name(), static_cast<d3d11_texture*>(Textures[i].get())->pTexture2D, RTVs[0]);
 				}
@@ -192,7 +197,7 @@ void d3d11_render_target::resize(const int3& _NewDimensions)
 
 std::shared_ptr<texture> d3d11_render_target::get_texture(int _MRTIndex)
 {
-	oCHECK(_MRTIndex < Info.mrt_count, "Invalid MRT index");
+	oCHECK(_MRTIndex < Info.num_mrts, "Invalid MRT index");
 	return Textures[_MRTIndex];
 }
 

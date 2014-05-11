@@ -332,7 +332,7 @@ void d3d11_command_list::set_render_target_and_unordered_resources(render_target
 
 	uint StartSlot = _UnorderedResourcesStartSlot;
 	if (StartSlot == invalid)
-		StartSlot = RT ? RT->Info.mrt_count : 0;
+		StartSlot = RT ? RT->Info.num_mrts : 0;
 
 	ID3D11UnorderedAccessView* UAVs[max_num_unordered_buffers];
 	get_uavs(UAVs, _NumUnorderedResources, _ppUnorderedResources, 0, 0, !_SetForDispatch);
@@ -359,7 +359,7 @@ void d3d11_command_list::set_render_target_and_unordered_resources(render_target
 
 		if (RT)
 		{
-			Context->OMSetRenderTargetsAndUnorderedAccessViews(RT->Info.mrt_count, (ID3D11RenderTargetView* const*)RT->RTVs.data(), RT->DSV, StartSlot, NumUAVs, UAVs, pInitialCounts);
+			Context->OMSetRenderTargetsAndUnorderedAccessViews(RT->Info.num_mrts, (ID3D11RenderTargetView* const*)RT->RTVs.data(), RT->DSV, StartSlot, NumUAVs, UAVs, pInitialCounts);
 			render_target_info i = _pRenderTarget->get_info();
 			set_viewports(Context, i.dimensions.xy(), _NumViewports, _pViewports);
 		}
@@ -424,9 +424,9 @@ void d3d11_command_list::clear(render_target* _pRenderTarget, const clear_type::
 	if (_Clear >= clear_type::color)
 	{
 		float c[4];
-		for (int i = 0; i < RT->Info.mrt_count; i++)
+		for (int i = 0; i < RT->Info.num_mrts; i++)
 		{
-			RT->Info.clear.clear_color[i].decompose(&c[0], &c[1], &c[2], &c[3]);
+			RT->Info.clear_color[i].decompose(&c[0], &c[1], &c[2], &c[3]);
 			Context->ClearRenderTargetView(RT->RTVs[i], c);
 		}
 	}
@@ -444,7 +444,7 @@ void d3d11_command_list::clear(render_target* _pRenderTarget, const clear_type::
 	static_assert(oCOUNTOF(sClearFlags) == clear_type::count, "# clears mismatch");
 
 	if (RT->DSV && _Clear != clear_type::color)
-		Context->ClearDepthStencilView(RT->DSV, sClearFlags[_Clear], RT->Info.clear.depth_clear_value, RT->Info.clear.stencil_clear_value);
+		Context->ClearDepthStencilView(RT->DSV, sClearFlags[_Clear], RT->Info.depth_clear_value, RT->Info.stencil_clear_value);
 }
 
 void d3d11_command_list::set_vertex_buffers(const buffer* _pIndexBuffer, uint _StartSlot, uint _NumVertexBuffers, const buffer* const* _ppVertexBuffers, uint _StartVertex)
@@ -535,7 +535,7 @@ void d3d11_command_list::draw(buffer* _pDrawArgs, uint _AlignedByteOffsetForArgs
 void d3d11_command_list::generate_mips(render_target* _pRenderTarget)
 {
 	render_target_info i = _pRenderTarget->get_info();
-	if (!is_mipped(i.type))
+	if (!i.has_mips)
 		oTHROW_INVARG("Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
 	d3d11_render_target* RT = static_cast<d3d11_render_target*>(_pRenderTarget);
 	Context->GenerateMips(static_cast<d3d11_texture*>(RT->Textures[0].get())->SRV);

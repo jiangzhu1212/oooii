@@ -55,7 +55,7 @@ class window;
 static const uint max_num_input_slots = 3;
 static const uint max_num_unordered_buffers = 8;
 static const uint max_num_viewports = 16;
-static const uint max_num_mrts = 8;
+//static const uint max_num_mrts = 8;
 
 // _____________________________________________________________________________
 // Device concepts
@@ -495,37 +495,6 @@ namespace clear_type
 
 };}
 
-struct clear_info
-{
-	clear_info()
-		: depth_clear_value(1.0f)
-		, stencil_clear_value(0)
-	{ clear_color.fill(color(0)); }
-
-	std::array<color, max_num_mrts> clear_color;
-	float depth_clear_value;
-	uchar stencil_clear_value;
-};
-
-struct render_target_info
-{
-	render_target_info()
-		: dimensions(0, 0, 0)
-		, type(texture_type::render_target_2d)
-		, depth_stencil_format(surface::unknown)
-		, mrt_count(1)
-		, array_size(1)
-	{ format.fill(surface::unknown); }
-
-	ushort3 dimensions;
-	texture_type::value type;
-	surface::format depth_stencil_format;
-	ushort mrt_count;
-	ushort array_size;
-	std::array<surface::format, max_num_mrts> format;
-	clear_info clear;
-};
-
 class texture : public resource
 {
 	// A large buffer usually filled with image data that is often accessed
@@ -542,15 +511,8 @@ public:
 	virtual render_target_info get_info() const = 0;
 
 	// Modifies the values for clearing without modifying other topology
-	virtual void set_clear_info(const clear_info& _ClearInfo) = 0;
-
-	inline void set_clear_color(int _Index, color _Color)
-	{
-		render_target_info i = get_info();
-		i.clear.clear_color[_Index] = _Color;
-		set_clear_info(i.clear);
-	}
-
+	virtual void set_clear_depth_stencil(float _Depth, uchar _Stencil) = 0;
+	virtual void set_clear_color(uint _Index, color _Color) = 0;
 	inline void set_clear_color(color _Color) { set_clear_color(0, _Color); }
 
 	// Resizes all buffers without changing formats or other topology

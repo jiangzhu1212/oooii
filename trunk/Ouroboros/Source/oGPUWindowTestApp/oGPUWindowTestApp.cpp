@@ -628,9 +628,9 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 				if (pRT)
 				{
 					gpu::render_target_info RTI = pRT->get_info();
-					if (RTI.clear.clear_color[0] == ClearToggle.Color[0]) RTI.clear.clear_color[0] = ClearToggle.Color[1];
-					else RTI.clear.clear_color[0] = ClearToggle.Color[0];
-					pRT->set_clear_info(RTI.clear);
+					if (RTI.clear_color[0] == ClearToggle.Color[0]) RTI.clear_color[0] = ClearToggle.Color[1];
+					else RTI.clear_color[0] = ClearToggle.Color[0];
+					pRT->set_clear_color(RTI.clear_color[0]);
 				}
 			}
 
