@@ -30,16 +30,14 @@
 #include <oSurface/surface.h>
 #include <array>
 
-#if 0
-
 namespace ouro {
 	namespace gpu {
 	
 static const uint max_num_mrts = 8;
 	
-struct render_target_info2
+struct render_target_info
 {
-	render_target_info2()
+	render_target_info()
 		: dimensions(0, 0, 0)
 		, num_mrts(1)
 		, array_size(1)
@@ -62,6 +60,7 @@ struct render_target_info2
 	float depth_clear_value;
 	uchar stencil_clear_value;
 };
+#if 0
 
 class device;
 class texture;
@@ -108,10 +107,9 @@ private:
 	void name_resources(const char* name);
 	void clear_resources();
 };
+#endif
 
 	} // namespace gpu
 } // namespace ouro
-
-#endif
 
 #endif

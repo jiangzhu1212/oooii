@@ -55,17 +55,14 @@ struct gpu_test_render_target : public gpu_test
 		PLTexture = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D));
 		Cube = make_first_cube(Device);
 
-		clear_info ci;
-		ci.clear_color[0] = deep_sky_blue;
-
 		{
 			render_target_info i;
 			i.dimensions = ushort3(256, 256, 1);
 			i.array_size = 1;
-			i.mrt_count = 1;
+			i.num_mrts = 1;
 			i.format[0] = surface::b8g8r8a8_unorm;
 			i.depth_stencil_format = surface::d24_unorm_s8_uint;
-			i.clear = ci;
+			i.clear_color[0] = deep_sky_blue;
 			RenderTarget = Device->make_render_target("RenderTarget", i);
 		}
 	}

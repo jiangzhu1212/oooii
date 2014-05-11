@@ -36,13 +36,14 @@ oDEVICE_CHILD_CLASS(render_target)
 	d3d11_render_target(std::shared_ptr<device>& _Device, const char* _Name, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat);
 	~d3d11_render_target();
 	render_target_info get_info() const override;
-	void set_clear_info(const clear_info& _ClearInfo) override;
+	void set_clear_depth_stencil(float _Depth, uchar _Stencil) override;
+	void set_clear_color(uint _Index, color _Color) override;
 	void resize(const int3& _NewDimensions) override;
 	std::shared_ptr<texture> get_texture(int _MRTIndex) override;
 	std::shared_ptr<texture> get_depth_texture() override;
 	std::shared_ptr<surface::buffer> make_snapshot(int _MRTIndex) override;
 
-	inline void set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Info.mrt_count, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
+	inline void set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Info.num_mrts, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
 
 	std::array<std::shared_ptr<texture>, max_num_mrts> Textures;
 	std::array<intrusive_ptr<ID3D11RenderTargetView>, max_num_mrts> RTVs;
