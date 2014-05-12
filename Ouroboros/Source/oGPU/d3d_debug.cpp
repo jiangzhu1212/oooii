@@ -32,11 +32,14 @@ namespace ouro {
 
 void debug_name(Device* _pDevice, const char* _Name)
 {
-	unsigned int CreationFlags = _pDevice->GetCreationFlags();
-	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
+	if (_pDevice && _Name)
 	{
-		sstring Buffer(_Name); // if strings aren't the same size D3D issues a warning
-		oV(_pDevice->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Buffer.capacity()), Buffer.c_str()));
+		unsigned int CreationFlags = _pDevice->GetCreationFlags();
+		if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
+		{
+			sstring Buffer(_Name); // if strings aren't the same size D3D issues a warning
+			oV(_pDevice->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Buffer.capacity()), Buffer.c_str()));
+		}
 	}
 }
 
@@ -53,13 +56,16 @@ char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const Devi
 
 void debug_name(DeviceChild* _pDeviceChild, const char* _Name)
 {
-	intrusive_ptr<Device> Device;
-	_pDeviceChild->GetDevice(&Device);
-	unsigned int CreationFlags = Device->GetCreationFlags();
-	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
+	if (_pDeviceChild && _Name)
 	{
-		sstring Buffer(_Name); // if strings aren't the same size, D3D issues a warning
-		oV(_pDeviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Buffer.capacity()), Buffer.c_str()));
+		intrusive_ptr<Device> Device;
+		_pDeviceChild->GetDevice(&Device);
+		unsigned int CreationFlags = Device->GetCreationFlags();
+		if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
+		{
+			sstring Buffer(_Name); // if strings aren't the same size, D3D issues a warning
+			oV(_pDeviceChild->SetPrivateData(WKPDID_D3DDebugObjectName, static_cast<UINT>(Buffer.capacity()), Buffer.c_str()));
+		}
 	}
 }
 
