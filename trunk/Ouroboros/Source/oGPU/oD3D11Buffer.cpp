@@ -33,10 +33,10 @@ oRESOURCE_CTOR(buffer)
 {
 	oD3D11_DEVICE();
 	ID3D11UnorderedAccessView** ppUAV = Info.type == buffer_type::unordered_structured_append ? &UAVAppend : &UAV;
-	Buffer = d3d11::make_buffer(D3DDevice, _Name, Info, nullptr, ppUAV, &SRV);
+	Buffer = d3d::make_buffer(D3DDevice, _Name, Info, nullptr, ppUAV, &SRV);
 	Info = d3d::get_info(Buffer);
 	if (Info.type == buffer_type::unordered_structured_append)
-		UAV = make_unflagged_copy(*ppUAV);
+		UAV = d3d::make_unflagged_copy(*ppUAV);
 }
 
 uint2 d3d11_buffer::byte_dimensions(int _Subresource) const
