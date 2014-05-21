@@ -58,18 +58,12 @@ void sampler_state_registry::initialize(Device* dev)
 	static_assert(oCOUNTOF(sAddresses) == sampler_state::count, "array mismatch");
 
 	mstring name;
-	D3D11_SAMPLER_DESC desc;
+	CD3D11_SAMPLER_DESC desc(D3D11_DEFAULT);
 
 	for (int i = 0; i < sampler_state::count; i++)
 	{
 		desc.Filter = sFilters[i];
 		desc.AddressU = desc.AddressV = desc.AddressW = sAddresses[i];
-		desc.MipLODBias = 0.0f;
-		desc.MaxAnisotropy = 16;
-		desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-		(float4&)desc.BorderColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
-		desc.MinLOD = 0.0f;
-		desc.MaxLOD = FLT_MAX;
 		oV(dev->CreateSamplerState(&desc, &states[i]));
 		snprintf(name, "sampler::%s", as_string(sampler_state::value(i)));
 		debug_name(states[i], name);
@@ -105,9 +99,9 @@ void rasterizer_state_registry::initialize(Device* dev)
 	mstring name;
 	D3D11_RASTERIZER_DESC desc;
   desc.FrontCounterClockwise = false;
-  desc.DepthBias = 0;
-  desc.DepthBiasClamp = 0.0f;
-  desc.SlopeScaledDepthBias = 0.0f;
+  desc.DepthBias = D3D11_DEFAULT_DEPTH_BIAS;
+  desc.DepthBiasClamp = D3D11_DEFAULT_DEPTH_BIAS_CLAMP;
+  desc.SlopeScaledDepthBias = D3D11_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
   desc.DepthClipEnable = true;
   desc.ScissorEnable = false;
   desc.MultisampleEnable = false;
