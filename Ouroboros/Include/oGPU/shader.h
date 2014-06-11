@@ -62,7 +62,7 @@ namespace shader_type
 
 };}
 
-vertex_layout* make_vertex_layout(device* dev, const mesh::layout_array& layout, const void* vs_bytecode, const char* debug_name = "");
+vertex_layout* make_vertex_layout(device* dev, mesh::layout_array& layout, const void* vs_bytecode, const char* debug_name = "");
 vertex_shader* make_vertex_shader(device* dev, const void* bytecode, const char* debug_name = "");
 hull_shader* make_hull_shader(device* dev, const void* bytecode, const char* debug_name = "");
 domain_shader* make_domain_shader(device* dev, const void* bytecode, const char* debug_name = "");

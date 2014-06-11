@@ -55,6 +55,7 @@ class window;
 static const uint max_num_input_slots = 3;
 static const uint max_num_unordered_buffers = 8;
 static const uint max_num_viewports = 16;
+//static const uint max_num_mrts = 8;
 
 // _____________________________________________________________________________
 // Device concepts
