@@ -105,7 +105,7 @@ static_assert(oCOUNTOF(sInputElements) == mesh::layout::count, "array mismatch")
 static uchar sInputElementCounts[] = { 0, 1, 1, 2, 2, 3, 4, 4, 2, 2, 1, 1, 2, 2, };
 static_assert(oCOUNTOF(sInputElementCounts) == mesh::layout::count, "array mismatch");
 
-vertex_layout* make_vertex_layout(device* dev, const mesh::layout_array& layout, const void* vs_bytecode, const char* name)
+vertex_layout* make_vertex_layout(device* dev, mesh::layout_array& layout, const void* vs_bytecode, const char* name)
 {
 	D3D11_INPUT_ELEMENT_DESC Elements[max_vertex_elements];
 	memset(Elements, 0, sizeof(Elements));
