@@ -48,6 +48,7 @@ template<typename T> size_t byte_padding(T value, size_t alignment) { return oSi
 inline size_t index_of(const void* el, const void* base, size_t elSize) { return byte_diff(el, base) / elSize; }
 template<typename T> size_t index_of(const T* el, const T* base) { return index_of(el, base, sizeof(T)); }
 template<typename T> bool is_pow2(const T& n) { return n ? (((n) & ((n)-1)) == 0) : false; }
+inline int log2i(int pow2) { int n = 0; while (pow2 >>= 1) n++; return n; }
 
 // from: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 inline unsigned int next_pow2(unsigned int n) { n--; n |= n >> 1; n |= n >> 2; n |= n >> 4; n |= n >> 8; n |= n >> 16; return ++n;}
