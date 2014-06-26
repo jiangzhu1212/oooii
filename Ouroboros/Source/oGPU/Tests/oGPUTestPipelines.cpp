@@ -40,6 +40,42 @@
 #include <VSTestWhite.h>
 #include <PSTestWhite.h>
 
+enum class common_elements : char
+{
+	pos,
+	pos_color,
+	pos_uv,
+	pos_uvw,
+
+	count,
+};
+
+ouro::mesh::element_array oGPUTestGetElements(const common_elements& c)
+{
+	ouro::mesh::element_array e;
+	switch (c)
+	{
+		default:
+		case common_elements::pos:
+			e[0] = ouro::mesh::element(ouro::mesh::semantic::position, 0, ouro::mesh::format::xyz32_float, 0);
+			break;
+		case common_elements::pos_color:
+			e[0] = ouro::mesh::element(ouro::mesh::semantic::position, 0, ouro::mesh::format::xyz32_float, 0);
+			e[1] = ouro::mesh::element(ouro::mesh::semantic::color, 0, ouro::mesh::format::xyzw8_unorm, 0);
+			break;
+		case common_elements::pos_uv:
+			e[0] = ouro::mesh::element(ouro::mesh::semantic::position, 0, ouro::mesh::format::xyz32_float, 0);
+			e[1] = ouro::mesh::element(ouro::mesh::semantic::texcoord, 0, ouro::mesh::format::xy32_float, 0);
+			break;
+		case common_elements::pos_uvw:
+			e[0] = ouro::mesh::element(ouro::mesh::semantic::position, 0, ouro::mesh::format::xyz32_float, 0);
+			e[1] = ouro::mesh::element(ouro::mesh::semantic::texcoord, 0, ouro::mesh::format::xyz32_float, 0);
+			break;
+	}
+
+	return e;
+}
+
 ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 {
 	ouro::gpu::pipeline1_info i;
@@ -48,7 +84,7 @@ ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 	{
 		case oGPU_TEST_PASS_THROUGH:
 			i.debug_name = "PassThrough";
-			i.vertex_layouts[0] = ouro::mesh::layout::pos;
+			i.vertex_layout = oGPUTestGetElements(common_elements::pos);
 			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestPassThrough;
 			i.ps = PSTestWhite;
@@ -56,7 +92,7 @@ ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 
 		case oGPU_TEST_PASS_THROUGH_COLOR:
 			i.debug_name = "PassThroughColor";
-			i.vertex_layouts[0] = ouro::mesh::layout::pos_color;
+			i.vertex_layout = oGPUTestGetElements(common_elements::pos_color);
 			i.primitive_type = ouro::mesh::primitive_type::lines;
 			i.vs = VSTestPassThroughColor;
 			i.ps = PSTestColor;
@@ -64,7 +100,7 @@ ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 
 		case oGPU_TEST_TRANSFORMED_WHITE:
 			i.debug_name = "TransformedWhite";
-			i.vertex_layouts[0] = ouro::mesh::layout::pos;
+			i.vertex_layout = oGPUTestGetElements(common_elements::pos);
 			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestWhiteInstanced;
 			i.ps = PSTestWhite;
@@ -79,7 +115,7 @@ ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 
 		case oGPU_TEST_TEXTURE_1D:
 			i.debug_name = "Texture1D";
-			i.vertex_layouts[0] = ouro::mesh::layout::pos_uv0;
+			i.vertex_layout = oGPUTestGetElements(common_elements::pos_uv);
 			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestTexture1D;
 			i.ps = PSTestTexture1D;
@@ -87,7 +123,7 @@ ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 
 		case oGPU_TEST_TEXTURE_2D:
 			i.debug_name = "Texture2D";
-			i.vertex_layouts[0] = ouro::mesh::layout::pos_uv0;
+			i.vertex_layout = oGPUTestGetElements(common_elements::pos_uv);
 			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestTexture2D;
 			i.ps = PSTestTexture2D;
@@ -95,7 +131,7 @@ ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 
 		case oGPU_TEST_TEXTURE_3D:
 			i.debug_name = "Texture3D";
-			i.vertex_layouts[0] = ouro::mesh::layout::pos_uvwx0;
+			i.vertex_layout = oGPUTestGetElements(common_elements::pos_uvw);
 			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestTexture3D;
 			i.ps = PSTestTexture3D;
@@ -103,7 +139,7 @@ ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline)
 
 		case oGPU_TEST_TEXTURE_CUBE:
 			i.debug_name = "TextureCube";
-			i.vertex_layouts[0] = ouro::mesh::layout::pos_uvwx0;
+			i.vertex_layout = oGPUTestGetElements(common_elements::pos_uvw);
 			i.primitive_type = ouro::mesh::primitive_type::triangles;
 			i.vs = VSTestTextureCube;
 			i.ps = PSTestTextureCube;

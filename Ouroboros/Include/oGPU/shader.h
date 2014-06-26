@@ -34,12 +34,10 @@
 namespace ouro {
 	namespace gpu {
 
-static const uint max_vertex_elements = 16;
 static const uint3 max_dispatches = uint3(65535, 65535, 65535);
 static const uint3 max_num_group_threads = uint3(1024, 1024, 64);
 
 class device;
-class vertex_layout;
 class shader {};
 class vertex_shader : shader {};
 class hull_shader : shader {};
@@ -48,7 +46,7 @@ class geometry_shader : shader {};
 class pixel_shader : shader {};
 class compute_shader : shader {};
 
-namespace shader_type
+namespace stage
 { oDECLARE_SMALL_ENUM(value, uchar) {
 	
 	vertex,
@@ -62,7 +60,22 @@ namespace shader_type
 
 };}
 
-vertex_layout* make_vertex_layout(device* dev, mesh::layout_array& layout, const void* vs_bytecode, const char* debug_name = "");
+namespace stage_flag
+{ oDECLARE_SMALL_ENUM(value, uchar) {
+	
+	vertex = 1<<0,
+	hull = 1<<1,
+	domain = 1<<2,
+	geometry = 1<<3,
+	pixel = 1<<4,
+	compute = 1<<5,
+
+	graphics = vertex|hull|domain|geometry|pixel,
+
+	count,
+
+};}
+
 vertex_shader* make_vertex_shader(device* dev, const void* bytecode, const char* debug_name = "");
 hull_shader* make_hull_shader(device* dev, const void* bytecode, const char* debug_name = "");
 domain_shader* make_domain_shader(device* dev, const void* bytecode, const char* debug_name = "");
@@ -70,7 +83,6 @@ geometry_shader* make_geometry_shader(device* dev, const void* bytecode, const c
 pixel_shader* make_pixel_shader(device* dev, const void* bytecode, const char* debug_name = "");
 compute_shader* make_compute_shader(device* dev, const void* bytecode, const char* debug_name = "");
 
-void unmake_vertex_layout(vertex_layout* layout);
 void unmake_shader(shader* s);
 
 template<typename shaderT> struct delete_shader { void operator()(shaderT* s) const { unmake_shader((shader*)s); } };
@@ -90,7 +102,7 @@ typedef std::unique_ptr<compute_shader, delete_shader<compute_shader>> unique_co
 scoped_allocation compile_shader(const char* _IncludePaths
 	, const char* _Defines
 	, const char* _ShaderSourcePath
-	, const shader_type::value& _Type
+	, const stage::value& _Type
 	, const char* _EntryPoint
 	, const char* _ShaderSource
 	, const allocator& _Allocator = default_allocator);

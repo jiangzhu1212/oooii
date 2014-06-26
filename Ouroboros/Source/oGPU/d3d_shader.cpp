@@ -27,6 +27,7 @@
 #include <oBase/macros.h>
 #include <oCore/windows/win_util.h>
 #include <d3d11.h>
+#include "d3d_util.h"
 
 namespace ouro {
 	namespace gpu {
@@ -40,13 +41,6 @@ MAKE_SH(DomainShader, make_domain_shader)
 MAKE_SH(GeometryShader, make_geometry_shader)
 MAKE_SH(PixelShader, make_pixel_shader)
 MAKE_SH(ComputeShader, make_compute_shader)
-
-// Return the size stored inside D3D11-era bytecode. This can be used anywhere bytecode size is expected.
-unsigned int bytecode_size(const void* bytecode)
-{
-	// Discovered empirically
-	return bytecode ? ((const unsigned int*)bytecode)[6] : 0;
-}
 
 		} // namespace d3d
 	} // namespace gpu

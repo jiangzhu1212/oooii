@@ -27,13 +27,17 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="primitive.cpp" />
+    <ClCompile Include="subdivide.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oMesh\all.h" />
     <ClInclude Include="..\..\Include\oMesh\mesh.h" />
     <ClInclude Include="..\..\Include\oMesh\obj.h" />
+    <ClInclude Include="..\..\Include\oMesh\primitive.h" />
     <ClInclude Include="mesh_template.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="subdivide.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8A76FF30-F5E2-4127-B86E-C5AE324961FB}</ProjectGuid>

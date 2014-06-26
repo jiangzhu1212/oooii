@@ -48,22 +48,22 @@ static void test_correctness(const std::shared_ptr<obj_test>& _Expected, const s
 	oCHECK(expectedInfo.mesh_info.num_vertices == objInfo.mesh_info.num_vertices, "Position counts do not match in obj file \"%s\"", objInfo.obj_path.c_str());
 	for (uint i = 0; i < objInfo.mesh_info.num_vertices; i++)
 	{
-		oCHECK(equal(expectedInfo.data.positionsf[i], objInfo.data.positionsf[i]), "Position %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
-		oCHECK(equal(expectedInfo.data.normalsf[i], objInfo.data.normalsf[i]), "Normal %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
-		oCHECK(equal(expectedInfo.data.uvw0sf[i], objInfo.data.uvw0sf[i]), "Texcoord %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oCHECK(equal(expectedInfo.positions[i], objInfo.positions[i]), "Position %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oCHECK(equal(expectedInfo.normals[i], objInfo.normals[i]), "Normal %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oCHECK(equal(expectedInfo.texcoords[i], objInfo.texcoords[i]), "Texcoord %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
 	}
 	
 	oCHECK(expectedInfo.mesh_info.num_indices == objInfo.mesh_info.num_indices, "Index counts do not match in obj file \"%s\"", objInfo.obj_path.c_str());
 	for (uint i = 0; i < objInfo.mesh_info.num_indices; i++)
-		oCHECK(equal(expectedInfo.data.indicesi[i], objInfo.data.indicesi[i]), "Index %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oCHECK(equal(expectedInfo.indices[i], objInfo.indices[i]), "Index %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
 
 	oCHECK(expectedInfo.mesh_info.num_ranges == objInfo.mesh_info.num_ranges, "Group counts do not match in obj file \"%s\"", objInfo.obj_path.c_str());
 	for (uint i = 0; i < objInfo.mesh_info.num_ranges; i++)
 	{
 		oCHECK(!strcmp(expectedInfo.groups[i].group_name.c_str(), objInfo.groups[i].group_name.c_str()), "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
 		oCHECK(!strcmp(expectedInfo.groups[i].material_name.c_str(), objInfo.groups[i].material_name.c_str()), "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
-		oCHECK(expectedInfo.data.ranges[i].start_primitive == objInfo.data.ranges[i].start_primitive, "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
-		oCHECK(expectedInfo.data.ranges[i].num_primitives == objInfo.data.ranges[i].num_primitives, "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oCHECK(expectedInfo.ranges[i].start_primitive == objInfo.ranges[i].start_primitive, "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
+		oCHECK(expectedInfo.ranges[i].num_primitives == objInfo.ranges[i].num_primitives, "Group %u does not match in obj file \"%s\"", i, objInfo.obj_path.c_str());
 	}
 }
 

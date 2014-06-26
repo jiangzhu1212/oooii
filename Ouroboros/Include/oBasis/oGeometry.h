@@ -28,6 +28,8 @@
 #ifndef oGeometry_h
 #define oGeometry_h
 
+#if 0
+
 #include <oGPU/oGPU.h>
 #include <oBasis/oInterface.h>
 #include <oBase/aabox.h>
@@ -252,5 +254,5 @@ interface oGeometryFactory : oInterface
 };
 
 bool oGeometryFactoryCreate(oGeometryFactory** _ppGeometryFactory);
-
+#endif
 #endif

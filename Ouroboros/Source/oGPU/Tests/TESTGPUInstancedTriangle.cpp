@@ -50,7 +50,7 @@ struct gpu_test_instanced_triangle : public gpu_test
 
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
 		InstanceList = Device->make_buffer<oGPU_TEST_INSTANCE>("Instances", 2);
-		Mesh = make_first_triangle(Device);
+		Mesh.initialize_first_triangle(Device.get());
 	}
 	
 	void render() override
@@ -89,7 +89,7 @@ struct gpu_test_instanced_triangle : public gpu_test
 		CommandList->set_pipeline(Pipeline);
 		CommandList->set_render_target(PrimaryRenderTarget);
 		
-		Mesh->draw(CommandList);
+		Mesh.draw(CommandList.get());
 
 		CommandList->end();
 	}
@@ -97,7 +97,7 @@ struct gpu_test_instanced_triangle : public gpu_test
 private:
 	std::shared_ptr<pipeline1> Pipeline;
 	std::shared_ptr<buffer> InstanceList;
-	std::shared_ptr<util_mesh> Mesh;
+	util_mesh Mesh;
 	std::shared_ptr<buffer> TestConstants;
 };
 

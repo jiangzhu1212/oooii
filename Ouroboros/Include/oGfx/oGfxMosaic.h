@@ -31,6 +31,8 @@
 #ifndef oGfxMosaic_h
 #define oGfxMosaic_h
 
+#if 0
+
 #include <oBasis/oGeometry.h>
 #include <oGPU/oGPU.h>
 
@@ -52,4 +54,5 @@ interface oGfxMosaic : oInterface
 
 ouro::intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(ouro::gpu::device* _pDevice, const ouro::gpu::pipeline1_info& _Info);
 
+#endif
 #endif

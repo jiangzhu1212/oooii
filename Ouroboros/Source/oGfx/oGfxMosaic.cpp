@@ -29,6 +29,8 @@
 using namespace ouro;
 using namespace ouro::gpu;
 
+#if 0
+
 struct oGfxMosaicImpl : oGfxMosaic
 {
 	oDEFINE_REFCOUNT_INTERFACE(RefCount);
@@ -75,26 +77,61 @@ bool oGfxMosaicImpl::Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _Nu
 	if (!oGeometryFactoryCreate(&GeoFactory))
 		return false; // pass through error
 
-	mesh::layout::value Layout = mesh::layout::pos;
+	uint flags = mesh::semantic_flag::position;
 	if (0 == _NumAdditionalTextureSets || !!_Desc.pSourceRects)
-		Layout = mesh::layout::pos_uv0;
+		flags |= mesh::semantic_flag::texcoord;
 
 	intrusive_ptr<oGeometry> Geo;
-	if (!GeoFactory->Create(_Desc, Layout, &Geo))
+	if (!GeoFactory->Create(_Desc, flags, &Geo))
 		return false; // pass through error
 
-	ouro::mesh::info GeoInfo = Geo->get_info();
-	ouro::mesh::source GeoSource = Geo->get_source();
+	auto GeoInfo = Geo->get_info();
+	auto GeoSource = Geo->get_source();
 
 	ouro::surface::const_mapped_subresource MSRGeo;
-	MSRGeo.data = GeoSource.indicesi;
+	MSRGeo.data = GeoSource.indices;
 	MSRGeo.row_pitch = sizeof(uint);
 	MSRGeo.depth_pitch = MSRGeo.row_pitch * GeoInfo.num_indices;
 	Indices = make_index_buffer(Device, "MosaicIB", GeoInfo.num_indices, GeoInfo.num_vertices, MSRGeo);
 
+	{
+		#error have to interpret geo source into a single stream (just pos/uvs)
+
+		buffer_info i;
+		i.type = buffer_type::vertex;
+		i.array_size = GeoInfo.num_vertices;
+		i.struct_byte_size = static_cast<ushort>(mesh::calc_vertex_size(GeoInfo.vertex_elements, 0));
+		i.format = surface::unknown;
+		Vertices[0] = Device->make_buffer("MosaicVB", i);
+
+		surface::mapped_subresource Destination = dev->immediate()->reserve(Vertices[0].get(), 0);
+		finally UnmapMSRs([&] { if (Destination.data) dev->immediate()->commit(vertices[0].get(), 0, Destination); });
+
+		uint offset = 0;
+		for (uint e = 0; e < info.vertex_elements.size(); e++)
+		{
+			const auto& el = info.vertex_elements[e];
+			if (el.slot != slot)
+				continue;
+
+			auto sem = mesh::get_semantic(el.get_type());
+
+			const void* src = source.get_stream(sem);
+			uint SrcSize = source.get_stream_size(sem);
+			auto SrcType = source.get_stream_type(sem);
+
+			offset = mesh::copy_vertices(offset, 
+				Destination.data, VertexSize, el.get_type(), 
+				src, SrcSize, SrcType, info.num_vertices);
+		}
+
+		make_vertex_buffer(Device, "MosaicVB", GeoInfo.vertex_layouts[0], GeoInfo.num_vertices, GeoSource);
+	}
+
 	pipeline1_info pi = Pipeline->get_info();
 
-	Vertices[0] = make_vertex_buffer(Device, "MosaicVB", GeoInfo.vertex_layouts[0], GeoInfo.num_vertices, GeoSource);
+
+		
 
 	NumPrimitives = ouro::mesh::num_primitives(GeoInfo);
 
@@ -182,3 +219,4 @@ void oGfxMosaicImpl::Draw(command_list* _pCommandList, render_target* _pRenderTa
 	_pCommandList->set_pipeline(Pipeline);
 	_pCommandList->draw(Indices, 0, Vertices[1] ? 2 : 1, &Vertices[0], 0, NumPrimitives);
 }
+#endif

@@ -1,41 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="oD3D11CommandList.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11Device.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11Pipeline.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11RenderTarget.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11Texture.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
     <ClCompile Include="oGPUUtil.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11ComputeShader.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11Buffer.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11IO.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11Query.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d11_util.cpp">
-      <Filter>Source\D3D11</Filter>
     </ClCompile>
     <ClCompile Include="dxgi_util.cpp">
       <Filter>Source\D3D11</Filter>
@@ -67,37 +37,61 @@
     <ClCompile Include="state.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="d3d_state.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d_shader.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
     <ClCompile Include="render_target.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="vertex_layout.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d_prim.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d11_util.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
     <ClCompile Include="d3d_resource.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d_shader.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d_state.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Buffer.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Texture.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11RenderTarget.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Query.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Pipeline.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11IO.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11Device.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11ComputeShader.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="oD3D11CommandList.cpp">
+      <Filter>Source\D3D11\old</Filter>
+    </ClCompile>
+    <ClCompile Include="d3d_util.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11Texture.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11CommandList.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11Device.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11Pipeline.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11RenderTarget.h">
-      <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPU.h">
       <Filter>Headers</Filter>
@@ -108,20 +102,8 @@
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="oD3D11ComputeShader.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11Buffer.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11Query.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h">
       <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d11_util.h">
-      <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="dxgi_util.h">
       <Filter>Source\D3D11</Filter>
@@ -156,16 +138,52 @@
     <ClInclude Include="..\..\Include\oGPU\state.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="d3d_state.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d_shader.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\render_target.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\vertex_layout.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_prim.h">
+      <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d11_util.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
     <ClInclude Include="d3d_resource.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_shader.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_state.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Texture.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11RenderTarget.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Query.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Pipeline.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Device.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11ComputeShader.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11CommandList.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="oD3D11Buffer.h">
+      <Filter>Source\D3D11\old</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_util.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
   </ItemGroup>
@@ -178,6 +196,9 @@
     </Filter>
     <Filter Include="Source\D3D11">
       <UniqueIdentifier>{1adba936-89bf-4e16-830f-fb5c7b91e8a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\D3D11\old">
+      <UniqueIdentifier>{78d15434-7ecb-49c7-99de-c973232b3524}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

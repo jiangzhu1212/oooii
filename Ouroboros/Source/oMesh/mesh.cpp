@@ -105,6 +105,7 @@ const char* as_string(const mesh::semantic::value& _Value)
 {
 	switch (_Value)
 	{
+		case mesh::semantic::unknown: return "unknown";
 		case mesh::semantic::position: return "position";
 		case mesh::semantic::normal: return "normal";
 		case mesh::semantic::tangent: return "tangent";
@@ -117,421 +118,648 @@ const char* as_string(const mesh::semantic::value& _Value)
 	
 STR_SUPPORT(mesh::semantic::value, mesh::semantic::count);
 
-const char* as_string(const mesh::layout::value& _Value)
+const char* as_string(const mesh::format::value& _Value)
 {
 	switch (_Value)
 	{
-		case mesh::layout::none: return "none";
-		case mesh::layout::pos: return "pos";
-		case mesh::layout::color: return "color";
-		case mesh::layout::pos_color: return "pos_color";
-		case mesh::layout::pos_nrm: return "pos_nrm";
-		case mesh::layout::pos_nrm_tan: return "pos_nrm_tan";
-		case mesh::layout::pos_nrm_tan_uv0: return "pos_nrm_tan_uv0";
-		case mesh::layout::pos_nrm_tan_uvwx0: return "pos_nrm_tan_uvwx0";
-		case mesh::layout::pos_uv0: return "pos_uv0";
-		case mesh::layout::pos_uvwx0: return "pos_uvwx0";
-		case mesh::layout::uv0: return "uv0";
-		case mesh::layout::uvwx0: return "uvwx0";
-		case mesh::layout::uv0_color: return "uv0_color";
-		case mesh::layout::uvwx0_color: return "uvwx0_color";
+		case mesh::format::unknown: return "unknown";
+		case mesh::format::xy32_float: return "xy32_float";
+		case mesh::format::xyz32_float: return "xyz32_float";
+		case mesh::format::xyzw32_float: return "xyzw32_float";
+		case mesh::format::xy16_float: return "xy16_float";
+		case mesh::format::xy16_unorm: return "xy16_unorm";
+		case mesh::format::xy16_snorm: return "xy16_snorm";
+		case mesh::format::xy16_uint: return "xy16_uint";
+		case mesh::format::xy16_sint: return "xy16_sint";
+		case mesh::format::xyzw16_float: return "xyzw16_float";
+		case mesh::format::xyzw16_unorm: return "xyzw16_unorm";
+		case mesh::format::xyzw16_snorm: return "xyzw16_snorm";
+		case mesh::format::xyzw16_uint: return "xyzw16_uint";
+		case mesh::format::xyzw16_sint: return "xyzw16_sint";
+		case mesh::format::xyz10w2_unorm: return "xyz10w2_unorm";
+		case mesh::format::xyz10w2_uint: return "xyz10w2_uint";
+		case mesh::format::xyzw8_unorm: return "xyzw8_unorm";
+		case mesh::format::xyzw8_snorm: return "xyzw8_snorm";
+		case mesh::format::xyzw8_uint: return "xyzw8_uint";
+		case mesh::format::xyzw8_sint: return "xyzw8_sint";
 		default: break;
 	}
 	return "?";
 }
 
-STR_SUPPORT(mesh::layout::value, mesh::layout::count);
-
-const char* as_string(const mesh::usage::value& _Value)
-{
-	switch (_Value)
-	{
-		case mesh::usage::per_mesh_static: return "per_mesh_static";
-		case mesh::usage::per_mesh_dynamic: return "per_mesh_dynamic";
-		case mesh::usage::per_instance_static: return "per_instance_static";
-		case mesh::usage::per_instance_dynamic: return "per_instance_dynamic";
-		default: break;
-	}
-	return "?";
-}
-
-oDEFINE_TO_STRING(mesh::usage::value);
+STR_SUPPORT(mesh::format::value, mesh::format::count);
 
 namespace mesh {
 
-uint num_primitives(const primitive_type::value& _PrimitiveType, uint _NumIndices, uint _NumVertices)
+uint format_size(const format::value& f)
 {
-	uint n = _NumIndices;
-	switch (_PrimitiveType)
+	static uchar sSizes[] = 
 	{
-		case primitive_type::points: n = _NumVertices; break;
+		0,
+		sizeof(float2),
+		sizeof(float3),
+		sizeof(float4),
+		sizeof(half2),
+		sizeof(half2),
+		sizeof(half2),
+		sizeof(ushort2),
+		sizeof(short2),
+		sizeof(half4),
+		sizeof(half4),
+		sizeof(half4),
+		sizeof(ushort4),
+		sizeof(short4),
+		sizeof(udec3),
+		sizeof(udec3),
+		sizeof(color),
+		sizeof(uint),
+		sizeof(uint),
+		sizeof(int),
+	};
+	static_assert(oCOUNTOF(sSizes) == format::count, "array mismatch");
+	return sSizes[f];
+}
+
+uint calc_offset(const element_array& elements, uint element_index)
+{
+	uint offset = 0;
+	const uint slot = elements[element_index].slot();
+	for (size_t i = 0; i < element_index; i++)
+		if (elements[i].slot() == slot)
+			offset += format_size(elements[i].format());
+	return offset;
+}
+
+uint calc_vertex_size(const element_array& elements, uint slot)
+{
+	uint size = 0;
+	for (const element& e : elements)
+		if (e.slot() == slot)
+			size += format_size(e.format());
+	return size;
+}
+
+uint num_primitives(const primitive_type::value& type, uint num_indices, uint num_vertices)
+{
+	uint n = num_indices;
+	switch (type)
+	{
+		case primitive_type::points: n = num_vertices; break;
 		case primitive_type::lines: n /= 2; break;
 		case primitive_type::line_strips: n--; break;
 		case primitive_type::triangles: n /= 3; break;
 		case primitive_type::triangle_strips: n -= 2; break;
 		default: oTHROW_INVARG("unsupported primitive type");
 	}
-	
 	return n;
 }
 
-uint vertex_size(const layout::value& _Layout)
+void flip_winding_order(uint base_index_index, ushort* indices, uint num_indices)
 {
-	static uchar sSizes[] =
-	{
-		0,
-		sizeof(float3),
-		sizeof(color),
-		sizeof(float3) + sizeof(color),
-		sizeof(float3) + sizeof(dec3n),
-		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n),
-		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n) + sizeof(half2),
-		sizeof(float3) + sizeof(dec3n) + sizeof(dec3n) + sizeof(half4),
-		sizeof(float3) + sizeof(half2),
-		sizeof(float3) + sizeof(half4),
-		sizeof(half2),
-		sizeof(half4),
-		sizeof(half2) + sizeof(color),
-		sizeof(half4) + sizeof(color),
-	};
-	static_assert(oCOUNTOF(sSizes) == layout::count, "array mismatch");
-	return sSizes[_Layout];
+	oCHECK((base_index_index % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
+	oCHECK((num_indices % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
+	for (uint i = base_index_index; i < num_indices; i += 3)
+		std::swap(indices[i+1], indices[i+2]);
 }
 
-layout::value calc_layout(const source& _Source)
+void flip_winding_order(uint base_index_index, uint* indices, uint num_indices)
 {
-	static ushort sMapping[] = 
-	{
-		0,
-		1,
-		32,
-		1 + 32,
-		1 + 2,
-		1 + 2 + 4,
-		1 + 2 + 4 + 8,
-		1 + 2 + 4 + 16,
-		1 + 8,
-		1 + 16,
-		8,
-		16,
-		8 + 32,
-		16 + 32,
-	};
-	static_assert(oCOUNTOF(sMapping) == layout::count, "array mismatch");
-
-	const int v = (_Source.positionsf?1:0) 
-		+ ((_Source.normals || _Source.normalsf)?2:0) 
-		+ ((_Source.tangents || _Source.tangentsf)?4:0) 
-		+ ((_Source.uv0s || _Source.uv0sf)?8:0) 
-		+ ((_Source.uvwx0s || _Source.uvwx0sf || _Source.uvw0sf)?16:0) 
-		+ (_Source.colors?32:0);
-
-	for (const ushort& i : sMapping)
-		if (i == v)
-			return (layout::value)i;
-	return layout::none;
+	oCHECK((base_index_index % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
+	oCHECK((num_indices % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
+	for (uint i = base_index_index; i < num_indices; i += 3)
+		std::swap(indices[i+1], indices[i+2]);
 }
 
-void flip_winding_order(uint _BaseIndexIndex, ushort* _pIndices, uint _NumIndices)
+void copy_indices(void* oRESTRICT dst, uint dst_pitch, const void* oRESTRICT src, uint src_pitch, uint num_indices)
 {
-	oCHECK((_BaseIndexIndex % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
-	oCHECK((_NumIndices % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
-	for (uint i = _BaseIndexIndex; i < _NumIndices; i += 3)
-		std::swap(_pIndices[i+1], _pIndices[i+2]);
-}
-
-void flip_winding_order(uint _BaseIndexIndex, uint* _pIndices, uint _NumIndices)
-{
-	oCHECK((_BaseIndexIndex % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
-	oCHECK((_NumIndices % 3) == 0, "Indices is not divisible by 3, so thus is not triangles and cannot be re-winded");
-	for (uint i = _BaseIndexIndex; i < _NumIndices; i += 3)
-		std::swap(_pIndices[i+1], _pIndices[i+2]);
-}
-
-void copy_indices(void* oRESTRICT _pDestination, uint _DestinationPitch, const void* oRESTRICT _pSource, uint _SourcePitch, uint _NumIndices)
-{
-	if (_DestinationPitch == sizeof(uint) && _SourcePitch == sizeof(ushort))
-		copy_indices((uint*)_pDestination, (const ushort*)_pSource, _NumIndices);
-	else if (_DestinationPitch == sizeof(ushort) && _SourcePitch == sizeof(uint))
-		copy_indices((ushort*)_pDestination, (const uint*)_pSource, _NumIndices);
+	if (dst_pitch == sizeof(uint) && src_pitch == sizeof(ushort))
+		copy_indices((uint*)dst, (const ushort*)src, num_indices);
+	else if (dst_pitch == sizeof(ushort) && src_pitch == sizeof(uint))
+		copy_indices((ushort*)dst, (const uint*)src, num_indices);
 	else
-		oTHROW_INVARG("unsupported index pitches (src=%d, dst=%d)", _SourcePitch, _DestinationPitch);
+		oTHROW_INVARG("unsupported index pitches (src=%d, dst=%d)", src_pitch, dst_pitch);
 }
 
-void copy_indices(ushort* oRESTRICT _pDestination, const uint* oRESTRICT _pSource, uint _NumIndices)
+void copy_indices(ushort* oRESTRICT dst, const uint* oRESTRICT src, uint num_indices)
 {
-	const uint* end = &_pSource[_NumIndices];
-	while (_pSource < end)
+	const uint* end = &src[num_indices];
+	while (src < end)
 	{
-		if (*_pSource > 65535) oTHROW_INVARG("truncating a uint (%d) to a ushort in a way that will change its value.", *_pSource);
-		*_pDestination++ = (*_pSource++) & 0xffff;
+		if (*src > 65535) oTHROW_INVARG("truncating a uint (%d) to a ushort in a way that will change its value.", *src);
+		*dst++ = (*src++) & 0xffff;
 	}
 }
 
-void copy_indices(uint* oRESTRICT _pDestination, const ushort* oRESTRICT _pSource, uint _NumIndices)
+void copy_indices(uint* oRESTRICT dst, const ushort* oRESTRICT src, uint num_indices)
 {
-	const ushort* end = &_pSource[_NumIndices];
-	while (_pSource < end)
-		*_pDestination++ = *_pSource++;
+	const ushort* end = &src[num_indices];
+	while (src < end)
+		*dst++ = *src++;
+}
+
+void offset_indices(ushort* oRESTRICT dst, uint num_indices, int offset)
+{
+	const ushort* end = dst + num_indices;
+	while (dst < end)
+	{
+		uint i = *dst + offset;
+		if ( i & 0xffff0000)
+			throw std::out_of_range("indices with offset push it out of range");
+		*dst++ = static_cast<ushort>(i);
+	}
+}
+
+void offset_indices(uint* oRESTRICT dst, uint num_indices, int offset)
+{
+	const uint* end = dst + num_indices;
+	while (dst < end)
+	{
+		ullong i = *dst + offset;
+		if ( i & 0xffffffff00000000)
+			throw std::out_of_range("indices with offset push it out of range");
+		*dst++ = static_cast<uint>(i);
+	}
 }
 
 template<typename DstT, typename SrcT>
-static void copy_vertex_element(DstT* oRESTRICT _pDestination, uint _DestinationPitch, const SrcT* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+static void copy_vertex_element(DstT* oRESTRICT dst, uint dst_pitch, const SrcT* oRESTRICT src, uint src_pitch, uint num_vertices)
 {
 	if (std::is_same<DstT, SrcT>::value)
-		memcpy2d(_pDestination, _DestinationPitch, _pSource, _SourcePitch, _SourcePitch, _NumVertices);
+		memcpy2d(dst, dst_pitch, src, src_pitch, src_pitch, num_vertices);
 	else
 	{
-		const DstT* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-		while (_pDestination < end)
+		const DstT* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+		while (dst < end)
 		{
-			*_pDestination = *_pSource;
-			_pDestination = byte_add(_pDestination, _DestinationPitch);
-			_pSource = byte_add(_pSource, _SourcePitch);
+			*dst = *src;
+			dst = byte_add(dst, dst_pitch);
+			src = byte_add(src, src_pitch);
 		}
 	}
 }
 
 template<>
-static void copy_vertex_element<half2, float3>(half2* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+static void copy_vertex_element<float3, float4>(float3* oRESTRICT dst, uint dst_pitch, const float4* oRESTRICT src, uint src_pitch, uint num_vertices)
 {
-	const half2* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
+	const float3* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+	while (dst < end)
 	{
-		_pDestination->x = _pSource->x;
-		_pDestination->y = _pSource->y;
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
+		dst->x = src->x;
+		dst->y = src->y; 
+		dst->z = src->z;
+		dst = byte_add(dst, dst_pitch);
+		src = byte_add(src, src_pitch);
+	}
+}
+
+template<>
+static void copy_vertex_element<float2, float3>(float2* oRESTRICT dst, uint dst_pitch, const float3* oRESTRICT src, uint src_pitch, uint num_vertices)
+{
+	const float2* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+	while (dst < end)
+	{
+		dst->x = src->x;
+		dst->y = src->y; 
+		dst = byte_add(dst, dst_pitch);
+		src = byte_add(src, src_pitch);
 	}
 }
 
 //template<>
-//static void copy_vertex_element<ushort4, float3>(ushort4* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+//static void copy_vertex_element<float2, ushort2>(float2* oRESTRICT dst, uint dst_pitch, const ushort2* oRESTRICT src, uint src_pitch, uint num_vertices)
 //{
-//	const ushort4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-//	while (_pDestination < end)
+//	const float2* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+//	while (dst < end)
 //	{
-//		_pDestination->x = f32ton16(_pSource->x);
-//		_pDestination->y = f32ton16(_pSource->y); 
-//		_pDestination->z = f32ton16(_pSource->z);
-//		_pDestination->w = 65535;//f32ton16(1.0f);
-//		_pDestination = byte_add(_pDestination, _DestinationPitch);
-//		_pSource = byte_add(_pSource, _SourcePitch);
+//		dst->x = n16tof32(src->x);
+//		dst->y = n16tof32(src->y);
+//		dst = byte_add(dst, dst_pitch);
+//		src = byte_add(src, src_pitch);
 //	}
 //}
 
 //template<>
-//static void copy_vertex_element<float3, ushort4>(float3* oRESTRICT _pDestination, uint _DestinationPitch, const ushort4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+//static void copy_vertex_element<float2, ushort4>(float2* oRESTRICT dst, uint dst_pitch, const ushort4* oRESTRICT src, uint src_pitch, uint num_vertices)
 //{
-//	const float3* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-//	while (_pDestination < end)
+//	const float2* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+//	while (dst < end)
 //	{
-//		_pDestination->x = n16tof32(_pSource->x);
-//		_pDestination->y = n16tof32(_pSource->y); 
-//		_pDestination->z = n16tof32(_pSource->z);
-//		_pDestination = byte_add(_pDestination, _DestinationPitch);
-//		_pSource = byte_add(_pSource, _SourcePitch);
+//		dst->x = n16tof32(src->x);
+//		dst->y = n16tof32(src->y);
+//		dst = byte_add(dst, dst_pitch);
+//		src = byte_add(src, src_pitch);
 //	}
 //}
 
 template<>
-static void copy_vertex_element<half4, float3>(half4* oRESTRICT _pDestination, uint _DestinationPitch, const float3* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+static void copy_vertex_element<half2, float3>(half2* oRESTRICT dst, uint dst_pitch, const float3* oRESTRICT src, uint src_pitch, uint num_vertices)
 {
-	const half4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
+	const half2* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+	while (dst < end)
 	{
-		_pDestination->x = _pSource->x;
-		_pDestination->y = _pSource->y;
-		_pDestination->z = _pSource->z;
-		_pDestination->w = 0.0f;
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
+		dst->x = src->x;
+		dst->y = src->y;
+		dst = byte_add(dst, dst_pitch);
+		src = byte_add(src, src_pitch);
 	}
 }
 
 //template<>
-//static void copy_vertex_element<float3, half4>(float3* oRESTRICT _pDestination, uint _DestinationPitch, const half4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+//static void copy_vertex_element<ushort4, float3>(ushort4* oRESTRICT dst, uint dst_pitch, const float3* oRESTRICT src, uint src_pitch, uint num_vertices)
 //{
-//	const float3* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-//	while (_pDestination < end)
+//	const ushort4* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+//	while (dst < end)
 //	{
-//		_pDestination->x = _pSource->x;
-//		_pDestination->y = _pSource->y;
-//		_pDestination->z = _pSource->z;
-//		_pDestination = byte_add(_pDestination, _DestinationPitch);
-//		_pSource = byte_add(_pSource, _SourcePitch);
+//		dst->x = f32ton16(src->x);
+//		dst->y = f32ton16(src->y); 
+//		dst->z = f32ton16(src->z);
+//		dst->w = 65535;//f32ton16(1.0f);
+//		dst = byte_add(dst, dst_pitch);
+//		src = byte_add(src, src_pitch);
+//	}
+//}
+
+//template<>
+//static void copy_vertex_element<float3, ushort4>(float3* oRESTRICT dst, uint dst_pitch, const ushort4* oRESTRICT src, uint src_pitch, uint num_vertices)
+//{
+//	const float3* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+//	while (dst < end)
+//	{
+//		dst->x = n16tof32(src->x);
+//		dst->y = n16tof32(src->y); 
+//		dst->z = n16tof32(src->z);
+//		dst = byte_add(dst, dst_pitch);
+//		src = byte_add(src, src_pitch);
 //	}
 //}
 
 template<>
-static void copy_vertex_element<half4, float4>(half4* oRESTRICT _pDestination, uint _DestinationPitch, const float4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+static void copy_vertex_element<half4, float3>(half4* oRESTRICT dst, uint dst_pitch, const float3* oRESTRICT src, uint src_pitch, uint num_vertices)
 {
-	const half4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-	while (_pDestination < end)
+	const half4* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+	while (dst < end)
 	{
-		_pDestination->x = _pSource->x;
-		_pDestination->y = _pSource->y;
-		_pDestination->z = _pSource->z;
-		_pDestination->w = _pSource->w;
-		_pDestination = byte_add(_pDestination, _DestinationPitch);
-		_pSource = byte_add(_pSource, _SourcePitch);
+		dst->x = src->x;
+		dst->y = src->y;
+		dst->z = src->z;
+		dst->w = 0.0f;
+		dst = byte_add(dst, dst_pitch);
+		src = byte_add(src, src_pitch);
 	}
 }
 
-//template<>
-//static void copy_vertex_element<float4, half4>(float4* oRESTRICT _pDestination, uint _DestinationPitch, const half4* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices)
+template<>
+static void copy_vertex_element<float3, half4>(float3* oRESTRICT dst, uint dst_pitch, const half4* oRESTRICT src, uint src_pitch, uint num_vertices)
+{
+	const float3* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+	while (dst < end)
+	{
+		dst->x = src->x;
+		dst->y = src->y;
+		dst->z = src->z;
+		dst = byte_add(dst, dst_pitch);
+		src = byte_add(src, src_pitch);
+	}
+}
+
+template<>
+static void copy_vertex_element<half4, float4>(half4* oRESTRICT dst, uint dst_pitch, const float4* oRESTRICT src, uint src_pitch, uint num_vertices)
+{
+	const half4* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+	while (dst < end)
+	{
+		dst->x = src->x;
+		dst->y = src->y;
+		dst->z = src->z;
+		dst->w = src->w;
+		dst = byte_add(dst, dst_pitch);
+		src = byte_add(src, src_pitch);
+	}
+}
+
+template<>
+static void copy_vertex_element<float4, half4>(float4* oRESTRICT dst, uint dst_pitch, const half4* oRESTRICT src, uint src_pitch, uint num_vertices)
+{
+	const float4* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+	while (dst < end)
+	{
+		dst->x = src->x;
+		dst->y = src->y;
+		dst->z = src->z;
+		dst->w = src->w;
+		dst = byte_add(dst, dst_pitch);
+		src = byte_add(src, src_pitch);
+	}
+}
+
+//template<typename DstT, typename SrcT>
+//static void copy_semantic(void* oRESTRICT & dst, uint dst_pitch, const layout::value& _DestinationLayout
+//	, const SrcT* oRESTRICT src, uint src_pitch, uint num_vertices
+//	, bool (*has_element)(const layout::value& _Layout))
 //{
-//	const float4* oRESTRICT end = byte_add(_pDestination, _DestinationPitch * _NumVertices);
-//	while (_pDestination < end)
+//	if (has_element(_DestinationLayout))
 //	{
-//		_pDestination->x = _pSource->x;
-//		_pDestination->y = _pSource->y;
-//		_pDestination->z = _pSource->z;
-//		_pDestination->w = _pSource->w;
-//		_pDestination = byte_add(_pDestination, _DestinationPitch);
-//		_pSource = byte_add(_pSource, _SourcePitch);
+//		if (src)
+//			copy_vertex_element<DstT, SrcT>((DstT*)dst, dst_pitch, (SrcT*)src, src_pitch, num_vertices);
+//		else
+//			memset2d4(dst, dst_pitch, 0, sizeof(DstT), num_vertices);
+//
+//		dst = byte_add(dst, sizeof(DstT));
 //	}
 //}
 
-template<typename DstT, typename SrcT>
-static void copy_semantic(void* oRESTRICT & _pDestination, uint _DestinationPitch, const layout::value& _DestinationLayout
-	, const SrcT* oRESTRICT _pSource, uint _SourcePitch, uint _NumVertices
-	, bool (*has_element)(const layout::value& _Layout))
+uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, const format::value& dst_format,
+									 const void* oRESTRICT src, uint src_stride, const format::value& src_format, uint num_vertices)
 {
-	if (has_element(_DestinationLayout))
-	{
-		if (_pSource)
-			copy_vertex_element<DstT, SrcT>((DstT*)_pDestination, _DestinationPitch, (SrcT*)_pSource, _SourcePitch, _NumVertices);
-		else
-			memset2d4(_pDestination, _DestinationPitch, 0, sizeof(DstT), _NumVertices);
+	const uint DstSize = format_size(dst_format);
+	const uint SrcSize = format_size(src_format);
 
-		_pDestination = byte_add(_pDestination, sizeof(DstT));
+	void* oRESTRICT dest = byte_add(dst, dst_byte_offset);
+
+	bool DidCopy = false;
+	switch (dst_format)
+	{
+		#define COPY(DstFmt, SrcFmt, DstType, SrcType) case format::SrcFmt: { copy_vertex_element((DstType*)dest, dst_stride, (const SrcType*)src, src_stride, num_vertices); DidCopy = true; break; }
+		case format::xy32_float:
+		{
+			switch (src_format)
+			{
+				COPY(xy32_float, xy32_float, float2, float2)
+				COPY(xy32_float, xyz32_float, float2, float3)
+				COPY(xy32_float, xy16_unorm, float2, ushort2)
+				//COPY(xy32_float, xyzw16_unorm, float2, ushort4)
+				COPY(xy32_float, xyzw16_float, float3, half4)
+				default: break;
+			}
+			break;
+		}
+
+		case format::xyz32_float:
+		{
+			switch (src_format)
+			{
+				COPY(xyz32_float, xyz32_float, float3, float3)
+				COPY(xyz32_float, xyzw32_float, float3, float4)
+				COPY(xyz32_float, xyz10w2_unorm, float3, udec3)
+				//COPY(xyz32_float, xyzw16_unorm, float3, ushort4)
+				COPY(xyz32_float, xyzw16_float, float3, half4)
+				default: break;
+			}
+			break;
+		}
+
+		case format::xyzw32_float:
+		{
+			switch (src_format)
+			{
+				COPY(xyzw32_float, xyzw32_float, float4, float4)
+				COPY(xyzw32_float, xyzw16_unorm, float4, ushort4)
+				COPY(xyzw32_float, xyzw16_float, float4, half4)
+				default: break;
+			}
+			break;
+		}
+
+		//case format::xyz10w2_unorm:
+		//{
+		//	switch (src_format)
+		//	{
+		//		COPY(xyz10w2_unorm, xyz10w2_unorm, udec3, udec3)
+		//		COPY(xyz10w2_unorm, xyz32_float, udec3, float3)
+		//		default: break;
+		//	}
+		//	break;
+		//}
+
+		case format::xyz10w2_uint:
+		{
+			switch (src_format)
+			{
+				COPY(xyz10w2_uint, xyz10w2_uint, udec3, udec3)
+				default: break;
+			}
+			break;
+		}
+
+		//case format::xy16_unorm:
+		//{
+		//	switch (src_format)
+		//	{
+		//		COPY(xy16_unorm, xy16_unorm, ushort2, ushort2)
+		//		default: break;
+		//	}
+		//	break;
+		//}
+
+		case format::xy16_uint:
+		{
+			switch (src_format)
+			{
+				COPY(xy16_uint, xy16_uint, ushort2, ushort2)
+				default: break;
+			}
+			break;
+		}
+
+		case format::xy16_float:
+		{
+			switch (src_format)
+			{
+				COPY(xy16_float, xy16_float, half2, half2)
+				COPY(xy16_float, xy32_float, half2, float2)
+				COPY(xy16_float, xyz32_float, half2, float3)
+				default: break;
+			}
+			break;
+		}
+
+		//case format::xyzw16_unorm:
+		//{
+		//	switch (src_format)
+		//	{
+		//		COPY(xyzw16_unorm, xyzw16_unorm, ushort4, ushort4)
+		//		COPY(xyzw16_unorm, xyz32_float, ushort4, float3)
+		//		COPY(xyzw16_unorm, xyzw32_float, ushort4, float4)
+		//		default: break;
+		//	}
+		//	break;
+		//}
+
+		case format::xyzw16_uint:
+		{
+			switch (src_format)
+			{
+				COPY(xyzw16_uint, xyzw16_uint, ushort4, ushort4)
+				default: break;
+			}
+			break;
+		}
+
+		case format::xyzw16_float:
+		{
+			switch (src_format)
+			{
+				COPY(xyzw16_float, xyzw16_float, half4, half4)
+				COPY(xyzw16_float, xyz32_float, half4, float3)
+				COPY(xyzw16_float, xyzw32_float, half4, float4)
+				default: break;
+			}
+			break;
+		}
+
+		case format::xyzw8_unorm:
+		{
+			switch (src_format)
+			{
+				COPY(xyzw8_unorm, xyzw8_unorm, color, color)
+				//COPY(r8g8b8a8_unorm, xyzw32_float, color, float4)
+				//COPY(r8g8b8a8_unorm, xyz32_float, color, float3)
+				default: break;
+			}
+			break;
+		}
+
+		case format::xyzw8_uint:
+		{
+			switch (src_format)
+			{
+				COPY(xyzw8_uint, xyzw8_uint, uint, uint)
+				default: break;
+			}
+			break;
+		}
+
+		default: 
+			break;
+	}
+	#undef COPY
+
+	if (!DidCopy)
+		memset2d4(dst, dst_stride, 0, DstSize, num_vertices);
+
+	return dst_byte_offset + DstSize;
+}
+
+void copy_vertices(void* oRESTRICT* oRESTRICT dst, const element_array& dst_elements, const void* oRESTRICT* oRESTRICT src, const element_array& src_elements, uint num_vertices)
+{
+	for (uint di = 0; di < dst_elements.size(); di++)
+	{
+		const element& e = dst_elements[di];
+		const uint doff = calc_offset(dst_elements, di);
+		const uint dstride = calc_vertex_size(dst_elements, e.slot());
+
+		bool copied = false;
+		for (uint si = 0; si < src_elements.size(); si++)
+		{
+			const element& se = src_elements[si];
+			if (e.semantic() != se.semantic() || e.index() != se.index())
+				continue;
+
+			const uint soff = calc_offset(src_elements, di);
+			const uint sstride = calc_offset(src_elements, di);
+
+			copy_element(doff, dst[e.slot()], dstride, e.format(), src[se.slot()], sstride, se.format(), num_vertices);
+			copied = true;
+		}
+
+		if (!copied)
+			memset2d4(dst[e.slot()], dstride, 0, format_size(e.format()), num_vertices);
 	}
 }
 
-void copy_vertices(void* oRESTRICT _pDestination, const layout::value& _DestinationLayout, const source& _Source, uint _NumVertices)
+void calc_min_max_indices(const uint* oRESTRICT indices, uint start_index, uint num_indices, uint num_vertices, uint* oRESTRICT out_min_vertex, uint* oRESTRICT out_max_vertex)
 {
-	const uint DestinationPitch = vertex_size(_DestinationLayout);
-
-	copy_semantic<float3, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.positionsf, _Source.positionf_pitch, _NumVertices, has_positions);
-	
-	if (_Source.normals)
-		copy_semantic<dec3n, dec3n>(_pDestination, DestinationPitch, _DestinationLayout, _Source.normals, _Source.normal_pitch, _NumVertices, has_normals);
-	else
-		copy_semantic<dec3n, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.normalsf, _Source.normalf_pitch, _NumVertices, has_normals);
-	
-	if (_Source.tangents)
-		copy_semantic<dec3n, dec3n>(_pDestination, DestinationPitch, _DestinationLayout, _Source.tangents, _Source.tangent_pitch, _NumVertices, has_tangents);
-	else
-		copy_semantic<dec3n, float4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.tangentsf, _Source.tangentf_pitch, _NumVertices, has_tangents);
-	
-	const int src_uv0s = (_Source.uv0s || _Source.uv0sf) ? 1 : 0;
-	const int src_uvw0s = (_Source.uvw0sf) ? 1 : 0;
-	const int src_uvwx0s = (_Source.uvwx0s || _Source.uvwx0sf) ? 1 : 0;
-
-	oCHECK((src_uv0s + src_uvw0s + src_uvwx0s) == 1, "only one of uv0 uvw0 or uvwx0's can be specified");
-
-	if (_Source.uv0s)
-		copy_semantic<half2, half2>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uv0s, _Source.uv0_pitch, _NumVertices, has_uv0s);
-	else if (!has_uvwx0s(_DestinationLayout) && _Source.uvw0sf)
-		copy_semantic<half2, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvw0sf, _Source.uvw0f_pitch, _NumVertices, has_uv0s);
-	else 
-		copy_semantic<half2, float2>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uv0sf, _Source.uv0f_pitch, _NumVertices, has_uv0s);
-
-	if (_Source.uvwx0s)
-		copy_semantic<half4, half4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvwx0s, _Source.uvwx0_pitch, _NumVertices, has_uvwx0s);
-	else if (_Source.uvwx0sf)
-		copy_semantic<half4, float4>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvwx0sf, _Source.uvwx0f_pitch, _NumVertices, has_uvwx0s);
-	else
-		copy_semantic<half4, float3>(_pDestination, DestinationPitch, _DestinationLayout, _Source.uvw0sf, _Source.uvw0f_pitch, _NumVertices, has_uvwx0s);
-
-	if (_Source.colors)
-		copy_semantic<color, color>(_pDestination, DestinationPitch, _DestinationLayout, _Source.colors, _Source.color_pitch, _NumVertices, has_colors);
+	detail::calc_min_max_indices(indices, start_index, num_indices, num_vertices, out_min_vertex, out_max_vertex);
 }
 
-void calc_min_max_indices(const uint* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex)
+void calc_min_max_indices(const ushort* oRESTRICT indices, uint start_index, uint num_indices, uint num_vertices, uint* oRESTRICT out_min_vertex, uint* oRESTRICT out_max_vertex)
 {
-	detail::calc_min_max_indices(_pIndices, _StartIndex, _NumIndices, _NumVertices, _pMinVertex, _pMaxVertex);
+	detail::calc_min_max_indices(indices, start_index, num_indices, num_vertices, out_min_vertex, out_max_vertex);
 }
 
-void calc_min_max_indices(const ushort* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex)
+aaboxf calc_bound(const float3* vertices, uint vertex_stride, uint num_vertices)
 {
-	detail::calc_min_max_indices(_pIndices, _StartIndex, _NumIndices, _NumVertices, _pMinVertex, _pMaxVertex);
+	return detail::calc_bound(vertices, vertex_stride, num_vertices);
 }
 
-aaboxf calc_bound(const float3* _pVertices, uint _VertexStride, uint _NumVertices)
+void transform_points(const float4x4& matrix, float3* oRESTRICT dst, uint dst_stride, const float3* oRESTRICT src, uint source_stride, uint num_points)
 {
-	return detail::calc_bound(_pVertices, _VertexStride, _NumVertices);
+	detail::transform_points(matrix, dst, dst_stride, src, source_stride, num_points);
 }
 
-void transform_points(const float4x4& _Matrix, float3* oRESTRICT _pDestination, uint _DestinationStride, const float3* oRESTRICT _pSource, uint _SourceStride, uint _NumPoints)
+void transform_vectors(const float4x4& matrix, float3* oRESTRICT dst, uint dst_stride, const float3* oRESTRICT src, uint source_stride, uint _NumVectors)
 {
-	detail::transform_points(_Matrix, _pDestination, _DestinationStride, _pSource, _SourceStride, _NumPoints);
+	detail::transform_vectors(matrix, dst, dst_stride, src, source_stride, _NumVectors);
 }
 
-void transform_vectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination, uint _DestinationStride, const float3* oRESTRICT _pSource, uint _SourceStride, uint _NumVectors)
+void remove_degenerates(const float3* oRESTRICT positions, uint num_positions, uint* oRESTRICT indices, uint num_indices, uint* oRESTRICT out_new_num_indices)
 {
-	detail::transform_vectors(_Matrix, _pDestination, _DestinationStride, _pSource, _SourceStride, _NumVectors);
+	detail::remove_degenerates(positions, num_positions, indices, num_indices, out_new_num_indices);
 }
 
-void remove_degenerates(const float3* oRESTRICT _pPositions, uint _NumPositions, uint* oRESTRICT _pIndices, uint _NumIndices, uint* oRESTRICT _pNewNumIndices)
+void remove_degenerates(const float3* oRESTRICT positions, uint num_positions, ushort* oRESTRICT indices, uint num_indices, uint* oRESTRICT out_new_num_indices)
 {
-	detail::remove_degenerates(_pPositions, _NumPositions, _pIndices, _NumIndices, _pNewNumIndices);
+	detail::remove_degenerates(positions, num_positions, indices, num_indices, out_new_num_indices);
 }
 
-void remove_degenerates(const float3* oRESTRICT _pPositions, uint _NumPositions, ushort* oRESTRICT _pIndices, uint _NumIndices, uint* oRESTRICT _pNewNumIndices)
+void calc_face_normals(float3* oRESTRICT face_normals, const uint* oRESTRICT indices, uint num_indices, const float3* oRESTRICT positions, uint num_positions, bool ccw)
 {
-	detail::remove_degenerates(_pPositions, _NumPositions, _pIndices, _NumIndices, _pNewNumIndices);
+	detail::calc_face_normals(face_normals, indices, num_indices, positions, num_positions, ccw);
 }
 
-void calc_face_normals(float3* oRESTRICT _pFaceNormals, const uint* oRESTRICT _pIndices, uint _NumIndices, const float3* oRESTRICT _pPositions, uint _NumPositions, bool _CCW)
+void calc_face_normals(float3* oRESTRICT face_normals, const ushort* oRESTRICT indices, uint num_indices, const float3* oRESTRICT positions, uint num_positions, bool ccw)
 {
-	detail::calc_face_normals(_pFaceNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW);
+	detail::calc_face_normals(face_normals, indices, num_indices, positions, num_positions, ccw);
 }
 
-void calc_face_normals(float3* oRESTRICT _pFaceNormals, const ushort* oRESTRICT _pIndices, uint _NumIndices, const float3* oRESTRICT _pPositions, uint _NumPositions, bool _CCW)
+void calc_vertex_normals(float3* vertex_normals, const uint* indices, uint num_indices, const float3* positions, uint num_positions, bool ccw, bool overwrite_all)
 {
-	detail::calc_face_normals(_pFaceNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW);
+	detail::calc_vertex_normals(vertex_normals, indices, num_indices, positions, num_positions, ccw, overwrite_all);
 }
 
-void calc_vertex_normals(float3* _pVertexNormals, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, uint _NumPositions, bool _CCW, bool _OverwriteAll)
+void calc_vertex_normals(float3* vertex_normals, const ushort* indices, uint num_indices, const float3* positions, uint num_positions, bool ccw, bool overwrite_all)
 {
-	detail::calc_vertex_normals(_pVertexNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW, _OverwriteAll);
+	detail::calc_vertex_normals(vertex_normals, indices, num_indices, positions, num_positions, ccw, overwrite_all);
 }
 
-void calc_vertex_normals(float3* _pVertexNormals, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, uint _NumPositions, bool _CCW, bool _OverwriteAll)
+void calc_vertex_tangents(float4* tangents, const uint* indices, uint num_indices, const float3* positions, const float3* normals, const float3* texcoords, uint num_vertices)
 {
-	detail::calc_vertex_normals(_pVertexNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW, _OverwriteAll);
+	detail::calc_vertex_tangents(tangents, indices, num_indices, positions, normals, texcoords, num_vertices);
 }
 
-void calc_vertex_tangents(float4* _pTangents, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, uint _NumVertices)
+void calc_vertex_tangents(float4* tangents, const uint* indices, uint num_indices, const float3* positions, const float3* normals, const float2* texcoords, uint num_vertices)
 {
-	detail::calc_vertex_tangents(_pTangents, _pIndices, _NumIndices, _pPositions, _pNormals, _pTexcoords, _NumVertices);
+	detail::calc_vertex_tangents(tangents, indices, num_indices, positions, normals, texcoords, num_vertices);
 }
 
-void calc_vertex_tangents(float4* _pTangents, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, uint _NumVertices)
+void calc_vertex_tangents(float4* tangents, const ushort* indices, uint num_indices, const float3* positions, const float3* normals, const float3* texcoords, uint num_vertices)
 {
-	detail::calc_vertex_tangents(_pTangents, _pIndices, _NumIndices, _pPositions, _pNormals, _pTexcoords, _NumVertices);
+	detail::calc_vertex_tangents(tangents, indices, num_indices, positions, normals, texcoords, num_vertices);
 }
 
-void calc_texcoords(const aaboxf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_vertex_tangents(float4* tangents, const ushort* indices, uint num_indices, const float3* positions, const float3* normals, const float2* texcoords, uint num_vertices)
 {
-	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
+	detail::calc_vertex_tangents(tangents, indices, num_indices, positions, normals, texcoords, num_vertices);
 }
 
-void calc_texcoords(const aaboxf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aaboxf& bound, const uint* indices, uint num_indices, const float3* positions, float2* out_texcoords, uint num_vertices, double* out_solve_time)
 {
-	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
+	detail::calc_texcoords(bound, indices, num_indices, positions, out_texcoords, num_vertices, out_solve_time);
 }
 
-void calc_texcoords(const aaboxf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aaboxf& bound, const uint* indices, uint num_indices, const float3* positions, float3* out_texcoords, uint num_vertices, double* out_solve_time)
 {
-	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
+	detail::calc_texcoords(bound, indices, num_indices, positions, out_texcoords, num_vertices, out_solve_time);
 }
 
-void calc_texcoords(const aaboxf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aaboxf& bound, const ushort* indices, uint num_indices, const float3* positions, float2* out_texcoords, uint num_vertices, double* out_solve_time)
 {
-	detail::calc_texcoords(_Bound, _pIndices, _NumIndices, _pPositions, _pOutTexcoords, _NumVertices, _pSolveTime);
+	detail::calc_texcoords(bound, indices, num_indices, positions, out_texcoords, num_vertices, out_solve_time);
+}
+
+void calc_texcoords(const aaboxf& bound, const ushort* indices, uint num_indices, const float3* positions, float3* out_texcoords, uint num_vertices, double* out_solve_time)
+{
+	detail::calc_texcoords(bound, indices, num_indices, positions, out_texcoords, num_vertices, out_solve_time);
 }
 
 namespace TerathonEdges {
@@ -683,18 +911,18 @@ namespace TerathonEdges {
 
 } // namespace TerathonEdges
 
-void calc_edges(uint _NumVertices, const uint* _pIndices, uint _NumIndices, uint** _ppEdges, uint* _pNumberOfEdges)
+void calc_edges(uint num_vertices, const uint* indices, uint num_indices, uint** _ppEdges, uint* out_num_edges)
 {
-	const uint numTriangles = _NumIndices / 3;
-	if ((uint)((long)_NumVertices) != _NumVertices)
-		throw std::out_of_range("_NumVertices is out of range");
+	const uint numTriangles = num_indices / 3;
+	if ((uint)((long)num_vertices) != num_vertices)
+		throw std::out_of_range("num_vertices is out of range");
 	
 	if ((uint)((long)numTriangles) != numTriangles)
 		throw std::out_of_range("numTriangles is out of range");
 
 	TerathonEdges::Edge* edgeArray = new TerathonEdges::Edge[3 * numTriangles];
 
-	uint numEdges = static_cast<uint>(TerathonEdges::BuildEdges(static_cast<long>(_NumVertices), static_cast<long>(numTriangles), (const TerathonEdges::Triangle *)_pIndices, edgeArray));
+	uint numEdges = static_cast<uint>(TerathonEdges::BuildEdges(static_cast<long>(num_vertices), static_cast<long>(numTriangles), (const TerathonEdges::Triangle *)indices, edgeArray));
 
 	// @tony: Should the allocator be exposed?
 	*_ppEdges = new uint[numEdges * 2];
@@ -705,21 +933,21 @@ void calc_edges(uint _NumVertices, const uint* _pIndices, uint _NumIndices, uint
 		(*_ppEdges)[i*2+1] = edgeArray[i].vertexIndex[1];
 	}
 
-	*_pNumberOfEdges = numEdges;
+	*out_num_edges = numEdges;
 
 	delete [] edgeArray;
 }
 
-void free_edge_list(uint* _pEdges)
+void free_edge_list(uint* edges)
 {
-	delete [] _pEdges;
+	delete [] edges;
 }
 
 #define PUV(IndexT, UV0T, UV1T) \
-void prune_unindexed_vertices(const IndexT* oRESTRICT _pIndices, uint _NumIndices \
-	, float3* oRESTRICT _pPositions, float3* oRESTRICT _pNormals, float4* oRESTRICT _pTangents, UV0T* oRESTRICT _pTexcoords0, UV1T* oRESTRICT _pTexcoords1, color* oRESTRICT _pColors \
-	, uint _NumVertices, uint* oRESTRICT _pNewNumVertices) \
-{ detail::prune_unindexed_vertices(_pIndices, _NumIndices, _pPositions, _pNormals, _pTangents, _pTexcoords0, _pTexcoords1, _pColors, _NumVertices, _pNewNumVertices); }
+void prune_unindexed_vertices(const IndexT* oRESTRICT indices, uint num_indices \
+	, float3* oRESTRICT positions, float3* oRESTRICT normals, float4* oRESTRICT tangents, UV0T* oRESTRICT texcoords0, UV1T* oRESTRICT texcoords1, color* oRESTRICT colors \
+	, uint num_vertices, uint* oRESTRICT out_new_num_vertices) \
+{ detail::prune_unindexed_vertices(indices, num_indices, positions, normals, tangents, texcoords0, texcoords1, colors, num_vertices, out_new_num_vertices); }
 
 PUV(uint, float2, float2)
 PUV(uint, float2, float3)

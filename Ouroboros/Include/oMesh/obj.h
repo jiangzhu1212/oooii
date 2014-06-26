@@ -91,13 +91,21 @@ struct info
 		: obj_path(nullptr)
 		, mtl_path(nullptr)
 		, groups(nullptr)
+		, indices(nullptr)
+		, positions(nullptr)
+		, normals(nullptr)
+		, texcoords(nullptr)
 	{}
 
 	path obj_path;
 	path mtl_path;
 	const group* groups; // the size of this array is the same as mesh_info::num_ranges
+	const range* ranges;
+	const uint* indices;
+	const float3* positions;
+	const float3* normals;
+	const float3* texcoords;
 	mesh::info mesh_info;
-	source data;
 };
 
 struct init

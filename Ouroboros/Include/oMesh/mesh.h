@@ -37,6 +37,10 @@
 namespace ouro {
 	namespace mesh {
 
+static const uint max_num_indices = 8;
+static const uint max_num_slots = 8;
+static const uint max_num_elements = 16;
+
 namespace primitive_type
 { oDECLARE_SMALL_ENUM(value, uchar) {
 
@@ -102,172 +106,90 @@ namespace face_type
 namespace semantic
 { oDECLARE_SMALL_ENUM(value, uchar) {
 
-	position, // 3-component xyz (float3/ushort4)
-	normal, // 3-component xyz (float3/dec3n)
-	tangent, // 4-component xyz, w is -1, 0 or 1 (float4/dec3n)
-	texcoord, // 2- or 3-component uv (float2/half2 or float3/ushort4)
-	color, // 4-component color rgba (uint)
+	unknown,
+	position,
+	normal,
+	tangent,
+	texcoord,
+	color,
 
 	count, 
 
 };}
 
-namespace usage
+namespace format
 { oDECLARE_SMALL_ENUM(value, uchar) {
 
-	per_mesh_static,
-	per_mesh_dynamic,
-	per_instance_static,
-	per_instance_dynamic,
+	unknown,
+	xy32_float,
+	xyz32_float,
+	xyzw32_float,
+	xy16_float,
+	xy16_unorm,
+	xy16_snorm,
+	xy16_uint,
+	xy16_sint,
+	xyzw16_float,
+	xyzw16_unorm,
+	xyzw16_snorm,
+	xyzw16_uint,
+	xyzw16_sint,
+	xyz10w2_unorm,
+	xyz10w2_uint,
+	xyzw8_unorm,
+	xyzw8_snorm,
+	xyzw8_uint,
+	xyzw8_sint,
 
 	count,
 
 };}
 
-namespace layout
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	// positions: float3
-	// normals: dec3n
-	// tangents: dec3n
-	// texcoords0: half2 \ mutually exclusive
-	// texcoords0: half4 /
-	// texcoords1: half2 \ mutually exclusive
-	// texcoords1: half4 /
-	// colors: color
-
-	// if this is updated, remember to update is_positions, etc.
-
-	none,
-
-	pos,
-	color,
-	pos_color,
-	pos_nrm,
-	pos_nrm_tan,
-	pos_nrm_tan_uv0,
-	pos_nrm_tan_uvwx0,
-	pos_uv0,
-	pos_uvwx0,
-	uv0,
-	uvwx0,
-	uv0_color,
-	uvwx0_color,
-
-	count,
-
-};}
-
-class layout_array : public std::array<layout::value, usage::count>
+class element
 {
 public:
-	typedef std::array<layout::value, usage::count> this_type;
-	layout_array() { fill(layout::none); }
-	layout_array(const layout::value& _Dynamic, const layout::value& _Static = layout::none, const layout::value& _PerInstance = layout::none) { (*this)[usage::per_mesh_dynamic] = _Dynamic; (*this)[usage::per_mesh_static] = _Static; (*this)[usage::per_instance_static] = _PerInstance; }
-	operator this_type() { return *this; }
-	operator const this_type() const { return *this; }
+	element() { *(ushort*)this = 0; }
+	element(const semantic::value& _semantic, uint _index, const format::value& _format, uint _slot)
+		: ussemantic(_semantic)
+		, usindex((ushort)_index)
+		, usformat(_format)
+		, usslot((ushort)_slot)
+	{}
+
+	inline semantic::value semantic() const { return (semantic::value)ussemantic; }
+	inline void semantic(const semantic::value& s) { ussemantic = s; }
+	
+	inline uint index() const { return usindex; }
+	inline void index(uint i) { usindex = (ushort)i; }
+	
+	inline format::value format() const { return (format::value)usformat; }
+	inline void format(const format::value& f) { usformat = f; }
+	
+	inline uint slot() const { return usslot; }
+	inline void slot(uint s) { usslot = (ushort)s; }
+
+private:
+	ushort ussemantic : 4;
+	ushort usindex : 3;
+	ushort usformat : 5;
+	ushort usslot : 4;
 };
+
+typedef std::array<element, max_num_elements> element_array;
 
 struct range
 {
-	range(uint _StartPrimitive = 0, uint _NumPrimitives = 0, uint _MinVertex = 0, uint _MaxVertex = ~0u)
-		: start_primitive(_StartPrimitive)
-		, num_primitives(_NumPrimitives)
-		, min_vertex(_MinVertex)
-		, max_vertex(_MaxVertex)
+	range(uint _start_prim = 0, uint _num_prims = 0, uint _min_vertex = 0, uint _max_vertex = ~0u)
+		: start_primitive(_start_prim)
+		, num_primitives(_num_prims)
+		, min_vertex(_min_vertex)
+		, max_vertex(_max_vertex)
 	{}
 
 	uint start_primitive; // index buffer offset in # of primitives
 	uint num_primitives; // Number of primitives in range
 	uint min_vertex; // min index into vertex buffer that will be accessed
 	uint max_vertex; // max index into vertex buffer that will be accessed
-};
-
-struct source
-{
-	// this struct is a general-purpose container for vertex source data.
-	// the intent is not that every pointer be populated but rather if one
-	// is populated than it contains typed data with the specified stride.
-
-	source()
-		: indicesi(nullptr)
-		, indicess(nullptr)
-		, ranges(nullptr)
-		, positionsf(nullptr)
-		, normalsf(nullptr)
-		, normals(nullptr)
-		, tangentsf(nullptr)
-		, tangents(nullptr)
-		, uv0sf(nullptr)
-		, uvw0sf(nullptr)
-		, uvwx0sf(nullptr)
-		, uv0s(nullptr)
-		, uvwx0s(nullptr)
-		, colors(nullptr)
-		, indexi_pitch(0)
-		, indexs_pitch(0)
-		, range_pitch(0)
-		, positionf_pitch(0)
-		, normalf_pitch(0)
-		, normal_pitch(0)
-		, tangentf_pitch(0)
-		, tangent_pitch(0)
-		, uv0f_pitch(0)
-		, uvw0f_pitch(0)
-		, uvwx0f_pitch(0)
-		, uv0_pitch(0)
-		, uvwx0_pitch(0)
-		, color_pitch(0)
-		, vertex_layout(layout::none)
-	{}
-
-	const uint* indicesi;
-	const ushort* indicess;
-
-	const range* ranges;
-	
-	const float3* positionsf;
-	const float3* normalsf;
-	const dec3n* normals;
-	const float4* tangentsf;
-	const dec3n* tangents;
-	const float2* uv0sf;
-	const float3* uvw0sf;
-	const float4* uvwx0sf;
-	const half2* uv0s;
-	const half4* uvwx0s;
-	const color* colors;
-
-	uint indexi_pitch;
-	uint indexs_pitch;
-	uint range_pitch;
-	uint positionf_pitch;
-	uint normalf_pitch;
-	uint normal_pitch;
-	uint tangentf_pitch;
-	uint tangent_pitch;
-	uint uv0f_pitch;
-	uint uvw0f_pitch;
-	uint uvwx0f_pitch;
-	uint uv0_pitch;
-	uint uvwx0_pitch;
-	uint color_pitch;
-
-	layout::value vertex_layout;
-
-	inline bool operator==(const source& _That) const
-	{
-		const void* const* thisP = (const void* const*)&indicesi;
-		const void* const* end = (const void* const*)&colors;
-		const void* const* thatP = (const void* const*)&_That.indicesi;
-		while (thisP <= end) if (*thisP++ != *thatP++) return false;
-		const uint* thisI = &indexi_pitch;
-		const uint* endI = &color_pitch;
-		const uint* thatI = &_That.indexi_pitch;
-		while (thisI <= endI) if (*thisI++ != *thatI++) return false;
-		return vertex_layout == _That.vertex_layout;
-	}
-	inline bool operator!=(const source& _That) const { return !(*this == _That); }
 };
 
 struct info
@@ -279,143 +201,150 @@ struct info
 		, face_type(face_type::unknown)
 		, num_ranges(0)
 		, vertex_scale_shift(0)
-		, pad0(0)
-	{ vertex_layouts.fill(layout::none); }
+	{ elements.fill(element()); }
 
 	aaboxf local_space_bound;
+	element_array elements;
 	uint num_indices;
 	uint num_vertices;
-	layout_array vertex_layouts;
 	primitive_type::value primitive_type;
 	face_type::value face_type;
 	uchar num_ranges;
 	uchar vertex_scale_shift; // for position as shorts for xyz it'll be (x / SHORT_MAX) * (1 << vertex_scale_shift)
-	uchar pad0;
 };
 
-inline bool has_16bit_indices(uint _NumVertices) { return _NumVertices <= 65535; }
-inline uint index_size(uint _NumVertices) { return has_16bit_indices(_NumVertices) ? sizeof(ushort) : sizeof(uint); }
-uint num_primitives(const primitive_type::value& _PrimitiveType, uint _NumIndices, uint _NumVertices);
-inline uint num_primitives(const info& _Info) { return num_primitives(_Info.primitive_type, _Info.num_indices, _Info.num_vertices); }
-uint vertex_size(const layout::value& _Layout);
+// returns the number of bytes to store one item of the specified format
+uint format_size(const format::value& f);
 
-inline bool has_positions(const layout::value& _Layout) { return _Layout >= layout::pos && _Layout <= layout::pos_uvwx0; }
-inline bool has_normals(const layout::value& _Layout) { return _Layout >= layout::pos_nrm && _Layout <= layout::pos_nrm_tan_uvwx0; }
-inline bool has_tangents(const layout::value& _Layout) { return _Layout >= layout::pos_nrm_tan && _Layout <= layout::pos_nrm_tan_uvwx0; }
-inline bool has_texcoords(const layout::value& _Layout) { return _Layout >= layout::pos_nrm_tan_uv0 && _Layout <= layout::uvwx0_color; }
-inline bool has_uv0s(const layout::value& _Layout) { return ((_Layout&0x1)==0) && has_texcoords(_Layout); }
-inline bool has_uvwx0s(const layout::value& _Layout) { return (_Layout&0x1) && has_texcoords(_Layout); }
-inline bool has_colors(const layout::value& _Layout) { return _Layout == layout::pos_color || _Layout == layout::color || _Layout == layout::uv0_color || _Layout == layout::uvwx0_color; }
+// returns the number of bytes from a base vertex in the specified element's slot to where the element's data begins
+uint calc_offset(const element_array& elements, uint element_index);
 
-// Given a source populated with vertex streams, return what layout it specifies.
-// (indices, ranges and layout fields are ignored)
-layout::value calc_layout(const source& _Source);
+// return the size of the entire vertex for the specified slot
+uint calc_vertex_size(const element_array& elements, uint slot);
 
-void flip_winding_order(uint _BaseIndexIndex, ushort* _pIndices, uint _NumIndices);
-void flip_winding_order(uint _BaseIndexIndex, uint* _pIndices, uint _NumIndices);
+uint num_primitives(const primitive_type::value& type, uint num_indices, uint num_vertices);
+inline uint num_primitives(const info& i) { return num_primitives(i.primitive_type, i.num_indices, i.num_vertices); }
+
+inline bool has_16bit_indices(uint num_vertices) { return num_vertices <= 65535; }
+inline uint index_size(uint num_vertices) { return has_16bit_indices(num_vertices) ? sizeof(ushort) : sizeof(uint); }
+
+// swaps indices to have a triangles in the list face the other way
+void flip_winding_order(uint base_index_index, ushort* indices, uint num_indices);
+void flip_winding_order(uint base_index_index, uint* indices, uint num_indices);
 
 // copies index buffers from one to another, properly converting from 16-bit to 32-bit and vice versa.
-void copy_indices(void* oRESTRICT _pDestination, uint _DestinationPitch, const void* oRESTRICT _pSource, uint _SourcePitch, uint _NumIndices);
-void copy_indices(ushort* oRESTRICT _pDestination, const uint* oRESTRICT _pSource, uint _NumIndices);
-void copy_indices(uint* oRESTRICT _pDestination, const ushort* oRESTRICT _pSource, uint _NumIndices);
+void copy_indices(void* oRESTRICT dst, uint dst_pitch, const void* oRESTRICT src, uint src_pitch, uint num_indices);
+void copy_indices(ushort* oRESTRICT dst, const uint* oRESTRICT src, uint num_indices);
+void copy_indices(uint* oRESTRICT dst, const ushort* oRESTRICT src, uint num_indices);
 
-// uses the above utility functions to do all necessary conversions to copy the source to the destination
-void copy_vertices(void* oRESTRICT _pDestination, const layout::value& _DestinationLayout, const source& _Source, uint _NumVertices);
+// Adds offset to each index
+void offset_indices(ushort* oRESTRICT dst, uint num_indices, int offset);
+void offset_indices(uint* oRESTRICT dst, uint num_indices, int offset);
 
-// Calculates the min and max index as stored in _pIndices. This starts iterating at _StartIndex through
-// _NumIndices as if from 0. _NumVertices is the number to traverse (end() will be _StartIndex + _NumIndices).
-//_pMinVertex and _pMaxVertex receive the lowest and highest index values respectively.
-void calc_min_max_indices(const uint* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex);
-void calc_min_max_indices(const ushort* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex);
+// Copies from the src to the dst + dst_byte_offset and does any appropriate format conversion.
+// If no copy can be done the values are set to zero. This returns dst_byte_offset + size of dst_type.
+uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, const format::value& dst_format,
+									 const void* oRESTRICT src, uint src_stride, const format::value& src_format, uint num_vertices);
 
-aaboxf calc_bound(const float3* _pVertices, uint _VertexStride, uint _NumVertices);
+// Uses copy_element to find a src for each dst and copies it in (or sets to zero).
+void copy_vertices(void* oRESTRICT* oRESTRICT dst, const element_array& dst_elements, const void* oRESTRICT* oRESTRICT src, const element_array& src_elements, uint num_vertices);
 
-void transform_points(const float4x4& _Matrix, float3* oRESTRICT _pDestination, uint _DestinationStride, const float3* oRESTRICT _pSource, uint _SourceStride, uint _NumPoints);
-void transform_vectors(const float4x4& _Matrix, float3* oRESTRICT _pDestination, uint _DestinationStride, const float3* oRESTRICT _pSource, uint _SourceStride, uint _NumVectors);
+// Calculates the min and max index as stored in indices. This starts iterating at start_index through
+// num_indices as if from 0. num_vertices is the number to traverse (end() will be start_index + num_indices).
+//out_min_vertex and out_max_vertex receive the lowest and highest index values respectively.
+void calc_min_max_indices(const uint* oRESTRICT indices, uint start_index, uint num_indices, uint num_vertices, uint* oRESTRICT out_min_vertex, uint* oRESTRICT out_max_vertex);
+void calc_min_max_indices(const ushort* oRESTRICT indices, uint start_index, uint num_indices, uint num_vertices, uint* oRESTRICT out_min_vertex, uint* oRESTRICT out_max_vertex);
+
+aaboxf calc_bound(const float3* vertices, uint vertex_stride, uint num_vertices);
+
+void transform_points(const float4x4& matrix, float3* oRESTRICT dst, uint dst_stride, const float3* oRESTRICT src, uint source_stride, uint num_points);
+void transform_vectors(const float4x4& matrix, float3* oRESTRICT dst, uint dst_stride, const float3* oRESTRICT src, uint source_stride, uint num_vectors);
 
 // Removes indices for degenerate triangles. After calling this function use prune_unindexed_vertices() to clean up extra vertices.
-// _pPositions: list of XYZ positions indexed by the index array
-// _NumVertices: The number of vertices in the _pPositions array
-// _pIndices: array of triangles (every 3 specifies a triangle)
-// _NumIndices: The number of indices in the _pIndices array
-// _pNewNumIndices: The new number of indices as a result of removed degenerages
-void remove_degenerates(const float3* oRESTRICT _pPositions, uint _NumPositions, uint* oRESTRICT _pIndices, uint _NumIndices, uint* oRESTRICT _pNewNumIndices);
-void remove_degenerates(const float3* oRESTRICT _pPositions, uint _NumPositions, ushort* oRESTRICT _pIndices, uint _NumIndices, uint* oRESTRICT _pNewNumIndices);
+// positions: list of XYZ positions indexed by the index array
+// num_vertices: The number of vertices in the positions array
+// indices: array of triangles (every 3 specifies a triangle)
+// num_indices: The number of indices in the indices array
+// out_new_num_indices: The new number of indices as a result of removed degenerages
+void remove_degenerates(const float3* oRESTRICT positions, uint num_positions, uint* oRESTRICT indices, uint num_indices, uint* oRESTRICT out_new_num_indices);
+void remove_degenerates(const float3* oRESTRICT positions, uint num_positions, ushort* oRESTRICT indices, uint num_indices, uint* oRESTRICT out_new_num_indices);
 
 // Calculate the face normals from the following inputs:
-// _pFaceNormals: output, array to fill with normals. This should be at least as
+// face_normals: output, array to fill with normals. This should be at least as
 //                large as the number of faces in the specified mesh (_NumberOfIndices/3)
-// _pIndices: array of triangles (every 3 specifies a triangle)
-// _NumIndices: The number of indices in the _pIndices array
-// _pPositions: list of XYZ positions for the mesh that are indexed by the index array
-// _NumPositions: The number of vertices in the _pPositions array
-// _CCW: If true triangles are assumed to have their front-face be specified by the counter-
+// indices: array of triangles (every 3 specifies a triangle)
+// num_indices: The number of indices in the indices array
+// positions: list of XYZ positions for the mesh that are indexed by the index array
+// num_positions: The number of vertices in the positions array
+// ccw: If true triangles are assumed to have their front-face be specified by the counter-
 //       clockwise order of vertices in a triangle. This affects which way a normal points.
-void calc_face_normals(float3* oRESTRICT _pFaceNormals, const uint* oRESTRICT _pIndices, uint _NumIndices, const float3* oRESTRICT _pPositions, uint _NumPositions, bool _CCW = false);
-void calc_face_normals(float3* oRESTRICT _pFaceNormals, const ushort* oRESTRICT _pIndices, uint _NumIndices, const float3* oRESTRICT _pPositions, uint _NumPositions, bool _CCW = false);
+void calc_face_normals(float3* oRESTRICT face_normals, const uint* oRESTRICT indices, uint num_indices, const float3* oRESTRICT positions, uint num_positions, bool ccw = false);
+void calc_face_normals(float3* oRESTRICT face_normals, const ushort* oRESTRICT indices, uint num_indices, const float3* oRESTRICT positions, uint num_positions, bool ccw = false);
 
 // Calculates the vertex normals by averaging face normals from the following 
 // inputs:
-// _pVertexNormals: output, array to fill with normals. This should be at least 
-//                  as large as the number of vertices in the specified mesh
-//                  (_NumberOfVertices).
-// _pIndices: array of triangles (every 3 specifies a triangle)
-// _NumberOfIndices: The number of indices in the _pIndices array
-// _pPositions: list of XYZ positions for the mesh that are indexed by the index 
-//              array
-// _NumberOfPositions: The number of vertices in the _pPositions array
-// _CCW: If true, triangles are assumed to have their front-face be specified by
+// vertex_normals: output, array to fill with normals. This should be at least 
+//                 as large as the number of vertices in the specified mesh
+//                 (_NumberOfVertices).
+// indices: array of triangles (every 3 specifies a triangle)
+// num_indices: The number of indices in the indices array
+// positions: list of XYZ positions for the mesh that are indexed by the index 
+//            array
+// num_positions: The number of vertices in the positions array
+// ccw: If true, triangles are assumed to have their front-face be specified by
 //       the counter-clockwise order of vertices in a triangle. This affects 
 //       which way a normal points.
-// _OverwriteAll: Overwrites any pre-existing data in the array. If this is 
+// overwrite_all: Overwrites any pre-existing data in the array. If this is 
 // false, any zero-length vector will be overwritten. Any length-having vector
 // will not be touched.
 // This can return EINVAL if a parameters isn't something that can be used.
-void calc_vertex_normals(float3* _pVertexNormals, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, uint _NumPositions, bool _CCW = false, bool _OverwriteAll = true);
-void calc_vertex_normals(float3* _pVertexNormals, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, uint _NumPositions, bool _CCW = false, bool _OverwriteAll = true);
+void calc_vertex_normals(float3* vertex_normals, const uint* indices, uint num_indices, const float3* positions, uint num_positions, bool ccw = false, bool overwrite_all = true);
+void calc_vertex_normals(float3* vertex_normals, const ushort* indices, uint num_indices, const float3* positions, uint num_positions, bool ccw = false, bool overwrite_all = true);
 
 // Calculates the tangent space vector and its handedness from the following
 // inputs:
-// _pTangents: output, array to fill with tangents. This should be at least as large as the number of vertices 
-//             in the specified mesh (_NumVertices)
-// _pIndices: array of triangles (every 3 specifies a triangle)
-// _NumIndices: The number of indices in the _pIndices array
-// _pPositions: list of XYZ positions for the mesh that are indexed by the index array
-// _pNormals: list of normalized normals for the mesh that are indexed by the index array
-// _pTexcoords: list of texture coordinates for the mesh that are indexed by the index array
-// _NumVertices: The number of vertices in the _pPositions, _pNormals and _pTexCoords arrays
-void calc_vertex_tangents(float4* _pTangents, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, uint _NumVertices);
-void calc_vertex_tangents(float4* _pTangents, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, const float3* _pNormals, const float3* _pTexcoords, uint _NumVertices);
+// tangents: output, array to fill with tangents. This should be at least as large as the number of vertices 
+//           in the specified mesh (num_vertices)
+// indices: array of triangles (every 3 specifies a triangle)
+// num_indices: The number of indices in the indices array
+// positions: list of XYZ positions for the mesh that are indexed by the index array
+// normals: list of normalized normals for the mesh that are indexed by the index array
+// texcoords: list of texture coordinates for the mesh that are indexed by the index array
+// num_vertices: The number of vertices in the positions, normals and texcoords arrays
+void calc_vertex_tangents(float4* tangents, const uint* indices, uint num_indices, const float3* positions, const float3* normals, const float3* texcoords, uint num_vertices);
+void calc_vertex_tangents(float4* tangents, const uint* indices, uint num_indices, const float3* positions, const float3* normals, const float2* texcoords, uint num_vertices);
+void calc_vertex_tangents(float4* tangents, const ushort* indices, uint num_indices, const float3* positions, const float3* normals, const float3* texcoords, uint num_vertices);
+void calc_vertex_tangents(float4* tangents, const ushort* indices, uint num_indices, const float3* positions, const float3* normals, const float2* texcoords, uint num_vertices);
 
-// Fills _pOutTexcoords with texture coordinates calculated using LCSM. The 
-// pointer should be allocated to have at least _NumVertices elements. If 
-// _pSolveTime is specified the number of seconds to calculate texcoords will 
+// Fills out_texcoords with texture coordinates calculated using LCSM. The 
+// pointer should be allocated to have at least num_vertices elements. If 
+// out_solve_time is specified the number of seconds to calculate texcoords will 
 // be returned.
 
 // NOTE: No LCSM code or middleware has been integrated, so these will only throw
 // operation_not_supported right now.
-void calc_texcoords(const aaboxf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
-void calc_texcoords(const aaboxf& _Bound, const uint* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
-void calc_texcoords(const aaboxf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float2* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
-void calc_texcoords(const aaboxf& _Bound, const ushort* _pIndices, uint _NumIndices, const float3* _pPositions, float3* _pOutTexcoords, uint _NumVertices, double* _pSolveTime);
+void calc_texcoords(const aaboxf& bound, const uint* indices, uint num_indices, const float3* positions, float2* out_texcoords, uint num_vertices, double* out_solve_time);
+void calc_texcoords(const aaboxf& bound, const uint* indices, uint num_indices, const float3* positions, float3* out_texcoords, uint num_vertices, double* out_solve_time);
+void calc_texcoords(const aaboxf& bound, const ushort* indices, uint num_indices, const float3* positions, float2* out_texcoords, uint num_vertices, double* out_solve_time);
+void calc_texcoords(const aaboxf& bound, const ushort* indices, uint num_indices, const float3* positions, float3* out_texcoords, uint num_vertices, double* out_solve_time);
 
 // Allocates and fills an edge list for the mesh described by the specified indices:
-// _NumVertices: The number of vertices the index array indexes
-// _pIndices: array of triangles (every 3 specifies a triangle)
-// _NumIndices: The number of indices in the _pIndices array
+// num_vertices: The number of vertices the index array indexes
+// indices: array of triangles (every 3 specifies a triangle)
+// num_indices: The number of indices in the indices array
 // _ppEdges: a pointer to receive an allocation and be filled with index pairs 
 //           describing an edge. Use oFreeEdgeList() to free memory the edge 
 //           list allocation. So every two uints in *_ppEdges represents an edge.
-// _pNumberOfEdges: a pointer to receive the number of edge pairs returned
-void calc_edges(uint _NumVertices, const uint* _pIndices, uint _NumIndices, uint** _ppEdges, uint* _pNumberOfEdges);
+// out_num_edges: a pointer to receive the number of edge pairs returned
+void calc_edges(uint num_vertices, const uint* indices, uint num_indices, uint** _ppEdges, uint* out_num_edges);
 
 // Frees the buffer allocated by calc_edges
-void free_edge_list(uint* _pEdges);
+void free_edge_list(uint* edges);
 
-#define PUV_PARAMS(IndexT, UV0T, UV1T) const IndexT* oRESTRICT _pIndices, uint _NumIndices \
-	, float3* oRESTRICT _pPositions, float3* oRESTRICT _pNormals, float4* oRESTRICT _pTangents \
-	, UV0T* oRESTRICT _pTexcoords0, UV1T* oRESTRICT _pTexcoords1, color* oRESTRICT _pColors \
-	, uint _NumVertices, uint* oRESTRICT _pNewNumVertices
+#define PUV_PARAMS(IndexT, UV0T, UV1T) const IndexT* oRESTRICT indices, uint num_indices \
+	, float3* oRESTRICT positions, float3* oRESTRICT normals, float4* oRESTRICT tangents \
+	, UV0T* oRESTRICT texcoords0, UV1T* oRESTRICT texcoords1, color* oRESTRICT colors \
+	, uint num_vertices, uint* oRESTRICT out_new_num_vertices
 
 // Given the parameters as described in the above macro, contract the vertex element arrays
 // to remove any vertex not indexed by the specified indices. Call this after remove_degenerates.

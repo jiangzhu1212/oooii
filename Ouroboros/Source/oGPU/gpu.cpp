@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPU.h>
+#include <oGPU/oGPUUtil.h>
 
 #define STR_SUPPORT(_T, _NumTs) \
 	oDEFINE_TO_STRING(_T) \
@@ -256,12 +257,12 @@ buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices)
 	return i;
 }
 
-buffer_info make_vertex_buffer_info(uint _NumVertices, const mesh::layout::value& _Layout)
+buffer_info make_vertex_buffer_info(uint _NumVertices, const oGPUUtilLayout::value& _Layout)
 {
 	buffer_info i;
 	i.type = buffer_type::vertex;
 	i.array_size = _NumVertices;
-	i.struct_byte_size = static_cast<ushort>(mesh::vertex_size(_Layout));
+	i.struct_byte_size = static_cast<ushort>(CalcVertexSize(_Layout));
 	i.format = surface::unknown;
 	return i;
 }

@@ -51,6 +51,50 @@ typedef unsigned char BYTE;
 using namespace ouro::gpu;
 using namespace ouro::mesh;
 
+enum class common_elements : char
+{
+	pos,
+	pos_color,
+	pos_uv,
+	pos_uvw,
+
+	pntuv,
+
+	count,
+};
+
+element_array oGfxGetElements(const common_elements& c)
+{
+	element_array e;
+	switch (c)
+	{
+		default:
+		case common_elements::pos:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			break;
+		case common_elements::pos_color:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			e[1] = element(semantic::color, 0, format::xyzw8_unorm, 0);
+			break;
+		case common_elements::pos_uv:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			e[1] = element(semantic::texcoord, 0, format::xy32_float, 0);
+			break;
+		case common_elements::pos_uvw:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			e[1] = element(semantic::texcoord, 0, format::xyz32_float, 0);
+			break;
+		case common_elements::pntuv:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			e[1] = element(semantic::normal, 0, format::xyz32_float, 0);
+			e[2] = element(semantic::tangent, 0, format::xyzw32_float, 0);
+			e[3] = element(semantic::texcoord, 0, format::xyz32_float, 0);
+			break;
+	}
+
+	return e;
+}
+
 pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 {
 	pipeline1_info i;
@@ -58,7 +102,7 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 	#define oPL_RIGID(_Enum, _PS) do { \
 		i.debug_name = #_Enum; \
 		i.primitive_type = primitive_type::triangles; \
-		i.vertex_layouts[0] = layout::pos_nrm_tan_uv0; \
+		i.vertex_layout = oGfxGetElements(common_elements::pntuv); \
 		i.vs = VSRigid; \
 		i.ps = _PS; \
 	} while(false)
@@ -72,7 +116,7 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 		case oGFX_PIPELINE_VERTEX_NORMALS:
 			i.debug_name = "oGFX_PIPELINE_VERTEX_NORMALS";
 			i.primitive_type = primitive_type::points;
-			i.vertex_layouts[0] = layout::pos_nrm_tan_uv0;
+			i.vertex_layout = oGfxGetElements(common_elements::pntuv);
 			i.vs = VSPassThrough;
 			i.gs = GSVertexNormals;
 			i.ps = PSColor;
@@ -81,7 +125,7 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 		case oGFX_PIPELINE_VERTEX_TANGENTS:
 			i.debug_name = "oGFX_PIPELINE_VERTEX_TANGENTS";
 			i.primitive_type = primitive_type::points;
-			i.vertex_layouts[0] = layout::pos_nrm_tan_uv0;
+			i.vertex_layout = oGfxGetElements(common_elements::pntuv);
 			i.vs = VSPassThrough;
 			i.gs = GSVertexTangents;
 			i.ps = PSColor;
@@ -90,7 +134,7 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 		case oGFX_PIPELINE_LINES:
 			i.debug_name = "oGFX_PIPELINE_LINES";
 			i.primitive_type = primitive_type::lines;
-			i.vertex_layouts[0] = layout::pos_color;
+			i.vertex_layout = oGfxGetElements(common_elements::pos_color);
 			i.vs = VSLines;
 			i.ps = PSColor;
 			break;
@@ -98,7 +142,7 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 		case oGFX_PIPELINE_LINE_STRIPS:
 			i.debug_name = "oGFX_PIPELINE_LINE_STRIPS";
 			i.primitive_type = primitive_type::line_strips;
-			i.vertex_layouts[0] = layout::pos_color;
+			i.vertex_layout = oGfxGetElements(common_elements::pos_color);
 			i.vs = VSLines;
 			i.ps = PSColor;
 			break;
@@ -106,7 +150,7 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 		case oGFX_PIPELINE_PASS_THROUGH:
 			i.debug_name = "oGFX_PIPELINE_PASS_THROUGH";
 			i.primitive_type = primitive_type::triangles;
-			i.vertex_layouts[0] = layout::pos;
+			i.vertex_layout = oGfxGetElements(common_elements::pos);
 			i.vs = VSPositionPassThrough;
 			i.ps = PSWhite;
 			break;
@@ -114,14 +158,14 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 		case oGFX_PIPELINE_RIGID_ZPREPASS:
 			i.debug_name = "oGFX_PIPELINE_RIGID_ZPREPASS";
 			i.primitive_type = primitive_type::triangles;
-			i.vertex_layouts[0] = layout::pos;
+			i.vertex_layout = oGfxGetElements(common_elements::pos);
 			i.vs = VSPosition;
 			break;
 
 		case oGFX_PIPELINE_RIGID_SHADOW:
 			i.debug_name = "oGFX_PIPELINE_RIGID_SHADOW";
 			i.primitive_type = primitive_type::triangles;
-			i.vertex_layouts[0] = layout::pos;
+			i.vertex_layout = oGfxGetElements(common_elements::pos);
 			i.vs = VSShadow;
 			i.ps = PSShadow;
 			break;
@@ -129,7 +173,7 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 		case oGFX_PIPELINE_RIGID_WHITE:
 			i.debug_name = "oGFX_PIPELINE_RIGID_WHITE";
 			i.primitive_type = primitive_type::triangles;
-			i.vertex_layouts[0] = layout::pos;
+			i.vertex_layout = oGfxGetElements(common_elements::pos);
 			i.vs = VSPosition;
 			i.ps = PSWhite;
 			break;
@@ -148,6 +192,5 @@ pipeline1_info oGfxGetPipeline(oGFX_PIPELINE _Pipeline)
 
 		default: oTHROW_INVARG0();
 	}
-
 	return i;
 }

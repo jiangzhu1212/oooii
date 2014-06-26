@@ -23,30 +23,32 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oGPU_pipeline_h
-#define oGPU_pipeline_h
+#ifndef oGPU_vertex_layout_h
+#define oGPU_vertex_layout_h
 
-#include "oGPUCommon.h"
-#include <oGPU/vertex_layout.h>
+#include <oMesh/mesh.h>
 
-oGPU_NAMESPACE_BEGIN
+namespace ouro {
+	namespace gpu {
 
-oDEVICE_CHILD_CLASS(pipeline1)
+static const uint max_vertex_elements = 16;
+
+class device;
+class command_list;
+
+class vertex_layout
 {
-	oDEVICE_CHILD_DECLARATION(pipeline1)
-	~d3d11_pipeline1();
-	pipeline1_info get_info() const override;
-	vertex_layout VertexLayout;
-	unique_vertex_shader_ptr VertexShader;
-	unique_hull_shader_ptr HullShader;
-	unique_domain_shader_ptr DomainShader;
-	unique_geometry_shader_ptr GeometryShader;
-	unique_pixel_shader_ptr PixelShader;
-	D3D_PRIMITIVE_TOPOLOGY InputTopology;
-	mesh::element_array VertexElements;
-	sstring DebugName;
+public:
+	vertex_layout() : layout(nullptr) {}
+	~vertex_layout() { deinitialize(); }
+	void initialize(const char* name, device* dev, const mesh::element_array& elements, const void* vs_bytecode);
+	void deinitialize();
+	void set(command_list* cl, const mesh::primitive_type::value& prim_type);
+	void* get() const { return layout; }
+private:
+	void* layout;
 };
 
-oGPU_NAMESPACE_END
+}}
 
 #endif

@@ -52,6 +52,8 @@ class window;
 
 	namespace gpu {
 
+		namespace oGPUUtilLayout { enum value; }
+
 static const uint max_num_input_slots = 3;
 static const uint max_num_unordered_buffers = 8;
 static const uint max_num_viewports = 16;
@@ -344,7 +346,7 @@ buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices);
 
 // Returns a buffer info for the vertex buffer with the specified usage and layout. Only vertex traits matching
 // the specified layout will be described by the buffer info,
-buffer_info make_vertex_buffer_info(uint _NumVertices, const mesh::layout::value& _Layout);
+buffer_info make_vertex_buffer_info(uint _NumVertices, const oGPUUtilLayout::value& _Layout);
 
 class buffer : public resource
 {
@@ -562,7 +564,7 @@ namespace pipeline_stage
 struct basic_pipeline1_info
 {
 	const char* debug_name;
-	mesh::layout_array vertex_layouts;
+	mesh::element_array vertex_layout;
 	mesh::primitive_type::value primitive_type;
 	const void* vs, *hs, *ds, *gs, *ps;
 };
@@ -572,7 +574,7 @@ struct pipeline1_info : public basic_pipeline1_info
 	pipeline1_info()
 	{
 		debug_name = "unnamed pipeline";
-		vertex_layouts.fill(mesh::layout::none);
+		vertex_layout.fill(mesh::element());
 		primitive_type = mesh::primitive_type::unknown;
 		vs = nullptr; hs = nullptr; ds = nullptr; gs = nullptr; ps = nullptr;
 	}
@@ -953,21 +955,6 @@ public:
 
 	virtual void present(uint _PresentInterval) = 0;
 };
-
-// Compiles a shader and returns the binary byte code. _IncludePaths is a semi-colon 
-// delimited list of include paths to search. _Defines is a semi-colon delimited list
-// of defines. Also required is the full path to the shader source for resolving local
-// includes, the entry point to compile and the source of the shader itself. This will
-// use the file system to load dependent headers. The final buffer will be allocated
-// using the specified allocator. _EntryPoint must begin with two letters that describe
-scoped_allocation compile_shader(const char* _IncludePaths
-																 , const char* _Defines
-																 , const char* _ShaderSourcePath
-																 , const pipeline_stage::value& _Stage
-																 , const char* _EntryPoint
-																 , const char* _ShaderSource
-																 , const allocator& _Allocator = default_allocator);
-
 
 void* create_shader(device* _pDevice, const pipeline_stage::value& _Stage, const void* _pByteCode, const char* _DebugName = nullptr);
 void destroy_shader(void* _pVertexShader);

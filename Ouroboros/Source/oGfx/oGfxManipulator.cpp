@@ -23,6 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGfx/oGfxManipulator.h>
+
+#if 0
+
 #include <oGPU/oGPUUtil.h>
 #include <oGPU/vertex_layouts.h>
 #include <oGfx/oGfxPipelines.h>
@@ -398,3 +401,4 @@ bool oGfxManipulatorCreate(const char* _Name, const oGfxManipulator::DESC& _Desc
 	oCONSTRUCT(_ppManipulator, oGfxManipulatorImpl(_Name, _Desc, _pDevice, &success));
 	return success;
 }
+#endif

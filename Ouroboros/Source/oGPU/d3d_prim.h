@@ -23,30 +23,24 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oGPU_pipeline_h
-#define oGPU_pipeline_h
+#ifndef oGPU_d3d_prim_h
+#define oGPU_d3d_prim_h
 
-#include "oGPUCommon.h"
-#include <oGPU/vertex_layout.h>
+#include <oMesh/mesh.h>
 
-oGPU_NAMESPACE_BEGIN
+enum D3D_PRIMITIVE_TOPOLOGY;
 
-oDEVICE_CHILD_CLASS(pipeline1)
-{
-	oDEVICE_CHILD_DECLARATION(pipeline1)
-	~d3d11_pipeline1();
-	pipeline1_info get_info() const override;
-	vertex_layout VertexLayout;
-	unique_vertex_shader_ptr VertexShader;
-	unique_hull_shader_ptr HullShader;
-	unique_domain_shader_ptr DomainShader;
-	unique_geometry_shader_ptr GeometryShader;
-	unique_pixel_shader_ptr PixelShader;
-	D3D_PRIMITIVE_TOPOLOGY InputTopology;
-	mesh::element_array VertexElements;
-	sstring DebugName;
-};
+namespace ouro { namespace gpu { namespace d3d {
 
-oGPU_NAMESPACE_END
+D3D_PRIMITIVE_TOPOLOGY from_primitive_type(const mesh::primitive_type::value& type);
+mesh::primitive_type::value to_primitive_type(D3D_PRIMITIVE_TOPOLOGY type);
+
+// Returns the number of elements as described the specified topology given
+// the number of primitives. An element can refer to indices or vertices, but
+// basically if there are 3 lines, then there are 6 elements. If there are 3
+// lines in a line strip, then there are 4 elements.
+uint num_elements(D3D_PRIMITIVE_TOPOLOGY topology, uint num_primitives);
+
+}}}
 
 #endif

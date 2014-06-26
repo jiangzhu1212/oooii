@@ -35,6 +35,132 @@
 namespace ouro {
 	namespace gpu {
 
+namespace oGPUUtilLayout
+{ oDECLARE_SMALL_ENUM(value, uchar) {
+
+	// positions: float3
+	// normals: dec3n
+	// tangents: dec3n
+	// texcoords0: half2 \ mutually exclusive
+	// texcoords0: half4 /
+	// texcoords1: half2 \ mutually exclusive
+	// texcoords1: half4 /
+	// colors: color
+
+	// if this is updated, remember to update is_positions, etc.
+
+	none,
+
+	pos,
+	color,
+	pos_color,
+	pos_nrm,
+	pos_nrm_tan,
+	pos_nrm_tan_uv0,
+	pos_nrm_tan_uvwx0,
+	pos_uv0,
+	pos_uvwx0,
+	uv0,
+	uvwx0,
+	uv0_color,
+	uvwx0_color,
+
+	count,
+
+};}
+
+struct oGPUUtilSource // @tony temp move from mesh.h (should be removed altogether) during refactor)
+{
+	// this struct is a general-purpose container for vertex source data.
+	// the intent is not that every pointer be populated but rather if one
+	// is populated than it contains typed data with the specified stride.
+
+	oGPUUtilSource()
+		: indicesi(nullptr)
+		, indicess(nullptr)
+		, ranges(nullptr)
+		, positionsf(nullptr)
+		, normalsf(nullptr)
+		, normals(nullptr)
+		, tangentsf(nullptr)
+		, tangents(nullptr)
+		, uv0sf(nullptr)
+		, uvw0sf(nullptr)
+		, uvwx0sf(nullptr)
+		, uv0s(nullptr)
+		, uvwx0s(nullptr)
+		, colors(nullptr)
+		, indexi_pitch(0)
+		, indexs_pitch(0)
+		, range_pitch(0)
+		, positionf_pitch(0)
+		, normalf_pitch(0)
+		, normal_pitch(0)
+		, tangentf_pitch(0)
+		, tangent_pitch(0)
+		, uv0f_pitch(0)
+		, uvw0f_pitch(0)
+		, uvwx0f_pitch(0)
+		, uv0_pitch(0)
+		, uvwx0_pitch(0)
+		, color_pitch(0)
+		, vertex_layout(oGPUUtilLayout::none)
+	{}
+
+	const uint* indicesi;
+	const ushort* indicess;
+
+	const mesh::range* ranges;
+	
+	const float3* positionsf;
+	const float3* normalsf;
+	const dec3n* normals;
+	const float4* tangentsf;
+	const dec3n* tangents;
+	const float2* uv0sf;
+	const float3* uvw0sf;
+	const float4* uvwx0sf;
+	const half2* uv0s;
+	const half4* uvwx0s;
+	const color* colors;
+
+	uint indexi_pitch;
+	uint indexs_pitch;
+	uint range_pitch;
+	uint positionf_pitch;
+	uint normalf_pitch;
+	uint normal_pitch;
+	uint tangentf_pitch;
+	uint tangent_pitch;
+	uint uv0f_pitch;
+	uint uvw0f_pitch;
+	uint uvwx0f_pitch;
+	uint uv0_pitch;
+	uint uvwx0_pitch;
+	uint color_pitch;
+
+	oGPUUtilLayout::value vertex_layout;
+
+	inline bool operator==(const oGPUUtilSource& _That) const
+	{
+		const void* const* thisP = (const void* const*)&indicesi;
+		const void* const* end = (const void* const*)&colors;
+		const void* const* thatP = (const void* const*)&_That.indicesi;
+		while (thisP <= end) if (*thisP++ != *thatP++) return false;
+		const uint* thisI = &indexi_pitch;
+		const uint* endI = &color_pitch;
+		const uint* thatI = &_That.indexi_pitch;
+		while (thisI <= endI) if (*thisI++ != *thatI++) return false;
+		return vertex_layout == _That.vertex_layout;
+	}
+	inline bool operator!=(const oGPUUtilSource& _That) const { return !(*this == _That); }
+};
+
+uint CalcVertexSize(const oGPUUtilLayout::value& _Layout);
+oGPUUtilLayout::value CalcLayout(const oGPUUtilSource& _Source);
+
+ouro::mesh::element_array get_elements(const oGPUUtilLayout::value& _Layout);
+
 // _____________________________________________________________________________
 // Buffer convenience functions
 
@@ -72,13 +198,13 @@ inline void commit_index_buffer(device* _pDevice
 // values for that vertex trait will be set to 0 in _pVertexBuffer. No conversions
 // will be done in this function so if a trait is asked for in a compressed format
 // the returned mapping is expected to be in that compressed format.
-void commit_vertex_buffer(command_list* _pCommandList, const mesh::layout::value& _Layout, const mesh::source& _Source, buffer* _pVertexBuffer);
-inline void commit_vertex_buffer(device* _pDevice, const mesh::layout::value& _Layout, const mesh::source& _Source, buffer* _pVertexBuffer)
+void commit_vertex_buffer(command_list* _pCommandList, const oGPUUtilLayout::value& _Layout, const oGPUUtilSource& _Source, buffer* _pVertexBuffer);
+inline void commit_vertex_buffer(device* _pDevice, const oGPUUtilLayout::value& _Layout, const oGPUUtilSource& _Source, buffer* _pVertexBuffer)
 {
 	commit_vertex_buffer(_pDevice->immediate(), _Layout, _Source, _pVertexBuffer);
 }
 
-inline void commit_vertex_buffer(device* _pDevice, const mesh::layout::value& _Layout, const mesh::source& _Source, std::shared_ptr<buffer>& _pVertexBuffer)
+inline void commit_vertex_buffer(device* _pDevice, const oGPUUtilLayout::value& _Layout, const oGPUUtilSource& _Source, std::shared_ptr<buffer>& _pVertexBuffer)
 {
 	commit_vertex_buffer(_pDevice->immediate(), _Layout, _Source, _pVertexBuffer.get());
 }
@@ -95,11 +221,11 @@ inline std::shared_ptr<buffer> make_index_buffer(std::shared_ptr<device>& _pDevi
 
 // Creates a vertex buffer based on the parameters. If _GetElementData is valid 
 // then commit_vertex_buffer is called.
-std::shared_ptr<buffer> make_vertex_buffer(device* _pDevice, const char* _Name, const mesh::layout::value& _Layout
-	, uint _NumVertices, const mesh::source& _Source = mesh::source());
+std::shared_ptr<buffer> make_vertex_buffer(device* _pDevice, const char* _Name, const oGPUUtilLayout::value& _Layout
+	, uint _NumVertices, const oGPUUtilSource& _Source = oGPUUtilSource());
 
-inline std::shared_ptr<buffer> make_vertex_buffer(std::shared_ptr<device>& _pDevice, const char* _Name, const mesh::layout::value& _Layout
-	, uint _NumVertices, const mesh::source& _Source = mesh::source())
+inline std::shared_ptr<buffer> make_vertex_buffer(std::shared_ptr<device>& _pDevice, const char* _Name, const oGPUUtilLayout::value& _Layout
+	, uint _NumVertices, const oGPUUtilSource& _Source = oGPUUtilSource())
 { return make_vertex_buffer(_pDevice.get(), _Name, _Layout, _NumVertices, _Source); }
 
 // Creates a readback buffer or texture sized to be able to completely contain the 

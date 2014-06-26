@@ -40,9 +40,6 @@ GeometryShader* make_geometry_shader(Device* dev, const void* bytecode, const ch
 PixelShader* make_pixel_shader(Device* dev, const void* bytecode, const char* debug_name);
 ComputeShader* make_compute_shader(Device* dev, const void* bytecode, const char* debug_name);
 
-// return the size of the specified bytecode
-unsigned int bytecode_size(const void* bytecode);
-
 		} // namespace d3d
 	} // namespace gpu
 } // namespace ouro

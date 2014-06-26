@@ -44,7 +44,7 @@ scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _S
 // Returns the shader profile for the specified stage of the specified feature
 // level. If the specified feature level does not support the specified stage,
 // this will return nullptr.
-const char* shader_profile(D3D_FEATURE_LEVEL _Level, pipeline_stage::value _Stage);
+const char* shader_profile(D3D_FEATURE_LEVEL _Level, stage::value _Stage);
 
 		} // namespace d3d
 	} // namespace gpu

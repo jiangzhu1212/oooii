@@ -23,6 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBasis/oGeometry.h>
+
+#if 0
 #include <oBase/algorithm.h>
 #include <oBase/invalid.h>
 #include <oMesh/mesh.h>
@@ -2012,3 +2014,4 @@ bool oGeometryFactory_Impl::CreateMosaic(const MOSAIC_DESC& _Desc, const layout:
 	
 	return true;
 }
+#endif

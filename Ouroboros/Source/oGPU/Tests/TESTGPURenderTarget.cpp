@@ -51,9 +51,9 @@ struct gpu_test_render_target : public gpu_test
 		CLRenderTarget = Device->make_command_list("CLRenderTarget", i);
 		TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
 		PLPassThrough = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
-		Triangle = make_first_triangle(Device);
+		Triangle.initialize_first_triangle(Device.get());
 		PLTexture = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D));
-		Cube = make_first_cube(Device);
+		Cube.initialize_first_cube(Device.get());
 
 		{
 			render_target_info i;
@@ -94,8 +94,8 @@ private:
 	std::shared_ptr<pipeline1> PLPassThrough;
 	std::shared_ptr<pipeline1> PLTexture;
 	std::shared_ptr<render_target> RenderTarget;
-	std::shared_ptr<util_mesh> Cube;
-	std::shared_ptr<util_mesh> Triangle;
+	util_mesh Cube;
+	util_mesh Triangle;
 	std::shared_ptr<buffer> TestConstants;
 
 	void render_to_target(command_list* _pCommandList, render_target* _pTarget)
@@ -107,7 +107,7 @@ private:
 		_pCommandList->set_rasterizer_state(rasterizer_state::front_face);
 		_pCommandList->set_pipeline(PLPassThrough);
 		_pCommandList->set_render_target(_pTarget);
-		Triangle->draw(_pCommandList);
+		Triangle.draw(_pCommandList);
 		_pCommandList->end();
 	}
 
@@ -134,7 +134,7 @@ private:
 		_pCommandList->set_shader_resource(0, _pTexture);
 		_pCommandList->set_pipeline(PLTexture);
 		_pCommandList->set_render_target(_pTarget);
-		Cube->draw(_pCommandList);
+		Cube.draw(_pCommandList);
 		_pCommandList->end();
 	}
 };

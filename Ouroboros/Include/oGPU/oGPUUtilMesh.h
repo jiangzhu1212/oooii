@@ -29,45 +29,56 @@
 #define oGPU_util_mesh_h
 
 #include <oGPU/oGPU.h>
-
 #include <oBasis/oGeometry.h>
 #include <oMesh/obj.h>
+#include <oMesh/primitive.h>
 
-namespace ouro {
-	namespace gpu {
+namespace ouro { namespace gpu {
+
+class device;
+class command_list;
 
 class util_mesh
 {
 public:
-	static std::shared_ptr<util_mesh> make(device* _pDevice, const char* _Name, const mesh::info& _Info);
+	util_mesh();
+	~util_mesh() { deinitialize(); }
 
-	static std::shared_ptr<util_mesh> make(device* _pDevice, const char* _Name
-		, const mesh::layout_array& _VertexLayouts, const oGeometry* _pGeometry);
+	void initialize(const char* name, device* dev, const mesh::info& info);
+	void initialize(const char* name, device* dev, const mesh::element_array& elements, const mesh::primitive* prim);
 
-	virtual mesh::info get_info() const = 0;
-	virtual const buffer* index_buffer() const = 0;
-	virtual buffer* index_buffer() = 0;
-	virtual const buffer* vertex_buffer(uint _Index) const = 0;
-	virtual buffer* vertex_buffer(uint _Index) = 0;
-	inline const buffer* vertex_buffer(const mesh::usage::value& _Usage) const { return vertex_buffer((uint)_Usage); }
-	inline buffer* vertex_buffer(const mesh::usage::value& _Usage) { return vertex_buffer((uint)_Usage); }
-	virtual void vertex_buffers(const buffer* _Buffers[mesh::usage::count]) = 0;
-	virtual void draw(command_list* _pCommandList) = 0;
-	inline void draw(std::shared_ptr<command_list>& _pCommandList) { draw(_pCommandList.get()); }
+	// Creates a very simple front-facing triangle that can be rendered with all-
+	// identity world, view, projection matrices. This is useful for very simple 
+	// tests and first bring-up.
+	void initialize_first_triangle(device* dev);
+	
+	// Creates a very simple unit cube. This is useful for bringing up world, view,
+	// projection transforms quickly.
+	void initialize_first_cube(device* dev);
+
+	void deinitialize();
+
+	inline mesh::info get_info() const { return info; }
+	inline buffer* index_buffer() { return indices.get(); }
+	inline const buffer* index_buffer() const { return indices.get(); }
+	inline buffer* vertex_buffer(uint index = 0) { return vertices[index].get(); }
+	inline const buffer* vertex_buffer(uint index = 0) const { return vertices[index].get(); }
+	inline void vertex_buffers(const buffer* buffers[mesh::max_num_slots]) const
+	{
+		for (auto const& b : vertices)
+			*buffers++ = b.get();
+	}
+
+	void draw(command_list* cl);
+
+private:
+	std::shared_ptr<buffer> indices;
+	std::array<std::shared_ptr<buffer>, mesh::max_num_slots> vertices;
+	mesh::info info;
+	uint num_prims;
+	uint num_slots;
 };
 
-// Creates a very simple front-facing triangle that can be rendered with all-
-// identify world, view, projection matrices. This is useful for very simple 
-// tests and first bring-up.
-std::shared_ptr<util_mesh> make_first_triangle(device* _pDevice);
-inline std::shared_ptr<util_mesh> make_first_triangle(std::shared_ptr<device>& _pDevice) { return make_first_triangle(_pDevice.get()); }
-
-// Creates a very simple unit cube. This is useful for bringing up world, view,
-// projection transforms quickly.
-std::shared_ptr<util_mesh> make_first_cube(device* _pDevice);
-inline std::shared_ptr<util_mesh> make_first_cube(std::shared_ptr<device>& _pDevice) { return make_first_cube(_pDevice.get()); }
-
-	} // namespace gpu
-} // namespace ouro
+}}
 
 #endif

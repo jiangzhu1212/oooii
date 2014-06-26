@@ -129,7 +129,7 @@ void gpu_texture_test::initialize()
 {
 	TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
 	Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(get_pipeline()));
-	Mesh = make_first_cube(Device);
+	Mesh.initialize_first_cube(Device.get());
 	Texture = make_test_texture();
 }
 
@@ -165,7 +165,7 @@ void gpu_texture_test::render()
 	CommandList->set_shader_resource(0, Texture);
 	CommandList->set_pipeline(Pipeline);
 	CommandList->set_render_target(PrimaryRenderTarget);
-	Mesh->draw(CommandList);
+	Mesh.draw(CommandList.get());
 
 	CommandList->end();
 }

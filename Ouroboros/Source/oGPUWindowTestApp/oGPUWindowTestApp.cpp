@@ -78,7 +78,7 @@ static concurrent_registry make_pixel_shader_registry(gpu::device* _pDevice)
 	return PixelShaders;
 }
 
-void enumerate_shader_entries(const char* _ShaderSourceString, const std::function<void(const char* _EntryPoint, gpu::pipeline_stage::value _Stage)>& _Enumerator)
+void enumerate_shader_entries(const char* _ShaderSourceString, const std::function<void(const char* _EntryPoint, gpu::stage::value _Stage)>& _Enumerator)
 {
 	// Make a copy so we can delete all the irrelevant parts for easier parsing
 	std::string ForParsing(_ShaderSourceString);
@@ -108,12 +108,12 @@ void enumerate_shader_entries(const char* _ShaderSourceString, const std::functi
 
 			if (!Entry.empty() && (Entry[1] == 's' || Entry[1] == 'S'))
 			{
-				gpu::pipeline_stage::value Stage;
+				gpu::stage::value Stage;
 				static const char* sProfiles = "vhdgpc";
 				const char* Profile = strchr(sProfiles, tolower(Entry[0]));
 				if (Profile)
 				{
-					Stage = gpu::pipeline_stage::value(Profile - sProfiles);
+					Stage = gpu::stage::value(Profile - sProfiles);
 					_Enumerator(Entry, Stage);
 				}
 			}
@@ -132,7 +132,7 @@ void shader_on_loaded(concurrent_registry& _Registry, const path& _Path, scoped_
 
 	scoped_allocation empty;
 
-	enumerate_shader_entries((char*)_Buffer, [&](const char* _EntryPoint, gpu::pipeline_stage::value _Stage)
+	enumerate_shader_entries((char*)_Buffer, [&](const char* _EntryPoint, gpu::stage::value _Stage)
 	{
 		try
 		{
@@ -255,7 +255,7 @@ private:
 	std::shared_ptr<gpu::command_list> CommandList;
 	std::shared_ptr<gpu::render_target> WindowRenderTarget;
 	std::shared_ptr<gpu::pipeline1> Pipeline;
-	std::shared_ptr<gpu::util_mesh> Mesh;
+	gpu::util_mesh Mesh;
 
 	concurrent_registry VertexShaders;
 	concurrent_registry PixelShaders;
@@ -282,7 +282,7 @@ oGPUWindowThread::oGPUWindowThread()
 	}
 
 	Pipeline = Device->make_pipeline1(oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH));
-	Mesh = gpu::make_first_triangle(Device);
+	Mesh.initialize_first_triangle(Device.get());
 	CommandList = Device->get_immediate_command_list();
 
 	PixelShaders = make_pixel_shader_registry(Device.get());
@@ -410,7 +410,7 @@ void oGPUWindowThread::Render()
 		CommandList->set_rasterizer_state(gpu::rasterizer_state::front_face);
 		CommandList->set_pipeline(Pipeline);
 
-		Mesh->draw(CommandList);
+		Mesh.draw(CommandList.get());
 		CommandList->end();
 		Device->end_frame();
 		Device->present(1);

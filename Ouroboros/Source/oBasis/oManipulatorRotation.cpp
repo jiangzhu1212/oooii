@@ -27,7 +27,7 @@
 #include <oBasis/oGeometry.h>
 
 using namespace ouro;
-using namespace ouro::gpu;
+//using namespace ouro::gpu;
 
 oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess) 
 	: oManipulatorBase(_Desc, _pSuccess)
@@ -37,10 +37,10 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 		return;
 	*_pSuccess = false;
 
-	intrusive_ptr<oGeometry> CircleGeometry;
-
 	auto RotationScale = Desc.ManipularScale;
 
+#if 0
+	intrusive_ptr<oGeometry> CircleGeometry;
 	intrusive_ptr<oGeometryFactory> GeometryFactory;
 	if(!oGeometryFactoryCreate(&GeometryFactory))
 	{
@@ -54,7 +54,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	d.Facet = ROTATION_CIRCLE_VCOUNT;
 	d.Color = white;
 
-	if(!GeometryFactory->CreateCircle(d, mesh::layout::pos, &CircleGeometry))
+	if(!GeometryFactory->CreateCircle(d, mesh::semantic_flag::position, &CircleGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -63,16 +63,16 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	ouro::mesh::info ginfo = CircleGeometry->get_info();
 	oASSERT(ginfo.primitive_type == mesh::primitive_type::lines,"created a line list, but actually didn't");
 
-	ouro::mesh::source gsource = CircleGeometry->get_source();
+	oGeometry::source gsource = CircleGeometry->get_source();
 	LineGeometry.resize(ginfo.num_indices);
 
 	for(unsigned int i = 0;i < ginfo.num_indices;i++)
 	{
-		LineGeometry[i] = float4(make_scale(RotationScale)*gsource.positionsf[gsource.indicesi[i]],1.0f);
+		LineGeometry[i] = float4(make_scale(RotationScale)*gsource.positions[gsource.indices[i]],1.0f);
 	}
 
 	d.Facet = ROTATION_CIRCLE_VCOUNT*2;
-	if(!GeometryFactory->CreateCircle(d, mesh::layout::pos, &CircleGeometry))
+	if(!GeometryFactory->CreateCircle(d, mesh::semantic_flag::position, &CircleGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -86,13 +86,13 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	for(unsigned int i = 0;i < ginfo.num_vertices;i++)
 	{
-		AngleGeometryBase[i] = float4(make_scale(RotationScale)*gsource.positionsf[i],1.0f);
+		AngleGeometryBase[i] = float4(make_scale(RotationScale)*gsource.positions[i],1.0f);
 	}
 
 	d.FaceType = mesh::face_type::front_cw;
 	d.Radius = RotationScale;
 	d.Facet = ROTATION_PICK_ARCBALL_VCOUNT;
-	if(!GeometryFactory->CreateCircle(d, mesh::layout::pos, &CircleGeometry))
+	if(!GeometryFactory->CreateCircle(d, mesh::semantic_flag::position, &CircleGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -104,7 +104,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 
 	for(unsigned int i = 0;i < ginfo.num_vertices;i++)
 	{
-		PickGeometryBaseArc[i] = float4(gsource.positionsf[i],1.0f);
+		PickGeometryBaseArc[i] = float4(gsource.positions[i],1.0f);
 	}
 
 	intrusive_ptr<oGeometry> TorusGeometry; 
@@ -116,7 +116,7 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	td.Facet = ROTATION_PICK_TORUS_FACET;
 	td.Color = white;
 
-	if(!GeometryFactory->CreateTorus(td, mesh::layout::pos, &TorusGeometry))
+	if(!GeometryFactory->CreateTorus(td, mesh::semantic_flag::position, &TorusGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -127,13 +127,13 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	PickGeometryBase.resize(ginfo.num_vertices);
 	for(unsigned int i = 0;i < ginfo.num_vertices; ++i)
 	{
-		PickGeometryBase[i] = float4(gsource.positionsf[i],1);
+		PickGeometryBase[i] = float4(gsource.positions[i],1);
 	}
 
 	td.InnerRadius = RotationScale;
 	td.OuterRadius = RotationScale;
 
-	if(!GeometryFactory->CreateTorus(td, mesh::layout::pos, &TorusGeometry))
+	if(!GeometryFactory->CreateTorus(td, mesh::semantic_flag::position, &TorusGeometry))
 	{
 		oErrorSetLast(std::errc::invalid_argument, "failed to create a circle geometry for rotation manipulator");
 		return;
@@ -144,10 +144,14 @@ oManipulatorRotation::oManipulatorRotation(const DESC& _Desc, bool *_pSuccess)
 	PickGeometryBaseFade.resize(ginfo.num_vertices);
 	for(unsigned int i = 0;i < ginfo.num_vertices;++i)
 	{
-		PickGeometryBaseFade[i] = float4(gsource.positionsf[i],1);
+		PickGeometryBaseFade[i] = float4(gsource.positions[i],1);
 	}
 
 	*_pSuccess = true;
+#else
+	oTHROW_INVARG("oGoemetry port not complete");
+#endif
+
 }
 
 void oManipulatorRotation::BeginManipulation(AXIS _Axis, const float2& _ScreenPosition)
