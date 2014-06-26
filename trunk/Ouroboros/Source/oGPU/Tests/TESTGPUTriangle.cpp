@@ -41,7 +41,7 @@ struct gpu_test_triangle : public gpu_test
 	void initialize() override
 	{
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
-		Mesh = make_first_triangle(Device);
+		Mesh.initialize_first_triangle(Device.get());
 	}
 
 	void render() override
@@ -53,13 +53,13 @@ struct gpu_test_triangle : public gpu_test
 		CommandList->set_rasterizer_state(rasterizer_state::front_face);
 		CommandList->set_pipeline(Pipeline);
 		CommandList->set_render_target(PrimaryRenderTarget);
-		Mesh->draw(CommandList);
+		Mesh.draw(CommandList.get());
 		CommandList->end();
 	}
 
 private:
 	std::shared_ptr<pipeline1> Pipeline;
-	std::shared_ptr<util_mesh> Mesh;
+	util_mesh Mesh;
 };
 
 oGPU_COMMON_TEST(triangle);

@@ -44,23 +44,21 @@ public:
 		i.mtl_path = "cube.mtl";
 		i.groups = sGroups;
 
-		i.data.indicesi = sIndices;
-		i.data.ranges = sRanges;
-		i.data.indexi_pitch = sizeof(uint);
-		i.data.positionsf = sPositions;
-		i.data.positionf_pitch = sizeof(float3);
-		i.data.normalsf = sNormals;
-		i.data.normalf_pitch = sizeof(float3);
-		i.data.uvw0sf = sTexcoords;
-		i.data.uvw0f_pitch = sizeof(float3);
-		
-		i.mesh_info.face_type = mesh::face_type::unknown;
+		i.ranges = sRanges;
+		i.indices = sIndices;
+		i.positions = sPositions;
+		i.normals = sNormals;
+		i.texcoords = sTexcoords;
+
 		i.mesh_info.local_space_bound = aaboxf(aaboxf::min_max, float3(-0.5), float3(0.5f));
+		i.mesh_info.elements[0] = mesh::element(mesh::semantic::position, 0, mesh::format::xyz32_float, 0);
+		i.mesh_info.elements[1] = mesh::element(mesh::semantic::normal, 0, mesh::format::xyz32_float, 1);
+		i.mesh_info.elements[2] = mesh::element(mesh::semantic::texcoord, 0, mesh::format::xyz32_float, 2);
 		i.mesh_info.num_indices = oCOUNTOF(sIndices);
-		i.mesh_info.num_ranges = oCOUNTOF(sRanges);
 		i.mesh_info.num_vertices = oCOUNTOF(sPositions);
 		i.mesh_info.primitive_type = mesh::primitive_type::triangles;
-		i.mesh_info.vertex_layouts[0] = mesh::layout::pos_nrm_tan_uv0;
+		i.mesh_info.face_type = mesh::face_type::unknown;
+		i.mesh_info.num_ranges = oCOUNTOF(sRanges);
 		i.mesh_info.vertex_scale_shift = 0;
 		return i;
 	}

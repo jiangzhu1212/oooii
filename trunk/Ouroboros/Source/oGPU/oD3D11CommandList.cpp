@@ -35,6 +35,7 @@ namespace ouro {
 	namespace gpu {
 
 d3d::DeviceContext* get_device_context(command_list* _pCommandList) { return ((d3d11::d3d11_command_list*)_pCommandList)->Context; }
+d3d::DeviceContext* get_dc(command_list* _pCommandList) { return get_device_context(_pCommandList); }
 
 	} // namespace gpu
 } // namespace ouro
@@ -380,7 +381,7 @@ void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 		d3d11_pipeline1* p = (d3d11_pipeline1*)_pPipeline;
 		PrimitiveTopology = p->InputTopology;
 		Context->IASetPrimitiveTopology(p->InputTopology);
-		Context->IASetInputLayout(p->InputLayout);
+		Context->IASetInputLayout((d3d::InputLayout*)p->VertexLayout.get());
 		Context->VSSetShader((d3d::VertexShader*)p->VertexShader.get(), 0, 0);
 		Context->HSSetShader((d3d::HullShader*)p->HullShader.get(), 0, 0);
 		Context->DSSetShader((d3d::DomainShader*)p->DomainShader.get(), 0, 0);

@@ -46,7 +46,7 @@ public:
 		PrimaryRenderTarget->set_clear_color(almost_black);
 		TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
-		Mesh = make_first_triangle(Device);
+		Mesh.initialize_first_triangle(Device.get());
 	}
 
 	void render() override
@@ -76,14 +76,14 @@ public:
 		CommandList->set_buffer(0, TestConstants);
 		CommandList->set_pipeline(Pipeline);
 		CommandList->set_render_target(PrimaryRenderTarget);
-		Mesh->draw(CommandList);
+		Mesh.draw(CommandList.get());
 
 		CommandList->end();
 	}
 
 private:
 	std::shared_ptr<pipeline1> Pipeline;
-	std::shared_ptr<util_mesh> Mesh;
+	util_mesh Mesh;
 	std::shared_ptr<buffer> TestConstants;
 };
 

@@ -31,7 +31,7 @@ oGPU_NAMESPACE_BEGIN
 oDEFINE_DEVICE_MAKE(pipeline1)
 oDEVICE_CHILD_CTOR(pipeline1)
 	, InputTopology(from_primitive_type(_Info.primitive_type))
-	, VertexLayouts(_Info.vertex_layouts)
+	, VertexElements(_Info.vertex_layout)
 	, DebugName(_Info.debug_name)
 {
 	// Verify input against shaders
@@ -56,8 +56,7 @@ oDEVICE_CHILD_CTOR(pipeline1)
 			break;
 	}
 
-	InputLayout = (ID3D11InputLayout*)make_vertex_layout(_Device.get(), VertexLayouts, _Info.vs);
-	InputLayout->Release();
+	VertexLayout.initialize("layout", _Device.get(), VertexElements, _Info.vs);
 
 	VertexShader.reset(make_vertex_shader(_Device.get(), _Info.vs, _Info.debug_name));
 	HullShader.reset(make_hull_shader(_Device.get(), _Info.hs, _Info.debug_name));
@@ -66,11 +65,16 @@ oDEVICE_CHILD_CTOR(pipeline1)
 	PixelShader.reset(make_pixel_shader(_Device.get(), _Info.ps, _Info.debug_name));
 }
 
+d3d11_pipeline1::~d3d11_pipeline1()
+{
+	VertexLayout.deinitialize();
+}
+
 pipeline1_info d3d11_pipeline1::get_info() const 
 {
 	pipeline1_info i;
 	i.debug_name = DebugName;
-	i.vertex_layouts = VertexLayouts;
+	i.vertex_layout = VertexElements;
 	i.primitive_type = to_primitive_type(InputTopology);
 	return i;
 }

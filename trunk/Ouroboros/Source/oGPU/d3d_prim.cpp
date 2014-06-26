@@ -22,31 +22,40 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oGPU_pipeline_h
-#define oGPU_pipeline_h
+#include "d3d_prim.h"
+#include <d3d11.h>
 
-#include "oGPUCommon.h"
-#include <oGPU/vertex_layout.h>
+using namespace ouro::gpu::d3d;
 
-oGPU_NAMESPACE_BEGIN
+namespace ouro { namespace gpu { namespace d3d {
 
-oDEVICE_CHILD_CLASS(pipeline1)
+D3D_PRIMITIVE_TOPOLOGY from_primitive_type(const mesh::primitive_type::value& type)
 {
-	oDEVICE_CHILD_DECLARATION(pipeline1)
-	~d3d11_pipeline1();
-	pipeline1_info get_info() const override;
-	vertex_layout VertexLayout;
-	unique_vertex_shader_ptr VertexShader;
-	unique_hull_shader_ptr HullShader;
-	unique_domain_shader_ptr DomainShader;
-	unique_geometry_shader_ptr GeometryShader;
-	unique_pixel_shader_ptr PixelShader;
-	D3D_PRIMITIVE_TOPOLOGY InputTopology;
-	mesh::element_array VertexElements;
-	sstring DebugName;
-};
+	return D3D_PRIMITIVE_TOPOLOGY(type);
+}
 
-oGPU_NAMESPACE_END
+mesh::primitive_type::value to_primitive_type(D3D_PRIMITIVE_TOPOLOGY type)
+{
+	return mesh::primitive_type::value(type);
+}
 
-#endif
+uint num_elements(D3D_PRIMITIVE_TOPOLOGY topology, uint num_primitives)
+{
+	switch (topology)
+	{
+		case D3D_PRIMITIVE_TOPOLOGY_POINTLIST: return num_primitives;
+		case D3D_PRIMITIVE_TOPOLOGY_LINELIST: return num_primitives * 2;
+		case D3D_PRIMITIVE_TOPOLOGY_LINESTRIP: return num_primitives + 1;
+		case D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST: return num_primitives * 3;
+		case D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP: return num_primitives + 2;
+		case D3D_PRIMITIVE_TOPOLOGY_LINELIST_ADJ: return num_primitives * 2 * 2;
+		case D3D_PRIMITIVE_TOPOLOGY_LINESTRIP_ADJ: return (num_primitives + 1) * 2;
+		case D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST_ADJ: return num_primitives * 3 * 2;
+		case D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ: return (num_primitives + 2) * 2;
+		case D3D_PRIMITIVE_TOPOLOGY_UNDEFINED: return 0;
+		default: break;
+	}
+	return num_primitives * (topology -D3D11_PRIMITIVE_TOPOLOGY_1_CONTROL_POINT_PATCHLIST+1);
+}
+
+}}}

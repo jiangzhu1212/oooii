@@ -111,7 +111,7 @@ public:
 protected:
 	std::shared_ptr<gpu::pipeline1> Pipeline;
 	std::shared_ptr<gpu::texture> Texture;
-	std::shared_ptr<gpu::util_mesh> Mesh;
+	gpu::util_mesh Mesh;
 	std::shared_ptr<gpu::buffer> TestConstants;
 
 	static const int sSnapshotFrames[2];

@@ -18,6 +18,12 @@
     <ClCompile Include="obj.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="primitive.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="subdivide.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -34,6 +40,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oMesh\obj.h">
       <Filter>oMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMesh\primitive.h">
+      <Filter>oMesh</Filter>
+    </ClInclude>
+    <ClInclude Include="subdivide.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

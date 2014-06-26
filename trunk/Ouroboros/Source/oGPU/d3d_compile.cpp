@@ -279,7 +279,7 @@ scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _S
 	return scoped_allocation(buffer, Code->GetBufferSize(), _Allocator.deallocate);
 }
 
-const char* shader_profile(D3D_FEATURE_LEVEL _Level, gpu::pipeline_stage::value _Stage)
+const char* shader_profile(D3D_FEATURE_LEVEL _Level, gpu::stage::value _Stage)
 {
 	static const char* sDX9Profiles[] = { "vs_3_0", nullptr, nullptr, nullptr, "ps_3_0", nullptr, };
 	static const char* sDX10Profiles[] = { "vs_4_0", nullptr, nullptr, "gs_4_0", "ps_4_0", nullptr, };

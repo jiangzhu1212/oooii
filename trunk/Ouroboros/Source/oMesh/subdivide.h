@@ -23,30 +23,33 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oGPU_pipeline_h
-#define oGPU_pipeline_h
+#ifndef oMesh_subdivide_h
+#define oMesh_subdivide_h
 
-#include "oGPUCommon.h"
-#include <oGPU/vertex_layout.h>
+#include <oBase/types.h>
+#include <vector>
 
-oGPU_NAMESPACE_BEGIN
+namespace ouro { namespace mesh {
 
-oDEVICE_CHILD_CLASS(pipeline1)
-{
-	oDEVICE_CHILD_DECLARATION(pipeline1)
-	~d3d11_pipeline1();
-	pipeline1_info get_info() const override;
-	vertex_layout VertexLayout;
-	unique_vertex_shader_ptr VertexShader;
-	unique_hull_shader_ptr HullShader;
-	unique_domain_shader_ptr DomainShader;
-	unique_geometry_shader_ptr GeometryShader;
-	unique_pixel_shader_ptr PixelShader;
-	D3D_PRIMITIVE_TOPOLOGY InputTopology;
-	mesh::element_array VertexElements;
-	sstring DebugName;
-};
+typedef void (*append_midpoint_fn)(uint i0, uint i1, void* data);
 
-oGPU_NAMESPACE_END
+// Subdivides each triangle in a mesh by finding the midpoints of each 
+// edge and creating a new point there, generating 4 new triangles to 
+// replace the prior triangle. This does not duplicate points for 
+// triangles that share an edge. It is recommended that vectors  
+// containing vertex data should reserve 2*num_edges additional vertices
+// before calling this function to limit the number of reallocations.
+// in_out_num_edges: The valid number of edges in the specified mesh 
+//            must be passed. This value will be filled with the new 
+//            edge count after subdivision. In this way subdivide() can 
+//            be called recursively up to the desired subdivision level.
+// num_vertices: the number of vertices before subdivision. This is used
+//               to prepare edge lists.
+// indices: List of indices. This will be modified during subdivision
+// append_midpoint: a callback to handle all interpolants when a new
+//                  vertex is required.
+void subdivide(uint* in_out_num_edges, std::vector<uint>& indices, uint num_vertices, append_midpoint_fn append_midpoint, void* data);
+
+}}
 
 #endif

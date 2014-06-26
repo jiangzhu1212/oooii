@@ -40,171 +40,171 @@ namespace ouro {
 	namespace mesh {
 		namespace detail {
 
-template<typename T> void calc_min_max_indices(const T* oRESTRICT _pIndices, uint _StartIndex, uint _NumIndices, uint _NumVertices, uint* oRESTRICT _pMinVertex, uint* oRESTRICT _pMaxVertex)
+template<typename T> void calc_min_max_indices(const T* oRESTRICT indices, uint start_index, uint num_indices, uint num_vertices, uint* oRESTRICT out_min_vertex, uint* oRESTRICT out_max_vertex)
 {
-	if (_pIndices)
+	if (indices)
 	{
-		*_pMinVertex = ouro::invalid;
-		*_pMaxVertex = 0;
+		*out_min_vertex = ouro::invalid;
+		*out_max_vertex = 0;
 
-		const uint end = _StartIndex + _NumIndices;
-		for (uint i = _StartIndex; i < end; i++)
+		const uint end = start_index + num_indices;
+		for (uint i = start_index; i < end; i++)
 		{
-			*_pMinVertex = min(*_pMinVertex, static_cast<uint>(_pIndices[i]));
-			*_pMaxVertex = max(*_pMaxVertex, static_cast<uint>(_pIndices[i]));
+			*out_min_vertex = min(*out_min_vertex, static_cast<uint>(indices[i]));
+			*out_max_vertex = max(*out_max_vertex, static_cast<uint>(indices[i]));
 		}
 	}
 
 	else
 	{
-		*_pMinVertex = 0;
-		*_pMaxVertex = _NumVertices - 1;
+		*out_min_vertex = 0;
+		*out_max_vertex = num_vertices - 1;
 	}
 }
 
-template<typename T> aabox<T, TVEC3<T>> calc_bound(const TVEC3<T>* _pVertices, uint _VertexStride, uint _NumVertices)
+template<typename T> aabox<T, TVEC3<T>> calc_bound(const TVEC3<T>* vertices, uint vertex_stride, uint num_vertices)
 {
 	aabox<T, TVEC3<T>> b;
-	const TVEC3<T>* end = byte_add(_pVertices, _VertexStride * _NumVertices);
-	while (_pVertices < end)
+	const TVEC3<T>* end = byte_add(vertices, vertex_stride * num_vertices);
+	while (vertices < end)
 	{
-		extend_by(b, *_pVertices);
-		_pVertices = byte_add(_pVertices, _VertexStride);
+		extend_by(b, *vertices);
+		vertices = byte_add(vertices, vertex_stride);
 	}
 
 	return b;
 }
 
-template<typename T> void transform_points(const TMAT4<T>& _Matrix, TVEC3<T>* oRESTRICT _pDestination, uint _DestinationStride, const TVEC3<T>* oRESTRICT _pSource, uint _SourceStride, uint _NumPoints)
+template<typename T> void transform_points(const TMAT4<T>& matrix, TVEC3<T>* oRESTRICT destination, uint destination_stride, const TVEC3<T>* oRESTRICT source, uint source_stride, uint num_points)
 {
-	const TVEC3<T>* oRESTRICT end = byte_add(_pDestination, _DestinationStride * _NumPoints);
-	while (_pDestination < end)
+	const TVEC3<T>* oRESTRICT end = byte_add(destination, destination_stride * num_points);
+	while (destination < end)
 	{
-		*_pDestination = mul(_Matrix, TVEC4<T>(*_pSource, T(1))).xyz();
-		_pDestination = byte_add(_pDestination, _DestinationStride);
-		_pSource = byte_add(_pSource, _SourceStride);
+		*destination = mul(matrix, TVEC4<T>(*source, T(1))).xyz();
+		destination = byte_add(destination, destination_stride);
+		source = byte_add(source, source_stride);
 	}
 }
 
-template<typename T> void transform_vectors(const TMAT4<T>& _Matrix, TVEC3<T>* oRESTRICT _pDestination, uint _DestinationStride, const TVEC3<T>* oRESTRICT _pSource, uint _SourceStride, uint _NumVectors)
+template<typename T> void transform_vectors(const TMAT4<T>& matrix, TVEC3<T>* oRESTRICT destination, uint destination_stride, const TVEC3<T>* oRESTRICT source, uint source_stride, uint num_vectors)
 {
-	const TMAT3<T> m_(_Matrix[0].xyz(), _Matrix[1].xyz(), _Matrix[2].xyz());
-	const TVEC3<T>* oRESTRICT end = byte_add(_pDestination, _DestinationStride * _NumVectors);
-	while (_pDestination < end)
+	const TMAT3<T> m_(matrix[0].xyz(), matrix[1].xyz(), matrix[2].xyz());
+	const TVEC3<T>* oRESTRICT end = byte_add(destination, destination_stride * num_vectors);
+	while (destination < end)
 	{
-		*_pDestination = mul(m_, *_pSource);
-		_pDestination = byte_add(_pDestination, _DestinationStride);
-		_pSource = byte_add(_pSource, _SourceStride);
+		*destination = mul(m_, *source);
+		destination = byte_add(destination, destination_stride);
+		source = byte_add(source, source_stride);
 	}
 }
 
-template<typename T, typename IndexT> void remove_degenerates(const TVEC3<T>* oRESTRICT _pPositions, uint _NumPositions, IndexT* oRESTRICT _pIndices, uint _NumIndices, uint* oRESTRICT _pNewNumIndices)
+template<typename T, typename IndexT> void remove_degenerates(const TVEC3<T>* oRESTRICT positions, uint num_positions, IndexT* oRESTRICT indices, uint num_indices, uint* oRESTRICT out_new_num_indices)
 {
-	if ((_NumIndices % 3) != 0)
-		oTHROW_INVARG("_NumIndices must be a multiple of 3");
+	if ((num_indices % 3) != 0)
+		oTHROW_INVARG("num_indices must be a multiple of 3");
 
-	for (uint i = 0; i < _NumIndices / 3; i++)
+	for (uint i = 0; i < num_indices / 3; i++)
 	{
 		uint I = i * 3;
 		uint J = i * 3 + 1;
 		uint K = i * 3 + 2;
 
-		if (_pIndices[I] >= _NumPositions || _pIndices[J] >= _NumPositions || _pIndices[K] >= _NumPositions)
+		if (indices[I] >= num_positions || indices[J] >= num_positions || indices[K] >= num_positions)
 			oTHROW_INVARG("an index value indexes outside the range of vertices specified");
 
-		const TVEC3<T>& a = _pPositions[_pIndices[I]];
-		const TVEC3<T>& b = _pPositions[_pIndices[J]];
-		const TVEC3<T>& c = _pPositions[_pIndices[K]];
+		const TVEC3<T>& a = positions[indices[I]];
+		const TVEC3<T>& b = positions[indices[J]];
+		const TVEC3<T>& c = positions[indices[K]];
 
 		if (equal(cross(a - b, a - c), TVEC3<T>(T(0), T(0), T(0))))
 		{
-			_pIndices[I] = invalid;
-			_pIndices[J] = invalid;
-			_pIndices[K] = invalid;
+			indices[I] = invalid;
+			indices[J] = invalid;
+			indices[K] = invalid;
 		}
 	}
 
-	*_pNewNumIndices = _NumIndices;
-	for (uint i = 0; i < *_pNewNumIndices; i++)
+	*out_new_num_indices = num_indices;
+	for (uint i = 0; i < *out_new_num_indices; i++)
 	{
-		if (_pIndices[i] == invalid)
+		if (indices[i] == invalid)
 		{
-			memcpy(&_pIndices[i], &_pIndices[i+1], sizeof(uint) * (_NumIndices - i - 1));
+			memcpy(&indices[i], &indices[i+1], sizeof(uint) * (num_indices - i - 1));
 			i--;
-			(*_pNewNumIndices)--;
+			(*out_new_num_indices)--;
 		}
 	}
 }
 
-template<typename T, typename IndexT> void calc_face(size_t index, TVEC3<T>* oRESTRICT _pFaceNormals, const IndexT* oRESTRICT _pIndices, uint _NumIndices, const TVEC3<T>* oRESTRICT _pPositions, uint _NumPositions, T _CCWMultiplier, bool* oRESTRICT _pSuccess)
+template<typename T, typename IndexT> void calc_face_normals_task(size_t index, TVEC3<T>* oRESTRICT face_normals, const IndexT* oRESTRICT indices, uint num_indices, const TVEC3<T>* oRESTRICT positions, uint num_positions, T ccwMultiplier, bool* oRESTRICT _pSuccess)
 {
 	size_t I = index * 3;
 	size_t J = index * 3 + 1;
 	size_t K = index * 3 + 2;
 
-	if (_pIndices[I] >= _NumPositions || _pIndices[J] >= _NumPositions || _pIndices[K] >= _NumPositions)
+	if (indices[I] >= num_positions || indices[J] >= num_positions || indices[K] >= num_positions)
 	{
 		*_pSuccess = false;
 		return;
 	}
 
-	const TVEC3<T>& a = _pPositions[_pIndices[I]];
-	const TVEC3<T>& b = _pPositions[_pIndices[J]];
-	const TVEC3<T>& c = _pPositions[_pIndices[K]];
+	const TVEC3<T>& a = positions[indices[I]];
+	const TVEC3<T>& b = positions[indices[J]];
+	const TVEC3<T>& c = positions[indices[K]];
 
 	// gracefully put in a zero vector for degenerate faces
 	TVEC3<T> cr = cross(a - b, a - c);
 	const TVEC3<T> Zero3(T(0), T(0), T(0));
-	_pFaceNormals[index] = equal(cr, Zero3) ? Zero3 : normalize(cr) * _CCWMultiplier;
+	face_normals[index] = equal(cr, Zero3) ? Zero3 : normalize(cr) * ccwMultiplier;
 }
 
-template<typename T, typename IndexT> void calc_face_normals(TVEC3<T>* oRESTRICT _pFaceNormals, const IndexT* oRESTRICT _pIndices, uint _NumIndices, const TVEC3<T>* oRESTRICT _pPositions, uint _NumPositions, bool _CCW)
+template<typename T, typename IndexT> void calc_face_normals(TVEC3<T>* oRESTRICT face_normals, const IndexT* oRESTRICT indices, uint num_indices, const TVEC3<T>* oRESTRICT positions, uint num_positions, bool ccw)
 {
-	if ((_NumIndices % 3) != 0)
-		oTHROW_INVARG("_NumIndices must be a multiple of 3");
+	if ((num_indices % 3) != 0)
+		oTHROW_INVARG("num_indices must be a multiple of 3");
 
 	bool success = true;
-	const T s = _CCW ? T(-1) : T(1);
-	parallel_for( 0, _NumIndices / 3, std::bind( calc_face<T, IndexT>, std::placeholders::_1
-		, _pFaceNormals, _pIndices, _NumIndices, _pPositions, _NumPositions, s, &success));
+	const T s = ccw ? T(-1) : T(1);
+	parallel_for( 0, num_indices / 3, std::bind( calc_face_normals_task<T, IndexT>, std::placeholders::_1
+		, face_normals, indices, num_indices, positions, num_positions, s, &success));
 	if (!success)
 		oTHROW_INVARG("an index value indexes outside the range of vertices specified");
 }
 
 template<typename InnerContainerT, typename VecT> void average_face_normals(
-	const std::vector<InnerContainerT>& _Container, const std::vector<TVEC3<VecT>>& _FaceNormals
-	, TVEC3<VecT>* _pNormals, uint _NumVertexNormals, bool _OverwriteAll)
+	const std::vector<InnerContainerT>& container, const std::vector<TVEC3<VecT>>& face_normals
+	, TVEC3<VecT>* normals, uint num_vertex_normals, bool overwrite_all)
 {
 	// Now go through the list and average the normals
-	for (uint i = 0; i < _NumVertexNormals; i++)
+	for (uint i = 0; i < num_vertex_normals; i++)
 	{
 		// If there is length on the data already, leave it alone
-		if (!_OverwriteAll && equal(_pNormals[i], TVEC3<VecT>(VecT(0), VecT(0), VecT(0))))
+		if (!overwrite_all && equal(normals[i], TVEC3<VecT>(VecT(0), VecT(0), VecT(0))))
 			continue;
 
 		TVEC3<VecT> N(VecT(0), VecT(0), VecT(0));
-		const InnerContainerT& TrianglesUsed = _Container[i];
+		const InnerContainerT& TrianglesUsed = container[i];
 		for (size_t t = 0; t < TrianglesUsed.size(); t++)
 		{
 			uint faceIndex = TrianglesUsed[t];
-			if (!equal(dot(_FaceNormals[faceIndex], _FaceNormals[faceIndex]), VecT(0)))
-				N += _FaceNormals[faceIndex];
+			if (!equal(dot(face_normals[faceIndex], face_normals[faceIndex]), VecT(0)))
+				N += face_normals[faceIndex];
 		}
 
-		_pNormals[i] = normalize(N);
+		normals[i] = normalize(N);
 	}
 }
 
-template<typename T, typename IndexT> void calc_vertex_normals(TVEC3<T>* oRESTRICT _pVertexNormals, const IndexT* oRESTRICT _pIndices, uint _NumIndices
-	, const TVEC3<T>* oRESTRICT _pPositions, uint _NumPositions, bool _CCW = false, bool _OverwriteAll = true)
+template<typename T, typename IndexT> void calc_vertex_normals(TVEC3<T>* oRESTRICT vertex_normals, const IndexT* oRESTRICT indices, uint num_indices
+	, const TVEC3<T>* oRESTRICT positions, uint num_positions, bool ccw = false, bool overwrite_all = true)
 {
-	std::vector<TVEC3<T>> faceNormals(_NumIndices / 3, TVEC3<T>(T(0), T(0), T(0)));
+	std::vector<TVEC3<T>> faceNormals(num_indices / 3, TVEC3<T>(T(0), T(0), T(0)));
 
-	calc_face_normals(faceNormals.data(), _pIndices, _NumIndices, _pPositions, _NumPositions, _CCW);
+	calc_face_normals(faceNormals.data(), indices, num_indices, positions, num_positions, ccw);
 
-	const uint nFaces = as_uint(_NumIndices) / 3;
+	const uint nFaces = as_uint(num_indices) / 3;
 	const uint REASONABLE_MAX_FACES_PER_VERTEX = 32;
-	std::vector<fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>> trianglesUsedByVertexA(_NumPositions);
+	std::vector<fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>> trianglesUsedByVertexA(num_positions);
 	std::vector<std::vector<uint>> trianglesUsedByVertex;
 	bool UseVecVec = false;
 
@@ -214,9 +214,9 @@ template<typename T, typename IndexT> void calc_vertex_normals(TVEC3<T>* oRESTRI
 	// for each vertex, store a list of the faces to which it contributes
 	for (uint i = 0; i < nFaces; i++)
 	{
-		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& a = trianglesUsedByVertexA[_pIndices[i*3]];
-		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& b = trianglesUsedByVertexA[_pIndices[i*3+1]];
-		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& c = trianglesUsedByVertexA[_pIndices[i*3+2]];
+		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& a = trianglesUsedByVertexA[indices[i*3]];
+		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& b = trianglesUsedByVertexA[indices[i*3+1]];
+		fixed_vector<uint, REASONABLE_MAX_FACES_PER_VERTEX>& c = trianglesUsedByVertexA[indices[i*3+2]];
 
 		// maybe fixed_vector should throw? and catch it here instead of this?
 		if (a.size() == a.capacity() || b.size() == b.capacity() || c.size() == c.capacity())
@@ -233,30 +233,30 @@ template<typename T, typename IndexT> void calc_vertex_normals(TVEC3<T>* oRESTRI
 	if (UseVecVec)
 	{
 		free_memory(trianglesUsedByVertexA);
-		trianglesUsedByVertex.resize(_NumPositions);
+		trianglesUsedByVertex.resize(num_positions);
 
 		for (uint i = 0; i < nFaces; i++)
 		{
-			push_back_unique(trianglesUsedByVertex[_pIndices[i*3]], i);
-			push_back_unique(trianglesUsedByVertex[_pIndices[i*3+1]], i);
-			push_back_unique(trianglesUsedByVertex[_pIndices[i*3+2]], i);
+			push_back_unique(trianglesUsedByVertex[indices[i*3]], i);
+			push_back_unique(trianglesUsedByVertex[indices[i*3+1]], i);
+			push_back_unique(trianglesUsedByVertex[indices[i*3+2]], i);
 		}
 
-		average_face_normals(trianglesUsedByVertex, faceNormals, _pVertexNormals, _NumPositions, _OverwriteAll);
+		average_face_normals(trianglesUsedByVertex, faceNormals, vertex_normals, num_positions, overwrite_all);
 
 		uint MaxValence = 0;
 		// print out why we ended up in this path...
-		for (uint i = 0; i < _NumPositions; i++)
+		for (uint i = 0; i < num_positions; i++)
 			MaxValence = __max(MaxValence, as_uint(trianglesUsedByVertex[i].size()));
 		oTRACE("debug-slow path in normals caused by reasonable max valence (%u) being exceeded. Actual valence: %u", REASONABLE_MAX_FACES_PER_VERTEX, MaxValence);
 	}
 
 	else
-		average_face_normals(trianglesUsedByVertexA, faceNormals, _pVertexNormals, _NumPositions, _OverwriteAll);
+		average_face_normals(trianglesUsedByVertexA, faceNormals, vertex_normals, num_positions, overwrite_all);
 }
 
-template<typename T, typename IndexT> void calc_vertex_tangents(TVEC4<T>* oRESTRICT _pTangents, const IndexT* oRESTRICT _pIndices, uint _NumIndices
- , const TVEC3<T>* oRESTRICT _pPositions, const TVEC3<T>* oRESTRICT _pNormals, const TVEC3<T>* oRESTRICT _pTexcoords, uint _NumVertices)
+template<typename T, typename IndexT, typename TexCoordTupleT> void calc_vertex_tangents(TVEC4<T>* oRESTRICT tangents, const IndexT* oRESTRICT indices, uint num_indices
+ , const TVEC3<T>* oRESTRICT positions, const TVEC3<T>* oRESTRICT normals, const TexCoordTupleT* oRESTRICT texcoords, uint num_vertices)
 {
 	/** <citation
 		usage="Implementation" 
@@ -270,19 +270,19 @@ template<typename T, typename IndexT> void calc_vertex_tangents(TVEC4<T>* oRESTR
 
 	// $(CitedCodeBegin)
 
-	std::vector<TVEC3<T>> tan1(_NumVertices, TVEC3<T>(T(0), T(0), T(0)));
-	std::vector<TVEC3<T>> tan2(_NumVertices, TVEC3<T>(T(0), T(0), T(0)));
+	std::vector<TVEC3<T>> tan1(num_vertices, TVEC3<T>(T(0), T(0), T(0)));
+	std::vector<TVEC3<T>> tan2(num_vertices, TVEC3<T>(T(0), T(0), T(0)));
 
-	const uint count = _NumIndices / 3;
+	const uint count = num_indices / 3;
 	for (uint i = 0; i < count; i++)
 	{
-		const uint a = _pIndices[3*i];
-		const uint b = _pIndices[3*i+1];
-		const uint c = _pIndices[3*i+2];
+		const uint a = indices[3*i];
+		const uint b = indices[3*i+1];
+		const uint c = indices[3*i+2];
 
-		const TVEC3<T>& Pa = _pPositions[a];
-		const TVEC3<T>& Pb = _pPositions[b];
-		const TVEC3<T>& Pc = _pPositions[c];
+		const TVEC3<T>& Pa = positions[a];
+		const TVEC3<T>& Pb = positions[b];
+		const TVEC3<T>& Pc = positions[c];
 
 		const T x1 = Pb.x - Pa.x;
 		const T x2 = Pc.x - Pa.x;
@@ -291,9 +291,9 @@ template<typename T, typename IndexT> void calc_vertex_tangents(TVEC4<T>* oRESTR
 		const T z1 = Pb.z - Pa.z;
 		const T z2 = Pc.z - Pa.z;
         
-		const TVEC3<T>& TCa = _pTexcoords[a];
-		const TVEC3<T>& TCb = _pTexcoords[b];
-		const TVEC3<T>& TCc = _pTexcoords[c];
+		const auto& TCa = texcoords[a];
+		const auto& TCb = texcoords[b];
+		const auto& TCc = texcoords[c];
 
 		const T s1 = TCb.x - TCa.x;
 		const T s2 = TCc.x - TCa.x;
@@ -313,43 +313,43 @@ template<typename T, typename IndexT> void calc_vertex_tangents(TVEC4<T>* oRESTR
 		tan2[c] += t;
 	}
 
-	parallel_for(0, _NumVertices, [&](size_t _Index)
+	parallel_for(0, num_vertices, [&](size_t _Index)
 	{
 		// Gram-Schmidt orthogonalize + handedness
-		const TVEC3<T>& n = _pNormals[_Index];
+		const TVEC3<T>& n = normals[_Index];
 		const TVEC3<T>& t = tan1[_Index];
-		_pTangents[_Index] = TVEC4<T>(normalize(t - n * dot(n, t)), (dot(cross(n, t), tan2[_Index]) < T(0)) ? T(-1) : T(1));
+		tangents[_Index] = TVEC4<T>(normalize(t - n * dot(n, t)), (dot(cross(n, t), tan2[_Index]) < T(0)) ? T(-1) : T(1));
 	});
 
 	// $(CitedCodeEnd)
 }
 
 template<typename T, typename IndexT, typename UV0T>
-void calc_texcoords(const aabox<T, TVEC3<T>>& _Bound, const IndexT* _pIndices, uint _NumIndices, const TVEC3<T>* _pPositions, UV0T* _pOutTexcoords, uint _NumVertices, double* _pSolveTime)
+void calc_texcoords(const aabox<T, TVEC3<T>>& bound, const IndexT* indices, uint num_indices, const TVEC3<T>* positions, UV0T* out_texcoords, uint num_vertices, double* out_solve_time)
 {
 	oTHROW(operation_not_supported, "calc_texcoords not implemented");
 }
 
-template<typename IndexT> void prune_indices(const std::vector<bool>& _Refed, IndexT* _pIndices, uint _NumIndices)
+template<typename IndexT> void prune_indices(const std::vector<bool>& refed, IndexT* indices, uint num_indices)
 {
-	std::vector<IndexT> sub(_Refed.size(), 0);
-	for (size_t i = 0; i < _Refed.size(); i++)
-		if (!_Refed[i])
+	std::vector<IndexT> sub(refed.size(), 0);
+	for (size_t i = 0; i < refed.size(); i++)
+		if (!refed[i])
 			for (size_t j = i; j < sub.size(); j++)
 				(sub[j])++;
 
-	for (uint i = 0; i < _NumIndices; i++)
-		_pIndices[i] -= sub[_pIndices[i]];
+	for (uint i = 0; i < num_indices; i++)
+		indices[i] -= sub[indices[i]];
 }
 
-template<typename T> uint prune_stream(const std::vector<bool>& _Refed, T* _pStream, uint _NumberOfElements)
+template<typename T> uint prune_stream(const std::vector<bool>& refed, T* _pStream, uint _NumberOfElements)
 {
 	if (!_pStream)
 		return 0;
 
-	std::vector<bool>::const_iterator itRefed = _Refed.begin();
+	std::vector<bool>::const_iterator itRefed = refed.begin();
 	T* r = _pStream, *w = _pStream;
-	while (itRefed != _Refed.end())
+	while (itRefed != refed.end())
 	{
 		if (*itRefed++)
 			*w++ = *r++;
@@ -361,41 +361,41 @@ template<typename T> uint prune_stream(const std::vector<bool>& _Refed, T* _pStr
 }
 
 template<typename T, typename IndexT, typename UV0VecT, typename UV1VecT> 
-void prune_unindexed_vertices(const IndexT* oRESTRICT _pIndices, uint _NumIndices
-	, TVEC3<T>* oRESTRICT _pPositions, TVEC3<T>* oRESTRICT _pNormals, TVEC4<T>* oRESTRICT _pTangents, UV0VecT* oRESTRICT _pTexcoords0, UV1VecT* oRESTRICT _pTexcoords1, color* oRESTRICT _pColors
-	, uint _NumVertices, uint* oRESTRICT _pNewNumVertices)
+void prune_unindexed_vertices(const IndexT* oRESTRICT indices, uint num_indices
+	, TVEC3<T>* oRESTRICT positions, TVEC3<T>* oRESTRICT normals, TVEC4<T>* oRESTRICT tangents, UV0VecT* oRESTRICT texcoords0, UV1VecT* oRESTRICT texcoords1, color* oRESTRICT colors
+	, uint num_vertices, uint* oRESTRICT out_new_num_vertices)
 {
 	std::vector<bool> refed;
-	refed.assign(_NumVertices, false);
-	for (size_t i = 0; i < _NumIndices; i++)
-		refed[_pIndices[i]] = true;
+	refed.assign(num_vertices, false);
+	for (size_t i = 0; i < num_indices; i++)
+		refed[indices[i]] = true;
 	uint newNumVertices = 0;
 
 	static const uint kNumVertexWhereParallelismHelps = 2000;
 
-	if (_NumVertices < kNumVertexWhereParallelismHelps)
+	if (num_vertices < kNumVertexWhereParallelismHelps)
 	{
-		newNumVertices = prune_stream(refed, _pPositions, _NumVertices);
-		prune_stream(refed, _pNormals, _NumVertices);
-		prune_stream(refed, _pTangents, _NumVertices);
-		prune_stream(refed, _pTexcoords0, _NumVertices);
-		prune_stream(refed, _pTexcoords1, _NumVertices);
-		prune_stream(refed, _pColors, _NumVertices);
+		newNumVertices = prune_stream(refed, positions, num_vertices);
+		prune_stream(refed, normals, num_vertices);
+		prune_stream(refed, tangents, num_vertices);
+		prune_stream(refed, texcoords0, num_vertices);
+		prune_stream(refed, texcoords1, num_vertices);
+		prune_stream(refed, colors, num_vertices);
 	}
 
 	else
 	{
 		std::shared_ptr<task_group> g = make_task_group();
-		g->run([&] { newNumVertices = prune_stream(refed, _pPositions, _NumVertices); });
-		g->run([&] { prune_stream(refed, _pNormals, _NumVertices); });
-		g->run([&] { prune_stream(refed, _pTangents, _NumVertices); });
-		g->run([&] { prune_stream(refed, _pTexcoords0, _NumVertices); });
-		g->run([&] { prune_stream(refed, _pTexcoords1, _NumVertices); });
-		g->run([&] { prune_stream(refed, _pColors, _NumVertices); });
+		g->run([&] { newNumVertices = prune_stream(refed, positions, num_vertices); });
+		g->run([&] { prune_stream(refed, normals, num_vertices); });
+		g->run([&] { prune_stream(refed, tangents, num_vertices); });
+		g->run([&] { prune_stream(refed, texcoords0, num_vertices); });
+		g->run([&] { prune_stream(refed, texcoords1, num_vertices); });
+		g->run([&] { prune_stream(refed, colors, num_vertices); });
 		g->wait();
 	}
 
-	*_pNewNumVertices = newNumVertices;
+	*out_new_num_vertices = newNumVertices;
 }
 
 		} // namespace detail

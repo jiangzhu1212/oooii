@@ -440,18 +440,6 @@ static void reduce_elements(const init& _Init
 		calc_min_max_indices(_pIndices->data(), r.start_primitive*3, r.num_primitives*3, as_uint(_pSinglyIndexedElements->positions.size()), &r.min_vertex, &r.max_vertex);
 }
 
-static layout::value get_vertex_layout(const vertex_data& _Data)
-{
-	layout::value Layout = layout::pos;
-	if (_Data.positions.empty())
-		oTHROW_INVARG("vertices must have positions");
-	if (!_Data.normals.empty())
-		Layout = _Data.texcoords.empty() ? layout::pos_nrm : layout::pos_nrm_tan_uv0;
-	if (!_Data.texcoords.empty())
-		Layout = layout::pos_uv0;
-	return Layout;
-}
-
 class mesh_impl : public mesh
 {
 public:
@@ -461,7 +449,6 @@ public:
 private:
 	vertex_data Data;
 	std::vector<uint> Indices;
-	layout::value VertexLayout;
 	path Path;
 };
 
@@ -581,6 +568,13 @@ std::shared_ptr<mesh> mesh::make(const init& _Init, const path& _OBJPath, const 
 info mesh_impl::get_info() const
 {
 	info i;
+
+	i.indices = Indices.data();
+	i.ranges = Data.ranges.data();
+	i.positions = Data.positions.empty() ? nullptr : Data.positions.data();
+	i.normals = Data.normals.empty() ? nullptr : Data.normals.data();
+	i.texcoords = Data.texcoords.empty() ? nullptr : Data.texcoords.data();
+
 	i.obj_path = Path;
 	i.mtl_path = Data.mtl_path;
 	i.groups = Data.groups.data();
@@ -588,22 +582,14 @@ info mesh_impl::get_info() const
 	i.mesh_info.local_space_bound = Data.bound;
 	i.mesh_info.num_indices = as_uint(Indices.size());
 	i.mesh_info.num_vertices = as_uint(Data.positions.size());
-	i.mesh_info.vertex_layouts[0] = get_vertex_layout(Data);
 	i.mesh_info.primitive_type = primitive_type::triangles;
 	i.mesh_info.face_type = face_type::unknown;
 	i.mesh_info.num_ranges = (uchar)Data.groups.size();
 	i.mesh_info.vertex_scale_shift = 0;
 
-	i.data.indicesi = Indices.data();
-	i.data.ranges = Data.ranges.data();
-	i.data.range_pitch = sizeof(range);
-	i.data.positionsf = Data.positions.data();
-	i.data.positionf_pitch = sizeof(float3);
-	i.data.normalsf = Data.normals.data();
-	i.data.normalf_pitch = sizeof(float3);
-	i.data.uvw0sf = Data.texcoords.data();
-	i.data.uvw0f_pitch = sizeof(float3);
-	i.data.vertex_layout = i.mesh_info.vertex_layouts[0];
+	i.mesh_info.elements[0] = element(semantic::position, 0, format::xyz32_float, 0);
+	i.mesh_info.elements[1] = element(semantic::normal, 0, format::xyz32_float, 0);
+	i.mesh_info.elements[2] = element(semantic::texcoord, 0, format::xyz32_float, 0);
 	return i;
 }
 

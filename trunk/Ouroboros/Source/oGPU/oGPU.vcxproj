@@ -133,6 +133,7 @@
     <ClInclude Include="..\..\Include\oGPU\render_target.h" />
     <ClInclude Include="..\..\Include\oGPU\shader.h" />
     <ClInclude Include="..\..\Include\oGPU\state.h" />
+    <ClInclude Include="..\..\Include\oGPU\vertex_layout.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h" />
     <ClInclude Include="d3d11_as_string.h" />
     <ClInclude Include="d3d11_util.h" />
@@ -140,10 +141,12 @@
     <ClInclude Include="d3d_compile.h" />
     <ClInclude Include="d3d_debug.h" />
     <ClInclude Include="d3d_include.h" />
+    <ClInclude Include="d3d_prim.h" />
     <ClInclude Include="d3d_resource.h" />
     <ClInclude Include="d3d_shader.h" />
     <ClInclude Include="d3d_state.h" />
     <ClInclude Include="d3d_types.h" />
+    <ClInclude Include="d3d_util.h" />
     <ClInclude Include="dxgi_util.h" />
     <ClInclude Include="oD3D11Buffer.h" />
     <ClInclude Include="oD3D11CommandList.h" />
@@ -163,9 +166,11 @@
     <ClCompile Include="d3d_compile.cpp" />
     <ClCompile Include="d3d_debug.cpp" />
     <ClCompile Include="d3d_include.cpp" />
+    <ClCompile Include="d3d_prim.cpp" />
     <ClCompile Include="d3d_resource.cpp" />
     <ClCompile Include="d3d_shader.cpp" />
     <ClCompile Include="d3d_state.cpp" />
+    <ClCompile Include="d3d_util.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
     <ClCompile Include="gpu.cpp" />
     <ClCompile Include="oD3D11Buffer.cpp" />
@@ -188,6 +193,7 @@
     <ClCompile Include="render_target.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="state.cpp" />
+    <ClCompile Include="vertex_layout.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="oGPUShaders.hlsl">
