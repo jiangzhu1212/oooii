@@ -96,9 +96,6 @@
     <ClInclude Include="..\..\Include\oGPU\oGPU.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>

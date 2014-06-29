@@ -547,20 +547,6 @@ namespace query_type
 
 };}
 
-namespace pipeline_stage
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-	
-	vertex,
-	hull,
-	domain,
-	geometry,
-	pixel,
-	compute,
-
-	count,
-
-};}
-
 struct basic_pipeline1_info
 {
 	const char* debug_name;
@@ -955,9 +941,6 @@ public:
 
 	virtual void present(uint _PresentInterval) = 0;
 };
-
-void* create_shader(device* _pDevice, const pipeline_stage::value& _Stage, const void* _pByteCode, const char* _DebugName = nullptr);
-void destroy_shader(void* _pVertexShader);
 
 	} // namespace gpu
 } // namespace ouro
