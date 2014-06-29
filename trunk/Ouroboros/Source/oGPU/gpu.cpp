@@ -210,22 +210,6 @@ const char* as_string(const gpu::query_type::value& _Value)
 
 STR_SUPPORT(gpu::query_type::value, gpu::query_type::count);
 
-const char* as_string(const gpu::pipeline_stage::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::pipeline_stage::vertex: return "vertex";
-		case gpu::pipeline_stage::hull: return "hull";
-		case gpu::pipeline_stage::domain: return "domain";
-		case gpu::pipeline_stage::geometry: return "geometry";
-		case gpu::pipeline_stage::pixel: return "pixel";
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(gpu::pipeline_stage::value, gpu::pipeline_stage::count);
-
 const char* as_string(const gpu::clear_type::value& _Value)
 {
 	switch (_Value)

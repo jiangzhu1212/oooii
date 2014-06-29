@@ -127,7 +127,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
-    <ClInclude Include="..\..\Include\oGPU\oGPUConstants.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h" />
     <ClInclude Include="..\..\Include\oGPU\render_target.h" />

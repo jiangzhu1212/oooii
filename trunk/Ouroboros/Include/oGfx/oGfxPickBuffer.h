@@ -28,7 +28,6 @@
 #define oGfxPickBuffer_h
 
 #include <oGPU/oGPU.h>
-#include <oGPU/oGPUConstants.h>
 
 static const uint oGPU_MAX_NUM_PICKS_PER_FRAME = 16;
 

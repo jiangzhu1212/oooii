@@ -142,14 +142,14 @@ void shader_on_loaded(concurrent_registry& _Registry, const path& _Path, scoped_
 			scoped_allocation bytecode = gpu::compile_shader(IncludePaths, Defines, _Path, _Stage, _EntryPoint, (const char*)_Buffer);
 			oTRACEA("Insert \"%s\" from %s", _EntryPoint, _Path.c_str());
 
-			if (_Stage == gpu::pipeline_stage::pixel)
+			if (_Stage == gpu::stage::pixel)
 				_Registry.make(_EntryPoint, bytecode, _Path, true);
 		}
 			
 		catch (std::exception& e)
 		{
 			oTRACEA("Insert \"%s\" as Error", _EntryPoint, e.what());
-			if (_Stage == gpu::pipeline_stage::pixel)
+			if (_Stage == gpu::stage::pixel)
 				_Registry.make(_EntryPoint, empty, _Path, true);
 		}
 
