@@ -29,7 +29,6 @@
 #define oGPU_util_mesh_h
 
 #include <oGPU/oGPU.h>
-#include <oBasis/oGeometry.h>
 #include <oMesh/obj.h>
 #include <oMesh/primitive.h>
 

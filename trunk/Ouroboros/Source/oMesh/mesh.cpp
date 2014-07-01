@@ -958,5 +958,38 @@ PUV(ushort, float2, float3)
 PUV(ushort, float3, float2)
 PUV(ushort, float3, float3)
 
+uint clip_convex(const planef& plane, const float3* oRESTRICT polygon, uint num_vertices, float3* oRESTRICT out_clipped_vertices)
+{
+	float3 v0;
+	float d0;
+	bool i0;
+	
+	float3 v1 = polygon[num_vertices-1];
+	float d1 = sdistance(plane, v1);
+	bool i1 = d1 > 0.0f;
+
+	bool clipped = false;
+
+	uint num_clipped_vertices = 0;
+	for (uint i = 0; i < num_vertices; i++)
+	{
+		v0 = v1;
+		d0 = d1;
+		i0 = i1;
+
+		v1 = polygon[i];
+		d1 = sdistance(plane, v1);
+		i1 = d1 > 0.0f;
+
+		if (i0)
+			out_clipped_vertices[num_clipped_vertices++] = v0;
+
+		if (i0 != i1)
+			out_clipped_vertices[num_clipped_vertices++] = lerp(v0, v1, d0 / (d0-d1));
+	}
+
+	return num_clipped_vertices;
+}
+
 	} // namespace gpu
 } // namespace ouro

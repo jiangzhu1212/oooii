@@ -111,7 +111,7 @@ public:
 		face_type::value face_type;
 		uint divide; // vale of 6 takes ~3 sec on an overclocked i7 920. 7 Takes ~11 sec.
 		color color;
-		spheref bound;
+		float radius;
 		bool hemisphere;
 		bool icosahedron;
 	};

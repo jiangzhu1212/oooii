@@ -105,13 +105,6 @@ namespace detail
 	inline int lerp(int a, int b, float s) { return static_cast<int>(a + s * (b-a) + 0.5f); }
 }
 
-inline color lerp(const color& a, const color& b, float s)
-{
-	int ra,ga,ba,aa, rb,gb,bb,ab;
-	a.decompose(&ra, &ga, &ba, &aa); b.decompose(&rb, &gb, &bb, &ab);
-	return color(detail::lerp(ra,rb,s), detail::lerp(ga,gb,s), detail::lerp(ba,bb,s), detail::lerp(aa,ab,s));
-}
-
 // Returns the index into the specified palette of the color that most closely
 // matches _Color.
 inline size_t palettize(const color& _Color, const color* _pPalette, size_t _NumColorsInPalette)
@@ -135,6 +128,14 @@ template<size_t size> inline size_t palettize(color _TestColor, const color (&_p
 
 } // namespace ouro
 
-using ouro::lerp; // promote to same level as oHLSL and other lerps.
+// promote to same level as oHLSL and other lerps. This also gets around a C++ standard 
+// vaguery/compiler bug where if this were in the ouro namespace, then it would forever 
+// block matching to ::lerp().
+inline ouro::color lerp(const ouro::color& a, const ouro::color& b, float s)
+{
+	int ra,ga,ba,aa, rb,gb,bb,ab;
+	a.decompose(&ra, &ga, &ba, &aa); b.decompose(&rb, &gb, &bb, &ab);
+	return ouro::color(ouro::detail::lerp(ra,rb,s), ouro::detail::lerp(ga,gb,s), ouro::detail::lerp(ba,bb,s), ouro::detail::lerp(aa,ab,s));
+}
 
 #endif

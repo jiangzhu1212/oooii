@@ -29,7 +29,6 @@
 
 #include <oGPU/oGPU.h>
 
-#include <oBasis/oGeometry.h>
 #include <oMesh/obj.h>
 
 namespace ouro {

@@ -24,6 +24,9 @@
     <ClCompile Include="subdivide.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="platonic_solids.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -45,6 +48,9 @@
       <Filter>oMesh</Filter>
     </ClInclude>
     <ClInclude Include="subdivide.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="platonic_solids.h">
       <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>

@@ -22,37 +22,39 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Utility object for defining several screen-space quads and drawing them with
-// a specified pixel shader. The intent is enable composite/multi-screen 
-// rendering with bezel support.
-#ifndef oHLSL
-	#pragma once
-#endif
-#ifndef oGfxMosaic_h
-#define oGfxMosaic_h
+#pragma once
+#ifndef oMesh_platonic_solids_h
+#define oMesh_platonic_solids_h
 
-#if 0
+#include <oBase/types.h>
 
-#include <oBasis/oGeometry.h>
-#include <oGPU/oGPU.h>
+namespace ouro { namespace mesh {
 
-interface oGfxMosaic : oInterface
+struct platonic_info
 {
-	// Sets up an oGeometry::MOSAIC mesh and renders it in a simple clip-space,
-	// non-z-tested, opaque state. This is useful in setting up image and video
-	// players. This is more than a full-screen quad because of the more complex
-	// requirements of video wall presentation where the logical screen might be 
-	// made up of several physical screen.
-
-	virtual bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc, int _NumAdditionalTextureSets, const ouro::rect* _AdditionalSourceImageSpaces, const ouro::rect* const* _pAdditionalSourceRectArrays) = 0;
-	inline bool Rebuild(const oGeometryFactory::MOSAIC_DESC& _Desc) { return Rebuild(_Desc, 0, nullptr, nullptr); }
-	virtual void set_blend_state(ouro::gpu::blend_state::value _BlendState) = 0; // will be ouro::gpu::blend_state::opaque by default
-
-	virtual void Draw(ouro::gpu::command_list* _pCommandList, ouro::gpu::render_target* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const ouro::gpu::texture* const* _ppTextures) = 0;
-	inline void Draw(ouro::gpu::command_list* _pCommandList, ouro::gpu::render_target* _pRenderTarget, uint _TextureStartSlot, uint _NumTextures, const std::shared_ptr<ouro::gpu::texture>* _ppTextures) { Draw(_pCommandList, _pRenderTarget, _TextureStartSlot, _NumTextures, (const ouro::gpu::texture* const*)_ppTextures); }
+	const float3* positions;
+	const uint* indices;
+	uint num_indices;
+	uint num_vertices;
+	uint num_edges;
+	uint num_faces;
 };
 
-ouro::intrusive_ptr<oGfxMosaic> oGfxMosaicCreate(ouro::gpu::device* _pDevice, const ouro::gpu::pipeline1_info& _Info);
+namespace platonic
+{	enum value {
 
-#endif
+	tetrahedron,
+	hexahedron, // cube
+	octahedron,
+	dodecahedron,
+	icosahedron,
+
+	count,
+
+};}
+
+platonic_info get_platonic_info(const platonic::value& type);
+
+}}
+
 #endif
