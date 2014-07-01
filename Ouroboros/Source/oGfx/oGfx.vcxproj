@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="oGfxManipulator.cpp" />
-    <ClCompile Include="oGfxMosaic.cpp" />
     <ClCompile Include="oGfxPickBuffer.cpp" />
     <ClCompile Include="oGfxPipelines.cpp" />
     <ClCompile Include="oGfxShaderRegistry.cpp" />
@@ -38,7 +37,6 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxManipulator.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxMosaic.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxPickBuffer.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxShaderRegistry.h" />

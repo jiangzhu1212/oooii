@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "oManipulatorRotation.h"
 #include <oCompute/oComputeConstants.h>
-#include <oBasis/oGeometry.h>
+
 
 using namespace ouro;
 //using namespace ouro::gpu;

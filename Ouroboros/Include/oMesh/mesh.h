@@ -357,6 +357,19 @@ void prune_unindexed_vertices(PUV_PARAMS(ushort, float2, float3));
 void prune_unindexed_vertices(PUV_PARAMS(ushort, float3, float2));
 void prune_unindexed_vertices(PUV_PARAMS(ushort, float3, float3));
 
+inline float3 lerp_positions(const float3& a, const float3& b, const float s) { return lerp(a, b, s); }
+inline float3 lerp_normals(const float3& a, const float3& b, const float s) { return normalize(lerp(a, b, s)); }
+inline float4 lerp_tangents(const float4& a, const float4& b, const float s) { return float4(normalize(lerp(a.xyz(), b.xyz(), s)), a.w); }
+inline float2 lerp_texcoords(const float2& a, const float2& b, const float s) { return lerp(a, b, s); }
+inline float3 lerp_texcoords(const float3& a, const float3& b, const float s) { return lerp(a, b, s); }
+inline color lerp_colors(const color& a, const color& b, const float s) { return lerp(a, b, s); }
+
+// clips the convex polygon to the plane (keeps verts on positive side of plane) by copying the 
+// result to out_clipped_vertices which must be able to accomodate num_vertices+1 output vertices. 
+// Vertex winding order will be maintained. If no clipping was done at all out_clipped will receive 
+// false. This will rotate the order of vertices by 1. Meaning 012 if unclipped will come out 201
+uint clip_convex(const planef& plane, const float3* oRESTRICT polygon, uint num_vertices, float3* oRESTRICT out_clipped_vertices);
+
 	} // namespace mesh
 } // namespace ouro
 

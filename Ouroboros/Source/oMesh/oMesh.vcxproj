@@ -27,6 +27,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="platonic_solids.cpp" />
     <ClCompile Include="primitive.cpp" />
     <ClCompile Include="subdivide.cpp" />
   </ItemGroup>
@@ -37,6 +38,7 @@
     <ClInclude Include="..\..\Include\oMesh\primitive.h" />
     <ClInclude Include="mesh_template.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="platonic_solids.h" />
     <ClInclude Include="subdivide.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

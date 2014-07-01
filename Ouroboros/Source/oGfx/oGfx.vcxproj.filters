@@ -21,9 +21,6 @@
     <ClCompile Include="oGfxPipelines.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oGfxMosaic.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oGfxPickBuffer.cpp">
       <Filter>Source\Needs Code Review</Filter>
     </ClCompile>
@@ -57,9 +54,6 @@
       <Filter>oGfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxHLSL.h">
-      <Filter>oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxMosaic.h">
       <Filter>oGfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxManipulator.h">

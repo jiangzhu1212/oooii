@@ -87,6 +87,8 @@ inline double sdistance(oIN(planed, _Plane), oIN(double3, _Point)) { return dot(
 inline float distance(oIN(planef, _Plane), oIN(float3, _Point)) { return abs(sdistance(_Plane, _Point));  }
 inline double distance(oIN(planed, _Plane), oIN(double3, _Point)) { return abs(sdistance(_Plane, _Point));  }
 
+inline bool in_front_of(oIN(planef, _Plane), oIN(float3, _Point)) { return sdistance(_Plane, _Point) > 0.0f; }
+
 inline bool intersects(oIN(planef, _Plane0), oIN(planef, _Plane1), oIN(planef, _Plane2), oOUT(float3, _Intersection))
 {
 	// Goldman, Ronald. Intersection of Three Planes. In A. Glassner,
