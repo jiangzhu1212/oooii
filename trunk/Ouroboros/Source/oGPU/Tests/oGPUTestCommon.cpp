@@ -24,6 +24,7 @@
  **************************************************************************/
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
+#include <oGPU/constant_buffer.h>
 #include <oCore/filesystem.h>
 
 #include <oBasis/oMath.h>
@@ -127,7 +128,7 @@ const int gpu_texture_test::sSnapshotFrames[2] = { 0, 2 };
 
 void gpu_texture_test::initialize()
 {
-	TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
+	TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
 	Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(get_pipeline()));
 	Mesh.initialize_first_cube(Device.get());
 	Texture = make_test_texture();
@@ -154,13 +155,13 @@ void gpu_texture_test::render()
 
 	CommandList->begin();
 
-	commit_buffer(CommandList.get(), TestConstants.get(), oGPUTestConstants(W, V, P, white));
+	TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
 	CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
 	CommandList->set_blend_state(blend_state::opaque);
 	CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 	CommandList->set_rasterizer_state(rasterizer_state::front_face);
-	CommandList->set_buffer(0, TestConstants);
+	TestConstants.set(CommandList.get(), 0);
 	CommandList->set_sampler(0, sampler_state::linear_wrap);
 	CommandList->set_shader_resource(0, Texture);
 	CommandList->set_pipeline(Pipeline);

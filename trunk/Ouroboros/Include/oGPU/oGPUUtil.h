@@ -46,11 +46,6 @@ template<typename T> void commit_buffer(command_list* _pCommandList, buffer* _pB
 template<typename T> void commit_buffer(device* _pDevice, buffer* _pBuffer, const T& _Struct) { commit_buffer(_pDevice, _pBuffer, &_Struct, sizeof(_Struct), 1); }
 template<typename T> void commit_buffer(device* _pDevice, buffer* _pBuffer, const T* _pStructArray, uint _NumStructs) { commit_buffer(_pDevice, _pBuffer, _pStructArray, sizeof(T), _NumStructs); }
 
-// Creates a readback buffer or texture sized to be able to completely contain the 
-// specified source.
-std::shared_ptr<buffer> make_readback_copy(buffer* _pSource);
-std::shared_ptr<texture> make_readback_copy(texture* _pSource);
-
 // Optionally allocates a new buffer and reads the counter from the specified 
 // buffer into it. For performance a buffer can be specified to receive the 
 // counter value. The value is the read back to a uint using the immediate 
@@ -78,10 +73,6 @@ bool read(resource* _pSourceResource, int _Subresource, ouro::surface::mapped_su
 std::shared_ptr<texture> make_texture(device* _pDevice, const char* _Name, const surface::buffer* const* _ppSourceImages, uint _NumImages, texture_type::value _Type);
 inline std::shared_ptr<texture> make_texture(std::shared_ptr<device>& _pDevice, const char* _Name, const surface::buffer* const* _ppSourceImages, uint _NumImages, texture_type::value _Type) { return make_texture(_pDevice.get(), _Name, _ppSourceImages, _NumImages, _Type); }
 
-// Creates a surface buffer and copies the specified subresource to it. If _Subresource is
-// invalid all subresources are copied.
-std::shared_ptr<surface::buffer> copy_to_surface_buffer(texture* _pSource, int _Subresource = invalid);
-
 	} // namespace gpu
 } // namespace ouro
 
@@ -100,12 +91,6 @@ inline void oGPURenderTargetSetShaderResources(command_list* _pCommandList, int 
 		_pRenderTarget->GetDepthTexture(&MRTs[i++]);
 	_pCommandList->SetShaderResources(_StartSlot, i, (const resource* const*)MRTs);
 }
-
-// _____________________________________________________________________________
-// Mesh convenience functions
-
-bool oGPUReadVertexSource(int _Slot, int _NumVertices, ouro::surface::mapped_subresource& _Mapped, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const oGeometry::DESC& _Desc, oGeometry::CONST_MAPPED& _GeoMapped);
-bool oGPUReadVertexSource(int _Slot, int _NumVertices, ouro::surface::mapped_subresource& _Mapped, uint _NumElements, const oGPU_VERTEX_ELEMENT* _pElements, const threadsafe oOBJ* _pOBJ);
 
 #endif
 #endif

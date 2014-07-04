@@ -24,6 +24,8 @@
  **************************************************************************/
 #include <oGfx/oGfxPickBuffer.h>
 
+#if 0
+
 using namespace ouro;
 using namespace ouro::gpu;
 
@@ -100,3 +102,4 @@ void oGfxPickBuffer::POUnmap()
 	std::shared_ptr<device> Device = PicksStaging->get_device();
 	Device->unmap_read(PicksStaging, 0);
 }
+#endif

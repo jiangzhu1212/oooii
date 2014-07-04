@@ -864,7 +864,6 @@ public:
 	inline std::shared_ptr<command_list> make_command_list(const char* _Name, short _DrawOrder = 0) { command_list_info i; i.draw_order = _DrawOrder; return make_command_list(_Name, i); } 
 	inline std::shared_ptr<pipeline1> make_pipeline1(const pipeline1_info& _Info) { return make_pipeline1(_Info.debug_name, _Info); }
 	inline std::shared_ptr<compute_kernel> make_compute_kernel(const compute_kernel_info& _Info) { return make_compute_kernel(_Info.debug_name, _Info); }
-	template<typename T> std::shared_ptr<buffer> make_buffer(const char* _Name, uint _ArraySize = 1) { buffer_info i; i.struct_byte_size = sizeof(T); i.array_size = _ArraySize; return make_buffer(_Name, i); }
 
 	// map_read is a non-blocking call to read from the specified resource by the
 	// mapped data populated in the specified _pMappedSubresource. If the function

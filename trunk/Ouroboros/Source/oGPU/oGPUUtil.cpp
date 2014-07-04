@@ -48,6 +48,7 @@ void commit_buffer(device* _pDevice, buffer* _pBuffer, const void* _pStruct, uin
 	_pDevice->immediate()->commit(_pBuffer, 0, msr);
 }
 
+#if 0
 std::shared_ptr<buffer> make_readback_copy(buffer* _pSource)
 {
 	std::shared_ptr<device> Device = _pSource->get_device();
@@ -67,6 +68,7 @@ std::shared_ptr<texture> make_readback_copy(texture* _pSource)
 	snprintf(Name, "%s.Readback", _pSource->name());
 	return Device->make_texture(Name, i);
 }
+#endif
 
 uint read_back_counter(buffer* _pUnorderedBuffer, buffer* _pPreallocatedReadbackBuffer)
 {
@@ -210,6 +212,7 @@ std::shared_ptr<texture> make_texture(device* _pDevice, const char* _Name, const
 	return Texture;
 }
 
+#if 0
 std::shared_ptr<surface::buffer> copy_to_surface_buffer(texture* _pSource, int _Subresource)
 {
 	std::shared_ptr<device> Device = _pSource->get_device();
@@ -294,7 +297,7 @@ std::shared_ptr<surface::buffer> copy_to_surface_buffer(texture* _pSource, int _
 
 	return b;
 }
-
+#endif
 
 	} // namespace gpu
 } // namespace ouro

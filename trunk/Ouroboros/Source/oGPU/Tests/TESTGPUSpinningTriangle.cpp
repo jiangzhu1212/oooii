@@ -44,7 +44,7 @@ public:
 	void initialize() override
 	{
 		PrimaryRenderTarget->set_clear_color(almost_black);
-		TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
+		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
 		Mesh.initialize_first_triangle(Device.get());
 	}
@@ -67,13 +67,13 @@ public:
 
 		CommandList->begin();
 
-		commit_buffer(CommandList.get(), TestConstants.get(), oGPUTestConstants(W, V, P, white));
+		TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
 		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
 		CommandList->set_blend_state(blend_state::opaque);
 		CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 		CommandList->set_rasterizer_state(rasterizer_state::two_sided);
-		CommandList->set_buffer(0, TestConstants);
+		TestConstants.set(CommandList.get(), 0);
 		CommandList->set_pipeline(Pipeline);
 		CommandList->set_render_target(PrimaryRenderTarget);
 		Mesh.draw(CommandList.get());
@@ -84,7 +84,7 @@ public:
 private:
 	std::shared_ptr<pipeline1> Pipeline;
 	util_mesh Mesh;
-	std::shared_ptr<buffer> TestConstants;
+	constant_buffer TestConstants;
 };
 
 oGPU_COMMON_TEST(spinning_triangle);

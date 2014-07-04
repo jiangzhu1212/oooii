@@ -49,7 +49,7 @@ struct gpu_test_render_target : public gpu_test
 
 		i.draw_order = 0;
 		CLRenderTarget = Device->make_command_list("CLRenderTarget", i);
-		TestConstants = Device->make_buffer<oGPUTestConstants>("TestConstants");
+		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
 		PLPassThrough = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
 		Triangle.initialize_first_triangle(Device.get());
 		PLTexture = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D));
@@ -96,7 +96,7 @@ private:
 	std::shared_ptr<render_target> RenderTarget;
 	util_mesh Cube;
 	util_mesh Triangle;
-	std::shared_ptr<buffer> TestConstants;
+	constant_buffer TestConstants;
 
 	void render_to_target(command_list* _pCommandList, render_target* _pTarget)
 	{
@@ -123,13 +123,13 @@ private:
 
 		_pCommandList->begin();
 
-		commit_buffer(_pCommandList, TestConstants.get(), oGPUTestConstants(W, V, P, white));
+		TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
 		_pCommandList->clear(_pTarget, clear_type::color_depth_stencil);
 		_pCommandList->set_blend_state(blend_state::opaque);
 		_pCommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 		_pCommandList->set_rasterizer_state(rasterizer_state::front_face);
-		_pCommandList->set_buffer(0, TestConstants);
+		TestConstants.set(_pCommandList, 0);
 		_pCommandList->set_sampler(0, sampler_state::linear_wrap);
 		_pCommandList->set_shader_resource(0, _pTexture);
 		_pCommandList->set_pipeline(PLTexture);

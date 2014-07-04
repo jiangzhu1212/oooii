@@ -94,6 +94,9 @@
     <ClCompile Include="vertex_buffer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="constant_buffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -194,6 +197,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h">
       <Filter>Headers\old</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\constant_buffer.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
