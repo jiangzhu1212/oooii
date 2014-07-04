@@ -126,6 +126,7 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oGPU\constant_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\index_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
@@ -161,6 +162,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="constant_buffer.cpp" />
     <ClCompile Include="d3d11_as_string.cpp" />
     <ClCompile Include="d3d11_util.cpp" />
     <ClCompile Include="d3dx11_util.cpp" />

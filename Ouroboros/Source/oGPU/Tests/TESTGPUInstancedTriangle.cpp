@@ -25,6 +25,7 @@
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
+#include <oGPU/constant_buffer.h>
 
 #include <oBasis/oMath.h>
 
@@ -42,14 +43,9 @@ struct gpu_test_instanced_triangle : public gpu_test
 
 	void initialize() override
 	{
-		{
-			buffer_info i;
-			i.struct_byte_size = sizeof(oGPUTestConstants);
-			TestConstants = Device->make_buffer("TestConstants", i);
-		}
-
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
-		InstanceList = Device->make_buffer<oGPU_TEST_INSTANCE>("Instances", 2);
+		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
+		InstanceList.initialize("Instances", Device.get(), sizeof(oGPU_TEST_INSTANCE), 2);
 		Mesh.initialize_first_triangle(Device.get());
 	}
 	
@@ -60,32 +56,28 @@ struct gpu_test_instanced_triangle : public gpu_test
 		render_target_info RTI = PrimaryRenderTarget->get_info();
 		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
 
-		{
-			surface::mapped_subresource msr = CommandList->reserve(InstanceList, 0);
-			oGPU_TEST_INSTANCE* pInstances = (oGPU_TEST_INSTANCE*)msr.data;
-			{
-				pInstances[0].Translation = float3(-0.5f, 0.5f, 0.0f);
-				pInstances[1].Translation = float3(0.5f, -0.5f, 0.0f);
+		oGPU_TEST_INSTANCE instances[2];
+		instances[0].Translation = float3(-0.5f, 0.5f, 0.0f);
+		instances[1].Translation = float3(0.5f, -0.5f, 0.0f);
 
-				float rotationStep = Device->frame_id() * 1.0f;
-				pInstances[0].Rotation = make_quaternion(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
-				pInstances[1].Rotation = make_quaternion(float3(radians(rotationStep) * 0.5f, radians(rotationStep), radians(rotationStep) * 0.75f));
-			}
-			CommandList->commit(InstanceList, 0, msr);
-		}
+		float rotationStep = Device->frame_id() * 1.0f;
+		instances[0].Rotation = make_quaternion(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
+		instances[1].Rotation = make_quaternion(float3(radians(rotationStep) * 0.5f, radians(rotationStep), radians(rotationStep) * 0.75f));
+
+		InstanceList.update(CommandList.get(), instances);
 
 		CommandList->begin();
 
-		commit_buffer(CommandList.get(), TestConstants.get(), oGPUTestConstants(oIDENTITY4x4, V, P, white));
+		TestConstants.update(CommandList.get(), oGPUTestConstants(oIDENTITY4x4, V, P, white));
 
 		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
 		CommandList->set_blend_state(blend_state::opaque);
 		CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 		CommandList->set_rasterizer_state(rasterizer_state::two_sided);
 		
-		const buffer* CBs[2] = { TestConstants.get(), InstanceList.get() };
-		
-		CommandList->set_buffers(0, CBs);
+		const constant_buffer* CBs[2] = { &TestConstants, &InstanceList };
+		constant_buffer::set(CommandList.get(), 0, 2, CBs);
+
 		CommandList->set_pipeline(Pipeline);
 		CommandList->set_render_target(PrimaryRenderTarget);
 		
@@ -96,9 +88,9 @@ struct gpu_test_instanced_triangle : public gpu_test
 
 private:
 	std::shared_ptr<pipeline1> Pipeline;
-	std::shared_ptr<buffer> InstanceList;
+	constant_buffer InstanceList;
+	constant_buffer TestConstants;
 	util_mesh Mesh;
-	std::shared_ptr<buffer> TestConstants;
 };
 
 oGPU_COMMON_TEST(instanced_triangle);

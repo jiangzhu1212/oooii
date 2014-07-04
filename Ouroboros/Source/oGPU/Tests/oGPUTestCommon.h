@@ -31,6 +31,7 @@
 #include "oGPUTestHLSL.h"
 
 #include <oGPU/oGPU.h>
+#include <oGPU/constant_buffer.h>
 #include <oGUI/window.h>
 
 #include "../../test_services.h"
@@ -112,7 +113,7 @@ protected:
 	std::shared_ptr<gpu::pipeline1> Pipeline;
 	std::shared_ptr<gpu::texture> Texture;
 	gpu::util_mesh Mesh;
-	std::shared_ptr<gpu::buffer> TestConstants;
+	gpu::constant_buffer TestConstants;
 
 	static const int sSnapshotFrames[2];
 };
