@@ -25,6 +25,7 @@
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
 #include <oGPU/oGPUUtil.h>
+#include <oGPU/vertex_buffer.h>
 
 using namespace ouro::gpu;
 
@@ -52,50 +53,52 @@ class gpu_test_lines : public gpu_test
 {
 public:
 	gpu_test_lines() : gpu_test("GPU test: lines", kIsDevMode, sSnapshotFrames) {}
-
+	~gpu_test_lines() { LineList.deinitialize(); }
 	void initialize()
 	{
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR));
-		LineList = Device->make_vertex_buffer<oGPU_LINE_VERTEX>("LineList", 6);
+
+		LineList.initialize("LineList", Device.get(), 6, sizeof(oGPU_LINE_VERTEX));
 	}
 
 	void render()
 	{
 		CommandList->begin();
 
-		surface::mapped_subresource msr = CommandList->reserve(LineList, 0);
-		oGPU_LINE* pLines = (oGPU_LINE*)msr.data;
-
 		static const float3 TrianglePoints[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
+		
+		oGPU_LINE lines[3];
 
-		pLines[0].StartColor = red;
-		pLines[0].EndColor = green;
-		pLines[1].StartColor = green;
-		pLines[1].EndColor = blue;
-		pLines[2].StartColor = blue;
-		pLines[2].EndColor = red;
+		lines[0].StartColor = red;
+		lines[0].EndColor = green;
+		lines[1].StartColor = green;
+		lines[1].EndColor = blue;
+		lines[2].StartColor = blue;
+		lines[2].EndColor = red;
 
-		pLines[0].Start = TrianglePoints[0];
-		pLines[0].End = TrianglePoints[1];
-		pLines[1].Start = TrianglePoints[1];
-		pLines[1].End = TrianglePoints[2];
-		pLines[2].Start = TrianglePoints[2];
-		pLines[2].End = TrianglePoints[0];
+		lines[0].Start = TrianglePoints[0];
+		lines[0].End = TrianglePoints[1];
+		lines[1].Start = TrianglePoints[1];
+		lines[1].End = TrianglePoints[2];
+		lines[2].Start = TrianglePoints[2];
+		lines[2].End = TrianglePoints[0];
 
-		CommandList->commit(LineList, 0, msr, surface::box(6));
+		LineList.update(CommandList.get(), 0, 3, lines);
 
 		CommandList->clear(PrimaryRenderTarget, gpu::clear_type::color_depth_stencil);
 		CommandList->set_blend_state(gpu::blend_state::opaque);
 		CommandList->set_depth_stencil_state(gpu::depth_stencil_state::none);
 		CommandList->set_pipeline(Pipeline);
 		CommandList->set_render_target(PrimaryRenderTarget);
-		CommandList->draw(nullptr, 0, 1, &LineList, 0, 3);
+
+		LineList.draw_unindexed(CommandList.get(), 3, 0);
+
 		CommandList->end();
 	}
 
 private:
 	std::shared_ptr<pipeline1> Pipeline;
-	std::shared_ptr<buffer> LineList;
+	vertex_buffer LineList;
 };
 
 oGPU_COMMON_TEST(lines);

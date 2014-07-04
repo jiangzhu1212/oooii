@@ -34,13 +34,13 @@
 
 namespace ouro { namespace gpu { namespace d3d {
 
-Texture1D* CreateTexture1D(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips);
-Texture2D* CreateTexture2D(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, bool cube = false, bool target = false);
-Texture3D* CreateTexture3D(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips);
+Texture1D* make_texture_1d(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips);
+Texture2D* make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, bool cube = false, bool target = false);
+Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips);
 
 // basic 1D 1DARRAY 2D 2DARRAY 3D CUBE CUBEARRAY types
-ShaderResourceView* CreateSRV(Resource* r, DXGI_FORMAT format, uint array_size);
-ShaderResourceView* CreateSRV(Resource* r, surface::format format, uint array_size);
+ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size);
+ShaderResourceView* make_srv(Resource* r, surface::format format, uint array_size);
 
 // sets to all pipeline stages
 void set_cbs(DeviceContext* dc, uint slot, uint num_buffers, Buffer* const* buffers, uint gpu_stage_flags = ~0u);
@@ -56,6 +56,10 @@ Resource* make_cpu_copy(Resource* src);
 // calls UpdateSubresource for the specified buffer. This won't work for a D3D11_BIND_CONSTANT_BUFFER.
 void update_buffer(DeviceContext* dc, Buffer* b, uint byte_offset, uint num_bytes, const void* src);
 void update_buffer(DeviceContext* dc, View* v, uint byte_offset, uint num_bytes, const void* src);
+
+inline D3D11_RESOURCE_DIMENSION get_type(Resource* r) { D3D11_RESOURCE_DIMENSION type; r->GetType(&type); return type; }
+inline D3D11_RESOURCE_DIMENSION get_type(View* v) { Resource* r = nullptr; v->GetResource(&r); D3D11_RESOURCE_DIMENSION type = get_type(r); r->Release(); return type; }
+
 
 // return the size of the specified hlsl shader bytecode
 uint bytecode_size(const void* bytecode);

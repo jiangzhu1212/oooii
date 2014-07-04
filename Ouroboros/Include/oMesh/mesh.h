@@ -34,10 +34,8 @@
 #include <oBase/aabox.h>
 #include <array>
 
-namespace ouro {
-	namespace mesh {
+namespace ouro { namespace mesh {
 
-static const uint max_num_indices = 8;
 static const uint max_num_slots = 8;
 static const uint max_num_elements = 16;
 
@@ -370,7 +368,6 @@ inline color lerp_colors(const color& a, const color& b, const float s) { return
 // false. This will rotate the order of vertices by 1. Meaning 012 if unclipped will come out 201
 uint clip_convex(const planef& plane, const float3* oRESTRICT polygon, uint num_vertices, float3* oRESTRICT out_clipped_vertices);
 
-	} // namespace mesh
-} // namespace ouro
+}}
 
 #endif

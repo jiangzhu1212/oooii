@@ -23,32 +23,34 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oGPU_vertex_layout_h
-#define oGPU_vertex_layout_h
+#ifndef oGPU_index_buffer_h
+#define oGPU_index_buffer_h
 
-#include <oMesh/mesh.h>
+#include <oBase/types.h>
 
-namespace ouro {
-	namespace gpu {
-
-static const uint max_vertex_elements = 16;
+namespace ouro { namespace gpu {
 
 class device;
 class command_list;
 
-class vertex_layout
+class index_buffer
 {
 public:
-	vertex_layout() : layout(nullptr) {}
-	~vertex_layout() { deinitialize(); }
-	void initialize(const char* name, device* dev, const mesh::element_array& elements, const void* vs_bytecode);
+	index_buffer() : impl(nullptr) {}
+	~index_buffer() { deinitialize(); }
+	void initialize(const char* name, device* dev, uint num_indices, const ushort* indices = nullptr);
 	void deinitialize();
-	void set(command_list* cl, const mesh::primitive_type::value& prim_type) const;
-	void* get() const { return layout; }
-private:
-	void* layout;
-};
 
+	char* name(char* dst, size_t dst_size) const;
+	uint num_indices() const;
+	void set(command_list* cl, uint start_index = 0) const;
+	void update(command_list* cl, uint index_offset, uint num_indices, const ushort* indices);
+	void* get_buffer() const { return impl; }
+
+private:
+	void* impl;
+};
+	
 }}
 
 #endif

@@ -22,33 +22,51 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oGPU_vertex_layout_h
-#define oGPU_vertex_layout_h
+#include <oGPU/index_buffer.h>
+#include <oCore/windows/win_error.h>
+#include "d3d_debug.h"
+#include "d3d_util.h"
 
-#include <oMesh/mesh.h>
+using namespace ouro::gpu::d3d;
 
-namespace ouro {
-	namespace gpu {
+namespace ouro { namespace gpu {
 
-static const uint max_vertex_elements = 16;
+Device* get_device(device* dev);
+DeviceContext* get_dc(command_list* cl);
 
-class device;
-class command_list;
-
-class vertex_layout
+void index_buffer::initialize(const char* name, device* dev, uint num_indices, const ushort* indices)
 {
-public:
-	vertex_layout() : layout(nullptr) {}
-	~vertex_layout() { deinitialize(); }
-	void initialize(const char* name, device* dev, const mesh::element_array& elements, const void* vs_bytecode);
-	void deinitialize();
-	void set(command_list* cl, const mesh::primitive_type::value& prim_type) const;
-	void* get() const { return layout; }
-private:
-	void* layout;
-};
+	deinitialize();
+	impl = (void*)make_buffer(name, get_device(dev), num_indices, sizeof(ushort), D3D11_BIND_INDEX_BUFFER, 0, indices);
+}
+
+void index_buffer::deinitialize()
+{
+	if (impl)
+		((Buffer*)impl)->Release();
+	impl = nullptr;
+}
+
+char* index_buffer::name(char* dst, size_t dst_size) const
+{
+	return impl ? debug_name(dst, dst_size, (Buffer*)impl) : "uninitialized";
+}
+
+uint index_buffer::num_indices() const
+{
+	D3D11_BUFFER_DESC d;
+	((Buffer*)impl)->GetDesc(&d);
+	return d.ByteWidth / sizeof(ushort);
+}
+
+void index_buffer::set(command_list* cl, uint start_index) const
+{
+	get_dc(cl)->IASetIndexBuffer((Buffer*)impl, DXGI_FORMAT_R16_UINT, start_index * sizeof(ushort));
+}
+
+void index_buffer::update(command_list* cl, uint index_offset, uint num_indices, const ushort* indices)
+{
+	update_buffer(get_dc(cl), (Buffer*)impl, index_offset * sizeof(ushort), num_indices * sizeof(ushort), indices);
+}
 
 }}
-
-#endif

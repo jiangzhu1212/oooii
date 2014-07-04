@@ -30,6 +30,7 @@
 
 #include <oBase/allocate.h>
 #include <oBase/dec3n.h>
+#include <oBase/gpu_api.h>
 #include <oBase/invalid.h>
 #include <oBase/macros.h>
 #include <oBase/types.h>
@@ -61,20 +62,6 @@ static const uint max_num_viewports = 16;
 
 // _____________________________________________________________________________
 // Device concepts
-
-namespace api
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	unknown,
-	d3d11,
-	ogl,
-	ogles,
-	webgl,
-	custom,
-
-	count,
-
-};}
 
 namespace debug_level
 { oDECLARE_SMALL_ENUM(value, uchar) {
@@ -155,7 +142,7 @@ struct device_info
 		, dedicated_system_memory(0)
 		, shared_system_memory(0)
 		, adapter_index(0)
-		, api(api::unknown)
+		, api(gpu_api::unknown)
 		, vendor(vendor::unknown)
 		, is_software_emulation(false)
 		, debug_reporting_enabled(false)
@@ -194,7 +181,7 @@ struct device_info
 	int adapter_index;
 
 	// Describes the API used to implement the oGPU API
-	api::value api;
+	gpu_api::value api;
 
 	// Describes the company that made the device.
 	vendor::value vendor;
@@ -260,24 +247,6 @@ namespace buffer_type
 	// accessible memory.
 	readback,
 
-	// A buffer fit for rasterization HW. This often acts to indirect into a 
-	// vertex buffer to describe primitives. There is often a special place in the 
-	// pipeline for index buffers and it is likely not able to be bound to any 
-	// other part.
-	index,
-
-	// An index buffer fit for receiving a copy from GPU memory to CPU-accessible 
-	// memory.
-	index_readback,
-
-	// A buffer fit for rasterization HW. This holds the data representation for 
-	// geometry primitives such as those described by oGPU_PRIMITIVE_TYPE.
-	vertex,
-
-	// A vertex buffer fit for receiving a copy from GPU memory to CPU-accessible 
-	// memory.
-	vertex_readback,
-
 	// A raw buffer indexed by bytes (32-bit aligned access only though). This is
 	// the type to use for dispatch parameters from the GPU (indirect drawing).
 	unordered_raw,
@@ -339,14 +308,6 @@ struct buffer_info
 	// The number of format elements or structures in the buffer.
 	uint array_size;
 };
-
-// Returns a buffer info that will auto-size to 16-bit indices or 32-bit indices depending
-// on the number of vertices.
-buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices);
-
-// Returns a buffer info for the vertex buffer with the specified usage and layout. Only vertex traits matching
-// the specified layout will be described by the buffer info,
-buffer_info make_vertex_buffer_info(uint _NumVertices, const oGPUUtilLayout::value& _Layout);
 
 class buffer : public resource
 {
@@ -904,8 +865,6 @@ public:
 	inline std::shared_ptr<pipeline1> make_pipeline1(const pipeline1_info& _Info) { return make_pipeline1(_Info.debug_name, _Info); }
 	inline std::shared_ptr<compute_kernel> make_compute_kernel(const compute_kernel_info& _Info) { return make_compute_kernel(_Info.debug_name, _Info); }
 	template<typename T> std::shared_ptr<buffer> make_buffer(const char* _Name, uint _ArraySize = 1) { buffer_info i; i.struct_byte_size = sizeof(T); i.array_size = _ArraySize; return make_buffer(_Name, i); }
-	template<typename T> std::shared_ptr<buffer> make_index_buffer(const char* _Name, uint _ArraySize = 1) { buffer_info i; i.type = buffer_type::index; i.struct_byte_size = sizeof(T); i.array_size = _ArraySize; return make_buffer(_Name, i); }
-	template<typename T> std::shared_ptr<buffer> make_vertex_buffer(const char* _Name, uint _ArraySize = 1) { buffer_info i; i.type = buffer_type::vertex; i.struct_byte_size = sizeof(T); i.array_size = _ArraySize; return make_buffer(_Name, i); }
 
 	// map_read is a non-blocking call to read from the specified resource by the
 	// mapped data populated in the specified _pMappedSubresource. If the function

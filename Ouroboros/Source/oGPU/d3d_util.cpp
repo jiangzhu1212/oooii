@@ -31,7 +31,7 @@
 
 namespace ouro { namespace gpu { namespace d3d {
 
-Texture1D* CreateTexture1D(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips)
+Texture1D* make_texture_1d(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips)
 {
 	CD3D11_TEXTURE1D_DESC d(dxgi::from_surface_format(format)
 		, width
@@ -44,7 +44,7 @@ Texture1D* CreateTexture1D(const char* name, Device* dev, surface::format format
 	return t;
 }
 
-Texture2D* CreateTexture2D(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, bool cube, bool target)
+Texture2D* make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, bool cube, bool target)
 {
 	CD3D11_TEXTURE2D_DESC d(dxgi::from_surface_format(format)
 		, width
@@ -64,7 +64,7 @@ Texture2D* CreateTexture2D(const char* name, Device* dev, surface::format format
 	return t;
 }
 
-Texture3D* CreateTexture3D(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips)
+Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips)
 {
 	CD3D11_TEXTURE3D_DESC d(dxgi::from_surface_format(format)
 		, width
@@ -78,7 +78,7 @@ Texture3D* CreateTexture3D(const char* name, Device* dev, surface::format format
 	return t;
 }
 
-ShaderResourceView* CreateSRV(Resource* r, DXGI_FORMAT format, uint array_size)
+ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size)
 {
 	D3D11_RESOURCE_DIMENSION type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
 	r->GetType(&type);
@@ -127,9 +127,9 @@ ShaderResourceView* CreateSRV(Resource* r, DXGI_FORMAT format, uint array_size)
 	return srv;
 }
 
-ShaderResourceView* CreateSRV(Resource* r, surface::format format, uint array_size)
+ShaderResourceView* make_srv(Resource* r, surface::format format, uint array_size)
 {
-	return CreateSRV(r, dxgi::from_surface_format(format), array_size);
+	return make_srv(r, dxgi::from_surface_format(format), array_size);
 }
 
 void set_cbs(DeviceContext* dc, uint slot, uint num_buffers, Buffer* const* buffers, uint gpu_stage_flags)
@@ -283,7 +283,7 @@ Resource* make_cpu_copy(Resource* src)
 	return CPUCopy;
 }
 
-void update_buffer(DeviceContext* dc, Resource* r, uint byte_offset, uint num_bytes, const void* src)
+void update_buffer(DeviceContext* dc, Buffer* b, uint byte_offset, uint num_bytes, const void* src)
 {
 	D3D11_BOX box;
 	box.left = byte_offset;
@@ -292,14 +292,15 @@ void update_buffer(DeviceContext* dc, Resource* r, uint byte_offset, uint num_by
 	box.right = box.left + num_bytes;
 	box.bottom = 1;
 	box.back = 1;
-	dc->UpdateSubresource(r, 0, &box, src, 0, 0);
+	dc->UpdateSubresource(b, 0, &box, src, 0, 0);
 }
 
 void update_buffer(DeviceContext* dc, View* v, uint byte_offset, uint num_bytes, const void* src)
 {
 	intrusive_ptr<Resource> r;
 	v->GetResource(&r);
-	update_buffer(dc, r, byte_offset, num_bytes, src);
+	oASSERT(D3D11_RESOURCE_DIMENSION_BUFFER == get_type(v), "must call on a buffer");
+	update_buffer(dc, (Buffer*)r.c_ptr(), byte_offset, num_bytes, src);
 }
 
 // Return the size stored inside D3D11-era bytecode. This can be used anywhere bytecode size is expected.

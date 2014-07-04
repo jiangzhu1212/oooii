@@ -277,7 +277,7 @@ gpu::device_info get_info(ID3D11Device* _pDevice, bool _IsSoftwareEmulation)
 	d.driver_version = adapter_info.version;
 	d.feature_version = adapter_info.feature_level;
 	d.adapter_index = *(int*)&adapter_info.id;
-	d.api = gpu::api::d3d11;
+	d.api = gpu_api::d3d11;
 	d.vendor = adapter_info.vendor;
 	d.is_software_emulation = _IsSoftwareEmulation;
 	d.debug_reporting_enabled = !!(_pDevice->GetCreationFlags() & D3D11_CREATE_DEVICE_DEBUG);

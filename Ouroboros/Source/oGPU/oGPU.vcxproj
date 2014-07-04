@@ -126,12 +126,14 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oGPU\index_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h" />
     <ClInclude Include="..\..\Include\oGPU\render_target.h" />
     <ClInclude Include="..\..\Include\oGPU\shader.h" />
     <ClInclude Include="..\..\Include\oGPU\state.h" />
+    <ClInclude Include="..\..\Include\oGPU\vertex_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layout.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h" />
     <ClInclude Include="d3d11_as_string.h" />
@@ -172,6 +174,7 @@
     <ClCompile Include="d3d_util.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
     <ClCompile Include="gpu.cpp" />
+    <ClCompile Include="index_buffer.cpp" />
     <ClCompile Include="oD3D11Buffer.cpp" />
     <ClCompile Include="oD3D11CommandList.cpp" />
     <ClCompile Include="oD3D11ComputeShader.cpp" />
@@ -192,6 +195,7 @@
     <ClCompile Include="render_target.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="state.cpp" />
+    <ClCompile Include="vertex_buffer.cpp" />
     <ClCompile Include="vertex_layout.cpp" />
   </ItemGroup>
   <ItemGroup>

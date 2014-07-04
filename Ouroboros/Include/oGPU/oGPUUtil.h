@@ -208,25 +208,6 @@ inline void commit_vertex_buffer(device* _pDevice, const oGPUUtilLayout::value& 
 	commit_vertex_buffer(_pDevice->immediate(), _Layout, _Source, _pVertexBuffer.get());
 }
 
-// Create an index buffer based on the parameters. If _MappedSubresource.pData
-// is not null commit_index_buffer() is called on that data. If it is null then 
-// only the creation is done.
-std::shared_ptr<buffer> make_index_buffer(device* _pDevice, const char* _Name, uint _NumIndices, uint _NumVertices
-	, const surface::const_mapped_subresource& _MappedSubresource = surface::const_mapped_subresource());
-
-inline std::shared_ptr<buffer> make_index_buffer(std::shared_ptr<device>& _pDevice, const char* _Name, uint _NumIndices, uint _NumVertices
-	, const surface::const_mapped_subresource& _MappedSubresource = surface::const_mapped_subresource())
-{ return make_index_buffer(_pDevice.get(), _Name, _NumIndices, _NumVertices, _MappedSubresource); }
-
-// Creates a vertex buffer based on the parameters. If _GetElementData is valid 
-// then commit_vertex_buffer is called.
-std::shared_ptr<buffer> make_vertex_buffer(device* _pDevice, const char* _Name, const oGPUUtilLayout::value& _Layout
-	, uint _NumVertices, const oGPUUtilSource& _Source = oGPUUtilSource());
-
-inline std::shared_ptr<buffer> make_vertex_buffer(std::shared_ptr<device>& _pDevice, const char* _Name, const oGPUUtilLayout::value& _Layout
-	, uint _NumVertices, const oGPUUtilSource& _Source = oGPUUtilSource())
-{ return make_vertex_buffer(_pDevice.get(), _Name, _Layout, _NumVertices, _Source); }
-
 // Creates a readback buffer or texture sized to be able to completely contain the 
 // specified source.
 std::shared_ptr<buffer> make_readback_copy(buffer* _pSource);

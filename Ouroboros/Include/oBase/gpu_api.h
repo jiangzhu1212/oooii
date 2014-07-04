@@ -34,6 +34,8 @@ namespace ouro {
 
 	unknown,
 	d3d11,
+	d3d12,
+	mantle,
 	ogl,
 	ogles,
 	webgl,
