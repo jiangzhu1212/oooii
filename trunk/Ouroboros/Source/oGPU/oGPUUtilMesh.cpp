@@ -24,9 +24,15 @@
  **************************************************************************/
 #include <oGPU/oGPUUtilMesh.h>
 #include <oGPU/oGPUUtil.h>
+#include <oGPU/vertex_layout.h>
+#include <oBase/finally.h>
+#include <oMesh/mesh.h>
 
 namespace ouro {
 	namespace gpu {
+
+static_assert(vertex_buffer::max_num_slots == mesh::max_num_slots, "size mismatch");
+static_assert(vertex_buffer::max_num_elements == mesh::max_num_elements, "size mismatch");
 
 util_mesh::util_mesh()
 	: num_prims(0)
@@ -34,7 +40,7 @@ util_mesh::util_mesh()
 {
 }
 
-void util_mesh::initialize(const char* name, device* dev, const mesh::info& _info)
+void util_mesh::initialize(const char* name, device* dev, const mesh::info& _info, const ushort* _indices, const void** _vertices)
 {
 	if (_info.num_ranges != 1)
 		oTHROW_INVARG("mesh range must be 1");
@@ -42,7 +48,7 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::info& _inf
 	info = _info;
 	num_prims = mesh::num_primitives(info);
 
-	indices = make_index_buffer(dev, name, info.num_indices, info.num_vertices);
+	indices.initialize(name, dev, info.num_indices, _indices);
 
 	num_slots = 0;
 	for (uint slot = 0; slot < mesh::max_num_slots; slot++)
@@ -51,13 +57,7 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::info& _inf
 		if (!VertexSize)
 			continue;
 
-		buffer_info i;
-		i.type = buffer_type::vertex;
-		i.array_size = info.num_vertices;
-		i.struct_byte_size = as_ushort(VertexSize);
-		i.format = surface::unknown;
-
-		vertices[slot] = dev->make_buffer(name, i);
+		vertices[slot].initialize(name, dev, info.num_vertices, VertexSize, _vertices ? _vertices[slot] : nullptr);
 		num_slots = slot + 1; // record the highest one since vertex buffers are set in one go
 	}
 }
@@ -65,29 +65,23 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::info& _inf
 void util_mesh::initialize(const char* name, device* dev, const mesh::element_array& elements, const mesh::primitive* prim)
 {
 	auto prim_info = prim->get_info();
-
 	oCHECK(prim_info.num_ranges == 1, "unexpected number of ranges");
+
+	info = prim_info;
+	info.elements = elements;
+	num_prims = mesh::num_primitives(info);
 
 	auto source = prim->get_source();
 
 	// copy indices
-	surface::const_mapped_subresource msrIndices;
-	msrIndices.data = source.indices;
-	msrIndices.row_pitch = sizeof(uint);
-	indices = make_index_buffer(dev, name, prim_info.num_indices, prim_info.num_vertices, msrIndices);
+	{
+		ushort* SrcIndices = new ushort[info.num_indices];
+		finally FreeIndices([&] { if (SrcIndices) delete [] SrcIndices; });
+		mesh::copy_indices(SrcIndices, source.indices, info.num_indices);
+		indices.initialize(name, dev, info.num_indices, SrcIndices);
+	}
 
 	// copy vertices
-	std::array<surface::mapped_subresource, mesh::max_num_slots> msrs;
-	std::array<void*, mesh::max_num_slots> dsts;
-	finally UnmapMSRs([&]
-	{
-		for (uint slot = 0; slot < mesh::max_num_slots; slot++)
-		{
-			if (msrs[slot].data)
-				dev->immediate()->commit(vertices[slot].get(), 0, msrs[slot]);
-		}
-	});
-
 	num_slots = 0;
 	for (uint slot = 0; slot < mesh::max_num_slots; slot++)
 	{
@@ -95,24 +89,18 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::element_ar
 		if (!VertexSize)
 			continue;
 
-		buffer_info i;
-		i.type = buffer_type::vertex;
-		i.array_size = prim_info.num_vertices;
-		i.struct_byte_size = as_short(VertexSize);
-		i.format = surface::unknown;
+		void* dsts[mesh::max_num_slots];
+		memset(dsts, 0, sizeof(void*) * mesh::max_num_slots);
 
-		vertices[slot] = dev->make_buffer(name, i);
-		msrs[slot] = dev->immediate()->reserve(vertices[slot].get(), 0);
-		dsts[slot] = msrs[slot].data;
+		{
+			dsts[slot] = new char[VertexSize * info.num_vertices];
+			finally FreeDsts([&] { if (dsts[slot]) delete [] dsts[slot]; });
+			mesh::copy_vertices(dsts, elements, source.streams, prim_info.elements, info.num_vertices);
+			vertices[slot].initialize(name, dev, prim_info.num_vertices, VertexSize, dsts[slot]);
+		}
+
 		num_slots = slot + 1; // record the highest one since vertex buffers are set in one go
 	}
-
-	copy_vertices(dsts.data(), elements, source.streams, prim_info.elements, prim_info.num_vertices);
-
-	// fill out info
-	num_prims = mesh::num_primitives(prim_info);
-	info = prim_info;
-	info.elements = elements;
 }
 
 void util_mesh::initialize_first_triangle(device* dev)
@@ -131,20 +119,13 @@ void util_mesh::initialize_first_triangle(device* dev)
 	mi.primitive_type = mesh::primitive_type::triangles;
 	mi.vertex_scale_shift = 0;
 
-	initialize("First Triangle", dev, mi);
-
-	surface::const_mapped_subresource msr;
 	static const ushort sIndices[] = { 0, 1, 2 };
-	msr.data = (void*)sIndices;
-	msr.row_pitch = sizeof(ushort);
-	msr.depth_pitch = sizeof(sIndices);
-	dev->immediate()->commit(index_buffer(), 0, msr);
-	
 	static const float3 sPositions[] = { float3(-X, -Y, 0.0f), float3(0.0f, Y, 0.0f), float3(X, -Y, 0.0f), };
-	msr.data = sPositions;
-	msr.row_pitch = sizeof(float3);
-	msr.depth_pitch = sizeof(sPositions);
-	dev->immediate()->commit(vertex_buffer(), 0, msr);
+
+	const void* elements[vertex_buffer::max_num_slots];
+	memset(elements, 0, sizeof(void*) * oCOUNTOF(elements));
+	elements[0] = sPositions;
+	initialize("First Triangle", dev, mi, sIndices, elements);
 }
 
 void util_mesh::initialize_first_cube(device* dev)
@@ -168,15 +149,16 @@ void util_mesh::initialize_first_cube(device* dev)
 
 void util_mesh::deinitialize()
 {
+	indices.deinitialize();
+	for (auto& v : vertices)
+		v.deinitialize();
 }
 
 void util_mesh::draw(command_list* cl)
 {
-	std::array<buffer*, mesh::max_num_slots> VBs;
-	for (uint i = 0; i < num_slots; i++)
-		VBs[i] = vertices[i].get();
-
-	cl->draw(indices.get(), 0, num_slots, VBs.data(), 0, num_prims);
+	indices.set(cl);
+	vertex_buffer::set(cl, 0, num_slots, vertices.data());
+	vertex_buffer::draw(cl, indices.num_indices(), 0, 0);
 }
 
 }}

@@ -283,32 +283,6 @@ void commit_vertex_buffer(command_list* _pCommandList, const oGPUUtilLayout::val
 #endif
 }
 
-std::shared_ptr<buffer> make_index_buffer(device* _pDevice, const char* _Name, uint _NumIndices, uint _NumVertices
-	, const surface::const_mapped_subresource& _MappedSubresource)
-{
-	buffer_info i = make_index_buffer_info(_NumIndices, _NumVertices);
-	std::shared_ptr<buffer> IndexBuffer = _pDevice->make_buffer(_Name, i);
-	if (_MappedSubresource.data)
-		commit_index_buffer(_pDevice, _MappedSubresource, IndexBuffer);
-	return IndexBuffer;
-}
-
-std::shared_ptr<buffer> make_vertex_buffer(device* _pDevice, const char* _Name, const oGPUUtilLayout::value& _Layout
-	, uint _NumVertices, const oGPUUtilSource& _Source)
-{
-	if (_Layout == oGPUUtilLayout::none)
-		oTHROW_INVARG("no vertex elements specified");
-
-	buffer_info i = make_vertex_buffer_info(_NumVertices, _Layout);
-
-	std::shared_ptr<buffer> VertexBuffer = _pDevice->make_buffer(_Name, i);
-
-	if (_Source != oGPUUtilSource())
-		commit_vertex_buffer(_pDevice, _Layout, _Source, VertexBuffer);
-
-	return VertexBuffer;
-}
-
 std::shared_ptr<buffer> make_readback_copy(buffer* _pSource)
 {
 	std::shared_ptr<device> Device = _pSource->get_device();

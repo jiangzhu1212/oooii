@@ -87,22 +87,6 @@ intrusive_ptr<Buffer> make_buffer(Device* _pDevice
 		case gpu::buffer_type::readback:
 			Usage = D3D11_USAGE_STAGING;
 			break;
-		case gpu::buffer_type::index:
-			if (_Info.format != surface::r16_uint && _Info.format != surface::r32_uint)
-				throw std::invalid_argument(formatf("An index buffer must specify a format of r16_uint or r32_uint only (%s specified).", as_string(_Info.format)));
-			if (_Info.struct_byte_size != invalid && _Info.struct_byte_size != static_cast<unsigned int>(surface::element_size(_Info.format)))
-				throw std::invalid_argument("An index buffer must specify struct_byte_size properly, or set it to 0.");
-			BindFlags = D3D11_BIND_INDEX_BUFFER;
-			break;
-		case gpu::buffer_type::index_readback:
-			Usage = D3D11_USAGE_STAGING;
-			break;
-		case gpu::buffer_type::vertex:
-			BindFlags = D3D11_BIND_VERTEX_BUFFER;
-			break;
-		case gpu::buffer_type::vertex_readback:
-			Usage = D3D11_USAGE_STAGING;
-			break;
 		case gpu::buffer_type::unordered_raw:
 			BindFlags = D3D11_BIND_UNORDERED_ACCESS;
 			Format = surface::r32_typeless;

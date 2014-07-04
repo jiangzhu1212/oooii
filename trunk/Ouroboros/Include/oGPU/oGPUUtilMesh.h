@@ -28,7 +28,8 @@
 #ifndef oGPU_util_mesh_h
 #define oGPU_util_mesh_h
 
-#include <oGPU/oGPU.h>
+#include <oGPU/index_buffer.h>
+#include <oGPU/vertex_buffer.h>
 #include <oMesh/obj.h>
 #include <oMesh/primitive.h>
 
@@ -36,6 +37,7 @@ namespace ouro { namespace gpu {
 
 class device;
 class command_list;
+class vertex_layout;
 
 class util_mesh
 {
@@ -43,7 +45,8 @@ public:
 	util_mesh();
 	~util_mesh() { deinitialize(); }
 
-	void initialize(const char* name, device* dev, const mesh::info& info);
+	// vertices must be an array of size vertex_buffer::max_num_slots
+	void initialize(const char* name, device* dev, const mesh::info& info, const ushort* indices = nullptr, const void** vertices = nullptr);
 	void initialize(const char* name, device* dev, const mesh::element_array& elements, const mesh::primitive* prim);
 
 	// Creates a very simple front-facing triangle that can be rendered with all-
@@ -58,21 +61,17 @@ public:
 	void deinitialize();
 
 	inline mesh::info get_info() const { return info; }
-	inline buffer* index_buffer() { return indices.get(); }
-	inline const buffer* index_buffer() const { return indices.get(); }
-	inline buffer* vertex_buffer(uint index = 0) { return vertices[index].get(); }
-	inline const buffer* vertex_buffer(uint index = 0) const { return vertices[index].get(); }
-	inline void vertex_buffers(const buffer* buffers[mesh::max_num_slots]) const
-	{
-		for (auto const& b : vertices)
-			*buffers++ = b.get();
-	}
+	inline index_buffer& get_index_buffer() { return indices; }
+	inline const index_buffer& getindex_buffer() const { return indices; }
+	inline vertex_buffer& get_vertex_buffer(uint index = 0) { return vertices[index]; }
+	inline const vertex_buffer& get_vertex_buffer(uint index = 0) const { return vertices[index]; }
+	inline const vertex_buffer* get_vertex_buffers() const { return vertices.data(); }
 
 	void draw(command_list* cl);
 
 private:
-	std::shared_ptr<buffer> indices;
-	std::array<std::shared_ptr<buffer>, mesh::max_num_slots> vertices;
+	index_buffer indices;
+	std::array<vertex_buffer, mesh::max_num_slots> vertices;
 	mesh::info info;
 	uint num_prims;
 	uint num_slots;

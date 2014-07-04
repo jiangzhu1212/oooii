@@ -33,24 +33,6 @@ namespace ouro {
 
 static_assert(sizeof(surface::format) == 1, "unexpected size");
 
-const char* as_string(const gpu::api::value& _Value)
-{
-	switch (_Value)
-	{
-		case gpu::api::unknown: return "unknown";
-		case gpu::api::d3d11: return "d3d11";
-		case gpu::api::ogl: return "ogl";
-		case gpu::api::ogles: return "ogles";
-		case gpu::api::webgl: return "webgl";
-		case gpu::api::custom: return "custom";
-
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(gpu::api::value, gpu::api::count);
-
 const char* as_string(const gpu::debug_level::value& _Value)
 {
 	switch (_Value)
@@ -104,10 +86,6 @@ const char* as_string(const gpu::buffer_type::value& _Value)
 	{
 		case gpu::buffer_type::constant: return "constant";
 		case gpu::buffer_type::readback: return "readback";
-		case gpu::buffer_type::index: return "index";
-		case gpu::buffer_type::index_readback: return "index_readback";
-		case gpu::buffer_type::vertex: return "vertex";
-		case gpu::buffer_type::vertex_readback: return "vertex_readback";
 		case gpu::buffer_type::unordered_raw: return "unordered_raw";
 		case gpu::buffer_type::unordered_unstructured: return "unordered_unstructured";
 		case gpu::buffer_type::unordered_structured: return "unordered_structured";
@@ -229,27 +207,4 @@ const char* as_string(const gpu::clear_type::value& _Value)
 
 STR_SUPPORT(gpu::clear_type::value, gpu::clear_type::count);
 
-namespace gpu {
-
-buffer_info make_index_buffer_info(uint _NumIndices, uint _NumVertices)
-{
-	buffer_info i;
-	i.type = buffer_type::index;
-	i.format = mesh::has_16bit_indices(_NumVertices) ? surface::r16_uint : surface::r32_uint;
-	i.array_size = _NumIndices;
-	i.struct_byte_size = static_cast<ushort>(surface::element_size(i.format));
-	return i;
-}
-
-buffer_info make_vertex_buffer_info(uint _NumVertices, const oGPUUtilLayout::value& _Layout)
-{
-	buffer_info i;
-	i.type = buffer_type::vertex;
-	i.array_size = _NumVertices;
-	i.struct_byte_size = static_cast<ushort>(CalcVertexSize(_Layout));
-	i.format = surface::unknown;
-	return i;
-}
-
-	} // namespace gpu
 } // namespace ouro

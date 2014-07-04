@@ -88,31 +88,25 @@
     <ClCompile Include="d3d_util.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
+    <ClCompile Include="index_buffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="vertex_buffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPU.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h">
-      <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="dxgi_util.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="d3dx11_util.h">
       <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h">
-      <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="d3d_include.h">
       <Filter>Source\D3D11</Filter>
@@ -133,9 +127,6 @@
       <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\state.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\render_target.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\vertex_layout.h">
@@ -183,6 +174,27 @@
     <ClInclude Include="d3d_util.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPU.h">
+      <Filter>Headers\old</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h">
+      <Filter>Headers\old</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h">
+      <Filter>Headers\old</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\render_target.h">
+      <Filter>Headers\old</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\vertex_buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\index_buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h">
+      <Filter>Headers\old</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -196,6 +208,9 @@
     </Filter>
     <Filter Include="Source\D3D11\old">
       <UniqueIdentifier>{78d15434-7ecb-49c7-99de-c973232b3524}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\old">
+      <UniqueIdentifier>{e87d699e-915e-41dd-ad55-7d6d031bae6f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -644,6 +644,9 @@ void copy_vertices(void* oRESTRICT* oRESTRICT dst, const element_array& dst_elem
 {
 	for (uint di = 0; di < dst_elements.size(); di++)
 	{
+		if (!dst[di])
+			continue;
+
 		const element& e = dst_elements[di];
 		const uint doff = calc_offset(dst_elements, di);
 		const uint dstride = calc_vertex_size(dst_elements, e.slot());
