@@ -27,11 +27,12 @@
 #ifndef oMesh_h
 #define oMesh_h
 
+#include <oBase/aabox.h>
 #include <oBase/color.h>
 #include <oBase/dec3n.h>
 #include <oBase/macros.h>
+#include <oBase/plane.h>
 #include <oBase/types.h>
-#include <oBase/aabox.h>
 #include <array>
 
 namespace ouro { namespace mesh {
