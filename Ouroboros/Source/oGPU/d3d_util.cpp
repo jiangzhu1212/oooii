@@ -184,13 +184,13 @@ void set_samplers(DeviceContext* dc, uint slot, uint num_samplers, const Sampler
 	if (gpu_stage_flags & stage_flag::compute)dc->CSSetSamplers(slot, num_samplers, s);
 }
 
-Buffer* make_buffer(const char* name, Device* dev, uint num_elements, uint element_stride, uint bind_flags, uint misc_flags, const void* init_data)
+Buffer* make_buffer(const char* name, Device* dev, uint element_stride, uint num_elements, D3D11_USAGE usage, uint bind_flags, uint misc_flags, const void* init_data)
 {
 	D3D11_BUFFER_DESC d = {0};
 	d.ByteWidth = num_elements * element_stride;
-	d.Usage = D3D11_USAGE_DEFAULT;
+	d.Usage = usage;
 	d.BindFlags = bind_flags;
-	d.CPUAccessFlags = 0;
+	d.CPUAccessFlags = usage == D3D11_USAGE_STAGING ? D3D11_CPU_ACCESS_READ : 0;
 	d.MiscFlags = misc_flags;
 	d.StructureByteStride = (misc_flags & D3D11_RESOURCE_MISC_BUFFER_STRUCTURED) ? element_stride : 0;
 
@@ -203,6 +203,30 @@ Buffer* make_buffer(const char* name, Device* dev, uint num_elements, uint eleme
 	oV(dev->CreateBuffer(&d, init_data ? &data : nullptr, &b));
 	debug_name(b, name);
 	return b;
+}
+
+void make_structured(const char* name, Device* dev, uint struct_stride, uint num_structs, const void* src, uint uav_flags, ShaderResourceView** out_srv, UnorderedAccessView** out_uav)
+{
+	intrusive_ptr<Buffer> buffer = make_buffer(name, dev, struct_stride, num_structs, D3D11_USAGE_DEFAULT, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_UNORDERED_ACCESS, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, src);
+
+	if (out_srv)
+	{
+		oV(dev->CreateShaderResourceView(buffer, nullptr, out_srv));
+		debug_name(*out_srv, name);
+	}
+	
+	if (out_uav)
+	{
+		D3D11_UNORDERED_ACCESS_VIEW_DESC ud;
+		ud.Format = DXGI_FORMAT_UNKNOWN;
+		ud.ViewDimension = D3D11_UAV_DIMENSION_BUFFER;
+		ud.Buffer.FirstElement = 0;
+		ud.Buffer.NumElements = num_structs;
+		ud.Buffer.Flags = uav_flags;
+
+		oV(dev->CreateUnorderedAccessView(buffer, &ud, out_uav));
+		debug_name(*out_uav, name);
+	}
 }
 
 template<typename ResourceDescT>
@@ -301,6 +325,21 @@ void update_buffer(DeviceContext* dc, View* v, uint byte_offset, uint num_bytes,
 	v->GetResource(&r);
 	oASSERT(D3D11_RESOURCE_DIMENSION_BUFFER == get_type(v), "must call on a buffer");
 	update_buffer(dc, (Buffer*)r.c_ptr(), byte_offset, num_bytes, src);
+}
+
+static UnorderedAccessView* s_NullUAVs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
+static uint s_NoopInitialCounts[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT] = { ~0u, ~0u, ~0u, ~0u, ~0u, ~0u, ~0u, ~0u, };
+static_assert(oCOUNTOF(s_NoopInitialCounts) == D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, "array mismatch");
+
+void unset_all_draw_targets(DeviceContext* dc)
+{
+	dc->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0
+		, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, s_NullUAVs, s_NoopInitialCounts);
+}
+
+void unset_all_dispatch_targets(DeviceContext* dc)
+{
+	dc->CSSetUnorderedAccessViews(0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, s_NullUAVs, s_NoopInitialCounts);
 }
 
 // Return the size stored inside D3D11-era bytecode. This can be used anywhere bytecode size is expected.

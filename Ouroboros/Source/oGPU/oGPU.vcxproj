@@ -126,12 +126,16 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oGPU\compute_target.h" />
     <ClInclude Include="..\..\Include\oGPU\constant_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\index_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h" />
+    <ClInclude Include="..\..\Include\oGPU\raw_buffer.h" />
+    <ClInclude Include="..\..\Include\oGPU\readback_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\render_target.h" />
+    <ClInclude Include="..\..\Include\oGPU\rwstructured_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\shader.h" />
     <ClInclude Include="..\..\Include\oGPU\state.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_buffer.h" />
@@ -162,6 +166,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="compute_target.cpp" />
     <ClCompile Include="constant_buffer.cpp" />
     <ClCompile Include="d3d11_as_string.cpp" />
     <ClCompile Include="d3d11_util.cpp" />
@@ -194,7 +199,10 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="raw_buffer.cpp" />
+    <ClCompile Include="readback_buffer.cpp" />
     <ClCompile Include="render_target.cpp" />
+    <ClCompile Include="rwstructured_buffer.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="state.cpp" />
     <ClCompile Include="vertex_buffer.cpp" />

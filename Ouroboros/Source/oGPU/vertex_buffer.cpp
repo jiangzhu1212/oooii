@@ -34,10 +34,10 @@ namespace ouro { namespace gpu {
 Device* get_device(device* dev);
 DeviceContext* get_dc(command_list* cl);
 
-void vertex_buffer::initialize(const char* name, device* dev, uint num_vertices, uint vertex_stride, const void* vertices)
+void vertex_buffer::initialize(const char* name, device* dev, uint vertex_stride, uint num_vertices, const void* vertices)
 {
 	deinitialize();
-	impl = (void*)make_buffer(name, get_device(dev), num_vertices, vertex_stride, D3D11_BIND_VERTEX_BUFFER, 0, vertices);
+	impl = (void*)make_buffer(name, get_device(dev), num_vertices, vertex_stride, D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, vertices);
 	vstride = vertex_stride;
 }
 

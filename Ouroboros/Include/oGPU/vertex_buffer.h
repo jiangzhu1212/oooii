@@ -42,7 +42,7 @@ public:
 	vertex_buffer() : impl(nullptr), vstride(0) {}
 	~vertex_buffer() { deinitialize(); }
 
-	void initialize(const char* name, device* dev, uint num_vertices, uint vertex_stride, const void* vertices = nullptr);
+	void initialize(const char* name, device* dev, uint vertex_stride, uint num_vertices, const void* vertices = nullptr);
 	void deinitialize();
 
 	char* name(char* dst, size_t dst_size) const;

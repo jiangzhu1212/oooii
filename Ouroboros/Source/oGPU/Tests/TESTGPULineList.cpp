@@ -58,7 +58,7 @@ public:
 	{
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH_COLOR));
 
-		LineList.initialize("LineList", Device.get(), 6, sizeof(oGPU_LINE_VERTEX));
+		LineList.initialize("LineList", Device.get(), sizeof(oGPU_LINE_VERTEX), 6);
 	}
 
 	void render()
