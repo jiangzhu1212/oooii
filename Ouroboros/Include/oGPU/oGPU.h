@@ -690,13 +690,6 @@ public:
 	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<resource>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
 	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<texture>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
 
-	// Set the constants in this context
-	virtual void set_buffers(uint _StartSlot, uint _NumBuffers, const buffer* const* _ppBuffers) = 0;
-
-	template<uint size> inline void set_buffers(uint _StartSlot, const buffer* const (&_ppBuffers)[size]) { set_buffers(_StartSlot, size, _ppBuffers); }
-	inline void set_buffer(uint _StartSlot, const buffer* _pBuffer) { set_buffers(_StartSlot, 1, (const buffer* const *)&_pBuffer); }
-	inline void set_buffer(uint _StartSlot, const std::shared_ptr<buffer>& _pBuffer) { set_buffers(_StartSlot, 1, (const buffer* const *)&_pBuffer); }
-
 	// Sets the render target to which rendering will occur. By default a single
 	// full-target viewport is created else it can be overridden. A viewport is 
 	// a 3D box whose minimum is at the top, left, near corner of the viewable 
@@ -756,46 +749,6 @@ public:
 	virtual void clear(render_target* _pRenderTarget, const clear_type::value& _Clear) = 0;
 	inline void clear(std::shared_ptr<render_target>& _pRenderTarget, const clear_type::value& _Clear) { clear(_pRenderTarget.get(), _Clear); }
 
-	// Submits the specified geometry inputs for rendering under the current state
-	// of the command list. If _pIndices is nullptr, then non-indexed drawing is
-	// done, else the indices are used to indirect into the vertex buffers.
-	// _StartPrimitive/_NumPrimitives are in the primitive set by the current 
-	// pipeline. If an instanced vertex buffer is set, then _StartInstance/
-	// _NumInstances can be used for instanced drawing in either indexed or non-
-	// indexed drawing.
-	virtual void draw(
-		const buffer* _pIndices
-		, uint _StartSlot
-		, uint _NumVertexBuffers
-		, const buffer* const* _ppVertexBuffers
-		, uint _StartPrimitive
-		, uint _NumPrimitives
-		, uint _StartInstance = invalid
-		, uint _NumInstances = invalid
-	) = 0;
-
-	inline void draw(
-		const std::shared_ptr<buffer>& _pIndices
-		, uint _StartSlot
-		, uint _NumVertexBuffers
-		, const std::shared_ptr<buffer>* _ppVertexBuffers
-		, uint _StartPrimitive
-		, uint _NumPrimitives
-		, uint _StartInstance = invalid
-		, uint _NumInstances = invalid
-		)
-	{
-		const buffer** VBs = (const buffer**)_alloca(sizeof(const buffer*) * _NumVertexBuffers);
-		for (uint i = 0; i < _NumVertexBuffers; i++)
-			VBs[i] = _ppVertexBuffers[i].get();
-		draw(_pIndices.get(), _StartSlot, _NumVertexBuffers, VBs, _StartPrimitive, _NumPrimitives, _StartInstance, _NumInstances);
-	}
-
-	// Draws points without any bound geometry but with the count provided by a GPU
-	// synthesized buffer.
-	virtual void draw(buffer* _pDrawArgs, uint _AlignedByteOffsetForArgs) = 0;
-	inline void draw(std::shared_ptr<buffer>& _pDrawArgs, uint _AlignedByteOffsetForArgs) { draw(_pDrawArgs.get(), _AlignedByteOffsetForArgs); }
-
 	// Generates mips from the top-level mip in the specified render target
 	// This happens wholly on the GPU.
 	virtual void generate_mips(render_target* _pRenderTarget) = 0;
@@ -821,10 +774,6 @@ public:
 	// initialization of an entry, thus retaining any prior value of the counter.
 	virtual void dispatch(compute_kernel* _pComputeKernel, const int3& _ThreadGroupCount) = 0;
 	inline void dispatch(std::shared_ptr<compute_kernel>& _pComputeKernel, const int3& _ThreadGroupCount) { dispatch(_pComputeKernel.get(), _ThreadGroupCount); }
-
-	// Same as Dispatch above, but it gets its thread group count from buffer.
-	virtual void dispatch(compute_kernel* _pComputeKernel, buffer* _pThreadGroupCountBuffer, uint _AlignedByteOffsetToThreadGroupCount) = 0;
-	inline void dispatch(std::shared_ptr<compute_kernel>& _pComputeKernel, std::shared_ptr<buffer>& _pThreadGroupCountBuffer, uint _AlignedByteOffsetToThreadGroupCount) { dispatch(_pComputeKernel.get(), _pThreadGroupCountBuffer.get(), _AlignedByteOffsetToThreadGroupCount); }
 };
 
 class device
@@ -859,7 +808,6 @@ public:
 	virtual std::shared_ptr<compute_kernel> make_compute_kernel(const char* _Name, const compute_kernel_info& _Info) = 0;
 	virtual std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) = 0;
 	virtual std::shared_ptr<render_target> make_render_target(const char* _Name, const render_target_info& _Info) = 0;
-	virtual std::shared_ptr<buffer> make_buffer(const char* _Name, const buffer_info& _Info) = 0;
 	virtual std::shared_ptr<texture> make_texture(const char* _Name, const texture_info& _Info) = 0;
 
 	// convenience versions of the above

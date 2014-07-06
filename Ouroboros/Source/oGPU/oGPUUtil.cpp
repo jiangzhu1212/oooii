@@ -48,39 +48,6 @@ void commit_buffer(device* _pDevice, buffer* _pBuffer, const void* _pStruct, uin
 	_pDevice->immediate()->commit(_pBuffer, 0, msr);
 }
 
-uint read_back_counter(buffer* _pUnorderedBuffer, buffer* _pPreallocatedReadbackBuffer)
-{
-	buffer_info i = _pUnorderedBuffer->get_info();
-	if (i.type != buffer_type::unordered_structured_append && i.type != buffer_type::unordered_structured_counter)
-		oTHROW_INVARG("the specified buffer must be of type buffer_type::unordered_structured_append or buffer_type::unordered_structured_counter");
-
-	std::shared_ptr<device> Device = _pUnorderedBuffer->get_device();
-
-	std::shared_ptr<buffer> CounterBuffer;
-	buffer* Counter = _pPreallocatedReadbackBuffer;
-	if (!Counter)
-	{
-		sstring Name;
-		snprintf(Name, "%s.Readback", _pUnorderedBuffer->name());
-
-		buffer_info rb;
-		rb.type = buffer_type::readback;
-		rb.struct_byte_size = sizeof(uint);
-
-		CounterBuffer = Device->make_buffer(Name, rb);
-		Counter = CounterBuffer.get();
-	}
-
-	Device->immediate()->copy_counter(Counter, 0, _pUnorderedBuffer);
-
-	surface::mapped_subresource msr;
-	if (!Device->map_read(Counter, 0, &msr, true))
-		return invalid; // pass through error
-	uint c = *(uint*)msr.data;
-	Device->unmap_read(Counter, 0);
-	return c;
-}
-
 bool read(resource* _pSourceResource, int _Subresource, surface::mapped_subresource& _Destination, bool _FlipVertically)
 {
 	std::shared_ptr<device> Device = _pSourceResource->get_device();

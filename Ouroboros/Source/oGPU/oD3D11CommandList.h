@@ -60,7 +60,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	void set_counters(uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pValues) override;
 	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) override;
 	void set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources) override;
-	void set_buffers(uint _StartSlot, uint _NumBuffers, const buffer* const* _ppBuffers) override;
 	void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
 
 	// _____________________________________________________________________________
@@ -71,18 +70,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	void set_blend_state(const blend_state::value& _State) override;
 	void set_depth_stencil_state(const depth_stencil_state::value& _State) override;
 	void clear(render_target* _pRenderTarget, const clear_type::value& _Clear) override;
-	void draw(
-		const buffer* _pIndices
-		, uint _StartSlot
-		, uint _NumVertexBuffers
-		, const buffer* const* _ppVertexBuffers
-		, uint _StartPrimitive
-		, uint _NumPrimitives
-		, uint _StartInstance = invalid
-		, uint _NumInstances = invalid
-	) override;
-
-	void draw(buffer* _pDrawArgs, uint _AlignedByteOffsetForArgs) override;
 	void generate_mips(render_target* _pRenderTarget) override;
 
 	// _____________________________________________________________________________
@@ -91,7 +78,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	void cleari(resource* _pUnorderedResource, const uint4& _Values) override;
 	void clearf(resource* _pUnorderedResource, const float4& _Values) override;
 	void dispatch(compute_kernel* _pComputeShader, const int3& _ThreadGroupCount) override;
-	void dispatch(compute_kernel* _pComputeShader, buffer* _pThreadGroupCountBuffer, uint _AlignedByteOffsetToThreadGroupCount) override;
 
 	device* WeakDevice;
 	intrusive_ptr<ID3D11DeviceContext> Context;

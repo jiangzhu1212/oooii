@@ -46,20 +46,6 @@ template<typename T> void commit_buffer(command_list* _pCommandList, buffer* _pB
 template<typename T> void commit_buffer(device* _pDevice, buffer* _pBuffer, const T& _Struct) { commit_buffer(_pDevice, _pBuffer, &_Struct, sizeof(_Struct), 1); }
 template<typename T> void commit_buffer(device* _pDevice, buffer* _pBuffer, const T* _pStructArray, uint _NumStructs) { commit_buffer(_pDevice, _pBuffer, _pStructArray, sizeof(T), _NumStructs); }
 
-// Optionally allocates a new buffer and reads the counter from the specified 
-// buffer into it. For performance a buffer can be specified to receive the 
-// counter value. The value is the read back to a uint using the immediate 
-// command list. The purpose of this utility code is primarily to wrap the 
-// lengthy code it takes to get the counter out for debugging/inspection 
-// purposes and should not be used in production code since it synchronizes/
-// stalls the device. This returns ouro::invalid on failure. REMEMBER THAT THIS MUST 
-// BE CALLED AFTER A FLUSH OF ALL COMMANDLISTS THAT WOULD UPDATE THE COUNTER. 
-// i.e. the entire app should use the immediate command list, otherwise this 
-// could be sampling stale data. If using the immediate command list everywhere 
-// is not an option, this must be called after Device::end_frame() to have valid 
-// values.
-uint read_back_counter(buffer* _pUnorderedBuffer, buffer* _pPreallocatedReadbackBuffer = nullptr);
-
 // Reads the source resource into the memory pointed at in the destination struct. 
 // Since this is often used for textures flip vertically can do an in-place/
 // during-copy flip. This returns the result of map_read. 
