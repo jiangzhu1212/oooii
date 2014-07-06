@@ -42,6 +42,26 @@ Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format
 ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size);
 ShaderResourceView* make_srv(Resource* r, surface::format format, uint array_size);
 
+// common struct for information from various texture types (including buffers, dimensions are (element_stride, num_elements, 1))
+struct texture_info
+{
+	texture_info()
+		: dimensions(0,0,0)
+		, array_size(0)
+		, type(D3D11_RESOURCE_DIMENSION_UNKNOWN)
+		, format(DXGI_FORMAT_UNKNOWN)
+		, usage(D3D11_USAGE_DEFAULT)
+	{}
+
+	ushort3 dimensions;
+	ushort array_size;
+	D3D11_RESOURCE_DIMENSION type;
+	DXGI_FORMAT format;
+	D3D11_USAGE usage;
+};
+
+texture_info get_texture_info(Resource* r);
+	
 // sets to all pipeline stages
 void set_cbs(DeviceContext* dc, uint slot, uint num_buffers, Buffer* const* buffers, uint gpu_stage_flags = ~0u);
 void set_srvs(DeviceContext* dc, uint slot, uint num_srvs, ShaderResourceView* const* srvs, uint gpu_stage_flags = ~0u);
@@ -59,6 +79,10 @@ Resource* make_cpu_copy(Resource* src, bool do_copy = true);
 // calls UpdateSubresource for the specified buffer. This won't work for a D3D11_BIND_CONSTANT_BUFFER.
 void update_buffer(DeviceContext* dc, Buffer* b, uint byte_offset, uint num_bytes, const void* src);
 void update_buffer(DeviceContext* dc, View* v, uint byte_offset, uint num_bytes, const void* src);
+
+// calls UpdateSubresource for the specified buffer.
+void update_texture(DeviceContext* dc, bool device_supports_deferred_contexts, Resource* r, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region = surface::box());
+inline void update_texture(DeviceContext* dc, bool device_supports_deferred_contexts, Resource* r, uint subresource, const surface::mapped_subresource& src, const surface::box& region = surface::box()) { update_texture(dc, device_supports_deferred_contexts, r, subresource, (const surface::const_mapped_subresource&)src, region); }
 
 inline D3D11_RESOURCE_DIMENSION get_type(Resource* r) { D3D11_RESOURCE_DIMENSION type; r->GetType(&type); return type; }
 inline D3D11_RESOURCE_DIMENSION get_type(View* v) { Resource* r = nullptr; v->GetResource(&r); D3D11_RESOURCE_DIMENSION type = get_type(r); r->Release(); return type; }

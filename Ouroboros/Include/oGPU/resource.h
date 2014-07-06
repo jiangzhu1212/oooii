@@ -22,33 +22,38 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/texture2d.h>
+#pragma once
+#ifndef oGPU_resource_h
+#define oGPU_resource_h
 
-using namespace ouro::gpu;
+#include <oBase/types.h>
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace gpu {
 
-static const bool kIsDevMode = false;
+class command_list;
 
-struct gpu_test_texture2dmip : public gpu_texture_test
+class resource
 {
-	gpu_test_texture2dmip() : gpu_texture_test("GPU test: texture2dmip", kIsDevMode) {}
+public:
+	resource() : ro(nullptr) {}
+	~resource() { deinitialize(); }
 
-	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_2D; }
-	resource* make_test_texture() override
-	{
-		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", surface::alpha_option::force_alpha);
-		t.initialize("Test 2D", Device.get(), *image.get(), true);
-		return &t;
-	}
+	void deinitialize();
 
-	texture2d t;
+	char* name(char* dst, size_t dst_size) const;
+
+	static void set(command_list* cl, uint slot, uint num_resources, resource* const* resources);
+	void set(command_list* cl, uint slot);
+
+	void set_highest_mip(command_list* cl, float mip);
+	void update(command_list* cl, uint subresource, const void* src, uint row_pitch, uint slice_pitch = 0);
+
+	inline void* get_resource() const { return ro; }
+
+protected:
+	void* ro;
 };
+	
+}}
 
-oGPU_COMMON_TEST(texture2dmip);
-
-	} // namespace tests
-} // namespace ouro
+#endif

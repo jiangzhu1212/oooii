@@ -30,13 +30,13 @@
 
 oGPU_NAMESPACE_BEGIN
 
-oRESOURCE_CLASS(texture)
+oRESOURCE_CLASS(texture1)
 {
 	//oRESOURCE_DECLARATION(oD3D11, Texture);
 public:
 	oRESOURCE_INTERFACE__
-	d3d11_texture(std::shared_ptr<device>& _Device, const char* _Name, const texture_info& _Info, ID3D11Resource* _pTexture = nullptr);
-	~d3d11_texture();
+	d3d11_texture1(std::shared_ptr<device>& _Device, const char* _Name, const texture1_info& _Info, ID3D11Resource* _pTexture = nullptr);
+	~d3d11_texture1();
 
 	union //intrusive_ptr<ID3D11Texture2D> Texture;
 	{
@@ -50,7 +50,7 @@ public:
 	intrusive_ptr<ID3D11UnorderedAccessView> UAV;
 
 	// Texture2 is used to emulate YUV and other planar sized formats.
-	std::shared_ptr<texture> Texture2;
+	std::shared_ptr<texture1> Texture2;
 };
 
 oGPU_NAMESPACE_END

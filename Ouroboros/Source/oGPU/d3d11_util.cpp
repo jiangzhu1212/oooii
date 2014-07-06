@@ -338,7 +338,7 @@ void update_subresource(ID3D11DeviceContext* _pDeviceContext
 	, bool _DeviceSupportsDeferredContexts)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
-	gpu::texture_info info = get_texture_info(_pDstResource, false, &Usage);
+	gpu::texture1_info info = get_texture_info1(_pDstResource, false, &Usage);
 
 	//D3D11_BOX DstBox;
 	const D3D11_BOX* pLocalDstBox = _pDstBox;
@@ -430,7 +430,7 @@ void set_srvs(ID3D11DeviceContext* _pDeviceContext
 		{
 			intrusive_ptr<ID3D11Resource> Resource;
 			const_cast<ID3D11ShaderResourceView*>(_ppViews[i])->GetResource(&Resource);
-			gpu::texture_info i = get_texture_info(Resource);
+			gpu::texture1_info i = get_texture_info1(Resource);
 			if (gpu::is_unordered(i.type))
 			{
 				OneUnorderedBufferFound = true;
@@ -541,7 +541,7 @@ static const GUID oWKPDID_oBackPointer = { 0x6489b24e, 0xc12e, 0x40c2, { 0xa9, 0
 void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, unsigned int _Subresource, surface::mapped_subresource* _pMappedResource)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
-	texture_info d;
+	texture1_info d;
 	oD3D11GetTextureDesc(_pResource, &d, &Usage);
 
 	switch (Usage)
@@ -567,7 +567,7 @@ void oD3D11MapWriteDiscard(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource*
 void oD3D11Unmap(ID3D11DeviceContext* _pDeviceContext, ID3D11Resource* _pResource, unsigned int _Subresource, surface::mapped_subresource& _MappedResource)
 {
 	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
-	texture_info d;
+	texture1_info d;
 	oD3D11GetTextureDesc(_pResource, &d, &Usage);
 	switch (Usage)
 	{

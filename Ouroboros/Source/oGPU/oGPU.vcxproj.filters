@@ -97,6 +97,21 @@
     <ClCompile Include="vertex_buffer.cpp">
       <Filter>Source\buffers</Filter>
     </ClCompile>
+    <ClCompile Include="resource.cpp">
+      <Filter>Source\textures</Filter>
+    </ClCompile>
+    <ClCompile Include="texture1d.cpp">
+      <Filter>Source\textures</Filter>
+    </ClCompile>
+    <ClCompile Include="texture2d.cpp">
+      <Filter>Source\textures</Filter>
+    </ClCompile>
+    <ClCompile Include="texture3d.cpp">
+      <Filter>Source\textures</Filter>
+    </ClCompile>
+    <ClCompile Include="texturecube.cpp">
+      <Filter>Source\textures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -200,6 +215,21 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\compute_target.h">
       <Filter>Headers\buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\resource.h">
+      <Filter>Headers\textures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\texture1d.h">
+      <Filter>Headers\textures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\texture2d.h">
+      <Filter>Headers\textures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\texture3d.h">
+      <Filter>Headers\textures</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\texturecube.h">
+      <Filter>Headers\textures</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

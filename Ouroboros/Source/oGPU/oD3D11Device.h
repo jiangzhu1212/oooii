@@ -62,10 +62,10 @@ public:
 	std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) override;
 	std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) override;
 	std::shared_ptr<render_target> make_render_target(const char* _Name, const render_target_info& _Info) override;
-	std::shared_ptr<texture> make_texture(const char* _Name, const texture_info& _Info) override;
+	std::shared_ptr<texture1> make_texture1(const char* _Name, const texture1_info& _Info) override;
 
-	bool map_read(resource* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) override;
-	void unmap_read(resource* _pReadbackResource, int _Subresource) override;
+	bool map_read(resource1* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) override;
+	void unmap_read(resource1* _pReadbackResource, int _Subresource) override;
 	bool read_query(query* _pQuery, void* _pData, uint _SizeofData) override;
 	bool begin_frame() override;
 	void end_frame() override;
@@ -79,10 +79,10 @@ public:
 	// Implementation API
 
 	// Implements Reserve() in the specified context (immediate or deferred).
-	surface::mapped_subresource reserve(ID3D11DeviceContext* _pDeviceContext, resource* _pResource, int _Subresource);
+	surface::mapped_subresource reserve(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource);
 
 	// Implements Commit() in the specified context (immediate or deferred).
-	void commit(ID3D11DeviceContext* _pDeviceContext, resource* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion);
+	void commit(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion);
 
 	// Registers a command list in the submission vector sorted by its DrawOrder.
 	// If there is already a command list at the specified order, then this 

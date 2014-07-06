@@ -22,33 +22,32 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/texture2d.h>
+#pragma once
+#ifndef oGPU_texture1d_h
+#define oGPU_texture1d_h
 
-using namespace ouro::gpu;
+#include <oGPU/resource.h>
+#include <oSurface/surface.h>
+#include <oSurface/buffer.h>
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace gpu {
 
-static const bool kIsDevMode = false;
+class device;
+class command_list;
 
-struct gpu_test_texture2dmip : public gpu_texture_test
+class texture1d : public resource
 {
-	gpu_test_texture2dmip() : gpu_texture_test("GPU test: texture2dmip", kIsDevMode) {}
-
-	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_2D; }
-	resource* make_test_texture() override
-	{
-		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", surface::alpha_option::force_alpha);
-		t.initialize("Test 2D", Device.get(), *image.get(), true);
-		return &t;
-	}
-
-	texture2d t;
+public:
+	texture1d() {}
+	~texture1d() { deinitialize(); }
+	void initialize(const char* name, device* dev, surface::format format, uint width, uint array_size, bool mips);
+	void initialize(const char* name, device* dev, const surface::buffer& src, bool mips);
+	uint width() const;
+	uint array_size() const;
+	void update(command_list* cl, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region = surface::box());
+	void update(command_list* cl, uint subresource, const surface::mapped_subresource& src, const surface::box& region = surface::box()) { update(cl, subresource, (const surface::const_mapped_subresource&)src, region); }
 };
+	
+}}
 
-oGPU_COMMON_TEST(texture2dmip);
-
-	} // namespace tests
-} // namespace ouro
+#endif

@@ -124,7 +124,7 @@ void d3d11_render_target::recreate_depth(const int2& _Dimensions)
 		DepthStencilTexture = nullptr;
 		DSV = nullptr;
 
-		texture_info i;
+		texture1_info i;
 		i.dimensions = ushort3(_Dimensions, 1);
 		i.array_size = 0;
 		i.format = Info.depth_stencil_format;
@@ -132,7 +132,7 @@ void d3d11_render_target::recreate_depth(const int2& _Dimensions)
 		d3d::new_texture New = d3d::make_texture(D3DDevice, n, i, nullptr);
 		intrusive_ptr<ID3D11Texture2D> Depth = New.pTexture2D;
 		DSV = New.pDSV;
-		DepthStencilTexture = std::make_shared<d3d11_texture>(Device, name(), texture_info(), Depth);
+		DepthStencilTexture = std::make_shared<d3d11_texture1>(Device, name(), texture1_info(), Depth);
 	}
 }
 
@@ -167,7 +167,7 @@ void d3d11_render_target::resize(const int3& _NewDimensions)
 				intrusive_ptr<ID3D11Texture2D> SwapChainTexture;
 				oV(SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&SwapChainTexture));
 				bool textureSuccess = false;
-				Textures[0] = std::make_shared<d3d11_texture>(Device, name(), texture_info(), SwapChainTexture);
+				Textures[0] = std::make_shared<d3d11_texture1>(Device, name(), texture1_info(), SwapChainTexture);
 				d3d::make_rtv(name(), SwapChainTexture, RTVs[0]);
 				Info.array_size = 0;
 				Info.num_mrts = 1;
@@ -179,13 +179,13 @@ void d3d11_render_target::resize(const int3& _NewDimensions)
 				{
 					lstring n;
 					snprintf(n, "%s%02d", name(), i);
-					texture_info ti;
+					texture1_info ti;
 					ti.dimensions = New;
 					ti.format = Info.format[i];
 					ti.array_size = Info.array_size;
 					ti.type = Info.has_mips ? texture_type::mipped_render_target_2d : texture_type::render_target_2d;
-					Textures[i] = Device->make_texture(n, ti);
-					d3d::make_rtv(name(), static_cast<d3d11_texture*>(Textures[i].get())->pTexture2D, RTVs[0]);
+					Textures[i] = Device->make_texture1(n, ti);
+					d3d::make_rtv(name(), static_cast<d3d11_texture1*>(Textures[i].get())->pTexture2D, RTVs[0]);
 				}
 			}
 
@@ -196,13 +196,13 @@ void d3d11_render_target::resize(const int3& _NewDimensions)
 	}
 }
 
-std::shared_ptr<texture> d3d11_render_target::get_texture(int _MRTIndex)
+std::shared_ptr<texture1> d3d11_render_target::get_texture(int _MRTIndex)
 {
 	oCHECK(_MRTIndex < Info.num_mrts, "Invalid MRT index");
 	return Textures[_MRTIndex];
 }
 
-std::shared_ptr<texture> d3d11_render_target::get_depth_texture()
+std::shared_ptr<texture1> d3d11_render_target::get_depth_texture()
 {
 	return DepthStencilTexture;
 }
@@ -211,7 +211,7 @@ std::shared_ptr<surface::buffer> d3d11_render_target::make_snapshot(int _MRTInde
 {
 	if (!Textures[_MRTIndex])		
 		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");
-	return d3d::make_snapshot(static_cast<d3d11_texture*>(Textures[_MRTIndex].get())->pTexture2D);
+	return d3d::make_snapshot(static_cast<d3d11_texture1*>(Textures[_MRTIndex].get())->pTexture2D);
 }
 
 oGPU_NAMESPACE_END

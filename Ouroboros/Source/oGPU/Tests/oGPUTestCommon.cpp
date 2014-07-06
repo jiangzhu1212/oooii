@@ -131,7 +131,7 @@ void gpu_texture_test::initialize()
 	TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
 	Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(get_pipeline()));
 	Mesh.initialize_first_cube(Device.get());
-	Texture = make_test_texture();
+	pResource = make_test_texture();
 }
 
 float gpu_texture_test::rotation_step()
@@ -163,7 +163,7 @@ void gpu_texture_test::render()
 	CommandList->set_rasterizer_state(rasterizer_state::front_face);
 	TestConstants.set(CommandList.get(), 0);
 	CommandList->set_sampler(0, sampler_state::linear_wrap);
-	CommandList->set_shader_resource(0, Texture);
+	resource::set(CommandList.get(), 0, 1, &pResource);
 	CommandList->set_pipeline(Pipeline);
 	CommandList->set_render_target(PrimaryRenderTarget);
 	Mesh.draw(CommandList.get());

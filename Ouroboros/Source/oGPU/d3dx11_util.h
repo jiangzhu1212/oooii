@@ -55,12 +55,12 @@ void save(const surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, vo
 // values from the specified file. If the type has mips then mips will be 
 // allocated but not filled in.
 intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture_info& _Info
+	, const gpu::texture1_info& _Info
 	, const char* _DebugName
 	, const path& _Path);
 
 intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture_info& _Info
+	, const gpu::texture1_info& _Info
 	, const char* _DebugName
 	, const void* _pBuffer
 	, size_t _SizeofBuffer);

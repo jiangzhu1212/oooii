@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+#include <oGPU/texture1d.h>
 
 using namespace ouro::gpu;
 
@@ -38,12 +38,14 @@ struct gpu_test_texture1d : public gpu_texture_test
 	gpu_test_texture1d() : gpu_texture_test("GPU test: texture 1D", kIsDevMode) {}
 
 	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_1D; } 
-	std::shared_ptr<texture> make_test_texture() override
+	resource* make_test_texture() override
 	{
 		auto image = make_1D(512);
-		auto* i = image.get();
-		return make_texture(Device, "Test 1D", &i, 1, texture_type::default_1d);
+		t.initialize("Test 1D", Device.get(), *image.get(), false);
+		return &t;
 	}
+
+	texture1d t;
 };
 
 oGPU_COMMON_TEST(texture1d);

@@ -82,7 +82,7 @@ struct gpu_test_render_target : public gpu_test
 		// draw order of the command lists defines the render target before the 
 		// main scene, this should come out as a cube with a triangle texture.
 
-		std::shared_ptr<texture> Texture = RenderTarget->get_texture(0);
+		std::shared_ptr<texture1> Texture = RenderTarget->get_texture(0);
 
 		render_main_scene(CLMainScene.get(), Texture.get(), PrimaryRenderTarget.get());
 		render_to_target(CLRenderTarget.get(), RenderTarget.get());
@@ -111,7 +111,7 @@ private:
 		_pCommandList->end();
 	}
 
-	void render_main_scene(command_list* _pCommandList, texture* _pTexture, render_target* _pTarget)
+	void render_main_scene(command_list* _pCommandList, texture1* _pTexture, render_target* _pTarget)
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 

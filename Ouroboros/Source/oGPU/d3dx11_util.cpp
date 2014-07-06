@@ -126,7 +126,7 @@ static intrusive_ptr<ID3D11Resource> prepare_source(ID3D11Resource* _pResource
 	intrusive_ptr<ID3D11Device> Device;
 	_pResource->GetDevice(&Device);
 	Device->GetImmediateContext(_ppDeviceContext);
-	gpu::texture_info i = d3d::get_texture_info(_pResource);
+	gpu::texture1_info i = d3d::get_texture_info1(_pResource);
 	if (surface::is_block_compressed(i.format) && _Format != D3DX11_IFF_DDS)
 		throw std::invalid_argument("D3DX11 can save block compressed formats only to .dds files.");
 	intrusive_ptr<ID3D11Resource> Source = gpu::is_readback(i.type) ? _pResource : d3d::make_cpu_copy(_pResource);
@@ -146,7 +146,7 @@ static intrusive_ptr<ID3D11Resource> prepare_source(const surface::buffer* _pSur
 	, D3DX11_IMAGE_FILE_FORMAT _Format)
 {
 	surface::info si = _pSurface->get_info();
-	gpu::texture_info info;
+	gpu::texture1_info info;
 	info.dimensions = si.dimensions;
 	info.format = si.format;
 	info.array_size = (ushort)si.array_size;
@@ -183,7 +183,7 @@ void save(const surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, vo
 	save(Source, _Format, _pBuffer, _SizeofBuffer); // pass through error
 }
 
-static D3DX11_IMAGE_LOAD_INFO get_image_load_info(const gpu::texture_info& _Info)
+static D3DX11_IMAGE_LOAD_INFO get_image_load_info(const gpu::texture1_info& _Info)
 {
 	D3DX11_IMAGE_LOAD_INFO ili;
 	ili.Width = _Info.dimensions.x == 0 ? D3DX11_FROM_FILE : _Info.dimensions.x;
@@ -199,7 +199,7 @@ static D3DX11_IMAGE_LOAD_INFO get_image_load_info(const gpu::texture_info& _Info
 }
 
 intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture_info& _Info, const char* _DebugName, const path& _Path)
+	, const gpu::texture1_info& _Info, const char* _DebugName, const path& _Path)
 {
 	D3DX11_IMAGE_LOAD_INFO li = get_image_load_info(_Info);
 	intrusive_ptr<ID3D11Resource> Texture;
@@ -209,7 +209,7 @@ intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
 }
 
 intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture_info& _Info
+	, const gpu::texture1_info& _Info
 	, const char* _DebugName
 	, const void* _pBuffer
 	, size_t _SizeofBuffer)
@@ -281,7 +281,7 @@ void convert(ID3D11Texture2D* _pSourceTexture, surface::format _NewFormat
 	intrusive_ptr<ID3D11Device> Device;
 	_pSourceTexture->GetDevice(&Device);
 
-	gpu::texture_info info;
+	gpu::texture1_info info;
 	info.dimensions = ushort3(static_cast<ushort>(desc.Width), static_cast<ushort>(desc.Height), 1);
 	info.array_size = as_ushort(desc.ArraySize);
 	info.format = _NewFormat;
@@ -302,7 +302,7 @@ void convert(ID3D11Device* _pDevice
 	, surface::format _SourceFormat
 	, const int2& _MipDimensions)
 {
-	gpu::texture_info i;
+	gpu::texture1_info i;
 	i.dimensions = ushort3(_MipDimensions, 1);
 	i.array_size = 1;
 	i.format = _SourceFormat;

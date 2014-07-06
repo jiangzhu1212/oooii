@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+#include <oGPU/texture3d.h>
 
 using namespace ouro::gpu;
 
@@ -38,7 +38,7 @@ struct gpu_test_texture3d : public gpu_texture_test
 	gpu_test_texture3d() : gpu_texture_test("GPU test: texture3d", kIsDevMode) {}
 
 	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_3D; }
-	std::shared_ptr<texture> make_test_texture() override
+	resource* make_test_texture() override
 	{
 		auto red = surface_load(filesystem::data_path() / "Test/Textures/Red.png", surface::alpha_option::force_alpha);
 		auto green = surface_load(filesystem::data_path() / "Test/Textures/Green.png", surface::alpha_option::force_alpha);
@@ -48,9 +48,12 @@ struct gpu_test_texture3d : public gpu_texture_test
 		images[0] = red.get();
 		images[1] = green.get();
 		images[2] = blue.get();
-
-		return make_texture(Device, "Test 3D", images, oCOUNTOF(images), texture_type::default_3d);
+		auto image = surface::buffer::make(images, 3, surface::buffer::image3d);
+		t.initialize("Test 3D", Device.get(), *image, false);
+		return &t;
 	}
+
+	texture3d t;
 };
 
 oGPU_COMMON_TEST(texture3d);

@@ -78,7 +78,7 @@ namespace resource_type
 { oDECLARE_SMALL_ENUM(value, uchar) {
 
 	buffer,
-	texture,
+	texture1,
 
 	count,
 
@@ -213,18 +213,18 @@ public:
 	virtual const char* name() const = 0;
 };
 
-class resource : public device_child
+class resource1 : public device_child
 {
 	// Anything that contains data intended primarily for read-only access by the 
-	// GPU processor is a resource. This does not exclude write access but 
+	// GPU processor is a resource1. This does not exclude write access but 
 	// generally differentiates these objects from process and target classs
 	// that are mostly write-only.
 
 public:
-	// Returns the type of this resource.
+	// Returns the type of this resource1.
 	virtual resource_type::value type() const = 0;
 
-	// Returns an ID for this resource fit for use as a hash.
+	// Returns an ID for this resource1 fit for use as a hash.
 	virtual uint id() const = 0;
 
 	// Returns the component sizes of a subresource. X is the RowSize or the 
@@ -309,7 +309,7 @@ struct buffer_info
 	uint array_size;
 };
 
-class buffer : public resource
+class buffer : public resource1
 {
 	// Buffers are directly accessed as memory - not through a sampler.
 public:
@@ -430,9 +430,9 @@ inline texture_type::value add_array(const texture_type::value& _Type) { return 
 inline texture_type::value remove_mipped(const texture_type::value& _Type) { return (texture_type::value)(_Type & ~texture_type::flag_mipped); }
 inline texture_type::value remove_render_target(const texture_type::value& _Type) { return (texture_type::value)(_Type & ~texture_type::usage_render_target); }
 
-struct texture_info
+struct texture1_info
 {
-	texture_info()
+	texture1_info()
 		: type(texture_type::default_2d)
 		, format(surface::b8g8r8a8_unorm)
 		, dimensions(0, 0, 0)
@@ -460,13 +460,13 @@ namespace clear_type
 
 };}
 
-class texture : public resource
+class texture1 : public resource1
 {
 	// A large buffer usually filled with image data that is often accessed
 	// through a texture sampler. A texture is often read-only or the read
 	// interface for a render_target.
 public:
-	virtual texture_info get_info() const = 0;
+	virtual texture1_info get_info() const = 0;
 };
 
 class render_target : public device_child
@@ -485,11 +485,11 @@ public:
 	inline void resize(const int2& _NewDimensions) { resize(int3(_NewDimensions, 1)); }
 
 	// Accesses a readable texture for the specified render target in an MRT.
-	virtual std::shared_ptr<texture> get_texture(int _MRTIndex) = 0;
+	virtual std::shared_ptr<texture1> get_texture(int _MRTIndex) = 0;
 
 	// Accesses a readable texture for the depth-stencil buffer. This will throw if 
 	// there is no depth-stencil buffer or if the buffer is a non-readable format.
-	virtual std::shared_ptr<texture> get_depth_texture() = 0;
+	virtual std::shared_ptr<texture1> get_depth_texture() = 0;
 
 	// Creates a buffer of the contents of the render target. This should be 
 	// called at times when it is known the render target has been fully resolved,
@@ -618,28 +618,28 @@ public:
 	virtual void reset() = 0;
 
 	// Allocates internal device memory that can be written to (not read) and 
-	// committed to the device to update the specified resource.
-	virtual surface::mapped_subresource reserve(resource* _pResource, int _Subresource) = 0;
+	// committed to the device to update the specified resource1.
+	virtual surface::mapped_subresource reserve(resource1* _pResource, int _Subresource) = 0;
 	template<typename T> surface::mapped_subresource reserve(std::shared_ptr<T>& _pResource, int _Subresource) { return reserve(_pResource.get(), _Subresource); }
 
-	// Commits memory to the specified resource. If the memory in _Source. 
+	// Commits memory to the specified resource1. If the memory in _Source. 
 	// was reserved, then this will free the memory. If _Source.data is user 
 	// memory, it will not be freed. If the specified rectangle is empty on any 
 	// dimension, then the entire surface will be copied (default behavior). If 
 	// the item is a buffer then units are in structs, i.e. Left=0, Right=ArraySize 
 	// would be a full copy. Ensure that the other dimension are not empty/equal 
 	// even in the buffer case.
-	virtual void commit(resource* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) = 0;
-	inline void commit(resource* _pResource, int _Subresource, const surface::const_mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) { commit(_pResource, _Subresource, (const surface::mapped_subresource&)_Source, _Subregion); }
+	virtual void commit(resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) = 0;
+	inline void commit(resource1* _pResource, int _Subresource, const surface::const_mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) { commit(_pResource, _Subresource, (const surface::mapped_subresource&)_Source, _Subregion); }
 	
 	template<typename T> void commit(std::shared_ptr<T>& _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) { commit(_pResource.get(), _Subresource, (const surface::mapped_subresource&)_Source, _Subregion); }
 	template<typename T> void commit(std::shared_ptr<T>& _pResource, int _Subresource, const surface::const_mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) { commit(_pResource.get(), _Subresource, _Source, _Subregion); }
 
-	// Copies the contents from one resource to another. Both must have compatible 
+	// Copies the contents from one resource1 to another. Both must have compatible 
 	// (often identical) topologies. A common use of this API is to copy from a 
-	// source resource to a readback copy of the same resource so it can be 
+	// source resource1 to a readback copy of the same resource1 so it can be 
 	// accessed from the CPU.
-	virtual void copy(resource* _pDestination, resource* _pSource) = 0;
+	virtual void copy(resource1* _pDestination, resource1* _pSource) = 0;
 	template<typename T, typename U> void copy(std::shared_ptr<T>& _pDestination, std::shared_ptr<U>& _pSource) { copy(_pDestination.get(), _pSource.get()); }
 
 	// Copies from one buffer to another with offsets in bytes.
@@ -651,23 +651,23 @@ public:
 	inline void set_sampler(uint _StartSlot, const sampler_state::value& _SamplerState) { set_samplers(_StartSlot, 1, &_SamplerState); }
 
 	// Set any shader resources (textures or buffers not accessed as constants)
-	virtual void set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources) = 0;
-	inline void set_shader_resources(uint _StartSlot, uint _NumResources, const buffer* const* _ppResources) { set_shader_resources(_StartSlot, _NumResources, (const resource* const*)_ppResources); }
-	inline void set_shader_resources(uint _StartSlot, uint _NumResources, const texture* const* _ppResources) { set_shader_resources(_StartSlot, _NumResources, (const resource* const*)_ppResources); }
+	virtual void set_shader_resources(uint _StartSlot, uint _NumResources, const resource1* const* _ppResources) = 0;
+	inline void set_shader_resources(uint _StartSlot, uint _NumResources, const buffer* const* _ppResources) { set_shader_resources(_StartSlot, _NumResources, (const resource1* const*)_ppResources); }
+	inline void set_shader_resources(uint _StartSlot, uint _NumResources, const texture1* const* _ppResources) { set_shader_resources(_StartSlot, _NumResources, (const resource1* const*)_ppResources); }
 	
-	template<uint size> void set_shader_resources(uint _StartSlot, const resource* const (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const resource* const*)_ppResources); }
+	template<uint size> void set_shader_resources(uint _StartSlot, const resource1* const (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const resource1* const*)_ppResources); }
 	template<uint size> void set_shader_resources(uint _StartSlot, const buffer* const (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const buffer* const*)_ppResources); }
-	template<uint size> void set_shader_resources(uint _StartSlot, const texture* const (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const texture* const*)_ppResources); }
+	template<uint size> void set_shader_resources(uint _StartSlot, const texture1* const (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const texture1* const*)_ppResources); }
 
-	template<uint size> void set_shader_resources(uint _StartSlot, const std::shared_ptr<resource> (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const resource* const*)_ppResources); }
+	template<uint size> void set_shader_resources(uint _StartSlot, const std::shared_ptr<resource1> (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const resource1* const*)_ppResources); }
 	template<uint size> void set_shader_resources(uint _StartSlot, const std::shared_ptr<buffer> (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const buffer* const*)_ppResources); }
-	template<uint size> void set_shader_resources(uint _StartSlot, const std::shared_ptr<texture> (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const texture* const*)_ppResources); }
+	template<uint size> void set_shader_resources(uint _StartSlot, const std::shared_ptr<texture1> (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const texture* const*)_ppResources); }
 	
-	inline void set_shader_resource(uint _StartSlot, const resource* _pResource) { set_shader_resources(_StartSlot, 1, &_pResource); }
-	inline void set_shader_resource(uint _StartSlot, const texture* _pResource) { set_shader_resources(_StartSlot, 1, &_pResource); }
+	inline void set_shader_resource(uint _StartSlot, const resource1* _pResource) { set_shader_resources(_StartSlot, 1, &_pResource); }
+	inline void set_shader_resource(uint _StartSlot, const texture1* _pResource) { set_shader_resources(_StartSlot, 1, &_pResource); }
 
-	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<resource>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
-	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<texture>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
+	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<resource1>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
+	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<texture1>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
 
 	// Sets the render target to which rendering will occur. By default a single
 	// full-target viewport is created else it can be overridden. A viewport is 
@@ -686,13 +686,13 @@ public:
 	// must be specified. If _NumUnorderedResources is invalid, all slots after 
 	// the render target's MRTs are cleared. See SetRnederTarget() as an example 
 	// of setting the RT while clearing unordered targets).
-	virtual void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) = 0;
-	inline void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, buffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, _NumUnorderedResources, (resource**)_ppUnorderedResources, _pInitialCounts); }
-	template<uint size> inline void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, resource* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
-	inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, _NumUnorderedResources, _ppUnorderedResources, _pInitialCounts); }
-	template<uint size> inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, resource* (&_ppUnorderedResources)[size]) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources); }
-	template<uint size> inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, resource* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
-	inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, buffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_unordered_resources(_UnorderedResourcesStartSlot, _NumUnorderedResources, (resource**)_ppUnorderedResources, _pInitialCounts); }
+	virtual void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource1** _ppUnorderedResources, uint* _pInitialCounts = nullptr) = 0;
+	inline void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, buffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, _NumUnorderedResources, (resource1**)_ppUnorderedResources, _pInitialCounts); }
+	template<uint size> inline void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, resource1* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
+	inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource1** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, _NumUnorderedResources, _ppUnorderedResources, _pInitialCounts); }
+	template<uint size> inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, resource1* (&_ppUnorderedResources)[size]) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources); }
+	template<uint size> inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, resource1* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
+	inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, buffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_unordered_resources(_UnorderedResourcesStartSlot, _NumUnorderedResources, (resource1**)_ppUnorderedResources, _pInitialCounts); }
 	inline void set_unordered_resource(uint _UnorderedResourcesStartSlot, buffer* _pUnorderedResources, uint _InitialCount = invalid) { set_unordered_resources(_UnorderedResourcesStartSlot, 1, &_pUnorderedResources, _InitialCount == invalid ? nullptr : &_InitialCount); }
 	inline void set_unordered_resource(uint _UnorderedResourcesStartSlot, std::shared_ptr<buffer>& _pUnorderedResources, uint _InitialCount = invalid) { set_unordered_resource(_UnorderedResourcesStartSlot, _pUnorderedResources.get(), _InitialCount); }
 
@@ -700,12 +700,12 @@ public:
 	// will be used as shader resources, which conflicts with being a target. If
 	// this is not the desired behavior, use the above more explicit/complicated 
 	// version.
-	inline void set_render_target(render_target* _pRenderTarget, int _NumViewports = 0, const aaboxf* _pViewports = nullptr) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, false, invalid, invalid, (resource**)nullptr); }
+	inline void set_render_target(render_target* _pRenderTarget, int _NumViewports = 0, const aaboxf* _pViewports = nullptr) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, false, invalid, invalid, (resource1**)nullptr); }
 	inline void set_render_target(std::shared_ptr<render_target>& _pRenderTarget, int _NumViewports = 0, const aaboxf* _pViewports = nullptr) { set_render_target(_pRenderTarget.get(), _NumViewports, _pViewports); }
 
-	inline void clear_render_target_and_unordered_resources() { set_render_target_and_unordered_resources(nullptr, 0, nullptr, false, 0, max_num_unordered_buffers, (resource**)nullptr); }
+	inline void clear_render_target_and_unordered_resources() { set_render_target_and_unordered_resources(nullptr, 0, nullptr, false, 0, max_num_unordered_buffers, (resource1**)nullptr); }
 
-	inline void clear_unordered_resources() { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, 0, max_num_unordered_buffers, (resource**)nullptr); } 
+	inline void clear_unordered_resources() { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, 0, max_num_unordered_buffers, (resource1**)nullptr); } 
 
 	// _____________________________________________________________________________
 	// Rasterization-specific
@@ -768,18 +768,18 @@ public:
 	virtual std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) = 0;
 	virtual std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) = 0;
 	virtual std::shared_ptr<render_target> make_render_target(const char* _Name, const render_target_info& _Info) = 0;
-	virtual std::shared_ptr<texture> make_texture(const char* _Name, const texture_info& _Info) = 0;
+	virtual std::shared_ptr<texture1> make_texture1(const char* _Name, const texture1_info& _Info) = 0;
 
 	// convenience versions of the above
 	inline std::shared_ptr<command_list> make_command_list(const char* _Name, short _DrawOrder = 0) { command_list_info i; i.draw_order = _DrawOrder; return make_command_list(_Name, i); } 
 	inline std::shared_ptr<pipeline1> make_pipeline1(const pipeline1_info& _Info) { return make_pipeline1(_Info.debug_name, _Info); }
 
-	// map_read is a non-blocking call to read from the specified resource by the
+	// map_read is a non-blocking call to read from the specified resource1 by the
 	// mapped data populated in the specified _pMappedSubresource. If the function
 	// would block, this returns false. If it succeeds, call ReadEnd to unlock.
 	// the buffer. This will also return false for resources not of type READBACK.
-	virtual bool map_read(resource* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) = 0;
-	virtual void unmap_read(resource* _pReadbackResource, int _Subresource) = 0;
+	virtual bool map_read(resource1* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) = 0;
+	virtual void unmap_read(resource1* _pReadbackResource, int _Subresource) = 0;
 	template<typename T> bool map_read(std::shared_ptr<T>& _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) { return map_read(_pReadbackResource.get(), _Subresource, _pMappedSubresource, _Blocking); }
 	template<typename T> void unmap_read(std::shared_ptr<T>& _pReadbackResource, int _Subresource) { unmap_read(_pReadbackResource.get(), _Subresource); }
 
@@ -865,7 +865,7 @@ bool oGPUSurfaceConvert(oGPUTexture* _pSourceTexture, surface::format _NewFormat
 
 // Loads a texture from disk. The _Desc specifies certain conversions/resizes
 // that can occur on load. Use 0 or surface::unknown to use values as 
-// they are found in the specified image resource/buffer.
+// they are found in the specified image resource1/buffer.
 // @tony: At this time the implementation does NOT use oImage loading 
 // code plus a simple call to call oGPUCreateTexture(). Because this API 
 // supports conversion for any surface::format, at this time we defer to 

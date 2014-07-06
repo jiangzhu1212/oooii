@@ -155,7 +155,7 @@ std::shared_ptr<render_target> d3d11_device::make_primary_render_target(window* 
 	return std::make_shared<d3d11_render_target>(get_shared(), name(), SwapChain, _DepthStencilFormat);
 }
 
-bool d3d11_device::map_read(resource* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking)
+bool d3d11_device::map_read(resource1* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking)
 {
 	uint D3DSubresourceIndex = 0;
 	ID3D11Resource* r = get_subresource(_pReadbackResource, _Subresource, &D3DSubresourceIndex);
@@ -171,7 +171,7 @@ bool d3d11_device::map_read(resource* _pReadbackResource, int _Subresource, surf
 	return true;
 }
 
-void d3d11_device::unmap_read(resource* _pReadbackResource, int _Subresource)
+void d3d11_device::unmap_read(resource1* _pReadbackResource, int _Subresource)
 {
 	uint D3DSubresourceIndex = 0;
 	ID3D11Resource* r = get_subresource(_pReadbackResource, _Subresource, &D3DSubresourceIndex);
@@ -241,7 +241,7 @@ void d3d11_device::present(uint _PresentInterval)
 	dxgi::present(SwapChain, _PresentInterval);
 }
 
-surface::mapped_subresource d3d11_device::reserve(ID3D11DeviceContext* _pDeviceContext, resource* _pResource, int _Subresource)
+surface::mapped_subresource d3d11_device::reserve(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource)
 {
 	uint2 ByteDimensions = _pResource->byte_dimensions(_Subresource);
 	uint size = ByteDimensions.x * ByteDimensions.y;
@@ -258,7 +258,7 @@ surface::mapped_subresource d3d11_device::reserve(ID3D11DeviceContext* _pDeviceC
 	return mapped;
 }
 
-void d3d11_device::commit(ID3D11DeviceContext* _pDeviceContext, resource* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion)
+void d3d11_device::commit(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion)
 {
 	uint D3DSubresource = invalid;
 	ID3D11Resource* pD3DResource = get_subresource(_pResource, _Subresource, &D3DSubresource);

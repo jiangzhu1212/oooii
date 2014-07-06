@@ -34,7 +34,7 @@
 oGPU_NAMESPACE_BEGIN
 
 // Abstracts the differences between a texture and a buffer
-ID3D11Resource* get_subresource(resource* _pResource, int _Subresource, uint* _pD3DSubresourceIndex);
+ID3D11Resource* get_subresource(resource1* _pResource, int _Subresource, uint* _pD3DSubresourceIndex);
 
 oDEVICE_CHILD_CLASS(command_list)
 {
@@ -52,13 +52,13 @@ oDEVICE_CHILD_CLASS(command_list)
 	void end_query(query* _pQuery) override;
 	void flush() override;
 	void reset() override;
-	surface::mapped_subresource reserve(resource* _pResource, int _Subresource) override;
-	void commit(resource* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) override;
-	void copy(resource* _pDestination, resource* _pSource) override;
+	surface::mapped_subresource reserve(resource1* _pResource, int _Subresource) override;
+	void commit(resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) override;
+	void copy(resource1* _pDestination, resource1* _pSource) override;
 	void copy(buffer* _pDestination, uint _DestinationOffsetBytes, buffer* _pSource, uint _SourceOffsetBytes, uint _SizeBytes) override;
 	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) override;
-	void set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources) override;
-	void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
+	void set_shader_resources(uint _StartSlot, uint _NumResources, const resource1* const* _ppResources) override;
+	void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource1** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
 
 	// _____________________________________________________________________________
 	// Rasterization-specific

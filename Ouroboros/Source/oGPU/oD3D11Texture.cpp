@@ -33,28 +33,28 @@ using namespace ouro::gpu::d3d;
 
 oGPU_NAMESPACE_BEGIN
 
- std::shared_ptr<texture> make_second_texture(std::shared_ptr<device>& _Device, const char* _Texture1Name, const texture_info& _Texture1Info)
+ std::shared_ptr<texture1> make_second_texture(std::shared_ptr<device>& _Device, const char* _Texture1Name, const texture1_info& _Texture1Info)
 {
 	oCHECK(surface::num_subformats(_Texture1Info.format) <= 2, "Many-plane textures not supported");
 	if (surface::num_subformats(_Texture1Info.format) == 2)
 	{
 		// To keep YUV textures singular to prepare for new YUV-based DXGI formats
 		// coming, create a private data companion texture.
-		texture_info Texture2Info(_Texture1Info);
+		texture1_info Texture2Info(_Texture1Info);
 		Texture2Info.format = surface::subformat(_Texture1Info.format, 1);
 		Texture2Info.dimensions = surface::dimensions_npot(_Texture1Info.format, _Texture1Info.dimensions, 0, 1);
 
 		mstring Texture2Name(_Texture1Name);
 		sncatf(Texture2Name, ".Texture2");
 
-		return _Device->make_texture(Texture2Name, Texture2Info);
+		return _Device->make_texture1(Texture2Name, Texture2Info);
 	}
 
 	return nullptr;
 }
 
-oDEFINE_DEVICE_MAKE(texture)
-d3d11_texture::d3d11_texture(std::shared_ptr<device>& _Device, const char* _Name, const texture_info& _Info, ID3D11Resource* _pTexture)
+oDEFINE_DEVICE_MAKE(texture1)
+d3d11_texture1::d3d11_texture1(std::shared_ptr<device>& _Device, const char* _Name, const texture1_info& _Info, ID3D11Resource* _pTexture)
 	: resource_mixin(_Device, _Name, _Info)
 	, pResource(_pTexture)
 {
@@ -64,7 +64,7 @@ d3d11_texture::d3d11_texture(std::shared_ptr<device>& _Device, const char* _Name
 	{
 		pResource->AddRef();
 
-		Info = get_texture_info(pResource);
+		Info = get_texture_info1(pResource);
 
 		if (!is_2d(Info.type))
 			oTHROW_INVARG("the specified texture must be 2D");
@@ -96,13 +96,13 @@ d3d11_texture::d3d11_texture(std::shared_ptr<device>& _Device, const char* _Name
 	Texture2 = make_second_texture(_Device, _Name, _Info);
 }
 
-d3d11_texture::~d3d11_texture()
+d3d11_texture1::~d3d11_texture1()
 {
 	if (pResource)
 		pResource->Release();
 }
 
-uint2 d3d11_texture::byte_dimensions(int _Subresource) const
+uint2 d3d11_texture1::byte_dimensions(int _Subresource) const
 {
 	int numMips = surface::num_mips(is_mipped(Info.type), Info.dimensions); 
 	int mipLevel, sliceIndex, surfaceIndex;

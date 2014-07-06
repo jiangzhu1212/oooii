@@ -48,7 +48,7 @@ void commit_buffer(device* _pDevice, buffer* _pBuffer, const void* _pStruct, uin
 	_pDevice->immediate()->commit(_pBuffer, 0, msr);
 }
 
-bool read(resource* _pSourceResource, int _Subresource, surface::mapped_subresource& _Destination, bool _FlipVertically)
+bool read(resource1* _pSourceResource, int _Subresource, surface::mapped_subresource& _Destination, bool _FlipVertically)
 {
 	std::shared_ptr<device> Device = _pSourceResource->get_device();
 
@@ -62,9 +62,9 @@ bool read(resource* _pSourceResource, int _Subresource, surface::mapped_subresou
 			break;
 		}
 
-		case resource_type::texture:
+		case resource_type::texture1:
 		{
-			texture_info i = static_cast<texture*>(_pSourceResource)->get_info();
+			texture1_info i = static_cast<texture1*>(_pSourceResource)->get_info();
 			if (!is_readback(i.type))
 				oTHROW_INVARG("The specified resource %p %s must be a readback type.", _pSourceResource, _pSourceResource->name());
 			break;
@@ -83,78 +83,6 @@ bool read(resource* _pSourceResource, int _Subresource, surface::mapped_subresou
 		return true;
 	}
 	return false;
-}
-
-std::shared_ptr<texture> make_texture(device* _pDevice, const char* _Name, const surface::buffer* const* _ppSourceImages, uint _NumImages, texture_type::value _Type)
-{
-	if (!_NumImages)
-		oTHROW_INVARG("Need at least one source image");
-
-	surface::info si = _ppSourceImages[0]->get_info();
-	si.array_size = _NumImages;
-
-	std::shared_ptr<texture> Texture;
-	texture_info i;
-	i.format = si.format;
-	i.type = _Type;
-	i.dimensions = int3(si.dimensions.xy(), is_3d(_Type) ? _NumImages : 1);
-	i.array_size = is_array(_Type) || is_cube(_Type) ? static_cast<ushort>(_NumImages) : 0;
-
-	switch (get_type(_Type))
-	{
-		case texture_type::default_1d:
-			if (si.dimensions.y != 1)
-				oTHROW_INVARG("1D textures cannot have height");
-			break;
-
-		case texture_type::default_cube:
-			if (((_NumImages) % 6) != 0)
-				oTHROW_INVARG("Cube maps must be specified in sets of 6");
-			break;
-
-		default:
-			break;
-	}
-
-	Texture = _pDevice->make_texture(_Name, i);
-
-	const int NumMips = surface::num_mips(is_mipped(_Type), i.dimensions);
-	surface::buffer::make_type MakeType = is_3d(_Type) 
-		? (NumMips ? surface::buffer::mips3d : surface::buffer::image3d)
-		: (NumMips ? surface::buffer::mips_array : surface::buffer::image_array);
-
-	auto src = surface::buffer::make(_ppSourceImages, _NumImages, MakeType);
-	auto src_si = src->get_info();
-	const int nSubresources = surface::num_subresources(src_si);
-
-	if (is_3d(_Type))
-	{
-		for (int subresource = 0; subresource < nSubresources; subresource++)
-		{
-			auto sri = surface::subresource(src_si, subresource);
-			surface::box region;
-			region.right = sri.dimensions.x;
-			region.bottom = sri.dimensions.y;
-			surface::shared_lock lock(src, subresource);
-			for (int slice = 0; slice < sri.dimensions.z; slice++)
-			{
-				region.front = slice;
-				region.back = slice + 1;
-				_pDevice->immediate()->commit(Texture, subresource, lock.mapped, region);
-			}
-		}
-	}
-
-	else
-	{
-		for (int subresource = 0; subresource < nSubresources; subresource++)
-		{
-			surface::shared_lock lock(src, subresource);
-			_pDevice->immediate()->commit(Texture, subresource, lock.mapped);
-		}
-	}
-
-	return Texture;
 }
 
 #if 0

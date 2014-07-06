@@ -49,15 +49,7 @@ template<typename T> void commit_buffer(device* _pDevice, buffer* _pBuffer, cons
 // Reads the source resource into the memory pointed at in the destination struct. 
 // Since this is often used for textures flip vertically can do an in-place/
 // during-copy flip. This returns the result of map_read. 
-bool read(resource* _pSourceResource, int _Subresource, ouro::surface::mapped_subresource& _Destination, bool _FlipVertically = false);
-
-// _____________________________________________________________________________
-// Texture convenience functions
-
-// Creates a texture and fills it with source image data according to the type specified. 
-// NOTE: render target and readback not tested.
-std::shared_ptr<texture> make_texture(device* _pDevice, const char* _Name, const surface::buffer* const* _ppSourceImages, uint _NumImages, texture_type::value _Type);
-inline std::shared_ptr<texture> make_texture(std::shared_ptr<device>& _pDevice, const char* _Name, const surface::buffer* const* _ppSourceImages, uint _NumImages, texture_type::value _Type) { return make_texture(_pDevice.get(), _Name, _ppSourceImages, _NumImages, _Type); }
+bool read(resource1* _pSourceResource, int _Subresource, ouro::surface::mapped_subresource& _Destination, bool _FlipVertically = false);
 
 	} // namespace gpu
 } // namespace ouro
@@ -75,7 +67,7 @@ inline void oGPURenderTargetSetShaderResources(command_list* _pCommandList, int 
 		_pRenderTarget->GetTexture(i, &MRTs[i]);
 	if (_IncludeDepthStencil)
 		_pRenderTarget->GetDepthTexture(&MRTs[i++]);
-	_pCommandList->SetShaderResources(_StartSlot, i, (const resource* const*)MRTs);
+	_pCommandList->SetShaderResources(_StartSlot, i, (const resource1* const*)MRTs);
 }
 
 #endif

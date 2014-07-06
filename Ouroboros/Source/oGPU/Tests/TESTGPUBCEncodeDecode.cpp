@@ -36,7 +36,7 @@ static void load_original_and_save_converted(test_services& _Services, device* _
 {
 	scoped_allocation OriginalFile = _Services.load_buffer(_OriginalPath);
 
-	texture_info i;
+	texture1_info i;
 	i.dimensions = ushort3(0, 0, 1);
 	i.array_size = 0;
 	i.format = surface::unknown;
@@ -61,14 +61,14 @@ static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test
 {
 	scoped_allocation ConvertedFile = _Services.load_buffer(_ConvertedPath);
 
-	texture_info i;
+	texture1_info i;
 	i.dimensions = ushort3(0, 0, 1);
 	i.array_size = 0;
 	i.format = surface::unknown;
 	i.type = texture_type::readback_2d;
 
-	std::shared_ptr<texture> ConvertedFileAsTexture;
-	std::shared_ptr<texture> BGRATexture;
+	std::shared_ptr<texture1> ConvertedFileAsTexture;
+	std::shared_ptr<texture1> BGRATexture;
 #if 0
 	oTESTB(oGPUTextureLoad(_pDevice, i, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), &ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());
 

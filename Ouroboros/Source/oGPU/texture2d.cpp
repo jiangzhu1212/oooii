@@ -22,33 +22,66 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
 #include <oGPU/texture2d.h>
+#include <oGPU/oGPU.h>
+#include "d3d_debug.h"
+#include "d3d_util.h"
+#include "dxgi_util.h"
 
-using namespace ouro::gpu;
+using namespace ouro::gpu::d3d;
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace gpu {
 
-static const bool kIsDevMode = false;
+Device* get_device(device* dev);
+DeviceContext* get_dc(command_list* cl);
 
-struct gpu_test_texture2dmip : public gpu_texture_test
+void texture2d::initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips)
 {
-	gpu_test_texture2dmip() : gpu_texture_test("GPU test: texture2dmip", kIsDevMode) {}
+	deinitialize();
+	oCHECK_ARG(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
+	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size, mips);
+	ro = make_srv(t, format, array_size);
+}
 
-	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_2D; }
-	resource* make_test_texture() override
+void texture2d::initialize(const char* name, device* dev, const surface::buffer& src, bool mips)
+{
+	auto si = src.get_info();
+	initialize(name, dev, si.format, si.dimensions.x, si.dimensions.y, si.array_size, mips);
+
+	const int NumMips = surface::num_mips(mips, si.dimensions);
+	const int nSubresources = surface::num_subresources(si);
+
+	command_list* cl = dev->immediate();
+	for (int subresource = 0; subresource < nSubresources; subresource++)
 	{
-		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", surface::alpha_option::force_alpha);
-		t.initialize("Test 2D", Device.get(), *image.get(), true);
-		return &t;
+		surface::shared_lock lock(src, subresource);
+		update(cl, subresource, lock.mapped);
 	}
+}
 
-	texture2d t;
-};
+uint2 texture2d::dimensions() const
+{
+	intrusive_ptr<Texture2D> t;
+	((View*)ro)->GetResource((Resource**)&t);
+	D3D11_TEXTURE2D_DESC d;
+	t->GetDesc(&d);
+	return uint2(d.Width, d.Height);
+}
 
-oGPU_COMMON_TEST(texture2dmip);
+uint texture2d::array_size() const
+{
+	intrusive_ptr<Texture2D> t;
+	((View*)ro)->GetResource((Resource**)&t);
+	D3D11_TEXTURE2D_DESC d;
+	t->GetDesc(&d);
+	return d.ArraySize;
+}
 
-	} // namespace tests
-} // namespace ouro
+void texture2d::update(command_list* cl, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region)
+{
+	intrusive_ptr<Resource> r;
+	((View*)ro)->GetResource(&r);
+	update_texture(get_dc(cl), true, r, subresource, src, region);
+}
+
+}}
