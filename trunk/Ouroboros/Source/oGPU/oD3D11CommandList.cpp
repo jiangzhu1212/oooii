@@ -22,7 +22,6 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include "oD3D11Buffer.h"
 #include "oD3D11CommandList.h"
 #include "oD3D11ComputeShader.h"
 #include "oD3D11Pipeline.h"
@@ -48,7 +47,6 @@ ID3D11Resource* get_subresource(resource* _pResource, int _Subresource, uint* _p
 	*_pD3DSubresourceIndex = _Subresource;
 	switch (_pResource->type())
 	{
-		case resource_type::buffer: return static_cast<d3d11_buffer*>(_pResource)->Buffer;
 		case resource_type::texture: return static_cast<d3d11_texture*>(_pResource)->pResource;
 		oNODEFAULT;
 	}
@@ -58,13 +56,6 @@ static ID3D11UnorderedAccessView* get_uav(const resource* _pResource, int _Miple
 {
 	switch (_pResource->type())
 	{
-		case resource_type::buffer:
-		{
-			auto b = static_cast<const d3d11_buffer*>(_pResource);
-			oCHECK(!_CheckHasCounter || b->has_counter(), "Buffer does not have a counter");
-			return b->choose_uav(_UseAppendIfAvailable);
-		}
-
 		case resource_type::texture: return ((d3d11_texture*)_pResource)->UAV;
 		oNODEFAULT;
 	}
@@ -93,7 +84,6 @@ static ID3D11ShaderResourceView* get_srv(const resource* _pResource, int _Miplev
 {
 	switch (_pResource->type())
 	{
-		case resource_type::buffer: return ((d3d11_buffer*)_pResource)->SRV;
 		case resource_type::texture:
 		{
 			d3d11_texture* t = (d3d11_texture*)_pResource;
@@ -229,10 +219,10 @@ void d3d11_command_list::copy(resource* _pDestination, resource* _pSource)
 
 void d3d11_command_list::copy_counter(buffer* _pDestination, uint _DestinationAlignedOffset, buffer* _pUnorderedSource)
 {
-	buffer_info i = static_cast<buffer*>(_pUnorderedSource)->get_info();
-	oCHECK(i.type == buffer_type::unordered_structured_append || i.type == buffer_type::unordered_structured_counter, "Source must be an unordered structured buffer with APPEND or COUNTER modifiers");
-	oCHECK(byte_aligned(_DestinationAlignedOffset, sizeof(uint)), "_DestinationAlignedOffset must be sizeof(uint)-aligned");
-	Context->CopyStructureCount(static_cast<d3d11_buffer*>(_pDestination)->Buffer, _DestinationAlignedOffset, get_uav(_pUnorderedSource, 0, 0, true));
+	//buffer_info i = static_cast<buffer*>(_pUnorderedSource)->get_info();
+	//oCHECK(i.type == buffer_type::unordered_structured_append || i.type == buffer_type::unordered_structured_counter, "Source must be an unordered structured buffer with APPEND or COUNTER modifiers");
+	//oCHECK(byte_aligned(_DestinationAlignedOffset, sizeof(uint)), "_DestinationAlignedOffset must be sizeof(uint)-aligned");
+	//Context->CopyStructureCount(static_cast<d3d11_buffer*>(_pDestination)->Buffer, _DestinationAlignedOffset, get_uav(_pUnorderedSource, 0, 0, true));
 }
 
 void d3d11_command_list::set_counters(uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pValues)
@@ -291,21 +281,6 @@ void d3d11_command_list::set_shader_resources(uint _StartSlot, uint _NumResource
 
 		set_srvs(Context, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - _NumResources - _StartSlot, _NumResources, SRVs);
 	}
-}
-
-void d3d11_command_list::set_buffers(uint _StartSlot, uint _NumBuffers, const buffer* const* _ppBuffers)
-{
-	const ID3D11Buffer* CBs[D3D11_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT];
-	oASSERT(oCOUNTOF(CBs) > _NumBuffers, "Too many buffers specified");
-
-	if (_ppBuffers)
-		for (uint i = 0; i < _NumBuffers; i++)
-			CBs[i] = _ppBuffers[i] ? ((d3d11_buffer*)_ppBuffers[i])->Buffer.c_ptr() : nullptr;
-	else
-		for (uint i = 0; i < _NumBuffers; i++)
-			CBs[i] = nullptr;
-
-	set_constant_buffers(Context, _StartSlot, _NumBuffers, CBs);
 }
 
 static void set_viewports(ID3D11DeviceContext* _pDeviceContext, const int2& _TargetDimensions, uint _NumViewports, const aaboxf* _pViewports)
@@ -449,91 +424,6 @@ void d3d11_command_list::clear(render_target* _pRenderTarget, const clear_type::
 		Context->ClearDepthStencilView(RT->DSV, sClearFlags[_Clear], RT->Info.depth_clear_value, RT->Info.stencil_clear_value);
 }
 
-void d3d11_command_list::set_vertex_buffers(const buffer* _pIndexBuffer, uint _StartSlot, uint _NumVertexBuffers, const buffer* const* _ppVertexBuffers, uint _StartVertex)
-{
-	ID3D11Buffer* b = nullptr;
-	DXGI_FORMAT Format = DXGI_FORMAT_R32_UINT;
-	const uint _StartIndex = 0; // expose this as a parameter?
-	// this can be set to non-zero, but it seems redundant in DrawIndexed and 
-	// DrawIndexedInstanced, so keep it hidden for now.
-	uint StartByteOffset = 0;
-	if (_pIndexBuffer)
-	{
-		b = ((d3d11_buffer*)_pIndexBuffer)->Buffer;
-		buffer_info i = _pIndexBuffer->get_info();
-		Format = dxgi::from_surface_format(i.format);
-		StartByteOffset = i.struct_byte_size * _StartIndex;
-	}
-	Context->IASetIndexBuffer(b, Format, StartByteOffset);
-
-	uint Strides[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-	uint ByteOffsets[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-	const ID3D11Buffer* pVertices[D3D11_IA_VERTEX_INPUT_RESOURCE_SLOT_COUNT];
-
-	if (_ppVertexBuffers)
-	{
-		for (uint i = 0; i < _NumVertexBuffers; i++)
-		{
-			Strides[i] = 0;
-			ByteOffsets[i] = 0;
-
-			buffer_info bi;
-			if (_ppVertexBuffers[i])
-			{
-				bi = _ppVertexBuffers[i]->get_info();
-				Strides[i] = bi.struct_byte_size;
-				ByteOffsets[i] = _StartVertex * bi.struct_byte_size;
-				pVertices[i] = static_cast<const d3d11_buffer*>(_ppVertexBuffers[i])->Buffer;
-			}
-			else
-				pVertices[i] = nullptr;
-		}
-	}
-
-	else
-		memset(pVertices, 0 , sizeof(ID3D11Buffer*) * _NumVertexBuffers);	
-
-	Context->IASetVertexBuffers(_StartSlot, _NumVertexBuffers, const_cast<ID3D11Buffer* const*>(pVertices), Strides, ByteOffsets);
-}
-
-void d3d11_command_list::draw(const buffer* _pIndices, uint _StartSlot, uint _NumVertexBuffers, const buffer* const* _ppVertexBuffers, uint _StartPrimitive, uint _NumPrimitives, uint _StartInstance, uint _NumInstances)
-{
-	const uint _StartVertex = 0;
-	set_vertex_buffers(_pIndices, _StartSlot, _NumVertexBuffers, _ppVertexBuffers, _StartVertex);
-
-	#ifdef _DEBUG
-	{
-		intrusive_ptr<ID3D11InputLayout> InputLayout = 0;
-		Context->IAGetInputLayout(&InputLayout);
-		oCHECK(!_ppVertexBuffers || InputLayout, "No InputLayout specified");
-	}
-	#endif
-
-	const uint NumElements = num_elements(PrimitiveTopology, _NumPrimitives);
-	const uint StartElement = num_elements(PrimitiveTopology, _StartPrimitive);
-
-	if (!!_pIndices)
-	{
-		if (_NumInstances != invalid)
-			Context->DrawIndexedInstanced(NumElements, _NumInstances, StartElement, 0, _StartInstance);
-		else
-			Context->DrawIndexed(NumElements, StartElement, 0);
-	}
-
-	else
-	{
-		if (_NumInstances != invalid)
-			Context->DrawInstanced(NumElements, _NumInstances, StartElement, _StartInstance);
-		else
-			Context->Draw(NumElements, StartElement);
-	}
-}
-
-void d3d11_command_list::draw(buffer* _pDrawArgs, uint _AlignedByteOffsetForArgs)
-{
-	Context->DrawInstancedIndirect(static_cast<d3d11_buffer*>(_pDrawArgs)->Buffer, _AlignedByteOffsetForArgs);
-}
-
 void d3d11_command_list::generate_mips(render_target* _pRenderTarget)
 {
 	render_target_info i = _pRenderTarget->get_info();
@@ -562,22 +452,6 @@ void d3d11_command_list::dispatch(compute_kernel* _pComputeShader, const int3& _
 	oCHECK(all(_ThreadGroupCount <= int3(D3D11_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION)), "_ThreadGroupCount cannot have a dimension greater than %u", D3D11_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION);
 	Context->CSSetShader(static_cast<d3d11_compute_kernel*>(_pComputeShader)->ComputeShader, nullptr, 0);
 	Context->Dispatch(_ThreadGroupCount.x, _ThreadGroupCount.y, _ThreadGroupCount.z);
-}
-
-void d3d11_command_list::dispatch(compute_kernel* _pComputeShader, buffer* _pThreadGroupCountBuffer, uint _AlignedByteOffsetToThreadGroupCount)
-{
-	#ifdef _DEBUG
-		buffer_info i = _pThreadGroupCountBuffer->get_info();
-		oCHECK(i.type == buffer_type::unordered_raw, "Parameters for dispatch must come from an oGPUBuffer of type buffer_type::unordered_raw");
-		// Found this out the hard way... if a UAV is bound as a target, then it 
-		// won't be flushed such that values are ready for this indirect dispatch.
-		// D3D is quiet about it, so do the check here...
-		ID3D11Buffer* pBuffer = static_cast<d3d11_buffer*>(_pThreadGroupCountBuffer)->Buffer;
-		check_bound_rts_and_uavs(Context, 1, &pBuffer);
-		check_bound_cs_uavs(Context, 1, &pBuffer);
-	#endif
-	Context->CSSetShader(static_cast<d3d11_compute_kernel*>(_pComputeShader)->ComputeShader, nullptr, 0);
-	Context->DispatchIndirect(static_cast<d3d11_buffer*>(_pThreadGroupCountBuffer)->Buffer, _AlignedByteOffsetToThreadGroupCount);
 }
 
 oGPU_NAMESPACE_END
