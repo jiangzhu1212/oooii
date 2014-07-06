@@ -46,6 +46,12 @@ namespace ouro {
 	// supported this will return DXGI_FORMAT_UNKNOWN.
 	DXGI_FORMAT from_surface_format(surface::format _Format);
 
+	// returns true if a D* format
+	bool is_depth(DXGI_FORMAT _Format);
+
+	// Returns the byte size of the specified format per element (per block for BC types)
+	unsigned int get_size(DXGI_FORMAT _Format, unsigned int plane = 0);
+
 	// Returns an adapter from its ID.
 	intrusive_ptr<IDXGIAdapter> get_adapter(const adapter::id& _AdapterID);
 

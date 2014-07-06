@@ -22,15 +22,14 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
- // defines enumerated graphics state
 #pragma once
 #ifndef oGPU_state_h
 #define oGPU_state_h
 
 #include <oBase/macros.h>
+#include <array>
 
-namespace ouro {
-	namespace gpu {
+namespace ouro { namespace gpu {
 
 static const uint max_num_samplers = 16;
 
@@ -101,7 +100,59 @@ namespace blend_state
 
 };}
 
-	} // namespace gpu
-} // namespace ouro
+class device;
+class command_list;
+
+class sampler_states
+{
+public:
+	sampler_states() { states.fill(nullptr); }
+	~sampler_states() { deinitialize(); }
+	void initialize(device* dev);
+	void deinitialize();
+	void set(command_list* cl, uint slot, uint num_samplers, const sampler_state::value* samplers);
+
+private:
+	std::array<void*, sampler_state::count> states;
+};
+
+class rasterizer_states
+{
+public:
+	rasterizer_states() { states.fill(nullptr); }
+	~rasterizer_states() { deinitialize(); }
+	void initialize(device* dev);
+	void deinitialize();
+	void set(command_list* cl, const rasterizer_state::value& state);
+private:
+	std::array<void*, rasterizer_state::count> states;
+};
+
+class blend_states
+{
+public:
+	blend_states() { states.fill(nullptr); }
+	~blend_states() { deinitialize(); }
+	void initialize(device* dev);
+	void deinitialize();
+	void set(command_list* cl, const blend_state::value& state);
+	void set(command_list* cl, const blend_state::value& state, const float blend_factor[4], uint sample_mask = 0xffffffff);
+private:
+	std::array<void*, blend_state::count> states;
+};
+
+class depth_stencil_states
+{
+public:
+	depth_stencil_states() { states.fill(nullptr); }
+	~depth_stencil_states() { deinitialize(); }
+	void initialize(device* dev);
+	void deinitialize();
+	void set(command_list* cl, const depth_stencil_state::value& state, uint stencil_ref = 0);
+private:
+	std::array<void*, depth_stencil_state::count> states;
+};
+
+}}
 
 #endif

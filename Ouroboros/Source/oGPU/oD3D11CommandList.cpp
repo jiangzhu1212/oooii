@@ -218,12 +218,7 @@ void d3d11_command_list::copy(resource* _pDestination, resource* _pSource)
 
 void d3d11_command_list::set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState)
 {
-	d3d::SamplerState* Samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
-	oCHECK(oCOUNTOF(Samplers) >= _NumStates, "Too many samplers specified");
-	for (uint i = 0; i < _NumStates; i++)
-		Samplers[i] = dev()->SamplerStates[_pSamplerState[i]];
-	
-	d3d11::set_samplers(Context, _StartSlot, _NumStates, Samplers);
+	dev()->SamplerStates.set(this, _StartSlot, _NumStates, _pSamplerState);
 }
 
 void d3d11_command_list::set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources)
@@ -358,18 +353,17 @@ void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 
 void d3d11_command_list::set_rasterizer_state(const rasterizer_state::value& _State)
 {
-	Context->RSSetState(dev()->RasterizerStates[_State]);
+	dev()->RasterizerStates.set(this, _State);
 }
 
 void d3d11_command_list::set_blend_state(const blend_state::value& _State)
 {
-	static const FLOAT sBlendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	Context->OMSetBlendState(dev()->BlendStates[_State], sBlendFactor, 0xffffffff);
+	dev()->BlendStates.set(this, _State);
 }
 
 void d3d11_command_list::set_depth_stencil_state(const depth_stencil_state::value& _State)
 {
-	Context->OMSetDepthStencilState(dev()->DepthStencilStates[_State], 0);
+	dev()->DepthStencilStates.set(this, _State);
 }
 
 void d3d11_command_list::clear(render_target* _pRenderTarget, const clear_type::value& _Clear)

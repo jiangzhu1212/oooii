@@ -52,12 +52,6 @@
     <ClCompile Include="d3d_resource.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
-    <ClCompile Include="d3d_shader.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d_state.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
     <ClCompile Include="oD3D11Texture.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
@@ -148,12 +142,6 @@
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
     <ClInclude Include="d3d_resource.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d_shader.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d_state.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11Texture.h">

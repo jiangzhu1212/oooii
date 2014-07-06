@@ -29,7 +29,7 @@
 #include "oGPUCommon.h"
 #include "oD3D11RenderTarget.h"
 #include "oD3D11Device.h"
-#include <d3d11.h>
+#include "d3d_util.h"
 
 oGPU_NAMESPACE_BEGIN
 

@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "d3d_compile.h"
 #include "d3d_include.h"
-#include "d3d_shader.h"
 #include <oCore/windows/win_util.h>
 #include <D3Dcompiler.h>
 
