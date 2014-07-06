@@ -76,26 +76,26 @@
     <ClCompile Include="d3d_util.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
-    <ClCompile Include="index_buffer.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="vertex_buffer.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="compute_target.cpp">
+      <Filter>Source\buffers</Filter>
     </ClCompile>
     <ClCompile Include="constant_buffer.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\buffers</Filter>
     </ClCompile>
-    <ClCompile Include="compute_target.cpp">
-      <Filter>Source</Filter>
+    <ClCompile Include="index_buffer.cpp">
+      <Filter>Source\buffers</Filter>
     </ClCompile>
     <ClCompile Include="rwstructured_buffer.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="raw_buffer.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\buffers</Filter>
     </ClCompile>
     <ClCompile Include="readback_buffer.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="raw_buffer.cpp">
+      <Filter>Source\buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="vertex_buffer.cpp">
+      <Filter>Source\buffers</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -177,29 +177,29 @@
     <ClInclude Include="..\..\Include\oGPU\render_target.h">
       <Filter>Headers\old</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\vertex_buffer.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\index_buffer.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h">
       <Filter>Headers\old</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\constant_buffer.h">
-      <Filter>Headers</Filter>
+      <Filter>Headers\buffers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\rwstructured_buffer.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\compute_target.h">
-      <Filter>Headers</Filter>
+    <ClInclude Include="..\..\Include\oGPU\index_buffer.h">
+      <Filter>Headers\buffers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\raw_buffer.h">
-      <Filter>Headers</Filter>
+      <Filter>Headers\buffers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\readback_buffer.h">
-      <Filter>Headers</Filter>
+      <Filter>Headers\buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\rwstructured_buffer.h">
+      <Filter>Headers\buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\vertex_buffer.h">
+      <Filter>Headers\buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\compute_target.h">
+      <Filter>Headers\buffers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -217,6 +217,18 @@
     </Filter>
     <Filter Include="Headers\old">
       <UniqueIdentifier>{e87d699e-915e-41dd-ad55-7d6d031bae6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\buffers">
+      <UniqueIdentifier>{bb648167-5cd7-4cc8-887e-07729e3d5991}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\textures">
+      <UniqueIdentifier>{5731cffe-cb32-4061-ae90-439809fc0370}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\buffers">
+      <UniqueIdentifier>{b2429f9c-41e1-444a-bc12-e25b135b292c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\textures">
+      <UniqueIdentifier>{34773b8d-9df1-4127-8abd-a28870715129}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

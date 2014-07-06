@@ -30,6 +30,9 @@
 struct ID3D11Device;
 struct ID3D11DeviceChild;
 struct ID3D11DeviceContext;
+struct ID3D11CommandList;
+struct ID3D11InfoQueue;
+struct ID3D11UserDefinedAnnotation;
 struct ID3D11InputLayout;
 struct ID3D11VertexShader;
 struct ID3D11HullShader;
@@ -53,13 +56,14 @@ struct ID3D11ShaderResourceView;
 struct ID3D11UnorderedAccessView;
 struct ID3D11View;
 
-namespace ouro {
-	namespace gpu {
-		namespace d3d {
+namespace ouro { namespace gpu { namespace d3d {
 
 typedef ID3D11Device Device;
 typedef ID3D11DeviceChild DeviceChild;
 typedef ID3D11DeviceContext DeviceContext;
+typedef ID3D11CommandList CommandList;
+typedef ID3D11InfoQueue InfoQueue;
+typedef ID3D11UserDefinedAnnotation UserDefinedAnnotation;
 typedef ID3D11InputLayout InputLayout;
 typedef ID3D11VertexShader VertexShader;
 typedef ID3D11HullShader HullShader;
@@ -83,8 +87,6 @@ typedef ID3D11ShaderResourceView ShaderResourceView;
 typedef ID3D11UnorderedAccessView UnorderedAccessView;
 typedef ID3D11View View;
 
-		} // namespace d3d
-	} // namespace gpu
-} // namespace ouro
+}}}
 
 #endif
