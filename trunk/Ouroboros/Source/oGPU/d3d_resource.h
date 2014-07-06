@@ -63,8 +63,8 @@ void copy(ID3D11Resource* _pTexture
 	, bool _FlipVertically = false);
 
 // returns a unified info for any type of resource
-texture_info get_texture_info(Resource* _pResource, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr);
-inline texture_info get_texture_info(View* _pView, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr) { intrusive_ptr<Resource> r; _pView->GetResource(&r); return get_texture_info(r, _AsArray, _pUsage); }
+texture1_info get_texture_info1(Resource* _pResource, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr);
+inline texture1_info get_texture_info1(View* _pView, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr) { intrusive_ptr<Resource> r; _pView->GetResource(&r); return get_texture_info1(r, _AsArray, _pUsage); }
 
 // From the specified texture, create the correct shader resource view
 intrusive_ptr<ShaderResourceView> make_srv(const char* _DebugName, Resource* _pTexture, bool _AsArray = false);
@@ -148,7 +148,7 @@ struct new_texture
 // DepthStencilView instead of an RenderTargetView.
 new_texture make_texture(Device* _pDevice
 	, const char* _DebugName
-	, const gpu::texture_info& _Info
+	, const gpu::texture1_info& _Info
 	, surface::const_mapped_subresource* _pInitData = nullptr);
 
 // Creates a CPU-readable copy of the specified texture/render target. Only 
@@ -164,7 +164,7 @@ void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix
 // This converts back from a texture_info to typical fields in texture-related
 // structs (including D3DX11_IMAGE_LOAD_INFO, specify the info's format as 
 // unknown to use DXGI_FORMAT_FROM_FILE)
-void init_values(const gpu::texture_info& _Info
+void init_values(const gpu::texture1_info& _Info
 	, DXGI_FORMAT* _pFormat
 	, D3D11_USAGE* _pUsage
 	, unsigned int* _pCPUAccessFlags

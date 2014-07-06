@@ -31,6 +31,7 @@
 #include "oGPUTestHLSL.h"
 
 #include <oGPU/oGPU.h>
+#include <oGPU/resource.h>
 #include <oGPU/constant_buffer.h>
 #include <oGUI/window.h>
 
@@ -103,7 +104,7 @@ public:
 	{}
 
 	virtual oGPU_TEST_PIPELINE get_pipeline() = 0;
-	virtual std::shared_ptr<gpu::texture> make_test_texture() = 0;
+	virtual gpu::resource* make_test_texture() = 0;
 	virtual float rotation_step();
 
 	void initialize() override;
@@ -111,7 +112,7 @@ public:
 
 protected:
 	std::shared_ptr<gpu::pipeline1> Pipeline;
-	std::shared_ptr<gpu::texture> Texture;
+	gpu::resource* pResource;
 	gpu::util_mesh Mesh;
 	gpu::constant_buffer TestConstants;
 

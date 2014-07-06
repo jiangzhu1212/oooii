@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+#include <oGPU/texture2d.h>
 
 using namespace ouro::gpu;
 
@@ -38,12 +38,14 @@ struct gpu_test_texture2d : public gpu_texture_test
 	gpu_test_texture2d() : gpu_texture_test("GPU test: texture2d", kIsDevMode) {}
 
 	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_2D; }
-	std::shared_ptr<texture> make_test_texture() override
+	resource* make_test_texture() override
 	{
 		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", surface::alpha_option::force_alpha);
-		auto* p = image.get();
-		return make_texture(Device, "Test 2D", &p, 1, texture_type::default_2d);
+		t.initialize("Test 2D", Device.get(), *image.get(), false);
+		return &t;
 	}
+
+	texture2d t;
 };
 
 oGPU_COMMON_TEST(texture2d);

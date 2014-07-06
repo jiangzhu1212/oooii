@@ -41,26 +41,26 @@ d3d::ComputeShader* get_noop_cs(command_list* _pCommandList) { return ((d3d11::d
 
 oGPU_NAMESPACE_BEGIN
 
-ID3D11Resource* get_subresource(resource* _pResource, int _Subresource, uint* _pD3DSubresourceIndex)
+ID3D11Resource* get_subresource(resource1* _pResource, int _Subresource, uint* _pD3DSubresourceIndex)
 {
 	*_pD3DSubresourceIndex = _Subresource;
 	switch (_pResource->type())
 	{
-		case resource_type::texture: return static_cast<d3d11_texture*>(_pResource)->pResource;
+		case resource_type::texture1: return static_cast<d3d11_texture1*>(_pResource)->pResource;
 		oNODEFAULT;
 	}
 }
 
-static ID3D11UnorderedAccessView* get_uav(const resource* _pResource, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _CheckHasCounter = false)
+static ID3D11UnorderedAccessView* get_uav(const resource1* _pResource, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _CheckHasCounter = false)
 {
 	switch (_pResource->type())
 	{
-		case resource_type::texture: return ((d3d11_texture*)_pResource)->UAV;
+		case resource_type::texture1: return ((d3d11_texture1*)_pResource)->UAV;
 		oNODEFAULT;
 	}
 }
 
-static void get_uavs(ID3D11UnorderedAccessView* (&_ppUAVs)[max_num_unordered_buffers], int _NumUnorderedResources, resource** _ppUnorderedResources, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _AssertHaveCounters = false)
+static void get_uavs(ID3D11UnorderedAccessView* (&_ppUAVs)[max_num_unordered_buffers], int _NumUnorderedResources, resource1** _ppUnorderedResources, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _AssertHaveCounters = false)
 {
 	if (!_ppUnorderedResources || _NumUnorderedResources == invalid || _NumUnorderedResources == 0)
 		memset(_ppUAVs, 0, sizeof(_ppUAVs));
@@ -79,14 +79,14 @@ static void get_uavs(ID3D11UnorderedAccessView* (&_ppUAVs)[max_num_unordered_buf
 	}
 }
 
-static ID3D11ShaderResourceView* get_srv(const resource* _pResource, int _Miplevel, int _ArrayIndex, int _SRVIndex)
+static ID3D11ShaderResourceView* get_srv(const resource1* _pResource, int _Miplevel, int _ArrayIndex, int _SRVIndex)
 {
 	switch (_pResource->type())
 	{
-		case resource_type::texture:
+		case resource_type::texture1:
 		{
-			d3d11_texture* t = (d3d11_texture*)_pResource;
-			d3d11_texture* t2 = (d3d11_texture*)t->Texture2.get();
+			d3d11_texture1* t = (d3d11_texture1*)_pResource;
+			d3d11_texture1* t2 = (d3d11_texture1*)t->Texture2.get();
 			return _SRVIndex == 0 ? t->SRV : (t2 ? t2->SRV : nullptr);
 		}
 
@@ -180,12 +180,12 @@ void d3d11_command_list::reset()
 	Context->ClearState();
 }
 
-surface::mapped_subresource d3d11_command_list::reserve(resource* _pResource, int _Subresource)
+surface::mapped_subresource d3d11_command_list::reserve(resource1* _pResource, int _Subresource)
 {
 	return dev()->reserve(Context, _pResource, _Subresource);
 }
 
-void d3d11_command_list::commit(resource* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion)
+void d3d11_command_list::commit(resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion)
 {
 	dev()->commit(Context, _pResource, _Subresource, _Source, _Subregion);
 }
@@ -207,7 +207,7 @@ void d3d11_command_list::copy(buffer* _pDestination, uint _DestinationOffsetByte
 	Context->CopySubresourceRegion(d, 0, _DestinationOffsetBytes, 0, 0, s, 0, &CopyBox);
 }
 
-void d3d11_command_list::copy(resource* _pDestination, resource* _pSource)
+void d3d11_command_list::copy(resource1* _pDestination, resource1* _pSource)
 {
 	oCHECK(_pDestination && _pSource && _pDestination->type() == _pSource->type(), "Copy(%s, %s) can only occur between two same-typed objects", _pDestination ? as_string(_pDestination->type()) : "(null)", _pSource ? as_string(_pSource->type()) : "(null)");
 	uint D3DSubresourceIndex = 0;
@@ -221,7 +221,7 @@ void d3d11_command_list::set_samplers(uint _StartSlot, uint _NumStates, const sa
 	dev()->SamplerStates.set(this, _StartSlot, _NumStates, _pSamplerState);
 }
 
-void d3d11_command_list::set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources)
+void d3d11_command_list::set_shader_resources(uint _StartSlot, uint _NumResources, const resource1* const* _ppResources)
 {
 	const ID3D11ShaderResourceView* SRVs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
 	uint InternalNumResources = _NumResources;
@@ -273,7 +273,7 @@ static void set_viewports(ID3D11DeviceContext* _pDeviceContext, const int2& _Tar
 	_pDeviceContext->RSSetViewports(_NumViewports, Viewports);
 }
 
-void d3d11_command_list::set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pInitialCounts)
+void d3d11_command_list::set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource1** _ppUnorderedResources, uint* _pInitialCounts)
 {
 	oCHECK(!_SetForDispatch || !_pRenderTarget, "If _SetForDispatch is true, then _pRenderTarget must be nullptr");
 
@@ -402,7 +402,7 @@ void d3d11_command_list::generate_mips(render_target* _pRenderTarget)
 	if (!i.has_mips)
 		oTHROW_INVARG("Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
 	d3d11_render_target* RT = static_cast<d3d11_render_target*>(_pRenderTarget);
-	Context->GenerateMips(static_cast<d3d11_texture*>(RT->Textures[0].get())->SRV);
+	Context->GenerateMips(static_cast<d3d11_texture1*>(RT->Textures[0].get())->SRV);
 }
 
 oGPU_NAMESPACE_END

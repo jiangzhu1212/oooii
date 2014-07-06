@@ -49,6 +49,9 @@ namespace ouro {
 	// returns true if a D* format
 	bool is_depth(DXGI_FORMAT _Format);
 
+	// returns true if a BC* format
+	bool is_block_compressed(DXGI_FORMAT _Format);
+
 	// Returns the byte size of the specified format per element (per block for BC types)
 	unsigned int get_size(DXGI_FORMAT _Format, unsigned int plane = 0);
 

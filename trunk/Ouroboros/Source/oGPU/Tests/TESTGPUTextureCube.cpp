@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
+#include <oGPU/texturecube.h>
 
 using namespace ouro::gpu;
 
@@ -38,7 +38,7 @@ struct gpu_test_texturecube : public gpu_texture_test
 	gpu_test_texturecube() : gpu_texture_test("GPU test: texturecube", kIsDevMode) {}
 
 	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_CUBE; }
-	std::shared_ptr<texture> make_test_texture() override
+	resource* make_test_texture() override
 	{
 		auto _0 = surface_load(filesystem::data_path() / "Test/Textures/CubePosX.png", surface::alpha_option::force_alpha);
 		auto _1 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegX.png", surface::alpha_option::force_alpha);
@@ -48,7 +48,9 @@ struct gpu_test_texturecube : public gpu_texture_test
 		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", surface::alpha_option::force_alpha);
 
 		const surface::buffer* images[6] = { _0.get(), _1.get(), _2.get(), _3.get(), _4.get(), _5.get() };
-		return make_texture(Device, "Test cube", images, oCOUNTOF(images), texture_type::default_cube);
+		auto image = surface::buffer::make(images, 6, surface::buffer::image_array);
+		t.initialize("Test cube", Device.get(), *image, false);
+		return &t;
 	}
 
 	float rotation_step() override
@@ -60,6 +62,8 @@ struct gpu_test_texturecube : public gpu_texture_test
 			rotationStep = 1036.0f;
 		return rotationStep;
 	}
+
+	texturecube t;
 };
 
 oGPU_COMMON_TEST(texturecube);

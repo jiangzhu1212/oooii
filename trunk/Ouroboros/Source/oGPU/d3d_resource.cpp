@@ -221,7 +221,7 @@ intrusive_ptr<Resource> make_cpu_copy(Resource* _pResource)
 		case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
 		case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
 		{
-			gpu::texture_info i = get_texture_info(_pResource);
+			gpu::texture1_info i = get_texture_info1(_pResource);
 			i.type = gpu::make_readback(i.type);
 			new_texture NewTexture = make_texture(D3D11Device, copyName, i, nullptr);
 			CPUCopy = NewTexture.pResource;
@@ -259,7 +259,7 @@ void copy(Resource* _pTexture
 	intrusive_ptr<DeviceContext> D3DDeviceContext;
 	Device->GetImmediateContext(&D3DDeviceContext);
 
-	gpu::texture_info info = get_texture_info(_pTexture);
+	gpu::texture1_info info = get_texture_info1(_pTexture);
 
 	if (!gpu::is_readback(info.type))
 	{
@@ -275,7 +275,7 @@ void copy(Resource* _pTexture
 	D3DDeviceContext->Unmap(_pTexture, _Subresource);
 }
 
-template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, bool _AsArray, texture_type::value _BasicType, texture_info* _pInfo)
+template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, bool _AsArray, texture_type::value _BasicType, texture1_info* _pInfo)
 {
 	if (_Desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE)
 		_BasicType = texture_type::default_cube;
@@ -304,9 +304,9 @@ template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, boo
 	}
 }
 
-texture_info get_texture_info(Resource* _pResource, bool _AsArray, D3D11_USAGE* _pUsage)
+texture1_info get_texture_info1(Resource* _pResource, bool _AsArray, D3D11_USAGE* _pUsage)
 {
-	texture_info info;
+	texture1_info info;
 
 	D3D11_RESOURCE_DIMENSION type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
 	_pResource->GetType(&type);
@@ -366,7 +366,7 @@ texture_info get_texture_info(Resource* _pResource, bool _AsArray, D3D11_USAGE* 
 	return info;
 }
 
-static D3D11_SHADER_RESOURCE_VIEW_DESC get_srv_desc(const gpu::texture_info& _Info, D3D11_RESOURCE_DIMENSION _Type)
+static D3D11_SHADER_RESOURCE_VIEW_DESC get_srv_desc(const gpu::texture1_info& _Info, D3D11_RESOURCE_DIMENSION _Type)
 {
 	D3D11_SHADER_RESOURCE_VIEW_DESC d;
 
@@ -404,7 +404,7 @@ intrusive_ptr<ShaderResourceView> make_srv(const char* _DebugName, Resource* _pT
 	D3D11_SHADER_RESOURCE_VIEW_DESC SRVDesc;
 	D3D11_SHADER_RESOURCE_VIEW_DESC* pSRVDesc = nullptr;
 
-	gpu::texture_info info = get_texture_info(_pTexture, _AsArray);
+	gpu::texture1_info info = get_texture_info1(_pTexture, _AsArray);
 
 	if (surface::is_depth(info.format))
 	{
@@ -423,7 +423,7 @@ intrusive_ptr<ShaderResourceView> make_srv(const char* _DebugName, Resource* _pT
 	return SRV;
 }
 
-static D3D11_DEPTH_STENCIL_VIEW_DESC get_dsv_desc(const gpu::texture_info& _Info, D3D11_RESOURCE_DIMENSION _Type)
+static D3D11_DEPTH_STENCIL_VIEW_DESC get_dsv_desc(const gpu::texture1_info& _Info, D3D11_RESOURCE_DIMENSION _Type)
 {
 	D3D11_DEPTH_STENCIL_VIEW_DESC DSVDesc;
 	if (_Type != D3D11_RESOURCE_DIMENSION_TEXTURE2D)
@@ -441,7 +441,7 @@ intrusive_ptr<View> make_rtv(const char* _DebugName, Resource* _pTexture)
 	intrusive_ptr<Device> Device;
 	_pTexture->GetDevice(&Device);
 	HRESULT hr = S_OK;
-	gpu::texture_info info = get_texture_info(_pTexture);
+	gpu::texture1_info info = get_texture_info1(_pTexture);
 
 	intrusive_ptr<View> View;
 	if (surface::is_depth(info.format))
@@ -463,7 +463,7 @@ intrusive_ptr<UnorderedAccessView> make_uav(const char* _DebugName
 {
 	intrusive_ptr<Device> Device;
 	_pTexture->GetDevice(&Device);
-	gpu::texture_info info = get_texture_info(_pTexture);
+	gpu::texture1_info info = get_texture_info1(_pTexture);
 	D3D11_UNORDERED_ACCESS_VIEW_DESC UAVDesc;
 	UAVDesc.Format = dxgi::from_surface_format(info.format);
 	switch (info.type)
@@ -528,7 +528,7 @@ void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix
 }
 
 #define oDXGI_FORMAT_FROM_FILE ((DXGI_FORMAT)-3)
-void init_values(const gpu::texture_info& _Info
+void init_values(const gpu::texture1_info& _Info
 	, DXGI_FORMAT* _pFormat
 	, D3D11_USAGE* _pUsage
 	, unsigned int* _pCPUAccessFlags
@@ -604,7 +604,7 @@ static new_texture make_second_texture(Device* _pDevice, const char* _Texture1Na
 
 new_texture make_texture(Device* _pDevice
 	, const char* _DebugName
-	, const gpu::texture_info& _Info
+	, const gpu::texture1_info& _Info
 	, surface::const_mapped_subresource* _pInitData)
 {
 	new_texture NewTexture;

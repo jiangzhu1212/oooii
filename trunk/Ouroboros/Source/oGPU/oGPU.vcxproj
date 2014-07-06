@@ -135,9 +135,14 @@
     <ClInclude Include="..\..\Include\oGPU\raw_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\readback_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\render_target.h" />
+    <ClInclude Include="..\..\Include\oGPU\resource.h" />
     <ClInclude Include="..\..\Include\oGPU\rwstructured_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\shader.h" />
     <ClInclude Include="..\..\Include\oGPU\state.h" />
+    <ClInclude Include="..\..\Include\oGPU\texture1d.h" />
+    <ClInclude Include="..\..\Include\oGPU\texture2d.h" />
+    <ClInclude Include="..\..\Include\oGPU\texture3d.h" />
+    <ClInclude Include="..\..\Include\oGPU\texturecube.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layout.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h" />
@@ -194,9 +199,14 @@
     <ClCompile Include="raw_buffer.cpp" />
     <ClCompile Include="readback_buffer.cpp" />
     <ClCompile Include="render_target.cpp" />
+    <ClCompile Include="resource.cpp" />
     <ClCompile Include="rwstructured_buffer.cpp" />
     <ClCompile Include="shader.cpp" />
     <ClCompile Include="state.cpp" />
+    <ClCompile Include="texture1d.cpp" />
+    <ClCompile Include="texture2d.cpp" />
+    <ClCompile Include="texture3d.cpp" />
+    <ClCompile Include="texturecube.cpp" />
     <ClCompile Include="vertex_buffer.cpp" />
     <ClCompile Include="vertex_layout.cpp" />
   </ItemGroup>

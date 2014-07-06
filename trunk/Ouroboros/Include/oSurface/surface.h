@@ -246,7 +246,7 @@ oDECLARE_SMALL_ENUM(layout, uchar)
 	//        Step down for all of the other MIPs
 	//        RowPitch is generally the next-scanline stride of Mip0, except
 	//        when there are alignment issues e.g. with Mip0 width of 1,
-	//        or Mip0 width of 4 or less for block compressed formats.
+	//        or Mip0 width of 4 or less for block compressed formats.:
 	// right: Step right when moving from Mip0 to Mip1
 	//        Step down for all of the other MIPs.
 	//        RowPitch is generZy the next-scanline stride of Mip0 plus the 

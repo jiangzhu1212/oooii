@@ -22,33 +22,54 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
-#include <oGPU/texture2d.h>
+#include <oGPU/resource.h>
+#include "d3d_debug.h"
+#include "d3d_util.h"
+#include "dxgi_util.h"
 
-using namespace ouro::gpu;
+using namespace ouro::gpu::d3d;
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace gpu {
 
-static const bool kIsDevMode = false;
+DeviceContext* get_dc(command_list* cl);
 
-struct gpu_test_texture2dmip : public gpu_texture_test
+void resource::deinitialize()
 {
-	gpu_test_texture2dmip() : gpu_texture_test("GPU test: texture2dmip", kIsDevMode) {}
+	if (ro)
+		((View*)ro)->Release();
+	ro = nullptr;
+}
 
-	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_2D; }
-	resource* make_test_texture() override
-	{
-		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", surface::alpha_option::force_alpha);
-		t.initialize("Test 2D", Device.get(), *image.get(), true);
-		return &t;
-	}
+char* resource::name(char* dst, size_t dst_size) const
+{
+	return ro ? debug_name(dst, dst_size, (View*)ro) : "uninitialized";
+}
 
-	texture2d t;
-};
+void resource::set(command_list* cl, uint slot, uint num_resources, resource* const* resources)
+{
+	ShaderResourceView* srvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
+	for (uint i = 0; i < num_resources; i++)
+		srvs[i] = (ShaderResourceView*)resources[i]->get_resource();
+	set_srvs(get_dc(cl), slot, num_resources, srvs); 	
+}
 
-oGPU_COMMON_TEST(texture2dmip);
+void resource::set(command_list* cl, uint slot)
+{
+	set_srvs(get_dc(cl), slot, 1, (ShaderResourceView* const*)&ro);
+}
 
-	} // namespace tests
-} // namespace ouro
+void resource::set_highest_mip(command_list* cl, float mip)
+{
+	intrusive_ptr<Resource> r;
+	((View*)ro)->GetResource(&r);
+	get_dc(cl)->SetResourceMinLOD(r, mip);
+}
+
+void resource::update(command_list* cl, uint subresource, const void* src, uint row_pitch, uint depth_pitch)
+{
+	intrusive_ptr<Buffer> b;
+	((View*)ro)->GetResource((Resource**)&b);
+	get_dc(cl)->UpdateSubresource(b, subresource, nullptr, src, row_pitch, row_pitch);
+}
+
+}}

@@ -128,6 +128,11 @@ public:
 		, Subresource(_Subresource)
 	{ pBuffer->map_const(Subresource, &mapped, &byte_dimensions); }
 
+	shared_lock(const buffer& _Buffer, int _Subresource = 0)
+		: pBuffer(&_Buffer)
+		, Subresource(_Subresource)
+	{ pBuffer->map_const(Subresource, &mapped, &byte_dimensions); }
+
 	~shared_lock() { pBuffer->unmap_const(Subresource); }
 
 	const_mapped_subresource mapped;

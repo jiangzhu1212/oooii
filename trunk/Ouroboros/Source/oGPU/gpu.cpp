@@ -71,7 +71,7 @@ const char* as_string(const gpu::resource_type::value& _Value)
 	switch (_Value)
 	{
 		case gpu::resource_type::buffer: return "buffer";
-		case gpu::resource_type::texture: return "texture";
+		case gpu::resource_type::texture1: return "texture";
 
 		default: break;
 	}

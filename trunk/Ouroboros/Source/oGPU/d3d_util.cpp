@@ -35,7 +35,7 @@ Texture1D* make_texture_1d(const char* name, Device* dev, surface::format format
 {
 	CD3D11_TEXTURE1D_DESC d(dxgi::from_surface_format(format)
 		, width
-		, array_size
+		, __max(1, array_size)
 		, mips ? 0 : 1);
 
 	Texture1D* t = nullptr;
@@ -49,7 +49,7 @@ Texture2D* make_texture_2d(const char* name, Device* dev, surface::format format
 	CD3D11_TEXTURE2D_DESC d(dxgi::from_surface_format(format)
 		, width
 		, height
-		, cube ? __min(6, array_size*6) : array_size
+		, cube ? __min(6, array_size*6) : __max(1, array_size)
 		, mips ? 0 : 1
 		, D3D11_BIND_SHADER_RESOURCE | (target ? D3D11_BIND_RENDER_TARGET : 0)
 		, D3D11_USAGE_DEFAULT
@@ -78,6 +78,64 @@ Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format
 	return t;
 }
 
+texture_info get_texture_info(Resource* r)
+{
+	texture_info i;
+	r->GetType(&i.type);
+	switch (i.type)
+	{
+		case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
+		{
+			D3D11_TEXTURE1D_DESC desc;
+			static_cast<Texture1D*>(r)->GetDesc(&desc);
+			i.dimensions = ushort3(static_cast<ushort>(desc.Width), 1, 1);
+			i.array_size = static_cast<ushort>(desc.ArraySize);
+			i.format = desc.Format;
+			i.usage = desc.Usage;
+			break;
+		}
+
+		case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
+		{
+			D3D11_TEXTURE2D_DESC desc;
+			static_cast<Texture2D*>(r)->GetDesc(&desc);
+			i.dimensions = ushort3(static_cast<ushort>(desc.Width), static_cast<ushort>(desc.Height), 1);
+			i.array_size = static_cast<ushort>(desc.ArraySize);
+			i.format = desc.Format;
+			i.usage = desc.Usage;
+			break;
+		}
+
+		case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
+		{
+			D3D11_TEXTURE3D_DESC desc;
+			static_cast<Texture3D*>(r)->GetDesc(&desc);
+			i.dimensions = ushort3(static_cast<ushort>(desc.Width), static_cast<ushort>(desc.Height), static_cast<ushort>(desc.Depth));
+			i.array_size = 1;
+			i.format = desc.Format;
+			i.usage = desc.Usage;
+			break;
+		}
+
+		case D3D11_RESOURCE_DIMENSION_BUFFER:
+		{
+			D3D11_BUFFER_DESC desc;
+			static_cast<Buffer*>(r)->GetDesc(&desc);
+			const ushort stride = static_cast<ushort>(__max(1, desc.StructureByteStride));
+			const ushort num = static_cast<ushort>(desc.ByteWidth / stride);
+			i.dimensions = ushort3(stride, num, 1);
+			i.array_size = num;
+			i.format = DXGI_FORMAT_UNKNOWN;
+			i.usage = desc.Usage;
+			break;
+		};
+
+		oNODEFAULT;
+	}
+
+	return i;
+}
+
 ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size)
 {
 	D3D11_RESOURCE_DIMENSION type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
@@ -86,13 +144,16 @@ ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size)
 	D3D11_SHADER_RESOURCE_VIEW_DESC d;
 	d.Format = format;
 
+	bool is_array = !!array_size;
+
 	switch (type)
 	{
 		case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
 		{
 			D3D11_TEXTURE2D_DESC desc;
 			((Texture2D*)r)->GetDesc(&desc);
-			d.ViewDimension = (desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE) ? D3D_SRV_DIMENSION_TEXTURE2D : D3D_SRV_DIMENSION_TEXTURECUBE;
+			d.ViewDimension = (desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE) ? D3D_SRV_DIMENSION_TEXTURECUBE : D3D_SRV_DIMENSION_TEXTURE2D;
+			is_array = array_size > 6;
 			break;
 		}
 		
@@ -100,8 +161,9 @@ ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size)
 		case D3D11_RESOURCE_DIMENSION_TEXTURE3D: d.ViewDimension = D3D_SRV_DIMENSION_TEXTURE3D; array_size = 0; break;
 		oNODEFAULT;
 	}
-
-	if (array_size)
+	
+	// because of unions, this works for all texture types
+	if (is_array)
 	{
 		d.ViewDimension = D3D_SRV_DIMENSION(d.ViewDimension + 1);
 		d.Texture2DArray.MostDetailedMip = 0;
@@ -329,6 +391,41 @@ void update_buffer(DeviceContext* dc, View* v, uint byte_offset, uint num_bytes,
 	v->GetResource(&r);
 	oASSERT(D3D11_RESOURCE_DIMENSION_BUFFER == get_type(v), "must call on a buffer");
 	update_buffer(dc, (Buffer*)r.c_ptr(), byte_offset, num_bytes, src);
+}
+
+void update_texture(DeviceContext* dc, bool device_supports_deferred_contexts, Resource* r, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region)
+{
+	D3D11_BOX box;
+	D3D11_BOX* pBox = nullptr;
+	if (!region.empty())
+	{
+		box.left = region.left;
+		box.top = region.top;
+		box.right = region.right;
+		box.bottom = region.bottom; 
+		box.front = region.front;
+		box.back = region.back;
+		pBox = &box;
+	}
+
+	uchar* pAdjustedData = (uchar*)src.data;
+
+	if (pBox && !device_supports_deferred_contexts)
+	{
+		auto i = get_texture_info(r);
+
+		if (dxgi::is_block_compressed(i.format))
+		{
+			pBox->left /= 4;
+			pBox->right /= 4;
+			pBox->top /= 4;
+			pBox->bottom /= 4;
+		}
+
+		pAdjustedData -= (pBox->front * src.depth_pitch) - (pBox->top * src.row_pitch) - (pBox->left * dxgi::get_size(i.format));
+	}
+
+	dc->UpdateSubresource(r, subresource, pBox, pAdjustedData, src.row_pitch, src.depth_pitch);
 }
 
 static UnorderedAccessView* s_NullUAVs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
