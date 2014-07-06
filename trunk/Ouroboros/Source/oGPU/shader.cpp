@@ -22,18 +22,18 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-
 #include <oGPU/shader.h>
+#include <oGPU/raw_buffer.h>
 #include <oCore/windows/win_util.h>
 #include "d3d_compile.h"
 #include "d3d_debug.h"
-#include "d3d_shader.h"
+#include "d3d_util.h"
 #include <string>
 
 using namespace ouro::gpu::d3d;
 
-namespace ouro {
-
+namespace ouro { 
+	
 const char* as_string(const gpu::stage::value& _Value)
 {
 	switch (_Value)
@@ -50,45 +50,84 @@ const char* as_string(const gpu::stage::value& _Value)
 
 oDEFINE_TO_STRING(gpu::stage::value)
 oDEFINE_FROM_STRING(gpu::stage::value, gpu::stage::count)
-
-	namespace gpu {
+	
+namespace gpu {
 
 Device* get_device(device* dev);
+DeviceContext* get_dc(command_list* cl);
 
-vertex_shader* make_vertex_shader(device* dev, const void* bytecode, const char* debug_name) { return (vertex_shader*)d3d::make_vertex_shader(get_device(dev), bytecode, debug_name); }
-hull_shader* make_hull_shader(device* dev, const void* bytecode, const char* debug_name) { return (hull_shader*)d3d::make_hull_shader(get_device(dev), bytecode, debug_name); }
-domain_shader* make_domain_shader(device* dev, const void* bytecode, const char* debug_name) { return (domain_shader*)d3d::make_domain_shader(get_device(dev), bytecode, debug_name); }
-geometry_shader* make_geometry_shader(device* dev, const void* bytecode, const char* debug_name) { return (geometry_shader*)d3d::make_geometry_shader(get_device(dev), bytecode, debug_name); }
-pixel_shader* make_pixel_shader(device* dev, const void* bytecode, const char* debug_name) { return (pixel_shader*)d3d::make_pixel_shader(get_device(dev), bytecode, debug_name); }
-compute_shader* make_compute_shader(device* dev, const void* bytecode, const char* debug_name) { return (compute_shader*)d3d::make_compute_shader(get_device(dev), bytecode, debug_name); }
-
-void unmake_shader(shader* s)
+void shader::deinitialize()
 {
-	if (s)
-		((DeviceChild*)s)->Release();
+	if (sh)
+		((DeviceChild*)sh)->Release();
+	sh = nullptr;
 }
 
-scoped_allocation compile_shader(const char* _IncludePaths
-	, const char* _Defines
-	, const char* _ShaderSourcePath
-	, const stage::value& _Stage
-	, const char* _EntryPoint
-	, const char* _ShaderSource
-	, const allocator& _Allocator)
+char* shader::name(char* dst, size_t dst_size) const
+{
+	return debug_name(dst, dst_size, (DeviceChild*)sh);
+}
+
+#define INIT_SH(type, d3d_type, d3d_short_type) \
+	void type::initialize(const char* name, device* dev, const void* bytecode) \
+	{	deinitialize(); \
+		if (!bytecode) return; \
+		oV(get_device(dev)->Create##d3d_type(bytecode, bytecode_size(bytecode), nullptr, (d3d_type**)&sh)); \
+		debug_name((DeviceChild*)sh, name); \
+	}
+
+#define SET_SH(type, d3d_type, d3d_short_type) \
+	void type::set(command_list* cl) const { get_dc(cl)->d3d_short_type##SetShader((d3d_type*)sh, nullptr, 0); }
+#define CLEAR_SH(type, d3d_type, d3d_short_type) \
+	void type::clear(command_list* cl) const { get_dc(cl)->d3d_short_type##SetShader(nullptr, nullptr, 0); }
+
+#define DEFINE_SH(type, d3d_type, d3d_short_type) INIT_SH(type, d3d_type, d3d_short_type) SET_SH(type, d3d_type, d3d_short_type) CLEAR_SH(type, d3d_type, d3d_short_type)
+	
+DEFINE_SH(vertex_shader, VertexShader, VS)
+DEFINE_SH(hull_shader, HullShader, HS)
+DEFINE_SH(domain_shader, DomainShader, DS)
+DEFINE_SH(geometry_shader, GeometryShader, GS)
+DEFINE_SH(pixel_shader, PixelShader, PS)
+
+INIT_SH(compute_shader, ComputeShader, CS) CLEAR_SH(compute_shader, ComputeShader, CS)
+
+void compute_shader::dispatch(command_list* cl, const uint3& dispatch_thread_count) const
+{
+	DeviceContext* dc = get_dc(cl);
+	dc->CSSetShader((ComputeShader*)sh, nullptr, 0);
+	dc->Dispatch(dispatch_thread_count.x, dispatch_thread_count.y, dispatch_thread_count.z);
+}
+
+void compute_shader::dispatch(command_list* cl, raw_buffer* dispatch_thread_counts, uint offset_in_uints) const
+{
+	intrusive_ptr<Buffer> b;
+	((View*)dispatch_thread_counts->get_target())->GetResource((Resource**)&b);
+	DeviceContext* dc = get_dc(cl);
+	dc->CSSetShader((ComputeShader*)sh, nullptr, 0);
+	dc->DispatchIndirect(b, offset_in_uints);
+}
+
+scoped_allocation compile_shader(const char* include_paths
+	, const char* defines
+	, const char* shader_source_path
+	, const stage::value& type
+	, const char* entry_point
+	, const char* shader_source
+	, const allocator& alloc)
 {
 	std::string cmdline;
 	cmdline.reserve(2048);
 	cmdline = "/O3 /T ";
-	cmdline += shader_profile(D3D_FEATURE_LEVEL_11_0, _Stage);
+	cmdline += shader_profile(D3D_FEATURE_LEVEL_11_0, type);
 	cmdline += " /E ";
-	cmdline += _EntryPoint;
+	cmdline += entry_point;
 
 	// Add defines
 	cmdline += " /D oHLSL ";
-	if (_Defines)
+	if (defines)
 	{
 		char* ctx = nullptr;
-		std::string defs(_Defines);
+		std::string defs(defines);
 		char* def = strtok_r((char*)defs.c_str(), ";", &ctx);
 		while (def)
 		{
@@ -99,10 +138,10 @@ scoped_allocation compile_shader(const char* _IncludePaths
 	}
 	
 	// Add includes
-	if (_IncludePaths)
+	if (include_paths)
 	{
 		char* ctx = nullptr;
-		std::string incs(_IncludePaths);
+		std::string incs(include_paths);
 		char* inc = strtok_r((char*)incs.c_str(), ";", &ctx);
 		while (inc)
 		{
@@ -112,8 +151,7 @@ scoped_allocation compile_shader(const char* _IncludePaths
 		}
 	}
 
-	return d3d::compile_shader(cmdline.c_str(), _ShaderSourcePath, _ShaderSource, _Allocator);
+	return d3d::compile_shader(cmdline.c_str(), shader_source_path, shader_source, alloc);
 }
 
-	} // namespace gpu
-} // namespace ouro
+}}

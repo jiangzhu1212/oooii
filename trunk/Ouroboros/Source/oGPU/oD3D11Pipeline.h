@@ -37,11 +37,11 @@ oDEVICE_CHILD_CLASS(pipeline1)
 	~d3d11_pipeline1();
 	pipeline1_info get_info() const override;
 	vertex_layout VertexLayout;
-	unique_vertex_shader_ptr VertexShader;
-	unique_hull_shader_ptr HullShader;
-	unique_domain_shader_ptr DomainShader;
-	unique_geometry_shader_ptr GeometryShader;
-	unique_pixel_shader_ptr PixelShader;
+	vertex_shader VertexShader;
+	hull_shader HullShader;
+	domain_shader DomainShader;
+	geometry_shader GeometryShader;
+	pixel_shader PixelShader;
 	D3D_PRIMITIVE_TOPOLOGY InputTopology;
 	mesh::element_array VertexElements;
 	sstring DebugName;

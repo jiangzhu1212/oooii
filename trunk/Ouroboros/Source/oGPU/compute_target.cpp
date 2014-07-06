@@ -55,6 +55,18 @@ void* compute_target::get_buffer() const
 	return r;
 }
 
+void compute_target::cleari(command_list* cl, const uint4& clear_value)
+{
+	// @tony: note it may not be possible to clear an append/counter target, so if that ends up being true, create another uav just for this.
+	get_dc(cl)->ClearUnorderedAccessViewUint((UnorderedAccessView*)rw, (const uint*)&clear_value);
+}
+
+void compute_target::clearf(command_list* cl, const float4& clear_value)
+{
+	// @tony: note it may not be possible to clear an append/counter target, so if that ends up being true, create another uav just for this.
+	get_dc(cl)->ClearUnorderedAccessViewFloat((UnorderedAccessView*)rw, (const float*)&clear_value);
+}
+
 void compute_target::set_draw_target(command_list* cl, uint slot, uint initial_count) const
 {
 	DeviceContext* dc = get_dc(cl);

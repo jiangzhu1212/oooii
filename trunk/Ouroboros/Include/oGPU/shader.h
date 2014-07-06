@@ -27,9 +27,8 @@
 #define oGPU_shader_h
 
 #include <oBase/allocate.h>
-#include <oBase/macros.h>
-#include <oBase/types.h>
-#include <oMesh/mesh.h>
+#include <oBase/gpu_api.h>
+#include <oGPU/vertex_layout.h>
 
 namespace ouro {
 	namespace gpu {
@@ -38,13 +37,8 @@ static const uint3 max_dispatches = uint3(65535, 65535, 65535);
 static const uint3 max_num_group_threads = uint3(1024, 1024, 64);
 
 class device;
-class shader {};
-class vertex_shader : shader {};
-class hull_shader : shader {};
-class domain_shader : shader {};
-class geometry_shader : shader {};
-class pixel_shader : shader {};
-class compute_shader : shader {};
+class command_list;
+class raw_buffer;
 
 namespace stage
 { oDECLARE_SMALL_ENUM(value, uchar) {
@@ -76,36 +70,86 @@ namespace stage_flag
 
 };}
 
-vertex_shader* make_vertex_shader(device* dev, const void* bytecode, const char* debug_name = "");
-hull_shader* make_hull_shader(device* dev, const void* bytecode, const char* debug_name = "");
-domain_shader* make_domain_shader(device* dev, const void* bytecode, const char* debug_name = "");
-geometry_shader* make_geometry_shader(device* dev, const void* bytecode, const char* debug_name = "");
-pixel_shader* make_pixel_shader(device* dev, const void* bytecode, const char* debug_name = "");
-compute_shader* make_compute_shader(device* dev, const void* bytecode, const char* debug_name = "");
+class shader
+{
+public:
+	shader() : sh(nullptr) {}
+	~shader() { deinitialize(); }
 
-void unmake_shader(shader* s);
+	void deinitialize();
+	char* name(char* dst, size_t dst_size) const;
+	inline void* get_shader() const { return sh; }
+protected:
+	void* sh;
+};
 
-template<typename shaderT> struct delete_shader { void operator()(shaderT* s) const { unmake_shader((shader*)s); } };
-typedef std::unique_ptr<vertex_shader, delete_shader<vertex_shader>> unique_vertex_shader_ptr;
-typedef std::unique_ptr<hull_shader, delete_shader<hull_shader>> unique_hull_shader_ptr;
-typedef std::unique_ptr<domain_shader, delete_shader<domain_shader>> unique_domain_shader_ptr;
-typedef std::unique_ptr<geometry_shader, delete_shader<geometry_shader>> unique_geometry_shader_ptr;
-typedef std::unique_ptr<pixel_shader, delete_shader<pixel_shader>> unique_pixel_shader_ptr;
-typedef std::unique_ptr<compute_shader, delete_shader<compute_shader>> unique_compute_shader_ptr;
+class vertex_shader : public shader
+{
+public:
+	~vertex_shader() { deinitialize(); }
+	void initialize(const char* name, device* dev, const void* bytecode);
+	void set(command_list* cl) const;
+	void clear(command_list* cl) const;
+};
 
-// Compiles a shader and returns the binary byte code. _IncludePaths is a semi-colon 
-// delimited list of include paths to search. _Defines is a semi-colon delimited list
-// of defines. Also required is the full path to the shader source for resolving local
-// includes, the entry point to compile and the source of the shader itself. This will
-// use the file system to load dependent headers. The final buffer will be allocated
-// using the specified allocator. _EntryPoint must begin with two letters that describe
-scoped_allocation compile_shader(const char* _IncludePaths
-	, const char* _Defines
-	, const char* _ShaderSourcePath
-	, const stage::value& _Type
-	, const char* _EntryPoint
-	, const char* _ShaderSource
-	, const allocator& _Allocator = default_allocator);
+class hull_shader : public shader
+{
+public:
+	~hull_shader() { deinitialize(); }
+	void initialize(const char* name, device* dev, const void* bytecode);
+	void set(command_list* cl) const;
+	void clear(command_list* cl) const;
+};
+
+class domain_shader : public shader
+{
+public:
+	~domain_shader() { deinitialize(); }
+	void initialize(const char* name, device* dev, const void* bytecode);
+	void set(command_list* cl) const;
+	void clear(command_list* cl) const;
+};
+
+class geometry_shader : public shader
+{
+public:
+	~geometry_shader() { deinitialize(); }
+	void initialize(const char* name, device* dev, const void* bytecode);
+	void set(command_list* cl) const;
+	void clear(command_list* cl) const;
+};
+
+class pixel_shader : public shader
+{
+public:
+	~pixel_shader() { deinitialize(); }
+	void initialize(const char* name, device* dev, const void* bytecode);
+	void set(command_list* cl) const;
+	void clear(command_list* cl) const;
+};
+
+class compute_shader : public shader
+{
+public:
+	~compute_shader() { deinitialize(); }
+	void initialize(const char* name, device* dev, const void* bytecode);
+	void dispatch(command_list* cl, const uint3& dispatch_thread_count) const;
+	void dispatch(command_list* cl, raw_buffer* dispatch_thread_counts, uint offset_in_uints) const;
+	void clear(command_list* cl) const;
+};
+
+// Compiles a shader and returns the binary byte code.
+//  include_paths: a semi-colon delimited list of include paths to search.
+//  defines: a semi-colon delimited list of defines. 
+//  shader_source_path: the full path to the shader source for resolving local includes
+//  entry_point: the top-level shader function to compile.
+scoped_allocation compile_shader(const char* include_paths
+	, const char* defines
+	, const char* shader_source_path
+	, const stage::value& type
+	, const char* entry_point
+	, const char* shader_source
+	, const allocator& alloc = default_allocator);
 
 	} // namespace gpu
 } // namespace ouro

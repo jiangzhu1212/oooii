@@ -56,13 +56,12 @@ oDEVICE_CHILD_CTOR(pipeline1)
 			break;
 	}
 
-	VertexLayout.initialize("layout", _Device.get(), VertexElements, _Info.vs);
-
-	VertexShader.reset(make_vertex_shader(_Device.get(), _Info.vs, _Info.debug_name));
-	HullShader.reset(make_hull_shader(_Device.get(), _Info.hs, _Info.debug_name));
-	DomainShader.reset(make_domain_shader(_Device.get(), _Info.ds, _Info.debug_name));
-	GeometryShader.reset(make_geometry_shader(_Device.get(), _Info.gs, _Info.debug_name));
-	PixelShader.reset(make_pixel_shader(_Device.get(), _Info.ps, _Info.debug_name));
+	VertexLayout.initialize(_Info.debug_name, _Device.get(), VertexElements, _Info.vs);
+	VertexShader.initialize(_Info.debug_name, _Device.get(), _Info.vs);
+	HullShader.initialize(_Info.debug_name, _Device.get(), _Info.hs);
+	DomainShader.initialize(_Info.debug_name, _Device.get(), _Info.ds);
+	GeometryShader.initialize(_Info.debug_name, _Device.get(), _Info.gs);
+	PixelShader.initialize(_Info.debug_name, _Device.get(), _Info.ps);
 }
 
 d3d11_pipeline1::~d3d11_pipeline1()

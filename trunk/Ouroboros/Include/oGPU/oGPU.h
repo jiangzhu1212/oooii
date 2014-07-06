@@ -646,27 +646,6 @@ public:
 	virtual void copy(buffer* _pDestination, uint _DestinationOffsetBytes, buffer* _pSource, uint _SourceOffsetBytes, uint _SizeBytes) = 0;
 	template<typename T, typename U> void copy(std::shared_ptr<T>& _pDestination, uint _DestinationOffsetBytes, std::shared_ptr<U>& _pSource, uint _SourceOffsetBytes, uint _SizeBytes) { copy(_pDestination.get(), _DestinationOffsetBytes, _pSource.get(), _SourceOffsetBytes, _SizeBytes); }
 
-	// Copy the counter value stored in a source buffer of type 
-	// buffer_type::unordered_structured_append or buffer_type::unordered_structured_counter 
-	// to a destination buffer. An offset into that buffer can be specified - it must be 
-	// aligned to sizeof(uint). To read back this value to the CPU, _pDestination should be 
-	// a readback buffer of at least sizeof(uint) size. Then use map_read() on the device to
-	// access the uint counter value.
-	virtual void copy_counter(buffer* _pDestination, uint _DestinationAlignedOffset, buffer* _pUnorderedSource) = 0;
-	template<typename T, typename U> void copy_counter(std::shared_ptr<T>& _pDestination, uint _DestinationAlignedOffset, std::shared_ptr<U>& _pUnorderedSource) { copy_counter(_pDestination.get(), _DestinationAlignedOffset, _pUnorderedSource.get()); }
-
-	// Sets the counter in the specified buffer to the specified value. This 
-	// incurs a dispatch and should not be used in the main loop of production 
-	// code. This is exposed primarily for test cases and initialization. For main 
-	// loop code use the _pInitialCounts parameter of set_unordered_resources or 
-	// set_render_target_and_unordered_resources. REMEMBER: This will occur when the 
-	// command list is submitted to the device during end_frame(). If the desire is
-	// immediate ensure this command list is the one retrieved from 
-	// device::get_immediate_command_list().
-	virtual void set_counters(uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pValues) = 0;
-	inline void set_counters(uint _NumUnorderedBuffers, buffer** _ppUnorderedBuffers, uint* _pValues) { set_counters(_NumUnorderedBuffers, (resource**)_ppUnorderedBuffers, _pValues); }
-	inline void set_counters(resource* _pResource, uint _Value) { set_counters(1, &_pResource, &_Value); }
-
 	// Set the texture sampler states in this context
 	virtual void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) = 0;
 	inline void set_sampler(uint _StartSlot, const sampler_state::value& _SamplerState) { set_samplers(_StartSlot, 1, &_SamplerState); }
@@ -756,24 +735,6 @@ public:
 
 	// _____________________________________________________________________________
 	// Compute-specific
-
-	// Clears the specified resource created for unordered access.
-	virtual void cleari(resource* _pUnorderedResource, const uint4& _Values) = 0;
-
-	// Clears the specified resource created for unordered access.
-	virtual void clearf(resource* _pUnorderedResource, const float4& _Values) = 0;
-
-	// If all 3 values in _ThreadGroupCount are invalid, then the counts are 
-	// automatically determined by the GPU. Unordered resources can be 
-	// buffer or oGPUTexture, but each must have been created readied
-	// for unordered access. If not null, _pInitialCounts should be 
-	// _NumUnorderedResources in length and is used to set the initial value of a 
-	// counter or append/consume count for buffers of type 
-	// buffer_type::unordered_structured_append or 
-	// buffer_type::unordered_structured_counter. Specify invalid to skip 
-	// initialization of an entry, thus retaining any prior value of the counter.
-	virtual void dispatch(compute_kernel* _pComputeKernel, const int3& _ThreadGroupCount) = 0;
-	inline void dispatch(std::shared_ptr<compute_kernel>& _pComputeKernel, const int3& _ThreadGroupCount) { dispatch(_pComputeKernel.get(), _ThreadGroupCount); }
 };
 
 class device
@@ -805,7 +766,6 @@ public:
 
 	virtual std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) = 0;
 	virtual std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) = 0;
-	virtual std::shared_ptr<compute_kernel> make_compute_kernel(const char* _Name, const compute_kernel_info& _Info) = 0;
 	virtual std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) = 0;
 	virtual std::shared_ptr<render_target> make_render_target(const char* _Name, const render_target_info& _Info) = 0;
 	virtual std::shared_ptr<texture> make_texture(const char* _Name, const texture_info& _Info) = 0;
@@ -813,7 +773,6 @@ public:
 	// convenience versions of the above
 	inline std::shared_ptr<command_list> make_command_list(const char* _Name, short _DrawOrder = 0) { command_list_info i; i.draw_order = _DrawOrder; return make_command_list(_Name, i); } 
 	inline std::shared_ptr<pipeline1> make_pipeline1(const pipeline1_info& _Info) { return make_pipeline1(_Info.debug_name, _Info); }
-	inline std::shared_ptr<compute_kernel> make_compute_kernel(const compute_kernel_info& _Info) { return make_compute_kernel(_Info.debug_name, _Info); }
 
 	// map_read is a non-blocking call to read from the specified resource by the
 	// mapped data populated in the specified _pMappedSubresource. If the function

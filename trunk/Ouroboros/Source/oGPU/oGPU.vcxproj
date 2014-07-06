@@ -155,7 +155,6 @@
     <ClInclude Include="d3d_util.h" />
     <ClInclude Include="dxgi_util.h" />
     <ClInclude Include="oD3D11CommandList.h" />
-    <ClInclude Include="oD3D11ComputeShader.h" />
     <ClInclude Include="oD3D11Device.h" />
     <ClInclude Include="oD3D11Pipeline.h" />
     <ClInclude Include="oD3D11Query.h" />
@@ -182,7 +181,6 @@
     <ClCompile Include="gpu.cpp" />
     <ClCompile Include="index_buffer.cpp" />
     <ClCompile Include="oD3D11CommandList.cpp" />
-    <ClCompile Include="oD3D11ComputeShader.cpp" />
     <ClCompile Include="oD3D11Device.cpp" />
     <ClCompile Include="oD3D11IO.cpp" />
     <ClCompile Include="oD3D11Pipeline.cpp" />
