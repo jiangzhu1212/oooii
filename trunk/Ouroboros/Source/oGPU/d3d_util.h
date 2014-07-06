@@ -52,9 +52,9 @@ Buffer* make_buffer(const char* name, Device* dev, uint element_stride, uint num
 // fills out_srv and out_uav with views on a structured buffer
 void make_structured(const char* name, Device* dev, uint struct_stride, uint num_structs, const void* src, uint uav_flags, ShaderResourceView** out_srv, UnorderedAccessView** out_uav);
 
-// Creates a STAGING version of the specified resource and copies 
-// the src to it and flushes the immediate context.
-Resource* make_cpu_copy(Resource* src);
+// Creates a STAGING version of the specified resource and copies the src to it and flushes 
+// the immediate context. If do_copy is false then the buffer is created uninitialized.
+Resource* make_cpu_copy(Resource* src, bool do_copy = true);
 
 // calls UpdateSubresource for the specified buffer. This won't work for a D3D11_BIND_CONSTANT_BUFFER.
 void update_buffer(DeviceContext* dc, Buffer* b, uint byte_offset, uint num_bytes, const void* src);

@@ -37,6 +37,8 @@ public:
 	readback_buffer() : impl(nullptr), bytes(0) {}
 	~readback_buffer() { deinitialize(); }
 	void initialize(const char* name, device* dev, uint element_stride, uint num_elements = 1);
+	template<typename BufferT> void initialize(const BufferT& buffer, bool make_immediate_copy = false) { internal_initialize(buffer.get_buffer(), make_immediate_copy); }
+
 	void deinitialize();
 	void* get_buffer() const { return impl; }
 
@@ -51,6 +53,7 @@ private:
 	void* impl;
 	uint bytes;
 
+	void internal_initialize(void* buffer_impl, bool make_immediate_copy);
 	void internal_copy_from(command_list* cl, void* buffer_impl);
 };
 	

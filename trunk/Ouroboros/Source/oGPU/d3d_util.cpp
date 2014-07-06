@@ -237,7 +237,7 @@ static void set_staging(ResourceDescT* desc)
 	desc->BindFlags = 0;
 }
 
-Resource* make_cpu_copy(Resource* src)
+Resource* make_cpu_copy(Resource* src, bool do_copy)
 {
 	intrusive_ptr<Device> dev;
 	src->GetDevice(&dev);
@@ -302,8 +302,12 @@ Resource* make_cpu_copy(Resource* src)
 		debug_name(CPUCopy, copyName);
 	}
 
-	dc->CopyResource(CPUCopy, src);
-	dc->Flush();
+	if (do_copy)
+	{
+		dc->CopyResource(CPUCopy, src);
+		dc->Flush();
+	}
+
 	return CPUCopy;
 }
 
