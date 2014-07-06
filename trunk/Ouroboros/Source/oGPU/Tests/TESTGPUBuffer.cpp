@@ -24,6 +24,9 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oGPU/oGPU.h>
+#include <oGPU/readback_buffer.h>
+#include <oGPU/vertex_buffer.h>
+#include <oGPU/rwstructured_buffer.h>
 #include "oGPUTestPipelines.h"
 
 using namespace ouro::gpu;
@@ -39,55 +42,43 @@ void TESTbuffer()
 	init.driver_debug_level = debug_level::normal;
 	std::shared_ptr<device> Device = device::make(init);
 
-	buffer_info i;
-	i.struct_byte_size = sizeof(int);
-	i.type = buffer_type::unordered_structured_append;
-	i.array_size = oCOUNTOF(GPU_BufferAppendIndices) * 2;
-	std::shared_ptr<buffer> AppendBuffer = Device->make_buffer("BufferAppend", i);
-	i.type = buffer_type::readback;
+	rwstructured_buffer AppendBuffer;
+	AppendBuffer.initialize_append("BufferAppend", Device.get(), sizeof(int), oCOUNTOF(GPU_BufferAppendIndices) * 2);
 
-	std::shared_ptr<buffer> AppendReadbackBuffer = Device->make_buffer("BufferAppend", i);
+	readback_buffer AppendReadbackBuffer;
+	AppendReadbackBuffer.initialize("BufferAppend", Device.get(), sizeof(int), oCOUNTOF(GPU_BufferAppendIndices) * 2);
 
-	i.type = buffer_type::readback;
-	i.array_size = 1;
+	readback_buffer AppendBufferCount;
+	AppendBufferCount.initialize("BufferAppendCount", Device.get(), sizeof(int));
 
-	std::shared_ptr<buffer> AppendBufferCount = Device->make_buffer("BufferAppendCount", i);
 	std::shared_ptr<pipeline1> Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_BUFFER));
 	std::shared_ptr<command_list> CommandList = Device->get_immediate_command_list();
 
-	Device->begin_frame();
-	CommandList->begin();
+	scoped_device_frame DevFrame(Device.get());
+	scoped_command_line_frame CommandListFrame(CommandList.get());
 
 	CommandList->set_blend_state(blend_state::opaque);
 	CommandList->set_depth_stencil_state(depth_stencil_state::none);
 	CommandList->set_rasterizer_state(rasterizer_state::two_sided);
 
-	buffer* b = AppendBuffer.get();
-	CommandList->set_render_target_and_unordered_resources(nullptr, 0, nullptr, false, 0, 1, &b);
+	AppendBuffer.set_draw_target(CommandList.get(), 0);
+
 	CommandList->set_pipeline(Pipeline);
-	CommandList->draw(nullptr, 0, 0, nullptr, 0, oCOUNTOF(GPU_BufferAppendIndices));
-	CommandList->copy_counter(AppendBufferCount, 0, AppendBuffer);
-	CommandList->copy(AppendReadbackBuffer, AppendBuffer);
+	vertex_buffer::draw_unindexed(CommandList.get(), oCOUNTOF(GPU_BufferAppendIndices), 0);
 
-	surface::mapped_subresource ReadBack;
-	oCHECK0(Device->map_read(AppendBufferCount, 0, &ReadBack, true));
-	oCHECK(oCOUNTOF(GPU_BufferAppendIndices) == *(int*)ReadBack.data, "Append counter didn't reach %d", oCOUNTOF(GPU_BufferAppendIndices));
-	Device->unmap_read(AppendBufferCount, 0);
+	AppendBuffer.copy_counter_to(CommandList.get(), AppendBufferCount, 0);
 
-	oCHECK0(Device->map_read(AppendReadbackBuffer, 0, &ReadBack, true));
+	int count = 0;
+	AppendBufferCount.copy_to(&count, sizeof(int));
+	oCHECK(oCOUNTOF(GPU_BufferAppendIndices) == count, "Append counter didn't reach %d", oCOUNTOF(GPU_BufferAppendIndices));
 
-	const int* pBuffer = (const int*)ReadBack.data;
-	std::vector<int> Values;
-	for(int i = 0; i < oCOUNTOF(GPU_BufferAppendIndices); ++i)
-		Values.push_back(GPU_BufferAppendIndices[i]);
+	AppendReadbackBuffer.copy_from(CommandList.get(), AppendBuffer);
+
+	std::vector<int> Values(20);
+	oCHECK(AppendReadbackBuffer.copy_to(Values.data(), Values.size() * sizeof(int)), "Copy out of readback buffer failed");
 
 	for(int i = 0; i < oCOUNTOF(GPU_BufferAppendIndices); ++i)
 		oCHECK(find_and_erase(Values, GPU_BufferAppendIndices[i]), "GPU Appended bad value");
-
-	Device->unmap_read(AppendReadbackBuffer, 0);
-
-	CommandList->end();
-	Device->end_frame();
 }
 
 	} // namespace tests

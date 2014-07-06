@@ -289,6 +289,7 @@ interface oTestManager
 			, Exhaustive(false)
 			, AutomatedMode(false)
 			, EnableOutputGoldenImages(false)
+			, TerminateOtherProcesses(true)
 		{}
 
 		const char* TestSuiteName;
@@ -315,6 +316,7 @@ interface oTestManager
 		bool Exhaustive; // allow time consuming tests to run. Tests should have a fast mode, and check this flag to see if its ok to run in slow mode.
 		bool AutomatedMode; // Don't prompt the user for action, do something sensible for running this on an automated test server
 		bool EnableOutputGoldenImages;
+		bool TerminateOtherProcesses;
 		// @tony: todo: Add redirect status, redirect printf
 	};
 

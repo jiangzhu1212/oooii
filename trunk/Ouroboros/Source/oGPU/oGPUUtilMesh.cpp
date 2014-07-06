@@ -57,7 +57,7 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::info& _inf
 		if (!VertexSize)
 			continue;
 
-		vertices[slot].initialize(name, dev, info.num_vertices, VertexSize, _vertices ? _vertices[slot] : nullptr);
+		vertices[slot].initialize(name, dev, VertexSize, info.num_vertices, _vertices ? _vertices[slot] : nullptr);
 		num_slots = slot + 1; // record the highest one since vertex buffers are set in one go
 	}
 }
@@ -96,7 +96,7 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::element_ar
 			dsts[slot] = new char[VertexSize * info.num_vertices];
 			finally FreeDsts([&] { if (dsts[slot]) delete [] dsts[slot]; });
 			mesh::copy_vertices(dsts, elements, source.streams, prim_info.elements, info.num_vertices);
-			vertices[slot].initialize(name, dev, prim_info.num_vertices, VertexSize, dsts[slot]);
+			vertices[slot].initialize(name, dev, VertexSize, prim_info.num_vertices, dsts[slot]);
 		}
 
 		num_slots = slot + 1; // record the highest one since vertex buffers are set in one go

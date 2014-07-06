@@ -37,7 +37,7 @@ DeviceContext* get_dc(command_list* cl);
 void index_buffer::initialize(const char* name, device* dev, uint num_indices, const ushort* indices)
 {
 	deinitialize();
-	impl = (void*)make_buffer(name, get_device(dev), num_indices, sizeof(ushort), D3D11_BIND_INDEX_BUFFER, 0, indices);
+	impl = (void*)make_buffer(name, get_device(dev), sizeof(ushort), num_indices, D3D11_USAGE_DEFAULT, D3D11_BIND_INDEX_BUFFER, 0, indices);
 }
 
 void index_buffer::deinitialize()

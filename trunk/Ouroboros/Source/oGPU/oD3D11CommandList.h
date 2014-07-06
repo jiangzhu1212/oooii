@@ -43,6 +43,7 @@ oDEVICE_CHILD_CLASS(command_list)
 	~d3d11_command_list();
 
 	inline d3d11_device* dev() { return static_cast<d3d11_device*>(WeakDevice); }
+	inline d3d::ComputeShader* get_noop_cs() { return (d3d::ComputeShader*)dev()->NoopCS.get(); }
 
 	command_list_info get_info() const override;
 	void begin() override;

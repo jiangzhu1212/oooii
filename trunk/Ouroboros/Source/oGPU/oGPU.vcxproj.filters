@@ -97,6 +97,18 @@
     <ClCompile Include="constant_buffer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="compute_target.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="rwstructured_buffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="raw_buffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="readback_buffer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -199,6 +211,18 @@
       <Filter>Headers\old</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\constant_buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\rwstructured_buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\compute_target.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\raw_buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\readback_buffer.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

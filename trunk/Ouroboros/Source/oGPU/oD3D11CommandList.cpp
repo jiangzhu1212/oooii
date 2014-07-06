@@ -36,6 +36,7 @@ namespace ouro {
 
 d3d::DeviceContext* get_device_context(command_list* _pCommandList) { return ((d3d11::d3d11_command_list*)_pCommandList)->Context; }
 d3d::DeviceContext* get_dc(command_list* _pCommandList) { return get_device_context(_pCommandList); }
+d3d::ComputeShader* get_noop_cs(command_list* _pCommandList) { return ((d3d11::d3d11_command_list*)_pCommandList)->get_noop_cs(); }
 
 	} // namespace gpu
 } // namespace ouro

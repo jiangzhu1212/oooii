@@ -314,6 +314,8 @@ class buffer : public resource
 	// Buffers are directly accessed as memory - not through a sampler.
 public:
 	virtual buffer_info get_info() const = 0;
+
+	virtual void* get_buffer() const = 0;
 };
 
 // _____________________________________________________________________________
@@ -899,6 +901,23 @@ public:
 
 	virtual void present(uint _PresentInterval) = 0;
 };
+
+class scoped_device_frame
+{
+	device* dev;
+public:
+	scoped_device_frame(device* dev) : dev(dev) { dev->begin_frame(); }
+	~scoped_device_frame() { if (dev) dev->end_frame(); }
+};
+
+class scoped_command_line_frame
+{
+	command_list* cl;
+public:
+	scoped_command_line_frame(command_list* cl) : cl(cl) { cl->begin(); }
+	~scoped_command_line_frame() { cl->end(); }
+};
+
 
 	} // namespace gpu
 } // namespace ouro

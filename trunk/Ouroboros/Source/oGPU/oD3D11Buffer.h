@@ -37,6 +37,8 @@ oRESOURCE_CLASS(buffer)
 	
 	ID3D11UnorderedAccessView* choose_uav(bool _Append = false) const { return Info.type == buffer_type::unordered_structured_append ? const_cast<ID3D11UnorderedAccessView*>(UAVAppend.c_ptr()) : const_cast<ID3D11UnorderedAccessView*>(UAV.c_ptr()); }
 
+	void* get_buffer() const override { return (void*)Buffer.c_ptr(); }
+
 	intrusive_ptr<ID3D11Buffer> Buffer;
 	intrusive_ptr<ID3D11UnorderedAccessView> UAV;
 	intrusive_ptr<ID3D11UnorderedAccessView> UAVAppend;

@@ -44,10 +44,13 @@ ShaderResourceView* make_srv(Resource* r, surface::format format, uint array_siz
 
 // sets to all pipeline stages
 void set_cbs(DeviceContext* dc, uint slot, uint num_buffers, Buffer* const* buffers, uint gpu_stage_flags = ~0u);
-void set_srvs(DeviceContext* dc, uint slot, uint num_srvs, const ShaderResourceView* const* srvs, uint gpu_stage_flags = ~0u);
+void set_srvs(DeviceContext* dc, uint slot, uint num_srvs, ShaderResourceView* const* srvs, uint gpu_stage_flags = ~0u);
 void set_samplers(DeviceContext* dc, uint slot, uint num_samplers, const SamplerState* const* samplers, uint gpu_stage_flags = ~0u);
 
-Buffer* make_buffer(const char* name, Device* dev, uint num_elements, uint element_stride, uint bind_flags, uint misc_flags, const void* init_data);
+Buffer* make_buffer(const char* name, Device* dev, uint element_stride, uint num_elements, D3D11_USAGE usage, uint bind_flags, uint misc_flags, const void* init_data);
+
+// fills out_srv and out_uav with views on a structured buffer
+void make_structured(const char* name, Device* dev, uint struct_stride, uint num_structs, const void* src, uint uav_flags, ShaderResourceView** out_srv, UnorderedAccessView** out_uav);
 
 // Creates a STAGING version of the specified resource and copies 
 // the src to it and flushes the immediate context.
@@ -60,6 +63,9 @@ void update_buffer(DeviceContext* dc, View* v, uint byte_offset, uint num_bytes,
 inline D3D11_RESOURCE_DIMENSION get_type(Resource* r) { D3D11_RESOURCE_DIMENSION type; r->GetType(&type); return type; }
 inline D3D11_RESOURCE_DIMENSION get_type(View* v) { Resource* r = nullptr; v->GetResource(&r); D3D11_RESOURCE_DIMENSION type = get_type(r); r->Release(); return type; }
 
+// clears render targets and unordered access views from dc
+void unset_all_draw_targets(DeviceContext* dc);
+void unset_all_dispatch_targets(DeviceContext* dc);
 
 // return the size of the specified hlsl shader bytecode
 uint bytecode_size(const void* bytecode);
