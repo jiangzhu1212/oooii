@@ -31,7 +31,6 @@
 #include "d3d_compile.h"
 #include "d3d_debug.h"
 #include "d3d_resource.h"
-#include "d3d_state.h"
 #include "dxgi_util.h"
 #include "CSNoop.h"
 
@@ -99,10 +98,10 @@ d3d11_device::d3d11_device(const device_init& _Init)
 		NoopCS.initialize(CSName, this, CSNoop);
 	}
 
-	SamplerStates.initialize(D3DDevice);
-	RasterizerStates.initialize(D3DDevice);
-	BlendStates.initialize(D3DDevice);
-	DepthStencilStates.initialize(D3DDevice);
+	SamplerStates.initialize(this);
+	RasterizerStates.initialize(this);
+	BlendStates.initialize(this);
+	DepthStencilStates.initialize(this);
 }
 
 void d3d11_device::intialize_immediate_context()

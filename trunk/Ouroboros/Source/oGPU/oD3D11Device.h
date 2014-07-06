@@ -27,7 +27,7 @@
 #define oD3D11Device_h
 
 #include <oGPU/oGPU.h>
-#include "d3d_state.h"
+#include <oGPU/state.h>
 #include "oGPUCommon.h"
 
 #define oD3D11_DEVICE() ID3D11Device* D3DDevice = static_cast<d3d11_device*>(Device.get())->d3d_device()
@@ -109,10 +109,10 @@ protected:
 	intrusive_ptr<ID3D11DeviceContext> ImmediateContext;
 	intrusive_ptr<IDXGISwapChain> SwapChain;
 
-	d3d::sampler_state_registry SamplerStates;
-	d3d::rasterizer_state_registry RasterizerStates;
-	d3d::blend_state_registry BlendStates;
-	d3d::depth_stencil_state_registry DepthStencilStates;
+	sampler_states SamplerStates;
+	rasterizer_states RasterizerStates;
+	blend_states BlendStates;
+	depth_stencil_states DepthStencilStates;
 
 	// used to flush an explicit setting of a UAV counter.
 	compute_shader NoopCS;
