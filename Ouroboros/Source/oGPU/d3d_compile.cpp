@@ -24,12 +24,12 @@
  **************************************************************************/
 #include "d3d_compile.h"
 #include "d3d_include.h"
+#include <oBase/byte.h>
 #include <oCore/windows/win_util.h>
+#include <d3d11.h>
 #include <D3Dcompiler.h>
 
-namespace ouro {
-	namespace gpu {
-		namespace d3d {
+namespace ouro { namespace gpu { namespace d3d {
 
 static void d3dcompile_convert_error_buffer(char* _OutErrorMessageString, size_t _SizeofOutErrorMessageString, ID3DBlob* _pErrorMessages, const char** _pIncludePaths, size_t _NumIncludePaths)
 {
@@ -278,7 +278,17 @@ scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _S
 	return scoped_allocation(buffer, Code->GetBufferSize(), _Allocator.deallocate);
 }
 
-const char* shader_profile(D3D_FEATURE_LEVEL _Level, gpu::stage::value _Stage)
+D3D_FEATURE_LEVEL feature_level(const version& _ShaderModel)
+{
+	D3D_FEATURE_LEVEL level = D3D_FEATURE_LEVEL_9_1;
+	if (_ShaderModel == version(3,0)) level = D3D_FEATURE_LEVEL_9_3;
+	else if (_ShaderModel == version(4,0)) level = D3D_FEATURE_LEVEL_10_0;
+	else if (_ShaderModel == version(4,1)) level = D3D_FEATURE_LEVEL_10_1;
+	else if (_ShaderModel == version(5,0)) level = D3D_FEATURE_LEVEL_11_0;
+	return level;
+}
+
+const char* shader_profile(D3D_FEATURE_LEVEL level, const stage::value& stage)
 {
 	static const char* sDX9Profiles[] = { "vs_3_0", nullptr, nullptr, nullptr, "ps_3_0", nullptr, };
 	static const char* sDX10Profiles[] = { "vs_4_0", nullptr, nullptr, "gs_4_0", "ps_4_0", nullptr, };
@@ -286,7 +296,7 @@ const char* shader_profile(D3D_FEATURE_LEVEL _Level, gpu::stage::value _Stage)
 	static const char* sDX11Profiles[] = { "vs_5_0", "hs_5_0", "ds_5_0", "gs_5_0", "ps_5_0", "cs_5_0", };
 
 	const char** profiles = 0;
-	switch (_Level)
+	switch (level)
 	{
 		case D3D_FEATURE_LEVEL_9_1: case D3D_FEATURE_LEVEL_9_2: case D3D_FEATURE_LEVEL_9_3: profiles = sDX9Profiles; break;
 		case D3D_FEATURE_LEVEL_10_0: profiles = sDX10Profiles; break;
@@ -295,17 +305,15 @@ const char* shader_profile(D3D_FEATURE_LEVEL _Level, gpu::stage::value _Stage)
 		oNODEFAULT;
 	}
 
-	const char* profile = profiles[_Stage];
+	const char* profile = profiles[log2i(stage)];
 	if (!profile)
 	{
-		version ver = version((_Level>>12) & 0xffff, (_Level>>8) & 0xffff);
+		version ver = version((level>>12) & 0xffff, (level>>8) & 0xffff);
 		sstring StrVer;
-		oTHROW(not_supported, "Shader profile does not exist for D3D%s's stage %s", to_string2(StrVer, ver), as_string(_Stage));
+		oTHROW(not_supported, "Shader profile does not exist for D3D%s's stage %s", to_string2(StrVer, ver), as_string(stage));
 	}
 
 	return profile;
 }
 
-		} // namespace d3d
-	} // namespace gpu
-} // namespace ouro
+}}}
