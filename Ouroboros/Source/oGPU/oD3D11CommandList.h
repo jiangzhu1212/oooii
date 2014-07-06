@@ -43,7 +43,7 @@ oDEVICE_CHILD_CLASS(command_list)
 	~d3d11_command_list();
 
 	inline d3d11_device* dev() { return static_cast<d3d11_device*>(WeakDevice); }
-	inline d3d::ComputeShader* get_noop_cs() { return (d3d::ComputeShader*)dev()->NoopCS.get(); }
+	inline d3d::ComputeShader* get_noop_cs() { return (d3d::ComputeShader*)dev()->NoopCS.get_shader(); }
 
 	command_list_info get_info() const override;
 	void begin() override;
@@ -56,8 +56,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	void commit(resource* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) override;
 	void copy(resource* _pDestination, resource* _pSource) override;
 	void copy(buffer* _pDestination, uint _DestinationOffsetBytes, buffer* _pSource, uint _SourceOffsetBytes, uint _SizeBytes) override;
-	void copy_counter(buffer* _pDestination, uint _DestinationAlignedOffset, buffer* _pUnorderedSource) override;
-	void set_counters(uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pValues) override;
 	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) override;
 	void set_shader_resources(uint _StartSlot, uint _NumResources, const resource* const* _ppResources) override;
 	void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
@@ -71,13 +69,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	void set_depth_stencil_state(const depth_stencil_state::value& _State) override;
 	void clear(render_target* _pRenderTarget, const clear_type::value& _Clear) override;
 	void generate_mips(render_target* _pRenderTarget) override;
-
-	// _____________________________________________________________________________
-	// Compute-specific
-
-	void cleari(resource* _pUnorderedResource, const uint4& _Values) override;
-	void clearf(resource* _pUnorderedResource, const float4& _Values) override;
-	void dispatch(compute_kernel* _pComputeShader, const int3& _ThreadGroupCount) override;
 
 	device* WeakDevice;
 	intrusive_ptr<ID3D11DeviceContext> Context;

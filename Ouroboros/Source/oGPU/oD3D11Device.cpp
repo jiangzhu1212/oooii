@@ -93,11 +93,10 @@ d3d11_device::d3d11_device(const device_init& _Init)
 
 	// Set up a noop compute shader to flush for SetCounter()
 	{
-		NoopCS = std::move(unique_compute_shader_ptr(make_compute_shader(this, CSNoop, "CSNoop")));
 		sstring CSName;
 		debug_name(CSName, D3DDevice);
 		sncatf(CSName, ".NoopCS");
-		debug_name((ComputeShader*)NoopCS.get(), CSName);
+		NoopCS.initialize(CSName, this, CSNoop);
 	}
 
 	SamplerStates.initialize(D3DDevice);

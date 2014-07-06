@@ -76,9 +76,6 @@
     <ClCompile Include="oD3D11Device.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
-    <ClCompile Include="oD3D11ComputeShader.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
     <ClCompile Include="oD3D11CommandList.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
@@ -172,9 +169,6 @@
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11Device.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11ComputeShader.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11CommandList.h">

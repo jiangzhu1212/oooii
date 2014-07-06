@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oD3D11CommandList.h"
-#include "oD3D11ComputeShader.h"
 #include "oD3D11Pipeline.h"
 #include "oD3D11Texture.h"
 #include "oD3D11Query.h"
@@ -217,28 +216,6 @@ void d3d11_command_list::copy(resource* _pDestination, resource* _pSource)
 	Context->CopyResource(d, s);
 }
 
-void d3d11_command_list::copy_counter(buffer* _pDestination, uint _DestinationAlignedOffset, buffer* _pUnorderedSource)
-{
-	//buffer_info i = static_cast<buffer*>(_pUnorderedSource)->get_info();
-	//oCHECK(i.type == buffer_type::unordered_structured_append || i.type == buffer_type::unordered_structured_counter, "Source must be an unordered structured buffer with APPEND or COUNTER modifiers");
-	//oCHECK(byte_aligned(_DestinationAlignedOffset, sizeof(uint)), "_DestinationAlignedOffset must be sizeof(uint)-aligned");
-	//Context->CopyStructureCount(static_cast<d3d11_buffer*>(_pDestination)->Buffer, _DestinationAlignedOffset, get_uav(_pUnorderedSource, 0, 0, true));
-}
-
-void d3d11_command_list::set_counters(uint _NumUnorderedResources, resource** _ppUnorderedResources, uint* _pValues)
-{
-	ID3D11UnorderedAccessView* UAVs[max_num_unordered_buffers];
-	get_uavs(UAVs, _NumUnorderedResources, _ppUnorderedResources, 0, 0, true);
-
-	// Executing a noop only seems to apply the initial counts if done through
-	// OMSetRenderTargetsAndUnorderedAccessViews, so set things up that way with
-	// a false setting here, and then flush it with a dispatch of a noop.
-	Context->CSSetUnorderedAccessViews(0, max_num_unordered_buffers, dev()->NullUAVs, dev()->NoopUAVInitialCounts); // clear any conflicting binding
-	Context->OMSetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, _NumUnorderedResources, UAVs, _pValues); // set up binding
-	Context->CSSetShader((d3d::ComputeShader*)dev()->NoopCS.get(), nullptr, 0);
-	Context->Dispatch(1, 1, 1);
-}
-
 void d3d11_command_list::set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState)
 {
 	d3d::SamplerState* Samplers[D3D11_COMMONSHADER_SAMPLER_SLOT_COUNT];
@@ -358,11 +335,12 @@ void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 		PrimitiveTopology = p->InputTopology;
 		Context->IASetPrimitiveTopology(p->InputTopology);
 		Context->IASetInputLayout((d3d::InputLayout*)p->VertexLayout.get());
-		Context->VSSetShader((d3d::VertexShader*)p->VertexShader.get(), 0, 0);
-		Context->HSSetShader((d3d::HullShader*)p->HullShader.get(), 0, 0);
-		Context->DSSetShader((d3d::DomainShader*)p->DomainShader.get(), 0, 0);
-		Context->GSSetShader((d3d::GeometryShader*)p->GeometryShader.get(), 0, 0);
-		Context->PSSetShader((d3d::PixelShader*)p->PixelShader.get(), 0, 0);
+		
+		p->VertexShader.set(this);
+		p->HullShader.set(this);
+		p->DomainShader.set(this);
+		p->GeometryShader.set(this);
+		p->PixelShader.set(this);
 	}
 
 	else
@@ -431,27 +409,6 @@ void d3d11_command_list::generate_mips(render_target* _pRenderTarget)
 		oTHROW_INVARG("Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
 	d3d11_render_target* RT = static_cast<d3d11_render_target*>(_pRenderTarget);
 	Context->GenerateMips(static_cast<d3d11_texture*>(RT->Textures[0].get())->SRV);
-}
-
-void d3d11_command_list::cleari(resource* _pUnorderedResource, const uint4& _Values)
-{
-	ID3D11UnorderedAccessView* UAV = get_uav(_pUnorderedResource, 0, 0, false);
-	oCHECK(UAV, "The specified resource %p %s does not an unordered resource view", _pUnorderedResource, _pUnorderedResource->name());
-	Context->ClearUnorderedAccessViewUint(UAV, (const uint*)&_Values);
-}
-
-void d3d11_command_list::clearf(resource* _pUnorderedResource, const float4& _Values)
-{
-	ID3D11UnorderedAccessView* UAV = get_uav(_pUnorderedResource, 0, 0, false);
-	oCHECK(UAV, "The specified resource %p %s does not an unordered resource view", _pUnorderedResource, _pUnorderedResource->name());
-	Context->ClearUnorderedAccessViewFloat(UAV, (const float*)&_Values);
-}
-
-void d3d11_command_list::dispatch(compute_kernel* _pComputeShader, const int3& _ThreadGroupCount)
-{
-	oCHECK(all(_ThreadGroupCount <= int3(D3D11_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION)), "_ThreadGroupCount cannot have a dimension greater than %u", D3D11_CS_DISPATCH_MAX_THREAD_GROUPS_PER_DIMENSION);
-	Context->CSSetShader(static_cast<d3d11_compute_kernel*>(_pComputeShader)->ComputeShader, nullptr, 0);
-	Context->Dispatch(_ThreadGroupCount.x, _ThreadGroupCount.y, _ThreadGroupCount.z);
 }
 
 oGPU_NAMESPACE_END
