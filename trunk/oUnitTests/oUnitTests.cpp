@@ -35,7 +35,8 @@ static const option sCmdLineOptions[] =
 	{ '_', "disable-leaktracking", 0, "Disable the leak tracking when it is suspected of causing performance issues" },
 	{ 'a', "automated", 0, "Run unit tests in automated mode, disable dialog boxes and exit on critical failure" },
 	{ 'l', "logfile", "path", "Uses specified path for the log file" },
-	{ 'x', "Exhaustive", 0, "Run tests in exhaustive mode. Probably should only be run in Release. May take a very long time." },
+	{ 'x', "exhaustive", 0, "Run tests in exhaustive mode. Probably should only be run in Release. May take a very long time." },
+	{ 't', "skip-terminate", 0, "Skips check of other processes to terminate" },
 };
 
 void InitEnv()
@@ -109,6 +110,7 @@ struct PARAMETERS
 	const char* LogFilePath;
 	bool Exhaustive;
 	bool EnableOutputGoldenImages;
+	bool TerminateOtherProcesses;
 };
 
 // _pHasChanges should be large enough to receive a result for each of the 
@@ -186,6 +188,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	_pParameters->LogFilePath = nullptr;
 	_pParameters->Exhaustive = false;
 	_pParameters->EnableOutputGoldenImages = false;
+	_pParameters->TerminateOtherProcesses = true;
 
 	const char* value = 0;
 	char ch = opttok(&value, _Argc, _Argv, sCmdLineOptions);
@@ -223,6 +226,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			case 'l': _pParameters->LogFilePath = value; break;
 			case 'x': _pParameters->Exhaustive = true; break;
 			case 'z': _pParameters->EnableOutputGoldenImages = true; break;
+			case 't': _pParameters->TerminateOtherProcesses = false; break;
 			default: break;
 		}
 
@@ -390,6 +394,7 @@ void SetTestManagerDesc(const PARAMETERS* _pParameters)
 	desc.Exhaustive = _pParameters->Exhaustive;
 	desc.AutomatedMode = _pParameters->EnableAutomatedMode;
 	desc.EnableOutputGoldenImages = _pParameters->EnableOutputGoldenImages;
+	desc.TerminateOtherProcesses = _pParameters->TerminateOtherProcesses;
 
 	oTestManager::Singleton()->SetDesc(&desc);
 }

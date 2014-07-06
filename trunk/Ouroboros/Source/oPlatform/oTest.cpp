@@ -1043,7 +1043,7 @@ oTest::RESULT oTestManager_Impl::RunTests(ouro::filter_chain::filter* _pTestFilt
 
 	oTraceCPUFeatures();
 
-	if (!oTestTerminateInterferingProcesses(!Desc.AutomatedMode) && oErrorGetLast() == std::errc::permission_denied)
+	if (Desc.TerminateOtherProcesses && !oTestTerminateInterferingProcesses(!Desc.AutomatedMode) && oErrorGetLast() == std::errc::permission_denied)
 	{
 		Report(oConsoleReporting::ERR, "%s\n", oErrorGetLastString());
 		Report(oConsoleReporting::ERR, "========== Unit Tests: ERROR NO TESTS RUN (Interfering Processes) ==========\n");
