@@ -42,6 +42,11 @@ void readback_buffer::initialize(const char* name, device* dev, uint element_str
 	impl = (void*)make_buffer(name, get_device(dev), element_stride, num_elements, D3D11_USAGE_STAGING, 0, 0, nullptr);
 }
 
+void readback_buffer::internal_initialize(void* buffer_impl, bool make_immediate_copy)
+{
+	d3d::make_cpu_copy((d3d::Buffer*)buffer_impl, make_immediate_copy);
+}
+
 void readback_buffer::deinitialize()
 {
 	if (impl)
