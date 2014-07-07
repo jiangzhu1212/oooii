@@ -82,11 +82,7 @@ void primary_target::deinitialize()
 	
 	lock_guard<shared_mutex> lock(mutex);
 	
-	if (swapchain)
-	{
-		((SwapChain*)swapchain)->Release();
-		swapchain = nullptr;
-	}
+	oSAFE_RELEASEV(swapchain);
 }
 
 uint2 primary_target::dimensions() const
