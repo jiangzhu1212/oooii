@@ -37,9 +37,6 @@
     <ClCompile Include="state.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="render_target.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="vertex_layout.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
@@ -53,9 +50,6 @@
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
     <ClCompile Include="oD3D11Texture.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11RenderTarget.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
     <ClCompile Include="oD3D11Query.cpp">
@@ -112,6 +106,15 @@
     <ClCompile Include="texturecube.cpp">
       <Filter>Source\textures</Filter>
     </ClCompile>
+    <ClCompile Include="depth_target.cpp">
+      <Filter>Source\targets</Filter>
+    </ClCompile>
+    <ClCompile Include="color_target.cpp">
+      <Filter>Source\targets</Filter>
+    </ClCompile>
+    <ClCompile Include="primary_target.cpp">
+      <Filter>Source\targets</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -162,9 +165,6 @@
     <ClInclude Include="oD3D11Texture.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
-    <ClInclude Include="oD3D11RenderTarget.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
     <ClInclude Include="oD3D11Query.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
@@ -187,9 +187,6 @@
       <Filter>Headers\old</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h">
-      <Filter>Headers\old</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\render_target.h">
       <Filter>Headers\old</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h">
@@ -231,6 +228,15 @@
     <ClInclude Include="..\..\Include\oGPU\texturecube.h">
       <Filter>Headers\textures</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\color_target.h">
+      <Filter>Headers\targets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\depth_target.h">
+      <Filter>Headers\targets</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\primary_target.h">
+      <Filter>Headers\targets</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -259,6 +265,12 @@
     </Filter>
     <Filter Include="Source\textures">
       <UniqueIdentifier>{34773b8d-9df1-4127-8abd-a28870715129}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\targets">
+      <UniqueIdentifier>{7c909ef5-330d-4af5-9ddc-d4c1339cba9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\targets">
+      <UniqueIdentifier>{7851f528-80be-42d3-bb05-7999692c08e1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

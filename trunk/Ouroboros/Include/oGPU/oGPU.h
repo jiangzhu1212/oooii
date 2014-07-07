@@ -40,7 +40,6 @@
 #include <oSurface/buffer.h>
 #include <array>
 
-#include <oGPU/render_target.h>
 #include <oGPU/shader.h>
 #include <oGPU/state.h>
 #include <oGPU/vertex_layouts.h>
@@ -469,35 +468,6 @@ public:
 	virtual texture1_info get_info() const = 0;
 };
 
-class render_target : public device_child
-{
-	// A write-only buffer onto which hardware-accelerating rasterization occurs.
-public:
-	virtual render_target_info get_info() const = 0;
-
-	// Modifies the values for clearing without modifying other topology
-	virtual void set_clear_depth_stencil(float _Depth, uchar _Stencil) = 0;
-	virtual void set_clear_color(uint _Index, color _Color) = 0;
-	inline void set_clear_color(color _Color) { set_clear_color(0, _Color); }
-
-	// Resizes all buffers without changing formats or other topology
-	virtual void resize(const int3& _NewDimensions) = 0;
-	inline void resize(const int2& _NewDimensions) { resize(int3(_NewDimensions, 1)); }
-
-	// Accesses a readable texture for the specified render target in an MRT.
-	virtual std::shared_ptr<texture1> get_texture(int _MRTIndex) = 0;
-
-	// Accesses a readable texture for the depth-stencil buffer. This will throw if 
-	// there is no depth-stencil buffer or if the buffer is a non-readable format.
-	virtual std::shared_ptr<texture1> get_depth_texture() = 0;
-
-	// Creates a buffer of the contents of the render target. This should be 
-	// called at times when it is known the render target has been fully resolved,
-	// mostly outside of begin_frame/end_frame. If this is called on the primary
-	// render target the back-buffer is captured.
-	virtual std::shared_ptr<surface::buffer> make_snapshot(int _MRTIndex) = 0;
-};
-
 // _____________________________________________________________________________
 // Pipeline concepts
 
@@ -669,44 +639,6 @@ public:
 	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<resource1>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
 	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<texture1>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
 
-	// Sets the render target to which rendering will occur. By default a single
-	// full-target viewport is created else it can be overridden. A viewport is 
-	// a 3D box whose minimum is at the top, left, near corner of the viewable 
-	// frustum, and whose maximum is at the bottom, right, far corner of the 
-	// viewable frustum. A full-target viewport would most often be: 
-	// boundf(float3(0.0f), float3(RTWidth, RTHeight, 1.0f)). In addition this
-	// also sets up unordered resources resetting any counters according to values 
-	// in the _pInitialCounts array, which should be the same count as the number 
-	// of unordered resources being bound. This API can also bound unordered 
-	// resources for access during Dispatch() calls if _SetForDispatch is true. 
-	// If _SetForDispatch is true, then _pRenderTarget must be null, though 
-	// viewport settings will be respected. If _UnorderedResourceStartSlot is 
-	// invalid, the value _pRenderTarget::DESC.MRTCount will be used. If 
-	// _pRenderTarget is nullptr then a valid _UnorderedResourceStartSlot value 
-	// must be specified. If _NumUnorderedResources is invalid, all slots after 
-	// the render target's MRTs are cleared. See SetRnederTarget() as an example 
-	// of setting the RT while clearing unordered targets).
-	virtual void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource1** _ppUnorderedResources, uint* _pInitialCounts = nullptr) = 0;
-	inline void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, buffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, _NumUnorderedResources, (resource1**)_ppUnorderedResources, _pInitialCounts); }
-	template<uint size> inline void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, resource1* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, _SetForDispatch, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
-	inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource1** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, _NumUnorderedResources, _ppUnorderedResources, _pInitialCounts); }
-	template<uint size> inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, resource1* (&_ppUnorderedResources)[size]) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources); }
-	template<uint size> inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, resource1* (&_ppUnorderedResources)[size], uint (&_pInitialCounts)[size]) { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, _UnorderedResourcesStartSlot, size, _ppUnorderedResources, _pInitialCounts); }
-	inline void set_unordered_resources(uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, buffer** _ppUnorderedResources, uint* _pInitialCounts = nullptr) { set_unordered_resources(_UnorderedResourcesStartSlot, _NumUnorderedResources, (resource1**)_ppUnorderedResources, _pInitialCounts); }
-	inline void set_unordered_resource(uint _UnorderedResourcesStartSlot, buffer* _pUnorderedResources, uint _InitialCount = invalid) { set_unordered_resources(_UnorderedResourcesStartSlot, 1, &_pUnorderedResources, _InitialCount == invalid ? nullptr : &_InitialCount); }
-	inline void set_unordered_resource(uint _UnorderedResourcesStartSlot, std::shared_ptr<buffer>& _pUnorderedResources, uint _InitialCount = invalid) { set_unordered_resource(_UnorderedResourcesStartSlot, _pUnorderedResources.get(), _InitialCount); }
-
-	// Simpler version that clears UAVs since likely during rasterization UAVs 
-	// will be used as shader resources, which conflicts with being a target. If
-	// this is not the desired behavior, use the above more explicit/complicated 
-	// version.
-	inline void set_render_target(render_target* _pRenderTarget, int _NumViewports = 0, const aaboxf* _pViewports = nullptr) { set_render_target_and_unordered_resources(_pRenderTarget, _NumViewports, _pViewports, false, invalid, invalid, (resource1**)nullptr); }
-	inline void set_render_target(std::shared_ptr<render_target>& _pRenderTarget, int _NumViewports = 0, const aaboxf* _pViewports = nullptr) { set_render_target(_pRenderTarget.get(), _NumViewports, _pViewports); }
-
-	inline void clear_render_target_and_unordered_resources() { set_render_target_and_unordered_resources(nullptr, 0, nullptr, false, 0, max_num_unordered_buffers, (resource1**)nullptr); }
-
-	inline void clear_unordered_resources() { set_render_target_and_unordered_resources(nullptr, 0, nullptr, true, 0, max_num_unordered_buffers, (resource1**)nullptr); } 
-
 	// _____________________________________________________________________________
 	// Rasterization-specific
 
@@ -721,17 +653,6 @@ public:
 
 	// Set the depth-stencil state in this context
 	virtual void set_depth_stencil_state(const depth_stencil_state::value& _State) = 0;
-
-	// Uses a render target's CLEAR_DESC to clear all associated buffers
-	// according to the type of clear specified here. If _pRenderTarget is nullptr
-	// the the currently set render target is cleared.
-	virtual void clear(render_target* _pRenderTarget, const clear_type::value& _Clear) = 0;
-	inline void clear(std::shared_ptr<render_target>& _pRenderTarget, const clear_type::value& _Clear) { clear(_pRenderTarget.get(), _Clear); }
-
-	// Generates mips from the top-level mip in the specified render target
-	// This happens wholly on the GPU.
-	virtual void generate_mips(render_target* _pRenderTarget) = 0;
-	inline void generate_mips(std::shared_ptr<render_target>& _pRenderTarget) { generate_mips(_pRenderTarget.get()); }
 
 	// _____________________________________________________________________________
 	// Compute-specific
@@ -761,13 +682,9 @@ public:
 
 	virtual command_list* immediate() = 0;
 
-	virtual std::shared_ptr<render_target> make_primary_render_target(window* _pWindow, surface::format _DepthStencilFormat, bool _EnableOSRendering) = 0;
-	inline std::shared_ptr<render_target> make_primary_render_target(std::shared_ptr<window>& _pWindow, surface::format _DepthStencilFormat, bool _EnableOSRendering) { return make_primary_render_target(_pWindow.get(), _DepthStencilFormat, _EnableOSRendering); }
-
 	virtual std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) = 0;
 	virtual std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) = 0;
 	virtual std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) = 0;
-	virtual std::shared_ptr<render_target> make_render_target(const char* _Name, const render_target_info& _Info) = 0;
 	virtual std::shared_ptr<texture1> make_texture1(const char* _Name, const texture1_info& _Info) = 0;
 
 	// convenience versions of the above

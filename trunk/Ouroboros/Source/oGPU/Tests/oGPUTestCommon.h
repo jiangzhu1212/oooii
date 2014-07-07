@@ -31,6 +31,8 @@
 #include "oGPUTestHLSL.h"
 
 #include <oGPU/oGPU.h>
+#include <oGPU/depth_target.h>
+#include <oGPU/primary_target.h>
 #include <oGPU/resource.h>
 #include <oGPU/constant_buffer.h>
 #include <oGUI/window.h>
@@ -69,7 +71,8 @@ public:
 	window* get_window() { return Window.get(); }
 	gpu::device* get_device() { return Device.get(); }
 	gpu::command_list* get_command_list() { return CommandList.get(); }
-	gpu::render_target* get_primary_render_target() { return PrimaryRenderTarget.get(); }
+
+	color get_clear_color() const { return almost_black; }
 
 private:
 	void on_event(const window::basic_event& _Event);
@@ -93,7 +96,8 @@ protected:
 	std::shared_ptr<window> Window;
 	std::shared_ptr<gpu::device> Device;
 	std::shared_ptr<gpu::command_list> CommandList;
-	std::shared_ptr<gpu::render_target> PrimaryRenderTarget;
+	gpu::primary_target PrimaryColorTarget;
+	gpu::depth_target PrimaryDepthTarget;
 };
 
 class gpu_texture_test : public gpu_test

@@ -51,34 +51,6 @@ ID3D11Resource* get_subresource(resource1* _pResource, int _Subresource, uint* _
 	}
 }
 
-static ID3D11UnorderedAccessView* get_uav(const resource1* _pResource, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _CheckHasCounter = false)
-{
-	switch (_pResource->type())
-	{
-		case resource_type::texture1: return ((d3d11_texture1*)_pResource)->UAV;
-		oNODEFAULT;
-	}
-}
-
-static void get_uavs(ID3D11UnorderedAccessView* (&_ppUAVs)[max_num_unordered_buffers], int _NumUnorderedResources, resource1** _ppUnorderedResources, int _Miplevel, int _Slice, bool _UseAppendIfAvailable = false, bool _AssertHaveCounters = false)
-{
-	if (!_ppUnorderedResources || _NumUnorderedResources == invalid || _NumUnorderedResources == 0)
-		memset(_ppUAVs, 0, sizeof(_ppUAVs));
-	else
-	{
-		for (int i = 0; i < _NumUnorderedResources; i++)
-		{
-			if (_ppUnorderedResources[i])
-			{
-				_ppUAVs[i] = get_uav(_ppUnorderedResources[i], 0, 0, _UseAppendIfAvailable, _AssertHaveCounters);
-				oCHECK(_ppUAVs[i], "The specified resource %p %s does not have an unordered resource view", _ppUnorderedResources[i], _ppUnorderedResources[i]->name()); 
-			}
-			else 
-				_ppUAVs[i] = nullptr;
-		}
-	}
-}
-
 static ID3D11ShaderResourceView* get_srv(const resource1* _pResource, int _Miplevel, int _ArrayIndex, int _SRVIndex)
 {
 	switch (_pResource->type())
@@ -255,6 +227,7 @@ void d3d11_command_list::set_shader_resources(uint _StartSlot, uint _NumResource
 	}
 }
 
+#if 0
 static void set_viewports(ID3D11DeviceContext* _pDeviceContext, const int2& _TargetDimensions, uint _NumViewports, const aaboxf* _pViewports)
 {
 	D3D11_VIEWPORT Viewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
@@ -321,6 +294,7 @@ void d3d11_command_list::set_render_target_and_unordered_resources(render_target
 		}	
 	}
 }
+#endif
 
 void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 {
@@ -364,45 +338,6 @@ void d3d11_command_list::set_blend_state(const blend_state::value& _State)
 void d3d11_command_list::set_depth_stencil_state(const depth_stencil_state::value& _State)
 {
 	dev()->DepthStencilStates.set(this, _State);
-}
-
-void d3d11_command_list::clear(render_target* _pRenderTarget, const clear_type::value& _Clear)
-{
-	d3d11_render_target* RT = static_cast<d3d11_render_target*>(_pRenderTarget);
-
-	if (_Clear >= clear_type::color)
-	{
-		float c[4];
-		for (int i = 0; i < RT->Info.num_mrts; i++)
-		{
-			RT->Info.clear_color[i].decompose(&c[0], &c[1], &c[2], &c[3]);
-			Context->ClearRenderTargetView(RT->RTVs[i], c);
-		}
-	}
-
-	static const UINT sClearFlags[] = 
-	{
-		D3D11_CLEAR_DEPTH,
-		D3D11_CLEAR_STENCIL,
-		D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL,
-		0,
-		D3D11_CLEAR_DEPTH,
-		D3D11_CLEAR_STENCIL,
-		D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL,
-	};
-	static_assert(oCOUNTOF(sClearFlags) == clear_type::count, "# clears mismatch");
-
-	if (RT->DSV && _Clear != clear_type::color)
-		Context->ClearDepthStencilView(RT->DSV, sClearFlags[_Clear], RT->Info.depth_clear_value, RT->Info.stencil_clear_value);
-}
-
-void d3d11_command_list::generate_mips(render_target* _pRenderTarget)
-{
-	render_target_info i = _pRenderTarget->get_info();
-	if (!i.has_mips)
-		oTHROW_INVARG("Cannot generate mips if the type doesn't contain oGPU_TRAIT_TEXTURE_MIPS");
-	d3d11_render_target* RT = static_cast<d3d11_render_target*>(_pRenderTarget);
-	Context->GenerateMips(static_cast<d3d11_texture1*>(RT->Textures[0].get())->SRV);
 }
 
 oGPU_NAMESPACE_END

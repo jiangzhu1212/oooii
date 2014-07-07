@@ -45,9 +45,8 @@ public:
 	void render() override
 	{
 		static color sClearColors[] = { lime, white };
-		PrimaryRenderTarget->set_clear_color(sClearColors[Device->frame_id() % oCOUNTOF(sClearColors)]);
 		CommandList->begin();
-		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
+		PrimaryColorTarget.clear(CommandList.get(), sClearColors[Device->frame_id() % oCOUNTOF(sClearColors)]);
 		CommandList->end();
 	}
 };

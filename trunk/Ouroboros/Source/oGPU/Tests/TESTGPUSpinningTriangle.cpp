@@ -43,7 +43,6 @@ public:
 
 	void initialize() override
 	{
-		PrimaryRenderTarget->set_clear_color(almost_black);
 		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
 		Mesh.initialize_first_triangle(Device.get());
@@ -53,8 +52,8 @@ public:
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -2.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-		render_target_info RTI = PrimaryRenderTarget->get_info();
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
+		uint2 dimensions = PrimaryColorTarget.dimensions();
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
 		// this is -1 because there was a code change that resulted in begin_frame()
 		// being moved out of the Render function below so it updated the FrameID
@@ -69,13 +68,13 @@ public:
 
 		TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
-		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
 		CommandList->set_blend_state(blend_state::opaque);
 		CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 		CommandList->set_rasterizer_state(rasterizer_state::two_sided);
 		TestConstants.set(CommandList.get(), 0);
 		CommandList->set_pipeline(Pipeline);
-		CommandList->set_render_target(PrimaryRenderTarget);
+		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 		Mesh.draw(CommandList.get());
 
 		CommandList->end();

@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPU.h>
+#include <oGPU/primary_target.h>
 #include <oGUI/window.h>
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/display.h>
@@ -79,7 +80,7 @@ public:
 			i.on_event = std::bind(&WindowInWindow::GPUWindowEventHook, this, std::placeholders::_1);
 
 			GPUWindow = window::make(i);
-			PrimaryrenderTarget = Device->make_primary_render_target(GPUWindow, surface::unknown, true);
+			PrimaryTarget.initialize(GPUWindow.get(), Device.get(), true);
 			GPUWindow->parent(ParentWindow);
 		}
 
@@ -90,20 +91,18 @@ public:
 
 	void render()
 	{
-		if (PrimaryrenderTarget)
+		if (!PrimaryTarget)
+			return;
+
+		if (Device->begin_frame())
 		{
-			if (Device->begin_frame())
-			{
-				PrimaryrenderTarget->set_clear_color((Counter & 0x1) ? white : blue);
+			CommandList->begin();
+			PrimaryTarget.set_draw_target(CommandList.get());
+			PrimaryTarget.clear(CommandList.get(), (Counter & 0x1) ? white : blue);
+			CommandList->end();
 
-				CommandList->begin();
-				CommandList->set_render_target(PrimaryrenderTarget);
-				CommandList->clear(PrimaryrenderTarget, gpu::clear_type::color_depth_stencil);
-				CommandList->end();
-
-				Device->end_frame();
-				Device->present(1);
-			}
+			Device->end_frame();
+			PrimaryTarget.present();
 		}
 	}
 
@@ -134,8 +133,8 @@ public:
 				if (GPUWindow)
 					GPUWindow->client_size(_Event.as_shape().shape.client_size - int2(40,65));
 
-				if (PrimaryrenderTarget)
-					PrimaryrenderTarget->resize(int3(_Event.as_shape().shape.client_size - int2(40,65), 1));
+				if (PrimaryTarget)
+					PrimaryTarget.resize(int2(_Event.as_shape().shape.client_size - int2(40,65)));
 
 				SetWindowPos(hButton, 0, 10, _Event.as_shape().shape.client_size.y-10-25, 0, 0, SWP_NOSIZE|SWP_SHOWWINDOW|SWP_NOZORDER);
 				break;
@@ -172,7 +171,7 @@ private:
 	std::shared_ptr<window> ParentWindow;
 	std::shared_ptr<window> GPUWindow;
 	std::shared_ptr<command_list> CommandList;
-	std::shared_ptr<render_target> PrimaryrenderTarget;
+	primary_target PrimaryTarget;
 
 	HWND hButton;
 	int Counter;

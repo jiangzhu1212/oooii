@@ -23,39 +23,45 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oGPU_readback_buffer_h
-#define oGPU_readback_buffer_h
+#ifndef oGPU_depth_target_h
+#define oGPU_depth_target_h
+
+#include <oSurface/surface.h>
+#include <vector>
 
 namespace ouro { namespace gpu {
 
 class device;
 class command_list;
 
-class readback_buffer
+class depth_target
 {
 public:
-	readback_buffer() : impl(nullptr), bytes(0) {}
-	~readback_buffer() { deinitialize(); }
+	depth_target() : ro(nullptr) {}
+	~depth_target() { deinitialize(); }
 
-	void initialize(const char* name, device* dev, uint element_stride, uint num_elements = 1);
-	template<typename BufferT> void initialize(const BufferT& buffer, bool make_immediate_copy = false) { internal_initialize(buffer.get_buffer(), make_immediate_copy); }
-
+	void initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling);
 	void deinitialize();
-	void* get_buffer() const { return impl; }
 
-	uint size() const { return bytes; }
+	char* name(char* dst, size_t dst_size) const;
 
-	template<typename T> void copy_from(command_list* cl, const T& buffer) { internal_copy_from(cl, buffer.get_buffer()); }
+	surface::format format() const;
+	uint2 dimensions() const;
+	uint array_size() const;
 
-	// returns false if this could not be read without blocking. Any invalid condition will throw.
-	bool copy_to(void* dst, size_t dst_size, bool blocking = true) const;
+	void set(command_list* cl, uint index = 0);
+
+	void clear_depth(command_list* cl, uint index, float depth = 1.0f);
+	void clear_stencil(command_list* cl, uint index, uchar stencil = 0);
+	void clear_depth_stencil(command_list* cl, uint index, float depth = 1.0f, uchar stencil = 0);
+	void generate_mips(command_list* cl);
+
+	void* get_resource() const { return ro; }
+	void* get_target(uint index = 0) const { return rws[index]; }
 
 private:
-	void* impl;
-	uint bytes;
-
-	void internal_initialize(void* buffer_impl, bool make_immediate_copy);
-	void internal_copy_from(command_list* cl, void* buffer_impl);
+	void* ro;
+	std::vector<void*> rws;
 };
 	
 }}

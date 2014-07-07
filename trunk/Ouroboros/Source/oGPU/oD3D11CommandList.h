@@ -27,7 +27,6 @@
 
 #include <oGPU/oGPU.h>
 #include "oGPUCommon.h"
-#include "oD3D11RenderTarget.h"
 #include "oD3D11Device.h"
 #include "d3d_util.h"
 
@@ -58,7 +57,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	void copy(buffer* _pDestination, uint _DestinationOffsetBytes, buffer* _pSource, uint _SourceOffsetBytes, uint _SizeBytes) override;
 	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) override;
 	void set_shader_resources(uint _StartSlot, uint _NumResources, const resource1* const* _ppResources) override;
-	void set_render_target_and_unordered_resources(render_target* _pRenderTarget, uint _NumViewports, const aaboxf* _pViewports, bool _SetForDispatch, uint _UnorderedResourcesStartSlot, uint _NumUnorderedResources, resource1** _ppUnorderedResources, uint* _pInitialCounts = nullptr) override;
 
 	// _____________________________________________________________________________
 	// Rasterization-specific
@@ -67,8 +65,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	void set_rasterizer_state(const rasterizer_state::value& _State) override;
 	void set_blend_state(const blend_state::value& _State) override;
 	void set_depth_stencil_state(const depth_stencil_state::value& _State) override;
-	void clear(render_target* _pRenderTarget, const clear_type::value& _Clear) override;
-	void generate_mips(render_target* _pRenderTarget) override;
 
 	device* WeakDevice;
 	intrusive_ptr<ID3D11DeviceContext> Context;

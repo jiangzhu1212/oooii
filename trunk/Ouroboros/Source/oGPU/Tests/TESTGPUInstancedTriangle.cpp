@@ -53,8 +53,8 @@ struct gpu_test_instanced_triangle : public gpu_test
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -3.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-		render_target_info RTI = PrimaryRenderTarget->get_info();
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
+		uint2 dimensions = PrimaryColorTarget.dimensions();
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
 		oGPU_TEST_INSTANCE instances[2];
 		instances[0].Translation = float3(-0.5f, 0.5f, 0.0f);
@@ -70,7 +70,6 @@ struct gpu_test_instanced_triangle : public gpu_test
 
 		TestConstants.update(CommandList.get(), oGPUTestConstants(oIDENTITY4x4, V, P, white));
 
-		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
 		CommandList->set_blend_state(blend_state::opaque);
 		CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 		CommandList->set_rasterizer_state(rasterizer_state::two_sided);
@@ -79,7 +78,8 @@ struct gpu_test_instanced_triangle : public gpu_test
 		constant_buffer::set(CommandList.get(), 0, 2, CBs);
 
 		CommandList->set_pipeline(Pipeline);
-		CommandList->set_render_target(PrimaryRenderTarget);
+		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 		
 		Mesh.draw(CommandList.get());
 

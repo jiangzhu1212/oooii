@@ -47,12 +47,12 @@ struct gpu_test_triangle : public gpu_test
 	void render() override
 	{
 		CommandList->begin();
-		CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
 		CommandList->set_blend_state(blend_state::opaque);
 		CommandList->set_depth_stencil_state(depth_stencil_state::none);
 		CommandList->set_rasterizer_state(rasterizer_state::front_face);
 		CommandList->set_pipeline(Pipeline);
-		CommandList->set_render_target(PrimaryRenderTarget);
+		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 		Mesh.draw(CommandList.get());
 		CommandList->end();
 	}

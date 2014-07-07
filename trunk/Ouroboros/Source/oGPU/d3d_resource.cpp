@@ -31,15 +31,6 @@ namespace ouro {
 	namespace gpu {
 		namespace d3d {
 
-#define oCHECK_IS_TEXTURE(_pResource) do \
-{	D3D11_RESOURCE_DIMENSION type; \
-	_pResource->GetType(&type); \
-	if (type != D3D11_RESOURCE_DIMENSION_TEXTURE1D && type != D3D11_RESOURCE_DIMENSION_TEXTURE2D && type != D3D11_RESOURCE_DIMENSION_TEXTURE3D) \
-	{	mstring buf; \
-		oTHROW_INVARG("Only textures types are currently supported. (resource %s)", debug_name(buf, _pResource)); \
-	} \
-} while (false)
-
 // {13BA565C-4766-49C4-8C1C-C1F459F00A65}
 static const GUID oWKPDID_BUFFER_INFO = { 0x13ba565c, 0x4766, 0x49c4, { 0x8c, 0x1c, 0xc1, 0xf4, 0x59, 0xf0, 0xa, 0x65 } };
 
@@ -65,6 +56,7 @@ static unsigned int cpu_write_flags(D3D11_USAGE _Usage)
 		default: return 0;
 	}
 }
+#if 0
 
 intrusive_ptr<Buffer> make_buffer(Device* _pDevice
 	, const char* _DebugName
@@ -185,96 +177,8 @@ intrusive_ptr<Buffer> make_buffer(Device* _pDevice
 
 	return Buffer;
 }
-
-intrusive_ptr<Resource> make_cpu_copy(Resource* _pResource)
-{
-	intrusive_ptr<Device> D3D11Device;
-	_pResource->GetDevice(&D3D11Device);
-	intrusive_ptr<DeviceContext> D3D11DeviceContext;
-	D3D11Device->GetImmediateContext(&D3D11DeviceContext);
-
-	lstring RTName;
-	debug_name(RTName, _pResource);
-
-	lstring copyName;
-	snprintf(copyName, "%s.CPUCopy", RTName.c_str());
-
-	intrusive_ptr<Resource> CPUCopy;
-
-	D3D11_RESOURCE_DIMENSION type;
-	_pResource->GetType(&type);
-	switch (type)
-	{
-		case D3D11_RESOURCE_DIMENSION_BUFFER:
-		{
-			D3D11_BUFFER_DESC d;
-			static_cast<Buffer*>(_pResource)->GetDesc(&d);
-			d.Usage = D3D11_USAGE_STAGING;
-			d.CPUAccessFlags = /*D3D11_CPU_ACCESS_WRITE|*/D3D11_CPU_ACCESS_READ;
-			d.BindFlags = 0;
-			oV(D3D11Device->CreateBuffer(&d, nullptr, (Buffer**)&CPUCopy));
-			debug_name(CPUCopy, copyName);
-			break;
-		}
-
-		case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
-		case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
-		case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
-		{
-			gpu::texture1_info i = get_texture_info1(_pResource);
-			i.type = gpu::make_readback(i.type);
-			new_texture NewTexture = make_texture(D3D11Device, copyName, i, nullptr);
-			CPUCopy = NewTexture.pResource;
-			break;
-		}
-
-		default:
-			throw std::invalid_argument("unknown resource type");
-	}
-
-	try
-	{
-		gpu::buffer_info i = d3d::get_info(_pResource);
-		set_info(CPUCopy, i);
-	}
-	catch(std::exception&) {}
-	
-	D3D11DeviceContext->CopyResource(CPUCopy, _pResource);
-	D3D11DeviceContext->Flush();
-	return CPUCopy;
-}
-
-void copy(Resource* _pTexture
-	, unsigned int _Subresource
-	, surface::mapped_subresource* _pDstSubresource
-	, bool _FlipVertically)
-{
-	if (!_pTexture)
-		oTHROW_INVARG0();
-
-	oCHECK_IS_TEXTURE(_pTexture);
-
-	intrusive_ptr<Device> Device;
-	_pTexture->GetDevice(&Device);
-	intrusive_ptr<DeviceContext> D3DDeviceContext;
-	Device->GetImmediateContext(&D3DDeviceContext);
-
-	gpu::texture1_info info = get_texture_info1(_pTexture);
-
-	if (!gpu::is_readback(info.type))
-	{
-		mstring buf;
-		oTHROW_INVARG("The specified texture %s does not have CPU read access", debug_name(buf, _pTexture));
-	}
-
-	D3D11_MAPPED_SUBRESOURCE source;
-	oV(D3DDeviceContext->Map(_pTexture, _Subresource, D3D11_MAP_READ, 0, &source));
-
-	int2 ByteDimensions = surface::byte_dimensions(info.format, info.dimensions);
-	memcpy2d(_pDstSubresource->data, _pDstSubresource->row_pitch, source.pData, source.RowPitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
-	D3DDeviceContext->Unmap(_pTexture, _Subresource);
-}
-
+#endif
+#if 0
 template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, bool _AsArray, texture_type::value _BasicType, texture1_info* _pInfo)
 {
 	if (_Desc.MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE)
@@ -457,7 +361,7 @@ intrusive_ptr<View> make_rtv(const char* _DebugName, Resource* _pTexture)
 	debug_name(View, _DebugName);
 	return View;
 }
-
+#endif
 intrusive_ptr<UnorderedAccessView> make_uav(const char* _DebugName
 	, Resource* _pTexture, unsigned int _MipSlice, unsigned int _ArraySlice)
 {
@@ -602,6 +506,7 @@ static new_texture make_second_texture(Device* _pDevice, const char* _Texture1Na
 }
 #endif
 
+#if 0
 new_texture make_texture(Device* _pDevice
 	, const char* _DebugName
 	, const gpu::texture1_info& _Info
@@ -674,34 +579,7 @@ new_texture make_texture(Device* _pDevice
 
 	return NewTexture;
 }
-
-std::shared_ptr<surface::buffer> make_snapshot(Texture2D* _pRenderTarget)
-{
-	if (!_pRenderTarget)
-		throw std::invalid_argument("invalid render target");
-
-	intrusive_ptr<Resource> CPUTexture = make_cpu_copy(_pRenderTarget);
-	Texture2D* CPUTexture2D = (Texture2D*)CPUTexture.c_ptr();
-
-	D3D11_TEXTURE2D_DESC d;
-	CPUTexture2D->GetDesc(&d);
-
-	if (d.Format == DXGI_FORMAT_UNKNOWN)
-		throw std::invalid_argument(formatf("The specified texture's format %s is not supported by oImage", as_string(d.Format)));
-
-	surface::info si;
-	si.format = surface::b8g8r8a8_unorm;
-	si.dimensions = int3(d.Width, d.Height, 1);
-	std::shared_ptr<surface::buffer> s = surface::buffer::make(si);
-
-	surface::lock_guard lock(s);
-	copy(CPUTexture2D, 0, &lock.mapped);
-
-	return s;
-}
-
-
-
+#endif
 		} // namespace d3d
 	} // namespace gpu
 } // namespace ouro
