@@ -128,9 +128,9 @@ static intrusive_ptr<ID3D11Resource> prepare_source(ID3D11Resource* _pResource
 	_pResource->GetDevice(&Device);
 	Device->GetImmediateContext(_ppDeviceContext);
 	d3d::D3D_TEXTURE_DESC desc = d3d::get_texture_desc(_pResource);
-	if (dxgi::is_block_compressed(desc.format) && _Format != D3DX11_IFF_DDS)
+	if (dxgi::is_block_compressed(desc.Format) && _Format != D3DX11_IFF_DDS)
 		throw std::invalid_argument("D3DX11 can save block compressed formats only to .dds files.");
-	intrusive_ptr<ID3D11Resource> Source = desc.usage == D3D11_USAGE_STAGING ? _pResource : d3d::make_cpu_copy(_pResource);
+	intrusive_ptr<ID3D11Resource> Source = desc.Usage == D3D11_USAGE_STAGING ? _pResource : d3d::make_cpu_copy(_pResource);
 	return Source;
 }
 

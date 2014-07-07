@@ -587,57 +587,9 @@ public:
 	// a clean slate.
 	virtual void reset() = 0;
 
-	// Allocates internal device memory that can be written to (not read) and 
-	// committed to the device to update the specified resource1.
-	virtual surface::mapped_subresource reserve(resource1* _pResource, int _Subresource) = 0;
-	template<typename T> surface::mapped_subresource reserve(std::shared_ptr<T>& _pResource, int _Subresource) { return reserve(_pResource.get(), _Subresource); }
-
-	// Commits memory to the specified resource1. If the memory in _Source. 
-	// was reserved, then this will free the memory. If _Source.data is user 
-	// memory, it will not be freed. If the specified rectangle is empty on any 
-	// dimension, then the entire surface will be copied (default behavior). If 
-	// the item is a buffer then units are in structs, i.e. Left=0, Right=ArraySize 
-	// would be a full copy. Ensure that the other dimension are not empty/equal 
-	// even in the buffer case.
-	virtual void commit(resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) = 0;
-	inline void commit(resource1* _pResource, int _Subresource, const surface::const_mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) { commit(_pResource, _Subresource, (const surface::mapped_subresource&)_Source, _Subregion); }
-	
-	template<typename T> void commit(std::shared_ptr<T>& _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) { commit(_pResource.get(), _Subresource, (const surface::mapped_subresource&)_Source, _Subregion); }
-	template<typename T> void commit(std::shared_ptr<T>& _pResource, int _Subresource, const surface::const_mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) { commit(_pResource.get(), _Subresource, _Source, _Subregion); }
-
-	// Copies the contents from one resource1 to another. Both must have compatible 
-	// (often identical) topologies. A common use of this API is to copy from a 
-	// source resource1 to a readback copy of the same resource1 so it can be 
-	// accessed from the CPU.
-	virtual void copy(resource1* _pDestination, resource1* _pSource) = 0;
-	template<typename T, typename U> void copy(std::shared_ptr<T>& _pDestination, std::shared_ptr<U>& _pSource) { copy(_pDestination.get(), _pSource.get()); }
-
-	// Copies from one buffer to another with offsets in bytes.
-	virtual void copy(buffer* _pDestination, uint _DestinationOffsetBytes, buffer* _pSource, uint _SourceOffsetBytes, uint _SizeBytes) = 0;
-	template<typename T, typename U> void copy(std::shared_ptr<T>& _pDestination, uint _DestinationOffsetBytes, std::shared_ptr<U>& _pSource, uint _SourceOffsetBytes, uint _SizeBytes) { copy(_pDestination.get(), _DestinationOffsetBytes, _pSource.get(), _SourceOffsetBytes, _SizeBytes); }
-
 	// Set the texture sampler states in this context
 	virtual void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) = 0;
 	inline void set_sampler(uint _StartSlot, const sampler_state::value& _SamplerState) { set_samplers(_StartSlot, 1, &_SamplerState); }
-
-	// Set any shader resources (textures or buffers not accessed as constants)
-	virtual void set_shader_resources(uint _StartSlot, uint _NumResources, const resource1* const* _ppResources) = 0;
-	inline void set_shader_resources(uint _StartSlot, uint _NumResources, const buffer* const* _ppResources) { set_shader_resources(_StartSlot, _NumResources, (const resource1* const*)_ppResources); }
-	inline void set_shader_resources(uint _StartSlot, uint _NumResources, const texture1* const* _ppResources) { set_shader_resources(_StartSlot, _NumResources, (const resource1* const*)_ppResources); }
-	
-	template<uint size> void set_shader_resources(uint _StartSlot, const resource1* const (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const resource1* const*)_ppResources); }
-	template<uint size> void set_shader_resources(uint _StartSlot, const buffer* const (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const buffer* const*)_ppResources); }
-	template<uint size> void set_shader_resources(uint _StartSlot, const texture1* const (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const texture1* const*)_ppResources); }
-
-	template<uint size> void set_shader_resources(uint _StartSlot, const std::shared_ptr<resource1> (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const resource1* const*)_ppResources); }
-	template<uint size> void set_shader_resources(uint _StartSlot, const std::shared_ptr<buffer> (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const buffer* const*)_ppResources); }
-	template<uint size> void set_shader_resources(uint _StartSlot, const std::shared_ptr<texture1> (&_ppResources)[size]) { set_shader_resources(_StartSlot, size, (const texture* const*)_ppResources); }
-	
-	inline void set_shader_resource(uint _StartSlot, const resource1* _pResource) { set_shader_resources(_StartSlot, 1, &_pResource); }
-	inline void set_shader_resource(uint _StartSlot, const texture1* _pResource) { set_shader_resources(_StartSlot, 1, &_pResource); }
-
-	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<resource1>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
-	inline void set_shader_resource(uint _StartSlot, const std::shared_ptr<texture1>& _pResource) { set_shader_resource(_StartSlot, _pResource.get()); }
 
 	// _____________________________________________________________________________
 	// Rasterization-specific
@@ -685,20 +637,10 @@ public:
 	virtual std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) = 0;
 	virtual std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) = 0;
 	virtual std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) = 0;
-	virtual std::shared_ptr<texture1> make_texture1(const char* _Name, const texture1_info& _Info) = 0;
 
 	// convenience versions of the above
 	inline std::shared_ptr<command_list> make_command_list(const char* _Name, short _DrawOrder = 0) { command_list_info i; i.draw_order = _DrawOrder; return make_command_list(_Name, i); } 
 	inline std::shared_ptr<pipeline1> make_pipeline1(const pipeline1_info& _Info) { return make_pipeline1(_Info.debug_name, _Info); }
-
-	// map_read is a non-blocking call to read from the specified resource1 by the
-	// mapped data populated in the specified _pMappedSubresource. If the function
-	// would block, this returns false. If it succeeds, call ReadEnd to unlock.
-	// the buffer. This will also return false for resources not of type READBACK.
-	virtual bool map_read(resource1* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) = 0;
-	virtual void unmap_read(resource1* _pReadbackResource, int _Subresource) = 0;
-	template<typename T> bool map_read(std::shared_ptr<T>& _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) { return map_read(_pReadbackResource.get(), _Subresource, _pMappedSubresource, _Blocking); }
-	template<typename T> void unmap_read(std::shared_ptr<T>& _pReadbackResource, int _Subresource) { unmap_read(_pReadbackResource.get(), _Subresource); }
 
 	virtual bool read_query(query* _pQuery, void* _pData, uint _SizeofData) = 0;
 	template<typename T> bool read_query(query* _pQuery, T* _pData) { return read_query(_pQuery, _pData, sizeof(T)); }
@@ -706,24 +648,6 @@ public:
 
 	virtual bool begin_frame() = 0;
 	virtual void end_frame() = 0;
-
-	// After out of end_frame, the device can provide a handle to OS CPU-based 
-	// rendering. All OS calls should occur in between begin_os_frame and 
-	// end_os_frame and this should be called after end_frame, but before present 
-	// to ensure no tearing.
-	virtual draw_context_handle begin_os_frame() = 0;
-	virtual void end_os_frame() = 0;
-
-	// This should only be called on same thread as the window passed to 
-	// CreatePrimaryRenderTarget. If a primary render target does not exist, this
-	// will noop, otherwise the entire client area of the associated window will
-	// receive the contents of the back buffer. Call this after end_frame() to 
-	// ensure all commands have been flushed.
-
-	virtual bool is_fullscreen_exclusive() const = 0;
-	virtual void set_fullscreen_exclusive(bool _Fullscreen) = 0;
-
-	virtual void present(uint _PresentInterval) = 0;
 };
 
 class scoped_device_frame

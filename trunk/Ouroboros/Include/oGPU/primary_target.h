@@ -26,19 +26,21 @@
 #ifndef oGPU_primary_target_h
 #define oGPU_primary_target_h
 
-#include <oBase/color.h>
-#include <oGPU/oGPU.h>
+#include <oGPU/resource.h>
 #include <vector>
 
-namespace ouro { class window; }
+namespace ouro { 
+	
+	class color;
+	class window;
 
-namespace ouro { namespace gpu {
+	namespace gpu {
 
 class command_list;
 class device;
 class depth_target;
 
-class primary_target
+class primary_target : public resource
 {
 public:
 	primary_target();
@@ -49,19 +51,17 @@ public:
 	void initialize(window* win, device* dev, bool enable_os_render);
 	void deinitialize();
 
-	char* name(char* dst, size_t dst_size) const;
 	uint2 dimensions() const;
 	inline uint num_presents() const { return npresents; }
 
 	std::shared_ptr<surface::buffer> make_snapshot();
 
-	inline void* get_resource() const { return ro; }
 	inline void* get_target() const { return rw; }
 
-	void set_draw_target(command_list* cl, depth_target* depth = nullptr, uint depth_index = 0);
-	inline void set_draw_target(command_list* cl, depth_target& depth, uint depth_index = 0) { set_draw_target(cl, &depth, depth_index); }
+	void set_draw_target(command_list* cl, depth_target* depth = nullptr, uint depth_index = 0, const viewport& vp = viewport());
+	inline void set_draw_target(command_list* cl, depth_target& depth, uint depth_index = 0, const viewport& vp = viewport()) { set_draw_target(cl, &depth, depth_index, vp); }
 	
-		void clear(command_list* cl, const color& c);
+	void clear(command_list* cl, const color& c);
 
 	// these must be called from the same thread as processes windows events
 	inline void resize(const uint2& dimensions) { internal_resize(dimensions, nullptr); }
@@ -77,11 +77,9 @@ public:
 private:
 	void* swapchain;
 	void* rw;
-	void* ro;
 	mutable shared_mutex mutex;
 	uint npresents;
 
-	void clear_resources();
 	void internal_resize(const uint2& dimensions, device* dev);
 };
 	

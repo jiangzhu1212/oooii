@@ -37,6 +37,9 @@ inline ULONG ref_count(IUnknown* unk) { ULONG r = unk->AddRef()-1; unk->Release(
 inline void intrusive_ptr_add_ref(IUnknown* unk) { unk->AddRef(); }
 inline void intrusive_ptr_release(IUnknown* unk) { unk->Release(); }
 
+#define oSAFE_RELEASE(p) do { if (p) { p->Release(); p = nullptr; } } while(false)
+#define oSAFE_RELEASEV(p) do { if (p) { ((IUnknown*)p)->Release(); p = nullptr; } } while(false)
+
 namespace ouro {
 	namespace windows {
 

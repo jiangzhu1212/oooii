@@ -76,7 +76,13 @@ char* debug_name(char* _StrDestination, size_t _SizeofStrDestination, const Devi
 	const_cast<DeviceChild*>(child)->GetDevice(&dev);
 	unsigned int CreationFlags = dev->GetCreationFlags();
 	if (CreationFlags & D3D11_CREATE_DEVICE_DEBUG)
-		oV(const_cast<DeviceChild*>(child)->GetPrivateData(WKPDID_D3DDebugObjectName, &size, _StrDestination));
+	{
+		HRESULT hr = const_cast<DeviceChild*>(child)->GetPrivateData(WKPDID_D3DDebugObjectName, &size, _StrDestination);
+		if (hr == DXGI_ERROR_NOT_FOUND)
+			strlcpy(_StrDestination, "unnamed", _SizeofStrDestination);
+		else
+			oV(hr);
+	}
 	else if (strlcpy(_StrDestination, "non-debug dev child", _SizeofStrDestination) >= _SizeofStrDestination)
 		oTHROW0(no_buffer_space);
 	return _StrDestination;

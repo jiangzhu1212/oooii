@@ -58,6 +58,11 @@ void texture1d::initialize(const char* name, device* dev, const surface::buffer&
 	}
 }
 
+void texture1d::deinitialize()
+{
+	oSAFE_RELEASEV(ro);
+}
+
 uint texture1d::width() const
 {
 	intrusive_ptr<Texture1D> t;
@@ -74,13 +79,6 @@ uint texture1d::array_size() const
 	D3D11_TEXTURE1D_DESC d;
 	t->GetDesc(&d);
 	return d.ArraySize;
-}
-
-void texture1d::update(command_list* cl, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region)
-{
-	intrusive_ptr<Resource> r;
-	((View*)ro)->GetResource(&r);
-	update_texture(get_dc(cl), true, r, subresource, src, region);
 }
 
 }}

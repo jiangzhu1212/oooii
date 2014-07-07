@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPUUtilMesh.h>
-#include <oGPU/oGPUUtil.h>
 #include <oGPU/vertex_layout.h>
 #include <oBase/finally.h>
 #include <oMesh/mesh.h>

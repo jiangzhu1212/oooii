@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
 
 using namespace ouro::gpu;
 

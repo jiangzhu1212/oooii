@@ -139,29 +139,6 @@ int d3d11_device::frame_id() const
 	return FrameID;
 }
 
-bool d3d11_device::map_read(resource1* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking)
-{
-	uint D3DSubresourceIndex = 0;
-	ID3D11Resource* r = get_subresource(_pReadbackResource, _Subresource, &D3DSubresourceIndex);
-
-	D3D11_MAPPED_SUBRESOURCE msr;
-	if (FAILED(ImmediateContext->Map(r, D3DSubresourceIndex, D3D11_MAP_READ, _Blocking ? 0 : D3D11_MAP_FLAG_DO_NOT_WAIT, &msr)))
-		return false;
-	if (!msr.pData)
-		oTHROW0(no_buffer_space);
-	_pMappedSubresource->data = msr.pData;
-	_pMappedSubresource->row_pitch = msr.RowPitch;
-	_pMappedSubresource->depth_pitch = msr.DepthPitch;
-	return true;
-}
-
-void d3d11_device::unmap_read(resource1* _pReadbackResource, int _Subresource)
-{
-	uint D3DSubresourceIndex = 0;
-	ID3D11Resource* r = get_subresource(_pReadbackResource, _Subresource, &D3DSubresourceIndex);
-	ImmediateContext->Unmap(r, D3DSubresourceIndex);
-}
-
 bool d3d11_device::read_query(query* _pQuery, void* _pData, uint _SizeofData)
 {
 	return static_cast<d3d11_query*>(_pQuery)->read_query(ImmediateContext, _pData, _SizeofData);
@@ -178,59 +155,6 @@ void d3d11_device::end_frame()
 {
 	draw_command_lists();
 	FrameMutex.unlock_shared();
-}
-
-surface::mapped_subresource d3d11_device::reserve(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource)
-{
-	uint2 ByteDimensions = _pResource->byte_dimensions(_Subresource);
-	uint size = ByteDimensions.x * ByteDimensions.y;
-	HeapLock(hHeap);
-	void* p = HeapAlloc(hHeap, 0, size);
-	HeapAllocations.push_back(p);
-	HeapUnlock(hHeap);
-
-	surface::mapped_subresource mapped;
-	mapped.data = p;
-	mapped.row_pitch = ByteDimensions.x;
-	mapped.depth_pitch = size;
-
-	return mapped;
-}
-
-void d3d11_device::commit(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion)
-{
-	uint D3DSubresource = invalid;
-	ID3D11Resource* pD3DResource = get_subresource(_pResource, _Subresource, &D3DSubresource);
-
-	D3D11_BOX box;
-	D3D11_BOX* pBox = nullptr;
-
-	if (!_Subregion.empty())
-	{
-		uint StructureByteStride = 1;
-		resource_type::value type = _pResource->type();
-		if (type == resource_type::buffer)
-		{
-			buffer_info i = d3d::get_info(static_cast<ID3D11Buffer*>(pD3DResource));
-			StructureByteStride = __max(1, i.struct_byte_size);
-			oASSERT(_Subregion.top == 0 && _Subregion.bottom == 1, "Buffer subregion must have top == 0 and bottom == 1");
-		}
-
-		box.left = _Subregion.left * StructureByteStride;
-		box.top = _Subregion.top;
-		box.right = _Subregion.right * StructureByteStride;
-		box.bottom = _Subregion.bottom; 
-		box.front = _Subregion.front;
-		box.back = _Subregion.back;
-		pBox = &box;
-	}
-
-	update_subresource(_pDeviceContext, pD3DResource, D3DSubresource, pBox, _Source, SupportsDeferredCommandLists);
-
-	HeapLock(hHeap);
-	if (find_and_erase(HeapAllocations, _Source.data))
-		HeapFree(hHeap, 0, _Source.data);
-	HeapUnlock(hHeap);
 }
 
 struct draw_order_equal

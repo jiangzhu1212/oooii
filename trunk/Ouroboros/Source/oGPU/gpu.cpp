@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/oGPU.h>
-#include <oGPU/oGPUUtil.h>
 
 #define STR_SUPPORT(_T, _NumTs) \
 	oDEFINE_TO_STRING(_T) \

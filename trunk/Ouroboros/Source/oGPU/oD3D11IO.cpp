@@ -25,7 +25,6 @@
 #include <oGPU/oGPU.h>
 #include <oCore/filesystem.h>
 #include "oGPUCommon.h"
-#include "oD3D11Texture.h"
 #include "oD3D11Device.h"
 #include "d3d11_util.h"
 #include "d3dx11_util.h"

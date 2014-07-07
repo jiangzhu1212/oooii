@@ -39,7 +39,7 @@ void texture2d::initialize(const char* name, device* dev, surface::format format
 {
 	deinitialize();
 	oCHECK_ARG(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
-	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size, mips);
+	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size, 0, mips);
 	ro = make_srv(t, format, array_size);
 }
 
@@ -59,6 +59,11 @@ void texture2d::initialize(const char* name, device* dev, const surface::buffer&
 	}
 }
 
+void texture2d::deinitialize()
+{
+	oSAFE_RELEASEV(ro);
+}
+
 uint2 texture2d::dimensions() const
 {
 	intrusive_ptr<Texture2D> t;
@@ -75,13 +80,6 @@ uint texture2d::array_size() const
 	D3D11_TEXTURE2D_DESC d;
 	t->GetDesc(&d);
 	return d.ArraySize;
-}
-
-void texture2d::update(command_list* cl, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region)
-{
-	intrusive_ptr<Resource> r;
-	((View*)ro)->GetResource(&r);
-	update_texture(get_dc(cl), true, r, subresource, src, region);
 }
 
 }}
