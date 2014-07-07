@@ -43,7 +43,7 @@ public:
 
 	void PIMap(ouro::gpu::command_list* _pCommandList, int2** _Picks);
 	void PIUnmap(ouro::gpu::command_list* _pCommandList);
-	void PDraw(ouro::gpu::command_list* _pCommandList, ouro::gpu::texture1* _pPickRenderTargetTexture);
+	//void PDraw(ouro::gpu::command_list* _pCommandList, ouro::gpu::texture1* _pPickRenderTargetTexture);
 	//Map outputs from the pick shader. This must be an immediate context. And if a deferred context was
 	//	used for any other functions in this class, those must be submitted before mapping the outputs.
 	void POMap(uint** _Picks);
@@ -52,7 +52,7 @@ public:
 private:
 	oRefCount RefCount;
 	int2 PicksInputBuffer[oGPU_MAX_NUM_PICKS_PER_FRAME];
-	std::shared_ptr<ouro::gpu::texture1> PicksInput;
+	//std::shared_ptr<ouro::gpu::texture1> PicksInput;
 	std::shared_ptr<ouro::gpu::buffer> PicksOutput;
 	std::shared_ptr<ouro::gpu::buffer> PicksStaging;
  	std::shared_ptr<ouro::gpu::compute_kernel> PickResourceShader;

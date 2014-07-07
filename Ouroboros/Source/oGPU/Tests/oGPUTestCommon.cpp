@@ -63,9 +63,9 @@ void gpu_test::create(const char* _Title, bool _DevMode, const int* _pSnapshotFr
 		Window = window::make(i);
 	}
 
-	PrimaryRenderTarget = Device->make_primary_render_target(Window, surface::d24_unorm_s8_uint, true);
-	PrimaryRenderTarget->set_clear_color(almost_black);
-
+	PrimaryColorTarget.initialize(Window.get(), Device.get(), true);
+	uint2 dim = PrimaryColorTarget.dimensions();
+	PrimaryDepthTarget.initialize("Depth", Device.get(), surface::d24_unorm_s8_uint, dim.x, dim.y, 0, false, 0);
 	CommandList = Device->get_immediate_command_list();
 }
 
@@ -86,7 +86,7 @@ void gpu_test::check_snapshot(test_services& _Services)
 	const int FrameID = Device->frame_id();
 	if (SnapshotFrames.end() != find(SnapshotFrames, FrameID))
 	{
-		std::shared_ptr<surface::buffer> snap = PrimaryRenderTarget->make_snapshot(0);
+		std::shared_ptr<surface::buffer> snap = PrimaryColorTarget.make_snapshot();
 		_Services.check(snap, NthSnapshot);
 		NthSnapshot++;
 	}
@@ -147,8 +147,8 @@ void gpu_texture_test::render()
 {
 	float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-	render_target_info RTI = PrimaryRenderTarget->get_info();
-	float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
+	uint2 dimensions = PrimaryColorTarget.dimensions();
+	float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
 	float rotationStep = rotation_step();
 	float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
@@ -157,7 +157,6 @@ void gpu_texture_test::render()
 
 	TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
-	CommandList->clear(PrimaryRenderTarget, clear_type::color_depth_stencil);
 	CommandList->set_blend_state(blend_state::opaque);
 	CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 	CommandList->set_rasterizer_state(rasterizer_state::front_face);
@@ -165,7 +164,8 @@ void gpu_texture_test::render()
 	CommandList->set_sampler(0, sampler_state::linear_wrap);
 	resource::set(CommandList.get(), 0, 1, &pResource);
 	CommandList->set_pipeline(Pipeline);
-	CommandList->set_render_target(PrimaryRenderTarget);
+	PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+	PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 	Mesh.draw(CommandList.get());
 
 	CommandList->end();

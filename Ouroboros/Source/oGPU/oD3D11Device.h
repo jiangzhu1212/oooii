@@ -44,6 +44,7 @@ public:
 	
 	inline ID3D11Device* d3d_device() { return D3DDevice; }
 	inline ID3D11DeviceContext* d3d_immediate_context() { return ImmediateContext; }
+	inline IDXGISwapChain* dxgi_swapchain() { return SwapChain; }
 
 	std::shared_ptr<device> get_shared() { return shared_from_this(); }
 
@@ -57,11 +58,9 @@ public:
 	const char* name() const override;
 	int frame_id() const override;
 
-	std::shared_ptr<render_target> make_primary_render_target(window* _pWindow, surface::format _DepthStencilFormat, bool _EnableOSRendering) override;
 	std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) override;
 	std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) override;
 	std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) override;
-	std::shared_ptr<render_target> make_render_target(const char* _Name, const render_target_info& _Info) override;
 	std::shared_ptr<texture1> make_texture1(const char* _Name, const texture1_info& _Info) override;
 
 	bool map_read(resource1* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) override;
@@ -119,12 +118,6 @@ protected:
 
 	std::shared_ptr<command_list> ImmediateCommandList;
 
-	// These will hold null/noop values and are initialized only at construction
-	// time, so it's safe to access from command lists in multiple threads.
-	uint NoopUAVInitialCounts[max_num_unordered_buffers];
-	ID3D11UnorderedAccessView* NullUAVs[max_num_unordered_buffers];
-	ID3D11RenderTargetView* NullRTVs[max_num_mrts];
-
 	// For this heap there shouldn't be too many simultaneous allocations - 
 	// remember this is to support Map/Unmap style API, so maybe on a thread 
 	// there's 10 maps at the same time? at most? and then there's 12 threads? So
@@ -137,7 +130,6 @@ protected:
 	std::mutex CommandListsInsertRemoveMutex;
 	shared_mutex CommandListsBeginEndMutex;
 	shared_mutex FrameMutex;
-	mutable shared_mutex SwapChainMutex;
 	std::vector<command_list*> CommandLists; // non-oRefs to avoid circular refs
 
 	device_info Info;

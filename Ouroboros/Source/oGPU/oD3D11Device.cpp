@@ -25,7 +25,6 @@
 #include "oD3D11Device.h"
 #include "oD3D11CommandList.h"
 #include "oD3D11Query.h"
-#include "oD3D11RenderTarget.h"
 
 #include "d3d11_util.h"
 #include "d3d_compile.h"
@@ -49,6 +48,28 @@ std::shared_ptr<device> device::make(const device_init& _Init)
 }
 
 d3d::Device* get_device(device* _pDevice) { return ((d3d11::d3d11_device*)_pDevice)->d3d_device(); }
+
+intrusive_ptr<d3d::SwapChain> make_swapchain(device* dev, window* win, bool enable_os_render)
+{
+	if (((d3d11::d3d11_device*)dev)->dxgi_swapchain())
+		oTHROW(protocol_error, "There already exists a primary render target, only one can exist for a given device at a time.");
+
+	window_shape s = win->shape();
+	if (has_statusbar(s.style))
+		oTHROW_INVARG("A window used for rendering must not have a status bar");
+
+	intrusive_ptr<SwapChain> sc = dxgi::make_swap_chain(get_device(dev)
+		, false
+		, max(int2(1,1), s.client_size)
+		, false
+		, surface::b8g8r8a8_unorm
+		, 0
+		, 0
+		, (HWND)win->native_handle()
+		, enable_os_render);
+
+	return sc;
+}
 
 	} // namespace gpu
 } // namespace ouro
@@ -78,18 +99,6 @@ d3d11_device::d3d11_device(const device_init& _Init)
 
 	D3DDevice->GetImmediateContext(&ImmediateContext);
 	
-	// Set up some null buffers that will be used to reset parts of the API that
-	// do no easily transition between compute and rasterization pipelines.
-	{
-		// ends up being all set to invalid/-1/D3D11_KEEP_UNORDERED_ACCESS_VIEWS 
-		// which means leave value alone
-		memset(NoopUAVInitialCounts, 0xff, sizeof(NoopUAVInitialCounts));
-
-		// set to an array of nulls
-		memset(NullUAVs, 0, sizeof(NullUAVs));
-		memset(NullRTVs, 0, sizeof(NullRTVs));
-	}
-
 	// Set up a noop compute shader to flush for SetCounter()
 	{
 		sstring CSName;
@@ -128,31 +137,6 @@ const char* d3d11_device::name() const
 int d3d11_device::frame_id() const
 {
 	return FrameID;
-}
-
-std::shared_ptr<render_target> d3d11_device::make_primary_render_target(window* _pWindow, surface::format _DepthStencilFormat, bool _EnableOSRendering)
-{
-	if (SwapChain)
-		oTHROW(protocol_error, "There already exists a primary render target, only one can exist for a given device at a time.");
-
-	window_shape s = _pWindow->shape();
-	if (has_statusbar(s.style))
-		oTHROW_INVARG("A window used for rendering must not have a status bar");
-
-	SwapChain = dxgi::make_swap_chain(D3DDevice
-		, false
-		, max(int2(1,1), s.client_size)
-		, false
-		, surface::b8g8r8a8_unorm
-		, 0
-		, 0
-		, (HWND)_pWindow->native_handle()
-		, _EnableOSRendering);
-
-	sstring RTName;
-	snprintf(RTName, "%s.PrimaryRT", name());
-
-	return std::make_shared<d3d11_render_target>(get_shared(), name(), SwapChain, _DepthStencilFormat);
 }
 
 bool d3d11_device::map_read(resource1* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking)
@@ -194,51 +178,6 @@ void d3d11_device::end_frame()
 {
 	draw_command_lists();
 	FrameMutex.unlock_shared();
-}
-
-draw_context_handle d3d11_device::begin_os_frame()
-{
-	SwapChainMutex.lock_shared();
-	if (!SwapChain)
-	{
-		SwapChainMutex.unlock_shared();
-		return nullptr;
-	}
-
-	return (draw_context_handle)dxgi::get_dc(SwapChain);
-}
-
-void d3d11_device::end_os_frame()
-{
-	dxgi::release_dc(SwapChain);
-	SwapChainMutex.unlock_shared();
-}
-
-bool d3d11_device::is_fullscreen_exclusive() const
-{
-	shared_lock<shared_mutex> lock(SwapChainMutex);
-	if (!SwapChain)
-		return false;
-
-	BOOL FS = FALSE;
-	const_cast<d3d11_device*>(this)->SwapChain->GetFullscreenState(&FS, nullptr);
-	return !!FS;
-}
-
-void d3d11_device::set_fullscreen_exclusive(bool _Fullscreen)
-{
-	lock_guard<shared_mutex> lock(SwapChainMutex);
-	if (!SwapChain)
-		oTHROW(protocol_error, "no primary render target has been created");
-	dxgi::set_fullscreen_exclusive(SwapChain, _Fullscreen);
-}
-
-void d3d11_device::present(uint _PresentInterval)
-{
-	lock_guard<shared_mutex> lock(SwapChainMutex);
-	if (!SwapChain)
-		oTHROW(operation_not_permitted, "present() must only be called on the primary render target");
-	dxgi::present(SwapChain, _PresentInterval);
 }
 
 surface::mapped_subresource d3d11_device::reserve(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource)
@@ -353,12 +292,6 @@ void d3d11_device::draw_command_lists()
 			c->CommandList = nullptr;
 		}
 	}
-}
-
-void d3d11_device::release_swap_chain()
-{
-	lock_guard<shared_mutex> lock(SwapChainMutex);
-	SwapChain = nullptr;
 }
 
 oGPU_NAMESPACE_END

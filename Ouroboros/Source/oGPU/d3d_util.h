@@ -42,10 +42,15 @@ Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format
 ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size);
 ShaderResourceView* make_srv(Resource* r, surface::format format, uint array_size);
 
+// returns either a RenderTargetView or DepthStencilView if the resource's format is a depth format
+View* make_draw_target(Resource* r);
+inline RenderTargetView* make_rtv(Resource* r) { return (RenderTargetView*)make_draw_target(r); }
+inline DepthStencilView* make_dsv(Resource* r) { return (DepthStencilView*)make_draw_target(r); }
+
 // common struct for information from various texture types (including buffers, dimensions are (element_stride, num_elements, 1))
-struct texture_info
+struct D3D_TEXTURE_DESC
 {
-	texture_info()
+	D3D_TEXTURE_DESC()
 		: dimensions(0,0,0)
 		, array_size(0)
 		, type(D3D11_RESOURCE_DIMENSION_UNKNOWN)
@@ -60,7 +65,7 @@ struct texture_info
 	D3D11_USAGE usage;
 };
 
-texture_info get_texture_info(Resource* r);
+D3D_TEXTURE_DESC get_texture_desc(Resource* r);
 	
 // sets to all pipeline stages
 void set_cbs(DeviceContext* dc, uint slot, uint num_buffers, Buffer* const* buffers, uint gpu_stage_flags = ~0u);
@@ -75,6 +80,15 @@ void make_structured(const char* name, Device* dev, uint struct_stride, uint num
 // Creates a STAGING version of the specified resource and copies the src to it and flushes 
 // the immediate context. If do_copy is false then the buffer is created uninitialized.
 Resource* make_cpu_copy(Resource* src, bool do_copy = true);
+
+// Copies the contents of the specified texture to dst which is assumed to be 
+// properly allocated to receive the contents. If flip_vertically is true then
+// the bitmap data will be copied such that the destination will be upside-down 
+// compared to the source.
+void copy(ID3D11Resource* r, uint subresource, surface::mapped_subresource& dst, bool flip_vertically = false);
+
+// copies the contents of t to a new surface buffer
+std::shared_ptr<surface::buffer> make_snapshot(Texture2D* t);
 
 // calls UpdateSubresource for the specified buffer. This won't work for a D3D11_BIND_CONSTANT_BUFFER.
 void update_buffer(DeviceContext* dc, Buffer* b, uint byte_offset, uint num_bytes, const void* src);

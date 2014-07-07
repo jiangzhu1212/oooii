@@ -24,6 +24,8 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
+#include <oGPU/depth_target.h>
+#include <oGPU/color_target.h>
 #include <oGPU/oGPUUtil.h>
 
 #include <oBasis/oMath.h>
@@ -55,37 +57,27 @@ struct gpu_test_render_target : public gpu_test
 		PLTexture = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D));
 		Cube.initialize_first_cube(Device.get());
 
-		{
-			render_target_info i;
-			i.dimensions = ushort3(256, 256, 1);
-			i.array_size = 1;
-			i.num_mrts = 1;
-			i.format[0] = surface::b8g8r8a8_unorm;
-			i.depth_stencil_format = surface::d24_unorm_s8_uint;
-			i.clear_color[0] = deep_sky_blue;
-			RenderTarget = Device->make_render_target("RenderTarget", i);
-		}
+		ColorTarget.initialize("ColorTarget", Device.get(), surface::b8g8r8a8_unorm, 256, 256, 0, false);
+		DepthTarget.initialize("DepthTarget", Device.get(), surface::d24_unorm_s8_uint, 256, 256, 0, false, 0);
 	}
 
 	void render() override
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-		render_target_info RTI = PrimaryRenderTarget->get_info();
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
+		uint2 dimensions = PrimaryColorTarget.dimensions();
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
 		float rotationStep = Device->frame_id() * 1.0f;
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-		// DrawOrder should be respected in out-of-order submits, so show that here
-		// but executing on the main scene, THEN the render target, but because the
+		// DrawOrder should be respected in out-of-order submits so show that here
+		// by executing the main scene THEN the render target but because the
 		// draw order of the command lists defines the render target before the 
-		// main scene, this should come out as a cube with a triangle texture.
+		// main scene this should come out as a cube with a triangle texture.
 
-		std::shared_ptr<texture1> Texture = RenderTarget->get_texture(0);
-
-		render_main_scene(CLMainScene.get(), Texture.get(), PrimaryRenderTarget.get());
-		render_to_target(CLRenderTarget.get(), RenderTarget.get());
+		render_main_scene(CLMainScene.get(), ColorTarget);
+		render_to_target(CLRenderTarget.get(), ColorTarget);
 	}
 
 private:
@@ -93,30 +85,31 @@ private:
 	std::shared_ptr<command_list> CLRenderTarget;
 	std::shared_ptr<pipeline1> PLPassThrough;
 	std::shared_ptr<pipeline1> PLTexture;
-	std::shared_ptr<render_target> RenderTarget;
+	color_target ColorTarget;
+	depth_target DepthTarget;
 	util_mesh Cube;
 	util_mesh Triangle;
 	constant_buffer TestConstants;
 
-	void render_to_target(command_list* _pCommandList, render_target* _pTarget)
+	void render_to_target(command_list* _pCommandList, color_target& rt)
 	{
 		_pCommandList->begin();
-		_pCommandList->clear(_pTarget, clear_type::color_depth_stencil);
+		rt.clear(_pCommandList, deep_sky_blue);
 		_pCommandList->set_blend_state(blend_state::opaque);
 		_pCommandList->set_depth_stencil_state(depth_stencil_state::none);
 		_pCommandList->set_rasterizer_state(rasterizer_state::front_face);
 		_pCommandList->set_pipeline(PLPassThrough);
-		_pCommandList->set_render_target(_pTarget);
+		rt.set_draw_target(_pCommandList);
 		Triangle.draw(_pCommandList);
 		_pCommandList->end();
 	}
 
-	void render_main_scene(command_list* _pCommandList, texture1* _pTexture, render_target* _pTarget)
+	void render_main_scene(command_list* _pCommandList, resource& texture)
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
-		render_target_info RTI = PrimaryRenderTarget->get_info();
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, RTI.dimensions.x / oCastAsFloat(RTI.dimensions.y), 0.001f, 1000.0f);
+		uint2 dimensions = PrimaryColorTarget.dimensions();
+		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
 		float rotationStep = Device->frame_id() * 1.0f;
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
@@ -125,15 +118,15 @@ private:
 
 		TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
-		_pCommandList->clear(_pTarget, clear_type::color_depth_stencil);
 		_pCommandList->set_blend_state(blend_state::opaque);
 		_pCommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 		_pCommandList->set_rasterizer_state(rasterizer_state::front_face);
 		TestConstants.set(_pCommandList, 0);
 		_pCommandList->set_sampler(0, sampler_state::linear_wrap);
-		_pCommandList->set_shader_resource(0, _pTexture);
+		texture.set(_pCommandList, 0);
 		_pCommandList->set_pipeline(PLTexture);
-		_pCommandList->set_render_target(_pTarget);
+		PrimaryColorTarget.clear(_pCommandList, get_clear_color());
+		PrimaryColorTarget.set_draw_target(_pCommandList, PrimaryDepthTarget);
 		Cube.draw(_pCommandList);
 		_pCommandList->end();
 	}

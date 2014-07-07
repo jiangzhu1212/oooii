@@ -23,41 +23,46 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oGPU_render_target_h
-#define oGPU_render_target_h
+#ifndef oGPU_color_target_h
+#define oGPU_color_target_h
 
-#include "oGPUCommon.h"
+#include <oGPU/resource.h>
+#include <vector>
 
-oGPU_NAMESPACE_BEGIN
+namespace ouro { namespace gpu {
 
-oDEVICE_CHILD_CLASS(render_target)
+static const uint max_num_mrts = 8;
+
+class device;
+class command_list;
+class depth_target;
+class window;
+
+class color_target : public resource
 {
-	oDEVICE_CHILD_DECLARATION(render_target)
-	d3d11_render_target(std::shared_ptr<device>& _Device, const char* _Name, IDXGISwapChain* _pSwapChain, surface::format _DepthStencilFormat);
-	~d3d11_render_target();
-	render_target_info get_info() const override;
-	void set_clear_depth_stencil(float _Depth, uchar _Stencil) override;
-	void set_clear_color(uint _Index, color _Color) override;
-	void resize(const int3& _NewDimensions) override;
-	std::shared_ptr<texture1> get_texture(int _MRTIndex) override;
-	std::shared_ptr<texture1> get_depth_texture() override;
-	std::shared_ptr<surface::buffer> make_snapshot(int _MRTIndex) override;
+public:
+	~color_target() { deinitialize(); }
 
-	inline void set(ID3D11DeviceContext* _pContext) { _pContext->OMSetRenderTargets(Info.num_mrts, (ID3D11RenderTargetView* const*)RTVs.data(), DSV); }
+	void initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips);
+	void deinitialize();
 
-	std::array<std::shared_ptr<texture1>, max_num_mrts> Textures;
-	std::array<intrusive_ptr<ID3D11RenderTargetView>, max_num_mrts> RTVs;
-	std::shared_ptr<texture1> DepthStencilTexture;
-	intrusive_ptr<ID3D11DepthStencilView> DSV;
-	intrusive_ptr<IDXGISwapChain> SwapChain;
-	render_target_info Info;
+	uint2 dimensions() const;
+	uint array_size() const;
 
-	void clear_resources();
+	static void set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, depth_target* depth);
+	static void set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, const uint* indices, depth_target* depth, uint depth_index);
 
-	// Creates the depth buffer according to the Desc.DepthStencilFormat value
-	void recreate_depth(const int2& _Dimensions);
+	void set_draw_target(command_list* cl, uint index = 0, depth_target* depth = nullptr, uint depth_index = 0);
+
+	void clear(command_list* cl, const color& c, uint index = 0);
+	void generate_mips(command_list* cl);
+	
+	void* get_target(uint index = 0) const { return rws[index]; }
+
+private:
+	std::vector<void*> rws;
 };
-
-oGPU_NAMESPACE_END
+	
+}}
 
 #endif

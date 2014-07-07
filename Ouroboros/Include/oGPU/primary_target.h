@@ -23,39 +23,66 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oGPU_readback_buffer_h
-#define oGPU_readback_buffer_h
+#ifndef oGPU_primary_target_h
+#define oGPU_primary_target_h
+
+#include <oBase/color.h>
+#include <oGPU/oGPU.h>
+#include <vector>
+
+namespace ouro { class window; }
 
 namespace ouro { namespace gpu {
 
-class device;
 class command_list;
+class device;
+class depth_target;
 
-class readback_buffer
+class primary_target
 {
 public:
-	readback_buffer() : impl(nullptr), bytes(0) {}
-	~readback_buffer() { deinitialize(); }
+	primary_target();
+	~primary_target() { deinitialize(); }
 
-	void initialize(const char* name, device* dev, uint element_stride, uint num_elements = 1);
-	template<typename BufferT> void initialize(const BufferT& buffer, bool make_immediate_copy = false) { internal_initialize(buffer.get_buffer(), make_immediate_copy); }
+	operator bool() const { return !!rw; }
 
+	void initialize(window* win, device* dev, bool enable_os_render);
 	void deinitialize();
-	void* get_buffer() const { return impl; }
 
-	uint size() const { return bytes; }
+	char* name(char* dst, size_t dst_size) const;
+	uint2 dimensions() const;
+	inline uint num_presents() const { return npresents; }
 
-	template<typename T> void copy_from(command_list* cl, const T& buffer) { internal_copy_from(cl, buffer.get_buffer()); }
+	std::shared_ptr<surface::buffer> make_snapshot();
 
-	// returns false if this could not be read without blocking. Any invalid condition will throw.
-	bool copy_to(void* dst, size_t dst_size, bool blocking = true) const;
+	inline void* get_resource() const { return ro; }
+	inline void* get_target() const { return rw; }
+
+	void set_draw_target(command_list* cl, depth_target* depth = nullptr, uint depth_index = 0);
+	inline void set_draw_target(command_list* cl, depth_target& depth, uint depth_index = 0) { set_draw_target(cl, &depth, depth_index); }
+	
+		void clear(command_list* cl, const color& c);
+
+	// these must be called from the same thread as processes windows events
+	inline void resize(const uint2& dimensions) { internal_resize(dimensions, nullptr); }
+
+	void* begin_os_frame();
+	void end_os_frame();
+
+	bool is_fullscreen_exclusive() const;
+	void set_fullscreen_exclusive(bool fullscreen);
+	
+	void present(uint interval = 1);
 
 private:
-	void* impl;
-	uint bytes;
+	void* swapchain;
+	void* rw;
+	void* ro;
+	mutable shared_mutex mutex;
+	uint npresents;
 
-	void internal_initialize(void* buffer_impl, bool make_immediate_copy);
-	void internal_copy_from(command_list* cl, void* buffer_impl);
+	void clear_resources();
+	void internal_resize(const uint2& dimensions, device* dev);
 };
 	
 }}

@@ -55,6 +55,7 @@ struct ID3D11RenderTargetView;
 struct ID3D11ShaderResourceView;
 struct ID3D11UnorderedAccessView;
 struct ID3D11View;
+struct IDXGISwapChain;
 
 namespace ouro { namespace gpu { namespace d3d {
 
@@ -86,6 +87,7 @@ typedef ID3D11RenderTargetView RenderTargetView;
 typedef ID3D11ShaderResourceView ShaderResourceView;
 typedef ID3D11UnorderedAccessView UnorderedAccessView;
 typedef ID3D11View View;
+typedef IDXGISwapChain SwapChain;
 
 }}}
 

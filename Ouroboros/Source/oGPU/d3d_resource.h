@@ -53,15 +53,6 @@ intrusive_ptr<ID3D11Buffer> make_buffer(ID3D11Device* _pDevice
 	, ID3D11UnorderedAccessView** _ppUAV = nullptr
 	, ID3D11ShaderResourceView** _ppSRV = nullptr);
 
-// Copies the contents of the specified texture to _pBuffer, which is assumed to
-// be properly allocated to receive the contents. If _FlipVertical is true, then
-// the bitmap data will be copied such that the destination will be upside-down 
-// compared to the source.
-void copy(ID3D11Resource* _pTexture
-	, unsigned int _Subresource
-	, surface::mapped_subresource* _pDstSubresource
-	, bool _FlipVertically = false);
-
 // returns a unified info for any type of resource
 texture1_info get_texture_info1(Resource* _pResource, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr);
 inline texture1_info get_texture_info1(View* _pView, bool _AsArray = false, D3D11_USAGE* _pUsage = nullptr) { intrusive_ptr<Resource> r; _pView->GetResource(&r); return get_texture_info1(r, _AsArray, _pUsage); }
@@ -154,9 +145,6 @@ new_texture make_texture(Device* _pDevice
 // Creates a CPU-readable copy of the specified texture/render target. Only 
 // textures are currently supported.
 intrusive_ptr<Resource> make_cpu_copy(Resource* _pResource);
-
-// Copies the specified render target to the specified image/path
-std::shared_ptr<surface::buffer> make_snapshot(Texture2D* _pRenderTarget);
 
 // Uses oTRACE to display the fields of the specified desc.
 void trace_texture2d_desc(const D3D11_TEXTURE2D_DESC& _Desc, const char* _Prefix = "\t");

@@ -85,11 +85,12 @@ public:
 
 		LineList.update(CommandList.get(), 0, 3, lines);
 
-		CommandList->clear(PrimaryRenderTarget, gpu::clear_type::color_depth_stencil);
 		CommandList->set_blend_state(gpu::blend_state::opaque);
 		CommandList->set_depth_stencil_state(gpu::depth_stencil_state::none);
 		CommandList->set_pipeline(Pipeline);
-		CommandList->set_render_target(PrimaryRenderTarget);
+
+		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 
 		LineList.draw_unindexed(CommandList.get(), 3, 0);
 

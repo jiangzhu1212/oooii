@@ -25,7 +25,8 @@
 #include "d3dx11_util.h"
 #include "d3d11_util.h"
 #include "d3d_debug.h"
-#include "d3d_resource.h"
+#include "d3d_util.h"
+#include "dxgi_util.h"
 #include <oBase/assert.h>
 
 namespace ouro {
@@ -126,10 +127,10 @@ static intrusive_ptr<ID3D11Resource> prepare_source(ID3D11Resource* _pResource
 	intrusive_ptr<ID3D11Device> Device;
 	_pResource->GetDevice(&Device);
 	Device->GetImmediateContext(_ppDeviceContext);
-	gpu::texture1_info i = d3d::get_texture_info1(_pResource);
-	if (surface::is_block_compressed(i.format) && _Format != D3DX11_IFF_DDS)
+	d3d::D3D_TEXTURE_DESC desc = d3d::get_texture_desc(_pResource);
+	if (dxgi::is_block_compressed(desc.format) && _Format != D3DX11_IFF_DDS)
 		throw std::invalid_argument("D3DX11 can save block compressed formats only to .dds files.");
-	intrusive_ptr<ID3D11Resource> Source = gpu::is_readback(i.type) ? _pResource : d3d::make_cpu_copy(_pResource);
+	intrusive_ptr<ID3D11Resource> Source = desc.usage == D3D11_USAGE_STAGING ? _pResource : d3d::make_cpu_copy(_pResource);
 	return Source;
 }
 
@@ -155,8 +156,12 @@ static intrusive_ptr<ID3D11Resource> prepare_source(const surface::buffer* _pSur
 		throw std::invalid_argument(formatf("Image format %s cannot be saved", as_string(si.format)));
 	intrusive_ptr<ID3D11Device> Device = d3d11::make_device(gpu::device_init("save_temp_device"));
 	surface::shared_lock lock(_pSurface);
+#if 0
 	d3d::new_texture NewTexture = d3d::make_texture(Device, "save_temp_texture", info, &lock.mapped);
 	return NewTexture.pResource;
+#else
+	oTHROW(protocol_error, "not implemented");
+#endif
 }
 
 void save(const surface::buffer* _pSurface, const path& _Path)
@@ -185,6 +190,7 @@ void save(const surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, vo
 
 static D3DX11_IMAGE_LOAD_INFO get_image_load_info(const gpu::texture1_info& _Info)
 {
+#if 0
 	D3DX11_IMAGE_LOAD_INFO ili;
 	ili.Width = _Info.dimensions.x == 0 ? D3DX11_FROM_FILE : _Info.dimensions.x;
 	ili.Height = _Info.dimensions.y == 0 ? D3DX11_FROM_FILE : _Info.dimensions.y;
@@ -196,6 +202,9 @@ static D3DX11_IMAGE_LOAD_INFO get_image_load_info(const gpu::texture1_info& _Inf
 	ili.pSrcInfo = nullptr;
 	d3d::init_values(_Info, &ili.Format, &ili.Usage, &ili.CpuAccessFlags, &ili.BindFlags, &ili.MipLevels);
 	return ili;
+#else
+	oTHROW(protocol_error, "not implemented");
+#endif
 }
 
 intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
@@ -287,12 +296,16 @@ void convert(ID3D11Texture2D* _pSourceTexture, surface::format _NewFormat
 	info.format = _NewFormat;
 	info.type = gpu::make_readback(info.type);
 
+#if 0
 	intrusive_ptr<ID3D11Texture2D> NewTexture = d3d::make_texture(Device, "convert_temp", info).pTexture2D;
 	intrusive_ptr<ID3D11DeviceContext> ImmediateContext;
 	Device->GetImmediateContext(&ImmediateContext);
 	oV(D3DX11LoadTextureFromTexture(ImmediateContext, _pSourceTexture, nullptr, NewTexture));
 	*_ppDestinationTexture = NewTexture;
 	(*_ppDestinationTexture)->AddRef();
+#else
+	oTHROW(protocol_error, "not implemented");
+#endif
 }
 
 void convert(ID3D11Device* _pDevice
@@ -302,6 +315,7 @@ void convert(ID3D11Device* _pDevice
 	, surface::format _SourceFormat
 	, const int2& _MipDimensions)
 {
+#if 0
 	gpu::texture1_info i;
 	i.dimensions = ushort3(_MipDimensions, 1);
 	i.array_size = 1;
@@ -313,6 +327,9 @@ void convert(ID3D11Device* _pDevice
 	convert(SourceTexture, _DestinationFormat, &DestinationTexture);
 	oTRACE("d3d11::convert end 0x%p", DestinationTexture);
 	d3d::copy(DestinationTexture, 0, &_Destination);
+#else
+	oTHROW(protocol_error, "not implemented");
+#endif
 }
 
 		} // namespace d3dx11
