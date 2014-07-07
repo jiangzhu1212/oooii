@@ -68,6 +68,11 @@ void texture3d::initialize(const char* name, device* dev, const surface::buffer&
 	}
 }
 
+void texture3d::deinitialize()
+{
+	oSAFE_RELEASEV(ro);
+}
+
 uint3 texture3d::dimensions() const
 {
 	intrusive_ptr<Texture3D> t;
@@ -75,13 +80,6 @@ uint3 texture3d::dimensions() const
 	D3D11_TEXTURE3D_DESC d;
 	t->GetDesc(&d);
 	return uint3(d.Width, d.Height, d.Depth);
-}
-
-void texture3d::update(command_list* cl, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region)
-{
-	intrusive_ptr<Resource> r;
-	((View*)ro)->GetResource(&r);
-	update_texture(get_dc(cl), true, r, subresource, src, region);
 }
 
 }}

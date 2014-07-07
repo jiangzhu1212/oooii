@@ -61,18 +61,10 @@ public:
 	std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) override;
 	std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) override;
 	std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) override;
-	std::shared_ptr<texture1> make_texture1(const char* _Name, const texture1_info& _Info) override;
 
-	bool map_read(resource1* _pReadbackResource, int _Subresource, surface::mapped_subresource* _pMappedSubresource, bool _Blocking = false) override;
-	void unmap_read(resource1* _pReadbackResource, int _Subresource) override;
 	bool read_query(query* _pQuery, void* _pData, uint _SizeofData) override;
 	bool begin_frame() override;
 	void end_frame() override;
-	draw_context_handle begin_os_frame() override;
-	void end_os_frame() override;
-	bool is_fullscreen_exclusive() const override;
-	void set_fullscreen_exclusive(bool _Fullscreen) override;
-	void present(uint _PresentInterval) override;
 
 	// _____________________________________________________________________________
 	// Implementation API

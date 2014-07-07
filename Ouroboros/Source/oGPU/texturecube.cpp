@@ -44,7 +44,7 @@ void texturecube::initialize(const char* name, device* dev, surface::format form
 	Device* D3DDevice = get_device(dev);
 	DXGI_FORMAT fmt = dxgi::from_surface_format(format);
 
-	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size_in_num_cubes, mips, true);
+	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size_in_num_cubes, 0, mips, true);
 	ro = make_srv(t, format, array_size_in_num_cubes);
 }
 
@@ -66,6 +66,11 @@ void texturecube::initialize(const char* name, device* dev, const surface::buffe
 	}
 }
 
+void texturecube::deinitialize()
+{
+	oSAFE_RELEASEV(ro);
+}
+
 uint2 texturecube::dimensions() const
 {
 	intrusive_ptr<Texture2D> t;
@@ -82,13 +87,6 @@ uint texturecube::array_size() const
 	D3D11_TEXTURE2D_DESC d;
 	t->GetDesc(&d);
 	return d.ArraySize;
-}
-
-void texturecube::update(command_list* cl, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region)
-{
-	intrusive_ptr<Resource> r;
-	((View*)ro)->GetResource(&r);
-	update_texture(get_dc(cl), true, r, subresource, src, region);
 }
 
 }}

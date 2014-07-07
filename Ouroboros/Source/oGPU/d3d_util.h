@@ -35,34 +35,44 @@
 namespace ouro { namespace gpu { namespace d3d {
 
 Texture1D* make_texture_1d(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips);
-Texture2D* make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, bool cube = false, bool target = false);
+Texture2D* make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, uint bind_flags, bool mips, bool cube = false);
 Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips);
 
 // basic 1D 1DARRAY 2D 2DARRAY 3D CUBE CUBEARRAY types
 ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size);
 ShaderResourceView* make_srv(Resource* r, surface::format format, uint array_size);
 
-// returns either a RenderTargetView or DepthStencilView if the resource's format is a depth format
-View* make_draw_target(Resource* r);
-inline RenderTargetView* make_rtv(Resource* r) { return (RenderTargetView*)make_draw_target(r); }
-inline DepthStencilView* make_dsv(Resource* r) { return (DepthStencilView*)make_draw_target(r); }
+RenderTargetView* make_rtv(Resource* r, uint array_slice = invalid);
+DepthStencilView* make_dsv(Resource* r, uint array_slice = invalid);
 
-// common struct for information from various texture types (including buffers, dimensions are (element_stride, num_elements, 1))
+bool is_array(ShaderResourceView* v);
+bool is_array(RenderTargetView* v);
+bool is_array(DepthStencilView* v);
+bool is_array(UnorderedAccessView* v);
+
+// common struct for information from various texture types (including buffers, Width is full byte width, ArraySize is num elements, so stride is Width / ArraySize)
 struct D3D_TEXTURE_DESC
 {
 	D3D_TEXTURE_DESC()
-		: dimensions(0,0,0)
-		, array_size(0)
-		, type(D3D11_RESOURCE_DIMENSION_UNKNOWN)
-		, format(DXGI_FORMAT_UNKNOWN)
-		, usage(D3D11_USAGE_DEFAULT)
+		: Width(0)
+		, Height(0)
+		, Depth(0)
+		, ArraySize(0)
+		, Type(D3D11_RESOURCE_DIMENSION_UNKNOWN)
+		, Format(DXGI_FORMAT_UNKNOWN)
+		, Usage(D3D11_USAGE_DEFAULT)
+		, Mips(false)
 	{}
 
-	ushort3 dimensions;
-	ushort array_size;
-	D3D11_RESOURCE_DIMENSION type;
-	DXGI_FORMAT format;
-	D3D11_USAGE usage;
+	uint Width;
+	uint Height;
+	uint Depth;
+	uint ArraySize;
+	D3D11_RESOURCE_DIMENSION Type;
+	DXGI_FORMAT Format;
+	D3D11_USAGE Usage;
+	DXGI_SAMPLE_DESC SampleDesc;
+	bool Mips;
 };
 
 D3D_TEXTURE_DESC get_texture_desc(Resource* r);

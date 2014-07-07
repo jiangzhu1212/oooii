@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="oGPUUtil.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -47,9 +44,6 @@
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
     <ClCompile Include="d3d_resource.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11Texture.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
     <ClCompile Include="oD3D11Query.cpp">
@@ -162,9 +156,6 @@
     <ClInclude Include="d3d_resource.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
-    <ClInclude Include="oD3D11Texture.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
     <ClInclude Include="oD3D11Query.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
@@ -181,9 +172,6 @@
       <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPU.h">
-      <Filter>Headers\old</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPUUtil.h">
       <Filter>Headers\old</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h">

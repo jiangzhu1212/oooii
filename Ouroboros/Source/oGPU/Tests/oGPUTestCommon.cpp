@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
 #include <oGPU/constant_buffer.h>
 #include <oCore/filesystem.h>
 
@@ -114,7 +113,7 @@ void gpu_test::run(test_services& _Services)
 			check_snapshot(_Services);
 
 			if (DevMode)
-				Device->present(1);
+				PrimaryColorTarget.present();
 		}
 		else
 			oTRACEA("Frame %u failed", Device->frame_id());

@@ -208,6 +208,7 @@ template<typename DescT> static void fill_non_dimensions(const DescT& _Desc, boo
 	}
 }
 
+#if 0
 texture1_info get_texture_info1(Resource* _pResource, bool _AsArray, D3D11_USAGE* _pUsage)
 {
 	texture1_info info;
@@ -269,6 +270,7 @@ texture1_info get_texture_info1(Resource* _pResource, bool _AsArray, D3D11_USAGE
 
 	return info;
 }
+#endif
 
 static D3D11_SHADER_RESOURCE_VIEW_DESC get_srv_desc(const gpu::texture1_info& _Info, D3D11_RESOURCE_DIMENSION _Type)
 {
@@ -362,6 +364,8 @@ intrusive_ptr<View> make_rtv(const char* _DebugName, Resource* _pTexture)
 	return View;
 }
 #endif
+
+#if 0
 intrusive_ptr<UnorderedAccessView> make_uav(const char* _DebugName
 	, Resource* _pTexture, unsigned int _MipSlice, unsigned int _ArraySlice)
 {
@@ -387,6 +391,7 @@ intrusive_ptr<UnorderedAccessView> make_uav(const char* _DebugName
 	debug_name(UAV, _DebugName);
 	return UAV;
 }
+#endif
 
 intrusive_ptr<UnorderedAccessView> make_unflagged_copy(UnorderedAccessView* _pSourceUAV)
 {

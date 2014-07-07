@@ -51,12 +51,7 @@ oDEVICE_CHILD_CLASS(command_list)
 	void end_query(query* _pQuery) override;
 	void flush() override;
 	void reset() override;
-	surface::mapped_subresource reserve(resource1* _pResource, int _Subresource) override;
-	void commit(resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion = surface::box()) override;
-	void copy(resource1* _pDestination, resource1* _pSource) override;
-	void copy(buffer* _pDestination, uint _DestinationOffsetBytes, buffer* _pSource, uint _SourceOffsetBytes, uint _SizeBytes) override;
 	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) override;
-	void set_shader_resources(uint _StartSlot, uint _NumResources, const resource1* const* _ppResources) override;
 
 	// _____________________________________________________________________________
 	// Rasterization-specific

@@ -330,65 +330,6 @@ bool supports_deferred_contexts(ID3D11Device* _pDevice)
 	return !!threadingCaps.DriverCommandLists;
 }
 
-void update_subresource(ID3D11DeviceContext* _pDeviceContext
-	, ID3D11Resource* _pDstResource
-	, uint _DstSubresource
-	, const D3D11_BOX* _pDstBox
-	, const surface::const_mapped_subresource& _Source
-	, bool _DeviceSupportsDeferredContexts)
-{
-	D3D11_USAGE Usage = D3D11_USAGE_DEFAULT;
-	gpu::texture1_info info = get_texture_info1(_pDstResource, false, &Usage);
-
-	//D3D11_BOX DstBox;
-	const D3D11_BOX* pLocalDstBox = _pDstBox;
-	const void* pAdjustedSrcData = _Source.data;
-
-#if 0 // need a way to test this
-	if (_pDstBox && !_DeviceSupportsDeferredContexts)
-	{
-		DstBox = *_pDstBox;
-		pLocalDstBox = &DstBox;
-
-		if (surface::is_block_compressed(info.format))
-		{
-			DstBox.left /= 4;
-			DstBox.right /= 4;
-			DstBox.top /= 4;
-			DstBox.bottom /= 4;
-		}
-
-		pAdjustedSrcData = ((const unsigned char*)_Source.data) - (DstBox.front * _Source.depth_pitch) - (DstBox.top * _Source.row_pitch) - (DstBox.left * surface::element_size(info.format));
-	}
-#endif
-
-	switch (Usage)
-	{
-		case D3D11_USAGE_DEFAULT:
-			_pDeviceContext->UpdateSubresource(_pDstResource, _DstSubresource, _pDstBox, pAdjustedSrcData, _Source.row_pitch, _Source.depth_pitch);
-			break;
-		case D3D11_USAGE_STAGING:
-		case D3D11_USAGE_DYNAMIC:
-		{
-			D3D11_RESOURCE_DIMENSION type;
-			_pDstResource->GetType(&type);
-
-			int2 ByteDimensions;
-			if (type == D3D11_RESOURCE_DIMENSION_BUFFER)
-				ByteDimensions = info.dimensions.xy();
-			else
-				ByteDimensions = surface::byte_dimensions(info.format, info.dimensions);
-
-			D3D11_MAPPED_SUBRESOURCE msr;
-			_pDeviceContext->Map(_pDstResource, _DstSubresource, D3D11_MAP_WRITE_DISCARD, 0, &msr);
-			memcpy2d(msr.pData, msr.RowPitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y);
-			_pDeviceContext->Unmap(_pDstResource, _DstSubresource);
-			break;
-		}
-		oNODEFAULT;
-	}
-}
-
 void set_constant_buffers(ID3D11DeviceContext* _pDeviceContext
 	, unsigned int _StartSlot
 	, unsigned int _NumBuffers
@@ -417,6 +358,7 @@ void set_samplers(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->CSSetSamplers(_StartSlot, _NumSamplers, ppSamplers);
 }
 
+#if 0
 void set_srvs(ID3D11DeviceContext* _pDeviceContext
 	, unsigned int _StartSlot
 	, unsigned int _NumShaderResourceViews
@@ -450,6 +392,7 @@ void set_srvs(ID3D11DeviceContext* _pDeviceContext
 	_pDeviceContext->PSSetShaderResources(_StartSlot, _NumShaderResourceViews, ppViews);
 	_pDeviceContext->CSSetShaderResources(_StartSlot, _NumShaderResourceViews, ppViews);
 }
+#endif
 
 aaboxf from_viewport(const D3D11_VIEWPORT& _Viewport)
 {

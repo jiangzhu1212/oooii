@@ -305,7 +305,7 @@ const char* shader_profile(D3D_FEATURE_LEVEL level, const stage::value& stage)
 		oNODEFAULT;
 	}
 
-	const char* profile = profiles[log2i(stage)];
+	const char* profile = profiles[stage];
 	if (!profile)
 	{
 		version ver = version((level>>12) & 0xffff, (level>>8) & 0xffff);

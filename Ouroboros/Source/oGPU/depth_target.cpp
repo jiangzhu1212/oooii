@@ -36,78 +36,48 @@ DeviceContext* get_dc(command_list* cl);
 
 void depth_target::initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling)
 {
+	internal_initialize(name, get_device(dev), format, width, height, array_size, mips, supersampling);
+}
+
+void depth_target::internal_initialize(const char* name, void* dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling)
+{
 	deinitialize();
 	oCHECK_ARG(surface::is_depth(format), "format %s is not a depth format", as_string(format));
 	
-	Device* D3DDevice = get_device(dev);
+	Device* D3DDevice = (Device*)dev;
+
+	intrusive_ptr<Texture2D> t = make_texture_2d(name, D3DDevice, format, width, height, array_size, D3D11_BIND_DEPTH_STENCIL, mips);
 
 	DXGI_FORMAT tf, df, sf;
 	dxgi::get_compatible_formats(dxgi::from_surface_format(format), &tf, &df, &sf);
 
-	CD3D11_TEXTURE2D_DESC d(tf
-		, width
-		, height
-		, array_size
-		, mips ? 0 : 1
-		, D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_DEPTH_STENCIL
-		, D3D11_USAGE_DEFAULT
-		, 0
-		, 1
-		, 0
-		, D3D11_RESOURCE_MISC_GENERATE_MIPS);
-
-	intrusive_ptr<Texture2D> t;
-	oV(D3DDevice->CreateTexture2D(&d, nullptr, &t));
-	debug_name(t, name);
-
 	ro = make_srv(t, sf, array_size);
 
+	if (array_size)
 	{
-		D3D11_DEPTH_STENCIL_VIEW_DESC dd;
-		dd.Format = df;
-
-		if (array_size)
-		{
-			dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
-			dd.Texture2DArray.MipSlice = 0;
-			dd.Texture2DArray.ArraySize = 1;
-		
-			rws.resize(array_size);
-			for (uint i = 0; i < array_size; i++)
-			{
-				dd.Texture2DArray.FirstArraySlice = i;
-				oV(D3DDevice->CreateDepthStencilView(t, &dd, (DepthStencilView**)&rws[i]));
-				debug_name((DepthStencilView*)rws[i], name);
-			}
-		}
+		rws.resize(array_size);
+		for (uint i = 0; i < array_size; i++)
+			rws[i] = make_dsv(t, i);
+	}
 	
-		else
-		{
-			dd.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-			dd.Texture2D.MipSlice = 0;
-			rws.resize(1);
-			oV(D3DDevice->CreateDepthStencilView(t, &dd, (DepthStencilView**)&rws[0]));
-			debug_name((DepthStencilView*)rws[0], name);
-		}
+	else
+	{
+		rws.resize(1);
+		rws[0] = make_dsv(t);
 	}
 }
 
 void depth_target::deinitialize()
 {
-	if (ro)
-		((View*)ro)->Release();
-	ro = nullptr;
+	oSAFE_RELEASEV(ro);
 	
 	for (auto rw : rws)
-		((View*)rw)->Release();
-	
+	{
+		oSAFE_RELEASEV(rw);
+	}
+
 	rws.clear();
 	rws.shrink_to_fit();
-}
-
-char* depth_target::name(char* dst, size_t dst_size) const
-{
-	return ro ? debug_name(dst, dst_size, (View*)ro) : "uninitialized";
 }
 
 surface::format depth_target::format() const
@@ -137,8 +107,24 @@ uint depth_target::array_size() const
 	return d.ArraySize;
 }
 
-void depth_target::set(command_list* cl, uint index)
+void depth_target::resize(const uint2& dimensions)
 {
+	ShaderResourceView* srv = (ShaderResourceView*)ro;
+
+	intrusive_ptr<Resource> r;
+	srv->GetResource(&r);
+	D3D_TEXTURE_DESC desc = get_texture_desc(r);
+	intrusive_ptr<Device> D3DDevice;
+	r->GetDevice(&D3DDevice);
+
+	mstring n;
+	debug_name(n, r);
+	internal_initialize(n, D3DDevice, dxgi::to_surface_format(desc.Format), dimensions.x, dimensions.y, is_array(srv) ? desc.ArraySize : 0, desc.Mips, 0);
+}
+
+void depth_target::set(command_list* cl, uint index, const viewport& vp)
+{
+	set_viewports(cl, dimensions(), &vp, 1);
 	get_dc(cl)->OMSetRenderTargets(0, nullptr, (DepthStencilView*)get_target(index));
 }
 

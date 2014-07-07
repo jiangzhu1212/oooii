@@ -45,7 +45,7 @@ void color_target::initialize(const char* name, device* dev, surface::format for
 	Device* D3DDevice = get_device(dev);
 	DXGI_FORMAT fmt = dxgi::from_surface_format(format);
 
-	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size, mips, false, true);
+	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size, D3D11_BIND_RENDER_TARGET, mips, false);
 	ro = make_srv(t, format, array_size);
 
 	{
@@ -80,10 +80,12 @@ void color_target::initialize(const char* name, device* dev, surface::format for
 
 void color_target::deinitialize()
 {
-	resource::deinitialize();
+	oSAFE_RELEASEV(ro);
 
-	for (void* rw : rws)
-		((View*)rw)->Release();
+	for (auto rw : rws)
+	{
+		oSAFE_RELEASEV(rw);
+	}
 
 	rws.clear();
 	rws.shrink_to_fit();
@@ -107,24 +109,29 @@ uint color_target::array_size() const
 	return d.ArraySize;
 }
 
-void color_target::set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, depth_target* depth)
+void color_target::set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, depth_target* depth, const viewport& vp)
 {
+	set_viewports(cl, colors[0]->dimensions(), &vp, 1);
+
 	RenderTargetView* rtvs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 	for (uint i = 0; i < oCOUNTOF(rtvs); i++)
 		rtvs[i] = (RenderTargetView*)colors[i]->get_target();
 	get_dc(cl)->OMSetRenderTargets(num_colors, num_colors ? rtvs : nullptr, depth ? (DepthStencilView*)depth->get_target() : nullptr);
 }
 
-void color_target::set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, const uint* indices, depth_target* depth, uint depth_index)
+void color_target::set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, const uint* color_indices, depth_target* depth, uint depth_index, const viewport& vp)
 {
+	set_viewports(cl, colors[0]->dimensions(), &vp, 1);
+	
 	RenderTargetView* rtvs[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
 	for (uint i = 0; i < oCOUNTOF(rtvs); i++)
-		rtvs[i] = (RenderTargetView*)colors[i]->get_target(indices[i]);
+		rtvs[i] = (RenderTargetView*)colors[i]->get_target(color_indices[i]);
 	get_dc(cl)->OMSetRenderTargets(num_colors, num_colors ? rtvs : nullptr, depth ? (DepthStencilView*)depth->get_target(depth_index) : nullptr);
 }
 
-void color_target::set_draw_target(command_list* cl, uint index, depth_target* depth, uint depth_index)
+void color_target::set_draw_target(command_list* cl, uint index, depth_target* depth, uint depth_index, const viewport& vp)
 {
+	set_viewports(cl, dimensions(), &vp, 1);
 	get_dc(cl)->OMSetRenderTargets(1, (RenderTargetView* const*)&rws[index], depth ? (DepthStencilView*)depth->get_target(depth_index) : nullptr);
 }
 

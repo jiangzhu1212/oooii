@@ -24,7 +24,6 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
-#include <oGPU/oGPUUtil.h>
 #include <oGPU/constant_buffer.h>
 
 #include <oBasis/oMath.h>

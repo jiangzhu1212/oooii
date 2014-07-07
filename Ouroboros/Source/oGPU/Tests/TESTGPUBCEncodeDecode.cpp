@@ -31,7 +31,7 @@ using namespace ouro::gpu;
 
 namespace ouro {
 	namespace tests {
-
+#if 0
 static void load_original_and_save_converted(test_services& _Services, device* _pDevice, surface::format _TargetFormat, const char* _OriginalPath, const path& _ConvertedPath)
 {
 	scoped_allocation OriginalFile = _Services.load_buffer(_OriginalPath);
@@ -67,16 +67,14 @@ static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test
 	i.format = surface::unknown;
 	i.type = texture_type::readback_2d;
 
+#if 0
+
 	std::shared_ptr<texture1> ConvertedFileAsTexture;
 	std::shared_ptr<texture1> BGRATexture;
-#if 0
+
 	oTESTB(oGPUTextureLoad(_pDevice, i, "Converted Texture", ConvertedFile->GetData(), ConvertedFile->GetSize(), &ConvertedFileAsTexture), "Failed to parse %s", ConvertedFile->GetName());
 
 	oTESTB(oGPUSurfaceConvert(ConvertedFileAsTexture, surface::b8g8r8a8_unorm, &BGRATexture), "Failed to convert %s to BGRA", ConvertedFile->GetName());
-#else
-	if (1)
-		oTHROW(permission_denied, "oGPUTextureLoad needs a new impl");
-#endif
 
 	i = BGRATexture->get_info();
 
@@ -91,6 +89,10 @@ static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test
 	_pDevice->unmap_read(BGRATexture, 0);
 
 	return ConvertedImage;
+#else
+	if (1)
+		oTHROW(permission_denied, "oGPUTextureLoad needs a new impl");
+#endif
 }
 
 static void convert_and_test(test_services& _Services, device* _pDevice, surface::format _TargetFormat, const char* _FilenameSuffix, uint _NthTest)
@@ -115,9 +117,11 @@ static void convert_and_test(test_services& _Services, device* _pDevice, surface
 	else
 		_Services.check(ConvertedImage, _NthTest);
 }
-
+#endif
 void TESTbccodec(test_services& _Services)
 {
+	oTHROW_INVARG("borked until I refactor more of oGPU");
+#if 0
 	std::shared_ptr<device> Device;
 	{
 		device_init i("TESTBCEncDec Temp Device");
@@ -141,6 +145,7 @@ void TESTbccodec(test_services& _Services)
 	convert_and_test(_Services, Device.get(), surface::bc7_unorm, "_BC7", 0);
 	convert_and_test(_Services, Device.get(), surface::bc6h_sf16, "_BC6HS", 1);
 	convert_and_test(_Services, Device.get(), surface::bc6h_uf16, "_BC6HU", 2);
+#endif
 }
 
 	} // namespace tests

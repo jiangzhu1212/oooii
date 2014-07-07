@@ -39,10 +39,9 @@ public:
 	~texturecube() { deinitialize(); }
 	void initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size_in_num_cubes, bool mips);
 	void initialize(const char* name, device* dev, const surface::buffer& src, bool mips);
+	void deinitialize();
 	uint2 dimensions() const;
 	uint array_size() const;
-	void update(command_list* cl, uint subresource, const surface::const_mapped_subresource& src, const surface::box& region = surface::box());
-	void update(command_list* cl, uint subresource, const surface::mapped_subresource& src, const surface::box& region = surface::box()) { update(cl, subresource, (const surface::const_mapped_subresource&)src, region); }
 };
 	
 }}

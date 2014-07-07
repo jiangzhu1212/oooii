@@ -48,16 +48,17 @@ public:
 
 	uint2 dimensions() const;
 	uint array_size() const;
+	void* get_target(uint index = 0) const { return rws[index]; }
+	
+	// todo: add viewport
 
-	static void set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, depth_target* depth);
-	static void set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, const uint* indices, depth_target* depth, uint depth_index);
+	static void set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, depth_target* depth, const viewport& vp = viewport());
+	static void set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, const uint* color_indices, depth_target* depth, uint depth_index, const viewport& vp = viewport());
 
-	void set_draw_target(command_list* cl, uint index = 0, depth_target* depth = nullptr, uint depth_index = 0);
+	void set_draw_target(command_list* cl, uint index = 0, depth_target* depth = nullptr, uint depth_index = 0, const viewport& vp = viewport());
 
 	void clear(command_list* cl, const color& c, uint index = 0);
 	void generate_mips(command_list* cl);
-	
-	void* get_target(uint index = 0) const { return rws[index]; }
 
 private:
 	std::vector<void*> rws;

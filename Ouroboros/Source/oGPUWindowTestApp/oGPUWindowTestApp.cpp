@@ -40,7 +40,8 @@
 #include <oGfx/oGfxShaders.h>
 
 #include <oGPU/oGPU.h>
-#include <oGPU/oGPUUtil.h>
+#include <oGPU/primary_target.h>
+#include <oGPU/depth_target.h>
 #include <oGPU/oGPUUtilMesh.h>
 
 #include <oBase/concurrent_registry.h>
@@ -50,6 +51,11 @@ using namespace windows::gdi;
 
 static concurrent_registry make_pixel_shader_registry(gpu::device* _pDevice)
 {
+	// NOTE: this was ported from a c-style create-native-handle manager where everything was 
+	// sizeof(void*) to a class-based wrapper API where there are classes that are mostly sizeof(void*),
+	// but can't be crammed into the current concurrent_registry API. For the initial port, just alloc
+	// sizeof(void*) and worry about the memory implications later.
+
 	static unsigned int kCapacity = 30;
 
 	scoped_allocation missing((void*)gfx::byte_code(gfx::pixel_shader::yellow), 1, noop_deallocate);
@@ -62,8 +68,18 @@ static concurrent_registry make_pixel_shader_registry(gpu::device* _pDevice)
 	source.compiled_making = std::move(making);
 
 	concurrent_registry::lifetime_t lifetime;
-	lifetime.create = [=](scoped_allocation& _Compiled, const char* _Name)->void* { return (void*)gpu::make_pixel_shader(_pDevice, _Compiled, _Name); };
-	lifetime.destroy = [=](void* _pEntry) { gpu::unmake_shader((gpu::shader*)_pEntry); };
+	lifetime.create = [=](scoped_allocation& _Compiled, const char* _Name)->void*
+	{
+		gpu::pixel_shader* ps = new gpu::pixel_shader();
+		ps->initialize(_Name, _pDevice, _Compiled);
+		return ps;
+	};
+
+	lifetime.destroy = [=](void* _pEntry)
+	{
+		gpu::pixel_shader* ps = (gpu::pixel_shader*)_pEntry;
+		delete ps;
+	};
 
 	concurrent_registry PixelShaders(kCapacity, lifetime, source);
 
@@ -242,7 +258,11 @@ public:
 	void Stop();
 
 	gpu::device* GetDevice() { return Device.get(); }
-	gpu::render_target* GetRenderTarget() { return WindowRenderTarget.get(); }
+	void SetClearColor(const color& c) { ClearColor = c; }
+	color GetClearColor() const { return ClearColor; }
+
+	bool IsFullscreenExclusive() const { return WindowColorTarget.is_fullscreen_exclusive(); }
+	void SetFullscreenExclusive(bool fullscreen) { return WindowColorTarget.set_fullscreen_exclusive(fullscreen); }
 
 private:
 	void OnEvent(const window::basic_event& _Event);
@@ -253,7 +273,8 @@ private:
 	std::shared_ptr<window> Parent;
 	std::shared_ptr<gpu::device> Device;
 	std::shared_ptr<gpu::command_list> CommandList;
-	std::shared_ptr<gpu::render_target> WindowRenderTarget;
+	gpu::primary_target WindowColorTarget;
+	gpu::depth_target WindowDepthTarget;
 	std::shared_ptr<gpu::pipeline1> Pipeline;
 	gpu::util_mesh Mesh;
 
@@ -262,6 +283,7 @@ private:
 
 	window* pGPUWindow;
 	std::thread Thread;
+	color ClearColor;
 	bool Running;
 
 	std::function<void()> OnThreadExit;
@@ -271,6 +293,7 @@ private:
 oGPUWindowThread::oGPUWindowThread()
 	: pGPUWindow(nullptr)
 	, Running(true)
+	, ClearColor(black)
 {
 	gpu::device_init di;
 	di.driver_debug_level = gpu::debug_level::normal;
@@ -333,8 +356,11 @@ void oGPUWindowThread::OnEvent(const window::basic_event& _Event)
 	{
 		case event_type::sized:
 		{
-			if (WindowRenderTarget)
-				WindowRenderTarget->resize(int3(_Event.as_shape().shape.client_size, 1));
+			if (WindowColorTarget)
+			{
+				WindowColorTarget.resize(_Event.as_shape().shape.client_size);
+				WindowDepthTarget.resize(_Event.as_shape().shape.client_size);
+			}
 			break;
 		}
 
@@ -370,7 +396,9 @@ void oGPUWindowThread::Run()
 			i.alt_f4_closes = true;
 			GPUWindow = window::make(i);
 			GPUWindow->set_hotkeys(HotKeys);
-			WindowRenderTarget = Device->make_primary_render_target(GPUWindow, surface::d24_unorm_s8_uint, true);
+			WindowColorTarget.initialize(GPUWindow.get(), Device.get(), true);
+			uint2 dimensions = WindowColorTarget.dimensions();
+			WindowDepthTarget.initialize("primary depth", Device.get(), surface::d24_unorm_s8_uint, dimensions.x, dimensions.y, 0, false, 0);
 			GPUWindow->parent(Parent);
 			GPUWindow->show(); // now that the window is a child, show it (it will only show when parent shows)
 			pGPUWindow = GPUWindow.get();
@@ -390,7 +418,8 @@ void oGPUWindowThread::Run()
 			msgbox(msg_type::info, nullptr, "oGPUWindowTestApp", "ERROR\n%s", e.what());
 		}
 
-		WindowRenderTarget = nullptr;
+		WindowColorTarget.deinitialize();
+		WindowDepthTarget.deinitialize();
 		pGPUWindow = nullptr;
 	}
 	if (OnThreadExit)
@@ -400,11 +429,11 @@ void oGPUWindowThread::Run()
 
 void oGPUWindowThread::Render()
 {
-	if (WindowRenderTarget && Device->begin_frame())
+	if (WindowColorTarget && Device->begin_frame())
 	{
 		CommandList->begin();
-		CommandList->set_render_target(WindowRenderTarget);
-		CommandList->clear(WindowRenderTarget, gpu::clear_type::color_depth_stencil);
+		WindowColorTarget.clear(CommandList.get(), ClearColor);
+		WindowColorTarget.set_draw_target(CommandList.get(), WindowDepthTarget);
 		CommandList->set_blend_state(gpu::blend_state::opaque);
 		CommandList->set_depth_stencil_state(gpu::depth_stencil_state::none);
 		CommandList->set_rasterizer_state(gpu::rasterizer_state::front_face);
@@ -413,7 +442,7 @@ void oGPUWindowThread::Render()
 		Mesh.draw(CommandList.get());
 		CommandList->end();
 		Device->end_frame();
-		Device->present(1);
+		WindowColorTarget.present();
 	}
 }
 
@@ -482,7 +511,7 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 	// Now set up separate child thread for rendering. This allows UI to be 
 	// detached from potentially slow rendering.
 	pGPUWindow = GPUWindow.Start(AppWindow, std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1), [&] { Running = false; });
-	GPUWindow.GetRenderTarget()->set_clear_color(ClearToggle.Color[0]);
+	GPUWindow.SetClearColor(ClearToggle.Color[0]);
 	AppWindow->show();
 }
 
@@ -624,14 +653,8 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 		case event_type::timer:
 			if (_Event.as_timer().context == (uintptr_t)&ClearToggle)
 			{
-				gpu::render_target* pRT = GPUWindow.GetRenderTarget();
-				if (pRT)
-				{
-					gpu::render_target_info RTI = pRT->get_info();
-					if (RTI.clear_color[0] == ClearToggle.Color[0]) RTI.clear_color[0] = ClearToggle.Color[1];
-					else RTI.clear_color[0] = ClearToggle.Color[0];
-					pRT->set_clear_color(RTI.clear_color[0]);
-				}
+				if (GPUWindow.GetClearColor() == ClearToggle.Color[0]) GPUWindow.SetClearColor(ClearToggle.Color[1]);
+				else GPUWindow.SetClearColor(ClearToggle.Color[0]);
 			}
 
 			else
@@ -732,8 +755,8 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 						const bool checked = oGUIMenuIsChecked(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE);
 						if (checked)
 						{
-							const bool GoFullscreen = !GPUWindow.GetDevice()->is_fullscreen_exclusive();
-							try { GPUWindow.GetDevice()->set_fullscreen_exclusive(GoFullscreen); }
+							const bool GoFullscreen = !GPUWindow.IsFullscreenExclusive();
+							try { GPUWindow.SetFullscreenExclusive(GoFullscreen); }
 							catch (std::exception& e) { oTRACEA("SetFullscreenExclusive(%s) failed: %s", GoFullscreen ? "true" : "false", e.what()); }
 							AllowUIModeChange = !GoFullscreen;
 						}

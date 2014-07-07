@@ -26,7 +26,6 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/depth_target.h>
 #include <oGPU/color_target.h>
-#include <oGPU/oGPUUtil.h>
 
 #include <oBasis/oMath.h>
 

@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oD3D11CommandList.h"
 #include "oD3D11Pipeline.h"
-#include "oD3D11Texture.h"
 #include "oD3D11Query.h"
 #include "dxgi_util.h"
 #include "d3d_types.h"
@@ -40,31 +39,6 @@ d3d::ComputeShader* get_noop_cs(command_list* _pCommandList) { return ((d3d11::d
 } // namespace ouro
 
 oGPU_NAMESPACE_BEGIN
-
-ID3D11Resource* get_subresource(resource1* _pResource, int _Subresource, uint* _pD3DSubresourceIndex)
-{
-	*_pD3DSubresourceIndex = _Subresource;
-	switch (_pResource->type())
-	{
-		case resource_type::texture1: return static_cast<d3d11_texture1*>(_pResource)->pResource;
-		oNODEFAULT;
-	}
-}
-
-static ID3D11ShaderResourceView* get_srv(const resource1* _pResource, int _Miplevel, int _ArrayIndex, int _SRVIndex)
-{
-	switch (_pResource->type())
-	{
-		case resource_type::texture1:
-		{
-			d3d11_texture1* t = (d3d11_texture1*)_pResource;
-			d3d11_texture1* t2 = (d3d11_texture1*)t->Texture2.get();
-			return _SRVIndex == 0 ? t->SRV : (t2 ? t2->SRV : nullptr);
-		}
-
-		oNODEFAULT;
-	}
-}
 
 oDEFINE_DEVICE_MAKE(command_list)
 oDEVICE_CHILD_CTOR(command_list)
@@ -152,79 +126,9 @@ void d3d11_command_list::reset()
 	Context->ClearState();
 }
 
-surface::mapped_subresource d3d11_command_list::reserve(resource1* _pResource, int _Subresource)
-{
-	return dev()->reserve(Context, _pResource, _Subresource);
-}
-
-void d3d11_command_list::commit(resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion)
-{
-	dev()->commit(Context, _pResource, _Subresource, _Source, _Subregion);
-}
-
-void d3d11_command_list::copy(buffer* _pDestination, uint _DestinationOffsetBytes, buffer* _pSource, uint _SourceOffsetBytes, uint _SizeBytes)
-{
-	uint D3DSubresourceIndex = 0;
-	ID3D11Resource* d = get_subresource(_pDestination, 0, &D3DSubresourceIndex);
-	ID3D11Resource* s = get_subresource(_pSource, 0, &D3DSubresourceIndex);
-
-	D3D11_BOX CopyBox;
-	CopyBox.left = _SourceOffsetBytes;
-	CopyBox.top = 0;
-	CopyBox.right = _SourceOffsetBytes + _SizeBytes;
-	CopyBox.bottom = 1;
-	CopyBox.front = 0;
-	CopyBox.back = 1;
-
-	Context->CopySubresourceRegion(d, 0, _DestinationOffsetBytes, 0, 0, s, 0, &CopyBox);
-}
-
-void d3d11_command_list::copy(resource1* _pDestination, resource1* _pSource)
-{
-	oCHECK(_pDestination && _pSource && _pDestination->type() == _pSource->type(), "Copy(%s, %s) can only occur between two same-typed objects", _pDestination ? as_string(_pDestination->type()) : "(null)", _pSource ? as_string(_pSource->type()) : "(null)");
-	uint D3DSubresourceIndex = 0;
-	ID3D11Resource* d = get_subresource(_pDestination, 0, &D3DSubresourceIndex);
-	ID3D11Resource* s = get_subresource(_pSource, 0, &D3DSubresourceIndex);
-	Context->CopyResource(d, s);
-}
-
 void d3d11_command_list::set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState)
 {
 	dev()->SamplerStates.set(this, _StartSlot, _NumStates, _pSamplerState);
-}
-
-void d3d11_command_list::set_shader_resources(uint _StartSlot, uint _NumResources, const resource1* const* _ppResources)
-{
-	const ID3D11ShaderResourceView* SRVs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
-	uint InternalNumResources = _NumResources;
-	bool SetSecondaries = false;
-
-	if (!_NumResources || !_ppResources)
-	{
-		memset(SRVs, 0, sizeof(ID3D11ShaderResourceView*) * D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT);
-		InternalNumResources = D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT;
-	}
-	else
-	{
-		oCHECK(oCOUNTOF(SRVs) >= _NumResources, "Too many resources specified");
-		for (uint i = 0; i < _NumResources; i++)
-			SRVs[i] = _ppResources[i] ? get_srv(_ppResources[i], 0, 0, 0) : nullptr;
-
-		SetSecondaries = true;
-	}
-
-	set_srvs(Context, _StartSlot, InternalNumResources, SRVs);
-
-	// Primarily for YUV emulation: bind a secondary buffer (i.e. AY is in the
-	// primary, UV is in the secondary) backing from the end of the resource
-	// array.
-	if (SetSecondaries)
-	{
-		for (uint i = 0, j = _NumResources-1; i < _NumResources; i++, j--)
-			SRVs[j] = _ppResources[i] ? get_srv(_ppResources[i], 0, 0, 1) : nullptr;
-
-		set_srvs(Context, D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT - _NumResources - _StartSlot, _NumResources, SRVs);
-	}
 }
 
 #if 0
