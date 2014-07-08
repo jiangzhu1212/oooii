@@ -40,20 +40,20 @@ namespace ouro { namespace gpu { namespace d3d {
 	} \
 } while (false)
 
-Texture1D* make_texture_1d(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips)
+intrusive_ptr<Texture1D> make_texture_1d(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips)
 {
 	CD3D11_TEXTURE1D_DESC d(dxgi::from_surface_format(format)
 		, width
 		, __max(1, array_size)
 		, mips ? 0 : 1);
 
-	Texture1D* t = nullptr;
+	intrusive_ptr<Texture1D> t;
 	oV(dev->CreateTexture1D(&d, nullptr, &t));
 	debug_name(t, name);
 	return t;
 }
 
-Texture2D* make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, uint bind_flags, bool mips, bool cube)
+intrusive_ptr<Texture2D> make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, uint bind_flags, bool mips, bool cube)
 {
 	DXGI_FORMAT tf, df, sf;
 	dxgi::get_compatible_formats(dxgi::from_surface_format(format), &tf, &df, &sf);
@@ -69,13 +69,13 @@ Texture2D* make_texture_2d(const char* name, Device* dev, surface::format format
 		, 0
 		, ((bind_flags & (D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL)) && mips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0) | (cube ? D3D11_RESOURCE_MISC_TEXTURECUBE : 0));
 
-	Texture2D* t = nullptr;
+	intrusive_ptr<Texture2D> t;
 	oV(dev->CreateTexture2D(&d, nullptr, &t));
 	debug_name(t, name);
 	return t;
 }
 
-Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips)
+intrusive_ptr<Texture3D> make_texture_3d(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips)
 {
 	CD3D11_TEXTURE3D_DESC d(dxgi::from_surface_format(format)
 		, width
@@ -83,10 +83,27 @@ Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format
 		, depth
 		, mips ? 0 : 1);
 
-	Texture3D* t = nullptr;
+	intrusive_ptr<Texture3D> t;
 	oV(dev->CreateTexture3D(&d, nullptr, &t));
 	debug_name(t, name);
 	return t;
+}
+
+template<typename DescT> static void get_resource_descT(D3D_TEXTURE_DESC* dst, const DescT& src)
+{
+	dst->Usage = src.Usage;
+	dst->BindFlags = src.BindFlags;
+	dst->CPUAccessFlags = src.CPUAccessFlags;
+	dst->MiscFlags = src.MiscFlags;
+}
+
+template<typename DescT> static void get_texture_descT(D3D_TEXTURE_DESC* dst, const DescT& src)
+{
+	get_resource_descT(dst, src);
+	dst->Format = src.Format;
+	dst->SampleDesc.Quality = 0;
+	dst->SampleDesc.Count = 1;
+	dst->Mips = src.MipLevels != 1;
 }
 
 D3D_TEXTURE_DESC get_texture_desc(Resource* r)
@@ -103,11 +120,7 @@ D3D_TEXTURE_DESC get_texture_desc(Resource* r)
 			d.Height = 1;
 			d.Depth = 1;
 			d.ArraySize = desc.ArraySize;
-			d.Format = desc.Format;
-			d.Usage = desc.Usage;
-			d.Mips = desc.MipLevels != 1;
-			d.SampleDesc.Quality = 0;
-			d.SampleDesc.Count = 0;
+			get_texture_descT(&d, desc);
 			break;
 		}
 
@@ -119,11 +132,7 @@ D3D_TEXTURE_DESC get_texture_desc(Resource* r)
 			d.Height = desc.Height;
 			d.Depth = 1;
 			d.ArraySize = desc.ArraySize;
-			d.Format = desc.Format;
-			d.Usage = desc.Usage;
-			d.Mips = desc.MipLevels != 1;
-			d.SampleDesc.Quality = desc.SampleDesc.Quality;
-			d.SampleDesc.Count = desc.SampleDesc.Count;
+			get_texture_descT(&d, desc);
 			break;
 		}
 
@@ -135,11 +144,7 @@ D3D_TEXTURE_DESC get_texture_desc(Resource* r)
 			d.Height = desc.Height;
 			d.Depth = 1;
 			d.ArraySize = 0;
-			d.Format = desc.Format;
-			d.Usage = desc.Usage;
-			d.Mips = desc.MipLevels != 1;
-			d.SampleDesc.Quality = 0;
-			d.SampleDesc.Count = 0;
+			get_texture_descT(&d, desc);
 			break;
 		}
 
@@ -152,9 +157,10 @@ D3D_TEXTURE_DESC get_texture_desc(Resource* r)
 			d.Depth = 0;
 			d.ArraySize = desc.ByteWidth / __max(1, desc.StructureByteStride);
 			d.Format = DXGI_FORMAT_UNKNOWN;
-			d.Usage = desc.Usage;
 			d.SampleDesc.Quality = 0;
-			d.SampleDesc.Count = 0;
+			d.SampleDesc.Count = 1;
+			d.Mips = false;
+			get_resource_descT(&d, desc);
 			break;
 		};
 
@@ -164,7 +170,33 @@ D3D_TEXTURE_DESC get_texture_desc(Resource* r)
 	return d;
 }
 
-ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size)
+void trace_texture_desc(const D3D_TEXTURE_DESC& d, const char* prefix)
+{
+	#define oTRACE_BOOL_S(struct_, x) oTRACE("%s" #x "=%s", oSAFESTR(prefix), struct_.x ? "true" : "false" )
+	#define oTRACE_UINT_S(struct_, x) oTRACE("%s" #x "=%u", oSAFESTR(prefix), struct_.x)
+	#define oTRACE_ENUM_S(struct_, x) oTRACE("%s" #x "=%s", oSAFESTR(prefix), as_string(struct_.x))
+	#define oTRACE_FLAGS_S(struct_, _flag_enum_type, _flags_var, _all_zero_string) do { char buf[512]; strbitmask(buf, struct_._flags_var, _all_zero_string, as_string<_flag_enum_type>); oTRACE("%s" #_flags_var "=%s", oSAFESTR(prefix), buf); } while(false)
+
+	oTRACE_ENUM_S(d, Type);
+	oTRACE_UINT_S(d, Width);
+	oTRACE_UINT_S(d, Height);
+	oTRACE_UINT_S(d, Depth);
+	oTRACE_UINT_S(d, ArraySize);
+	oTRACE_BOOL_S(d, Mips);
+	oTRACE_ENUM_S(d, Format);
+	oTRACE_UINT_S(d, SampleDesc.Count);
+	oTRACE_UINT_S(d, SampleDesc.Quality);
+	oTRACE_ENUM_S(d, Usage);
+	oTRACE_FLAGS_S(d, D3D11_BIND_FLAG, BindFlags, "(none)");
+	oTRACE_FLAGS_S(d, D3D11_CPU_ACCESS_FLAG, CPUAccessFlags, "(none)");
+	oTRACE_FLAGS_S(d, D3D11_RESOURCE_MISC_FLAG, MiscFlags, "(none)");
+
+	#undef oTRACE_FLAGS_S
+	#undef oTRACE_ENUM_S
+	#undef oTRACE_UINT_S
+}
+
+intrusive_ptr<ShaderResourceView> make_srv(Resource* r, DXGI_FORMAT format, uint array_size)
 {
 	D3D_TEXTURE_DESC desc = get_texture_desc(r);
 
@@ -208,7 +240,7 @@ ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size)
 	intrusive_ptr<Device> dev;
 	r->GetDevice(&dev);
 
-	ShaderResourceView* srv = nullptr;
+	intrusive_ptr<ShaderResourceView> srv;
 	oV(dev->CreateShaderResourceView(r, &d, &srv));
 
 	mstring name;
@@ -216,7 +248,7 @@ ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size)
 	return srv;
 }
 
-ShaderResourceView* make_srv(Resource* r, surface::format format, uint array_size)
+intrusive_ptr<ShaderResourceView> make_srv(Resource* r, surface::format format, uint array_size)
 {
 	return make_srv(r, dxgi::from_surface_format(format), array_size);
 }
@@ -234,7 +266,7 @@ static View* make_draw_target(Resource* r, bool is_depth, uint array_slice)
 	DXGI_FORMAT TF, DF, SRVF;
 	dxgi::get_compatible_formats(desc.Format, &TF, &DF, &SRVF);
 
-	View* v;
+	View* v = nullptr;
 	if (is_depth)
 	{
 		oCHECK_ARG(desc.Type == D3D11_RESOURCE_DIMENSION_TEXTURE2D, "unsupported resource dimension (%s)", as_string(desc.type));
@@ -279,14 +311,14 @@ static View* make_draw_target(Resource* r, bool is_depth, uint array_slice)
 	return v;
 }
 
-RenderTargetView* make_rtv(Resource* r, uint array_slice)
+intrusive_ptr<RenderTargetView> make_rtv(Resource* r, uint array_slice)
 {
-	return (RenderTargetView*)make_draw_target(r, false, array_slice);
+	return intrusive_ptr<RenderTargetView>((RenderTargetView*)make_draw_target(r, false, array_slice), false);
 }
 
-DepthStencilView* make_dsv(Resource* r, uint array_slice)
+intrusive_ptr<DepthStencilView> make_dsv(Resource* r, uint array_slice)
 {
-	return (DepthStencilView*)make_draw_target(r, true, array_slice);
+	return intrusive_ptr<DepthStencilView>((DepthStencilView*)make_draw_target(r, true, array_slice), false);
 }
 
 bool is_array(ShaderResourceView* v)
@@ -391,7 +423,7 @@ void set_samplers(DeviceContext* dc, uint slot, uint num_samplers, const Sampler
 	if (gpu_stage_flags & stage_flag::compute)dc->CSSetSamplers(slot, num_samplers, s);
 }
 
-Buffer* make_buffer(const char* name, Device* dev, uint element_stride, uint num_elements, D3D11_USAGE usage, uint bind_flags, uint misc_flags, const void* init_data)
+intrusive_ptr<Buffer> make_buffer(const char* name, Device* dev, uint element_stride, uint num_elements, D3D11_USAGE usage, uint bind_flags, uint misc_flags, const void* init_data)
 {
 	D3D11_BUFFER_DESC d = {0};
 	d.ByteWidth = num_elements * element_stride;
@@ -406,7 +438,7 @@ Buffer* make_buffer(const char* name, Device* dev, uint element_stride, uint num
 	data.SysMemPitch = d.ByteWidth;
 	data.SysMemSlicePitch = d.ByteWidth;
 
-	Buffer* b = nullptr;
+	intrusive_ptr<Buffer> b;
 	oV(dev->CreateBuffer(&d, init_data ? &data : nullptr, &b));
 	debug_name(b, name);
 	return b;
@@ -445,14 +477,14 @@ static void set_staging(ResourceDescT* desc)
 	desc->MiscFlags &= D3D11_RESOURCE_MISC_TEXTURECUBE; // keep cube flag because that's the only way to differentiate between 2D and cube types
 }
 
-Resource* make_cpu_copy(Resource* src, bool do_copy)
+intrusive_ptr<Resource> make_cpu_copy(Resource* src, bool do_copy)
 {
 	intrusive_ptr<Device> dev;
 	src->GetDevice(&dev);
 	intrusive_ptr<DeviceContext> dc;
 	dev->GetImmediateContext(&dc);
 
-	Resource* CPUCopy = nullptr;
+	intrusive_ptr<Resource> CPUCopy;
 
 	D3D11_RESOURCE_DIMENSION type = D3D11_RESOURCE_DIMENSION_UNKNOWN;
 	src->GetType(&type);
@@ -635,6 +667,13 @@ uint bytecode_size(const void* bytecode)
 {
 	// Discovered empirically
 	return bytecode ? ((const uint*)bytecode)[6] : 0;
+}
+
+bool supports_deferred_contexts(Device* dev)
+{
+	D3D11_FEATURE_DATA_THREADING threadingCaps = { FALSE, FALSE };
+	oV(dev->CheckFeatureSupport(D3D11_FEATURE_THREADING, &threadingCaps, sizeof(threadingCaps)));
+	return !!threadingCaps.DriverCommandLists;
 }
 
 }}}

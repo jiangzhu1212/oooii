@@ -24,13 +24,14 @@
  **************************************************************************/
 #include "oD3D11Pipeline.h"
 #include "oD3D11Device.h"
+#include "d3d_prim.h"
 #include <oGPU/shader.h>
 
 oGPU_NAMESPACE_BEGIN
 
 oDEFINE_DEVICE_MAKE(pipeline1)
 oDEVICE_CHILD_CTOR(pipeline1)
-	, InputTopology(from_primitive_type(_Info.primitive_type))
+	, InputTopology(d3d::from_primitive_type(_Info.primitive_type))
 	, VertexElements(_Info.vertex_layout)
 	, DebugName(_Info.debug_name)
 {
@@ -74,7 +75,7 @@ pipeline1_info d3d11_pipeline1::get_info() const
 	pipeline1_info i;
 	i.debug_name = DebugName;
 	i.vertex_layout = VertexElements;
-	i.primitive_type = to_primitive_type(InputTopology);
+	i.primitive_type = d3d::to_primitive_type(InputTopology);
 	return i;
 }
 

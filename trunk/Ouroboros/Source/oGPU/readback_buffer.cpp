@@ -39,7 +39,9 @@ DeviceContext* get_dc(command_list* cl);
 void readback_buffer::initialize(const char* name, device* dev, uint element_stride, uint num_elements)
 {
 	bytes = element_stride * num_elements;
-	impl = (void*)make_buffer(name, get_device(dev), element_stride, num_elements, D3D11_USAGE_STAGING, 0, 0, nullptr);
+	auto b = make_buffer(name, get_device(dev), element_stride, num_elements, D3D11_USAGE_STAGING, 0, 0, nullptr);
+	b->AddRef();
+	impl = b;
 }
 
 void readback_buffer::internal_initialize(void* buffer_impl, bool make_immediate_copy)
@@ -49,9 +51,7 @@ void readback_buffer::internal_initialize(void* buffer_impl, bool make_immediate
 
 void readback_buffer::deinitialize()
 {
-	if (impl)
-		((Buffer*)impl)->Release();
-	impl = nullptr;
+	oSAFE_RELEASEV(impl);
 }
 
 void readback_buffer::internal_copy_from(command_list* cl, void* buffer_impl)

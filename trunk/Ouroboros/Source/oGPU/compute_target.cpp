@@ -38,21 +38,8 @@ DeviceContext* get_dc(command_list* cl);
 
 void compute_target::deinitialize()
 {
-	if (rw)
-		((View*)rw)->Release();
-	rw = nullptr;
-}
-
-char* compute_target::name(char* dst, size_t dst_size) const
-{
-	return rw ? debug_name(dst, dst_size, (View*)rw) : "uninitialized";
-}
-
-void* compute_target::get_buffer() const
-{
-	intrusive_ptr<Resource> r;
-	((View*)rw)->GetResource(&r);
-	return r;
+	oSAFE_RELEASEV(rw);
+	oSAFE_RELEASEV(ro);
 }
 
 void compute_target::cleari(command_list* cl, const uint4& clear_value)

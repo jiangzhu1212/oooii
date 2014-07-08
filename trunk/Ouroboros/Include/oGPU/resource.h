@@ -38,6 +38,7 @@ public:
 	resource() : ro(nullptr) {}
 
 	char* name(char* dst, size_t dst_size) const;
+	void* get_buffer() const;
 	inline void* get_resource() const { return ro; }
 
 	static void set(command_list* cl, uint slot, uint num_resources, resource* const* resources);

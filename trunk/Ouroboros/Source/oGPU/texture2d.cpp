@@ -39,8 +39,10 @@ void texture2d::initialize(const char* name, device* dev, surface::format format
 {
 	deinitialize();
 	oCHECK_ARG(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
-	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size, 0, mips);
-	ro = make_srv(t, format, array_size);
+	auto t = make_texture_2d(name, get_device(dev), format, width, height, array_size, 0, mips);
+	auto srv = make_srv(t, format, array_size);
+	srv->AddRef();
+	ro = srv;
 }
 
 void texture2d::initialize(const char* name, device* dev, const surface::buffer& src, bool mips)

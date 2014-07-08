@@ -38,14 +38,14 @@ void constant_buffer::initialize(const char* name, device* dev, uint struct_stri
 	deinitialize();
 	const uint num_bytes = struct_stride * num_structs;
 	oCHECK_ARG(byte_aligned(num_bytes, 16) && num_bytes <= 65535, "constant_buffer must be size-aligned to 16 and smaller than 64 kilobytes. (size %u bytes specified)", num_bytes);
-	impl = make_buffer(name, get_device(dev), struct_stride, num_structs, D3D11_USAGE_DEFAULT, D3D11_BIND_CONSTANT_BUFFER, 0, src);
+	auto b = make_buffer(name, get_device(dev), struct_stride, num_structs, D3D11_USAGE_DEFAULT, D3D11_BIND_CONSTANT_BUFFER, 0, src);
+	b->AddRef();
+	impl = b;
 }
 
 void constant_buffer::deinitialize()
 {
-	if (impl)
-		((Buffer*)impl)->Release();
-	impl = nullptr;
+	oSAFE_RELEASEV(impl);
 }
 
 char* constant_buffer::name(char* dst, size_t dst_size) const

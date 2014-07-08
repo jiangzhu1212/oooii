@@ -152,9 +152,9 @@
     <ClInclude Include="d3dx11_util.h" />
     <ClInclude Include="d3d_compile.h" />
     <ClInclude Include="d3d_debug.h" />
+    <ClInclude Include="d3d_device.h" />
     <ClInclude Include="d3d_include.h" />
     <ClInclude Include="d3d_prim.h" />
-    <ClInclude Include="d3d_resource.h" />
     <ClInclude Include="d3d_types.h" />
     <ClInclude Include="d3d_util.h" />
     <ClInclude Include="dxgi_util.h" />
@@ -174,9 +174,9 @@
     <ClCompile Include="d3dx11_util.cpp" />
     <ClCompile Include="d3d_compile.cpp" />
     <ClCompile Include="d3d_debug.cpp" />
+    <ClCompile Include="d3d_device.cpp" />
     <ClCompile Include="d3d_include.cpp" />
     <ClCompile Include="d3d_prim.cpp" />
-    <ClCompile Include="d3d_resource.cpp" />
     <ClCompile Include="d3d_util.cpp" />
     <ClCompile Include="depth_target.cpp" />
     <ClCompile Include="dxgi_util.cpp" />

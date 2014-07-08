@@ -39,16 +39,19 @@ ComputeShader* get_noop_cs(command_list* cl);
 
 void rwstructured_buffer::initialize(const char* name, device* dev, uint struct_stride, uint num_structs, const void* src)
 {
+	deinitialize();
 	make_structured(name, get_device(dev), struct_stride, num_structs, src, 0, (ShaderResourceView**)&ro, (UnorderedAccessView**)&rw);
 }
 
 void rwstructured_buffer::initialize_append(const char* name, device* dev, uint struct_stride, uint num_structs, const void* src)
 {
+	deinitialize();
 	make_structured(name, get_device(dev), struct_stride, num_structs, src, D3D11_BUFFER_UAV_FLAG_APPEND, (ShaderResourceView**)&ro, (UnorderedAccessView**)&rw);
 }
 
 void rwstructured_buffer::initialize_counter(const char* name, device* dev, uint struct_stride, uint num_structs, const void* src)
 {
+	deinitialize();
 	make_structured(name, get_device(dev), struct_stride, num_structs, src, D3D11_BUFFER_UAV_FLAG_COUNTER, (ShaderResourceView**)&ro, (UnorderedAccessView**)&rw);
 }
 

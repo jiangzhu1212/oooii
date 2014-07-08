@@ -36,7 +36,6 @@ class command_list;
 class rwstructured_buffer : public compute_target
 {
 public:
-	rwstructured_buffer() : ro(nullptr) {}
 	~rwstructured_buffer() { deinitialize(); }
 
 	void initialize(const char* name, device* dev, uint struct_stride, uint num_structs, const void* src = nullptr);
@@ -48,7 +47,6 @@ public:
 
 	uint struct_stride() const;
 	uint num_structs() const;
-	void* get_resource_for_read() const { return ro; }
 	
 	void set(command_list* cl, uint slot);
 
@@ -59,8 +57,6 @@ public:
 	void set_counter(command_list* cl, uint value);
 
 private:
-	void* ro;
-
 	void internal_copy_counter(command_list* cl, void* dst_buffer_impl, uint offset_in_uints);
 };
 	

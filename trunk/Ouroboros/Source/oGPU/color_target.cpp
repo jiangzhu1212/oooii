@@ -45,8 +45,10 @@ void color_target::initialize(const char* name, device* dev, surface::format for
 	Device* D3DDevice = get_device(dev);
 	DXGI_FORMAT fmt = dxgi::from_surface_format(format);
 
-	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size, D3D11_BIND_RENDER_TARGET, mips, false);
-	ro = make_srv(t, format, array_size);
+	auto t = make_texture_2d(name, get_device(dev), format, width, height, array_size, D3D11_BIND_RENDER_TARGET, mips, false);
+	auto srv = make_srv(t, format, array_size);
+	srv->AddRef();
+	ro = srv;
 
 	{
 		D3D11_RENDER_TARGET_VIEW_DESC d;

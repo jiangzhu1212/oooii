@@ -40,8 +40,8 @@ void raw_buffer::initialize(const char* name, device* dev, uint num_uints, const
 {
 	deinitialize();
 	Device* D3DDevice = get_device(dev);
-	intrusive_ptr<Buffer> buffer = make_buffer(name, D3DDevice, sizeof(uint), num_uints, D3D11_USAGE_DEFAULT, D3D11_BIND_UNORDERED_ACCESS, D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS|D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, src);
-	debug_name(buffer, name);
+	intrusive_ptr<Buffer> b = make_buffer(name, D3DDevice, sizeof(uint), num_uints, D3D11_USAGE_DEFAULT, D3D11_BIND_UNORDERED_ACCESS, D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS|D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, src);
+	debug_name(b, name);
 
 	D3D11_UNORDERED_ACCESS_VIEW_DESC vd;
 	vd.Format = DXGI_FORMAT_R32_TYPELESS;
@@ -50,7 +50,7 @@ void raw_buffer::initialize(const char* name, device* dev, uint num_uints, const
 	vd.Buffer.NumElements = num_uints;
 	vd.Buffer.Flags = D3D11_BUFFER_UAV_FLAG_RAW;
 
-	oV(D3DDevice->CreateUnorderedAccessView(buffer, &vd, (UnorderedAccessView**)&rw));
+	oV(D3DDevice->CreateUnorderedAccessView(b, &vd, (UnorderedAccessView**)&rw));
 	debug_name((View*)rw, name);
 }
 

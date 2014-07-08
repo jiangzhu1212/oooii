@@ -274,8 +274,6 @@ namespace buffer_type
 
 };}
 
-inline bool has_counter(const buffer_type::value& _Type) { return _Type == buffer_type::unordered_structured_append || _Type == buffer_type::unordered_structured_counter; }
-
 struct buffer_info
 {
 	// A constant buffer (view, draw, material). Client code can defined whatever 
