@@ -83,7 +83,7 @@ public:
 		lines[2].End = TrianglePoints[0];
 
 		LineList.update(CommandList.get(), 0, 3, lines);
-
+		LineList.set(CommandList.get(), 0);
 		CommandList->set_blend_state(gpu::blend_state::opaque);
 		CommandList->set_depth_stencil_state(gpu::depth_stencil_state::none);
 		CommandList->set_pipeline(Pipeline);
