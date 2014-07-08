@@ -30,6 +30,7 @@
 #include <oSurface/buffer.h>
 #include <oGPU/oGPU.h>
 #include <oCore/windows/win_util.h>
+#include "d3d_util.h"
 #include <d3dx11.h>
 
 namespace ouro {
@@ -54,16 +55,16 @@ void save(const surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, vo
 // Specify surface::unknown and 0 for x, y or array_size in the _Info to use 
 // values from the specified file. If the type has mips then mips will be 
 // allocated but not filled in.
-intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture1_info& _Info
-	, const char* _DebugName
-	, const path& _Path);
+intrusive_ptr<ID3D11Resource> load(d3d::Device* dev
+	, const d3d::D3D_TEXTURE_DESC& desc
+	, const char* debug_name
+	, const path& p);
 
-intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture1_info& _Info
-	, const char* _DebugName
-	, const void* _pBuffer
-	, size_t _SizeofBuffer);
+intrusive_ptr<ID3D11Resource> load(d3d::Device* dev
+	, const d3d::D3D_TEXTURE_DESC& desc
+	, const char* debug_name
+	, const void* src
+	, size_t src_size);
 
 // Uses GPU acceleration for BC6H and BC7 conversions if the source is in the 
 // correct format. All other conversions go through D3DX11LoadTextureFromTexture

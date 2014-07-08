@@ -43,9 +43,6 @@
     <ClCompile Include="d3d11_util.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
-    <ClCompile Include="d3d_resource.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
     <ClCompile Include="oD3D11Query.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
@@ -109,6 +106,9 @@
     <ClCompile Include="primary_target.cpp">
       <Filter>Source\targets</Filter>
     </ClCompile>
+    <ClCompile Include="d3d_device.cpp">
+      <Filter>Source\D3D11</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -151,9 +151,6 @@
       <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="d3d11_util.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d_resource.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11Query.h">
@@ -224,6 +221,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\primary_target.h">
       <Filter>Headers\targets</Filter>
+    </ClInclude>
+    <ClInclude Include="d3d_device.h">
+      <Filter>Source\D3D11</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

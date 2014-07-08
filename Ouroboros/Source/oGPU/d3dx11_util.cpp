@@ -23,9 +23,9 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "d3dx11_util.h"
-#include "d3d11_util.h"
 #include "d3d_debug.h"
-#include "d3d_util.h"
+#include "d3d_device.h"
+#include "d3d11_util.h"
 #include "dxgi_util.h"
 #include <oBase/assert.h>
 
@@ -154,7 +154,7 @@ static intrusive_ptr<ID3D11Resource> prepare_source(const surface::buffer* _pSur
 	info.type = gpu::texture_type::readback_2d;
 	if (info.format == surface::unknown)
 		throw std::invalid_argument(formatf("Image format %s cannot be saved", as_string(si.format)));
-	intrusive_ptr<ID3D11Device> Device = d3d11::make_device(gpu::device_init("save_temp_device"));
+	intrusive_ptr<ID3D11Device> Device = d3d::make_device(gpu::device_init("save_temp_device"));
 	surface::shared_lock lock(_pSurface);
 #if 0
 	d3d::new_texture NewTexture = d3d::make_texture(Device, "save_temp_texture", info, &lock.mapped);
@@ -183,51 +183,75 @@ void save(ID3D11Resource* _pTexture, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pB
 
 void save(const surface::buffer* _pSurface, D3DX11_IMAGE_FILE_FORMAT _Format, void* _pBuffer, size_t _SizeofBuffer)
 {
-	intrusive_ptr<ID3D11Device> Device = d3d11::make_device(gpu::device_init("save_temp_device"));
+	intrusive_ptr<ID3D11Device> Device = d3d::make_device(gpu::device_init("save_temp_device"));
 	intrusive_ptr<ID3D11Resource> Source = prepare_source(_pSurface, _Format);
 	save(Source, _Format, _pBuffer, _SizeofBuffer); // pass through error
 }
 
-static D3DX11_IMAGE_LOAD_INFO get_image_load_info(const gpu::texture1_info& _Info)
+#define oDXGI_FORMAT_FROM_FILE ((DXGI_FORMAT)-3)
+static D3DX11_IMAGE_LOAD_INFO get_image_load_info(const d3d::D3D_TEXTURE_DESC& d)
 {
-#if 0
 	D3DX11_IMAGE_LOAD_INFO ili;
-	ili.Width = _Info.dimensions.x == 0 ? D3DX11_FROM_FILE : _Info.dimensions.x;
-	ili.Height = _Info.dimensions.y == 0 ? D3DX11_FROM_FILE : _Info.dimensions.y;
-	ili.Depth = _Info.array_size == 0 ? D3DX11_FROM_FILE : _Info.array_size;
+	ili.Width = d.Width == 0 ? D3DX11_FROM_FILE : d.Width;
+	ili.Height = d.Height == 0 ? D3DX11_FROM_FILE : d.Height;
+	ili.Depth = d.ArraySize == 0 ? D3DX11_FROM_FILE : d.ArraySize;
 	ili.FirstMipLevel = D3DX11_DEFAULT;
 	ili.MiscFlags = 0;
 	ili.Filter = D3DX11_FILTER_TRIANGLE;
 	ili.MipFilter = D3DX11_FILTER_TRIANGLE;
 	ili.pSrcInfo = nullptr;
-	d3d::init_values(_Info, &ili.Format, &ili.Usage, &ili.CpuAccessFlags, &ili.BindFlags, &ili.MipLevels);
+
+	DXGI_FORMAT DSVF, SRVF;
+	dxgi::get_compatible_formats(d.Format, &ili.Format, &DSVF, &SRVF);
+	if (ili.Format == DXGI_FORMAT_UNKNOWN)
+		ili.Format = oDXGI_FORMAT_FROM_FILE;
+
+	ili.Usage = d.Usage;
+	ili.CpuAccessFlags = ili.Usage == D3D11_USAGE_DYNAMIC ? D3D11_CPU_ACCESS_WRITE : (ili.Usage == D3D11_USAGE_STAGING ? D3D11_CPU_ACCESS_READ : 0);
+	ili.MipLevels = d.Mips ? 0 : 1;
+
+	ili.BindFlags = 0;
+	if (ili.Usage == D3D11_USAGE_STAGING)
+		ili.BindFlags = 0;
+
+	else
+	{
+		ili.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+		if (d.is_color_target())
+			ili.BindFlags |= D3D11_BIND_RENDER_TARGET;
+
+		if (d.is_depth_target() && ili.Format != oDXGI_FORMAT_FROM_FILE && dxgi::to_surface_format(ili.Format))
+			ili.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
+
+		if (d.is_unordered())
+			ili.BindFlags |= D3D11_BIND_UNORDERED_ACCESS;
+	}
+
 	return ili;
-#else
-	oTHROW(protocol_error, "not implemented");
-#endif
 }
 
-intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture1_info& _Info, const char* _DebugName, const path& _Path)
+intrusive_ptr<ID3D11Resource> load(d3d::Device* dev
+	, const d3d::D3D_TEXTURE_DESC& desc, const char* debug_name, const path& p)
 {
-	D3DX11_IMAGE_LOAD_INFO li = get_image_load_info(_Info);
-	intrusive_ptr<ID3D11Resource> Texture;
-	oV(D3DX11CreateTextureFromFile(_pDevice, _Path, &li, nullptr, &Texture, nullptr));
-	d3d::debug_name(Texture, _DebugName);
-	return Texture;
+	D3DX11_IMAGE_LOAD_INFO li = get_image_load_info(desc);
+	intrusive_ptr<ID3D11Resource> t;
+	oV(D3DX11CreateTextureFromFile(dev, p, &li, nullptr, &t, nullptr));
+	d3d::debug_name(t, debug_name);
+	return t;
 }
 
-intrusive_ptr<ID3D11Resource> load(ID3D11Device* _pDevice
-	, const gpu::texture1_info& _Info
-	, const char* _DebugName
-	, const void* _pBuffer
-	, size_t _SizeofBuffer)
+intrusive_ptr<ID3D11Resource> load(d3d::Device* dev
+	, const d3d::D3D_TEXTURE_DESC& desc
+	, const char* debug_name
+	, const void* src
+	, size_t src_size)
 {
-	D3DX11_IMAGE_LOAD_INFO li = get_image_load_info(_Info);
-	intrusive_ptr<ID3D11Resource> Texture;
-	oV(D3DX11CreateTextureFromMemory(_pDevice, _pBuffer, _SizeofBuffer, &li, nullptr, &Texture, nullptr));
-	d3d::debug_name(Texture, _DebugName);
-	return Texture;
+	D3DX11_IMAGE_LOAD_INFO li = get_image_load_info(desc);
+	intrusive_ptr<ID3D11Resource> t;
+	oV(D3DX11CreateTextureFromMemory(dev, src, src_size, &li, nullptr, &t, nullptr));
+	d3d::debug_name(t, debug_name);
+	return t;
 }
 
 void convert(ID3D11Texture2D* _pSourceTexture, surface::format _NewFormat

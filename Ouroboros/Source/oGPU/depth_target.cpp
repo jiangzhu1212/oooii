@@ -46,24 +46,32 @@ void depth_target::internal_initialize(const char* name, void* dev, surface::for
 	
 	Device* D3DDevice = (Device*)dev;
 
-	intrusive_ptr<Texture2D> t = make_texture_2d(name, D3DDevice, format, width, height, array_size, D3D11_BIND_DEPTH_STENCIL, mips);
+	auto t = make_texture_2d(name, D3DDevice, format, width, height, array_size, D3D11_BIND_DEPTH_STENCIL, mips);
 
 	DXGI_FORMAT tf, df, sf;
 	dxgi::get_compatible_formats(dxgi::from_surface_format(format), &tf, &df, &sf);
 
-	ro = make_srv(t, sf, array_size);
+	auto srv = make_srv(t, sf, array_size);
+	srv->AddRef();
+	ro = srv;
 
 	if (array_size)
 	{
 		rws.resize(array_size);
 		for (uint i = 0; i < array_size; i++)
-			rws[i] = make_dsv(t, i);
+		{
+			auto dsv = make_dsv(t, i);
+			dsv->AddRef();
+			rws[i] = dsv;
+		}
 	}
 	
 	else
 	{
 		rws.resize(1);
-		rws[0] = make_dsv(t);
+		auto dsv = make_dsv(t);
+		dsv->AddRef();
+		rws[0] = dsv;
 	}
 }
 

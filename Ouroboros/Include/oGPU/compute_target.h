@@ -26,6 +26,7 @@
 #ifndef oGPU_compute_target_h
 #define oGPU_compute_target_h
 
+#include <oGPU/resource.h>
 #include <oBase/types.h>
 
 namespace ouro { namespace gpu {
@@ -33,7 +34,7 @@ namespace ouro { namespace gpu {
 class device;
 class command_list;
 
-class compute_target
+class compute_target : public resource
 {
 public:
 	static const uint preserve_prior_value = ~0u;
@@ -41,9 +42,7 @@ public:
 	compute_target() : rw(nullptr) {}
 	~compute_target() { deinitialize(); }
 	void deinitialize();
-	char* name(char* dst, size_t dst_size) const;
 	void* get_target() const { return rw; }
-	void* get_buffer() const;
 
 	void cleari(command_list* cl, const uint4& clear_value);
 	void clearf(command_list* cl, const float4& clear_value);

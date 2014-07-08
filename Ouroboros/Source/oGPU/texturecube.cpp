@@ -44,8 +44,10 @@ void texturecube::initialize(const char* name, device* dev, surface::format form
 	Device* D3DDevice = get_device(dev);
 	DXGI_FORMAT fmt = dxgi::from_surface_format(format);
 
-	intrusive_ptr<Texture2D> t = make_texture_2d(name, get_device(dev), format, width, height, array_size_in_num_cubes, 0, mips, true);
-	ro = make_srv(t, format, array_size_in_num_cubes);
+	auto t = make_texture_2d(name, get_device(dev), format, width, height, array_size_in_num_cubes, 0, mips, true);
+	auto srv = make_srv(t, format, array_size_in_num_cubes);
+	srv->AddRef();
+	ro = srv;
 }
 
 void texturecube::initialize(const char* name, device* dev, const surface::buffer& src, bool mips)

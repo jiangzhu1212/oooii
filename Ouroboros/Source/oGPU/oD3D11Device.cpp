@@ -26,10 +26,9 @@
 #include "oD3D11CommandList.h"
 #include "oD3D11Query.h"
 
-#include "d3d11_util.h"
 #include "d3d_compile.h"
 #include "d3d_debug.h"
-#include "d3d_resource.h"
+#include "d3d_device.h"
 #include "dxgi_util.h"
 #include "CSNoop.h"
 
@@ -93,7 +92,7 @@ d3d11_device::d3d11_device(const device_init& _Init)
 	D3DDevice = make_device(_Init);
 	SupportsDeferredCommandLists = supports_deferred_contexts(D3DDevice);
 
-	Info = d3d11::get_info(D3DDevice, IsSoftwareEmulation);
+	Info = d3d::get_info(D3DDevice, IsSoftwareEmulation);
 
 	HeapAllocations.reserve(500);
 

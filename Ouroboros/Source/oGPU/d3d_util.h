@@ -34,16 +34,16 @@
 
 namespace ouro { namespace gpu { namespace d3d {
 
-Texture1D* make_texture_1d(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips);
-Texture2D* make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, uint bind_flags, bool mips, bool cube = false);
-Texture3D* make_texture_3d(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips);
+intrusive_ptr<Texture1D> make_texture_1d(const char* name, Device* dev, surface::format format, uint width, uint array_size, bool mips);
+intrusive_ptr<Texture2D> make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, uint bind_flags, bool mips, bool cube = false);
+intrusive_ptr<Texture3D> make_texture_3d(const char* name, Device* dev, surface::format format, uint width, uint height, uint depth, bool mips);
 
 // basic 1D 1DARRAY 2D 2DARRAY 3D CUBE CUBEARRAY types
-ShaderResourceView* make_srv(Resource* r, DXGI_FORMAT format, uint array_size);
-ShaderResourceView* make_srv(Resource* r, surface::format format, uint array_size);
+intrusive_ptr<ShaderResourceView> make_srv(Resource* r, DXGI_FORMAT format, uint array_size);
+intrusive_ptr<ShaderResourceView> make_srv(Resource* r, surface::format format, uint array_size);
 
-RenderTargetView* make_rtv(Resource* r, uint array_slice = invalid);
-DepthStencilView* make_dsv(Resource* r, uint array_slice = invalid);
+intrusive_ptr<RenderTargetView> make_rtv(Resource* r, uint array_slice = invalid);
+intrusive_ptr<DepthStencilView> make_dsv(Resource* r, uint array_slice = invalid);
 
 bool is_array(ShaderResourceView* v);
 bool is_array(RenderTargetView* v);
@@ -61,8 +61,10 @@ struct D3D_TEXTURE_DESC
 		, Type(D3D11_RESOURCE_DIMENSION_UNKNOWN)
 		, Format(DXGI_FORMAT_UNKNOWN)
 		, Usage(D3D11_USAGE_DEFAULT)
+		, CPUAccessFlags(0)
+		, MiscFlags(0)
 		, Mips(false)
-	{}
+	{ SampleDesc.Quality = 0; SampleDesc.Count = 1; }
 
 	uint Width;
 	uint Height;
@@ -70,26 +72,38 @@ struct D3D_TEXTURE_DESC
 	uint ArraySize;
 	D3D11_RESOURCE_DIMENSION Type;
 	DXGI_FORMAT Format;
-	D3D11_USAGE Usage;
 	DXGI_SAMPLE_DESC SampleDesc;
+	D3D11_USAGE Usage;
+	uint BindFlags;
+	uint CPUAccessFlags;
+	uint MiscFlags;
 	bool Mips;
+
+	inline bool is_target() const { return !!(BindFlags & (D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL)); }
+	inline bool is_color_target() const { return !!(BindFlags & D3D11_BIND_RENDER_TARGET); }
+	inline bool is_depth_target() const { return !!(BindFlags & D3D11_BIND_DEPTH_STENCIL); }
+	inline bool is_unordered() const { return !!(BindFlags & D3D11_BIND_UNORDERED_ACCESS); }
+	inline bool is_cube() const { return !!(MiscFlags & D3D11_RESOURCE_MISC_TEXTURECUBE); }
 };
 
 D3D_TEXTURE_DESC get_texture_desc(Resource* r);
-	
+
+// uses oTRACE to display the fields of d
+void trace_texture_desc(const D3D_TEXTURE_DESC& d, const char* prefix = "\t");
+
 // sets to all pipeline stages
 void set_cbs(DeviceContext* dc, uint slot, uint num_buffers, Buffer* const* buffers, uint gpu_stage_flags = ~0u);
 void set_srvs(DeviceContext* dc, uint slot, uint num_srvs, ShaderResourceView* const* srvs, uint gpu_stage_flags = ~0u);
 void set_samplers(DeviceContext* dc, uint slot, uint num_samplers, const SamplerState* const* samplers, uint gpu_stage_flags = ~0u);
 
-Buffer* make_buffer(const char* name, Device* dev, uint element_stride, uint num_elements, D3D11_USAGE usage, uint bind_flags, uint misc_flags, const void* init_data);
+intrusive_ptr<Buffer> make_buffer(const char* name, Device* dev, uint element_stride, uint num_elements, D3D11_USAGE usage, uint bind_flags, uint misc_flags, const void* init_data);
 
 // fills out_srv and out_uav with views on a structured buffer
 void make_structured(const char* name, Device* dev, uint struct_stride, uint num_structs, const void* src, uint uav_flags, ShaderResourceView** out_srv, UnorderedAccessView** out_uav);
 
 // Creates a STAGING version of the specified resource and copies the src to it and flushes 
 // the immediate context. If do_copy is false then the buffer is created uninitialized.
-Resource* make_cpu_copy(Resource* src, bool do_copy = true);
+intrusive_ptr<Resource> make_cpu_copy(Resource* src, bool do_copy = true);
 
 // Copies the contents of the specified texture to dst which is assumed to be 
 // properly allocated to receive the contents. If flip_vertically is true then
@@ -117,6 +131,12 @@ void unset_all_dispatch_targets(DeviceContext* dc);
 
 // return the size of the specified hlsl shader bytecode
 uint bytecode_size(const void* bytecode);
+
+// http://msdn.microsoft.com/en-us/library/windows/desktop/ff476486(v=vs.85).aspx
+// This is not cheap enough to reevaluate for each call to update_subresource, so
+// call this once and cache the result per device and pass it to update_subresource
+// as appropriate.
+bool supports_deferred_contexts(Device* dev);
 
 }}}
 

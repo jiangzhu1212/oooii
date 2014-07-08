@@ -37,15 +37,15 @@ DeviceContext* get_dc(command_list* cl);
 void vertex_buffer::initialize(const char* name, device* dev, uint vertex_stride, uint num_vertices, const void* vertices)
 {
 	deinitialize();
-	impl = (void*)make_buffer(name, get_device(dev), num_vertices, vertex_stride, D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, vertices);
+	auto b = make_buffer(name, get_device(dev), num_vertices, vertex_stride, D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, vertices);
+	b->AddRef();
+	impl = b;
 	vstride = vertex_stride;
 }
 
 void vertex_buffer::deinitialize()
 {
-	if (impl)
-		((Buffer*)impl)->Release();
-	impl = nullptr;
+	oSAFE_RELEASEV(impl);
 }
 
 char* vertex_buffer::name(char* dst, size_t dst_size) const

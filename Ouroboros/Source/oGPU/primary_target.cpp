@@ -162,8 +162,14 @@ void primary_target::internal_resize(const uint2& dimensions, device* dev)
 		oV(sc->GetBuffer(0, __uuidof(Texture2D), (void**)&SwapChainTexture));
 		debug_name(SwapChainTexture, "primary target");
 				
-		rw = make_rtv(SwapChainTexture);
-		ro = make_srv(SwapChainTexture, DXGI_FORMAT_UNKNOWN, 0);
+		auto rtv = make_rtv(SwapChainTexture);
+		auto srv = make_srv(SwapChainTexture, DXGI_FORMAT_UNKNOWN, 0);
+
+		rtv->AddRef();
+		rw = rtv;
+
+		srv->AddRef();
+		ro = srv;
 	}
 }
 

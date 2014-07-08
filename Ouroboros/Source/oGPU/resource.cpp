@@ -38,6 +38,13 @@ char* resource::name(char* dst, size_t dst_size) const
 	return ro ? debug_name(dst, dst_size, (View*)ro) : "uninitialized";
 }
 
+void* resource::get_buffer() const
+{
+	intrusive_ptr<Resource> r;
+	((View*)ro)->GetResource(&r);
+	return r;
+}
+
 void resource::set(command_list* cl, uint slot, uint num_resources, resource* const* resources)
 {
 	ShaderResourceView* srvs[D3D11_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT];
