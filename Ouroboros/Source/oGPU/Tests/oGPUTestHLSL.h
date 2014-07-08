@@ -64,8 +64,8 @@ struct oGPUTestConstants
 struct oGPU_TEST_INSTANCE
 {
 	float3 Translation;
-	quatf Rotation;
 	float PadA;
+	quatf Rotation;
 };
 
 #ifdef oHLSL

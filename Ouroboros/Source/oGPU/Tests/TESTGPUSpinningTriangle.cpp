@@ -43,6 +43,7 @@ public:
 	void initialize() override
 	{
 		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
+		InstanceList.initialize("Instances", Device.get(), sizeof(oGPU_TEST_INSTANCE), 2);
 		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
 		Mesh.initialize_first_triangle(Device.get());
 	}
@@ -71,6 +72,10 @@ public:
 		CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
 		CommandList->set_rasterizer_state(rasterizer_state::two_sided);
 		TestConstants.set(CommandList.get(), 0);
+
+		const constant_buffer* CBs[2] = { &TestConstants, &InstanceList };
+		constant_buffer::set(CommandList.get(), 0, 2, CBs);
+
 		CommandList->set_pipeline(Pipeline);
 		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
 		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
@@ -83,6 +88,7 @@ private:
 	std::shared_ptr<pipeline1> Pipeline;
 	util_mesh Mesh;
 	constant_buffer TestConstants;
+	constant_buffer InstanceList;
 };
 
 oGPU_COMMON_TEST(spinning_triangle);

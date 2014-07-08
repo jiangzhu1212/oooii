@@ -75,7 +75,7 @@ void compute_target::set_draw_target(command_list* cl, uint slot, uint initial_c
 
 	// any pixel shader operation will quitely noop if a viewport isn't specified
 	// so set a 1x1 if none other is set.
-	uint nViewports = 0;
+	uint nViewports = D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE;
 	D3D11_VIEWPORT Viewports[D3D11_VIEWPORT_AND_SCISSORRECT_OBJECT_COUNT_PER_PIPELINE];
 	dc->RSGetViewports(&nViewports, Viewports);
 	if (!nViewports)
