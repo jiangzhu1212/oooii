@@ -34,16 +34,10 @@
     <ClCompile Include="state.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="vertex_layout.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
     <ClCompile Include="d3d_prim.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
     <ClCompile Include="d3d11_util.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11Query.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
     <ClCompile Include="oD3D11Pipeline.cpp">
@@ -109,6 +103,12 @@
     <ClCompile Include="d3d_device.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
+    <ClCompile Include="vertex_layout.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="timer_query.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -151,9 +151,6 @@
       <Filter>Source\D3D11</Filter>
     </ClInclude>
     <ClInclude Include="d3d11_util.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11Query.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
     <ClInclude Include="oD3D11Pipeline.h">
@@ -224,6 +221,9 @@
     </ClInclude>
     <ClInclude Include="d3d_device.h">
       <Filter>Source\D3D11</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\timer_query.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

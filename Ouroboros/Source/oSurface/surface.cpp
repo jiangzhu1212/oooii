@@ -305,6 +305,24 @@ oDEFINE_RESIZED_AS_STRING(surface::format);
 oDEFINE_RESIZED_TO_STRING(surface::format);
 oDEFINE_RESIZED_FROM_STRING(surface::format);
 
+const char* as_string(const surface::cube_face::value& _Value)
+{
+	switch (_Value)
+	{
+		case surface::cube_face::posx: return "posx";
+		case surface::cube_face::negx: return "negx";
+		case surface::cube_face::posy: return "posy";
+		case surface::cube_face::negy: return "negy";
+		case surface::cube_face::posz: return "posz";
+		case surface::cube_face::negz: return "negz";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(surface::cube_face::value)
+oDEFINE_FROM_STRING(surface::cube_face::value, surface::cube_face::count)
+
 	namespace surface {
 
 static bool has_trait(format _Format, unsigned int _Trait)

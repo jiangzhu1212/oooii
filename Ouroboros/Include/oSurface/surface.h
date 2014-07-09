@@ -276,6 +276,20 @@ oDECLARE_SMALL_ENUM(layout, uchar)
 
 };
 
+namespace cube_face
+{ oDECLARE_SMALL_ENUM(value, uchar) {
+
+	posx,
+	negx,
+	posy,
+	negy,
+	posz,
+	negz,
+
+	count,
+
+};}
+
 struct info
 {
 	info()

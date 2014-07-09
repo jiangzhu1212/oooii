@@ -234,249 +234,7 @@ public:
 };
 
 // _____________________________________________________________________________
-// Buffer concepts
-
-namespace buffer_type
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-	// Binding fit for rasterization HW. Using this requires a structure byte size
-	// to be specified.
-	constant,
-
-	// A constant buffer fit for receiving a copy from GPU memory to CPU-
-	// accessible memory.
-	readback,
-
-	// A raw buffer indexed by bytes (32-bit aligned access only though). This is
-	// the type to use for dispatch parameters from the GPU (indirect drawing).
-	unordered_raw,
-
-	// Buffer that does not guarantee order of access. Such ordering must be done
-	// by the explicit use of atomics in client shader code. Using this requires
-	// a surface::format to be specified.
-	unordered_unstructured,
-
-	// Buffer that does not guarantee order of access. Such ordering must be done
-	// by the explicit use of atomics in client shader code. Using this requires
-	// a structure byte size to be specified.
-	unordered_structured,
-
-	// Like unordered_structured but also support extra bookkeeping to enable 
-	// atomic append/consume. Using this requires a structure byte size to be 
-	// specified.
-	unordered_structured_append, 
-
-	// Like unordered_structured but also support extra bookkeeping to enable 
-	// atomic increment/decrement. Using this requires a structure byte size to be 
-	// specified.
-	unordered_structured_counter,
-
-	count,
-
-};}
-
-struct buffer_info
-{
-	// A constant buffer (view, draw, material). Client code can defined whatever 
-	// value are to be passed to a shader that expects them. struct_byte_size must 
-	// be 16-byte aligned. For unstructured buffers specify size = 0, and provide
-	// a format.
-
-	buffer_info()
-		: type(buffer_type::constant)
-		, format(surface::unknown)
-		, struct_byte_size(0)
-		, array_size(1)
-	{}
-
-	// Specifies the type of the constant buffer. Normally the final buffer size
-	// is struct_byte_size * array_size. If the type is specified as 
-	// unordered_unstructured then StructByteSize must be 0 and the size is 
-	// calculated as (size of Format) * ArraySize.
-	buffer_type::value type;
-
-	// This must be valid for unordered_unstructured types, and surface::unknown 
-	// for all other types.
-	surface::format format;
-
-	// This must be invalid_size for unordered_unstructured types, but valid for 
-	// all other types.
-	ushort struct_byte_size;
-
-	// The number of format elements or structures in the buffer.
-	uint array_size;
-};
-
-class buffer : public resource1
-{
-	// Buffers are directly accessed as memory - not through a sampler.
-public:
-	virtual buffer_info get_info() const = 0;
-
-	virtual void* get_buffer() const = 0;
-};
-
-// _____________________________________________________________________________
-// Texture concepts
-
-namespace cube_face
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	posx,
-	negx,
-	posy,
-	negy,
-	posz,
-	negz,
-
-	count,
-
-};}
-
-namespace texture_type
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	// 8-bits: array, mipped, usage, type
-	// 00AMUsTy
-
-	type_mask = 0x3,
-	type_1d = 0,
-	type_2d = 1,
-	type_3d = 2,
-	type_cube = 3,
-	usage_mask = 0xc,
-	usage_default = 0,
-	usage_readback = 4,
-	usage_render_target = 8,
-	usage_unordered = 12,
-	flag_mipped = 16,
-	flag_array = 32,
-
-	// 1D texture.
-	default_1d = type_1d,
-	mipped_1d = type_1d | flag_mipped,
-	array_1d = type_1d | flag_array,
-	mipped_array_1d = type_1d | flag_array | flag_mipped,
-	render_target_1d = type_1d | usage_render_target,
-	mipped_render_target_1d = type_1d | flag_mipped | usage_render_target,
-	readback_1d = type_1d | usage_readback,
-	mipped_readback_1d = type_1d | flag_mipped | usage_readback,
-	readback_array_1d = type_1d | flag_array | usage_readback,
-	mipped_readback_array_1d = type_1d | flag_array | flag_mipped | usage_readback,
-
-	// "normal" 2D texture.
-	default_2d = type_2d,
-	mipped_2d = type_2d | flag_mipped,
-	array_2d = type_2d | flag_array,
-	mipped_array_2d = type_2d | flag_array | flag_mipped,
-	render_target_2d = type_2d | usage_render_target,
-	mipped_render_target_2d = type_2d | flag_mipped | usage_render_target,
-	readback_2d = type_2d | usage_readback,
-	mipped_readback_2d = type_2d | flag_mipped | usage_readback,
-	readback_array_2d = type_2d | flag_array | usage_readback,
-	mipped_readback_array_2d = type_2d | flag_array | flag_mipped | usage_readback,
-
-	// a "normal" 2D texture, no mips, configured for unordered access. Currently
-	// all GPGPU access to such buffers are one subresource at a time so there is 
-	// no spec that describes unordered access to arbitrary mipped memory.
-	unordered_2d = type_2d | usage_unordered,
-	
-	// 6- 2D slices that form the faces of a cube that is sampled from its center.
-	default_cube = type_cube,
-	mipped_cube = type_cube | flag_mipped,
-	array_cube = type_cube | flag_array,
-	mipped_array_cube = type_cube | flag_array | flag_mipped,
-	render_target_cube = type_cube | usage_render_target,
-	mipped_render_target_cube = type_cube | flag_mipped | usage_render_target,
-	readback_cube = type_cube | usage_readback,
-	mipped_readback_cube = type_cube | flag_mipped | usage_readback,
-
-	// Series of 2D slices sampled as a volume
-	default_3d = type_3d,
-	mipped_3d = type_3d | flag_mipped,
-	array_3d = type_3d | flag_array,
-	mipped_array_3d = type_3d | flag_array | flag_mipped,
-	render_target_3d = type_3d | usage_render_target,
-	mipped_render_target_3d = type_3d | flag_mipped | usage_render_target,
-	readback_3d = type_3d | usage_readback,
-	mipped_readback_3d = type_3d | flag_mipped | usage_readback,
-
-};}
-
-inline bool is_1d(const texture_type::value& _Type) { return texture_type::type_1d == (_Type & texture_type::type_mask); }
-inline bool is_2d(const texture_type::value& _Type) { return texture_type::type_2d == (_Type & texture_type::type_mask); }
-inline bool is_3d(const texture_type::value& _Type) { return texture_type::type_3d == (_Type & texture_type::type_mask); }
-inline bool is_cube(const texture_type::value& _Type) { return texture_type::type_cube == (_Type & texture_type::type_mask); }
-inline bool is_default(const texture_type::value& _Type) { return texture_type::usage_default == (_Type & texture_type::usage_mask); }
-inline bool is_readback(const texture_type::value& _Type) { return texture_type::usage_readback == (_Type & texture_type::usage_mask); }
-inline bool is_render_target(const texture_type::value& _Type) { return texture_type::usage_render_target == (_Type & texture_type::usage_mask); }
-inline bool is_unordered(const texture_type::value& _Type) { return texture_type::usage_unordered == (_Type & texture_type::usage_mask); }
-inline bool is_mipped(const texture_type::value& _Type) { return 0 != (_Type & texture_type::flag_mipped); }
-inline bool is_array(const texture_type::value& _Type) { return 0 != ((int)_Type & texture_type::flag_array); }
-
-inline texture_type::value get_type(const texture_type::value& _Type) { return (texture_type::value)(_Type & texture_type::type_mask); }
-inline texture_type::value get_usage(const texture_type::value& _Type) { return (texture_type::value)(_Type & texture_type::usage_mask); }
-
-inline texture_type::value make_default(const texture_type::value& _Type) { return (texture_type::value)((_Type & ~texture_type::usage_mask) | texture_type::usage_default); }
-inline texture_type::value make_readback(const texture_type::value& _Type) { return (texture_type::value)((_Type & ~texture_type::usage_mask) | texture_type::usage_readback); }
-inline texture_type::value make_render_target(const texture_type::value& _Type) { return (texture_type::value)((_Type & ~texture_type::usage_mask) | texture_type::usage_render_target); }
-inline texture_type::value make_unordered(const texture_type::value& _Type) { return (texture_type::value)((_Type & ~texture_type::usage_mask) | texture_type::usage_unordered); }
-
-inline texture_type::value add_mipped(const texture_type::value& _Type) { return (texture_type::value)(_Type | texture_type::flag_mipped); }
-inline texture_type::value add_array(const texture_type::value& _Type) { return (texture_type::value)(_Type | texture_type::flag_array); }
-
-inline texture_type::value remove_mipped(const texture_type::value& _Type) { return (texture_type::value)(_Type & ~texture_type::flag_mipped); }
-inline texture_type::value remove_render_target(const texture_type::value& _Type) { return (texture_type::value)(_Type & ~texture_type::usage_render_target); }
-
-struct texture1_info
-{
-	texture1_info()
-		: type(texture_type::default_2d)
-		, format(surface::b8g8r8a8_unorm)
-		, dimensions(0, 0, 0)
-		, array_size(1)
-	{}
-
-	texture_type::value type;
-	surface::format format;
-	ushort3 dimensions;
-	uint array_size;
-};
-
-namespace clear_type
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	depth,
-	stencil,
-	depth_stencil,
-	color,
-	color_depth,
-	color_stencil,
-	color_depth_stencil,
-
-	count,
-
-};}
-
-class texture1 : public resource1
-{
-	// A large buffer usually filled with image data that is often accessed
-	// through a texture sampler. A texture is often read-only or the read
-	// interface for a render_target.
-public:
-	virtual texture1_info get_info() const = 0;
-};
-
-// _____________________________________________________________________________
 // Pipeline concepts
-
-namespace query_type
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	timer,
-
-	count,
-
-};}
 
 struct basic_pipeline1_info
 {
@@ -497,21 +255,6 @@ struct pipeline1_info : public basic_pipeline1_info
 	}
 };
 
-struct basic_compute_kernel_info
-{
-	const char* debug_name;
-	const void* cs;
-};
-
-struct compute_kernel_info : public basic_compute_kernel_info
-{
-	compute_kernel_info()
-	{
-		debug_name = "unnamed compute kernel";
-		cs = nullptr;
-	}
-};
-
 class pipeline1 : public device_child 
 {
 	// A pipeline is the result of setting all stages of the programmable pipeline 
@@ -520,38 +263,14 @@ public:
 	virtual pipeline1_info get_info() const = 0;
 };
 
-class compute_kernel : public device_child 
-{
-	// That other pipeline mode GPUs support: This is the CUDA/Compute/OpenCL 
-	// path that ignores fixed-function rasterization stages and exposes more 
-	// general-purpose treatment of the GPU.
-public:
-	virtual compute_kernel_info get_info() const = 0;
-};
-
 // _____________________________________________________________________________
 // Execution concepts
-
-struct query_info
-{
-	query_info()
-		: type(query_type::timer)
-	{}
-
-	query_type::value type;
-};
 
 struct command_list_info
 {
 	static const short immediate = -1;
 
 	short draw_order;
-};
-
-class query : public device_child 
-{
-public:
-	virtual query_info get_info() const = 0;
 };
 
 class command_list : public device_child 
@@ -566,13 +285,6 @@ public:
 	// should occur between Begin() and End().
 	virtual void begin() = 0;
 	virtual void end() = 0;
-
-	// The specified query will record events in between these begin/ends.
-	virtual void begin_query(query* _pQuery) = 0;
-	virtual void end_query(query* _pQuery) = 0;
-
-	inline void begin_query(std::shared_ptr<query>& _pQuery) { begin_query(_pQuery.get()); }
-	inline void end_query(std::shared_ptr<query>& _pQuery) { end_query(_pQuery.get()); }
 
 	// This should never be required to be called, and has bad performance 
 	// implications if called but is sometimes required, especially with the 
@@ -634,15 +346,10 @@ public:
 
 	virtual std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) = 0;
 	virtual std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) = 0;
-	virtual std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) = 0;
 
 	// convenience versions of the above
 	inline std::shared_ptr<command_list> make_command_list(const char* _Name, short _DrawOrder = 0) { command_list_info i; i.draw_order = _DrawOrder; return make_command_list(_Name, i); } 
 	inline std::shared_ptr<pipeline1> make_pipeline1(const pipeline1_info& _Info) { return make_pipeline1(_Info.debug_name, _Info); }
-
-	virtual bool read_query(query* _pQuery, void* _pData, uint _SizeofData) = 0;
-	template<typename T> bool read_query(query* _pQuery, T* _pData) { return read_query(_pQuery, _pData, sizeof(T)); }
-	template<typename T> bool read_query(std::shared_ptr<query>& _pQuery, T* _pData) { return read_query(_pQuery.get(), _pData, sizeof(T)); }
 
 	virtual bool begin_frame() = 0;
 	virtual void end_frame() = 0;

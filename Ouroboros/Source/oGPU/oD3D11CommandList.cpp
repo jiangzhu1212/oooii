@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oD3D11CommandList.h"
 #include "oD3D11Pipeline.h"
-#include "oD3D11Query.h"
 #include "dxgi_util.h"
 #include "d3d_types.h"
 
@@ -104,16 +103,6 @@ void d3d11_command_list::end()
 		Context->FinishCommandList(FALSE, &CommandList);
 		dev()->unblock_submission();
 	}
-}
-
-void d3d11_command_list::begin_query(query* _pQuery)
-{
-	static_cast<d3d11_query*>(_pQuery)->begin(Context);
-}
-
-void d3d11_command_list::end_query(query* _pQuery)
-{
-	static_cast<d3d11_query*>(_pQuery)->end(Context);
 }
 
 void d3d11_command_list::flush()

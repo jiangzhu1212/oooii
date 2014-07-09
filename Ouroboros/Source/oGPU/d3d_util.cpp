@@ -26,8 +26,9 @@
 #include "d3d_debug.h"
 #include "dxgi_util.h"
 #include <d3d11.h>
-#include <oGPU/shader.h>
+#include <oBase/backoff.h>
 #include <oCore/windows/win_util.h>
+#include <oGPU/shader.h>
 
 namespace ouro { namespace gpu { namespace d3d {
 
@@ -571,6 +572,22 @@ void copy(Resource* r, uint subresource, surface::mapped_subresource& dst, bool 
 	int2 ByteDimensions = surface::byte_dimensions(dxgi::to_surface_format(desc.Format), int3(desc.Width, desc.Height, 1));
 	memcpy2d(dst.data, dst.row_pitch, mapped.pData, mapped.RowPitch, ByteDimensions.x, ByteDimensions.y, flip_vertically);
 	dc->Unmap(res, subresource);
+}
+
+bool copy_async_data(DeviceContext* dc, Asynchronous* async, void* dst, uint dst_size, bool blocking)
+{
+	backoff bo;
+	HRESULT hr = S_FALSE;
+
+	while(true)
+	{
+		hr = dc->GetData(async, dst, dst_size, 0);
+		if (S_FALSE != hr || !blocking)
+			break;
+		bo.pause();
+	}
+
+	return SUCCEEDED(hr);
 }
 
 std::shared_ptr<surface::buffer> make_snapshot(Texture2D* t)

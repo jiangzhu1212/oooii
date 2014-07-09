@@ -60,9 +60,7 @@ public:
 
 	std::shared_ptr<command_list> make_command_list(const char* _Name, const command_list_info& _Info) override;
 	std::shared_ptr<pipeline1> make_pipeline1(const char* _Name, const pipeline1_info& _Info) override;
-	std::shared_ptr<query> make_query(const char* _Name, const query_info& _Info) override;
 
-	bool read_query(query* _pQuery, void* _pData, uint _SizeofData) override;
 	bool begin_frame() override;
 	void end_frame() override;
 

@@ -42,7 +42,6 @@ oTEST_REGISTER_GPU_TEST(lines);
 oTEST_REGISTER_GPU_TEST0(query);
 oTEST_REGISTER_GPU_TEST(render_target);
 oTEST_REGISTER_GPU_TEST(spinning_triangle);
-oTEST_REGISTER_GPU_TEST0(texture_traits);
 oTEST_REGISTER_GPU_TEST(texture1d);
 oTEST_REGISTER_GPU_TEST(texture1dmip);
 oTEST_REGISTER_GPU_TEST(texture2d);
