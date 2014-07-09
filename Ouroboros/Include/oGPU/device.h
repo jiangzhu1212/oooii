@@ -26,19 +26,11 @@
 #ifndef oGPU_device_h
 #define oGPU_device_h
 
-#include <oGPU/render_target.h>
-#include <oGPU/buffer.h>
-#include <oGPU/texture.h>
-#include <oGPU/vertex_layout.h>
-#include <oGPU/shader.h>
-
 #include <oBase/gpu_api.h>
 
-namespace ouro {
+namespace ouro { namespace gpu {
 
-class window;
-
-	namespace gpu {
+class command_list;
 	
 struct device_init
 {
@@ -96,10 +88,10 @@ struct device_info
 		, dedicated_system_memory(0)
 		, shared_system_memory(0)
 		, adapter_index(0)
-		, api(api::unknown)
+		, api(gpu_api::unknown)
 		, vendor(vendor::unknown)
 		, is_software_emulation(false)
-		, debug_reporting_enabled(false)
+		, driver_reporting_enabled(false)
 	{}
 
 	// Name associated with this device in debug output
@@ -144,10 +136,10 @@ struct device_info
 	bool is_software_emulation;
 
 	// True if the device was created with debug reporting enabled.
-	bool debug_reporting_enabled;
+	bool driver_reporting_enabled;
 };
 
-class device
+class device1
 {
 public:
 	device_info get_info() const;
@@ -155,40 +147,22 @@ public:
 	// the immediate command list is always created with the device
 	command_list* immediate();
 
-	// copies the contents of a readback resource into the user-provided destination
-	bool read_resource(void* destination, uint destination_size, const resource* readback_resource, bool blocking = false);
+	// sends the push buffer immediately rather than waiting for it to fill
+	// this can be useful if the GPU stalls early in the frame while the 
+	// push buffer is still being assembled.
+	void flush();
 
-	// copies the contents of a query into the user-provided destination
-	bool read_query(void* destination, uint destination_size, const* source, bool blocking = false);
-#if 0
-	// this value is incremented with each call to end-frame
-	uint frame_id() const;
+	// clears the command list's idea of state back to its default
+	void reset();
 
-	// all command_list api should be called between these apis
-	bool begin_frame();
-	void end_frame();
-
-	// Out of a begin_frame/end_frame bracket, the device can provide a 
-	// handle to OS CPU-based rendering. All OS calls should occur in between 
-	// begin_os_frame and end_os_frame and this should be called after end_frame, 
-	// but before present to prevent tearing.
-	void* begin_os_frame();
-	void end_os_frame();
-
-	// This should only be called on same thread as the window passed to 
-	// make_primary_render_target. If a primary render target does not exist this
-	// will noop otherwise the entire client area of the associated window will
-	// receive the contents of the back buffer. Call this after end_frame() to 
-	// ensure all commands have been flushed.
-
-	bool is_fullscreen_exclusive() const;
-	void set_fullscreen_exclusive(bool fullscreen);
-
-	void present(uint present_interval);
-#endif
+	// the immediate command list executes commands immediately but other
+	// command lists only record commands. Only when this submit is called
+	// are they sent to the device in order. This blocks util all initialized
+	// command_lists are outside their begin/end block and have been submitted
+	// to the device.
+	void submit_command_lists();
 };
 
-	} // namespace gpu
-} // namespace ouro
+}}
 
 #endif

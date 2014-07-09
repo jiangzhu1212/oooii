@@ -64,15 +64,6 @@ public:
 	bool begin_frame() override;
 	void end_frame() override;
 
-	// _____________________________________________________________________________
-	// Implementation API
-
-	// Implements Reserve() in the specified context (immediate or deferred).
-	surface::mapped_subresource reserve(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource);
-
-	// Implements Commit() in the specified context (immediate or deferred).
-	void commit(ID3D11DeviceContext* _pDeviceContext, resource1* _pResource, int _Subresource, const surface::mapped_subresource& _Source, const surface::box& _Subregion);
-
 	// Registers a command list in the submission vector sorted by its DrawOrder.
 	// If there is already a command list at the specified order, then this 
 	// returns false and does not insert the specified command list (basically 

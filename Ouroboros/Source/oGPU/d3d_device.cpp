@@ -45,7 +45,7 @@ intrusive_ptr<Device> make_device(const gpu::device_init& init)
 
 	uint Flags = 0;
 	bool UsingDebug = false;
-	if (init.driver_debug_level != gpu::debug_level::none)
+	if (init.enable_driver_reporting)
 	{
 		Flags |= D3D11_CREATE_DEVICE_DEBUG;
 		UsingDebug = true;
@@ -212,7 +212,7 @@ intrusive_ptr<Device> make_device(const gpu::device_init& init)
 		D3D11_MESSAGE_ID_DESTROY_RASTERIZERSTATE,
 	};
 
-	if (UsingDebug && init.driver_debug_level == gpu::debug_level::normal)
+	if (UsingDebug && init.enable_driver_reporting)
 	{
 		intrusive_ptr<ID3D11InfoQueue> IQ;
 		oV(Device->QueryInterface(__uuidof(ID3D11InfoQueue), (void**)&IQ));
@@ -254,7 +254,7 @@ gpu::device_info get_info(Device* dev, bool is_software_emulation)
 	d.api = gpu_api::d3d11;
 	d.vendor = adapter_info.vendor;
 	d.is_software_emulation = is_software_emulation;
-	d.debug_reporting_enabled = !!(dev->GetCreationFlags() & D3D11_CREATE_DEVICE_DEBUG);
+	d.driver_reporting_enabled = !!(dev->GetCreationFlags() & D3D11_CREATE_DEVICE_DEBUG);
 	return d;
 }
 

@@ -33,7 +33,7 @@ namespace ouro {
 void TESTquery()
 {
 	device_init init("GPU Query");
-	init.driver_debug_level = gpu::debug_level::normal;
+	init.enable_driver_reporting = true;
 	init.version = version(10,0);
 	std::shared_ptr<device> d = device::make(init);
 
@@ -47,7 +47,7 @@ void TESTquery()
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 		q.end(icl);
 
-		double SecondsPast = q.get_time(d.get());
+		double SecondsPast = q.get_time();
 		oCHECK(SecondsPast > 0.0, "No time past!");
 	}
 }

@@ -47,7 +47,7 @@ void gpu_test::create(const char* _Title, bool _DevMode, const int* _pSnapshotFr
 		device_init i;
 		i.debug_name = "gpu_test.Device";
 		i.version = version(10,0); // for broader compatibility
-		i.driver_debug_level = debug_level::normal;
+		i.enable_driver_reporting = true;
 		Device = device::make(i);
 	}
 

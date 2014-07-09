@@ -94,11 +94,6 @@
 
 oGPU_NAMESPACE_BEGIN
 
-// The one true hash. This is a persistent hash that can be used at tool time 
-// and at runtime and should be capable of uniquely identifying any resource 
-// in the system.
-inline uint resource_hash(const char* _SourceName, resource_type::value _Type) { return ouro::fnv1a<uint>(_SourceName, static_cast<uint>(strlen(_SourceName)), _Type); }
-
 template<typename InfoT, typename InterfaceT, typename ImplementationT>
 class device_child_mixin_base
 {
@@ -133,28 +128,6 @@ public:
 	device_child_mixin(std::shared_ptr<device>& _Device, const char* _Name)
 		: device_child_mixin_base(_Device, _Name)
 	{}
-};
-
-template<typename InfoT, typename InterfaceT, typename ImplementationT, resource_type::value TypeT>
-class resource_mixin : public device_child_mixin_base<InfoT, InterfaceT, ImplementationT>
-{
-public:
-	typedef InfoT info_type;
-	typedef InterfaceT interface_type;
-	typedef ImplementationT implementation_type;
-
-	resource_mixin(std::shared_ptr<device>& _Device, const char* _Name, const InfoT& _Info)
-		: device_child_mixin_base(_Device, _Name)
-		, Info(_Info)
-		, ID(resource_hash(_Name, get_type()))
-	{}
-
-	inline resource_type::value get_type() const { return TypeT; }
-	inline InfoT& get_info_direct() { return Info; }
-
-protected:
-	InfoT Info;
-	uint ID;
 };
 
 oGPU_NAMESPACE_END
