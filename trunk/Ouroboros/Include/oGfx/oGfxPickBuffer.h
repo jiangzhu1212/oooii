@@ -53,9 +53,11 @@ private:
 	oRefCount RefCount;
 	int2 PicksInputBuffer[oGPU_MAX_NUM_PICKS_PER_FRAME];
 	//std::shared_ptr<ouro::gpu::texture1> PicksInput;
+#if 0
 	std::shared_ptr<ouro::gpu::buffer> PicksOutput;
 	std::shared_ptr<ouro::gpu::buffer> PicksStaging;
- 	std::shared_ptr<ouro::gpu::compute_kernel> PickResourceShader;
+	std::shared_ptr<ouro::gpu::compute_kernel> PickResourceShader;
+#endif
 };
 
 oAPI bool oGfxPickBufferCreate(ouro::gpu::device* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer);

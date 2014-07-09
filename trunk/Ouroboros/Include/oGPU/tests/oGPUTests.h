@@ -42,7 +42,6 @@ namespace ouro {
 		void TESTquery();
 		void TESTrender_target(test_services& _Services);
 		void TESTspinning_triangle(test_services& _Services);
-		void TESTtexture_traits();
 		void TESTtexture1d(test_services& _Services);
 		void TESTtexture1dmip(test_services& _Services);
 		void TESTtexture2d(test_services& _Services);

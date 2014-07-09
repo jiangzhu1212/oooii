@@ -24,7 +24,6 @@
  **************************************************************************/
 #include "oD3D11Device.h"
 #include "oD3D11CommandList.h"
-#include "oD3D11Query.h"
 
 #include "d3d_compile.h"
 #include "d3d_debug.h"
@@ -136,11 +135,6 @@ const char* d3d11_device::name() const
 int d3d11_device::frame_id() const
 {
 	return FrameID;
-}
-
-bool d3d11_device::read_query(query* _pQuery, void* _pData, uint _SizeofData)
-{
-	return static_cast<d3d11_query*>(_pQuery)->read_query(ImmediateContext, _pData, _SizeofData);
 }
 
 bool d3d11_device::begin_frame()

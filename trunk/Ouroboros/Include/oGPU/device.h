@@ -152,9 +152,6 @@ class device
 public:
 	device_info get_info() const;
 	
-	// this value is incremented with each call to end-frame
-	uint frame_id() const;
-
 	// the immediate command list is always created with the device
 	command_list* immediate();
 
@@ -163,12 +160,15 @@ public:
 
 	// copies the contents of a query into the user-provided destination
 	bool read_query(void* destination, uint destination_size, const* source, bool blocking = false);
+#if 0
+	// this value is incremented with each call to end-frame
+	uint frame_id() const;
 
 	// all command_list api should be called between these apis
 	bool begin_frame();
 	void end_frame();
 
-	// After out of a begin_frame/end_frame bracket, the device can provide a 
+	// Out of a begin_frame/end_frame bracket, the device can provide a 
 	// handle to OS CPU-based rendering. All OS calls should occur in between 
 	// begin_os_frame and end_os_frame and this should be called after end_frame, 
 	// but before present to prevent tearing.
@@ -185,41 +185,6 @@ public:
 	void set_fullscreen_exclusive(bool fullscreen);
 
 	void present(uint present_interval);
-
-	// factory api
-#if 0
-	// rendering must be associated with the GUI for presentation
-	render_target* make_primary_render_target(window* 
-		, const surface::format& depth_stencil_format, bool enable_OS_rendering);
-	
-	// factory apis to create gpu resources all resources are associated with the
-	// creating device and should not be used with other devices.
-	command_list* make_command_list(const command_list_info& info, const char* debug_name = "");
-	render_target* make_render_target(const render_target_info& info, const char* debug_name = "");
-	query* make_query(const query_info& info, const char* debug_name = "");
-	vertex_layout* make_vertex_layout(const vertex_layout_info& info, const char* debug_name = "");
-	buffer* make_buffer(const buffer_info& info, const char* debug_name = "");
-	texture* make_texture(const texture_info& info, const char* debug_name = "");
-	vertex_shader* make_vertex_shader(const void* bytecode, const char* debug_name = "");
-	hull_shader* make_hull_shader(const void* bytecode, const char* debug_name = "");
-	domain_shader* make_domain_shader(const void* bytecode, const char* debug_name = "");
-	geometry_shader* make_geometry_shader(const void* bytecode, const char* debug_name = "");
-	pixel_shader* make_pixel_shader(const void* bytecode, const char* debug_name = "");
-	compute_shader* make_compute_shader(const void* bytecode, const char* debug_name = "");
-	
-	// use these to free made device objects
-	void unmake_command_list(command_list* cl);
-	void unmake_render_target(render_target* rt);
-	void unmake_query(query* q);
-	void unmake_vertex_layout(vertex_layout* vl);
-	void unmake_buffer(buffer* b);
-	void unmake_texture(texture* t);
-	void unmake_vertex_shader(vertex_shader* v);
-	void unmake_hull_shader(hull_shader* h);
-	void unmake_domain_shader(domain_shader* d);
-	void unmake_geometry_shader(geometry_shader* g);
-	void unmake_pixel_shader(pixel_shader* p);
-	void unmake_compute_shader(compute_shader* c);
 #endif
 };
 

@@ -158,7 +158,6 @@
     <ClCompile Include="Tests\TESTGPUTexture3DMip.cpp" />
     <ClCompile Include="Tests\TESTGPUTextureCube.cpp" />
     <ClCompile Include="Tests\TESTGPUTextureCubeMip.cpp" />
-    <ClCompile Include="Tests\TESTGPUTraits.cpp" />
     <ClCompile Include="Tests\TESTGPUTriangle.cpp" />
     <ClCompile Include="Tests\TESTGPUWindowInWindow.cpp" />
   </ItemGroup>

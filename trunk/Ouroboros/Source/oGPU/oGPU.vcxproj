@@ -144,6 +144,7 @@
     <ClInclude Include="..\..\Include\oGPU\texture2d.h" />
     <ClInclude Include="..\..\Include\oGPU\texture3d.h" />
     <ClInclude Include="..\..\Include\oGPU\texturecube.h" />
+    <ClInclude Include="..\..\Include\oGPU\timer_query.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layout.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h" />
@@ -161,7 +162,6 @@
     <ClInclude Include="oD3D11CommandList.h" />
     <ClInclude Include="oD3D11Device.h" />
     <ClInclude Include="oD3D11Pipeline.h" />
-    <ClInclude Include="oD3D11Query.h" />
     <ClInclude Include="oGPUCommon.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
@@ -186,7 +186,6 @@
     <ClCompile Include="oD3D11Device.cpp" />
     <ClCompile Include="oD3D11IO.cpp" />
     <ClCompile Include="oD3D11Pipeline.cpp" />
-    <ClCompile Include="oD3D11Query.cpp" />
     <ClCompile Include="oGPUUtilMesh.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -205,6 +204,7 @@
     <ClCompile Include="texture2d.cpp" />
     <ClCompile Include="texture3d.cpp" />
     <ClCompile Include="texturecube.cpp" />
+    <ClCompile Include="timer_query.cpp" />
     <ClCompile Include="vertex_buffer.cpp" />
     <ClCompile Include="vertex_layout.cpp" />
   </ItemGroup>

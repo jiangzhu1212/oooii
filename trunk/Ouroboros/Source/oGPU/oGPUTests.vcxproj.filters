@@ -64,9 +64,6 @@
     <ClCompile Include="Tests\TESTGPUTextureCubeMip.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTGPUTraits.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTGPUTriangle.cpp">
       <Filter>Source</Filter>
     </ClCompile>

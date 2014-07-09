@@ -47,7 +47,7 @@ public:
 	virtual void SetViewProjection(float4x4 _ViewMatrixLH, float4x4 _ProjectionMatrixLH) = 0;
 	virtual void GetTransform(float4x4 *_pTransform) const = 0;
 	virtual void SetTransform(const float4x4& _Transform) = 0;
-
+#if 0
 	// A GPU Manipulator is made up of Lines and Meshes for visulazation.  
 	// These lines and meshes should be drawn with some sort of ObjectID
 	// picking shader to determine if they are picked.  When drawing lines
@@ -56,6 +56,7 @@ public:
 	virtual void GetManipulatorPickLineMeshes(ouro::gpu::command_list* _pCommandList, std::function<void(ouro::gpu::util_mesh* _pMesh, uint _ObjectID)> _Callback) = 0;
 	virtual void GetManipulatorVisualLines(ouro::gpu::command_list* _pCommandList, std::function<void(ouro::gpu::buffer* _pLineList, uint _NumLines)> _Callback) = 0;
 	virtual void GetManipulatorMeshes(ouro::gpu::command_list* _pCommandList, std::function<void(ouro::gpu::util_mesh* _pMesh, float4x4 _Transform, ouro::color _MeshColor, uint _ObjectID)> _Callback) = 0;
+#endif
 };
 
 bool oGfxManipulatorCreate(const char* _Name, const oGfxManipulator::DESC& _Desc, ouro::gpu::device* _pDevice, oGfxManipulator** _ppManipulator);

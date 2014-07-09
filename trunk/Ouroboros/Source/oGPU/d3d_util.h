@@ -111,6 +111,11 @@ intrusive_ptr<Resource> make_cpu_copy(Resource* src, bool do_copy = true);
 // compared to the source.
 void copy(ID3D11Resource* r, uint subresource, surface::mapped_subresource& dst, bool flip_vertically = false);
 
+// blocks until async's data is available and can be read into dst. This must be
+// called outside dc's begin/end block.
+bool copy_async_data(DeviceContext* dc, Asynchronous* async, void* dst, uint dst_size, bool blocking = true);
+template<typename T> bool copy_async_data(DeviceContext* dc, Asynchronous* async, T* data, bool blocking = true) { return copy_async_data(dc, async, data, sizeof(T), blocking); }
+
 // copies the contents of t to a new surface buffer
 std::shared_ptr<surface::buffer> make_snapshot(Texture2D* t);
 

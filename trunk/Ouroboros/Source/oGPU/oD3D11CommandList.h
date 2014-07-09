@@ -47,8 +47,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	command_list_info get_info() const override;
 	void begin() override;
 	void end() override;
-	void begin_query(query* _pQuery) override;
-	void end_query(query* _pQuery) override;
 	void flush() override;
 	void reset() override;
 	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) override;
@@ -66,8 +64,6 @@ oDEVICE_CHILD_CLASS(command_list)
 	intrusive_ptr<ID3D11CommandList> CommandList;
 	command_list_info Info;
 	D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology;
-
-	void set_vertex_buffers(const buffer* _pIndexBuffer, uint _StartSlot, uint _NumVertexBuffers, const buffer* const* _ppVertexBuffers, uint _StartVertex = 0);
 };
 
 oGPU_NAMESPACE_END
