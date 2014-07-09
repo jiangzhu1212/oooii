@@ -130,6 +130,7 @@
     <ClInclude Include="..\..\Include\oGPU\compute_target.h" />
     <ClInclude Include="..\..\Include\oGPU\constant_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\depth_target.h" />
+    <ClInclude Include="..\..\Include\oGPU\device.h" />
     <ClInclude Include="..\..\Include\oGPU\index_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h" />
@@ -180,7 +181,6 @@
     <ClCompile Include="d3d_util.cpp" />
     <ClCompile Include="depth_target.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
-    <ClCompile Include="gpu.cpp" />
     <ClCompile Include="index_buffer.cpp" />
     <ClCompile Include="oD3D11CommandList.cpp" />
     <ClCompile Include="oD3D11Device.cpp" />

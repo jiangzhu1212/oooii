@@ -61,7 +61,7 @@ public:
 			device_init i;
 			i.debug_name = "TestDevice";
 			i.version = version(10,0);
-			i.driver_debug_level = gpu::debug_level::normal;
+			i.enable_driver_reporting = true;
 			Device = device::make(i);
 		}
 

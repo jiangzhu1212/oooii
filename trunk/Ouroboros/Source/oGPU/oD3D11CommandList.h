@@ -32,9 +32,6 @@
 
 oGPU_NAMESPACE_BEGIN
 
-// Abstracts the differences between a texture and a buffer
-ID3D11Resource* get_subresource(resource1* _pResource, int _Subresource, uint* _pD3DSubresourceIndex);
-
 oDEVICE_CHILD_CLASS(command_list)
 {
 	oDEVICE_CHILD_DECLARATION(command_list)

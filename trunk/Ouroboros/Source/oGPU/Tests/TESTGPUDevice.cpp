@@ -34,7 +34,7 @@ namespace ouro {
 void TESTdevice(test_services& _Services)
 {
 	device_init init("GPU device");
-	init.driver_debug_level = debug_level::normal;
+	init.enable_driver_reporting = true;
 	init.version = version(10,0); // for more compatibility when running on varied machines
 	std::shared_ptr<device> d = device::make(init);
 	device_info i = d->get_info();

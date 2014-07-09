@@ -48,7 +48,7 @@ public:
 	// if the value is negative, then the timing is not yet ready. This throws on
 	// error such as HW removed that would cause the timer to return but with 
 	// unreliable results.
-	double get_time(device* dev, bool blocking = true);
+	double get_time(bool blocking = true);
 
 private:
 	void* impl[3];

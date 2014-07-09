@@ -90,10 +90,13 @@ void timer_query::end(command_list* cl)
 	dc->End((Query*)impl[timer_query_part::disjoint]);
 }
 
-double timer_query::get_time(device* dev, bool blocking)
+double timer_query::get_time(bool blocking)
 {
+	intrusive_ptr<Device> dev;
+	((Query*)impl[timer_query_part::start])->GetDevice(&dev);
+
 	intrusive_ptr<DeviceContext> dc;
-	get_device(dev)->GetImmediateContext(&dc);
+	dev->GetImmediateContext(&dc);
 
 	ullong results[timer_query_part::count];
 	

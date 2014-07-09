@@ -39,7 +39,7 @@ void TESTbuffer()
 	static int GPU_BufferAppendIndices[20] = { 5, 6, 7, 18764, 2452, 2423, 52354, 344, -1542, 3434, 53, -4535, 3535, 88884747, 534535, 88474, -445, 4428855, -1235, 4661};
 	
 	device_init init("GPU Buffer test");
-	init.driver_debug_level = debug_level::normal;
+	init.enable_driver_reporting = true;
 	std::shared_ptr<device> Device = device::make(init);
 
 	rwstructured_buffer AppendBuffer;

@@ -40,6 +40,7 @@
 #include <oSurface/buffer.h>
 #include <array>
 
+#include <oGPU/device.h>
 #include <oGPU/shader.h>
 #include <oGPU/state.h>
 #include <oGPU/vertex_layouts.h>
@@ -47,150 +48,10 @@
 #include <oGUI/oGUI.h> // only for ouro::draw_context_handle... can it be abstracted
 
 namespace ouro {
-
-class window;
-
 	namespace gpu {
-
-		namespace oGPUUtilLayout { enum value; }
-
-static const uint max_num_input_slots = 3;
-static const uint max_num_unordered_buffers = 8;
-static const uint max_num_viewports = 16;
-//static const uint max_num_mrts = 8;
 
 // _____________________________________________________________________________
 // Device concepts
-
-namespace debug_level
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	none, // No driver debug reporting
-	normal, // Trivial/auto-handled warnings by driver squelched
-	unfiltered, // No suppression of driver warnings
-	
-	count,
-
-};}
-
-namespace resource_type
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	buffer,
-	texture1,
-
-	count,
-
-};}
-
-struct device_init
-{
-	device_init(const char* _DebugName = "GPU device")
-		: debug_name(_DebugName)
-		, version(11,0)
-		, min_driver_version(0,0)
-		, driver_debug_level(debug_level::none)
-		, adapter_index(0)
-		, virtual_desktop_position(oDEFAULT, oDEFAULT)
-		, use_software_emulation(false)
-		, use_exact_driver_version(false)
-		, multithreaded(true)
-	{}
-
-	// Name associated with this device in debug output
-	sstring debug_name;
-
-	// The version of the underlying API to use.
-	struct version version;
-
-	// The minimum version of the driver required to successfully create the 
-	// device. If the driver version is 0.0.0.0 (the default) then a hard-coded
-	// internal value is used based on QA verificiation.
-	struct version min_driver_version;
-
-	// Specify to what degree driver warnings/errors are reported. GPU-level 
-	// errors and warnings are always reported.
-	debug_level::value driver_debug_level;
-
-	// If virtual_desktop_position is oDEFAULT, oDEFAULT then use the nth found
-	// device as specified by this Index. If virtual_desktop_position is anything
-	// valid then the device used to handle that desktop position will be used
-	// and adapter_index is ignored.
-	int adapter_index;
-
-	// Position on the desktop and thus on a monitor to be used to determine which 
-	// GPU is used for that monitor and create a device for that GPU.
-	int2 virtual_desktop_position;
-
-	// Allow SW emulation for the specified version. If false, a create will fail
-	// if HW acceleration is not available.
-	bool use_software_emulation;
-
-	// If true, == is used to match min_driver_version to the specified GPU's 
-	// driver. If false cur_version >= min_driver_version is used.
-	bool use_exact_driver_version;
-
-	// If true, the device is thread-safe.
-	bool multithreaded;
-};
-
-struct device_info
-{
-	device_info()
-		: native_memory(0)
-		, dedicated_system_memory(0)
-		, shared_system_memory(0)
-		, adapter_index(0)
-		, api(gpu_api::unknown)
-		, vendor(vendor::unknown)
-		, is_software_emulation(false)
-		, debug_reporting_enabled(false)
-	{}
-
-	// Name associated with this device in debug output
-	sstring debug_name;
-
-	// Description as provided by the device vendor
-	mstring device_description;
-
-	// Description as provided by the driver vendor
-	mstring driver_description;
-
-	// Number of bytes present on the device (AKA VRAM)
-	ullong native_memory;
-
-	// Number of bytes reserved by the system to accommodate data transfer to the 
-	// device
-	ullong dedicated_system_memory;
-
-	// Number of bytes reserved in system memory used instead of a separate bank 
-	// of NativeMemory 
-	ullong shared_system_memory;
-
-	// The version for the software that supports the native API. This depends on 
-	// the API type being used.
-	version driver_version;
-
-	// The feature level the device supports. This depends on the API type being 
-	// used.
-	version feature_version; 
-
-	// The zero-based index of the adapter. This may be different than what is 
-	// specified in device_init in certain debug/development modes.
-	int adapter_index;
-
-	// Describes the API used to implement the oGPU API
-	gpu_api::value api;
-
-	// Describes the company that made the device.
-	vendor::value vendor;
-
-	// True if the device was created in software emulation mode.
-	bool is_software_emulation;
-
-	// True if the device was created with debug reporting enabled.
-	bool debug_reporting_enabled;
-};
 
 // Main SW abstraction for a graphics processor. The class is defined below since it uses
 // all other objects defined in this header.
@@ -210,27 +71,6 @@ public:
 
 	// Returns the identifier as specified at create time.
 	virtual const char* name() const = 0;
-};
-
-class resource1 : public device_child
-{
-	// Anything that contains data intended primarily for read-only access by the 
-	// GPU processor is a resource1. This does not exclude write access but 
-	// generally differentiates these objects from process and target classs
-	// that are mostly write-only.
-
-public:
-	// Returns the type of this resource1.
-	virtual resource_type::value type() const = 0;
-
-	// Returns an ID for this resource1 fit for use as a hash.
-	virtual uint id() const = 0;
-
-	// Returns the component sizes of a subresource. X is the RowSize or the 
-	// number of valid bytes in one scanline of a texture or the size of one 
-	// element of any other buffer. Y is the number of scanlines/rows in a 
-	// texture or the number of elements in the buffer.
-	virtual uint2 byte_dimensions(int _Subresource) const = 0;
 };
 
 // _____________________________________________________________________________
@@ -301,9 +141,6 @@ public:
 	virtual void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) = 0;
 	inline void set_sampler(uint _StartSlot, const sampler_state::value& _SamplerState) { set_samplers(_StartSlot, 1, &_SamplerState); }
 
-	// _____________________________________________________________________________
-	// Rasterization-specific
-
 	virtual void set_pipeline(const pipeline1* _pPipeline) = 0;
 	inline void set_pipeline(const std::shared_ptr<pipeline1>& _pPipeline) { set_pipeline(_pPipeline.get()); }
 
@@ -315,9 +152,6 @@ public:
 
 	// Set the depth-stencil state in this context
 	virtual void set_depth_stencil_state(const depth_stencil_state::value& _State) = 0;
-
-	// _____________________________________________________________________________
-	// Compute-specific
 };
 
 class device
