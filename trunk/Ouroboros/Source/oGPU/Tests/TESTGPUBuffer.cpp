@@ -57,10 +57,6 @@ void TESTbuffer()
 	scoped_device_frame DevFrame(Device.get());
 	scoped_command_line_frame CommandListFrame(CommandList.get());
 
-	CommandList->set_blend_state(blend_state::opaque);
-	CommandList->set_depth_stencil_state(depth_stencil_state::none);
-	CommandList->set_rasterizer_state(rasterizer_state::two_sided);
-
 	AppendBuffer.set_draw_target(CommandList.get(), 0);
 
 	CommandList->set_pipeline(Pipeline);

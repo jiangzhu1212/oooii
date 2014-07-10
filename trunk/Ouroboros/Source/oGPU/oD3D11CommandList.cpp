@@ -115,11 +115,6 @@ void d3d11_command_list::reset()
 	Context->ClearState();
 }
 
-void d3d11_command_list::set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState)
-{
-	dev()->SamplerStates.set(this, _StartSlot, _NumStates, _pSamplerState);
-}
-
 void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 {
 	if (_pPipeline)
@@ -147,21 +142,6 @@ void d3d11_command_list::set_pipeline(const pipeline1* _pPipeline)
 		Context->GSSetShader(nullptr, nullptr, 0);
 		Context->PSSetShader(nullptr, nullptr, 0);
 	}
-}
-
-void d3d11_command_list::set_rasterizer_state(const rasterizer_state::value& _State)
-{
-	dev()->RasterizerStates.set(this, _State);
-}
-
-void d3d11_command_list::set_blend_state(const blend_state::value& _State)
-{
-	dev()->BlendStates.set(this, _State);
-}
-
-void d3d11_command_list::set_depth_stencil_state(const depth_stencil_state::value& _State)
-{
-	dev()->DepthStencilStates.set(this, _State);
 }
 
 oGPU_NAMESPACE_END

@@ -28,9 +28,6 @@
     <ClCompile Include="d3d11_as_string.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
-    <ClCompile Include="state.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="d3d_prim.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
@@ -106,6 +103,18 @@
     <ClCompile Include="timer_query.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="sampler_state.cpp">
+      <Filter>Source\states</Filter>
+    </ClCompile>
+    <ClCompile Include="rasterizer_state.cpp">
+      <Filter>Source\states</Filter>
+    </ClCompile>
+    <ClCompile Include="depth_stencil_state.cpp">
+      <Filter>Source\states</Filter>
+    </ClCompile>
+    <ClCompile Include="blend_state.cpp">
+      <Filter>Source\states</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="oGPUCommon.h">
@@ -137,9 +146,6 @@
     </ClInclude>
     <ClInclude Include="d3d11_as_string.h">
       <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\state.h">
-      <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\vertex_layout.h">
       <Filter>Headers</Filter>
@@ -225,6 +231,18 @@
     <ClInclude Include="..\..\Include\oGPU\device.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\blend_state.h">
+      <Filter>Headers\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\depth_stencil_state.h">
+      <Filter>Headers\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\rasterizer_state.h">
+      <Filter>Headers\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\sampler_state.h">
+      <Filter>Headers\states</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">
@@ -259,6 +277,12 @@
     </Filter>
     <Filter Include="Source\targets">
       <UniqueIdentifier>{7851f528-80be-42d3-bb05-7999692c08e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\states">
+      <UniqueIdentifier>{fc4a36e6-7848-428f-96c8-3f264d379b4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\states">
+      <UniqueIdentifier>{d308483a-f0dd-4805-ae25-be96e2aca6de}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

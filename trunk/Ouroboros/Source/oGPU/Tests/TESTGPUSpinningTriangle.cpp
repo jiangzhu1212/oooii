@@ -68,9 +68,9 @@ public:
 
 		TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
-		CommandList->set_blend_state(blend_state::opaque);
-		CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
-		CommandList->set_rasterizer_state(rasterizer_state::two_sided);
+		BlendState.set(CommandList.get(), blend_state::opaque);
+		DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
+		RasterizerState.set(CommandList.get(), rasterizer_state::two_sided);
 		TestConstants.set(CommandList.get(), 0);
 
 		const constant_buffer* CBs[2] = { &TestConstants, &InstanceList };

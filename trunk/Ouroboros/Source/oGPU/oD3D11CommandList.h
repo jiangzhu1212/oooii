@@ -46,16 +46,9 @@ oDEVICE_CHILD_CLASS(command_list)
 	void end() override;
 	void flush() override;
 	void reset() override;
-	void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) override;
-
-	// _____________________________________________________________________________
-	// Rasterization-specific
 
 	void set_pipeline(const pipeline1* _pPipeline) override;
-	void set_rasterizer_state(const rasterizer_state::value& _State) override;
-	void set_blend_state(const blend_state::value& _State) override;
-	void set_depth_stencil_state(const depth_stencil_state::value& _State) override;
-
+	
 	device* WeakDevice;
 	intrusive_ptr<ID3D11DeviceContext> Context;
 	intrusive_ptr<ID3D11CommandList> CommandList;

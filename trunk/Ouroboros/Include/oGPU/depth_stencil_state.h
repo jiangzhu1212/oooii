@@ -22,46 +22,49 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
+#pragma once
+#ifndef oGPU_depth_stencil_state_h
+#define oGPU_depth_stencil_state_h
 
-using namespace ouro::gpu;
+#include <oBase/macros.h>
+#include <array>
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace gpu {
 
-static const int sSnapshotFrames[] = { 0 };
-static const bool kIsDevMode = false;
+class device;
+class command_list;
 
-struct gpu_test_triangle : public gpu_test
+class depth_stencil_state
 {
-	gpu_test_triangle() : gpu_test("GPU test: triangle", kIsDevMode, sSnapshotFrames) {}
-
-	void initialize() override
+public:
+	enum value : uchar
 	{
-		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
-		Mesh.initialize_first_triangle(Device.get());
-	}
+		// No depth or stencil operation.
+		none,
 
-	void render() override
-	{
-		CommandList->begin();
-		BlendState.set(CommandList.get(), blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), depth_stencil_state::none);
-		RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
-		CommandList->set_pipeline(Pipeline);
-		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
-		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
-		Mesh.draw(CommandList.get());
-		CommandList->end();
-	}
+		// normal z-buffering mode where if occluded or same value (<= less_equal 
+		// comparison), exit else render and write new Z value. No stencil operation.
+		test_and_write,
+	
+		// test depth only using same method as test-and-write but do not write. No 
+		// stencil operation.
+		test,
+	
+		count,
+	};
+
+	depth_stencil_state() { states.fill(nullptr); }
+	~depth_stencil_state() { deinitialize(); }
+
+	void initialize(device* dev);
+	void deinitialize();
+
+	void set(command_list* cl, const value& state, uint stencil_ref = 0);
 
 private:
-	std::shared_ptr<pipeline1> Pipeline;
-	util_mesh Mesh;
+	std::array<void*, count> states;
 };
 
-oGPU_COMMON_TEST(triangle);
+}}
 
-	} // namespace tests
-} // namespace ouro
+#endif
