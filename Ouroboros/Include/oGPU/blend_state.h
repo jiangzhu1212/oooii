@@ -22,46 +22,50 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oPlatform/oTest.h>
-#include "oGPUTestCommon.h"
+#pragma once
+#ifndef oGPU_blend_state_h
+#define oGPU_blend_state_h
 
-using namespace ouro::gpu;
+#include <array>
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace gpu {
 
-static const int sSnapshotFrames[] = { 0 };
-static const bool kIsDevMode = false;
+class device;
+class command_list;
 
-struct gpu_test_triangle : public gpu_test
+class blend_state
 {
-	gpu_test_triangle() : gpu_test("GPU test: triangle", kIsDevMode, sSnapshotFrames) {}
-
-	void initialize() override
+public:
+	enum value : uchar
 	{
-		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
-		Mesh.initialize_first_triangle(Device.get());
-	}
+		// Blend mode math from http://en.wikipedia.org/wiki/Blend_modes
 
-	void render() override
-	{
-		CommandList->begin();
-		BlendState.set(CommandList.get(), blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), depth_stencil_state::none);
-		RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
-		CommandList->set_pipeline(Pipeline);
-		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
-		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
-		Mesh.draw(CommandList.get());
-		CommandList->end();
-	}
+		opaque, // Output.rgba = Source.rgba
+		alpha_test, // Same as opaque, test is done in user code
+		accumulate, // Output.rgba = Source.rgba + Destination.rgba
+		additive, // Output.rgb = Source.rgb * Source.a + Destination.rgb
+		multiply, // Output.rgb = Source.rgb * Destination.rgb
+		screen, // Output.rgb = Source.rgb * (1 - Destination.rgb) + Destination.rgb (as reduced from webpage's 255 - [((255 - Src)*(255 - Dst))/255])
+		translucent, // Output.rgb = Source.rgb * Source.a + Destination.rgb * (1 - Source.a)
+		minimum, // Output.rgba = min(Source.rgba, Destination.rgba)
+		maximum, // Output.rgba = max(Source.rgba, Destination.rgba)
+
+		count,
+	};
+
+	blend_state() { states.fill(nullptr); }
+	~blend_state() { deinitialize(); }
+
+	void initialize(device* dev);
+	void deinitialize();
+
+	void set(command_list* cl, const value& state);
+	void set(command_list* cl, const value& state, const float blend_factor[4], uint sample_mask = 0xffffffff);
 
 private:
-	std::shared_ptr<pipeline1> Pipeline;
-	util_mesh Mesh;
+	std::array<void*, count> states;
 };
 
-oGPU_COMMON_TEST(triangle);
+}}
 
-	} // namespace tests
-} // namespace ouro
+#endif

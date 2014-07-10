@@ -94,9 +94,10 @@ private:
 	{
 		_pCommandList->begin();
 		rt.clear(_pCommandList, deep_sky_blue);
-		_pCommandList->set_blend_state(blend_state::opaque);
-		_pCommandList->set_depth_stencil_state(depth_stencil_state::none);
-		_pCommandList->set_rasterizer_state(rasterizer_state::front_face);
+		BlendState.set(CommandList.get(), blend_state::opaque);
+		DepthStencilState.set(CommandList.get(), depth_stencil_state::none);
+		RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
+		SamplerState.set(CommandList.get(), 0, sampler_state::linear_wrap);
 		_pCommandList->set_pipeline(PLPassThrough);
 		rt.set_draw_target(_pCommandList);
 		Triangle.draw(_pCommandList);
@@ -117,11 +118,11 @@ private:
 
 		TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
-		_pCommandList->set_blend_state(blend_state::opaque);
-		_pCommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
-		_pCommandList->set_rasterizer_state(rasterizer_state::front_face);
+		BlendState.set(CommandList.get(), blend_state::opaque);
+		DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
+		RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
+		SamplerState.set(CommandList.get(), 0, sampler_state::linear_wrap);
 		TestConstants.set(_pCommandList, 0);
-		_pCommandList->set_sampler(0, sampler_state::linear_wrap);
 		texture.set(_pCommandList, 0);
 		_pCommandList->set_pipeline(PLTexture);
 		PrimaryColorTarget.clear(_pCommandList, get_clear_color());

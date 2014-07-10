@@ -96,6 +96,10 @@ protected:
 	std::shared_ptr<window> Window;
 	std::shared_ptr<gpu::device> Device;
 	std::shared_ptr<gpu::command_list> CommandList;
+	gpu::blend_state BlendState;
+	gpu::depth_stencil_state DepthStencilState;
+	gpu::rasterizer_state RasterizerState;
+	gpu::sampler_state SamplerState;
 	gpu::primary_target PrimaryColorTarget;
 	gpu::depth_target PrimaryDepthTarget;
 };

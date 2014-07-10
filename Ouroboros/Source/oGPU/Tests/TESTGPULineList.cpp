@@ -84,9 +84,11 @@ public:
 
 		LineList.update(CommandList.get(), 0, 3, lines);
 		LineList.set(CommandList.get(), 0);
-		CommandList->set_blend_state(gpu::blend_state::opaque);
-		CommandList->set_depth_stencil_state(gpu::depth_stencil_state::none);
-		CommandList->set_pipeline(Pipeline);
+
+		BlendState.set(CommandList.get(), blend_state::opaque);
+		DepthStencilState.set(CommandList.get(), depth_stencil_state::none);
+		RasterizerState.set(CommandList.get(), rasterizer_state::two_sided);
+		SamplerState.set(CommandList.get(), 0, sampler_state::linear_wrap);
 
 		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
 		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);

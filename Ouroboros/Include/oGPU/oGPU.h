@@ -42,7 +42,10 @@
 
 #include <oGPU/device.h>
 #include <oGPU/shader.h>
-#include <oGPU/state.h>
+#include <oGPU/blend_state.h>
+#include <oGPU/depth_stencil_state.h>
+#include <oGPU/rasterizer_state.h>
+#include <oGPU/sampler_state.h>
 #include <oGPU/vertex_layouts.h>
 
 #include <oGUI/oGUI.h> // only for ouro::draw_context_handle... can it be abstracted
@@ -137,21 +140,9 @@ public:
 	// a clean slate.
 	virtual void reset() = 0;
 
-	// Set the texture sampler states in this context
-	virtual void set_samplers(uint _StartSlot, uint _NumStates, const sampler_state::value* _pSamplerState) = 0;
-	inline void set_sampler(uint _StartSlot, const sampler_state::value& _SamplerState) { set_samplers(_StartSlot, 1, &_SamplerState); }
-
 	virtual void set_pipeline(const pipeline1* _pPipeline) = 0;
 	inline void set_pipeline(const std::shared_ptr<pipeline1>& _pPipeline) { set_pipeline(_pPipeline.get()); }
 
-	// Set the rasterization state in this context
-	virtual void set_rasterizer_state(const rasterizer_state::value& _State) = 0;
-
-	// Set the output merger (blend) state in this context
-	virtual void set_blend_state(const blend_state::value& _State) = 0;
-
-	// Set the depth-stencil state in this context
-	virtual void set_depth_stencil_state(const depth_stencil_state::value& _State) = 0;
 };
 
 class device

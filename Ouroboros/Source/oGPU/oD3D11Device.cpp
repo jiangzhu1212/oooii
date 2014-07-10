@@ -104,11 +104,6 @@ d3d11_device::d3d11_device(const device_init& _Init)
 		sncatf(CSName, ".NoopCS");
 		NoopCS.initialize(CSName, this, CSNoop);
 	}
-
-	SamplerStates.initialize(this);
-	RasterizerStates.initialize(this);
-	BlendStates.initialize(this);
-	DepthStencilStates.initialize(this);
 }
 
 void d3d11_device::intialize_immediate_context()

@@ -126,21 +126,24 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oGPU\blend_state.h" />
     <ClInclude Include="..\..\Include\oGPU\color_target.h" />
     <ClInclude Include="..\..\Include\oGPU\compute_target.h" />
     <ClInclude Include="..\..\Include\oGPU\constant_buffer.h" />
+    <ClInclude Include="..\..\Include\oGPU\depth_stencil_state.h" />
     <ClInclude Include="..\..\Include\oGPU\depth_target.h" />
     <ClInclude Include="..\..\Include\oGPU\device.h" />
     <ClInclude Include="..\..\Include\oGPU\index_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h" />
     <ClInclude Include="..\..\Include\oGPU\primary_target.h" />
+    <ClInclude Include="..\..\Include\oGPU\rasterizer_state.h" />
     <ClInclude Include="..\..\Include\oGPU\raw_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\readback_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\resource.h" />
     <ClInclude Include="..\..\Include\oGPU\rwstructured_buffer.h" />
+    <ClInclude Include="..\..\Include\oGPU\sampler_state.h" />
     <ClInclude Include="..\..\Include\oGPU\shader.h" />
-    <ClInclude Include="..\..\Include\oGPU\state.h" />
     <ClInclude Include="..\..\Include\oGPU\texture1d.h" />
     <ClInclude Include="..\..\Include\oGPU\texture2d.h" />
     <ClInclude Include="..\..\Include\oGPU\texture3d.h" />
@@ -167,6 +170,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="blend_state.cpp" />
     <ClCompile Include="color_target.cpp" />
     <ClCompile Include="compute_target.cpp" />
     <ClCompile Include="constant_buffer.cpp" />
@@ -179,6 +183,7 @@
     <ClCompile Include="d3d_include.cpp" />
     <ClCompile Include="d3d_prim.cpp" />
     <ClCompile Include="d3d_util.cpp" />
+    <ClCompile Include="depth_stencil_state.cpp" />
     <ClCompile Include="depth_target.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
     <ClCompile Include="index_buffer.cpp" />
@@ -194,12 +199,13 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="primary_target.cpp" />
+    <ClCompile Include="rasterizer_state.cpp" />
     <ClCompile Include="raw_buffer.cpp" />
     <ClCompile Include="readback_buffer.cpp" />
     <ClCompile Include="resource.cpp" />
     <ClCompile Include="rwstructured_buffer.cpp" />
+    <ClCompile Include="sampler_state.cpp" />
     <ClCompile Include="shader.cpp" />
-    <ClCompile Include="state.cpp" />
     <ClCompile Include="texture1d.cpp" />
     <ClCompile Include="texture2d.cpp" />
     <ClCompile Include="texture3d.cpp" />

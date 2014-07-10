@@ -65,6 +65,10 @@ void gpu_test::create(const char* _Title, bool _DevMode, const int* _pSnapshotFr
 	PrimaryColorTarget.initialize(Window.get(), Device.get(), true);
 	uint2 dim = PrimaryColorTarget.dimensions();
 	PrimaryDepthTarget.initialize("Depth", Device.get(), surface::d24_unorm_s8_uint, dim.x, dim.y, 0, false, 0);
+	BlendState.initialize(Device.get());
+	DepthStencilState.initialize(Device.get());
+	RasterizerState.initialize(Device.get());
+	SamplerState.initialize(Device.get());
 	CommandList = Device->get_immediate_command_list();
 }
 
@@ -156,11 +160,11 @@ void gpu_texture_test::render()
 
 	TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
 
-	CommandList->set_blend_state(blend_state::opaque);
-	CommandList->set_depth_stencil_state(depth_stencil_state::test_and_write);
-	CommandList->set_rasterizer_state(rasterizer_state::front_face);
+	BlendState.set(CommandList.get(), blend_state::opaque);
+	DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
+	RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
+	SamplerState.set(CommandList.get(), 0, sampler_state::linear_wrap);
 	TestConstants.set(CommandList.get(), 0);
-	CommandList->set_sampler(0, sampler_state::linear_wrap);
 	resource::set(CommandList.get(), 0, 1, &pResource);
 	CommandList->set_pipeline(Pipeline);
 	PrimaryColorTarget.clear(CommandList.get(), get_clear_color());

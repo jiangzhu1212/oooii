@@ -273,6 +273,10 @@ private:
 	std::shared_ptr<window> Parent;
 	std::shared_ptr<gpu::device> Device;
 	std::shared_ptr<gpu::command_list> CommandList;
+	gpu::blend_state BlendState;
+	gpu::depth_stencil_state DepthStencilState;
+	gpu::rasterizer_state RasterizerState;
+	gpu::sampler_state SamplerState;
 	gpu::primary_target WindowColorTarget;
 	gpu::depth_target WindowDepthTarget;
 	std::shared_ptr<gpu::pipeline1> Pipeline;
@@ -296,13 +300,18 @@ oGPUWindowThread::oGPUWindowThread()
 	, ClearColor(black)
 {
 	gpu::device_init di;
-	di.driver_debug_level = gpu::debug_level::normal;
+	di.enable_driver_reporting = true;
 	try { Device = gpu::device::make(di); }
 	catch (std::exception&)
 	{
 		Running = false;
 		return;
 	}
+
+	BlendState.initialize(Device.get());
+	DepthStencilState.initialize(Device.get());
+	RasterizerState.initialize(Device.get());
+	SamplerState.initialize(Device.get());
 
 	Pipeline = Device->make_pipeline1(oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH));
 	Mesh.initialize_first_triangle(Device.get());
@@ -434,9 +443,12 @@ void oGPUWindowThread::Render()
 		CommandList->begin();
 		WindowColorTarget.clear(CommandList.get(), ClearColor);
 		WindowColorTarget.set_draw_target(CommandList.get(), WindowDepthTarget);
-		CommandList->set_blend_state(gpu::blend_state::opaque);
-		CommandList->set_depth_stencil_state(gpu::depth_stencil_state::none);
-		CommandList->set_rasterizer_state(gpu::rasterizer_state::front_face);
+		
+		BlendState.set(CommandList.get(), gpu::blend_state::opaque);
+		DepthStencilState.set(CommandList.get(), gpu::depth_stencil_state::none);
+		RasterizerState.set(CommandList.get(), gpu::rasterizer_state::front_face);
+		SamplerState.set(CommandList.get(), 0, gpu::sampler_state::linear_wrap);
+		
 		CommandList->set_pipeline(Pipeline);
 
 		Mesh.draw(CommandList.get());
