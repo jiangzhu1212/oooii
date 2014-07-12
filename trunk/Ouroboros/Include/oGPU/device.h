@@ -27,6 +27,7 @@
 #define oGPU_device_h
 
 #include <oBase/gpu_api.h>
+#include <oBase/vendor.h>
 
 namespace ouro { namespace gpu {
 

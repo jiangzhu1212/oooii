@@ -25,8 +25,8 @@
 // http://preshing.com/20130605/the-worlds-simplest-lock-free-hash-table/
 // A simple concurrent hash map
 // Rules:
-// A hash value of 0 is not allowed - it is used to flag invalid entries
-// A value of invalid_value is not allowed - it is used to flag invalid entries
+// A hash value of nullkey is not allowed - it is used to flag invalid entries
+// A value of nullidx is not allowed - it is used to flag invalid entries
 // The hash cannot be resized. To make a bigger hash, create a new one and re-hash 
 // all entries.
 #pragma once
@@ -42,6 +42,7 @@ public:
 	typedef unsigned int value_type;
 	typedef unsigned int size_type;
 
+	static const key_type nullkey = key_type(-1);
 	static const value_type nullidx = value_type(-1);
 
 
@@ -97,12 +98,12 @@ public:
 	inline bool needs_resize() const { return occupancy() > 75; }
 
 	// walk through nullidx entries and eviscerate the entries to reduce 
-	// occupancy. Returns the number reclaimed
+	// occupancy. Returns the number reclaimed.
 	size_type reclaim();
 
 	// walks through valid entries and inserts them into the specified hash 
 	// map up until the specified number of inserts was done.
-	size_type migrate(concurrent_hash_map& _That, size_type max_moves = size_type(-1));
+	size_type migrate(concurrent_hash_map& that, size_type max_moves = size_type(-1));
 
 	
 	// concurrent api

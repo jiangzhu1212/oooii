@@ -57,8 +57,11 @@ public:
 
 	typedef unsigned int size_type;
 	typedef unsigned int index_type;
+	typedef unsigned long long hash_type;
 	typedef void* const* entry_type;
 	static const index_type nullidx = index_type(-1);
+
+	static hash_type hash(const char* name);
 	
 	// non-concurrent api
 
@@ -106,7 +109,7 @@ public:
 
 	// Flushs the Makes and Unmakes queues. This should be called from the thread where 
 	// all device operations have to occur. Returns the number of operations completed.
-	size_type flush(size_type max_operations);
+	size_type flush(size_type max_operations = ~0u);
 
 
 	// concurrent api
@@ -114,28 +117,34 @@ public:
 	// returns a pointer to an asset. The asset itself may be reloaded or unmade
 	// but this pointer will be stable and useable until remove is called on it
 	// and the next flush() is called.
-	entry_type get(const char* name) const;
+	entry_type get(hash_type key) const;
+	inline entry_type get(const char* name) const { return get(hash(name)); }
 
 	// returns the name of the entry or the empty string if _pAsset is not an entry
 	// in this registry.
 	const char* name(entry_type entry) const;
+	inline const char* name(hash_type key) const { return name(get(key)); }
 	
 	// Creates a runtime object from the compiled source and returns a handle to it that.
-	// will be valid until it is removed. If _Compiled is a nullptr then the entry will
+	// will be valid until it is removed. If compiled is a nullptr then the entry will
 	// be set to the error asset. If another thread calls make the most-correct will win,
 	// i.e. either a valid cached version or a thread attempting to make a new entry if
-	// thee entry is missing or in error.
-	entry_type make(const char* name, scoped_allocation& compiled, bool force = false);
-	entry_type make(const char* name, scoped_allocation& compiled, const path& path, bool force = false);
+	// the entry is missing or in error. There is an explicit-key version that is useful
+	// if some values come from a hard-coded enumerated type, otherwise the hash will be
+	// based on the name passed in.
+	entry_type make(hash_type key, const char* name, scoped_allocation& compiled, const path& path, bool force = false);
+	inline entry_type make(const char* name, scoped_allocation& compiled, const path& path, bool force = false) { return make(hash(name), name, compiled, path, force); }
+	inline entry_type make(hash_type key, const char* name, scoped_allocation& compiled, bool force = false) { return make(key, name, compiled, path(), force); }
+	inline entry_type make(const char* name, scoped_allocation& compiled, bool force = false) { return make(hash(name), name, compiled, path(), force); }
 	
 	// Removes the entry allocated from this registry. The entry is still valid and 
 	// present until the next call to flush so any device processing can finish using
 	// it.
 	bool unmake(entry_type entry);
+	inline bool unmake(const hash_type key) { return unmake(get(key)); }
 	inline bool unmake(const char* name) { return unmake(get(name)); }
 
 private:
-	typedef unsigned long long hash_type;
 
 	struct file_info
 	{

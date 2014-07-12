@@ -22,23 +22,40 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Encapsulate compiled shader code into a C++-accessible form.
-
 #ifndef oGfxShaderRegistry_h
 #define oGfxShaderRegistry_h
 
-#include <oBase/concurrent_registry.h>
+#include <oGfx/shader_registry.h>
 #include <oGPU/shader.h>
 
-namespace ouro {
-	namespace gfx {
+namespace ouro { namespace gfx {
 
-	//void initialize(gpu::device* _pDevice);
-	//void deinitialize();
+class vs_registry : public shader_registry<gpu::vertex_shader>
+{
+	typedef shader_registry<gpu::vertex_shader> base_type;
 
-	//gpu::shader* get(const char* _Name);
+public:
+	typedef base_type::shader_type shader_type;
+	static const gpu::stage::value stage = base_type::stage;
+	
+	~vs_registry() { deinitialize(); }
 
-	} // namespace gfx
-} // namespace ouro
+	void initialize(gpu::device* dev);
+};
+
+class ps_registry : public shader_registry<gpu::pixel_shader>
+{
+	typedef shader_registry<gpu::pixel_shader> base_type;
+
+public:
+	typedef base_type::shader_type shader_type;
+	static const gpu::stage::value stage = base_type::stage;
+	
+	~ps_registry() { deinitialize(); }
+
+	void initialize(gpu::device* dev);
+};
+
+}}
 
 #endif

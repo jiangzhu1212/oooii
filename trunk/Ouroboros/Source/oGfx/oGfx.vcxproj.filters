@@ -68,6 +68,9 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxShaderRegistry.h">
       <Filter>oGfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\shader_registry.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="oGfxShaders.hlsl">

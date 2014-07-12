@@ -86,6 +86,9 @@ protected:
 class vertex_shader : public shader
 {
 public:
+	static const stage::value stage = stage::vertex;
+	vertex_shader() {}
+	vertex_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~vertex_shader() { deinitialize(); }
 	void initialize(const char* name, device* dev, const void* bytecode);
 	void set(command_list* cl) const;
@@ -95,6 +98,9 @@ public:
 class hull_shader : public shader
 {
 public:
+	static const stage::value stage = stage::hull;
+	hull_shader() {}
+	hull_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~hull_shader() { deinitialize(); }
 	void initialize(const char* name, device* dev, const void* bytecode);
 	void set(command_list* cl) const;
@@ -104,6 +110,9 @@ public:
 class domain_shader : public shader
 {
 public:
+	static const stage::value stage = stage::domain;
+	domain_shader() {}
+	domain_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~domain_shader() { deinitialize(); }
 	void initialize(const char* name, device* dev, const void* bytecode);
 	void set(command_list* cl) const;
@@ -113,6 +122,9 @@ public:
 class geometry_shader : public shader
 {
 public:
+	static const stage::value stage = stage::geometry;
+	geometry_shader() {}
+	geometry_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~geometry_shader() { deinitialize(); }
 	void initialize(const char* name, device* dev, const void* bytecode);
 	void set(command_list* cl) const;
@@ -122,6 +134,9 @@ public:
 class pixel_shader : public shader
 {
 public:
+	static const stage::value stage = stage::pixel;
+	pixel_shader() {}
+	pixel_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~pixel_shader() { deinitialize(); }
 	void initialize(const char* name, device* dev, const void* bytecode);
 	void set(command_list* cl) const;
@@ -131,6 +146,9 @@ public:
 class compute_shader : public shader
 {
 public:
+	static const stage::value stage = stage::compute;
+	compute_shader() {}
+	compute_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~compute_shader() { deinitialize(); }
 	void initialize(const char* name, device* dev, const void* bytecode);
 	void dispatch(command_list* cl, const uint3& dispatch_thread_count) const;

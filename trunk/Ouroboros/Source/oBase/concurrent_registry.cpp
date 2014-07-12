@@ -184,7 +184,7 @@ void concurrent_registry::unmake_all()
 	for (size_type i = 0; i < n; i++)
 	{
 		void** e = entries + i;
-		if (*e != missing && *e != failed && *e != making)
+		if (*e && *e != missing && *e != failed && *e != making)
 		{
 			lifetime.destroy(*e);
 			auto f = pool.typed_pointer(i);
@@ -253,9 +253,13 @@ concurrent_registry::size_type concurrent_registry::flush(size_type max_operatio
 	return makes.size() + unmakes.size();
 }
 
-concurrent_registry::entry_type concurrent_registry::get(const char* name) const
+concurrent_registry::hash_type concurrent_registry::hash(const char* name)
 {
-	auto key = fnv1a<hash_type>(name);
+	return fnv1a<hash_type>(name);
+}
+
+concurrent_registry::entry_type concurrent_registry::get(hash_type key) const
+{
 	auto index = lookup.get(key);
 	return index == lookup.nullidx ? &missing : entries + index;
 }
@@ -269,7 +273,7 @@ const char* concurrent_registry::name(entry_type entry) const
 	return f->state.load() == state::invalid ? "" : f->name;
 }
 
-concurrent_registry::entry_type concurrent_registry::make(const char* name, scoped_allocation& compiled, const path& path, bool force)
+concurrent_registry::entry_type concurrent_registry::make(hash_type key, const char* name, scoped_allocation& compiled, const path& path, bool force)
 {
 	//                    Truth Table
 	//	             n/c       n/c/f             n            n/f
@@ -281,7 +285,6 @@ concurrent_registry::entry_type concurrent_registry::make(const char* name, scop
 	// unm_to_err   q/making      q/making      noop          noop
 
 	void** e = nullptr;
-	auto key = fnv1a<hash_type>(name);
 	index_type index = lookup.get(key);
 	file_info* f = nullptr;
 
@@ -348,11 +351,6 @@ concurrent_registry::entry_type concurrent_registry::make(const char* name, scop
 
 	makes.push(f);
 	return e;
-}
-
-concurrent_registry::entry_type concurrent_registry::make(const char* name, scoped_allocation& compiled, bool force)
-{
-	return make(name, compiled, path(), force);
 }
 
 bool concurrent_registry::unmake(entry_type entry)

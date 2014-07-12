@@ -59,10 +59,12 @@ namespace ouro {
 
 	default_memory,
 	io_read_write,
-	binary_read_write,
-	gpu_write_only,
-	gpu_read_write,
+	cpu_writecombine,
+	cpu_gpu_coherent,
+	gpu_writecombine,
+	gpu_readonly,
 	gpu_on_chip,
+	physical,
 
 	count,
 
@@ -100,72 +102,72 @@ union allocate_options
 		unsigned int usage : 6; // subsystem-specific (thus often user-defined)
 		unsigned int extra : 14; // passed through: can be used for user-data
 	
-		memory_alignment::value get_alignment() const { return static_cast<memory_alignment::value>(alignment ? memory_alignment::default_alignment : 1 << alignment); }
+		unsigned int get_alignment() const { return static_cast<memory_alignment::value>(alignment ? memory_alignment::default_alignment : 1 << alignment); }
 	};
 };
 
-typedef void* (*allocate_fn)(size_t _NumBytes, unsigned int _Options);
-typedef void (*deallocate_fn)(const void* _Pointer);
+typedef void* (*allocate_fn)(size_t num_bytes, unsigned int options);
+typedef void (*deallocate_fn)(const void* pointer);
 
 class scoped_allocation
 {
 public:
 	scoped_allocation()
-		: Pointer(nullptr)
-		, Size(0)
-		, Deallocate(nullptr)
+		: pointer(nullptr)
+		, num_bytes(0)
+		, deallocate(nullptr)
 	{}
 
-	scoped_allocation(void* _Pointer, size_t _Size, deallocate_fn _Deallocate)
-		: Pointer(_Pointer)
-		, Size(_Size)
-		, Deallocate(_Deallocate)
+	scoped_allocation(void* _pointer, size_t _num_bytes, deallocate_fn _deallocate)
+		: pointer(_pointer)
+		, num_bytes(_num_bytes)
+		, deallocate(_deallocate)
 	{}
 
-	scoped_allocation(scoped_allocation&& _That) 
-		: Pointer(_That.Pointer)
-		, Size(_That.Size)
-		, Deallocate(_That.Deallocate)
+	scoped_allocation(scoped_allocation&& that) 
+		: pointer(that.pointer)
+		, num_bytes(that.num_bytes)
+		, deallocate(that.deallocate)
 	{
-		_That.Pointer = nullptr;
-		_That.Size = 0;
-		_That.Deallocate = nullptr;
+		that.pointer = nullptr;
+		that.num_bytes = 0;
+		that.deallocate = nullptr;
 	}
 
-	~scoped_allocation() { if (Pointer && Deallocate) Deallocate(Pointer); }
+	~scoped_allocation() { if (pointer && deallocate) deallocate(pointer); }
 
-	scoped_allocation& operator=(scoped_allocation&& _That)
+	scoped_allocation& operator=(scoped_allocation&& that)
 	{
-		if (this != &_That)
+		if (this != &that)
 		{
-			if (Pointer && Deallocate) Deallocate(Pointer);
-			Pointer = _That.Pointer; _That.Pointer = nullptr;
-			Size = _That.Size; _That.Size = 0;
-			Deallocate = _That.Deallocate; _That.Deallocate = nullptr;
+			if (pointer && deallocate) deallocate(pointer);
+			pointer = that.pointer; that.pointer = nullptr;
+			num_bytes = that.num_bytes; that.num_bytes = 0;
+			deallocate = that.deallocate; that.deallocate = nullptr;
 		}
 		return *this;
 	}
 
-	void swap(scoped_allocation& _That)
+	void swap(scoped_allocation& that)
 	{
-		std::swap(Pointer, _That.Pointer);
-		std::swap(Size, _That.Size);
-		std::swap(Deallocate, _That.Deallocate);
+		std::swap(pointer, that.pointer);
+		std::swap(num_bytes, that.num_bytes);
+		std::swap(deallocate, that.deallocate);
 	}
 
 	// Don't eviscerate size and deallocate functions so that release() can be passed as a parameter
 	// to a function that might also want to take results from size() and get_deallocate()
-	void* release() { void* p = Pointer; Pointer = nullptr; /*Size = 0; Deallocate = nullptr;*/ return p; }
+	void* release() { void* p = pointer; pointer = nullptr; /*num_bytes = 0; deallocate = nullptr;*/ return p; }
 
-	operator bool() const { return !!Pointer; }
-	template<typename T> operator T*() const { return static_cast<T*>(Pointer); }
-	size_t size() const { return Size; }
-	deallocate_fn get_deallocate() { return Deallocate; }
+	operator bool() const { return !!pointer; }
+	template<typename T> operator T*() const { return static_cast<T*>(pointer); }
+	size_t size() const { return num_bytes; }
+	deallocate_fn get_deallocate() { return deallocate; }
 
 private:
-	void* Pointer;
-	size_t Size;
-	deallocate_fn Deallocate;
+	void* pointer;
+	size_t num_bytes;
+	deallocate_fn deallocate;
 
 	scoped_allocation(const scoped_allocation&);/* = delete; */
 	const scoped_allocation& operator=(const scoped_allocation&);/* = delete; */
@@ -178,15 +180,15 @@ struct allocator
 	allocate_fn allocate;
 	deallocate_fn deallocate;
 
-	scoped_allocation scoped_allocate(size_t _Size, unsigned int _Options = memory_alignment::align_to_default) const { return scoped_allocation(allocate(_Size, _Options), _Size, deallocate); }
+	scoped_allocation scoped_allocate(size_t num_bytes, unsigned int options = memory_alignment::align_to_default) const { return scoped_allocation(allocate(num_bytes, options), num_bytes, deallocate); }
 
 	template<typename T>
-	T* construct(unsigned int _Options = memory_alignment::align_to_default) { void* p = allocate(sizeof(T), _Options); return (T*)new (p) T(); }
+	T* construct(unsigned int options = memory_alignment::align_to_default) { void* p = allocate(sizeof(T), options); return (T*)new (p) T(); }
 	
 	template<typename T>
-	T* construct_array(size_t _Capacity, unsigned int _Options = memory_alignment::align_to_default)
+	T* construct_array(size_t _Capacity, unsigned int options = memory_alignment::align_to_default)
 	{
-		T* p = (T*)allocate(sizeof(T) * _Capacity, _Options);
+		T* p = (T*)allocate(sizeof(T) * _Capacity, options);
 		for (size_t i = 0; i < _Capacity; i++)
 			new (p + i) T();
 		return p;
@@ -199,11 +201,11 @@ struct allocator
 	void destroy_array(T* p, size_t _Capacity) { if (p) { for (size_t i = 0; i < _Capacity; i++) p[i].~T(); deallocate(p); } }
 };
 
-void* default_allocate(size_t _Size, unsigned int _Options);
-void default_deallocate(const void* _Pointer);
+void* default_allocate(size_t num_bytes, unsigned int options);
+void default_deallocate(const void* pointer);
 
-void* noop_allocate(size_t _Size, unsigned int _Options);
-void noop_deallocate(const void* _Pointer);
+void* noop_allocate(size_t num_bytes, unsigned int options);
+void noop_deallocate(const void* pointer);
 
 extern allocator default_allocator;
 extern allocator noop_allocator;
