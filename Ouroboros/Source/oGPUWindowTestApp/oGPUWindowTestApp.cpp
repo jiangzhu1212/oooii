@@ -44,60 +44,18 @@
 #include <oGPU/depth_target.h>
 #include <oGPU/oGPUUtilMesh.h>
 
-#include <oBase/concurrent_registry.h>
+#include <oGfx/oGfxShaderRegistry.h>
 
 using namespace ouro;
 using namespace windows::gdi;
 
-static concurrent_registry make_pixel_shader_registry(gpu::device* _pDevice)
-{
-	// NOTE: this was ported from a c-style create-native-handle manager where everything was 
-	// sizeof(void*) to a class-based wrapper API where there are classes that are mostly sizeof(void*),
-	// but can't be crammed into the current concurrent_registry API. For the initial port, just alloc
-	// sizeof(void*) and worry about the memory implications later.
-
-	static unsigned int kCapacity = 30;
-
-	scoped_allocation missing((void*)gfx::byte_code(gfx::pixel_shader::yellow), 1, noop_deallocate);
-	scoped_allocation failed((void*)gfx::byte_code(gfx::pixel_shader::red), 1, noop_deallocate);
-	scoped_allocation making((void*)gfx::byte_code(gfx::pixel_shader::white), 1, noop_deallocate);
-
-	concurrent_registry::placeholder_source_t source;
-	source.compiled_missing = std::move(missing);
-	source.compiled_failed = std::move(failed);
-	source.compiled_making = std::move(making);
-
-	concurrent_registry::lifetime_t lifetime;
-	lifetime.create = [=](scoped_allocation& _Compiled, const char* _Name)->void*
-	{
-		gpu::pixel_shader* ps = new gpu::pixel_shader();
-		ps->initialize(_Name, _pDevice, _Compiled);
-		return ps;
-	};
-
-	lifetime.destroy = [=](void* _pEntry)
-	{
-		gpu::pixel_shader* ps = (gpu::pixel_shader*)_pEntry;
-		delete ps;
-	};
-
-	concurrent_registry PixelShaders(kCapacity, lifetime, source);
-
-	for (int i = 0; i < gfx::pixel_shader::count; i++)
-	{
-		gfx::pixel_shader::value ps = gfx::pixel_shader::value(i);
-		scoped_allocation bytecode((void*)gfx::byte_code(ps), 1, noop_deallocate);
-		PixelShaders.make(as_string(ps), bytecode);
-	}
-
-	PixelShaders.flush(kCapacity);
-	return PixelShaders;
-}
-
-void enumerate_shader_entries(const char* _ShaderSourceString, const std::function<void(const char* _EntryPoint, gpu::stage::value _Stage)>& _Enumerator)
+// This function treats shader_source as hlsl and it then iterates on all entry points which are defined to be all functions
+// that begin with two letter describing how it should be compiled: VS for vertex shader, PS for pixel shader (DS HS GS CS etc.)
+// The specified enumerator is called on each one.
+void enumerate_shader_entries(const char* shader_source, const std::function<void(const char* entry_point, gpu::stage::value stage)>& enumerator)
 {
 	// Make a copy so we can delete all the irrelevant parts for easier parsing
-	std::string ForParsing(_ShaderSourceString);
+	std::string ForParsing(shader_source);
 	char* p = (char*)ForParsing.c_str();
 
 	// Simplify code of anything that might not be a top-level function.
@@ -130,7 +88,7 @@ void enumerate_shader_entries(const char* _ShaderSourceString, const std::functi
 				if (Profile)
 				{
 					Stage = gpu::stage::value(Profile - sProfiles);
-					_Enumerator(Entry, Stage);
+					enumerator(Entry, Stage);
 				}
 			}
 		}
@@ -138,37 +96,21 @@ void enumerate_shader_entries(const char* _ShaderSourceString, const std::functi
 	}
 }
 
-void shader_on_loaded(concurrent_registry& _Registry, const path& _Path, scoped_allocation& _Buffer, const std::system_error* _pError)
+void shader_on_loaded(gfx::vs_registry& vs, gfx::ps_registry& ps, const path& p, scoped_allocation& b, const std::system_error* err)
 {
-	if (_pError)
+	if (err)
 	{
-		oTRACEA("Load '%s' failed: %s", _Path.c_str(), _pError->what());
+		oTRACEA("Load '%s' failed: %s", p.c_str(), err->what());
 		return;
 	}
 
-	scoped_allocation empty;
+	lstring IncludePaths, Defines;
+	IncludePaths += filesystem::dev_path() / "Ouroboros/Include;";
 
-	enumerate_shader_entries((char*)_Buffer, [&](const char* _EntryPoint, gpu::stage::value _Stage)
+	enumerate_shader_entries((char*)b, [&](const char* entry_point, gpu::stage::value stage)
 	{
-		try
-		{
-			lstring IncludePaths, Defines;
-			IncludePaths += filesystem::dev_path() / "Ouroboros/Include;";
-
-			scoped_allocation bytecode = gpu::compile_shader(IncludePaths, Defines, _Path, _Stage, _EntryPoint, (const char*)_Buffer);
-			oTRACEA("Insert \"%s\" from %s", _EntryPoint, _Path.c_str());
-
-			if (_Stage == gpu::stage::pixel)
-				_Registry.make(_EntryPoint, bytecode, _Path, true);
-		}
-			
-		catch (std::exception& e)
-		{
-			oTRACEA("Insert \"%s\" as Error", _EntryPoint, e.what());
-			if (_Stage == gpu::stage::pixel)
-				_Registry.make(_EntryPoint, empty, _Path, true);
-		}
-
+		if (stage == vs.stage) vs.compile(IncludePaths, Defines, p, (const char*)b, entry_point);
+		if (stage == ps.stage) ps.compile(IncludePaths, Defines, p, (const char*)b, entry_point);
 	});
 }
 
@@ -282,8 +224,8 @@ private:
 	std::shared_ptr<gpu::pipeline1> Pipeline;
 	gpu::util_mesh Mesh;
 
-	concurrent_registry VertexShaders;
-	concurrent_registry PixelShaders;
+	gfx::vs_registry VertexShaders;
+	gfx::ps_registry PixelShaders;
 
 	window* pGPUWindow;
 	std::thread Thread;
@@ -317,13 +259,14 @@ oGPUWindowThread::oGPUWindowThread()
 	Mesh.initialize_first_triangle(Device.get());
 	CommandList = Device->get_immediate_command_list();
 
-	PixelShaders = make_pixel_shader_registry(Device.get());
+	VertexShaders.initialize(Device.get());
+	PixelShaders.initialize(Device.get());
 
 	// jist: load the library file knowing all registries where content will go.
 	// there is a registry per shader type. Shaders are registered by entry point 
 	// name.
 	filesystem::load_async(filesystem::dev_path() / "Ouroboros/Source/oGfx/oGfxShaders.hlsl"
-		, std::bind(shader_on_loaded, std::ref(PixelShaders), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
+		, std::bind(shader_on_loaded, std::ref(VertexShaders), std::ref(PixelShaders), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 		, filesystem::load_option::text_read);
 }
 
@@ -333,12 +276,9 @@ oGPUWindowThread::~oGPUWindowThread()
 	OnAction = nullptr;
 	Parent = nullptr;
 	Thread.join();
-
-	PixelShaders.unmake_all();
-	PixelShaders.flush(~0u);
-
-	// disable this for now, I think I fixed it in process_heap and win_iocp. See if it sticks and then clean this up.
-	//filesystem::join();
+	filesystem::join(); // ensure all loading is done
+	PixelShaders.deinitialize();
+	VertexShaders.deinitialize();
 }
 
 window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const std::function<void()>& _OnThreadExit)

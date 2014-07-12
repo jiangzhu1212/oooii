@@ -40,47 +40,47 @@ typedef unsigned char BYTE;
 namespace ouro {
 	namespace gfx {
 
-const void* byte_code(const vertex_shader::value& _Shader)
+const void* byte_code(const vertex_shader::value& shader)
 {
 	static const void* sShaders[] = 
 	{
 		VSPositionPassThrough,
 	};
 	static_assert(oCOUNTOF(sShaders) == vertex_shader::count, "array mismatch");
-	return sShaders[_Shader];
+	return sShaders[shader];
 }
 
-const void* byte_code(const hull_shader::value& _Shader)
+const void* byte_code(const hull_shader::value& shader)
 {
 	static const void* sShaders[] = 
 	{
 		nullptr,
 	};
 	static_assert(oCOUNTOF(sShaders) == hull_shader::count, "array mismatch");
-	return sShaders[_Shader];
+	return sShaders[shader];
 }
 
-const void* byte_code(const domain_shader::value& _Shader)
+const void* byte_code(const domain_shader::value& shader)
 {
 	static const void* sShaders[] = 
 	{
 		nullptr,
 	};
 	static_assert(oCOUNTOF(sShaders) == domain_shader::count, "array mismatch");
-	return sShaders[_Shader];
+	return sShaders[shader];
 }
 
-const void* byte_code(const geometry_shader::value& _Shader)
+const void* byte_code(const geometry_shader::value& shader)
 {
 	static const void* sShaders[] = 
 	{
 		nullptr,
 	};
 	static_assert(oCOUNTOF(sShaders) == geometry_shader::count, "array mismatch");
-	return sShaders[_Shader];
+	return sShaders[shader];
 }
 
-const void* byte_code(const pixel_shader::value& _PixelShader)
+const void* byte_code(const pixel_shader::value& shader)
 {
 	static const void* sShaders[] = 
 	{
@@ -94,22 +94,32 @@ const void* byte_code(const pixel_shader::value& _PixelShader)
 		PSCyan,
 	};
 	static_assert(oCOUNTOF(sShaders) == pixel_shader::count, "array mismatch");
-	return sShaders[_PixelShader];
+	return sShaders[shader];
 }
 
-const void* byte_code(const compute_shader::value& _Shader)
+const void* byte_code(const compute_shader::value& shader)
 {
 	static const void* sShaders[] = 
 	{
 		nullptr,
 	};
 	static_assert(oCOUNTOF(sShaders) == compute_shader::count, "array mismatch");
-	return sShaders[_Shader];
+	return sShaders[shader];
 }
 
 	} // namespace gfx
 
-const char* as_string(const gfx::pixel_shader::value& _Shader)
+const char* as_string(const gfx::vertex_shader::value& shader)
+{
+	const char* sNames[] = 
+	{
+		"PositionPassThrough",
+	};
+	static_assert(oCOUNTOF(sNames) == gfx::vertex_shader::count, "array mismatch");
+	return sNames[shader];
+}
+
+const char* as_string(const gfx::pixel_shader::value& shader)
 {
 	const char* sNames[] = 
 	{
@@ -123,7 +133,7 @@ const char* as_string(const gfx::pixel_shader::value& _Shader)
 		"cyan",
 	};
 	static_assert(oCOUNTOF(sNames) == gfx::pixel_shader::count, "array mismatch");
-	return sNames[_Shader];
+	return sNames[shader];
 }
 
 } // namespace ouro

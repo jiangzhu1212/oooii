@@ -36,6 +36,8 @@ class resource
 {
 public:
 	resource() : ro(nullptr) {}
+	resource(resource&& that) : ro(that.ro) { that.ro = nullptr; }
+	resource& operator=(resource&& that) { if (this != &that) { ro = that.ro; that.ro = nullptr; } }
 
 	char* name(char* dst, size_t dst_size) const;
 	void* get_buffer() const;
@@ -52,6 +54,10 @@ public:
 
 protected:
 	void* ro;
+
+private:
+	resource(const resource&);
+	const resource& operator=(const resource&);
 };
 	
 // @tony: not sure where this goes yet, but this header is included by all render targets

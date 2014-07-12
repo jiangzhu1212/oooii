@@ -27,15 +27,15 @@
 
 namespace ouro {
 
-void* default_allocate(size_t _Size, unsigned int _Options)
+void* default_allocate(size_t _Size, unsigned int options)
 {
-	allocate_options opt; opt.options = _Options;
+	allocate_options opt; opt.options = options;
 	return _aligned_malloc(_Size, __max(memory_alignment::align_to_default, 1 << opt.alignment));
 }
 
-void default_deallocate(const void* _Pointer)
+void default_deallocate(const void* pointer)
 {
-	_aligned_free((void*)_Pointer);
+	_aligned_free((void*)pointer);
 }
 
 void* noop_allocate(size_t _Size, unsigned int _Options)
@@ -43,14 +43,14 @@ void* noop_allocate(size_t _Size, unsigned int _Options)
 	return nullptr;
 }
 
-void noop_deallocate(const void* _Pointer)
+void noop_deallocate(const void* pointer)
 {
 }
 
 allocator default_allocator(default_allocate, default_deallocate);
 allocator noop_allocator(noop_allocate, noop_deallocate);
 	
-const char* as_string(const memory_alignment::value& _Alignment)
+const char* as_string(const memory_alignment::value& alignment)
 {
 	static const char* names[] = 
 	{
@@ -69,25 +69,27 @@ const char* as_string(const memory_alignment::value& _Alignment)
 		"align_to_4096",
 	};
 	static_assert(oCOUNTOF(names) == memory_alignment::count, "array mismatch");
-	return names[_Alignment];
+	return names[alignment];
 }
 
-const char* as_string(const memory_type::value& _Alignment)
+const char* as_string(const memory_type::value& type)
 {
 	static const char* names[] = 
 	{
 		"default_memory",
 		"io_read_write",
-		"binary_read_write",
-		"gpu_write_only",
-		"gpu_read_write",
+		"cpu_writecombine",
+		"cpu_gpu_coherent",
+		"gpu_writecombine",
+		"gpu_readonly",
 		"gpu_on_chip",
+		"physical",
 	};
 	static_assert(oCOUNTOF(names) == memory_type::count, "array mismatch");
-	return names[_Alignment];
+	return names[type];
 }
 
-const char* as_string(const subsystem::value& _Subsystem)
+const char* as_string(const subsystem::value& subsystem)
 {
 	static const char* names[] = 
 	{
@@ -103,7 +105,7 @@ const char* as_string(const subsystem::value& _Subsystem)
 		"ui",
 	};
 	static_assert(oCOUNTOF(names) == subsystem::count, "array mismatch");
-	return names[_Subsystem];
+	return names[subsystem];
 }
 
 } // namespace ouro

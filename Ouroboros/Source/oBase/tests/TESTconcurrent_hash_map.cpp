@@ -59,10 +59,10 @@ void TEST_chm_basics(test_services& _Services)
 	std::vector<std::string> Strings;
 	generate_strings(_Services, Strings, 10);
 
-	std::vector<unsigned long long> Keys;
+	std::vector<concurrent_hash_map::key_type> Keys;
 	Keys.resize(Strings.size());
 	for (size_t i = 0; i < Strings.size(); i++)
-		Keys[i] = fnv1a<unsigned long long>(Strings[i].c_str());
+		Keys[i] = fnv1a<concurrent_hash_map::key_type>(Strings[i].c_str());
 
 	for (unsigned int i = 0; i < static_cast<unsigned int>(Strings.size()); i += 3)
 		h.set(Keys[i], i);

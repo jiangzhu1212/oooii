@@ -24,61 +24,45 @@
  **************************************************************************/
 #include <oGfx/oGfxShaderRegistry.h>
 #include <oGfx/oGfxShaders.h>
-#include <oCore/process_heap.h>
 
-namespace ouro {
-	namespace gfx {
-#if 0
-class shader_context
+namespace ouro { namespace gfx {
+
+void vs_registry::initialize(gpu::device* dev)
 {
-public:
-	static shader_context& singleton();
+	static unsigned int kCapacity = 30;
 
-	shader_context();
-	~shader_context();
+	base_type::initialize(kCapacity, dev
+		, (void*)gfx::byte_code(gfx::vertex_shader::pos_pass_through)
+		, (void*)gfx::byte_code(gfx::vertex_shader::pos_pass_through)
+		, (void*)gfx::byte_code(gfx::vertex_shader::pos_pass_through));
 
-private:
-	concurrent_registry Shaders[gpu::shader_type::count];
-};
-
-oDEFINE_PROCESS_SINGLETON("ouro::gfx::shader_context", shader_context);
-
-shader_context::shader_context()
-{
-	gpu::device* _pDevice = nullptr;
-	static const uint kExpectedCounts[gpu::shader_type::count] = { 20, 5, 5, 10, 100, 100 };
-	uint SizeBytes[gpu::shader_type::count];
-
-	size_t Total = 0;
-	for (uint i : kExpectedCounts)
+	for (int i = 0; i < gfx::vertex_shader::count; i++)
 	{
-		SizeBytes[i] = byte_align(concurrent_registry::calc_size(kExpectedCounts[i]), oDEFAULT_MEMORY_ALIGNMENT);
-		Total += SizeBytes[i];
+		gfx::vertex_shader::value vs = gfx::vertex_shader::value(i);
+		scoped_allocation bytecode((void*)gfx::byte_code(vs), 1, noop_deallocate);
+		r.make(i, as_string(vs), bytecode);
 	}
 
-	void* p = default_allocator.allocate(Total, 0);
-
-	// Pixel Shaders
-	{
-		scoped_allocation missing((void*)byte_code(pixel_shader::yellow), 1, noop_deallocate);
-		scoped_allocation failed((void*)byte_code(pixel_shader::red), 1, noop_deallocate);
-		scoped_allocation making((void*)byte_code(pixel_shader::white), 1, noop_deallocate);
-
-		Shaders[gpu::shader_type::pixel] = std::move(concurrent_registry(p
-			, kExpectedCounts[gpu::shader_type::pixel]
-			, [=](scoped_allocation& _Compiled, const char* _Name)->void* { return (void*)gpu::make_shader(_pDevice, gpu::shader_type::pixel, _Compiled, _Name); }
-			, [=](void* _pEntry) { gpu::unmake_shader((gpu::shader)_pEntry); }
-			, missing
-			, failed
-			, making));
-		
-		p = byte_align(byte_add(p, SizeBytes[gpu::shader_type::pixel]), oDEFAULT_MEMORY_ALIGNMENT);
-	}
+	r.flush();
 }
 
-shader_context::~shader_context()
+void ps_registry::initialize(gpu::device* dev)
 {
+	static unsigned int kCapacity = 30;
+
+	base_type::initialize(kCapacity, dev
+		, (void*)gfx::byte_code(gfx::pixel_shader::yellow)
+		, (void*)gfx::byte_code(gfx::pixel_shader::red)
+		, (void*)gfx::byte_code(gfx::pixel_shader::white));
+
+	for (int i = 0; i < gfx::pixel_shader::count; i++)
+	{
+		gfx::pixel_shader::value ps = gfx::pixel_shader::value(i);
+		scoped_allocation bytecode((void*)gfx::byte_code(ps), 1, noop_deallocate);
+		r.make(i, as_string(ps), bytecode);
+	}
+
+	r.flush();
 }
-#endif
-	} // namespace gfx
-} // namespace ouro
+
+}}
