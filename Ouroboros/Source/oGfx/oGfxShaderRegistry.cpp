@@ -27,14 +27,31 @@
 
 namespace ouro { namespace gfx {
 
+void layout_state::initialize(gpu::device* dev)
+{
+	deinitialize();
+
+	for (int i = 0; i < vertex_input::count; i++)
+	{
+		vertex_input::value input = vertex_input::value(i);
+		layouts[i].initialize(as_string(input), dev, elements(input), vs_byte_code(input));
+	}
+}
+
+void layout_state::deinitialize()
+{
+	for (auto& layout : layouts)
+		layout.deinitialize();
+}
+
 void vs_registry::initialize(gpu::device* dev)
 {
 	static unsigned int kCapacity = 30;
 
 	base_type::initialize(kCapacity, dev
-		, (void*)gfx::byte_code(gfx::vertex_shader::pos_pass_through)
-		, (void*)gfx::byte_code(gfx::vertex_shader::pos_pass_through)
-		, (void*)gfx::byte_code(gfx::vertex_shader::pos_pass_through));
+		, (void*)gfx::byte_code(gfx::vertex_shader::pass_through_pos)
+		, (void*)gfx::byte_code(gfx::vertex_shader::pass_through_pos)
+		, (void*)gfx::byte_code(gfx::vertex_shader::pass_through_pos));
 
 	for (int i = 0; i < gfx::vertex_shader::count; i++)
 	{
@@ -44,6 +61,12 @@ void vs_registry::initialize(gpu::device* dev)
 	}
 
 	r.flush();
+}
+
+void vs_registry::set(gpu::command_list* cl, const vertex_shader::value& shader) const
+{
+	gpu::vertex_shader* s = (gpu::vertex_shader*)r.get(shader);
+	s->set(cl);
 }
 
 void ps_registry::initialize(gpu::device* dev)
@@ -63,6 +86,12 @@ void ps_registry::initialize(gpu::device* dev)
 	}
 
 	r.flush();
+}
+
+void ps_registry::set(gpu::command_list* cl, const pixel_shader::value& shader) const
+{
+	gpu::pixel_shader* s = (gpu::pixel_shader*)r.get(shader);
+	s->set(cl);
 }
 
 }}

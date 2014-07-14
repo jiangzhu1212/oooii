@@ -45,6 +45,10 @@
 #ifndef ouro_linear_algebra_h
 #define ouro_linear_algebra_h
 
+#ifdef oHLSL
+#error this header cannot compile in HLSL
+#endif
+
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/oComputeUtil.h>
 #include <oBase/equal.h>

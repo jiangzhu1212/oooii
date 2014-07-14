@@ -824,15 +824,15 @@ void primitive_impl::finalize(const face_type::value& face_type, int semantics, 
 
 	int el = 0;
 	if (has(semantics, flag_positions))
-		inf.elements[el] = element(semantic::position, 0, format::xyz32_float, el), el++;
+		inf.elements[el] = element(semantic::position, 0, format::xyz32_float, 0), el++;
 	if (has(semantics, flag_normals))
-		inf.elements[el] = element(semantic::normal, 0, format::xyz32_float, el), el++;
+		inf.elements[el] = element(semantic::normal, 0, format::xyz32_float, 1), el++;
 	if (has(semantics, flag_tangents))
-		inf.elements[el] = element(semantic::tangent, 0, format::xyzw32_float, el), el++;
+		inf.elements[el] = element(semantic::tangent, 0, format::xyzw32_float, 2), el++;
 	if (has(semantics, flag_texcoords))
-		inf.elements[el] = element(semantic::texcoord, 0, format::xy32_float, el), el++;
+		inf.elements[el] = element(semantic::texcoord, 0, format::xy32_float, 3), el++;
 	if (has(semantics, flag_colors))
-		inf.elements[el] = element(semantic::color, 0, format::xyzw8_unorm, el), el++;
+		inf.elements[el] = element(semantic::color, 0, format::bgra8_unorm, 4), el++;
 
 	inf.num_indices = num_indices();
 	inf.num_vertices = num_vertices();

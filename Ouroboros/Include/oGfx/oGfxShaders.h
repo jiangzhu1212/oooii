@@ -28,21 +28,49 @@
 #define oGfxShaders_h
 
 #include <oGPU/oGPU.h>
+#include <oMesh/mesh.h>
 
 namespace ouro {
 	namespace gfx {
 
-namespace vertex_shader
-{	enum value {
+namespace vertex_input
+{	enum value : uchar {
+	
+	pos,
+	pos_color,
+	pos_uv,
+	pos_uvw,
 
-	pos_pass_through, // passes POSITION unmodified
+	count,
+
+};}
+
+namespace vertex_shader
+{	enum value : uchar {
+
+	pass_through_pos, // passes POSITION unmodified
+	pass_through_pos_color,
+	pass_through_pos_uv,
+	pass_through_pos_uvw,
+	
+	texture1d,
+	texture1darray,
+	texture2d,
+	texture2darray,
+	texture3d,
+	texturecube,
+	texturecubearray,
+
+	test_buffer,
+	test_transform,
+	test_instanced,
 
 	count,
 
 };}
 
 namespace hull_shader
-{	enum value {
+{	enum value : uchar {
 
 	null,
 	count,
@@ -50,7 +78,7 @@ namespace hull_shader
 };}
 
 namespace domain_shader
-{	enum value {
+{	enum value : uchar {
 
 	null,
 	count,
@@ -58,15 +86,17 @@ namespace domain_shader
 };}
 
 namespace geometry_shader
-{	enum value {
+{	enum value : uchar {
 
-	null,
+	vertex_normals,
+	vertex_tangents,
+
 	count,
 
 };}
 
 namespace pixel_shader
-{	enum value {
+{	enum value : uchar {
 
 	black,
 	white,
@@ -77,26 +107,45 @@ namespace pixel_shader
 	magenta,
 	cyan,
 
+	texture1d,
+	texture1darray,
+	texture2d,
+	texture2darray,
+	texture3d,
+	texturecube,
+	texturecubearray,
+	
+	vertex_color,
+
+	test_buffer,
+
 	count,
 
 };}
 
 namespace compute_shader
-{	enum value {
+{	enum value : uchar {
 
 	null,
 	count,
 
 };}
 
+// returns the elements of input
+mesh::element_array elements(const vertex_input::value& input);
+
+// returns the vertex shader byte code with the same input
+// signature as input.
+const void* vs_byte_code(const vertex_input::value& input);
+
 // returns the buffer of bytecode compiled during executable compilation time
 // (not runtime compilation)
-const void* byte_code(const vertex_shader::value& _Shader);
-const void* byte_code(const hull_shader::value& _Shader);
-const void* byte_code(const domain_shader::value& _Shader);
-const void* byte_code(const geometry_shader::value& _Shader);
-const void* byte_code(const pixel_shader::value& _Shader);
-const void* byte_code(const compute_shader::value& _Shader);
+const void* byte_code(const vertex_shader::value& shader);
+const void* byte_code(const hull_shader::value& shader);
+const void* byte_code(const domain_shader::value& shader);
+const void* byte_code(const geometry_shader::value& shader);
+const void* byte_code(const pixel_shader::value& shader);
+const void* byte_code(const compute_shader::value& shader);
 
 	} // namespace gfx
 } // namespace ouro

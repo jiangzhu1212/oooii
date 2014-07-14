@@ -26,9 +26,27 @@
 #define oGfxShaderRegistry_h
 
 #include <oGfx/shader_registry.h>
+#include <oGfx/oGfxShaders.h>
 #include <oGPU/shader.h>
+#include <oGPU/vertex_layout.h>
 
 namespace ouro { namespace gfx {
+
+class layout_state
+{
+public:
+	typedef concurrent_registry::hash_type hash_type;
+
+	~layout_state() { deinitialize(); }
+
+	void initialize(gpu::device* dev);
+	void deinitialize();
+
+	inline void set(gpu::command_list* cl, const vertex_input::value& input, const mesh::primitive_type::value& prim_type) const { layouts[input].set(cl, prim_type); }
+
+private:
+	std::array<gpu::vertex_layout, vertex_input::count> layouts;
+};
 
 class vs_registry : public shader_registry<gpu::vertex_shader>
 {
@@ -41,6 +59,8 @@ public:
 	~vs_registry() { deinitialize(); }
 
 	void initialize(gpu::device* dev);
+
+	void set(gpu::command_list* cl, const vertex_shader::value& shader) const;
 };
 
 class ps_registry : public shader_registry<gpu::pixel_shader>
@@ -54,6 +74,8 @@ public:
 	~ps_registry() { deinitialize(); }
 
 	void initialize(gpu::device* dev);
+
+	void set(gpu::command_list* cl, const pixel_shader::value& shader) const;
 };
 
 }}

@@ -41,6 +41,7 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxShaderRegistry.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxShaders.h" />
+    <ClInclude Include="..\..\Include\oGfx\oGfxVertexLayouts.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxViewConstants.h" />
     <ClInclude Include="..\..\Include\oGfx\shader_registry.h" />
     <ClInclude Include="pch.h" />

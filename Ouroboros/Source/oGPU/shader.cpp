@@ -58,9 +58,7 @@ DeviceContext* get_dc(command_list* cl);
 
 void shader::deinitialize()
 {
-	if (sh)
-		((DeviceChild*)sh)->Release();
-	sh = nullptr;
+	oSAFE_RELEASEV(sh);
 }
 
 char* shader::name(char* dst, size_t dst_size) const

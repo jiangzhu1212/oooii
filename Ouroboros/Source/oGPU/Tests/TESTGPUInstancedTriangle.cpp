@@ -33,19 +33,24 @@ using namespace ouro::gpu;
 namespace ouro {
 	namespace tests {
 
-static const int sSnapshotFrames[] = { 1, 23, 46 };
+static const int sSnapshotFrames[] = { 0, 22, 45 };
 static const bool kIsDevMode = false;
 
 struct gpu_test_instanced_triangle : public gpu_test
 {
 	gpu_test_instanced_triangle() : gpu_test("GPU test: instanced triangle", kIsDevMode, sSnapshotFrames) {}
 
-	void initialize() override
+	pipeline initialize() override
 	{
-		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
-		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
-		InstanceList.initialize("Instances", Device.get(), sizeof(oGPU_TEST_INSTANCE), 2);
+		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGfxDrawConstants));
+		InstanceList.initialize("Instances", Device.get(), sizeof(oGfxTestInstance), 2);
 		Mesh.initialize_first_triangle(Device.get());
+
+		pipeline p;
+		p.input = gfx::vertex_input::pos;
+		p.vs = gfx::vertex_shader::test_instanced;
+		p.ps = gfx::pixel_shader::white;
+		return p;
 	}
 	
 	void render() override
@@ -55,7 +60,7 @@ struct gpu_test_instanced_triangle : public gpu_test
 		uint2 dimensions = PrimaryColorTarget.dimensions();
 		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
-		oGPU_TEST_INSTANCE instances[2];
+		oGfxTestInstance instances[2];
 		instances[0].Translation = float3(-0.5f, 0.5f, 0.0f);
 		instances[1].Translation = float3(0.5f, -0.5f, 0.0f);
 
@@ -67,27 +72,31 @@ struct gpu_test_instanced_triangle : public gpu_test
 
 		CommandList->begin();
 
-		TestConstants.update(CommandList.get(), oGPUTestConstants(oIDENTITY4x4, V, P, white));
+		oGfxDrawConstants c(oIDENTITY4x4, V, P, aaboxf());
+		c.Color = white;
+		TestConstants.update(CommandList.get(), c);
 
 		BlendState.set(CommandList.get(), blend_state::opaque);
 		DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
 		RasterizerState.set(CommandList.get(), rasterizer_state::two_sided);
-		SamplerState.set(CommandList.get(), 0, sampler_state::linear_wrap);
+		SamplerState.set(CommandList.get(), sampler_state::linear_wrap, sampler_state::linear_wrap);
+		VertexLayout.set(CommandList.get(), mesh::primitive_type::triangles);
+		VertexShader.set(CommandList.get());
+		PixelShader.set(CommandList.get());
 
 		const constant_buffer* CBs[2] = { &TestConstants, &InstanceList };
-		constant_buffer::set(CommandList.get(), 0, 2, CBs);
+		constant_buffer::set(CommandList.get(), oGFX_DRAW_CONSTANTS_REGISTER, 2, CBs);
 
-		CommandList->set_pipeline(Pipeline);
 		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+		PrimaryDepthTarget.clear(CommandList.get());
 		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 		
-		Mesh.draw(CommandList.get());
+		Mesh.draw(CommandList.get(), 2);
 
 		CommandList->end();
 	}
 
 private:
-	std::shared_ptr<pipeline1> Pipeline;
 	constant_buffer InstanceList;
 	constant_buffer TestConstants;
 	util_mesh Mesh;

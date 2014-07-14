@@ -221,9 +221,13 @@ private:
 	gpu::sampler_state SamplerState;
 	gpu::primary_target WindowColorTarget;
 	gpu::depth_target WindowDepthTarget;
-	std::shared_ptr<gpu::pipeline1> Pipeline;
 	gpu::util_mesh Mesh;
 
+	// stubs until registries are fully debugged
+	gpu::vertex_shader VertexShader;
+	gpu::pixel_shader PixelShader;
+
+	gfx::layout_state LayoutState;
 	gfx::vs_registry VertexShaders;
 	gfx::ps_registry PixelShaders;
 
@@ -250,17 +254,12 @@ oGPUWindowThread::oGPUWindowThread()
 		return;
 	}
 
-	BlendState.initialize(Device.get());
-	DepthStencilState.initialize(Device.get());
-	RasterizerState.initialize(Device.get());
-	SamplerState.initialize(Device.get());
-
-	Pipeline = Device->make_pipeline1(oGfxGetPipeline(oGFX_PIPELINE_PASS_THROUGH));
-	Mesh.initialize_first_triangle(Device.get());
-	CommandList = Device->get_immediate_command_list();
-
+	LayoutState.initialize(Device.get());
 	VertexShaders.initialize(Device.get());
 	PixelShaders.initialize(Device.get());
+
+	VertexShader.initialize("VS", Device.get(), gfx::byte_code(gfx::vertex_shader::pass_through_pos));
+	PixelShader.initialize("PS", Device.get(), gfx::byte_code(gfx::pixel_shader::white));
 
 	// jist: load the library file knowing all registries where content will go.
 	// there is a registry per shader type. Shaders are registered by entry point 
@@ -268,6 +267,16 @@ oGPUWindowThread::oGPUWindowThread()
 	filesystem::load_async(filesystem::dev_path() / "Ouroboros/Source/oGfx/oGfxShaders.hlsl"
 		, std::bind(shader_on_loaded, std::ref(VertexShaders), std::ref(PixelShaders), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 		, filesystem::load_option::text_read);
+
+	BlendState.initialize(Device.get());
+	DepthStencilState.initialize(Device.get());
+	RasterizerState.initialize(Device.get());
+	SamplerState.initialize(Device.get());
+
+	Mesh.initialize_first_triangle(Device.get());
+	CommandList = Device->get_immediate_command_list();
+
+	//filesystem::join();
 }
 
 oGPUWindowThread::~oGPUWindowThread()
@@ -279,6 +288,7 @@ oGPUWindowThread::~oGPUWindowThread()
 	filesystem::join(); // ensure all loading is done
 	PixelShaders.deinitialize();
 	VertexShaders.deinitialize();
+	LayoutState.deinitialize();
 }
 
 window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const std::function<void()>& _OnThreadExit)
@@ -387,9 +397,11 @@ void oGPUWindowThread::Render()
 		BlendState.set(CommandList.get(), gpu::blend_state::opaque);
 		DepthStencilState.set(CommandList.get(), gpu::depth_stencil_state::none);
 		RasterizerState.set(CommandList.get(), gpu::rasterizer_state::front_face);
-		SamplerState.set(CommandList.get(), 0, gpu::sampler_state::linear_wrap);
+		SamplerState.set(CommandList.get(), gpu::sampler_state::linear_wrap, gpu::sampler_state::linear_wrap);
 		
-		CommandList->set_pipeline(Pipeline);
+		LayoutState.set(CommandList.get(), gfx::vertex_input::pos, mesh::primitive_type::triangles);
+		VertexShader.set(CommandList.get());
+		PixelShader.set(CommandList.get());
 
 		Mesh.draw(CommandList.get());
 		CommandList->end();

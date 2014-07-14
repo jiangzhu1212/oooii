@@ -40,6 +40,7 @@ class vertex_layout
 {
 public:
 	vertex_layout() : layout(nullptr) {}
+	vertex_layout(const char* name, device* dev, const mesh::element_array& elements, const void* vs_bytecode) : layout(nullptr) { initialize(name, dev, elements, vs_bytecode); }
 	~vertex_layout() { deinitialize(); }
 	void initialize(const char* name, device* dev, const mesh::element_array& elements, const void* vs_bytecode);
 	void deinitialize();

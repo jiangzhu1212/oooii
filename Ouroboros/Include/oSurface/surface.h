@@ -490,7 +490,8 @@ format closest_nv12(format _Format);
 // Mip Level (1 2D plane/slice, a simple image) introspection
 
 // Returns the number of mipmaps generated from the specified dimensions down to 
-// a 1x1 mip level.
+// a 1x1 mip level. If _HasMips is false or dimensions are degenerate then this
+// will return 0.
 int num_mips(bool _HasMips, const int3& _Mip0Dimensions);
 inline int num_mips(bool _HasMips, const int2& _Mip0Dimensions) { return num_mips(_HasMips, int3(_Mip0Dimensions, 1)); }
 inline int num_mips(layout _Layout, const int3& _Mip0Dimensions) { return num_mips(_Layout != image, _Mip0Dimensions); }
@@ -610,7 +611,7 @@ inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _Subsurface
 inline void unpack_subresource(int _Subresource, int _NumMips, int _NumArraySlices, int* _pMipLevel, int* _pArraySliceIndex, int* _pSubsurfaceIndex) { int nMips = max(1, _NumMips); int as = max(1, _NumArraySlices); *_pMipLevel = _Subresource % nMips; *_pArraySliceIndex = (_Subresource / nMips) % as; *_pSubsurfaceIndex = _Subresource / (nMips * as); }
 
 // Returns the number of all subresources described by the info.
-inline int num_subresources(const info& _SurfaceInfo) { return num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions) * max(1, _SurfaceInfo.array_size); }
+inline int num_subresources(const info& _SurfaceInfo) { return max(1, num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions)) * max(1, _SurfaceInfo.array_size); }
 
 // Returns the info for a given subresource.
 subresource_info subresource(const info& _SurfaceInfo, int _Subresource);

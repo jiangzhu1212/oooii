@@ -37,15 +37,15 @@ struct gpu_test_texturecubemip : public gpu_texture_test
 {
 	gpu_test_texturecubemip() : gpu_texture_test("GPU test: texturecube mip", kIsDevMode) {}
 
-	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_CUBE; }
+	pipeline get_pipeline() override { pipeline p; p.input = gfx::vertex_input::pos_uvw; p.vs = gfx::vertex_shader::texturecube; p.ps = gfx::pixel_shader::texturecube; return p; } 
 	resource* make_test_texture() override
 	{
-		auto _0 = surface_load(filesystem::data_path() / "Test/Textures/CubePosX.png", surface::alpha_option::force_alpha);
-		auto _1 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegX.png", surface::alpha_option::force_alpha);
-		auto _2 = surface_load(filesystem::data_path() / "Test/Textures/CubePosY.png", surface::alpha_option::force_alpha);
-		auto _3 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegY.png", surface::alpha_option::force_alpha);
-		auto _4 = surface_load(filesystem::data_path() / "Test/Textures/CubePosZ.png", surface::alpha_option::force_alpha);
-		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", surface::alpha_option::force_alpha);
+		auto _0 = surface_load(filesystem::data_path() / "Test/Textures/CubePosX.png", false, surface::alpha_option::force_alpha);
+		auto _1 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegX.png", false, surface::alpha_option::force_alpha);
+		auto _2 = surface_load(filesystem::data_path() / "Test/Textures/CubePosY.png", false, surface::alpha_option::force_alpha);
+		auto _3 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegY.png", false, surface::alpha_option::force_alpha);
+		auto _4 = surface_load(filesystem::data_path() / "Test/Textures/CubePosZ.png", false, surface::alpha_option::force_alpha);
+		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", false, surface::alpha_option::force_alpha);
 
 		const surface::buffer* images[6] = { _0.get(), _1.get(), _2.get(), _3.get(), _4.get(), _5.get() };
 		auto image = surface::buffer::make(images, 6, surface::buffer::mips_array);

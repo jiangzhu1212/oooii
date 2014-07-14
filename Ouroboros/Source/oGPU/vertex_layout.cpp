@@ -76,6 +76,8 @@ static DXGI_FORMAT from_format(const mesh::format::value& format)
 		DXGI_FORMAT_R8G8B8A8_SNORM,
 		DXGI_FORMAT_R8G8B8A8_UINT,
 		DXGI_FORMAT_R8G8B8A8_SINT,
+		DXGI_FORMAT_B8G8R8A8_UNORM,
+		DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
 	};
 	static_assert(oCOUNTOF(sFormats) == mesh::format::count, "array mismatch");
 	return sFormats[format];

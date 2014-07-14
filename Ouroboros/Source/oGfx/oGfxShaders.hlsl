@@ -32,10 +32,31 @@
 #include <oGfx/oGfxLightConstants.h>
 #include <oGfx/oGfxMaterialConstants.h>
 #include <oGfx/oGfxViewConstants.h>
+#include <oGfx/oGfxVertexLayouts.h>
 
-#include <oGPU/vertex_layouts.h>
+// _____________________________________________________________________________
+// Conventions:
 
+// LS: local space
+// WS: world space
+// VS: view space
+// CS: clip space
+// NS: ndc (post-clip) space
+// SS: screen-space
+
+// _____________________________________________________________________________
+// oGPU samplers
+
+SamplerState PointClamp : register(s0);
+SamplerState PointWrap : register(s1);
+SamplerState LinearClamp : register(s2);
+SamplerState LinearWrap : register(s3);
+SamplerState AnisoClamp : register(s4);
+SamplerState AnisoWrap : register(s5);
+
+// _____________________________________________________________________________
 // Solid color shaders
+
 float4 PSBlack() : SV_Target { return oBLACK4; }
 float4 PSWhite() : SV_Target { return oWHITE4; }
 float4 PSRed() : SV_Target { return oRED4; }
@@ -44,6 +65,98 @@ float4 PSBlue() : SV_Target { return oBLUE4; }
 float4 PSYellow() : SV_Target { return oYELLOW4; }
 float4 PSMagenta() : SV_Target { return oMAGENTA4; }
 float4 PSCyan() : SV_Target { return oCYAN4; }
+
+// _____________________________________________________________________________
+// Simple texture-based shaders
+
+Texture1D Simple1D : register(t0);
+Texture1DArray Simple1DArray : register(t0);
+Texture2D Simple2D : register(t0);
+Texture2DArray Simple2DArray : register(t0);
+Texture3D Simple3D : register(t0);
+TextureCube SimpleCube : register(t0);
+TextureCubeArray SimpleCubeArray : register(t0);
+
+float4 PSTexture1D(float4 SSpostion : SV_Position, float texcoord : TEXCOORD) : SV_Target { return Simple1D.Sample(LinearWrap, texcoord); }
+float4 PSTexture1DArray(float4 SSpostion : SV_Position, float2 texcoord : TEXCOORD) : SV_Target { return Simple1DArray.Sample(LinearWrap, texcoord); }
+float4 PSTexture2D(float4 SSpostion : SV_Position, float2 texcoord : TEXCOORD) : SV_Target { return Simple2D.Sample(LinearWrap, texcoord); }
+float4 PSTexture2DArray(float4 SSpostion : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return Simple2DArray.Sample(LinearWrap, texcoord); }
+float4 PSTexture3D(float4 SSpostion : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return Simple3D.Sample(LinearWrap, texcoord); }
+float4 PSTextureCube(float4 SSpostion : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return SimpleCube.Sample(LinearWrap, texcoord); }
+float4 PSTextureCubeArray(float4 SSpostion : SV_Position, float4 texcoord : TEXCOORD) : SV_Target { return SimpleCubeArray.Sample(LinearWrap, texcoord); }
+
+// _____________________________________________________________________________
+// Simple interpolant-based shaders
+
+float4 PSVertexColor(float4 SSposition : SV_Position, float4 color : COLOR) : SV_Target { return color; }
+
+// _____________________________________________________________________________
+// Trivial vertex shaders
+
+float4 VSPassThroughPos(float3 LSposition : POSITION) : SV_Position
+{
+	return float4(LSposition, 1);
+}
+
+void VSPassThroughPosColor(float3 LSposition : POSITION, float4 color : COLOR, out float4 out_SSposition : SV_Position, out float4 out_color : COLOR)
+{
+	out_SSposition = float4(LSposition, 1);
+	out_color = color;
+}
+
+void VSPassThroughPosUv(float3 LSposition : POSITION, float2 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float2 out_texcoord : TEXCOORD)
+{
+	out_SSposition = float4(LSposition, 1);
+	out_texcoord = texcoord;
+}
+
+void VSPassThroughPosUvw(float3 LSposition : POSITION, float3 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float3 out_texcoord : TEXCOORD)
+{
+	out_SSposition = float4(LSposition, 1);
+	out_texcoord = texcoord;
+}
+
+void VSTexture1D(float3 LSposition : POSITION, float texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float out_texcoord : TEXCOORD)
+{
+	out_SSposition = oGfxLStoSS(LSposition);
+	out_texcoord = texcoord;
+}
+
+void VSTexture1DArray(float3 LSposition : POSITION, float texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float2 out_texcoord : TEXCOORD)
+{
+	out_SSposition = oGfxLStoSS(LSposition);
+	out_texcoord = float2(texcoord, oGfxGetSlice());
+}
+
+void VSTexture2D(float3 LSposition : POSITION, float2 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float2 out_texcoord : TEXCOORD)
+{
+	out_SSposition = oGfxLStoSS(LSposition);
+	out_texcoord = texcoord;
+}
+
+void VSTexture2DArray(float3 LSposition : POSITION, float2 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float3 out_texcoord : TEXCOORD)
+{
+	out_SSposition = oGfxLStoSS(LSposition);
+	out_texcoord = float3(texcoord, oGfxGetSlice());
+}
+
+void VSTexture3D(float3 LSposition : POSITION, float3 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float3 out_texcoord : TEXCOORD)
+{
+	out_SSposition = oGfxLStoSS(LSposition);
+	out_texcoord = texcoord;
+}
+
+void VSTextureCube(float3 LSposition : POSITION, float3 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float3 out_texcoord : TEXCOORD)
+{
+	out_SSposition = oGfxLStoSS(LSposition);
+	out_texcoord = texcoord;
+}
+
+void VSTextureCubeArray(float3 LSposition : POSITION, float3 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float4 out_texcoord : TEXCOORD)
+{
+	out_SSposition = oGfxLStoSS(LSposition);
+	out_texcoord = float4(texcoord, oGfxGetSlice());
+}
 
 struct oGFX_INSTANCE
 {
@@ -112,11 +225,6 @@ oGFX_VS_OUT_UNLIT VSLines(vertex_pos_color In)
 vertex_pos_nrm_tan_uv0 VSPassThrough(vertex_pos_nrm_tan_uv0 In)
 {
 	return In;
-}
-
-float4 VSPositionPassThrough(float3 _LSPosition : POSITION) : SV_Position
-{
-	return float4(_LSPosition, 1);
 }
 
 float4 VSPosition(float3 _LSPosition : POSITION) : SV_Position
@@ -387,3 +495,46 @@ float4 PSWSVertexNormal(oGFX_VS_OUT_LIT In) : SV_Target
 {
 	return float4(colorize_vector(normalize(In.WSNormal)), 1);
 }
+
+
+
+
+
+
+
+
+
+
+
+// _____________________________________________________________________________
+// Shaders used in simple unit tests
+
+static int TESTBufferAppendIndices[20] = 
+{ 5, 6, 7, 18764, 2452, 2423, 52354, 344, -1542, 3434, 53, -4535, 3535, 88884747, 534535, 88474, -445, 4428855, -1235, 4661};
+
+void VSTestBuffer(in uint id : SV_VertexID, out float4 out_SSposition : SV_Position, out int out_index : TESTBUFFERINDEX)
+{
+	out_SSposition = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	out_index = TESTBufferAppendIndices[id];
+}
+
+AppendStructuredBuffer<int> TESTGPUBufferOutput : register(u0);
+
+void PSTestBuffer(in float4 Position : SV_Position, in int Index : TESTBUFFERINDEX)
+{
+	TESTGPUBufferOutput.Append(Index);
+}
+
+void VSTestTransform(float3 LSposition : POSITION, out float4 out_SSposition : SV_Position)
+{
+	out_SSposition = oGfxLStoSS(LSposition);
+}
+
+void VSTestInstanced(float3 LSposition : POSITION, uint instance_index : SV_InstanceID, out float4 out_SSposition : SV_Position, out float4 out_color : COLOR)
+{
+	oGfxTestInstance Inst = GPUTestInstances[instance_index];
+	out_SSposition = oGfxLStoSS(qmul(Inst.Rotation, LSposition) + Inst.Translation);
+	out_color = oGfxGetColor();
+}
+
+

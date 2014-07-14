@@ -86,7 +86,7 @@ public:
 	// calls deinit on this, moves that's memory under the same config
 	concurrent_registry& operator=(concurrent_registry&& _That);
 
-	// Initializes the registry with external memory. If null then the object is not initialized
+	// Initializes the registry with external memory. If nullptr then the object is not initialized
 	// nor is lifetime or placeholder_source accessed. In all cases this returns the number of 
 	// bytes required.
 	size_type initialize(void* memory, size_type capacity, const lifetime_t& lifetime, placeholder_source_t& placeholder_source);

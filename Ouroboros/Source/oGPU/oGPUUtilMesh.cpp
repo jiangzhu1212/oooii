@@ -74,8 +74,8 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::element_ar
 
 	// copy indices
 	{
-		ushort* SrcIndices = new ushort[info.num_indices];
-		finally FreeIndices([&] { if (SrcIndices) delete [] SrcIndices; });
+		ushort* SrcIndices = (ushort*)default_allocate(sizeof(ushort) * info.num_indices, 0);
+		finally FreeIndices([&] { if (SrcIndices) default_deallocate(SrcIndices); });
 		mesh::copy_indices(SrcIndices, source.indices, info.num_indices);
 		indices.initialize(name, dev, info.num_indices, SrcIndices);
 	}
@@ -92,8 +92,8 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::element_ar
 		memset(dsts, 0, sizeof(void*) * mesh::max_num_slots);
 
 		{
-			dsts[slot] = new char[VertexSize * info.num_vertices];
-			finally FreeDsts([&] { if (dsts[slot]) delete [] dsts[slot]; });
+			dsts[slot] = default_allocate(VertexSize * info.num_vertices, 0);
+			finally FreeDsts([&] { if (dsts[slot]) default_deallocate(dsts[slot]); });
 			mesh::copy_vertices(dsts, elements, source.streams, prim_info.elements, info.num_vertices);
 			vertices[slot].initialize(name, dev, VertexSize, prim_info.num_vertices, dsts[slot]);
 		}
@@ -127,7 +127,7 @@ void util_mesh::initialize_first_triangle(device* dev)
 	initialize("First Triangle", dev, mi, sIndices, elements);
 }
 
-void util_mesh::initialize_first_cube(device* dev)
+void util_mesh::initialize_first_cube(device* dev, bool _UVWs)
 {
 	mesh::primitive::box_init i;
 	i.semantics = mesh::primitive::flag_positions|mesh::primitive::flag_texcoords;
@@ -141,7 +141,7 @@ void util_mesh::initialize_first_cube(device* dev)
 
 	mesh::element_array Elements;
 	Elements[0] = mesh::element(mesh::semantic::position, 0, mesh::format::xyz32_float, 0);
-	Elements[1] = mesh::element(mesh::semantic::texcoord, 0, mesh::format::xy32_float, 0);
+	Elements[1] = mesh::element(mesh::semantic::texcoord, 0, _UVWs ? mesh::format::xyz32_float : mesh::format::xy32_float, 0);
 	
 	initialize("First Cube", dev, Elements, prim.get());
 }
@@ -153,11 +153,11 @@ void util_mesh::deinitialize()
 		v.deinitialize();
 }
 
-void util_mesh::draw(command_list* cl)
+void util_mesh::draw(command_list* cl, uint num_instances)
 {
 	indices.set(cl);
 	vertex_buffer::set(cl, 0, num_slots, vertices.data());
-	vertex_buffer::draw(cl, indices.num_indices(), 0, 0);
+	vertex_buffer::draw(cl, indices.num_indices(), 0, 0, num_instances);
 }
 
 }}

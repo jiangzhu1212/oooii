@@ -27,7 +27,7 @@
 #include <oGPU/readback_buffer.h>
 #include <oGPU/vertex_buffer.h>
 #include <oGPU/rwstructured_buffer.h>
-#include "oGPUTestPipelines.h"
+#include <oGfx/oGfxShaders.h>
 
 using namespace ouro::gpu;
 
@@ -51,7 +51,15 @@ void TESTbuffer()
 	readback_buffer AppendBufferCount;
 	AppendBufferCount.initialize("BufferAppendCount", Device.get(), sizeof(int));
 
-	std::shared_ptr<pipeline1> Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_BUFFER));
+	vertex_layout VL;
+	VL.initialize("vertex layout", Device.get(), gfx::elements(gfx::vertex_input::pos), gfx::vs_byte_code(gfx::vertex_input::pos));
+
+	vertex_shader VS;
+	VS.initialize("VS", Device.get(), gfx::byte_code(gfx::vertex_shader::test_buffer));
+
+	pixel_shader PS;
+	PS.initialize("PS", Device.get(), gfx::byte_code(gfx::pixel_shader::test_buffer));
+
 	std::shared_ptr<command_list> CommandList = Device->get_immediate_command_list();
 
 	scoped_device_frame DevFrame(Device.get());
@@ -59,7 +67,10 @@ void TESTbuffer()
 
 	AppendBuffer.set_draw_target(CommandList.get(), 0);
 
-	CommandList->set_pipeline(Pipeline);
+	//CommandList->set_pipeline(Pipeline);
+	VL.set(CommandList.get(), mesh::primitive_type::points);
+	VS.set(CommandList.get());
+	PS.set(CommandList.get());
 	vertex_buffer::draw_unindexed(CommandList.get(), oCOUNTOF(GPU_BufferAppendIndices), 0);
 
 	AppendBuffer.copy_counter_to(CommandList.get(), AppendBufferCount, 0);

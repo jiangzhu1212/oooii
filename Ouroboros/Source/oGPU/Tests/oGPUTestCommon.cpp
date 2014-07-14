@@ -103,7 +103,10 @@ void gpu_test::run(test_services& _Services)
 	// Flush window init
 	Window->flush_messages();
 
-	initialize();
+	pipeline p = initialize();
+	VertexLayout.initialize(as_string(p.input), Device.get(), gfx::elements(p.input), gfx::vs_byte_code(p.input));
+	VertexShader.initialize(as_string(p.vs), Device.get(), gfx::byte_code(p.vs));
+	PixelShader.initialize(as_string(p.ps), Device.get(), gfx::byte_code(p.ps));
 
 	while (Running && (DevMode || Device->frame_id() < SnapshotFrames.back()))
 	{
@@ -114,7 +117,16 @@ void gpu_test::run(test_services& _Services)
 
 			Device->end_frame();
 
-			check_snapshot(_Services);
+			try
+			{
+				check_snapshot(_Services);
+			}
+
+			catch (std::exception&)
+			{
+				if (!DevMode)
+					std::rethrow_exception(std::current_exception());
+			}
 
 			if (DevMode)
 				PrimaryColorTarget.present();
@@ -127,23 +139,27 @@ void gpu_test::run(test_services& _Services)
 		oTHROW(protocol_error, "Image compares failed, see debug output/log for specifics.");
 }
 
-const int gpu_texture_test::sSnapshotFrames[2] = { 0, 2 };
+const int gpu_texture_test::sSnapshotFrames[2] = { 0, 1 };
 
-void gpu_texture_test::initialize()
+gpu_texture_test::pipeline gpu_texture_test::initialize()
 {
-	TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
-	Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(get_pipeline()));
-	Mesh.initialize_first_cube(Device.get());
-	pResource = make_test_texture();
+	auto p = get_pipeline();
+	TestConstants.initialize("TestConstants", Device.get(), sizeof(oGfxDrawConstants));
+	Mesh.initialize_first_cube(Device.get(), p.input == gfx::vertex_input::pos_uvw);
+	Resource = make_test_texture();
+	return p;
 }
 
 float gpu_texture_test::rotation_step()
 {
-	// this is -1 because there was a code change that resulted in begin_frame()
-	// being moved out of the Render function below so it updated the frame ID
-	// earlier than this code was ready for. If golden images are updated this
-	// could go away.
-	return (Device->frame_id()-1) * 1.0f;
+	static const float sCapture[] = 
+	{
+		50.0f, 
+		124.0f,
+	};
+
+	uint frame = PrimaryColorTarget.num_presents();
+	return is_devmode() ? static_cast<float>(frame) : sCapture[frame];
 }
 
 void gpu_texture_test::render()
@@ -158,32 +174,43 @@ void gpu_texture_test::render()
 
 	CommandList->begin();
 
-	TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
+	oGfxDrawConstants c(W, V, P, aaboxf());
+	c.Color = white;
+	TestConstants.update(CommandList.get(), c);
 
 	BlendState.set(CommandList.get(), blend_state::opaque);
 	DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
 	RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
-	SamplerState.set(CommandList.get(), 0, sampler_state::linear_wrap);
-	TestConstants.set(CommandList.get(), 0);
-	resource::set(CommandList.get(), 0, 1, &pResource);
-	CommandList->set_pipeline(Pipeline);
+	SamplerState.set(CommandList.get(), sampler_state::linear_wrap, sampler_state::linear_wrap);
+	VertexLayout.set(CommandList.get(), mesh::primitive_type::triangles);
+	VertexShader.set(CommandList.get());
+	PixelShader.set(CommandList.get());
+	
+	TestConstants.set(CommandList.get(), oGFX_DRAW_CONSTANTS_REGISTER);
+	resource::set(CommandList.get(), 0, 1, &Resource);
+	
 	PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+	PrimaryDepthTarget.clear(CommandList.get());
 	PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 	Mesh.draw(CommandList.get());
 
 	CommandList->end();
 }
 
-std::shared_ptr<surface::buffer> surface_load(const path& _Path, surface::alpha_option::value _Option)
+std::shared_ptr<surface::buffer> surface_load(const path& _Path, bool _Mips, const surface::alpha_option::value& _Option)
 {
 	scoped_allocation b = filesystem::load(_Path);
-	return surface::decode(b, b.size(), _Option);
+	auto sb = surface::decode(b, b.size(), _Option, _Mips ? surface::tight : surface::image);
+	if (_Mips)
+		sb->generate_mips();
+	return sb;
 }
 
-std::shared_ptr<surface::buffer> make_1D(int _Width)
+std::shared_ptr<surface::buffer> make_1D(int _Width, bool _Mips)
 {
 	surface::info si;
 	si.dimensions = int3(_Width, 1, 1);
+	si.layout = _Mips ? surface::tight : surface::image;
 	si.format = surface::b8g8r8a8_unorm;
 	auto s = surface::buffer::make(si);
 
@@ -194,6 +221,9 @@ std::shared_ptr<surface::buffer> make_1D(int _Width)
 		for (int i = 0; i < si.dimensions.x; i++)
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
 	}
+
+	if (_Mips)
+		s->generate_mips();
 
 	return s;
 }

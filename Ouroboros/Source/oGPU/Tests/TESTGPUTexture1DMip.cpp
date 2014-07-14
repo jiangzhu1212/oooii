@@ -37,10 +37,10 @@ struct gpu_test_texture1dmip : public gpu_texture_test
 {
 	gpu_test_texture1dmip() : gpu_texture_test("GPU test: texture 1D mip", kIsDevMode) {}
 
-	oGPU_TEST_PIPELINE get_pipeline() override { return oGPU_TEST_TEXTURE_1D; }
+	pipeline get_pipeline() override { pipeline p; p.input = gfx::vertex_input::pos_uv; p.vs = gfx::vertex_shader::texture1d; p.ps = gfx::pixel_shader::texture1d; return p; } 
 	resource* make_test_texture() override
 	{
-		auto image = make_1D(512);
+		auto image = make_1D(512, true);
 		t.initialize("Test 1D", Device.get(), *image.get(), true);
 		return &t;
 	}

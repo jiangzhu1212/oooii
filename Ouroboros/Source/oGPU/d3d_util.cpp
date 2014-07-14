@@ -421,7 +421,7 @@ void set_samplers(DeviceContext* dc, uint slot, uint num_samplers, const Sampler
 	if (gpu_stage_flags & stage_flag::domain) dc->DSSetSamplers(slot, num_samplers, s);
 	if (gpu_stage_flags & stage_flag::geometry) dc->GSSetSamplers(slot, num_samplers, s);
 	if (gpu_stage_flags & stage_flag::pixel) dc->PSSetSamplers(slot, num_samplers, s);
-	if (gpu_stage_flags & stage_flag::compute)dc->CSSetSamplers(slot, num_samplers, s);
+	if (gpu_stage_flags & stage_flag::compute) dc->CSSetSamplers(slot, num_samplers, s);
 }
 
 intrusive_ptr<Buffer> make_buffer(const char* name, Device* dev, uint element_stride, uint num_elements, D3D11_USAGE usage, uint bind_flags, uint misc_flags, const void* init_data)

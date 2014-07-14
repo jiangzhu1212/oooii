@@ -35,13 +35,13 @@ namespace ouro {
 	namespace tests {
 
 static const int sSnapshotFrames[] = { 0, 50 };
-static const bool kIsDevMode = false;
+static const bool kIsDevMode = true;//false;
 
 struct gpu_test_render_target : public gpu_test
 {
 	gpu_test_render_target() : gpu_test("GPU test: render_target", kIsDevMode, sSnapshotFrames) {}
 
-	void initialize() override
+	pipeline initialize() override
 	{
 		command_list_info i;
 		
@@ -50,14 +50,23 @@ struct gpu_test_render_target : public gpu_test
 
 		i.draw_order = 0;
 		CLRenderTarget = Device->make_command_list("CLRenderTarget", i);
-		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
-		PLPassThrough = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
+		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGfxDrawConstants));
 		Triangle.initialize_first_triangle(Device.get());
-		PLTexture = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TEXTURE_2D));
+
+		MainVertexLayout.initialize("Main layout", Device.get(), gfx::elements(gfx::vertex_input::pos_uv), gfx::vs_byte_code(gfx::vertex_input::pos_uv));
+		MainVertexShader.initialize("Main layout", Device.get(), gfx::byte_code(gfx::vertex_shader::texture2d));
+		MainPixelShader.initialize("Main layout", Device.get(), gfx::byte_code(gfx::pixel_shader::texture2d));
+
 		Cube.initialize_first_cube(Device.get());
 
 		ColorTarget.initialize("ColorTarget", Device.get(), surface::b8g8r8a8_unorm, 256, 256, 0, false);
 		DepthTarget.initialize("DepthTarget", Device.get(), surface::d24_unorm_s8_uint, 256, 256, 0, false, 0);
+	
+		pipeline p;
+		p.input = gfx::vertex_input::pos;
+		p.vs = gfx::vertex_shader::pass_through_pos;
+		p.ps = gfx::pixel_shader::white;
+		return p;
 	}
 
 	void render() override
@@ -82,8 +91,9 @@ struct gpu_test_render_target : public gpu_test
 private:
 	std::shared_ptr<command_list> CLMainScene;
 	std::shared_ptr<command_list> CLRenderTarget;
-	std::shared_ptr<pipeline1> PLPassThrough;
-	std::shared_ptr<pipeline1> PLTexture;
+	gpu::vertex_layout MainVertexLayout;
+	gpu::vertex_shader MainVertexShader;
+	gpu::pixel_shader MainPixelShader;
 	color_target ColorTarget;
 	depth_target DepthTarget;
 	util_mesh Cube;
@@ -94,11 +104,13 @@ private:
 	{
 		_pCommandList->begin();
 		rt.clear(_pCommandList, deep_sky_blue);
-		BlendState.set(CommandList.get(), blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), depth_stencil_state::none);
-		RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
-		SamplerState.set(CommandList.get(), 0, sampler_state::linear_wrap);
-		_pCommandList->set_pipeline(PLPassThrough);
+		BlendState.set(_pCommandList, blend_state::opaque);
+		DepthStencilState.set(_pCommandList, depth_stencil_state::none);
+		RasterizerState.set(_pCommandList, rasterizer_state::front_face);
+		SamplerState.set(_pCommandList, sampler_state::linear_wrap, sampler_state::linear_wrap);
+		VertexLayout.set(_pCommandList, mesh::primitive_type::triangles);
+		VertexShader.set(_pCommandList);
+		PixelShader.set(_pCommandList);
 		rt.set_draw_target(_pCommandList);
 		Triangle.draw(_pCommandList);
 		_pCommandList->end();
@@ -116,16 +128,23 @@ private:
 
 		_pCommandList->begin();
 
-		TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
+		oGfxDrawConstants c(oIDENTITY4x4, V, P, aaboxf());
+		c.Color = white;
+		TestConstants.update(_pCommandList, c);
 
-		BlendState.set(CommandList.get(), blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
-		RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
-		SamplerState.set(CommandList.get(), 0, sampler_state::linear_wrap);
-		TestConstants.set(_pCommandList, 0);
+		BlendState.set(_pCommandList, blend_state::opaque);
+		DepthStencilState.set(_pCommandList, depth_stencil_state::test_and_write);
+		RasterizerState.set(_pCommandList, rasterizer_state::front_face);
+		SamplerState.set(_pCommandList, sampler_state::linear_wrap, sampler_state::linear_wrap);
+		TestConstants.set(_pCommandList, oGFX_DRAW_CONSTANTS_REGISTER);
 		texture.set(_pCommandList, 0);
-		_pCommandList->set_pipeline(PLTexture);
+
+		MainVertexLayout.set(_pCommandList, mesh::primitive_type::triangles);
+		MainVertexShader.set(_pCommandList);
+		MainPixelShader.set(_pCommandList);
+
 		PrimaryColorTarget.clear(_pCommandList, get_clear_color());
+		PrimaryDepthTarget.clear(_pCommandList);
 		PrimaryColorTarget.set_draw_target(_pCommandList, PrimaryDepthTarget);
 		Cube.draw(_pCommandList);
 		_pCommandList->end();

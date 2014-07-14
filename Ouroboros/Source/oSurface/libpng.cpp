@@ -126,8 +126,8 @@ info get_info_png(const void* _pBuffer, size_t _BufferSize)
 
 std::shared_ptr<char> encode_png(const buffer* _pBuffer
 	, size_t* _pSize
-	, alpha_option::value _Option
-	, compression::value _Compression)
+	, const alpha_option::value& _Option
+	, const compression::value& _Compression)
 {
 	const buffer* pSource = _pBuffer;
 	std::shared_ptr<const buffer> Converted;
@@ -239,7 +239,7 @@ std::shared_ptr<char> encode_png(const buffer* _pBuffer
 	return buffer;
 }
 
-std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option)
+std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
 	// initialze libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
@@ -274,7 +274,7 @@ std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, alp
 	png_set_bgr(png_ptr);
 
 	info si;
-	si.layout = image;
+	si.layout = _Layout;
 	si.dimensions = int3(w, h, 1);
 	switch (color_type)
 	{

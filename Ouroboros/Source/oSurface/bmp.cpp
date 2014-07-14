@@ -84,13 +84,13 @@ info get_info_bmp(const void* _pBuffer, size_t _BufferSize)
 
 std::shared_ptr<char> encode_bmp(const buffer* _pBuffer
 	, size_t* _pSize
-	, alpha_option::value _Option
-	, compression::value _Compression)
+	, const alpha_option::value& _Option
+	, const compression::value& _Compression)
 {
 	throw std::exception("bmp encode unsupported");
 }
 
-std::shared_ptr<buffer> decode_bmp(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option)
+std::shared_ptr<buffer> decode_bmp(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
 	if (_BufferSize < 2 || memcmp(_pBuffer, "BM", 2))
 		throw std::invalid_argument("the buffer is not a bmp");
@@ -101,6 +101,7 @@ std::shared_ptr<buffer> decode_bmp(const void* _pBuffer, size_t _BufferSize, alp
 
 	info si = get_info_bmp(_pBuffer, _BufferSize);
 	info dsi = si;
+	dsi.layout = _Layout;
 	const_mapped_subresource msr;
 	msr.data = bits;
 	msr.depth_pitch = bmi->bmiHeader.biSizeImage;

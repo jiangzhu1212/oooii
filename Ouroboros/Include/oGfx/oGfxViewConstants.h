@@ -34,6 +34,9 @@
 
 #ifndef oHLSL
 
+	#include <oBase/throw.h>
+	#include <oCompute/linear_algebra.h>
+
 	enum oGfx_VIEW_FAR_PLANE_CORNER
 	{
 		oGFX_VIEW_FAR_PLANE_BOTTOM_LEFT,
@@ -70,25 +73,25 @@ struct oGfxViewConstants
 		inline void Set(const float4x4& _View, const float4x4& _Projection, const int3& _RenderTargetDimensions, uint _TextureArrayIndex)
 		{
 			View = _View;
-			ViewInverse = invert(View);
+			ViewInverse = ouro::invert(View);
 			Projection = _Projection;
-			ProjectionInverse = invert(Projection);
+			ProjectionInverse = ouro::invert(Projection);
 			ViewProjection = View * Projection;
-			ViewProjectionInverse = invert(ViewProjection);
+			ViewProjectionInverse = ouro::invert(ViewProjection);
 
 			float3 corners[8];
 			oFrustumf psf(_Projection);
-			oVERIFY(oExtractFrustumCorners(psf, corners));
+			oCHECK0(oExtractFrustumCorners(psf, corners));
 			VSFarplaneCorners[oGFX_VIEW_FAR_PLANE_TOP_LEFT] = float4(corners[oFRUSTUM_LEFT_TOP_FAR], 0.0f);
 			VSFarplaneCorners[oGFX_VIEW_FAR_PLANE_TOP_RIGHT] = float4(corners[oFRUSTUM_RIGHT_TOP_FAR], 0.0f);
 			VSFarplaneCorners[oGFX_VIEW_FAR_PLANE_BOTTOM_LEFT] = float4(corners[oFRUSTUM_LEFT_BOTTOM_FAR], 0.0f);
 			VSFarplaneCorners[oGFX_VIEW_FAR_PLANE_BOTTOM_RIGHT] = float4(corners[oFRUSTUM_RIGHT_BOTTOM_FAR], 0.0f);
 
 			oASSERT(_RenderTargetDimensions.z==1, "Expecting render target dimensions without depth (z=1), but z=%d", _RenderTargetDimensions.z);
-			RenderTargetDimensions = oCastAsFloat(_RenderTargetDimensions.xy());
+			RenderTargetDimensions = float2(static_cast<float>(_RenderTargetDimensions.x), static_cast<float>(_RenderTargetDimensions.y));
 
 			// Store the 1/far plane distance so we can calculate view-space depth
-			oExtractNearFarPlanesDistance(_Projection, &NearPlaneDistance, &FarPlaneDistance);
+			ouro::extract_near_far_distances(_Projection, &NearPlaneDistance, &FarPlaneDistance);
 			InverseFarPlaneDistance = 1.0f / FarPlaneDistance;
 			NearPlaneDistancePlusEpsilon = NearPlaneDistance + 0.1f;
 			TextureArrayIndex = _TextureArrayIndex;
