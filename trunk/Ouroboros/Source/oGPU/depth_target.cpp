@@ -136,7 +136,7 @@ void depth_target::set(command_list* cl, uint index, const viewport& vp)
 	get_dc(cl)->OMSetRenderTargets(0, nullptr, (DepthStencilView*)get_target(index));
 }
 
-void depth_target::clear_depth(command_list* cl, uint index, float depth)
+void depth_target::clear(command_list* cl, uint index, float depth)
 {
 	get_dc(cl)->ClearDepthStencilView((DepthStencilView*)rws[index], D3D11_CLEAR_DEPTH, depth, 0);
 }

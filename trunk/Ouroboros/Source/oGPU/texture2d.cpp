@@ -48,6 +48,9 @@ void texture2d::initialize(const char* name, device* dev, surface::format format
 void texture2d::initialize(const char* name, device* dev, const surface::buffer& src, bool mips)
 {
 	auto si = src.get_info();
+
+	oCHECK(!mips || (mips && si.layout != surface::layout::image), "source buffer does not contain mips for mipped texture");
+
 	initialize(name, dev, si.format, si.dimensions.x, si.dimensions.y, si.array_size, mips);
 
 	const int NumMips = surface::num_mips(mips, si.dimensions);

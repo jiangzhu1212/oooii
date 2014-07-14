@@ -39,9 +39,22 @@
 	#define oGFX_DRAW_CONSTANTS_REGISTER 1
 #endif
 
+#ifndef oGFX_TEST_INSTANCES_REGISTER
+	#define oGFX_TEST_INSTANCES_REGISTER 2
+#endif
+
 #ifndef oHLSL
 	#include <oBasis/oMath.h>
 #endif
+
+// this is a relic from the collapse of oGPUTestPipelines. Look to find a better
+// home/method for this.
+struct oGfxTestInstance
+{
+	float3 Translation;
+	float PadA;
+	quatf Rotation;
+};
 
 struct oGfxDrawConstants
 {
@@ -64,16 +77,17 @@ struct oGfxDrawConstants
 	{
 		World = _World;
 		WorldView = _World * _View;
-		WorldViewInverse = invert(WorldView);
+		WorldViewInverse = ouro::invert(WorldView);
 		WorldViewProjection = WorldView * _Projection;
-		Normalized = oCreateNormalizationMatrix(_ObjectBound.Min, _ObjectBound.Max);
-		NormalizedInverse = invert(Normalized);
-		WorldQuaternion = make_quaternion(World);
-		WorldViewQuaternion = make_quaternion(WorldView);
+		Normalized = ouro::make_normalization(_ObjectBound.Min, _ObjectBound.Max);
+		NormalizedInverse = ouro::invert(Normalized);
+		WorldQuaternion = ouro::make_quaternion(World);
+		WorldViewQuaternion = ouro::make_quaternion(WorldView);
 		Scale = max(_ObjectBound.size());
 		ObjectID = _ObjectID;
 		DrawID = _DrawID;
-		pad0 = 0;
+		Slice = 0;
+		Color = ouro::white;
 	}
 
 	inline void SetIdentity()
@@ -88,7 +102,8 @@ struct oGfxDrawConstants
 		Scale = 1.0f;
 		ObjectID = 0;
 		DrawID = 0;
-		pad0 = 0;
+		Slice = 0;
+		Color = ouro::white;
 	}
 
 #endif
@@ -120,11 +135,19 @@ struct oGfxDrawConstants
 	// DrawID is a monotonically increasing value unique for each call to Draw().
 	uint DrawID;
 
-	uint pad0;
+	// Use this texture slice, if applicable
+	uint Slice;
+
+	// this is a relic from collapsing the separate set of code in oGPUTestsPipelines
+	// revisit this.
+	rgbaf Color;
 };
 
 #ifdef oHLSL
 	cbuffer cbuffer_oGfxDrawConstants : register(oCONCAT(b, oGFX_DRAW_CONSTANTS_REGISTER)) { oGfxDrawConstants GfxDrawConstants; }
+	
+	// relic from oGPUTestPipelines... clean this up
+	cbuffer cbuffer_oGfxTestInstances : register(oCONCAT(b, oGFX_TEST_INSTANCES_REGISTER)) { oGfxTestInstance GPUTestInstances[2]; }
 
 	float4 oGfxLStoSS(float3 _LSPosition)
 	{
@@ -184,6 +207,16 @@ struct oGfxDrawConstants
 	uint oGfxGetDrawID()
 	{
 		return GfxDrawConstants.DrawID;
+	}
+
+	uint oGfxGetSlice()
+	{
+		return GfxDrawConstants.Slice;
+	}
+
+	float4 oGfxGetColor()
+	{
+		return GfxDrawConstants.Color;
 	}
 
 #endif

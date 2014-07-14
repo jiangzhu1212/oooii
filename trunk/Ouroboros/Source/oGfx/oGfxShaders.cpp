@@ -26,7 +26,25 @@
 
 typedef unsigned char BYTE;
 
-#include <VSPositionPassThrough.h>
+#include <VSPassThroughPos.h>
+#include <VSPassThroughPosColor.h>
+#include <VSPassThroughPosUv.h>
+#include <VSPassThroughPosUvw.h>
+
+#include <VSTexture1D.h>
+#include <VSTexture1DArray.h>
+#include <VSTexture2D.h>
+#include <VSTexture2DArray.h>
+#include <VSTexture3D.h>
+#include <VSTextureCube.h>
+#include <VSTextureCubeArray.h>
+
+#include <VSTestBuffer.h>
+#include <VSTestTransform.h>
+#include <VSTestInstanced.h>
+
+#include <GSVertexNormals.h>
+#include <GSVertexTangents.h>
 
 #include <PSBlack.h>
 #include <PSWhite.h>
@@ -37,103 +55,163 @@ typedef unsigned char BYTE;
 #include <PSMagenta.h>
 #include <PSCyan.h>
 
+#include <PSTexture1D.h>
+#include <PSTexture1DArray.h>
+#include <PSTexture2D.h>
+#include <PSTexture2DArray.h>
+#include <PSTexture3D.h>
+#include <PSTextureCube.h>
+#include <PSTextureCubeArray.h>
+
+#include <PSVertexColor.h>
+
+#include <PSTestBuffer.h>
+
+struct SHADER
+{
+	const char* name;
+	const void* byte_code;
+};
+
+#define oSH(x) { #x, x },
+#define oBYTE_CODE(type) const void* byte_code(const type::value& shader) { static_assert(oCOUNTOF(s_##type) == type::count, "array mismatch"); return s_##type[shader].byte_code; }
+#define oAS_STRING(type) const char* as_string(const gfx::type::value& shader) { return gfx::s_##type[shader].name; }
+
+using namespace ouro::mesh;
+
 namespace ouro {
 	namespace gfx {
 
-const void* byte_code(const vertex_shader::value& shader)
+mesh::element_array elements(const vertex_input::value& input)
 {
-	static const void* sShaders[] = 
+	element_array e;
+	switch (input)
 	{
-		VSPositionPassThrough,
-	};
-	static_assert(oCOUNTOF(sShaders) == vertex_shader::count, "array mismatch");
-	return sShaders[shader];
+		default:
+		case vertex_input::pos:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			break;
+		case vertex_input::pos_color:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			e[1] = element(semantic::color, 0, format::bgra8_unorm, 0);
+			break;
+		case vertex_input::pos_uv:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			e[1] = element(semantic::texcoord, 0, format::xy32_float, 0);
+			break;
+		case vertex_input::pos_uvw:
+			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			e[1] = element(semantic::texcoord, 0, format::xyz32_float, 0);
+			break;
+	}
+
+	return e;
 }
 
-const void* byte_code(const hull_shader::value& shader)
+const void* vs_byte_code(const vertex_input::value& input)
 {
-	static const void* sShaders[] = 
+	static const vertex_shader::value sVS[] =
 	{
-		nullptr,
+		vertex_shader::pass_through_pos,
+		vertex_shader::pass_through_pos_color,
+		vertex_shader::pass_through_pos_uv,
+		vertex_shader::pass_through_pos_uvw,
 	};
-	static_assert(oCOUNTOF(sShaders) == hull_shader::count, "array mismatch");
-	return sShaders[shader];
+	static_assert(oCOUNTOF(sVS) == gfx::vertex_input::count, "array mismatch");
+	return byte_code(sVS[input]);
 }
 
-const void* byte_code(const domain_shader::value& shader)
+static const SHADER s_vertex_shader[] = 
 {
-	static const void* sShaders[] = 
-	{
-		nullptr,
-	};
-	static_assert(oCOUNTOF(sShaders) == domain_shader::count, "array mismatch");
-	return sShaders[shader];
-}
+	oSH(VSPassThroughPos)
+	oSH(VSPassThroughPosColor)
+	oSH(VSPassThroughPosUv)
+	oSH(VSPassThroughPosUvw)
+	oSH(VSTexture1D)
+	oSH(VSTexture1DArray)
+	oSH(VSTexture2D)
+	oSH(VSTexture2DArray)
+	oSH(VSTexture3D)
+	oSH(VSTextureCube)
+	oSH(VSTextureCubeArray)
+	oSH(VSTestBuffer)
+	oSH(VSTestTransform)
+	oSH(VSTestInstanced)
+};
 
-const void* byte_code(const geometry_shader::value& shader)
+static const SHADER s_hull_shader[] = 
 {
-	static const void* sShaders[] = 
-	{
-		nullptr,
-	};
-	static_assert(oCOUNTOF(sShaders) == geometry_shader::count, "array mismatch");
-	return sShaders[shader];
-}
+	oSH(nullptr)
+};
 
-const void* byte_code(const pixel_shader::value& shader)
+static const SHADER s_domain_shader[] = 
 {
-	static const void* sShaders[] = 
-	{
-		PSBlack,
-		PSWhite,
-		PSRed,
-		PSGreen,
-		PSBlue,
-		PSYellow,
-		PSMagenta,
-		PSCyan,
-	};
-	static_assert(oCOUNTOF(sShaders) == pixel_shader::count, "array mismatch");
-	return sShaders[shader];
-}
+	oSH(nullptr)
+};
 
-const void* byte_code(const compute_shader::value& shader)
+static const SHADER s_geometry_shader[] = 
 {
-	static const void* sShaders[] = 
-	{
-		nullptr,
-	};
-	static_assert(oCOUNTOF(sShaders) == compute_shader::count, "array mismatch");
-	return sShaders[shader];
-}
+	oSH(GSVertexNormals)
+	oSH(GSVertexTangents)
+};
+
+static const SHADER s_pixel_shader[] = 
+{
+	oSH(PSBlack)
+	oSH(PSWhite)
+	oSH(PSRed)
+	oSH(PSGreen)
+	oSH(PSBlue)
+	oSH(PSYellow)
+	oSH(PSMagenta)
+	oSH(PSCyan)
+
+	oSH(PSTexture1D)
+	oSH(PSTexture1DArray)
+	oSH(PSTexture2D)
+	oSH(PSTexture2DArray)
+	oSH(PSTexture3D)
+	oSH(PSTextureCube)
+	oSH(PSTextureCubeArray)
+
+	oSH(PSVertexColor)
+
+	oSH(PSTestBuffer)
+};
+
+static const SHADER s_compute_shader[] = 
+{
+	oSH(nullptr)
+};
+
+oBYTE_CODE(vertex_shader)
+oBYTE_CODE(hull_shader)
+oBYTE_CODE(domain_shader)
+oBYTE_CODE(geometry_shader)
+oBYTE_CODE(pixel_shader)
+oBYTE_CODE(compute_shader)
 
 	} // namespace gfx
 
-const char* as_string(const gfx::vertex_shader::value& shader)
+const char* as_string(const gfx::vertex_input::value& input)
 {
-	const char* sNames[] = 
+	static const char* sNames[] = 
 	{
-		"PositionPassThrough",
+		"pos",
+		"pos_color",
+		"pos_uv",
+		"pos_uvw",
 	};
-	static_assert(oCOUNTOF(sNames) == gfx::vertex_shader::count, "array mismatch");
-	return sNames[shader];
+	static_assert(oCOUNTOF(sNames) == gfx::vertex_input::count, "array mismatch");
+
+	return sNames[input];
 }
 
-const char* as_string(const gfx::pixel_shader::value& shader)
-{
-	const char* sNames[] = 
-	{
-		"black",
-		"white",
-		"red",
-		"green",
-		"blue",
-		"yellow",
-		"magenta",
-		"cyan",
-	};
-	static_assert(oCOUNTOF(sNames) == gfx::pixel_shader::count, "array mismatch");
-	return sNames[shader];
-}
+oAS_STRING(vertex_shader)
+oAS_STRING(hull_shader)
+oAS_STRING(domain_shader)
+oAS_STRING(geometry_shader)
+oAS_STRING(pixel_shader)
+oAS_STRING(compute_shader)
 
 } // namespace ouro

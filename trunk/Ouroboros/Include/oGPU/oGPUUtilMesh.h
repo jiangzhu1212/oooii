@@ -56,7 +56,7 @@ public:
 	
 	// Creates a very simple unit cube. This is useful for bringing up world, view,
 	// projection transforms quickly.
-	void initialize_first_cube(device* dev);
+	void initialize_first_cube(device* dev, bool _UVWs = false);
 
 	void deinitialize();
 
@@ -67,7 +67,7 @@ public:
 	inline const vertex_buffer& get_vertex_buffer(uint index = 0) const { return vertices[index]; }
 	inline const vertex_buffer* get_vertex_buffers() const { return vertices.data(); }
 
-	void draw(command_list* cl);
+	void draw(command_list* cl, uint num_instances = 1);
 
 private:
 	index_buffer indices;

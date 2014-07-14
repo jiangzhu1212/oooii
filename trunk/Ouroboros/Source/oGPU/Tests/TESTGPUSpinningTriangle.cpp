@@ -32,7 +32,7 @@ using namespace ouro::gpu;
 namespace ouro {
 	namespace tests {
 
-static const int sSnapshotFrames[] = { 0, 2, 4, 6 };
+static const int sSnapshotFrames[] = { 0, 1, 3, 5 };
 static const bool kIsDevMode = false;
 
 class gpu_test_spinning_triangle : public gpu_test
@@ -40,12 +40,16 @@ class gpu_test_spinning_triangle : public gpu_test
 public:
 	gpu_test_spinning_triangle() : gpu_test("GPU test: spinning triangle", kIsDevMode, sSnapshotFrames) {}
 
-	void initialize() override
+	pipeline initialize() override
 	{
-		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGPUTestConstants));
-		InstanceList.initialize("Instances", Device.get(), sizeof(oGPU_TEST_INSTANCE), 2);
-		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_TRANSFORMED_WHITE));
+		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGfxDrawConstants));
 		Mesh.initialize_first_triangle(Device.get());
+
+		pipeline p;
+		p.input = gfx::vertex_input::pos;
+		p.vs = gfx::vertex_shader::test_transform;
+		p.ps = gfx::pixel_shader::white;
+		return p;
 	}
 
 	void render() override
@@ -59,25 +63,30 @@ public:
 		// being moved out of the Render function below so it updated the FrameID
 		// earlier than this code was ready for. If golden images are updated, this
 		// could go away.
-		float rotationRate = (Device->frame_id()-1) * 2.0f;
+		float rotationRate = (Device->frame_id()) * 2.0f;
 		float4x4 W = make_rotation(float3(0.0f, radians(rotationRate), 0.0f));
 
 		uint DrawID = 0;
 
 		CommandList->begin();
 
-		TestConstants.update(CommandList.get(), oGPUTestConstants(W, V, P, white));
+		oGfxDrawConstants c(W, V, P, aaboxf());
+		c.Color = white;
+		TestConstants.update(CommandList.get(), c);
 
 		BlendState.set(CommandList.get(), blend_state::opaque);
 		DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
 		RasterizerState.set(CommandList.get(), rasterizer_state::two_sided);
-		TestConstants.set(CommandList.get(), 0);
 
-		const constant_buffer* CBs[2] = { &TestConstants, &InstanceList };
-		constant_buffer::set(CommandList.get(), 0, 2, CBs);
+		TestConstants.set(CommandList.get(), oGFX_DRAW_CONSTANTS_REGISTER);
 
-		CommandList->set_pipeline(Pipeline);
+		VertexLayout.set(CommandList.get(), mesh::primitive_type::triangles);
+		VertexShader.set(CommandList.get());
+		PixelShader.set(CommandList.get());
+
 		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+		PrimaryDepthTarget.clear(CommandList.get(), 0);
+
 		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 		Mesh.draw(CommandList.get());
 
@@ -85,10 +94,8 @@ public:
 	}
 
 private:
-	std::shared_ptr<pipeline1> Pipeline;
 	util_mesh Mesh;
 	constant_buffer TestConstants;
-	constant_buffer InstanceList;
 };
 
 oGPU_COMMON_TEST(spinning_triangle);

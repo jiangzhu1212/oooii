@@ -37,6 +37,9 @@
 #include <oGPU/constant_buffer.h>
 #include <oGUI/window.h>
 
+#include <oGfx/oGfxDrawConstants.h>
+#include <oGfx/oGfxShaders.h>
+
 #include "../../test_services.h"
 
 #define oGPU_COMMON_TEST(_Name) void TEST##_Name(test_services& _Services) { gpu_test_##_Name t; t.run(_Services); }
@@ -47,6 +50,19 @@ namespace ouro {
 class gpu_test
 {
 public:
+	struct pipeline
+	{
+		pipeline()
+			: input(gfx::vertex_input::pos)
+			, vs(gfx::vertex_shader::pass_through_pos)
+			, ps(gfx::pixel_shader::white)
+		{}
+
+		gfx::vertex_input::value input;
+		gfx::vertex_shader::value vs;
+		gfx::pixel_shader::value ps;
+	};
+
 	gpu_test(const char* _Title, bool _Interactive, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size = int2(640, 480))
 	{
 		create(_Title, _Interactive, _pSnapshotFrameIDs, _NumSnapshotFrameIDs, _Size);
@@ -61,7 +77,8 @@ public:
 	virtual ~gpu_test() {}
 
 	// Called once before rendering begins (throw on error)
-	virtual void initialize() {}
+	// the override must return
+	virtual pipeline initialize() { return pipeline(); }
 
 	// Infrastructure calls begin_frame/end_frame; the rest is up to this function
 	virtual void render() = 0;
@@ -73,6 +90,9 @@ public:
 	gpu::command_list* get_command_list() { return CommandList.get(); }
 
 	color get_clear_color() const { return almost_black; }
+
+protected:
+	bool is_devmode() const { return DevMode; }
 
 private:
 	void on_event(const window::basic_event& _Event);
@@ -100,6 +120,9 @@ protected:
 	gpu::depth_stencil_state DepthStencilState;
 	gpu::rasterizer_state RasterizerState;
 	gpu::sampler_state SamplerState;
+	gpu::vertex_layout VertexLayout;
+	gpu::vertex_shader VertexShader;
+	gpu::pixel_shader PixelShader;
 	gpu::primary_target PrimaryColorTarget;
 	gpu::depth_target PrimaryDepthTarget;
 };
@@ -111,25 +134,24 @@ public:
 		: gpu_test(_Title, _Interactive, sSnapshotFrames, oCOUNTOF(sSnapshotFrames), _Size)
 	{}
 
-	virtual oGPU_TEST_PIPELINE get_pipeline() = 0;
+	virtual pipeline get_pipeline() = 0;
 	virtual gpu::resource* make_test_texture() = 0;
 	virtual float rotation_step();
 
-	void initialize() override;
+	pipeline initialize() override;
 	void render() override;
 
 protected:
-	std::shared_ptr<gpu::pipeline1> Pipeline;
-	gpu::resource* pResource;
+	gpu::resource* Resource;
 	gpu::util_mesh Mesh;
 	gpu::constant_buffer TestConstants;
 
 	static const int sSnapshotFrames[2];
 };
 
-std::shared_ptr<surface::buffer> surface_load(const path& _Path, surface::alpha_option::value _Option = surface::alpha_option::force_alpha);
+std::shared_ptr<surface::buffer> surface_load(const path& _Path, bool _Mips, const surface::alpha_option::value& _Option = surface::alpha_option::force_alpha);
 
-std::shared_ptr<surface::buffer> make_1D(int _Width);
+std::shared_ptr<surface::buffer> make_1D(int _Width, bool _Mips);
 
 	} // namespace tests
 } // namespace ouro

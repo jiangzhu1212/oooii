@@ -139,6 +139,8 @@ namespace format
 	xyzw8_snorm,
 	xyzw8_uint,
 	xyzw8_sint,
+	bgra8_unorm,
+	bgra8_srgb,
 
 	count,
 

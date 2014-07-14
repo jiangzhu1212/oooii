@@ -142,8 +142,8 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 
 std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
 	, size_t* _pSize
-	, alpha_option::value _Option
-	, compression::value _Compression)
+	, const alpha_option::value& _Option
+	, const compression::value& _Compression)
 {
 #if 0
 	jpeg_compress_struct cinfo;
@@ -202,7 +202,7 @@ std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
 #endif
 }
 
-std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option)
+std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
 #if 0
 	jpeg_decompress_struct cinfo;
@@ -219,7 +219,7 @@ std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, alp
 
 	info si;
 	si.format = from_jcs(cinfo.out_color_space);
-	si.layout = image;
+	si.layout = _Layout;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
 
 	switch (si.format)

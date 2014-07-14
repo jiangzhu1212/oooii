@@ -54,8 +54,8 @@ file_format::value get_file_format(const char* _FilePath)
 
 #define DEFINE_API(ext) \
 	info get_info_##ext(const void* _pBuffer, size_t _BufferSize); \
-	std::shared_ptr<char> encode_##ext(const buffer* _pBuffer, size_t* _pSize, alpha_option::value _Option, compression::value _Compression); \
-	std::shared_ptr<buffer> decode_##ext(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option);
+	std::shared_ptr<char> encode_##ext(const buffer* _pBuffer, size_t* _pSize, const alpha_option::value& _Option, const compression::value& _Compression); \
+	std::shared_ptr<buffer> decode_##ext(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout);
 
 DEFINE_API(png) DEFINE_API(jpg) DEFINE_API(bmp)
 
@@ -90,9 +90,9 @@ info get_info(const void* _pBuffer, size_t _BufferSize)
 	
 std::shared_ptr<char> encode(const buffer* _pBuffer
 	, size_t* _pSize
-	, file_format::value _FileFormat
-	, alpha_option::value _Option
-	, compression::value _Compression)
+	, const file_format::value& _FileFormat
+	, const alpha_option::value& _Option
+	, const compression::value& _Compression)
 {
 	switch (_FileFormat)
 	{
@@ -104,13 +104,13 @@ std::shared_ptr<char> encode(const buffer* _pBuffer
 	throw std::exception("unknown image encoding");
 }
 
-std::shared_ptr<buffer> decode(const void* _pBuffer, size_t _BufferSize, alpha_option::value _Option)
+std::shared_ptr<buffer> decode(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
 	switch (get_file_format(_pBuffer, _BufferSize))
 	{
-		case file_format::png: return decode_png(_pBuffer, _BufferSize, _Option);
-		case file_format::jpg: return decode_jpg(_pBuffer, _BufferSize, _Option);
-		case file_format::bmp: return decode_bmp(_pBuffer, _BufferSize, _Option);
+		case file_format::png: return decode_png(_pBuffer, _BufferSize, _Option, _Layout);
+		case file_format::jpg: return decode_jpg(_pBuffer, _BufferSize, _Option, _Layout);
+		case file_format::bmp: return decode_bmp(_pBuffer, _BufferSize, _Option, _Layout);
 		default: break;
 	}
 	throw std::exception("unknown image encoding");

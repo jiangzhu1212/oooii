@@ -37,10 +37,15 @@ struct gpu_test_triangle : public gpu_test
 {
 	gpu_test_triangle() : gpu_test("GPU test: triangle", kIsDevMode, sSnapshotFrames) {}
 
-	void initialize() override
+	pipeline initialize() override
 	{
-		Pipeline = Device->make_pipeline1(oGPUTestGetPipeline(oGPU_TEST_PASS_THROUGH));
 		Mesh.initialize_first_triangle(Device.get());
+
+		pipeline p;
+		p.input = gfx::vertex_input::pos;
+		p.vs = gfx::vertex_shader::pass_through_pos;
+		p.ps = gfx::pixel_shader::white;
+		return p;
 	}
 
 	void render() override
@@ -49,15 +54,17 @@ struct gpu_test_triangle : public gpu_test
 		BlendState.set(CommandList.get(), blend_state::opaque);
 		DepthStencilState.set(CommandList.get(), depth_stencil_state::none);
 		RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
-		CommandList->set_pipeline(Pipeline);
+		VertexLayout.set(CommandList.get(), mesh::primitive_type::triangles);
+		VertexShader.set(CommandList.get());
+		PixelShader.set(CommandList.get());
 		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
+		PrimaryDepthTarget.clear(CommandList.get());
 		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
 		Mesh.draw(CommandList.get());
 		CommandList->end();
 	}
 
 private:
-	std::shared_ptr<pipeline1> Pipeline;
 	util_mesh Mesh;
 };
 

@@ -142,6 +142,8 @@ const char* as_string(const mesh::format::value& _Value)
 		case mesh::format::xyzw8_snorm: return "xyzw8_snorm";
 		case mesh::format::xyzw8_uint: return "xyzw8_uint";
 		case mesh::format::xyzw8_sint: return "xyzw8_sint";
+		case mesh::format::bgra8_unorm: return "bgra8_unorm";
+		case mesh::format::bgra8_srgb: return "bgra8_srgb";
 		default: break;
 	}
 	return "?";
@@ -171,10 +173,12 @@ uint format_size(const format::value& f)
 		sizeof(short4),
 		sizeof(udec3),
 		sizeof(udec3),
-		sizeof(color),
+		sizeof(uint),
 		sizeof(uint),
 		sizeof(uint),
 		sizeof(int),
+		sizeof(color),
+		sizeof(color),
 	};
 	static_assert(oCOUNTOF(sSizes) == format::count, "array mismatch");
 	return sSizes[f];
@@ -320,6 +324,20 @@ static void copy_vertex_element<float2, float3>(float2* oRESTRICT dst, uint dst_
 	{
 		dst->x = src->x;
 		dst->y = src->y; 
+		dst = byte_add(dst, dst_pitch);
+		src = byte_add(src, src_pitch);
+	}
+}
+
+template<>
+static void copy_vertex_element<float3, float2>(float3* oRESTRICT dst, uint dst_pitch, const float2* oRESTRICT src, uint src_pitch, uint num_vertices)
+{
+	const float3* oRESTRICT end = byte_add(dst, dst_pitch * num_vertices);
+	while (dst < end)
+	{
+		dst->x = src->x;
+		dst->y = src->y;
+		dst->z = 0.0f;
 		dst = byte_add(dst, dst_pitch);
 		src = byte_add(src, src_pitch);
 	}
@@ -499,6 +517,7 @@ uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, co
 			switch (src_format)
 			{
 				COPY(xyz32_float, xyz32_float, float3, float3)
+				COPY(xyz32_float, xy32_float, float3, float2)
 				COPY(xyz32_float, xyzw32_float, float3, float4)
 				COPY(xyz32_float, xyz10w2_unorm, float3, udec3)
 				//COPY(xyz32_float, xyzw16_unorm, float3, ushort4)
@@ -611,9 +630,7 @@ uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, co
 		{
 			switch (src_format)
 			{
-				COPY(xyzw8_unorm, xyzw8_unorm, color, color)
-				//COPY(r8g8b8a8_unorm, xyzw32_float, color, float4)
-				//COPY(r8g8b8a8_unorm, xyz32_float, color, float3)
+				COPY(xyzw8_unorm, xyzw8_unorm, uint, uint)
 				default: break;
 			}
 			break;
@@ -624,6 +641,26 @@ uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, co
 			switch (src_format)
 			{
 				COPY(xyzw8_uint, xyzw8_uint, uint, uint)
+				default: break;
+			}
+			break;
+		}
+
+		case format::bgra8_unorm:
+		{
+			switch (src_format)
+			{
+				COPY(bgra8_unorm, bgra8_unorm, color, color)
+				default: break;
+			}
+			break;
+		}
+
+		case format::bgra8_srgb:
+		{
+			switch (src_format)
+			{
+				COPY(bgra8_srgb, bgra8_srgb, color, color)
 				default: break;
 			}
 			break;
@@ -642,27 +679,31 @@ uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, co
 
 void copy_vertices(void* oRESTRICT* oRESTRICT dst, const element_array& dst_elements, const void* oRESTRICT* oRESTRICT src, const element_array& src_elements, uint num_vertices)
 {
-	for (uint di = 0; di < dst_elements.size(); di++)
+	for (uint di = 0; di < as_uint(dst_elements.size()); di++)
 	{
-		if (!dst[di])
+		const element& e = dst_elements[di];
+		const uint dslot = e.slot();
+
+		if (!dst[dslot])
 			continue;
 
-		const element& e = dst_elements[di];
 		const uint doff = calc_offset(dst_elements, di);
-		const uint dstride = calc_vertex_size(dst_elements, e.slot());
+		const uint dstride = calc_vertex_size(dst_elements, dslot);
 
 		bool copied = false;
 		for (uint si = 0; si < src_elements.size(); si++)
 		{
 			const element& se = src_elements[si];
-			if (e.semantic() != se.semantic() || e.index() != se.index())
-				continue;
+			const uint sslot = se.slot();
+			if (e.semantic() == se.semantic() && e.index() == se.index() && src[sslot])
+			{
+				const uint soff = calc_offset(src_elements, si);
+				const uint sstride = calc_vertex_size(src_elements, sslot);
 
-			const uint soff = calc_offset(src_elements, di);
-			const uint sstride = calc_offset(src_elements, di);
-
-			copy_element(doff, dst[e.slot()], dstride, e.format(), src[se.slot()], sstride, se.format(), num_vertices);
-			copied = true;
+				copy_element(doff, dst[dslot], dstride, e.format(), src[sslot], sstride, se.format(), num_vertices);
+				copied = true;
+				break;
+			}
 		}
 
 		if (!copied)
