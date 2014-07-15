@@ -49,18 +49,8 @@ struct gpu_test_texturecubemip : public gpu_texture_test
 
 		const surface::buffer* images[6] = { _0.get(), _1.get(), _2.get(), _3.get(), _4.get(), _5.get() };
 		auto image = surface::buffer::make(images, 6, surface::buffer::mips_array);
-		t.initialize("Test cube", Device.get(), *image, true);
+		t.initialize("Test cube", Device, *image, true);
 		return &t;
-	}
-
-	float rotation_step() override
-	{
-		float rotationStep = (Device->frame_id()-1) * 1.0f;
-		if (Device->frame_id()==0)
-			rotationStep = 774.0f;
-		else if (Device->frame_id()==2)
-			rotationStep = 1036.0f;
-		return rotationStep;
 	}
 
 	texturecube t;

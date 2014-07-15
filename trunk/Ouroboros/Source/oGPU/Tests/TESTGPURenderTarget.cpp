@@ -26,6 +26,7 @@
 #include "oGPUTestCommon.h"
 #include <oGPU/depth_target.h>
 #include <oGPU/color_target.h>
+#include <oGPU/command_list.h>
 
 #include <oBasis/oMath.h>
 
@@ -43,24 +44,20 @@ struct gpu_test_render_target : public gpu_test
 
 	pipeline initialize() override
 	{
-		command_list_info i;
+		CLMainScene.initialize("CLMainScene", Device, 1);
+		CLRenderTarget.initialize("CLRenderTarget", Device, 0);
 		
-		i.draw_order = 1;
-		CLMainScene = Device->make_command_list("CLMainScene", i);
+		TestConstants.initialize("TestConstants", Device, sizeof(oGfxDrawConstants));
+		Triangle.initialize_first_triangle(Device);
 
-		i.draw_order = 0;
-		CLRenderTarget = Device->make_command_list("CLRenderTarget", i);
-		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGfxDrawConstants));
-		Triangle.initialize_first_triangle(Device.get());
+		MainVertexLayout.initialize("Main layout", Device, gfx::elements(gfx::vertex_input::pos_uv), gfx::vs_byte_code(gfx::vertex_input::pos_uv));
+		MainVertexShader.initialize("Main layout", Device, gfx::byte_code(gfx::vertex_shader::texture2d));
+		MainPixelShader.initialize("Main layout", Device, gfx::byte_code(gfx::pixel_shader::texture2d));
 
-		MainVertexLayout.initialize("Main layout", Device.get(), gfx::elements(gfx::vertex_input::pos_uv), gfx::vs_byte_code(gfx::vertex_input::pos_uv));
-		MainVertexShader.initialize("Main layout", Device.get(), gfx::byte_code(gfx::vertex_shader::texture2d));
-		MainPixelShader.initialize("Main layout", Device.get(), gfx::byte_code(gfx::pixel_shader::texture2d));
+		Cube.initialize_first_cube(Device);
 
-		Cube.initialize_first_cube(Device.get());
-
-		ColorTarget.initialize("ColorTarget", Device.get(), surface::b8g8r8a8_unorm, 256, 256, 0, false);
-		DepthTarget.initialize("DepthTarget", Device.get(), surface::d24_unorm_s8_uint, 256, 256, 0, false, 0);
+		ColorTarget.initialize("ColorTarget", Device, surface::b8g8r8a8_unorm, 256, 256, 0, false);
+		DepthTarget.initialize("DepthTarget", Device, surface::d24_unorm_s8_uint, 256, 256, 0, false, 0);
 	
 		pipeline p;
 		p.input = gfx::vertex_input::pos;
@@ -76,7 +73,7 @@ struct gpu_test_render_target : public gpu_test
 		uint2 dimensions = PrimaryColorTarget.dimensions();
 		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
-		float rotationStep = Device->frame_id() * 1.0f;
+		float rotationStep = FrameID * 1.0f;
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
 		// DrawOrder should be respected in out-of-order submits so show that here
@@ -84,70 +81,70 @@ struct gpu_test_render_target : public gpu_test
 		// draw order of the command lists defines the render target before the 
 		// main scene this should come out as a cube with a triangle texture.
 
-		render_main_scene(CLMainScene.get(), ColorTarget);
-		render_to_target(CLRenderTarget.get(), ColorTarget);
+		render_main_scene(CLMainScene, ColorTarget);
+		render_to_target(CLRenderTarget, ColorTarget);
+
+		CLRenderTarget.flush();
+		CLMainScene.flush();
 	}
 
 private:
-	std::shared_ptr<command_list> CLMainScene;
-	std::shared_ptr<command_list> CLRenderTarget;
-	gpu::vertex_layout MainVertexLayout;
-	gpu::vertex_shader MainVertexShader;
-	gpu::pixel_shader MainPixelShader;
+	command_list CLMainScene;
+	command_list CLRenderTarget;
+	vertex_layout MainVertexLayout;
+	vertex_shader MainVertexShader;
+	pixel_shader MainPixelShader;
 	color_target ColorTarget;
 	depth_target DepthTarget;
 	util_mesh Cube;
 	util_mesh Triangle;
 	constant_buffer TestConstants;
 
-	void render_to_target(command_list* _pCommandList, color_target& rt)
+	void render_to_target(command_list& cl, color_target& rt)
 	{
-		_pCommandList->begin();
-		rt.clear(_pCommandList, deep_sky_blue);
-		BlendState.set(_pCommandList, blend_state::opaque);
-		DepthStencilState.set(_pCommandList, depth_stencil_state::none);
-		RasterizerState.set(_pCommandList, rasterizer_state::front_face);
-		SamplerState.set(_pCommandList, sampler_state::linear_wrap, sampler_state::linear_wrap);
-		VertexLayout.set(_pCommandList, mesh::primitive_type::triangles);
-		VertexShader.set(_pCommandList);
-		PixelShader.set(_pCommandList);
-		rt.set_draw_target(_pCommandList);
-		Triangle.draw(_pCommandList);
-		_pCommandList->end();
+		rt.clear(cl, deep_sky_blue);
+		BlendState.set(cl, blend_state::opaque);
+		DepthStencilState.set(cl, depth_stencil_state::none);
+		RasterizerState.set(cl, rasterizer_state::front_face);
+		SamplerState.set(cl, sampler_state::linear_wrap, sampler_state::linear_wrap);
+		VertexLayout.set(cl, mesh::primitive_type::triangles);
+		VertexShader.set(cl);
+		PixelShader.set(cl);
+		rt.set_draw_target(cl);
+		Triangle.draw(cl);
+		cl.flush();
 	}
 
-	void render_main_scene(command_list* _pCommandList, resource& texture)
+	void render_main_scene(command_list& cl, resource& texture)
 	{
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
 		uint2 dimensions = PrimaryColorTarget.dimensions();
 		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
-		float rotationStep = Device->frame_id() * 1.0f;
+		float rotationStep = FrameID * 1.0f;
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
-
-		_pCommandList->begin();
 
 		oGfxDrawConstants c(oIDENTITY4x4, V, P, aaboxf());
 		c.Color = white;
-		TestConstants.update(_pCommandList, c);
+		TestConstants.update(cl, c);
 
-		BlendState.set(_pCommandList, blend_state::opaque);
-		DepthStencilState.set(_pCommandList, depth_stencil_state::test_and_write);
-		RasterizerState.set(_pCommandList, rasterizer_state::front_face);
-		SamplerState.set(_pCommandList, sampler_state::linear_wrap, sampler_state::linear_wrap);
-		TestConstants.set(_pCommandList, oGFX_DRAW_CONSTANTS_REGISTER);
-		texture.set(_pCommandList, 0);
+		BlendState.set(cl, blend_state::opaque);
+		DepthStencilState.set(cl, depth_stencil_state::test_and_write);
+		RasterizerState.set(cl, rasterizer_state::front_face);
+		SamplerState.set(cl, sampler_state::linear_wrap, sampler_state::linear_wrap);
+		TestConstants.set(cl, oGFX_DRAW_CONSTANTS_REGISTER);
+		texture.set(cl, 0);
 
-		MainVertexLayout.set(_pCommandList, mesh::primitive_type::triangles);
-		MainVertexShader.set(_pCommandList);
-		MainPixelShader.set(_pCommandList);
+		MainVertexLayout.set(cl, mesh::primitive_type::triangles);
+		MainVertexShader.set(cl);
+		MainPixelShader.set(cl);
 
-		PrimaryColorTarget.clear(_pCommandList, get_clear_color());
-		PrimaryDepthTarget.clear(_pCommandList);
-		PrimaryColorTarget.set_draw_target(_pCommandList, PrimaryDepthTarget);
-		Cube.draw(_pCommandList);
-		_pCommandList->end();
+		PrimaryColorTarget.clear(cl, get_clear_color());
+		PrimaryDepthTarget.clear(cl);
+		PrimaryColorTarget.set_draw_target(cl, PrimaryDepthTarget);
+		Cube.draw(cl);
+		cl.flush();
 	}
 };
 

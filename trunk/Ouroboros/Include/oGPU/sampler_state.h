@@ -54,11 +54,11 @@ public:
 	sampler_state() { states.fill(nullptr); }
 	~sampler_state() { deinitialize(); }
 
-	void initialize(device* dev);
+	void initialize(device& dev);
 	void deinitialize();
 
-	void set(command_list* cl, uint slot, uint num_samplers, const value* samplers);
-	inline void set(command_list* cl, uint slot, const value& sampler) { set(cl, slot, 1, &sampler); }
+	void set(command_list& cl, uint slot, uint num_samplers, const value* samplers);
+	inline void set(command_list& cl, uint slot, const value& sampler) { set(cl, slot, 1, &sampler); }
 
 private:
 	std::array<void*, count> states;

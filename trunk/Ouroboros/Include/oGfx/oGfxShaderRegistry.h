@@ -39,10 +39,10 @@ public:
 
 	~layout_state() { deinitialize(); }
 
-	void initialize(gpu::device* dev);
+	void initialize(gpu::device& dev);
 	void deinitialize();
 
-	inline void set(gpu::command_list* cl, const vertex_input::value& input, const mesh::primitive_type::value& prim_type) const { layouts[input].set(cl, prim_type); }
+	inline void set(gpu::command_list& cl, const vertex_input::value& input, const mesh::primitive_type::value& prim_type) const { layouts[input].set(cl, prim_type); }
 
 private:
 	std::array<gpu::vertex_layout, vertex_input::count> layouts;
@@ -58,9 +58,9 @@ public:
 	
 	~vs_registry() { deinitialize(); }
 
-	void initialize(gpu::device* dev);
+	void initialize(gpu::device& dev);
 
-	void set(gpu::command_list* cl, const vertex_shader::value& shader) const;
+	void set(gpu::command_list& cl, const vertex_shader::value& shader) const;
 };
 
 class ps_registry : public shader_registry<gpu::pixel_shader>
@@ -73,9 +73,9 @@ public:
 	
 	~ps_registry() { deinitialize(); }
 
-	void initialize(gpu::device* dev);
+	void initialize(gpu::device& dev);
 
-	void set(gpu::command_list* cl, const pixel_shader::value& shader) const;
+	void set(gpu::command_list& cl, const pixel_shader::value& shader) const;
 };
 
 }}

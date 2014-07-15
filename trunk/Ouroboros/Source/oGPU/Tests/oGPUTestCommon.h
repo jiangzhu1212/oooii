@@ -26,15 +26,10 @@
 #ifndef oGPUTestCommon_h
 #define oGPUTestCommon_h
 
-#include <oGPU/oGPUUtilMesh.h>
-#include "oGPUTestPipelines.h"
+#include <oGPU/all.h>
+#include "oGPU/oGPUUtilMesh.h"
 #include "oGPUTestHLSL.h"
 
-#include <oGPU/oGPU.h>
-#include <oGPU/depth_target.h>
-#include <oGPU/primary_target.h>
-#include <oGPU/resource.h>
-#include <oGPU/constant_buffer.h>
 #include <oGUI/window.h>
 
 #include <oGfx/oGfxDrawConstants.h>
@@ -64,12 +59,14 @@ public:
 	};
 
 	gpu_test(const char* _Title, bool _Interactive, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size = int2(640, 480))
+		: FrameID(0)
 	{
 		create(_Title, _Interactive, _pSnapshotFrameIDs, _NumSnapshotFrameIDs, _Size);
 	}
 	
 	template<size_t size>
 	gpu_test(const char* _Title, bool _Interactive, const int (&_pSnapshotFrameIDs)[size], const int2& _Size = int2(640, 480))
+		: FrameID(0)
 	{
 		create(_Title, _Interactive, _pSnapshotFrameIDs, size, _Size);
 	}
@@ -86,8 +83,8 @@ public:
 	void run(test_services& _Services);
 
 	window* get_window() { return Window.get(); }
-	gpu::device* get_device() { return Device.get(); }
-	gpu::command_list* get_command_list() { return CommandList.get(); }
+	gpu::device& device() { return Device; }
+	gpu::command_list& get_command_list() { return Device.immediate(); }
 
 	color get_clear_color() const { return almost_black; }
 
@@ -114,8 +111,7 @@ private:
 
 protected:
 	std::shared_ptr<window> Window;
-	std::shared_ptr<gpu::device> Device;
-	std::shared_ptr<gpu::command_list> CommandList;
+	gpu::device Device;
 	gpu::blend_state BlendState;
 	gpu::depth_stencil_state DepthStencilState;
 	gpu::rasterizer_state RasterizerState;
@@ -125,6 +121,7 @@ protected:
 	gpu::pixel_shader PixelShader;
 	gpu::primary_target PrimaryColorTarget;
 	gpu::depth_target PrimaryDepthTarget;
+	int FrameID;
 };
 
 class gpu_texture_test : public gpu_test

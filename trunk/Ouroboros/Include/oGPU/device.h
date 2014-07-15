@@ -28,11 +28,11 @@
 
 #include <oBase/gpu_api.h>
 #include <oBase/vendor.h>
+#include <oGPU/command_list.h>
+#include <oGPU/shader.h>
 
 namespace ouro { namespace gpu {
 
-class command_list;
-	
 struct device_init
 {
 	device_init(const char* name = "gpu device")
@@ -140,28 +140,37 @@ struct device_info
 	bool driver_reporting_enabled;
 };
 
-class device1
+class device
 {
 public:
+	device() : dev(nullptr), supports_deferred(false) {}
+	device(const device_init& init) : dev(nullptr), supports_deferred(false) { initialize(init); }
+	~device() { deinitialize(); }
+
+	void initialize(const device_init& init);
+	void deinitialize();
+
 	device_info get_info() const;
 	
 	// the immediate command list is always created with the device
-	command_list* immediate();
+	command_list& immediate() { return imm; }
+
+	// clears the command list's idea of state back to its default
+	void reset();
 
 	// sends the push buffer immediately rather than waiting for it to fill
 	// this can be useful if the GPU stalls early in the frame while the 
 	// push buffer is still being assembled.
 	void flush();
 
-	// clears the command list's idea of state back to its default
-	void reset();
+private:
+	friend compute_shader* get_noop_cs(device& dev);
 
-	// the immediate command list executes commands immediately but other
-	// command lists only record commands. Only when this submit is called
-	// are they sent to the device in order. This blocks util all initialized
-	// command_lists are outside their begin/end block and have been submitted
-	// to the device.
-	void submit_command_lists();
+	void* dev;
+	command_list imm;
+	compute_shader noop;
+	bool supports_deferred;
+	bool is_sw;
 };
 
 }}

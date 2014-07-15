@@ -36,6 +36,7 @@
 
 	#include <oBase/throw.h>
 	#include <oCompute/linear_algebra.h>
+	#include <oCompute/oFrustum.h>
 
 	enum oGfx_VIEW_FAR_PLANE_CORNER
 	{

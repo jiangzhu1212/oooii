@@ -41,7 +41,7 @@ public:
 	depth_target() : ro(nullptr) {}
 	~depth_target() { deinitialize(); }
 
-	void initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling);
+	void initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling);
 	void deinitialize();
 
 	surface::format format() const;
@@ -51,12 +51,12 @@ public:
 
 	void resize(const uint2& dimensions);
 
-	void set(command_list* cl, uint index = 0, const viewport& vp = viewport());
+	void set(command_list& cl, uint index = 0, const viewport& vp = viewport());
 
-	void clear(command_list* cl, uint index = 0, float depth = 1.0f);
-	void clear_stencil(command_list* cl, uint index = 0, uchar stencil = 0);
-	void clear_depth_stencil(command_list* cl, uint index = 0, float depth = 1.0f, uchar stencil = 0);
-	void generate_mips(command_list* cl);
+	void clear(command_list& cl, uint index = 0, float depth = 1.0f);
+	void clear_stencil(command_list& cl, uint index = 0, uchar stencil = 0);
+	void clear_depth_stencil(command_list& cl, uint index = 0, float depth = 1.0f, uchar stencil = 0);
+	void generate_mips(command_list& cl);
 
 private:
 	void* ro;

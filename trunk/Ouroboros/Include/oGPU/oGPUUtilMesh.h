@@ -46,17 +46,17 @@ public:
 	~util_mesh() { deinitialize(); }
 
 	// vertices must be an array of size vertex_buffer::max_num_slots
-	void initialize(const char* name, device* dev, const mesh::info& info, const ushort* indices = nullptr, const void** vertices = nullptr);
-	void initialize(const char* name, device* dev, const mesh::element_array& elements, const mesh::primitive* prim);
+	void initialize(const char* name, device& dev, const mesh::info& info, const ushort* indices = nullptr, const void** vertices = nullptr);
+	void initialize(const char* name, device& dev, const mesh::element_array& elements, const mesh::primitive* prim);
 
 	// Creates a very simple front-facing triangle that can be rendered with all-
 	// identity world, view, projection matrices. This is useful for very simple 
 	// tests and first bring-up.
-	void initialize_first_triangle(device* dev);
+	void initialize_first_triangle(device& dev);
 	
 	// Creates a very simple unit cube. This is useful for bringing up world, view,
 	// projection transforms quickly.
-	void initialize_first_cube(device* dev, bool _UVWs = false);
+	void initialize_first_cube(device& dev, bool _UVWs = false);
 
 	void deinitialize();
 
@@ -67,7 +67,7 @@ public:
 	inline const vertex_buffer& get_vertex_buffer(uint index = 0) const { return vertices[index]; }
 	inline const vertex_buffer* get_vertex_buffers() const { return vertices.data(); }
 
-	void draw(command_list* cl, uint num_instances = 1);
+	void draw(command_list& cl, uint num_instances = 1);
 
 private:
 	index_buffer indices;

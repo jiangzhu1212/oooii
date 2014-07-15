@@ -34,16 +34,7 @@
     <ClCompile Include="d3d11_util.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
-    <ClCompile Include="oD3D11Pipeline.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
     <ClCompile Include="oD3D11IO.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11Device.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11CommandList.cpp">
       <Filter>Source\D3D11\old</Filter>
     </ClCompile>
     <ClCompile Include="d3d_util.cpp">
@@ -115,11 +106,14 @@
     <ClCompile Include="blend_state.cpp">
       <Filter>Source\states</Filter>
     </ClCompile>
+    <ClCompile Include="command_list.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="device.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="oGPUCommon.h">
-      <Filter>Source</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
     </ClInclude>
@@ -156,20 +150,8 @@
     <ClInclude Include="d3d11_util.h">
       <Filter>Source\D3D11\old</Filter>
     </ClInclude>
-    <ClInclude Include="oD3D11Pipeline.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11Device.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
-    <ClInclude Include="oD3D11CommandList.h">
-      <Filter>Source\D3D11\old</Filter>
-    </ClInclude>
     <ClInclude Include="d3d_util.h">
       <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGPU\oGPU.h">
-      <Filter>Headers\old</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h">
       <Filter>Headers\old</Filter>
@@ -242,6 +224,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oGPU\sampler_state.h">
       <Filter>Headers\states</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\command_list.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGPU\all.h">
+      <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

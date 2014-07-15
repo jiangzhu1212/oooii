@@ -31,8 +31,8 @@
 
 namespace ouro { 
 	
-	class color;
-	class window;
+class color;
+class window;
 
 	namespace gpu {
 
@@ -48,7 +48,7 @@ public:
 
 	operator bool() const { return !!rw; }
 
-	void initialize(window* win, device* dev, bool enable_os_render);
+	void initialize(window* win, device& dev, bool enable_os_render);
 	void deinitialize();
 
 	uint2 dimensions() const;
@@ -58,10 +58,10 @@ public:
 
 	inline void* get_target() const { return rw; }
 
-	void set_draw_target(command_list* cl, depth_target* depth = nullptr, uint depth_index = 0, const viewport& vp = viewport());
-	inline void set_draw_target(command_list* cl, depth_target& depth, uint depth_index = 0, const viewport& vp = viewport()) { set_draw_target(cl, &depth, depth_index, vp); }
+	void set_draw_target(command_list& cl, depth_target* depth = nullptr, uint depth_index = 0, const viewport& vp = viewport());
+	inline void set_draw_target(command_list& cl, depth_target& depth, uint depth_index = 0, const viewport& vp = viewport()) { set_draw_target(cl, &depth, depth_index, vp); }
 	
-	void clear(command_list* cl, const color& c);
+	void clear(command_list& cl, const color& c);
 
 	// these must be called from the same thread as processes windows events
 	inline void resize(const uint2& dimensions) { internal_resize(dimensions, nullptr); }

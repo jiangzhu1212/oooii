@@ -126,15 +126,16 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oGPU\all.h" />
     <ClInclude Include="..\..\Include\oGPU\blend_state.h" />
     <ClInclude Include="..\..\Include\oGPU\color_target.h" />
+    <ClInclude Include="..\..\Include\oGPU\command_list.h" />
     <ClInclude Include="..\..\Include\oGPU\compute_target.h" />
     <ClInclude Include="..\..\Include\oGPU\constant_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\depth_stencil_state.h" />
     <ClInclude Include="..\..\Include\oGPU\depth_target.h" />
     <ClInclude Include="..\..\Include\oGPU\device.h" />
     <ClInclude Include="..\..\Include\oGPU\index_buffer.h" />
-    <ClInclude Include="..\..\Include\oGPU\oGPU.h" />
     <ClInclude Include="..\..\Include\oGPU\oGPUUtilMesh.h" />
     <ClInclude Include="..\..\Include\oGPU\primary_target.h" />
     <ClInclude Include="..\..\Include\oGPU\rasterizer_state.h" />
@@ -163,15 +164,12 @@
     <ClInclude Include="d3d_types.h" />
     <ClInclude Include="d3d_util.h" />
     <ClInclude Include="dxgi_util.h" />
-    <ClInclude Include="oD3D11CommandList.h" />
-    <ClInclude Include="oD3D11Device.h" />
-    <ClInclude Include="oD3D11Pipeline.h" />
-    <ClInclude Include="oGPUCommon.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="blend_state.cpp" />
     <ClCompile Include="color_target.cpp" />
+    <ClCompile Include="command_list.cpp" />
     <ClCompile Include="compute_target.cpp" />
     <ClCompile Include="constant_buffer.cpp" />
     <ClCompile Include="d3d11_as_string.cpp" />
@@ -185,12 +183,10 @@
     <ClCompile Include="d3d_util.cpp" />
     <ClCompile Include="depth_stencil_state.cpp" />
     <ClCompile Include="depth_target.cpp" />
+    <ClCompile Include="device.cpp" />
     <ClCompile Include="dxgi_util.cpp" />
     <ClCompile Include="index_buffer.cpp" />
-    <ClCompile Include="oD3D11CommandList.cpp" />
-    <ClCompile Include="oD3D11Device.cpp" />
     <ClCompile Include="oD3D11IO.cpp" />
-    <ClCompile Include="oD3D11Pipeline.cpp" />
     <ClCompile Include="oGPUUtilMesh.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

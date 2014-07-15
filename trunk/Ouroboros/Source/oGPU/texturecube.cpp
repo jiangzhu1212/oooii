@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/texturecube.h>
-#include <oGPU/oGPU.h>
+#include <oGPU/device.h>
 #include "d3d_debug.h"
 #include "d3d_util.h"
 #include "dxgi_util.h"
@@ -32,10 +32,10 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void texturecube::initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size_in_num_cubes, bool mips)
+void texturecube::initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint array_size_in_num_cubes, bool mips)
 {
 	deinitialize();
 	
@@ -50,7 +50,7 @@ void texturecube::initialize(const char* name, device* dev, surface::format form
 	ro = srv;
 }
 
-void texturecube::initialize(const char* name, device* dev, const surface::buffer& src, bool mips)
+void texturecube::initialize(const char* name, device& dev, const surface::buffer& src, bool mips)
 {
 	auto si = src.get_info();
 	oCHECK((si.array_size % 6) == 0, "cubemaps require a multiple of 6 for their array_size value (%u specified)", si.array_size);
@@ -60,7 +60,7 @@ void texturecube::initialize(const char* name, device* dev, const surface::buffe
 	const int NumMips = surface::num_mips(mips, si.dimensions);
 	const int nSubresources = surface::num_subresources(si);
 
-	command_list* cl = dev->immediate();
+	command_list& cl = dev.immediate();
 	for (int subresource = 0; subresource < nSubresources; subresource++)
 	{
 		surface::shared_lock lock(src, subresource);

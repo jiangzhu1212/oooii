@@ -36,8 +36,8 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
 primary_target::primary_target()
 	: swapchain(nullptr)
@@ -46,7 +46,7 @@ primary_target::primary_target()
 {
 }
 
-void primary_target::initialize(window* win, device* dev, bool enable_os_render)
+void primary_target::initialize(window* win, device& dev, bool enable_os_render)
 {
 	deinitialize();
 
@@ -72,7 +72,7 @@ void primary_target::initialize(window* win, device* dev, bool enable_os_render)
 
 	swapchain = sc;
 	sc->AddRef();
-	internal_resize(uint2(desc.BufferDesc.Width, desc.BufferDesc.Height), dev);
+	internal_resize(uint2(desc.BufferDesc.Width, desc.BufferDesc.Height), &dev);
 }
 
 void primary_target::deinitialize()
@@ -141,7 +141,7 @@ void primary_target::internal_resize(const uint2& dimensions, device* dev)
 
 		intrusive_ptr<Device> D3DDevice;
 		if (dev)
-			D3DDevice = get_device(dev);
+			D3DDevice = get_device(*dev);
 		else
 			((View*)rw)->GetDevice(&D3DDevice);
 
@@ -219,13 +219,13 @@ void primary_target::present(uint interval)
 	npresents++;
 }
 
-void primary_target::set_draw_target(command_list* cl, depth_target* depth, uint depth_index, const viewport& vp)
+void primary_target::set_draw_target(command_list& cl, depth_target* depth, uint depth_index, const viewport& vp)
 {
 	set_viewports(cl, dimensions(), &vp, 1);
 	get_dc(cl)->OMSetRenderTargets(1, (RenderTargetView* const*)&rw, depth ? (DepthStencilView*)depth->get_target(depth_index) : nullptr);
 }
 
-void primary_target::clear(command_list* cl, const color& c)
+void primary_target::clear(command_list& cl, const color& c)
 {
 	float fcolor[4];
 	c.decompose(&fcolor[0], &fcolor[1], &fcolor[2], &fcolor[3]);

@@ -48,7 +48,7 @@ void gpu_test::create(const char* _Title, bool _DevMode, const int* _pSnapshotFr
 		i.debug_name = "gpu_test.Device";
 		i.version = version(10,0); // for broader compatibility
 		i.enable_driver_reporting = true;
-		Device = device::make(i);
+		Device.initialize(i);
 	}
 
 	{
@@ -62,14 +62,13 @@ void gpu_test::create(const char* _Title, bool _DevMode, const int* _pSnapshotFr
 		Window = window::make(i);
 	}
 
-	PrimaryColorTarget.initialize(Window.get(), Device.get(), true);
+	PrimaryColorTarget.initialize(Window.get(), Device, true);
 	uint2 dim = PrimaryColorTarget.dimensions();
-	PrimaryDepthTarget.initialize("Depth", Device.get(), surface::d24_unorm_s8_uint, dim.x, dim.y, 0, false, 0);
-	BlendState.initialize(Device.get());
-	DepthStencilState.initialize(Device.get());
-	RasterizerState.initialize(Device.get());
-	SamplerState.initialize(Device.get());
-	CommandList = Device->get_immediate_command_list();
+	PrimaryDepthTarget.initialize("Depth", Device, surface::d24_unorm_s8_uint, dim.x, dim.y, 0, false, 0);
+	BlendState.initialize(Device);
+	DepthStencilState.initialize(Device);
+	RasterizerState.initialize(Device);
+	SamplerState.initialize(Device);
 }
 
 void gpu_test::on_event(const window::basic_event& _Event)
@@ -86,7 +85,6 @@ void gpu_test::on_event(const window::basic_event& _Event)
 
 void gpu_test::check_snapshot(test_services& _Services)
 {
-	const int FrameID = Device->frame_id();
 	if (SnapshotFrames.end() != find(SnapshotFrames, FrameID))
 	{
 		std::shared_ptr<surface::buffer> snap = PrimaryColorTarget.make_snapshot();
@@ -104,35 +102,31 @@ void gpu_test::run(test_services& _Services)
 	Window->flush_messages();
 
 	pipeline p = initialize();
-	VertexLayout.initialize(as_string(p.input), Device.get(), gfx::elements(p.input), gfx::vs_byte_code(p.input));
-	VertexShader.initialize(as_string(p.vs), Device.get(), gfx::byte_code(p.vs));
-	PixelShader.initialize(as_string(p.ps), Device.get(), gfx::byte_code(p.ps));
+	VertexLayout.initialize(as_string(p.input), Device, gfx::elements(p.input), gfx::vs_byte_code(p.input));
+	VertexShader.initialize(as_string(p.vs), Device, gfx::byte_code(p.vs));
+	PixelShader.initialize(as_string(p.ps), Device, gfx::byte_code(p.ps));
 
-	while (Running && (DevMode || Device->frame_id() < SnapshotFrames.back()))
+	while (Running && (DevMode || FrameID <= SnapshotFrames.back()))
 	{
 		Window->flush_messages();
-		if (Device->begin_frame())
+		render();
+		Device.flush();
+
+		try
 		{
-			render();
-
-			Device->end_frame();
-
-			try
-			{
-				check_snapshot(_Services);
-			}
-
-			catch (std::exception&)
-			{
-				if (!DevMode)
-					std::rethrow_exception(std::current_exception());
-			}
-
-			if (DevMode)
-				PrimaryColorTarget.present();
+			check_snapshot(_Services);
 		}
-		else
-			oTRACEA("Frame %u failed", Device->frame_id());
+
+		catch (std::exception&)
+		{
+			if (!DevMode)
+				std::rethrow_exception(std::current_exception());
+		}
+
+		if (DevMode)
+			PrimaryColorTarget.present();
+
+		FrameID++;
 	}
 
 	if (!AllFramesSucceeded)
@@ -144,8 +138,8 @@ const int gpu_texture_test::sSnapshotFrames[2] = { 0, 1 };
 gpu_texture_test::pipeline gpu_texture_test::initialize()
 {
 	auto p = get_pipeline();
-	TestConstants.initialize("TestConstants", Device.get(), sizeof(oGfxDrawConstants));
-	Mesh.initialize_first_cube(Device.get(), p.input == gfx::vertex_input::pos_uvw);
+	TestConstants.initialize("TestConstants", Device, sizeof(oGfxDrawConstants));
+	Mesh.initialize_first_cube(Device, p.input == gfx::vertex_input::pos_uvw);
 	Resource = make_test_texture();
 	return p;
 }
@@ -154,8 +148,8 @@ float gpu_texture_test::rotation_step()
 {
 	static const float sCapture[] = 
 	{
-		50.0f, 
-		124.0f,
+		774.0f,
+		1036.0f,
 	};
 
 	uint frame = PrimaryColorTarget.num_presents();
@@ -164,6 +158,8 @@ float gpu_texture_test::rotation_step()
 
 void gpu_texture_test::render()
 {
+	command_list& cl = get_command_list();
+
 	float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
 	uint2 dimensions = PrimaryColorTarget.dimensions();
@@ -172,29 +168,25 @@ void gpu_texture_test::render()
 	float rotationStep = rotation_step();
 	float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-	CommandList->begin();
-
 	oGfxDrawConstants c(W, V, P, aaboxf());
 	c.Color = white;
-	TestConstants.update(CommandList.get(), c);
+	TestConstants.update(cl, c);
 
-	BlendState.set(CommandList.get(), blend_state::opaque);
-	DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
-	RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
-	SamplerState.set(CommandList.get(), sampler_state::linear_wrap, sampler_state::linear_wrap);
-	VertexLayout.set(CommandList.get(), mesh::primitive_type::triangles);
-	VertexShader.set(CommandList.get());
-	PixelShader.set(CommandList.get());
+	BlendState.set(cl, blend_state::opaque);
+	DepthStencilState.set(cl, depth_stencil_state::test_and_write);
+	RasterizerState.set(cl, rasterizer_state::front_face);
+	SamplerState.set(cl, sampler_state::linear_wrap, sampler_state::linear_wrap);
+	VertexLayout.set(cl, mesh::primitive_type::triangles);
+	VertexShader.set(cl);
+	PixelShader.set(cl);
 	
-	TestConstants.set(CommandList.get(), oGFX_DRAW_CONSTANTS_REGISTER);
-	resource::set(CommandList.get(), 0, 1, &Resource);
+	TestConstants.set(cl, oGFX_DRAW_CONSTANTS_REGISTER);
+	resource::set(cl, 0, 1, &Resource);
 	
-	PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
-	PrimaryDepthTarget.clear(CommandList.get());
-	PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
-	Mesh.draw(CommandList.get());
-
-	CommandList->end();
+	PrimaryColorTarget.clear(cl, get_clear_color());
+	PrimaryDepthTarget.clear(cl);
+	PrimaryColorTarget.set_draw_target(cl, PrimaryDepthTarget);
+	Mesh.draw(cl);
 }
 
 std::shared_ptr<surface::buffer> surface_load(const path& _Path, bool _Mips, const surface::alpha_option::value& _Option)

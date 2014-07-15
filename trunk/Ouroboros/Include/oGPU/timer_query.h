@@ -37,12 +37,12 @@ public:
 	timer_query() { impl[0] = impl[1] = impl[2] = nullptr; }
 	~timer_query() { deinitialize(); }
 	
-	void initialize(const char* name, device* dev);
+	void initialize(const char* name, device& dev);
 	void deinitialize();
 
 	// call this inside a command_lists begin/end block to scope a timing capture
-	void begin(command_list* cl);
-	void end(command_list* cl);
+	void begin(command_list& cl);
+	void end(command_list& cl);
 
 	// this must be called outside of a command_list's begin/end block
 	// if the value is negative, then the timing is not yet ready. This throws on

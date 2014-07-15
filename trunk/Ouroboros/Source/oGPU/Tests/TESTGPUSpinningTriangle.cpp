@@ -42,8 +42,8 @@ public:
 
 	pipeline initialize() override
 	{
-		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGfxDrawConstants));
-		Mesh.initialize_first_triangle(Device.get());
+		TestConstants.initialize("TestConstants", Device, sizeof(oGfxDrawConstants));
+		Mesh.initialize_first_triangle(Device);
 
 		pipeline p;
 		p.input = gfx::vertex_input::pos;
@@ -54,6 +54,8 @@ public:
 
 	void render() override
 	{
+		command_list& cl = get_command_list();
+
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -2.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
 		uint2 dimensions = PrimaryColorTarget.dimensions();
@@ -63,34 +65,30 @@ public:
 		// being moved out of the Render function below so it updated the FrameID
 		// earlier than this code was ready for. If golden images are updated, this
 		// could go away.
-		float rotationRate = (Device->frame_id()) * 2.0f;
+		float rotationRate = FrameID * 2.0f;
 		float4x4 W = make_rotation(float3(0.0f, radians(rotationRate), 0.0f));
 
 		uint DrawID = 0;
 
-		CommandList->begin();
-
 		oGfxDrawConstants c(W, V, P, aaboxf());
 		c.Color = white;
-		TestConstants.update(CommandList.get(), c);
+		TestConstants.update(cl, c);
 
-		BlendState.set(CommandList.get(), blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
-		RasterizerState.set(CommandList.get(), rasterizer_state::two_sided);
+		BlendState.set(cl, blend_state::opaque);
+		DepthStencilState.set(cl, depth_stencil_state::test_and_write);
+		RasterizerState.set(cl, rasterizer_state::two_sided);
 
-		TestConstants.set(CommandList.get(), oGFX_DRAW_CONSTANTS_REGISTER);
+		TestConstants.set(cl, oGFX_DRAW_CONSTANTS_REGISTER);
 
-		VertexLayout.set(CommandList.get(), mesh::primitive_type::triangles);
-		VertexShader.set(CommandList.get());
-		PixelShader.set(CommandList.get());
+		VertexLayout.set(cl, mesh::primitive_type::triangles);
+		VertexShader.set(cl);
+		PixelShader.set(cl);
 
-		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
-		PrimaryDepthTarget.clear(CommandList.get(), 0);
+		PrimaryColorTarget.clear(cl, get_clear_color());
+		PrimaryDepthTarget.clear(cl, 0);
 
-		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
-		Mesh.draw(CommandList.get());
-
-		CommandList->end();
+		PrimaryColorTarget.set_draw_target(cl, PrimaryDepthTarget);
+		Mesh.draw(cl);
 	}
 
 private:

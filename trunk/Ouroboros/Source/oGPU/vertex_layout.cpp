@@ -33,8 +33,8 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
 static const char* from_semantic(const mesh::semantic::value& semantic)
 {
@@ -96,7 +96,7 @@ static D3D11_INPUT_ELEMENT_DESC from_element(const mesh::element& element)
 	return d;
 }
 
-void vertex_layout::initialize(const char* name, device* dev, const mesh::element_array& elements, const void* vs_bytecode)
+void vertex_layout::initialize(const char* name, device& dev, const mesh::element_array& elements, const void* vs_bytecode)
 {
 	D3D11_INPUT_ELEMENT_DESC Elements[max_vertex_elements];
 	uint n = 0;
@@ -117,7 +117,7 @@ void vertex_layout::deinitialize()
 	layout = nullptr;
 }
 
-void vertex_layout::set(command_list* cl, const mesh::primitive_type::value& prim_type) const
+void vertex_layout::set(command_list& cl, const mesh::primitive_type::value& prim_type) const
 {
 	DeviceContext* dc = get_dc(cl);
 	dc->IASetPrimitiveTopology( from_primitive_type(prim_type) );

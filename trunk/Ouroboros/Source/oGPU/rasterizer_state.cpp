@@ -49,10 +49,10 @@ oDEFINE_TO_FROM_STRING(gpu::rasterizer_state::value, gpu::rasterizer_state::coun
 
 namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void rasterizer_state::initialize(device* dev)
+void rasterizer_state::initialize(device& dev)
 {
 	deinitialize();
 
@@ -108,7 +108,7 @@ void rasterizer_state::deinitialize()
 	}
 }
 
-void rasterizer_state::set(command_list* cl, const value& state)
+void rasterizer_state::set(command_list& cl, const value& state)
 {
 	get_dc(cl)->RSSetState((RasterizerState*)states[state]);
 }

@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGPU/texture2d.h>
-#include <oGPU/oGPU.h>
+#include <oGPU/device.h>
 #include "d3d_debug.h"
 #include "d3d_util.h"
 #include "dxgi_util.h"
@@ -32,10 +32,10 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void texture2d::initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips)
+void texture2d::initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint array_size, bool mips)
 {
 	deinitialize();
 	oCHECK_ARG(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
@@ -45,7 +45,7 @@ void texture2d::initialize(const char* name, device* dev, surface::format format
 	ro = srv;
 }
 
-void texture2d::initialize(const char* name, device* dev, const surface::buffer& src, bool mips)
+void texture2d::initialize(const char* name, device& dev, const surface::buffer& src, bool mips)
 {
 	auto si = src.get_info();
 
@@ -56,7 +56,7 @@ void texture2d::initialize(const char* name, device* dev, const surface::buffer&
 	const int NumMips = surface::num_mips(mips, si.dimensions);
 	const int nSubresources = surface::num_subresources(si);
 
-	command_list* cl = dev->immediate();
+	command_list& cl = dev.immediate();
 	for (int subresource = 0; subresource < nSubresources; subresource++)
 	{
 		surface::shared_lock lock(src, subresource);

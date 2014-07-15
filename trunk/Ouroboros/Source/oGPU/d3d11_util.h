@@ -30,7 +30,6 @@
 #include <oBase/intrusive_ptr.h>
 #include <oCore/windows/win_util.h>
 #include <oSurface/buffer.h>
-#include <oGPU/oGPU.h>
 #include <vector>
 
 #include <oCore/windows/win_error.h>

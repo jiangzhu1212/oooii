@@ -49,10 +49,10 @@ oDEFINE_TO_FROM_STRING(gpu::sampler_state::value, gpu::sampler_state::count);
 
 namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void sampler_state::initialize(device* dev)
+void sampler_state::initialize(device& dev)
 {
 	deinitialize();
 
@@ -100,7 +100,7 @@ void sampler_state::deinitialize()
 	}
 }
 
-void sampler_state::set(command_list* cl, uint slot, uint num_samplers, const sampler_state::value* samplers)
+void sampler_state::set(command_list& cl, uint slot, uint num_samplers, const sampler_state::value* samplers)
 {
 	SamplerState* States[max_num_samplers];
 	for (uint i = 0; i < num_samplers; i++)

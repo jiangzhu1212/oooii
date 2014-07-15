@@ -37,8 +37,8 @@ class texture3d : public resource
 {
 public:
 	~texture3d() { deinitialize(); }
-	void initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint depth, bool mips);
-	void initialize(const char* name, device* dev, const surface::buffer& src, bool mips);
+	void initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint depth, bool mips);
+	void initialize(const char* name, device& dev, const surface::buffer& src, bool mips);
 	void deinitialize();
 	uint3 dimensions() const;
 };

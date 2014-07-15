@@ -29,21 +29,24 @@
 #include <oGPU/resource.h>
 #include <vector>
 
-namespace ouro { namespace gpu {
+namespace ouro { 
+	
+class window;
+
+	namespace gpu {
 
 static const uint max_num_mrts = 8;
 
 class device;
 class command_list;
 class depth_target;
-class window;
 
 class color_target : public resource
 {
 public:
 	~color_target() { deinitialize(); }
 
-	void initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips);
+	void initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint array_size, bool mips);
 	void deinitialize();
 
 	uint2 dimensions() const;
@@ -52,13 +55,13 @@ public:
 	
 	// todo: add viewport
 
-	static void set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, depth_target* depth, const viewport& vp = viewport());
-	static void set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, const uint* color_indices, depth_target* depth, uint depth_index, const viewport& vp = viewport());
+	static void set_draw_target(command_list& cl, uint num_colors, color_target* const* colors, depth_target* depth, const viewport& vp = viewport());
+	static void set_draw_target(command_list& cl, uint num_colors, color_target* const* colors, const uint* color_indices, depth_target* depth, uint depth_index, const viewport& vp = viewport());
 
-	void set_draw_target(command_list* cl, uint index = 0, depth_target* depth = nullptr, uint depth_index = 0, const viewport& vp = viewport());
+	void set_draw_target(command_list& cl, uint index = 0, depth_target* depth = nullptr, uint depth_index = 0, const viewport& vp = viewport());
 
-	void clear(command_list* cl, const color& c, uint index = 0);
-	void generate_mips(command_list* cl);
+	void clear(command_list& cl, const color& c, uint index = 0);
+	void generate_mips(command_list& cl);
 
 private:
 	std::vector<void*> rws;

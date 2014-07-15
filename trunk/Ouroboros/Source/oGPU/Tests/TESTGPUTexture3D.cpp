@@ -49,7 +49,7 @@ struct gpu_test_texture3d : public gpu_texture_test
 		images[1] = green.get();
 		images[2] = blue.get();
 		auto image = surface::buffer::make(images, 3, surface::buffer::image3d);
-		t.initialize("Test 3D", Device.get(), *image, false);
+		t.initialize("Test 3D", Device, *image, false);
 		return &t;
 	}
 

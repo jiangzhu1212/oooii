@@ -33,10 +33,10 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void raw_buffer::initialize(const char* name, device* dev, uint num_uints, const uint* src)
+void raw_buffer::initialize(const char* name, device& dev, uint num_uints, const uint* src)
 {
 	deinitialize();
 	Device* D3DDevice = get_device(dev);
@@ -61,7 +61,7 @@ uint raw_buffer::num_uints() const
 	return vd.Buffer.NumElements;
 }
 
-void raw_buffer::update(command_list* cl, uint offset_in_uints, uint num_uints, const void* src)
+void raw_buffer::update(command_list& cl, uint offset_in_uints, uint num_uints, const void* src)
 {
 	update_buffer(get_dc(cl), (View*)rw, offset_in_uints * sizeof(uint), num_uints * sizeof(uint), src);
 }

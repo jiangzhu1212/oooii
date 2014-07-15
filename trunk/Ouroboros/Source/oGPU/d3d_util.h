@@ -137,12 +137,6 @@ void unset_all_dispatch_targets(DeviceContext* dc);
 // return the size of the specified hlsl shader bytecode
 uint bytecode_size(const void* bytecode);
 
-// http://msdn.microsoft.com/en-us/library/windows/desktop/ff476486(v=vs.85).aspx
-// This is not cheap enough to reevaluate for each call to update_subresource, so
-// call this once and cache the result per device and pass it to update_subresource
-// as appropriate.
-bool supports_deferred_contexts(Device* dev);
-
 }}}
 
 #endif

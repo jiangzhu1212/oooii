@@ -52,10 +52,10 @@ oDEFINE_TO_FROM_STRING(gpu::blend_state::value, gpu::blend_state::count);
 
 namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void blend_state::initialize(device* dev)
+void blend_state::initialize(device& dev)
 {
 	deinitialize();
 
@@ -97,13 +97,13 @@ void blend_state::deinitialize()
 	}
 }
 
-void blend_state::set(command_list* cl, const blend_state::value& state)
+void blend_state::set(command_list& cl, const blend_state::value& state)
 {
 	static const float default_blend_factor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
 	get_dc(cl)->OMSetBlendState((BlendState*)states[state], default_blend_factor, 0xffffffff);
 }
 
-void blend_state::set(command_list* cl, const blend_state::value& state, const float blend_factor[4], uint sample_mask)
+void blend_state::set(command_list& cl, const blend_state::value& state, const float blend_factor[4], uint sample_mask)
 {
 	get_dc(cl)->OMSetBlendState((BlendState*)states[state], blend_factor, sample_mask);
 }

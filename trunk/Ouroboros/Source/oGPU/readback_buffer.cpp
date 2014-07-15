@@ -33,10 +33,10 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void readback_buffer::initialize(const char* name, device* dev, uint element_stride, uint num_elements)
+void readback_buffer::initialize(const char* name, device& dev, uint element_stride, uint num_elements)
 {
 	bytes = element_stride * num_elements;
 	auto b = make_buffer(name, get_device(dev), element_stride, num_elements, D3D11_USAGE_STAGING, 0, 0, nullptr);
@@ -54,7 +54,7 @@ void readback_buffer::deinitialize()
 	oSAFE_RELEASEV(impl);
 }
 
-void readback_buffer::internal_copy_from(command_list* cl, void* buffer_impl)
+void readback_buffer::internal_copy_from(command_list& cl, void* buffer_impl)
 {
 	get_dc(cl)->CopyResource((Resource*)impl, (Resource*)buffer_impl);
 }

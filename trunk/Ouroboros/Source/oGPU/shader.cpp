@@ -53,8 +53,8 @@ oDEFINE_FROM_STRING(gpu::stage::value, gpu::stage::count)
 	
 namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
 void shader::deinitialize()
 {
@@ -67,7 +67,7 @@ char* shader::name(char* dst, size_t dst_size) const
 }
 
 #define INIT_SH(type, d3d_type, d3d_short_type) \
-	void type::initialize(const char* name, device* dev, const void* bytecode) \
+	void type::initialize(const char* name, device& dev, const void* bytecode) \
 	{	deinitialize(); \
 		if (!bytecode) return; \
 		oV(get_device(dev)->Create##d3d_type(bytecode, bytecode_size(bytecode), nullptr, (d3d_type**)&sh)); \
@@ -75,9 +75,9 @@ char* shader::name(char* dst, size_t dst_size) const
 	}
 
 #define SET_SH(type, d3d_type, d3d_short_type) \
-	void type::set(command_list* cl) const { get_dc(cl)->d3d_short_type##SetShader((d3d_type*)sh, nullptr, 0); }
+	void type::set(command_list& cl) const { get_dc(cl)->d3d_short_type##SetShader((d3d_type*)sh, nullptr, 0); }
 #define CLEAR_SH(type, d3d_type, d3d_short_type) \
-	void type::clear(command_list* cl) const { get_dc(cl)->d3d_short_type##SetShader(nullptr, nullptr, 0); }
+	void type::clear(command_list& cl) const { get_dc(cl)->d3d_short_type##SetShader(nullptr, nullptr, 0); }
 
 #define DEFINE_SH(type, d3d_type, d3d_short_type) INIT_SH(type, d3d_type, d3d_short_type) SET_SH(type, d3d_type, d3d_short_type) CLEAR_SH(type, d3d_type, d3d_short_type)
 	
@@ -89,14 +89,14 @@ DEFINE_SH(pixel_shader, PixelShader, PS)
 
 INIT_SH(compute_shader, ComputeShader, CS) CLEAR_SH(compute_shader, ComputeShader, CS)
 
-void compute_shader::dispatch(command_list* cl, const uint3& dispatch_thread_count) const
+void compute_shader::dispatch(command_list& cl, const uint3& dispatch_thread_count) const
 {
 	DeviceContext* dc = get_dc(cl);
 	dc->CSSetShader((ComputeShader*)sh, nullptr, 0);
 	dc->Dispatch(dispatch_thread_count.x, dispatch_thread_count.y, dispatch_thread_count.z);
 }
 
-void compute_shader::dispatch(command_list* cl, raw_buffer* dispatch_thread_counts, uint offset_in_uints) const
+void compute_shader::dispatch(command_list& cl, raw_buffer* dispatch_thread_counts, uint offset_in_uints) const
 {
 	intrusive_ptr<Buffer> b;
 	((View*)dispatch_thread_counts->get_target())->GetResource((Resource**)&b);

@@ -44,12 +44,12 @@ public:
 	void deinitialize();
 	void* get_target() const { return rw; }
 
-	void cleari(command_list* cl, const uint4& clear_value);
-	void clearf(command_list* cl, const float4& clear_value);
+	void cleari(command_list& cl, const uint4& clear_value);
+	void clearf(command_list& cl, const float4& clear_value);
 
 	// NOTE: with the current api RTs and UAVs cannot be bound at the same time - one will kick the other out
-	void set_draw_target(command_list* cl, uint slot, uint initial_count = preserve_prior_value) const;
-	void set_dispatch_target(command_list* cl, uint slot, uint initial_count = preserve_prior_value) const;
+	void set_draw_target(command_list& cl, uint slot, uint initial_count = preserve_prior_value) const;
+	void set_dispatch_target(command_list& cl, uint slot, uint initial_count = preserve_prior_value) const;
 
 protected:
 	void* rw;

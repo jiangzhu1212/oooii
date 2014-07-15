@@ -27,7 +27,7 @@
 
 namespace ouro { namespace gfx {
 
-void layout_state::initialize(gpu::device* dev)
+void layout_state::initialize(gpu::device& dev)
 {
 	deinitialize();
 
@@ -44,7 +44,7 @@ void layout_state::deinitialize()
 		layout.deinitialize();
 }
 
-void vs_registry::initialize(gpu::device* dev)
+void vs_registry::initialize(gpu::device& dev)
 {
 	static unsigned int kCapacity = 30;
 
@@ -63,13 +63,13 @@ void vs_registry::initialize(gpu::device* dev)
 	r.flush();
 }
 
-void vs_registry::set(gpu::command_list* cl, const vertex_shader::value& shader) const
+void vs_registry::set(gpu::command_list& cl, const vertex_shader::value& shader) const
 {
 	gpu::vertex_shader* s = (gpu::vertex_shader*)r.get(shader);
 	s->set(cl);
 }
 
-void ps_registry::initialize(gpu::device* dev)
+void ps_registry::initialize(gpu::device& dev)
 {
 	static unsigned int kCapacity = 30;
 
@@ -88,7 +88,7 @@ void ps_registry::initialize(gpu::device* dev)
 	r.flush();
 }
 
-void ps_registry::set(gpu::command_list* cl, const pixel_shader::value& shader) const
+void ps_registry::set(gpu::command_list& cl, const pixel_shader::value& shader) const
 {
 	gpu::pixel_shader* s = (gpu::pixel_shader*)r.get(shader);
 	s->set(cl);

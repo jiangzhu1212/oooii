@@ -30,10 +30,10 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void constant_buffer::initialize(const char* name, device* dev, uint struct_stride, uint num_structs, const void* src)
+void constant_buffer::initialize(const char* name, device& dev, uint struct_stride, uint num_structs, const void* src)
 {
 	deinitialize();
 	const uint num_bytes = struct_stride * num_structs;
@@ -53,12 +53,12 @@ char* constant_buffer::name(char* dst, size_t dst_size) const
 	return impl ? debug_name(dst, dst_size, (Buffer*)impl) : "uninitialized";
 }
 
-void constant_buffer::set(command_list* cl, uint slot) const
+void constant_buffer::set(command_list& cl, uint slot) const
 {
 	set_cbs(get_dc(cl), slot, 1, (Buffer* const*)&impl);
 }
 
-void constant_buffer::set(command_list* cl, uint slot, uint num_buffers, const constant_buffer* const* buffers)
+void constant_buffer::set(command_list& cl, uint slot, uint num_buffers, const constant_buffer* const* buffers)
 {
 	Buffer* bufs[D3D11_COMMONSHADER_CONSTANT_BUFFER_REGISTER_COUNT];
 	for (uint i = 0; i < num_buffers; i++)
@@ -66,7 +66,7 @@ void constant_buffer::set(command_list* cl, uint slot, uint num_buffers, const c
 	set_cbs(get_dc(cl), slot, num_buffers, bufs);
 }
 
-void constant_buffer::update(command_list* cl, const void* src)
+void constant_buffer::update(command_list& cl, const void* src)
 {
 	get_dc(cl)->UpdateSubresource((Buffer*)impl, 0, nullptr, src, 0, 0);
 }

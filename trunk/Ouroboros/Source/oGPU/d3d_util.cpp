@@ -686,11 +686,4 @@ uint bytecode_size(const void* bytecode)
 	return bytecode ? ((const uint*)bytecode)[6] : 0;
 }
 
-bool supports_deferred_contexts(Device* dev)
-{
-	D3D11_FEATURE_DATA_THREADING threadingCaps = { FALSE, FALSE };
-	oV(dev->CheckFeatureSupport(D3D11_FEATURE_THREADING, &threadingCaps, sizeof(threadingCaps)));
-	return !!threadingCaps.DriverCommandLists;
-}
-
 }}}

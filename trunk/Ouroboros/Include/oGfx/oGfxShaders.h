@@ -27,7 +27,6 @@
 #ifndef oGfxShaders_h
 #define oGfxShaders_h
 
-#include <oGPU/oGPU.h>
 #include <oMesh/mesh.h>
 
 namespace ouro {

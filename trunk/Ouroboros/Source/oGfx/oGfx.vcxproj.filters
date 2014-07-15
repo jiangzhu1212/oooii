@@ -18,9 +18,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oGfxPipelines.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oGfxPickBuffer.cpp">
       <Filter>Source\Needs Code Review</Filter>
     </ClCompile>
@@ -42,9 +39,6 @@
       <Filter>oGfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxDrawConstants.h">
-      <Filter>oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h">
       <Filter>oGfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h">

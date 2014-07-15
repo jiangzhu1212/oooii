@@ -258,4 +258,11 @@ gpu::device_info get_info(Device* dev, bool is_software_emulation)
 	return d;
 }
 
+bool supports_deferred_contexts(Device* dev)
+{
+	D3D11_FEATURE_DATA_THREADING threadingCaps = { FALSE, FALSE };
+	oV(dev->CheckFeatureSupport(D3D11_FEATURE_THREADING, &threadingCaps, sizeof(threadingCaps)));
+	return !!threadingCaps.DriverCommandLists;
+}
+
 }}}

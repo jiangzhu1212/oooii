@@ -88,11 +88,11 @@ class vertex_shader : public shader
 public:
 	static const stage::value stage = stage::vertex;
 	vertex_shader() {}
-	vertex_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
+	vertex_shader(const char* name, device& dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~vertex_shader() { deinitialize(); }
-	void initialize(const char* name, device* dev, const void* bytecode);
-	void set(command_list* cl) const;
-	void clear(command_list* cl) const;
+	void initialize(const char* name, device& dev, const void* bytecode);
+	void set(command_list& cl) const;
+	void clear(command_list& cl) const;
 };
 
 class hull_shader : public shader
@@ -100,11 +100,11 @@ class hull_shader : public shader
 public:
 	static const stage::value stage = stage::hull;
 	hull_shader() {}
-	hull_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
+	hull_shader(const char* name, device& dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~hull_shader() { deinitialize(); }
-	void initialize(const char* name, device* dev, const void* bytecode);
-	void set(command_list* cl) const;
-	void clear(command_list* cl) const;
+	void initialize(const char* name, device& dev, const void* bytecode);
+	void set(command_list& cl) const;
+	void clear(command_list& cl) const;
 };
 
 class domain_shader : public shader
@@ -112,11 +112,11 @@ class domain_shader : public shader
 public:
 	static const stage::value stage = stage::domain;
 	domain_shader() {}
-	domain_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
+	domain_shader(const char* name, device& dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~domain_shader() { deinitialize(); }
-	void initialize(const char* name, device* dev, const void* bytecode);
-	void set(command_list* cl) const;
-	void clear(command_list* cl) const;
+	void initialize(const char* name, device& dev, const void* bytecode);
+	void set(command_list& cl) const;
+	void clear(command_list& cl) const;
 };
 
 class geometry_shader : public shader
@@ -124,11 +124,11 @@ class geometry_shader : public shader
 public:
 	static const stage::value stage = stage::geometry;
 	geometry_shader() {}
-	geometry_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
+	geometry_shader(const char* name, device& dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~geometry_shader() { deinitialize(); }
-	void initialize(const char* name, device* dev, const void* bytecode);
-	void set(command_list* cl) const;
-	void clear(command_list* cl) const;
+	void initialize(const char* name, device& dev, const void* bytecode);
+	void set(command_list& cl) const;
+	void clear(command_list& cl) const;
 };
 
 class pixel_shader : public shader
@@ -136,11 +136,11 @@ class pixel_shader : public shader
 public:
 	static const stage::value stage = stage::pixel;
 	pixel_shader() {}
-	pixel_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
+	pixel_shader(const char* name, device& dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~pixel_shader() { deinitialize(); }
-	void initialize(const char* name, device* dev, const void* bytecode);
-	void set(command_list* cl) const;
-	void clear(command_list* cl) const;
+	void initialize(const char* name, device& dev, const void* bytecode);
+	void set(command_list& cl) const;
+	void clear(command_list& cl) const;
 };
 
 class compute_shader : public shader
@@ -148,12 +148,12 @@ class compute_shader : public shader
 public:
 	static const stage::value stage = stage::compute;
 	compute_shader() {}
-	compute_shader(const char* name, device* dev, const void* bytecode) { initialize(name, dev, bytecode); }
+	compute_shader(const char* name, device& dev, const void* bytecode) { initialize(name, dev, bytecode); }
 	~compute_shader() { deinitialize(); }
-	void initialize(const char* name, device* dev, const void* bytecode);
-	void dispatch(command_list* cl, const uint3& dispatch_thread_count) const;
-	void dispatch(command_list* cl, raw_buffer* dispatch_thread_counts, uint offset_in_uints) const;
-	void clear(command_list* cl) const;
+	void initialize(const char* name, device& dev, const void* bytecode);
+	void dispatch(command_list& cl, const uint3& dispatch_thread_count) const;
+	void dispatch(command_list& cl, raw_buffer* dispatch_thread_counts, uint offset_in_uints) const;
+	void clear(command_list& cl) const;
 };
 
 // Compiles a shader and returns the binary byte code.
