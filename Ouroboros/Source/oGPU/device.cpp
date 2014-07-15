@@ -22,58 +22,90 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#pragma once
-#ifndef oGPUTestPipelines_h
-#define oGPUTestPipelines_h
+#include <oGPU/device.h>
+#include "d3d_debug.h"
+#include "d3d_device.h"
+#include <d3d11.h>
 
-#include <oGPU/oGPU.h>
-#include <oBase/quat.h>
+#include <CSNoop.h>
 
-enum oGPU_TEST_PIPELINE
+using namespace ouro::gpu::d3d;
+
+namespace ouro { namespace gpu {
+
+DeviceContext* get_dc(command_list& cl);
+Device* get_device(device& dev)
 {
-	// Vertex: float3 Positions
-	// VS: ScreenSpacePos = float4(LocalSpacePos, 1)
-	// PS: Color = white
-	oGPU_TEST_PASS_THROUGH, 
+	return *(Device**)&dev;
+}
 
-	// Vertex: float3 Positions, must be lines, not triangles
-	// VS: ScreenSpacePos = float4(LocalSpacePos, 1)
-	// PS: Color = Vertex Color
-	oGPU_TEST_PASS_THROUGH_COLOR,
+compute_shader* get_noop_cs(device& dev)
+{
+	return &dev.noop;
+}
 
-	// Vertex: float3 Positions
-	// VS: ScreenSpacePos = full WVP transformation
-	// PS: Color = white
-	oGPU_TEST_TRANSFORMED_WHITE,
+void device::initialize(const device_init& init)
+{
+	deinitialize();
 
-	// Vertex: NONE
-	// VS: ScreenSpacePos = full WVP transformation
-	// PS: AppendBuffer
-	oGPU_TEST_BUFFER,
+	intrusive_ptr<Device> D3DDevice = make_device(init);
+	supports_deferred = supports_deferred_contexts(D3DDevice);
+	is_sw = init.use_software_emulation;
 
-	// Vertex: float3 Positions, float Texcoords
-	// VS: ScreenSpacePos = full WVP transformation
-	// PS: Color = texture0
-	oGPU_TEST_TEXTURE_1D,
+	intrusive_ptr<DeviceContext> Immediate;
+	D3DDevice->GetImmediateContext(&Immediate);
 
-	// Vertex: float3 Positions, float2 Texcoords
-	// VS: ScreenSpacePos = full WVP transformation
-	// PS: Color = texture0
-	oGPU_TEST_TEXTURE_2D,
+	struct cmdlist
+	{
+		void* context;
+		uint id;
+	};
 
-	// Vertex: float3 Positions, float3 Texcoords
-	// VS: ScreenSpacePos = full WVP transformation
-	// PS: Color = texture0
-	oGPU_TEST_TEXTURE_3D,
+	cmdlist initImm;
+	initImm.context = Immediate;
+	initImm.id = command_list::immediate;
+	*(cmdlist*)&imm = initImm;
+	Immediate->AddRef();
+	
+	D3DDevice->AddRef();
+	dev = D3DDevice;
 
-	// Vertex: float3 Positions, float3 Texcoords
-	// VS: ScreenSpacePos = full WVP transformation
-	// PS: Color = texture0
-	oGPU_TEST_TEXTURE_CUBE,
+	// Set up a noop compute shader to flush for SetCounter()
+	try
+	{
+		sstring CSName;
+		debug_name(CSName, D3DDevice);
+		sncatf(CSName, ".noop");
+		noop.initialize(CSName, *this, CSNoop);
+	}
+	catch (std::exception&)
+	{
+		deinitialize();
+		std::rethrow_exception(std::current_exception());
+	}
+}
 
-	oGPU_TEST_NUM_PIPELINES,
-};
+void device::deinitialize()
+{
+	imm.deinitialize();
+	oSAFE_RELEASEV(dev);
+	supports_deferred = false;
+	is_sw = false;
+}
 
-ouro::gpu::pipeline1_info oGPUTestGetPipeline(oGPU_TEST_PIPELINE _Pipeline);
+device_info device::get_info() const
+{
+	return d3d::get_info((Device*)dev, is_sw);
+}
 
-#endif
+void device::reset()
+{
+	get_dc(imm)->ClearState();
+}
+
+void device::flush()
+{
+	get_dc(imm)->Flush();
+}
+
+}}

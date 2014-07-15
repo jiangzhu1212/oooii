@@ -30,8 +30,8 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
 namespace timer_query_part
 {	enum value {
@@ -44,7 +44,7 @@ namespace timer_query_part
 
 };}
 
-void timer_query::initialize(const char* name, device* dev)
+void timer_query::initialize(const char* name, device& dev)
 {
 	deinitialize();
 
@@ -76,14 +76,14 @@ void timer_query::deinitialize()
 		oSAFE_RELEASEV(impl[i]);
 }
 
-void timer_query::begin(command_list* cl)
+void timer_query::begin(command_list& cl)
 {
 	DeviceContext* dc = get_dc(cl);
 	dc->Begin((Query*)impl[timer_query_part::disjoint]);
 	dc->End((Query*)impl[timer_query_part::start]);
 }
 
-void timer_query::end(command_list* cl)
+void timer_query::end(command_list& cl)
 {
 	DeviceContext* dc = get_dc(cl);
 	dc->End((Query*)impl[timer_query_part::stop]);

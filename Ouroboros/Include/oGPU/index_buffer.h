@@ -38,13 +38,13 @@ class index_buffer
 public:
 	index_buffer() : impl(nullptr) {}
 	~index_buffer() { deinitialize(); }
-	void initialize(const char* name, device* dev, uint num_indices, const ushort* indices = nullptr);
+	void initialize(const char* name, device& dev, uint num_indices, const ushort* indices = nullptr);
 	void deinitialize();
 
 	char* name(char* dst, size_t dst_size) const;
 	uint num_indices() const;
-	void set(command_list* cl, uint start_index = 0) const;
-	void update(command_list* cl, uint index_offset, uint num_indices, const ushort* indices);
+	void set(command_list& cl, uint start_index = 0) const;
+	void update(command_list& cl, uint index_offset, uint num_indices, const ushort* indices);
 	void* get_buffer() const { return impl; }
 
 private:

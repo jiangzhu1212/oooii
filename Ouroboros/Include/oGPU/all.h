@@ -22,40 +22,33 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#ifndef oD3D11CommandList_h
-#define oD3D11CommandList_h
-
-#include <oGPU/oGPU.h>
-#include "oGPUCommon.h"
-#include "oD3D11Device.h"
-#include "d3d_util.h"
-
-oGPU_NAMESPACE_BEGIN
-
-oDEVICE_CHILD_CLASS(command_list)
-{
-	oDEVICE_CHILD_DECLARATION(command_list)
-	d3d11_command_list(std::shared_ptr<device>& _Device, ID3D11DeviceContext* _pDeviceContext, short _DrawOrder);
-	~d3d11_command_list();
-
-	inline d3d11_device* dev() { return static_cast<d3d11_device*>(WeakDevice); }
-	inline d3d::ComputeShader* get_noop_cs() { return (d3d::ComputeShader*)dev()->NoopCS.get_shader(); }
-
-	command_list_info get_info() const override;
-	void begin() override;
-	void end() override;
-	void flush() override;
-	void reset() override;
-
-	void set_pipeline(const pipeline1* _pPipeline) override;
-	
-	device* WeakDevice;
-	intrusive_ptr<ID3D11DeviceContext> Context;
-	intrusive_ptr<ID3D11CommandList> CommandList;
-	command_list_info Info;
-	D3D_PRIMITIVE_TOPOLOGY PrimitiveTopology;
-};
-
-oGPU_NAMESPACE_END
-
+// Convenience "all headers" header for precompiled header files. Do NOT use 
+// this to be lazy when including headers in .cpp files. Be explicit.
+#pragma once
+#ifndef oGPU_all_h
+#define oGPU_all_h
+#include <oGPU/blend_state.h>
+#include <oGPU/color_target.h>
+#include <oGPU/command_list.h>
+#include <oGPU/compute_target.h>
+#include <oGPU/constant_buffer.h>
+#include <oGPU/depth_stencil_state.h>
+#include <oGPU/depth_target.h>
+#include <oGPU/device.h>
+#include <oGPU/index_buffer.h>
+#include <oGPU/primary_target.h>
+#include <oGPU/rasterizer_state.h>
+#include <oGPU/raw_buffer.h>
+#include <oGPU/readback_buffer.h>
+#include <oGPU/resource.h>
+#include <oGPU/rwstructured_buffer.h>
+#include <oGPU/sampler_state.h>
+#include <oGPU/shader.h>
+#include <oGPU/texture1d.h>
+#include <oGPU/texture2d.h>
+#include <oGPU/texture3d.h>
+#include <oGPU/texturecube.h>
+#include <oGPU/timer_query.h>
+#include <oGPU/vertex_buffer.h>
+#include <oGPU/vertex_layout.h>
 #endif

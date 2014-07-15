@@ -31,10 +31,10 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void depth_target::initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling)
+void depth_target::initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling)
 {
 	internal_initialize(name, get_device(dev), format, width, height, array_size, mips, supersampling);
 }
@@ -130,28 +130,28 @@ void depth_target::resize(const uint2& dimensions)
 	internal_initialize(n, D3DDevice, dxgi::to_surface_format(desc.Format), dimensions.x, dimensions.y, is_array(srv) ? desc.ArraySize : 0, desc.Mips, 0);
 }
 
-void depth_target::set(command_list* cl, uint index, const viewport& vp)
+void depth_target::set(command_list& cl, uint index, const viewport& vp)
 {
 	set_viewports(cl, dimensions(), &vp, 1);
 	get_dc(cl)->OMSetRenderTargets(0, nullptr, (DepthStencilView*)get_target(index));
 }
 
-void depth_target::clear(command_list* cl, uint index, float depth)
+void depth_target::clear(command_list& cl, uint index, float depth)
 {
 	get_dc(cl)->ClearDepthStencilView((DepthStencilView*)rws[index], D3D11_CLEAR_DEPTH, depth, 0);
 }
 
-void depth_target::clear_stencil(command_list* cl, uint index, uchar stencil)
+void depth_target::clear_stencil(command_list& cl, uint index, uchar stencil)
 {
 	get_dc(cl)->ClearDepthStencilView((DepthStencilView*)rws[index], D3D11_CLEAR_STENCIL, 0.0f, stencil);
 }
 
-void depth_target::clear_depth_stencil(command_list* cl, uint index, float depth, uchar stencil)
+void depth_target::clear_depth_stencil(command_list& cl, uint index, float depth, uchar stencil)
 {
 	get_dc(cl)->ClearDepthStencilView((DepthStencilView*)rws[index], D3D11_CLEAR_DEPTH|D3D11_CLEAR_STENCIL, depth, stencil);
 }
 
-void depth_target::generate_mips(command_list* cl)
+void depth_target::generate_mips(command_list& cl)
 {
 	get_dc(cl)->GenerateMips((ShaderResourceView*)ro);
 }

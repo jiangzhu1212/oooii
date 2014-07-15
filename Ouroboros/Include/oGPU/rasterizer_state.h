@@ -54,10 +54,10 @@ public:
 	rasterizer_state() { states.fill(nullptr); }
 	~rasterizer_state() { deinitialize(); }
 
-	void initialize(device* dev);
+	void initialize(device& dev);
 	void deinitialize();
 
-	void set(command_list* cl, const value& state);
+	void set(command_list& cl, const value& state);
 
 private:
 	std::array<void*, count> states;

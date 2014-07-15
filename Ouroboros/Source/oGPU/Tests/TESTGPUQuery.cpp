@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGPU/oGPU.h>
+#include <oGPU/device.h>
 #include <oGPU/timer_query.h>
 
 using namespace ouro::gpu;
@@ -35,17 +35,17 @@ void TESTquery()
 	device_init init("GPU Query");
 	init.enable_driver_reporting = true;
 	init.version = version(10,0);
-	std::shared_ptr<device> d = device::make(init);
+	device d(init);
 
-	command_list* icl = d->immediate();
+	command_list& cl = d.immediate();
 
 	// Test timer
 	{
 		timer_query q;
-		q.initialize("Timer", d.get());
-		q.begin(icl);
+		q.initialize("Timer", d);
+		q.begin(cl);
 		std::this_thread::sleep_for(std::chrono::seconds(1));
-		q.end(icl);
+		q.end(cl);
 
 		double SecondsPast = q.get_time();
 		oCHECK(SecondsPast > 0.0, "No time past!");

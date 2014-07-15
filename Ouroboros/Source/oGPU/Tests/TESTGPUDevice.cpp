@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGPU/oGPU.h>
+#include <oGPU/device.h>
 
 #include "../../test_services.h"
 
@@ -36,8 +36,8 @@ void TESTdevice(test_services& _Services)
 	device_init init("GPU device");
 	init.enable_driver_reporting = true;
 	init.version = version(10,0); // for more compatibility when running on varied machines
-	std::shared_ptr<device> d = device::make(init);
-	device_info i = d->get_info();
+	device d(init);
+	device_info i = d.get_info();
 
 	oCHECK(i.adapter_index == 0, "Index is incorrect");
 	oCHECK(i.feature_version >= version(9,0), "Invalid version retrieved");

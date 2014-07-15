@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
-#include <oGPU/oGPU.h>
+#include <oGPU/device.h>
 #include <oGPU/readback_buffer.h>
 #include <oGPU/vertex_buffer.h>
 #include <oGPU/rwstructured_buffer.h>
@@ -40,46 +40,42 @@ void TESTbuffer()
 	
 	device_init init("GPU Buffer test");
 	init.enable_driver_reporting = true;
-	std::shared_ptr<device> Device = device::make(init);
+	device Device(init);
 
 	rwstructured_buffer AppendBuffer;
-	AppendBuffer.initialize_append("BufferAppend", Device.get(), sizeof(int), oCOUNTOF(GPU_BufferAppendIndices) * 2);
+	AppendBuffer.initialize_append("BufferAppend", Device, sizeof(int), oCOUNTOF(GPU_BufferAppendIndices) * 2);
 
 	readback_buffer AppendReadbackBuffer;
-	AppendReadbackBuffer.initialize("BufferAppend", Device.get(), sizeof(int), oCOUNTOF(GPU_BufferAppendIndices) * 2);
+	AppendReadbackBuffer.initialize("BufferAppend", Device, sizeof(int), oCOUNTOF(GPU_BufferAppendIndices) * 2);
 
 	readback_buffer AppendBufferCount;
-	AppendBufferCount.initialize("BufferAppendCount", Device.get(), sizeof(int));
+	AppendBufferCount.initialize("BufferAppendCount", Device, sizeof(int));
 
 	vertex_layout VL;
-	VL.initialize("vertex layout", Device.get(), gfx::elements(gfx::vertex_input::pos), gfx::vs_byte_code(gfx::vertex_input::pos));
+	VL.initialize("vertex layout", Device, gfx::elements(gfx::vertex_input::pos), gfx::vs_byte_code(gfx::vertex_input::pos));
 
 	vertex_shader VS;
-	VS.initialize("VS", Device.get(), gfx::byte_code(gfx::vertex_shader::test_buffer));
+	VS.initialize("VS", Device, gfx::byte_code(gfx::vertex_shader::test_buffer));
 
 	pixel_shader PS;
-	PS.initialize("PS", Device.get(), gfx::byte_code(gfx::pixel_shader::test_buffer));
+	PS.initialize("PS", Device, gfx::byte_code(gfx::pixel_shader::test_buffer));
 
-	std::shared_ptr<command_list> CommandList = Device->get_immediate_command_list();
+	command_list& CommandList = Device.immediate();
 
-	scoped_device_frame DevFrame(Device.get());
-	scoped_command_line_frame CommandListFrame(CommandList.get());
+	AppendBuffer.set_draw_target(CommandList, 0);
 
-	AppendBuffer.set_draw_target(CommandList.get(), 0);
+	VL.set(CommandList, mesh::primitive_type::points);
+	VS.set(CommandList);
+	PS.set(CommandList);
+	vertex_buffer::draw_unindexed(CommandList, oCOUNTOF(GPU_BufferAppendIndices), 0);
 
-	//CommandList->set_pipeline(Pipeline);
-	VL.set(CommandList.get(), mesh::primitive_type::points);
-	VS.set(CommandList.get());
-	PS.set(CommandList.get());
-	vertex_buffer::draw_unindexed(CommandList.get(), oCOUNTOF(GPU_BufferAppendIndices), 0);
-
-	AppendBuffer.copy_counter_to(CommandList.get(), AppendBufferCount, 0);
+	AppendBuffer.copy_counter_to(CommandList, AppendBufferCount, 0);
 
 	int count = 0;
 	AppendBufferCount.copy_to(&count, sizeof(int));
 	oCHECK(oCOUNTOF(GPU_BufferAppendIndices) == count, "Append counter didn't reach %d", oCOUNTOF(GPU_BufferAppendIndices));
 
-	AppendReadbackBuffer.copy_from(CommandList.get(), AppendBuffer);
+	AppendReadbackBuffer.copy_from(CommandList, AppendBuffer);
 
 	std::vector<int> Values(20);
 	oCHECK(AppendReadbackBuffer.copy_to(Values.data(), Values.size() * sizeof(int)), "Copy out of readback buffer failed");

@@ -25,6 +25,7 @@
 #include <oPlatform/oTest.h>
 #include "oGPUTestCommon.h"
 #include <oGPU/constant_buffer.h>
+#include <oGPU/command_list.h>
 
 #include <oBasis/oMath.h>
 
@@ -42,9 +43,9 @@ struct gpu_test_instanced_triangle : public gpu_test
 
 	pipeline initialize() override
 	{
-		TestConstants.initialize("TestConstants", Device.get(), sizeof(oGfxDrawConstants));
-		InstanceList.initialize("Instances", Device.get(), sizeof(oGfxTestInstance), 2);
-		Mesh.initialize_first_triangle(Device.get());
+		TestConstants.initialize("TestConstants", Device, sizeof(oGfxDrawConstants));
+		InstanceList.initialize("Instances", Device, sizeof(oGfxTestInstance), 2);
+		Mesh.initialize_first_triangle(Device);
 
 		pipeline p;
 		p.input = gfx::vertex_input::pos;
@@ -55,6 +56,8 @@ struct gpu_test_instanced_triangle : public gpu_test
 	
 	void render() override
 	{
+		command_list& cl = get_command_list();
+
 		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -3.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
 
 		uint2 dimensions = PrimaryColorTarget.dimensions();
@@ -64,36 +67,32 @@ struct gpu_test_instanced_triangle : public gpu_test
 		instances[0].Translation = float3(-0.5f, 0.5f, 0.0f);
 		instances[1].Translation = float3(0.5f, -0.5f, 0.0f);
 
-		float rotationStep = Device->frame_id() * 1.0f;
+		float rotationStep = FrameID * 1.0f;
 		instances[0].Rotation = make_quaternion(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 		instances[1].Rotation = make_quaternion(float3(radians(rotationStep) * 0.5f, radians(rotationStep), radians(rotationStep) * 0.75f));
 
-		InstanceList.update(CommandList.get(), instances);
-
-		CommandList->begin();
+		InstanceList.update(cl, instances);
 
 		oGfxDrawConstants c(oIDENTITY4x4, V, P, aaboxf());
 		c.Color = white;
-		TestConstants.update(CommandList.get(), c);
+		TestConstants.update(cl, c);
 
-		BlendState.set(CommandList.get(), blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), depth_stencil_state::test_and_write);
-		RasterizerState.set(CommandList.get(), rasterizer_state::two_sided);
-		SamplerState.set(CommandList.get(), sampler_state::linear_wrap, sampler_state::linear_wrap);
-		VertexLayout.set(CommandList.get(), mesh::primitive_type::triangles);
-		VertexShader.set(CommandList.get());
-		PixelShader.set(CommandList.get());
+		BlendState.set(cl, blend_state::opaque);
+		DepthStencilState.set(cl, depth_stencil_state::test_and_write);
+		RasterizerState.set(cl, rasterizer_state::two_sided);
+		SamplerState.set(cl, sampler_state::linear_wrap, sampler_state::linear_wrap);
+		VertexLayout.set(cl, mesh::primitive_type::triangles);
+		VertexShader.set(cl);
+		PixelShader.set(cl);
 
 		const constant_buffer* CBs[2] = { &TestConstants, &InstanceList };
-		constant_buffer::set(CommandList.get(), oGFX_DRAW_CONSTANTS_REGISTER, 2, CBs);
+		constant_buffer::set(cl, oGFX_DRAW_CONSTANTS_REGISTER, 2, CBs);
 
-		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
-		PrimaryDepthTarget.clear(CommandList.get());
-		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
+		PrimaryColorTarget.clear(cl, get_clear_color());
+		PrimaryDepthTarget.clear(cl);
+		PrimaryColorTarget.set_draw_target(cl, PrimaryDepthTarget);
 		
-		Mesh.draw(CommandList.get(), 2);
-
-		CommandList->end();
+		Mesh.draw(cl, 2);
 	}
 
 private:

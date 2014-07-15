@@ -40,11 +40,11 @@ class vertex_layout
 {
 public:
 	vertex_layout() : layout(nullptr) {}
-	vertex_layout(const char* name, device* dev, const mesh::element_array& elements, const void* vs_bytecode) : layout(nullptr) { initialize(name, dev, elements, vs_bytecode); }
+	vertex_layout(const char* name, device& dev, const mesh::element_array& elements, const void* vs_bytecode) : layout(nullptr) { initialize(name, dev, elements, vs_bytecode); }
 	~vertex_layout() { deinitialize(); }
-	void initialize(const char* name, device* dev, const mesh::element_array& elements, const void* vs_bytecode);
+	void initialize(const char* name, device& dev, const mesh::element_array& elements, const void* vs_bytecode);
 	void deinitialize();
-	void set(command_list* cl, const mesh::primitive_type::value& prim_type) const;
+	void set(command_list& cl, const mesh::primitive_type::value& prim_type) const;
 	void* get() const { return layout; }
 private:
 	void* layout;

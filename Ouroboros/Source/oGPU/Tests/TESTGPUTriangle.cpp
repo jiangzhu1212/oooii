@@ -39,7 +39,7 @@ struct gpu_test_triangle : public gpu_test
 
 	pipeline initialize() override
 	{
-		Mesh.initialize_first_triangle(Device.get());
+		Mesh.initialize_first_triangle(Device);
 
 		pipeline p;
 		p.input = gfx::vertex_input::pos;
@@ -50,18 +50,17 @@ struct gpu_test_triangle : public gpu_test
 
 	void render() override
 	{
-		CommandList->begin();
-		BlendState.set(CommandList.get(), blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), depth_stencil_state::none);
-		RasterizerState.set(CommandList.get(), rasterizer_state::front_face);
-		VertexLayout.set(CommandList.get(), mesh::primitive_type::triangles);
-		VertexShader.set(CommandList.get());
-		PixelShader.set(CommandList.get());
-		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
-		PrimaryDepthTarget.clear(CommandList.get());
-		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
-		Mesh.draw(CommandList.get());
-		CommandList->end();
+		command_list& cl = get_command_list();
+		BlendState.set(cl, blend_state::opaque);
+		DepthStencilState.set(cl, depth_stencil_state::none);
+		RasterizerState.set(cl, rasterizer_state::front_face);
+		VertexLayout.set(cl, mesh::primitive_type::triangles);
+		VertexShader.set(cl);
+		PixelShader.set(cl);
+		PrimaryColorTarget.clear(cl, get_clear_color());
+		PrimaryDepthTarget.clear(cl);
+		PrimaryColorTarget.set_draw_target(cl, PrimaryDepthTarget);
+		Mesh.draw(cl);
 	}
 
 private:

@@ -36,15 +36,11 @@
 // oGfx is an abstraction of a particular rendering policy. It so happens to 
 // include some simple shaders, so rather than reproduce such shaders, just use
 // them from the oGfx library.
-#include <oGfx/oGfxPipelines.h>
 #include <oGfx/oGfxShaders.h>
-
-#include <oGPU/oGPU.h>
-#include <oGPU/primary_target.h>
-#include <oGPU/depth_target.h>
-#include <oGPU/oGPUUtilMesh.h>
-
 #include <oGfx/oGfxShaderRegistry.h>
+
+#include <oGPU/all.h>
+#include <oGPU/oGPUUtilMesh.h>
 
 using namespace ouro;
 using namespace windows::gdi;
@@ -199,7 +195,7 @@ public:
 	window* Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const std::function<void()>& _OnThreadExit);
 	void Stop();
 
-	gpu::device* GetDevice() { return Device.get(); }
+	gpu::device& GetDevice() { return Device; }
 	void SetClearColor(const color& c) { ClearColor = c; }
 	color GetClearColor() const { return ClearColor; }
 
@@ -213,8 +209,8 @@ private:
 
 private:
 	std::shared_ptr<window> Parent;
-	std::shared_ptr<gpu::device> Device;
-	std::shared_ptr<gpu::command_list> CommandList;
+	gpu::device Device;
+	gpu::command_list cl;
 	gpu::blend_state BlendState;
 	gpu::depth_stencil_state DepthStencilState;
 	gpu::rasterizer_state RasterizerState;
@@ -247,19 +243,19 @@ oGPUWindowThread::oGPUWindowThread()
 {
 	gpu::device_init di;
 	di.enable_driver_reporting = true;
-	try { Device = gpu::device::make(di); }
+	try { Device.initialize(di); }
 	catch (std::exception&)
 	{
 		Running = false;
 		return;
 	}
 
-	LayoutState.initialize(Device.get());
-	VertexShaders.initialize(Device.get());
-	PixelShaders.initialize(Device.get());
+	LayoutState.initialize(Device);
+	VertexShaders.initialize(Device);
+	PixelShaders.initialize(Device);
 
-	VertexShader.initialize("VS", Device.get(), gfx::byte_code(gfx::vertex_shader::pass_through_pos));
-	PixelShader.initialize("PS", Device.get(), gfx::byte_code(gfx::pixel_shader::white));
+	VertexShader.initialize("VS", Device, gfx::byte_code(gfx::vertex_shader::pass_through_pos));
+	PixelShader.initialize("PS", Device, gfx::byte_code(gfx::pixel_shader::white));
 
 	// jist: load the library file knowing all registries where content will go.
 	// there is a registry per shader type. Shaders are registered by entry point 
@@ -268,13 +264,12 @@ oGPUWindowThread::oGPUWindowThread()
 		, std::bind(shader_on_loaded, std::ref(VertexShaders), std::ref(PixelShaders), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 		, filesystem::load_option::text_read);
 
-	BlendState.initialize(Device.get());
-	DepthStencilState.initialize(Device.get());
-	RasterizerState.initialize(Device.get());
-	SamplerState.initialize(Device.get());
+	BlendState.initialize(Device);
+	DepthStencilState.initialize(Device);
+	RasterizerState.initialize(Device);
+	SamplerState.initialize(Device);
 
-	Mesh.initialize_first_triangle(Device.get());
-	CommandList = Device->get_immediate_command_list();
+	Mesh.initialize_first_triangle(Device);
 
 	//filesystem::join();
 }
@@ -355,9 +350,9 @@ void oGPUWindowThread::Run()
 			i.alt_f4_closes = true;
 			GPUWindow = window::make(i);
 			GPUWindow->set_hotkeys(HotKeys);
-			WindowColorTarget.initialize(GPUWindow.get(), Device.get(), true);
+			WindowColorTarget.initialize(GPUWindow.get(), Device, true);
 			uint2 dimensions = WindowColorTarget.dimensions();
-			WindowDepthTarget.initialize("primary depth", Device.get(), surface::d24_unorm_s8_uint, dimensions.x, dimensions.y, 0, false, 0);
+			WindowDepthTarget.initialize("primary depth", Device, surface::d24_unorm_s8_uint, dimensions.x, dimensions.y, 0, false, 0);
 			GPUWindow->parent(Parent);
 			GPUWindow->show(); // now that the window is a child, show it (it will only show when parent shows)
 			pGPUWindow = GPUWindow.get();
@@ -388,24 +383,24 @@ void oGPUWindowThread::Run()
 
 void oGPUWindowThread::Render()
 {
-	if (WindowColorTarget && Device->begin_frame())
+	if (WindowColorTarget)
 	{
-		CommandList->begin();
-		WindowColorTarget.clear(CommandList.get(), ClearColor);
-		WindowColorTarget.set_draw_target(CommandList.get(), WindowDepthTarget);
-		
-		BlendState.set(CommandList.get(), gpu::blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), gpu::depth_stencil_state::none);
-		RasterizerState.set(CommandList.get(), gpu::rasterizer_state::front_face);
-		SamplerState.set(CommandList.get(), gpu::sampler_state::linear_wrap, gpu::sampler_state::linear_wrap);
-		
-		LayoutState.set(CommandList.get(), gfx::vertex_input::pos, mesh::primitive_type::triangles);
-		VertexShader.set(CommandList.get());
-		PixelShader.set(CommandList.get());
+		gpu::command_list& cl = Device.immediate();
 
-		Mesh.draw(CommandList.get());
-		CommandList->end();
-		Device->end_frame();
+		WindowColorTarget.clear(cl, ClearColor);
+		WindowColorTarget.set_draw_target(cl, WindowDepthTarget);
+		
+		BlendState.set(cl, gpu::blend_state::opaque);
+		DepthStencilState.set(cl, gpu::depth_stencil_state::none);
+		RasterizerState.set(cl, gpu::rasterizer_state::front_face);
+		SamplerState.set(cl, gpu::sampler_state::linear_wrap, gpu::sampler_state::linear_wrap);
+		
+		LayoutState.set(cl, gfx::vertex_input::pos, mesh::primitive_type::triangles);
+		VertexShader.set(cl);
+		PixelShader.set(cl);
+
+		Mesh.draw(cl);
+		cl;
 		WindowColorTarget.present();
 	}
 }

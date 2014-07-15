@@ -32,10 +32,10 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void color_target::initialize(const char* name, device* dev, surface::format format, uint width, uint height, uint array_size, bool mips)
+void color_target::initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint array_size, bool mips)
 {
 	deinitialize();
 	
@@ -111,7 +111,7 @@ uint color_target::array_size() const
 	return d.ArraySize;
 }
 
-void color_target::set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, depth_target* depth, const viewport& vp)
+void color_target::set_draw_target(command_list& cl, uint num_colors, color_target* const* colors, depth_target* depth, const viewport& vp)
 {
 	set_viewports(cl, colors[0]->dimensions(), &vp, 1);
 
@@ -121,7 +121,7 @@ void color_target::set_draw_target(command_list* cl, uint num_colors, color_targ
 	get_dc(cl)->OMSetRenderTargets(num_colors, num_colors ? rtvs : nullptr, depth ? (DepthStencilView*)depth->get_target() : nullptr);
 }
 
-void color_target::set_draw_target(command_list* cl, uint num_colors, color_target* const* colors, const uint* color_indices, depth_target* depth, uint depth_index, const viewport& vp)
+void color_target::set_draw_target(command_list& cl, uint num_colors, color_target* const* colors, const uint* color_indices, depth_target* depth, uint depth_index, const viewport& vp)
 {
 	set_viewports(cl, colors[0]->dimensions(), &vp, 1);
 	
@@ -131,20 +131,20 @@ void color_target::set_draw_target(command_list* cl, uint num_colors, color_targ
 	get_dc(cl)->OMSetRenderTargets(num_colors, num_colors ? rtvs : nullptr, depth ? (DepthStencilView*)depth->get_target(depth_index) : nullptr);
 }
 
-void color_target::set_draw_target(command_list* cl, uint index, depth_target* depth, uint depth_index, const viewport& vp)
+void color_target::set_draw_target(command_list& cl, uint index, depth_target* depth, uint depth_index, const viewport& vp)
 {
 	set_viewports(cl, dimensions(), &vp, 1);
 	get_dc(cl)->OMSetRenderTargets(1, (RenderTargetView* const*)&rws[index], depth ? (DepthStencilView*)depth->get_target(depth_index) : nullptr);
 }
 
-void color_target::clear(command_list* cl, const color& c, uint index)
+void color_target::clear(command_list& cl, const color& c, uint index)
 {
 	float fcolor[4];
 	c.decompose(&fcolor[0], &fcolor[1], &fcolor[2], &fcolor[3]);
 	get_dc(cl)->ClearRenderTargetView((RenderTargetView*)rws[index], fcolor);
 }
 
-void color_target::generate_mips(command_list* cl)
+void color_target::generate_mips(command_list& cl)
 {
 	get_dc(cl)->GenerateMips((ShaderResourceView*)ro);
 }

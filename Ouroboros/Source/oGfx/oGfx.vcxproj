@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="oGfxManipulator.cpp" />
     <ClCompile Include="oGfxPickBuffer.cpp" />
-    <ClCompile Include="oGfxPipelines.cpp" />
     <ClCompile Include="oGfxShaderRegistry.cpp" />
     <ClCompile Include="oGfxShaders.cpp" />
     <ClCompile Include="pch.cpp">
@@ -38,7 +37,6 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxManipulator.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxPickBuffer.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxPipelines.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxShaderRegistry.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxShaders.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxVertexLayouts.h" />

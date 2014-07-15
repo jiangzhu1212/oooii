@@ -22,12 +22,11 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGPU/oGPU.h>
 #include <oPlatform/oTest.h>
 
 #include "../../test_services.h"
 
-using namespace ouro::gpu;
+//using namespace ouro::gpu;
 
 namespace ouro {
 	namespace tests {
@@ -142,9 +141,9 @@ void TESTbccodec(test_services& _Services)
 	if (i.vendor != vendor::nvidia && i.vendor != vendor::amd)
 		oTHROW(permission_denied, "%s gpu device not trusted to run the DXSDK BC7 sample code correctly, so skip this test.", as_string(i.vendor));
 
-	convert_and_test(_Services, Device.get(), surface::bc7_unorm, "_BC7", 0);
-	convert_and_test(_Services, Device.get(), surface::bc6h_sf16, "_BC6HS", 1);
-	convert_and_test(_Services, Device.get(), surface::bc6h_uf16, "_BC6HU", 2);
+	convert_and_test(_Services, Device, surface::bc7_unorm, "_BC7", 0);
+	convert_and_test(_Services, Device, surface::bc6h_sf16, "_BC6HS", 1);
+	convert_and_test(_Services, Device, surface::bc6h_uf16, "_BC6HU", 2);
 #endif
 }
 

@@ -682,6 +682,9 @@ void copy_vertices(void* oRESTRICT* oRESTRICT dst, const element_array& dst_elem
 	for (uint di = 0; di < as_uint(dst_elements.size()); di++)
 	{
 		const element& e = dst_elements[di];
+		if (e.semantic() == mesh::semantic::unknown)
+			continue;
+
 		const uint dslot = e.slot();
 
 		if (!dst[dslot])

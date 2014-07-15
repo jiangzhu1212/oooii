@@ -39,7 +39,7 @@ util_mesh::util_mesh()
 {
 }
 
-void util_mesh::initialize(const char* name, device* dev, const mesh::info& _info, const ushort* _indices, const void** _vertices)
+void util_mesh::initialize(const char* name, device& dev, const mesh::info& _info, const ushort* _indices, const void** _vertices)
 {
 	if (_info.num_ranges != 1)
 		oTHROW_INVARG("mesh range must be 1");
@@ -61,7 +61,7 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::info& _inf
 	}
 }
 
-void util_mesh::initialize(const char* name, device* dev, const mesh::element_array& elements, const mesh::primitive* prim)
+void util_mesh::initialize(const char* name, device& dev, const mesh::element_array& elements, const mesh::primitive* prim)
 {
 	auto prim_info = prim->get_info();
 	oCHECK(prim_info.num_ranges == 1, "unexpected number of ranges");
@@ -102,7 +102,7 @@ void util_mesh::initialize(const char* name, device* dev, const mesh::element_ar
 	}
 }
 
-void util_mesh::initialize_first_triangle(device* dev)
+void util_mesh::initialize_first_triangle(device& dev)
 {
 	static const float3 sExtents(0.8f, 0.7f, 0.01f);
 	static const float X = 0.75f;
@@ -127,7 +127,7 @@ void util_mesh::initialize_first_triangle(device* dev)
 	initialize("First Triangle", dev, mi, sIndices, elements);
 }
 
-void util_mesh::initialize_first_cube(device* dev, bool _UVWs)
+void util_mesh::initialize_first_cube(device& dev, bool _UVWs)
 {
 	mesh::primitive::box_init i;
 	i.semantics = mesh::primitive::flag_positions|mesh::primitive::flag_texcoords;
@@ -153,7 +153,7 @@ void util_mesh::deinitialize()
 		v.deinitialize();
 }
 
-void util_mesh::draw(command_list* cl, uint num_instances)
+void util_mesh::draw(command_list& cl, uint num_instances)
 {
 	indices.set(cl);
 	vertex_buffer::set(cl, 0, num_slots, vertices.data());

@@ -45,9 +45,8 @@ public:
 	void render() override
 	{
 		static color sClearColors[] = { lime, white };
-		CommandList->begin();
-		PrimaryColorTarget.clear(CommandList.get(), sClearColors[Device->frame_id() % oCOUNTOF(sClearColors)]);
-		CommandList->end();
+		static int FrameID = 0;
+		PrimaryColorTarget.clear(get_command_list(), sClearColors[FrameID++ % oCOUNTOF(sClearColors)]);
 	}
 };
 

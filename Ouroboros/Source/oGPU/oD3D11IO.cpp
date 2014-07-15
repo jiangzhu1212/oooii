@@ -22,10 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGPU/oGPU.h>
 #include <oCore/filesystem.h>
-#include "oGPUCommon.h"
-#include "oD3D11Device.h"
 #include "d3d11_util.h"
 #include "d3dx11_util.h"
 

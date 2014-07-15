@@ -55,7 +55,7 @@ public:
 	~gpu_test_lines() { LineList.deinitialize(); }
 	pipeline initialize()
 	{
-		LineList.initialize("LineList", Device.get(), sizeof(oGPU_LINE_VERTEX), 6);
+		LineList.initialize("LineList", Device, sizeof(oGPU_LINE_VERTEX), 6);
 
 		pipeline p;
 		p.input = gfx::vertex_input::pos_color;
@@ -67,7 +67,7 @@ public:
 
 	void render()
 	{
-		CommandList->begin();
+		command_list& cl = get_command_list();
 
 		static const float3 TrianglePoints[] = { float3(-0.75f, -0.667f, 0.0f), float3(0.0f, 0.667f, 0.0f), float3(0.75f, -0.667f, 0.0f) };
 		
@@ -87,25 +87,23 @@ public:
 		lines[2].Start = TrianglePoints[2];
 		lines[2].End = TrianglePoints[0];
 
-		LineList.update(CommandList.get(), 0, 6, lines);
-		LineList.set(CommandList.get(), 0);
+		LineList.update(cl, 0, 6, lines);
+		LineList.set(cl, 0);
 
-		BlendState.set(CommandList.get(), blend_state::opaque);
-		DepthStencilState.set(CommandList.get(), depth_stencil_state::none);
-		RasterizerState.set(CommandList.get(), rasterizer_state::two_sided);
-		SamplerState.set(CommandList.get(), sampler_state::linear_wrap, sampler_state::linear_wrap);
+		BlendState.set(cl, blend_state::opaque);
+		DepthStencilState.set(cl, depth_stencil_state::none);
+		RasterizerState.set(cl, rasterizer_state::two_sided);
+		SamplerState.set(cl, sampler_state::linear_wrap, sampler_state::linear_wrap);
 
-		VertexLayout.set(CommandList.get(), mesh::primitive_type::lines);
-		VertexShader.set(CommandList.get());
-		PixelShader.set(CommandList.get());
+		VertexLayout.set(cl, mesh::primitive_type::lines);
+		VertexShader.set(cl);
+		PixelShader.set(cl);
 
-		PrimaryColorTarget.clear(CommandList.get(), get_clear_color());
-		PrimaryDepthTarget.clear(CommandList.get());
-		PrimaryColorTarget.set_draw_target(CommandList.get(), PrimaryDepthTarget);
+		PrimaryColorTarget.clear(cl, get_clear_color());
+		PrimaryDepthTarget.clear(cl);
+		PrimaryColorTarget.set_draw_target(cl, PrimaryDepthTarget);
 
-		LineList.draw_unindexed(CommandList.get(), 6, 0);
-
-		CommandList->end();
+		LineList.draw_unindexed(cl, 6, 0);
 	}
 
 private:

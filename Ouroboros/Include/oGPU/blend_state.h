@@ -56,11 +56,11 @@ public:
 	blend_state() { states.fill(nullptr); }
 	~blend_state() { deinitialize(); }
 
-	void initialize(device* dev);
+	void initialize(device& dev);
 	void deinitialize();
 
-	void set(command_list* cl, const value& state);
-	void set(command_list* cl, const value& state, const float blend_factor[4], uint sample_mask = 0xffffffff);
+	void set(command_list& cl, const value& state);
+	void set(command_list& cl, const value& state, const float blend_factor[4], uint sample_mask = 0xffffffff);
 
 private:
 	std::array<void*, count> states;

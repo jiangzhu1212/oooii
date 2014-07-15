@@ -37,9 +37,9 @@ class raw_buffer : public compute_target
 {
 public:
 	~raw_buffer() { deinitialize(); }
-	void initialize(const char* name, device* dev, uint num_uints, const uint* src = nullptr);
+	void initialize(const char* name, device& dev, uint num_uints, const uint* src = nullptr);
 	uint num_uints() const;
-	void update(command_list* cl, uint offset_in_uints, uint num_uints, const void* src);
+	void update(command_list& cl, uint offset_in_uints, uint num_uints, const void* src);
 };
 	
 }}

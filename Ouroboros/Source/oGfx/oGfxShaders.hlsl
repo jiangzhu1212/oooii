@@ -146,16 +146,16 @@ void VSTexture3D(float3 LSposition : POSITION, float3 texcoord : TEXCOORD, out f
 	out_texcoord = texcoord;
 }
 
-void VSTextureCube(float3 LSposition : POSITION, float3 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float3 out_texcoord : TEXCOORD)
+void VSTextureCube(float3 LSposition : POSITION, out float4 out_SSposition : SV_Position, out float3 out_texcoord : TEXCOORD)
 {
 	out_SSposition = oGfxLStoSS(LSposition);
-	out_texcoord = texcoord;
+	out_texcoord = LSposition; // use local-space position and allow for cube mapping to be applied since texcoords are so often in 2D and not appropriate for cubemaps
 }
 
 void VSTextureCubeArray(float3 LSposition : POSITION, float3 texcoord : TEXCOORD, out float4 out_SSposition : SV_Position, out float4 out_texcoord : TEXCOORD)
 {
 	out_SSposition = oGfxLStoSS(LSposition);
-	out_texcoord = float4(texcoord, oGfxGetSlice());
+	out_texcoord = float4(LSposition, oGfxGetSlice()); // use local-space position and allow for cube mapping to be applied since texcoords are so often in 2D and not appropriate for cubemaps
 }
 
 struct oGFX_INSTANCE

@@ -95,14 +95,14 @@ public:
 
 protected:
 
-	size_type initialize(void* memory, size_type capacity, gpu::device* dev, const void* missing_bytecode, const void* failed_bytecode, const void* making_bytecode)
+	size_type initialize(void* memory, size_type capacity, gpu::device& dev, const void* missing_bytecode, const void* failed_bytecode, const void* making_bytecode)
 	{
 		scoped_allocation missing((void*)missing_bytecode, 1, noop_deallocate);
 		scoped_allocation failed((void*)failed_bytecode, 1, noop_deallocate);
 		scoped_allocation making((void*)making_bytecode, 1, noop_deallocate);
 
 		concurrent_registry::lifetime_t lifetime;
-		lifetime.create = [&](scoped_allocation& compiled, const char* name)->void* { return s.create<const char*, gpu::device*, scoped_allocation&>(name, d, compiled); };
+		lifetime.create = [&](scoped_allocation& compiled, const char* name)->void* { return s.create<const char*, gpu::device&, scoped_allocation&>(name, *d, compiled); };
 		lifetime.destroy = [&](void* entry) { s.destroy((shader_type*)entry); };
 
 		concurrent_registry::placeholder_source_t placeholders;
@@ -117,7 +117,7 @@ protected:
 
 		if (memory)
 		{
-			d = dev;
+			d = &dev;
 			s.initialize(memory, capacity);
 			memory = byte_add(memory, aligned_ssize);
 			r.initialize(memory, capacity, lifetime, placeholders);
@@ -126,7 +126,7 @@ protected:
 		return req;
 	}
 
-	size_type initialize(size_type capacity, gpu::device* dev, const void* missing_bytecode, const void* failed_bytecode, const void* making_bytecode)
+	size_type initialize(size_type capacity, gpu::device& dev, const void* missing_bytecode, const void* failed_bytecode, const void* making_bytecode)
 	{
 		size_type req = initialize(nullptr, capacity, dev, missing_bytecode, failed_bytecode, making_bytecode);
 		if (!req)

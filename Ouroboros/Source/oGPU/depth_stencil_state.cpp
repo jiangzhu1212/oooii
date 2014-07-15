@@ -46,10 +46,10 @@ oDEFINE_TO_FROM_STRING(gpu::depth_stencil_state::value, gpu::depth_stencil_state
 
 namespace gpu {
 
-Device* get_device(device* dev);
-DeviceContext* get_dc(command_list* cl);
+Device* get_device(device& dev);
+DeviceContext* get_dc(command_list& cl);
 
-void depth_stencil_state::initialize(device* dev)
+void depth_stencil_state::initialize(device& dev)
 {
 	deinitialize();
 
@@ -78,7 +78,7 @@ void depth_stencil_state::deinitialize()
 	}
 }
 
-void depth_stencil_state::set(command_list* cl, const value& state, uint stencil_ref)
+void depth_stencil_state::set(command_list& cl, const value& state, uint stencil_ref)
 {
 	get_dc(cl)->OMSetDepthStencilState((DepthStencilState*)states[state], stencil_ref);
 }

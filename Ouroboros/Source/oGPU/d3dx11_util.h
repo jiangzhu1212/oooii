@@ -28,7 +28,6 @@
 #define oGPU_d3dx11_util_h
 
 #include <oSurface/buffer.h>
-#include <oGPU/oGPU.h>
 #include <oCore/windows/win_util.h>
 #include "d3d_util.h"
 #include <d3dx11.h>

@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGPU/oGPU.h>
+#include <oGPU/device.h>
 #include <oGPU/primary_target.h>
 #include <oGUI/window.h>
 #include <oGUI/Windows/oWinWindowing.h>
@@ -62,14 +62,10 @@ public:
 			i.debug_name = "TestDevice";
 			i.version = version(10,0);
 			i.enable_driver_reporting = true;
-			Device = device::make(i);
+			Device.initialize(i);
 		}
 
-		{
-			command_list_info i;
-			i.draw_order = 0;
-			CommandList = Device->make_command_list("CL0", i);
-		}
+		CommandList.initialize("CL0", Device, 0);
 
 		{
 			window::init i;
@@ -80,7 +76,7 @@ public:
 			i.on_event = std::bind(&WindowInWindow::GPUWindowEventHook, this, std::placeholders::_1);
 
 			GPUWindow = window::make(i);
-			PrimaryTarget.initialize(GPUWindow.get(), Device.get(), true);
+			PrimaryTarget.initialize(GPUWindow.get(), Device, true);
 			GPUWindow->parent(ParentWindow);
 		}
 
@@ -94,16 +90,10 @@ public:
 		if (!PrimaryTarget)
 			return;
 
-		if (Device->begin_frame())
-		{
-			CommandList->begin();
-			PrimaryTarget.set_draw_target(CommandList.get());
-			PrimaryTarget.clear(CommandList.get(), (Counter & 0x1) ? white : blue);
-			CommandList->end();
-
-			Device->end_frame();
-			PrimaryTarget.present();
-		}
+		PrimaryTarget.set_draw_target(CommandList);
+		PrimaryTarget.clear(CommandList, (Counter & 0x1) ? white : blue);
+		CommandList.flush();
+		PrimaryTarget.present();
 	}
 
 	void ParentEventHook(const window::basic_event& _Event)
@@ -167,10 +157,10 @@ public:
 	void increment_clear_counter() { Counter++; }
 
 private:
-	std::shared_ptr<device> Device;
+	device Device;
 	std::shared_ptr<window> ParentWindow;
 	std::shared_ptr<window> GPUWindow;
-	std::shared_ptr<command_list> CommandList;
+	command_list CommandList;
 	primary_target PrimaryTarget;
 
 	HWND hButton;
