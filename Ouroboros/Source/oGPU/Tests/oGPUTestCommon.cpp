@@ -153,7 +153,7 @@ float gpu_texture_test::rotation_step()
 	};
 
 	uint frame = PrimaryColorTarget.num_presents();
-	return is_devmode() ? static_cast<float>(frame) : sCapture[frame];
+	return is_devmode() ? static_cast<float>(frame) : sCapture[FrameID];
 }
 
 void gpu_texture_test::render()

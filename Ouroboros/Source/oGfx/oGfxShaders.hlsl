@@ -77,13 +77,13 @@ Texture3D Simple3D : register(t0);
 TextureCube SimpleCube : register(t0);
 TextureCubeArray SimpleCubeArray : register(t0);
 
-float4 PSTexture1D(float4 SSpostion : SV_Position, float texcoord : TEXCOORD) : SV_Target { return Simple1D.Sample(LinearWrap, texcoord); }
-float4 PSTexture1DArray(float4 SSpostion : SV_Position, float2 texcoord : TEXCOORD) : SV_Target { return Simple1DArray.Sample(LinearWrap, texcoord); }
-float4 PSTexture2D(float4 SSpostion : SV_Position, float2 texcoord : TEXCOORD) : SV_Target { return Simple2D.Sample(LinearWrap, texcoord); }
-float4 PSTexture2DArray(float4 SSpostion : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return Simple2DArray.Sample(LinearWrap, texcoord); }
-float4 PSTexture3D(float4 SSpostion : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return Simple3D.Sample(LinearWrap, texcoord); }
-float4 PSTextureCube(float4 SSpostion : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return SimpleCube.Sample(LinearWrap, texcoord); }
-float4 PSTextureCubeArray(float4 SSpostion : SV_Position, float4 texcoord : TEXCOORD) : SV_Target { return SimpleCubeArray.Sample(LinearWrap, texcoord); }
+float4 PSTexture1D(float4 SSposition : SV_Position, float texcoord : TEXCOORD) : SV_Target { return Simple1D.Sample(LinearWrap, texcoord); }
+float4 PSTexture1DArray(float4 SSposition : SV_Position, float2 texcoord : TEXCOORD) : SV_Target { return Simple1DArray.Sample(LinearWrap, texcoord); }
+float4 PSTexture2D(float4 SSposition : SV_Position, float2 texcoord : TEXCOORD) : SV_Target { return Simple2D.Sample(LinearWrap, texcoord); }
+float4 PSTexture2DArray(float4 SSposition : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return Simple2DArray.Sample(LinearWrap, texcoord); }
+float4 PSTexture3D(float4 SSposition : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return Simple3D.Sample(LinearWrap, texcoord); }
+float4 PSTextureCube(float4 SSposition : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return SimpleCube.Sample(LinearWrap, texcoord); }
+float4 PSTextureCubeArray(float4 SSposition : SV_Position, float4 texcoord : TEXCOORD) : SV_Target { return SimpleCubeArray.Sample(LinearWrap, texcoord); }
 
 // _____________________________________________________________________________
 // Simple interpolant-based shaders

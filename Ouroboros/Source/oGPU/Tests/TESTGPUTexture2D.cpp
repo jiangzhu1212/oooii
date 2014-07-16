@@ -31,7 +31,7 @@ using namespace ouro::gpu;
 namespace ouro {
 	namespace tests {
 
-static const bool kIsDevMode = true;
+static const bool kIsDevMode = false;
 
 struct gpu_test_texture2d : public gpu_texture_test
 {
