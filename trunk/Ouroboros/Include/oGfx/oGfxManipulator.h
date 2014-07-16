@@ -26,7 +26,6 @@
 #define oGfxManipulator_h
 
 #include <oBasis/oManipulator.h>
-#include <oGPU/oGPU.h>
 #include <oGPU/oGPUUtilMesh.h>
 
 interface oGfxManipulator : oInterface

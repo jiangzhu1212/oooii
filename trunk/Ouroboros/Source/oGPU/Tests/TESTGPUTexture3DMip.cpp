@@ -40,15 +40,17 @@ struct gpu_test_texture3dmip : public gpu_texture_test
 	pipeline get_pipeline() override { pipeline p; p.input = gfx::vertex_input::pos_uvw; p.vs = gfx::vertex_shader::texture3d; p.ps = gfx::pixel_shader::texture3d; return p; } 
 	resource* make_test_texture() override
 	{
-		auto red = surface_load(filesystem::data_path() / "Test/Textures/Red.png", true, surface::alpha_option::force_alpha);
-		auto green = surface_load(filesystem::data_path() / "Test/Textures/Green.png", true, surface::alpha_option::force_alpha);
-		auto blue = surface_load(filesystem::data_path() / "Test/Textures/Blue.png", true, surface::alpha_option::force_alpha);
+		surface::info si;
+		si.layout = surface::tight;
+		si.format = surface::b8g8r8a8_unorm;
+		si.dimensions = int3(64,64,64);
+		auto image = surface::buffer::make(si);
+		{
+			surface::lock_guard lock(image);
+			surface::fill_color_cube((color*)lock.mapped.data, lock.mapped.row_pitch, lock.mapped.depth_pitch, si.dimensions);
+		}
+		image->generate_mips();
 
-		const surface::buffer* images[3];
-		images[0] = red.get();
-		images[1] = green.get();
-		images[2] = blue.get();
-		auto image = surface::buffer::make(images, 3, surface::buffer::mips3d);
 		t.initialize("Test 3D", Device, *image, true);
 		return &t;
 	}

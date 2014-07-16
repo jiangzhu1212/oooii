@@ -58,6 +58,9 @@ void fill_grid_lines(color* _pColors, size_t _RowPitch, const int2& _Dimensions,
 // This iterates through each grid box and calls the _DrawText function
 bool fill_grid_numbers(const int2& _Dimensions, const int2& _GridDimensions, std::function<bool(const int2& _DrawBoxPosition, const int2& _DrawBoxSize, const char* _Text)> _DrawText);
 
+// Fills a 3D texture with colors that go from black to white, red along U, green along V, blue along W
+void fill_color_cube(color* _pColors, size_t _RowPitch, size_t _SlicePitch, const int3& _Dimensions);
+
 	} // namespace surface
 } // namespace ouro
 

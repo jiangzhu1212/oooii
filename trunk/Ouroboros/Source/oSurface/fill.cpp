@@ -139,5 +139,32 @@ bool fill_grid_numbers(const int2& _Dimensions, const int2& _GridDimensions, std
 	return true;
 }
 
+void fill_color_cube(color* _pColors, size_t _RowPitch, size_t _SlicePitch, const int3& _Dimensions)
+{
+	float3 fcolor(0.0f, 0.0f, 0.0f);
+	float3 step = float3(1.0f) / float3(_Dimensions - 1);
+
+	for (int z = 0; z < _Dimensions.z; z++)
+	{
+		color* pSlice = byte_add(_pColors, z * _SlicePitch);
+
+		fcolor.y = 0.0f;
+		for (int y = 0; y < _Dimensions.y; y++)
+		{
+			color* pScanline = byte_add(pSlice, y * _RowPitch);
+			fcolor.x = 0.0f;
+			for (int x = 0; x < _Dimensions.x; x++)
+			{
+				pScanline[x] = color(fcolor.x, fcolor.y, fcolor.z, 1.0f);
+				fcolor.x += step.x;
+			}
+
+			fcolor.y += step.y;
+		}
+
+		fcolor.z += step.z;
+	}
+}
+
 	} // namespace surface
 } // namespace ouro

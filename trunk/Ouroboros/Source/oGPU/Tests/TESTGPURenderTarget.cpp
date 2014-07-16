@@ -35,8 +35,8 @@ using namespace ouro::gpu;
 namespace ouro {
 	namespace tests {
 
-static const int sSnapshotFrames[] = { 0, 50 };
-static const bool kIsDevMode = true;//false;
+static const int sSnapshotFrames[] = { 0, 1 };
+static const bool kIsDevMode = false;
 
 struct gpu_test_render_target : public gpu_test
 {
@@ -68,21 +68,13 @@ struct gpu_test_render_target : public gpu_test
 
 	void render() override
 	{
-		float4x4 V = make_lookat_lh(float3(0.0f, 0.0f, -4.5f), oZERO3, float3(0.0f, 1.0f, 0.0f));
-
-		uint2 dimensions = PrimaryColorTarget.dimensions();
-		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
-
-		float rotationStep = FrameID * 1.0f;
-		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
-
 		// DrawOrder should be respected in out-of-order submits so show that here
 		// by executing the main scene THEN the render target but because the
 		// draw order of the command lists defines the render target before the 
 		// main scene this should come out as a cube with a triangle texture.
 
-		render_main_scene(CLMainScene, ColorTarget);
 		render_to_target(CLRenderTarget, ColorTarget);
+		render_main_scene(CLMainScene, ColorTarget);
 
 		CLRenderTarget.flush();
 		CLMainScene.flush();
@@ -122,10 +114,18 @@ private:
 		uint2 dimensions = PrimaryColorTarget.dimensions();
 		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
-		float rotationStep = FrameID * 1.0f;
+		static const float sCapture[] = 
+		{
+			774.0f,
+			1036.0f,
+		};
+
+		uint frame = PrimaryColorTarget.num_presents();
+		float rotationStep = is_devmode() ? static_cast<float>(frame) : sCapture[FrameID];
+
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-		oGfxDrawConstants c(oIDENTITY4x4, V, P, aaboxf());
+		oGfxDrawConstants c(W, V, P, aaboxf());
 		c.Color = white;
 		TestConstants.update(cl, c);
 
