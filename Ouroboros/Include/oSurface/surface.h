@@ -750,8 +750,8 @@ float calc_rms(const info& _SurfaceInfoInput
 
 // Fills the specified array with the count of pixels at each luminance value.
 // (lum [0,1] mapped to [0,255] or [0,256]).
-void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[256]);
-void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[65536]);
+void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[256]);
+void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[65536]);
 
 	} // namespace surface
 } // namespace ouro
