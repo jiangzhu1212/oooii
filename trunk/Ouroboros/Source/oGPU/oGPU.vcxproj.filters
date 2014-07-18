@@ -7,9 +7,6 @@
     <ClCompile Include="dxgi_util.cpp">
       <Filter>Source\D3D11</Filter>
     </ClCompile>
-    <ClCompile Include="d3dx11_util.cpp">
-      <Filter>Source\D3D11</Filter>
-    </ClCompile>
     <ClCompile Include="oGPUUtilMesh.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -30,12 +27,6 @@
     </ClCompile>
     <ClCompile Include="d3d_prim.cpp">
       <Filter>Source\D3D11</Filter>
-    </ClCompile>
-    <ClCompile Include="d3d11_util.cpp">
-      <Filter>Source\D3D11\old</Filter>
-    </ClCompile>
-    <ClCompile Include="oD3D11IO.cpp">
-      <Filter>Source\D3D11\old</Filter>
     </ClCompile>
     <ClCompile Include="d3d_util.cpp">
       <Filter>Source\D3D11</Filter>
@@ -123,9 +114,6 @@
     <ClInclude Include="dxgi_util.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
-    <ClInclude Include="d3dx11_util.h">
-      <Filter>Source\D3D11</Filter>
-    </ClInclude>
     <ClInclude Include="d3d_include.h">
       <Filter>Source\D3D11</Filter>
     </ClInclude>
@@ -149,9 +137,6 @@
     </ClInclude>
     <ClInclude Include="d3d_prim.h">
       <Filter>Source\D3D11</Filter>
-    </ClInclude>
-    <ClInclude Include="d3d11_util.h">
-      <Filter>Source\D3D11\old</Filter>
     </ClInclude>
     <ClInclude Include="d3d_util.h">
       <Filter>Source\D3D11</Filter>
@@ -244,9 +229,6 @@
     </Filter>
     <Filter Include="Source\D3D11">
       <UniqueIdentifier>{1adba936-89bf-4e16-830f-fb5c7b91e8a1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\D3D11\old">
-      <UniqueIdentifier>{78d15434-7ecb-49c7-99de-c973232b3524}</UniqueIdentifier>
     </Filter>
     <Filter Include="Headers\buffers">
       <UniqueIdentifier>{bb648167-5cd7-4cc8-887e-07729e3d5991}</UniqueIdentifier>

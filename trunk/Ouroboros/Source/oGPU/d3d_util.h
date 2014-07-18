@@ -134,6 +134,18 @@ inline D3D11_RESOURCE_DIMENSION get_type(View* v) { Resource* r = nullptr; v->Ge
 void unset_all_draw_targets(DeviceContext* dc);
 void unset_all_dispatch_targets(DeviceContext* dc);
 
+// Implementations of scanning the specified buffers to see if they're bound to
+// certain quiet/noop-y behaviors when using compute. IMHO certain DX warnings
+// should be errors and certain silences should make noise. These API are 
+// exposed here as much a documentation/callout to the user as they are part of
+// implementing a robust checking system in the cross-platform API. Basically
+// D3D11 will promote a read-only binding to read-write, but will not all a 
+// read-write binding to be replaced/concurrent with a read-only binding.
+void check_bound_rts_and_uavs(DeviceContext* dc, uint num_buffers, const Buffer* const* buffers);
+
+// check that none of the specified buffers are bound to CS UAVs.
+void check_bound_cs_uavs(DeviceContext* dc, uint num_buffers, const Buffer* const* buffers);
+
 // return the size of the specified hlsl shader bytecode
 uint bytecode_size(const void* bytecode);
 

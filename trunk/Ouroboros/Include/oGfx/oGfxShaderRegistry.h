@@ -33,12 +33,12 @@
 
 namespace ouro { namespace gfx {
 
-class gpu_layout_state
+class layout_state
 {
 public:
 	typedef concurrent_registry::hash_type hash_type;
 
-	~gpu_layout_state() { deinitialize(); }
+	~layout_state() { deinitialize(); }
 
 	void initialize(gpu::device& dev);
 	void deinitialize();
@@ -49,7 +49,7 @@ private:
 	std::array<gpu::vertex_layout, gpu::intrinsic::vertex_layout::count> layouts;
 };
 
-class gpu_vs_registry : public shader_registry<gpu::vertex_shader>
+class vs_registry : public shader_registry<gpu::vertex_shader>
 {
 	typedef shader_registry<gpu::vertex_shader> base_type;
 
@@ -57,14 +57,14 @@ public:
 	typedef base_type::shader_type shader_type;
 	static const gpu::stage::value stage = base_type::stage;
 	
-	~gpu_vs_registry() { deinitialize(); }
+	~vs_registry() { deinitialize(); }
 
 	void initialize(gpu::device& dev);
 
 	void set(gpu::command_list& cl, const gpu::intrinsic::vertex_shader::value& shader) const;
 };
 
-class pixel_shader_registry : public shader_registry<gpu::pixel_shader>
+class ps_registry : public shader_registry<gpu::pixel_shader>
 {
 	typedef shader_registry<gpu::pixel_shader> base_type;
 
@@ -72,7 +72,7 @@ public:
 	typedef base_type::shader_type shader_type;
 	static const gpu::stage::value stage = base_type::stage;
 	
-	~pixel_shader_registry() { deinitialize(); }
+	~ps_registry() { deinitialize(); }
 
 	void initialize(gpu::device& dev);
 

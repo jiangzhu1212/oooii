@@ -679,6 +679,44 @@ void unset_all_dispatch_targets(DeviceContext* dc)
 	dc->CSSetUnorderedAccessViews(0, D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT, s_NullUAVs, s_NoopInitialCounts);
 }
 
+void check_bound_rts_and_uavs(DeviceContext* dc, uint num_buffers, const Buffer* const* buffers)
+{
+	intrusive_ptr<UnorderedAccessView> UAVs[D3D11_PS_CS_UAV_REGISTER_COUNT];
+	dc->OMGetRenderTargetsAndUnorderedAccessViews(0, nullptr, nullptr, 0, D3D11_PS_CS_UAV_REGISTER_COUNT, (UnorderedAccessView**)UAVs);
+	for (int r = 0; r < D3D11_PS_CS_UAV_REGISTER_COUNT; r++)
+	{
+		if (UAVs[r])
+		{
+			for (uint b = 0; b < num_buffers; b++)
+			{
+				intrusive_ptr<Resource> Resource;
+				UAVs[r]->GetResource(&Resource);
+				if (Resource && Resource == buffers[b])
+					trace(dc, D3D11_MESSAGE_SEVERITY_ERROR, "The specified buffer in slot %d is bound using OMSetRenderTargetsAndUnorderedAccessViews slot %d. Behavior will be unexpected since the buffer may not be flushed for reading.", b, r);
+			}
+		}
+	}
+}
+
+void check_bound_cs_uavs(DeviceContext* dc, uint num_buffers, const Buffer* const* buffers)
+{
+	intrusive_ptr<UnorderedAccessView> UAVs[D3D11_PS_CS_UAV_REGISTER_COUNT];
+	dc->CSGetUnorderedAccessViews(0, D3D11_PS_CS_UAV_REGISTER_COUNT, (UnorderedAccessView**)UAVs);
+	for (int r = 0; r < D3D11_PS_CS_UAV_REGISTER_COUNT; r++)
+	{
+		if (UAVs[r])
+		{
+			for (uint b = 0; b < num_buffers; b++)
+			{
+				intrusive_ptr<Resource> Resource;
+				UAVs[r]->GetResource(&Resource);
+				if (Resource && Resource == buffers[b])
+					trace(dc, D3D11_MESSAGE_SEVERITY_ERROR, "The specified buffer in slot %d is bound to CSSetUnorderedAccessViews slot %d. Behavior will be unexpected because the buffer may be bound for reading and writing at the same time.", b, r);
+			}
+		}
+	}
+}
+
 // Return the size stored inside D3D11-era bytecode. This can be used anywhere bytecode size is expected.
 uint bytecode_size(const void* bytecode)
 {
