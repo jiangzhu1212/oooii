@@ -65,10 +65,11 @@ void gpu_test::create(const char* _Title, bool _DevMode, const int* _pSnapshotFr
 	PrimaryColorTarget.initialize(Window.get(), Device, true);
 	uint2 dim = PrimaryColorTarget.dimensions();
 	PrimaryDepthTarget.initialize("Depth", Device, surface::d24_unorm_s8_uint, dim.x, dim.y, 0, false, 0);
-	BlendState.initialize(Device);
-	DepthStencilState.initialize(Device);
-	RasterizerState.initialize(Device);
-	SamplerState.initialize(Device);
+	BlendState.initialize("TestBlendState", Device);
+	DepthStencilState.initialize("TestDepthState", Device);
+	RasterizerState.initialize("TestRasterizer", Device);
+	SamplerState.initialize("TestSamplerState", Device);
+	TestConstants.initialize("TestConstants", Device, sizeof(oGpuTrivialDrawConstants));
 }
 
 void gpu_test::on_event(const window::basic_event& _Event)
@@ -102,9 +103,9 @@ void gpu_test::run(test_services& _Services)
 	Window->flush_messages();
 
 	pipeline p = initialize();
-	VertexLayout.initialize(as_string(p.input), Device, gfx::elements(p.input), gfx::vs_byte_code(p.input));
-	VertexShader.initialize(as_string(p.vs), Device, gfx::byte_code(p.vs));
-	PixelShader.initialize(as_string(p.ps), Device, gfx::byte_code(p.ps));
+	VertexLayout.initialize(as_string(p.input), Device, gpu::intrinsic::elements(p.input), gpu::intrinsic::vs_byte_code(p.input));
+	VertexShader.initialize(as_string(p.vs), Device, gpu::intrinsic::byte_code(p.vs));
+	PixelShader.initialize(as_string(p.ps), Device, gpu::intrinsic::byte_code(p.ps));
 
 	while (Running && (DevMode || FrameID <= SnapshotFrames.back()))
 	{
@@ -138,8 +139,7 @@ const int gpu_texture_test::sSnapshotFrames[2] = { 0, 1 };
 gpu_texture_test::pipeline gpu_texture_test::initialize()
 {
 	auto p = get_pipeline();
-	TestConstants.initialize("TestConstants", Device, sizeof(oGfxDrawConstants));
-	Mesh.initialize_first_cube(Device, p.input == gfx::vertex_input::pos_uvw);
+	Mesh.initialize_first_cube(Device, p.input == gpu::intrinsic::vertex_layout::pos_uvw);
 	Resource = make_test_texture();
 	return p;
 }
@@ -168,9 +168,7 @@ void gpu_texture_test::render()
 	float rotationStep = rotation_step();
 	float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-	oGfxDrawConstants c(W, V, P, aaboxf());
-	c.Color = white;
-	TestConstants.update(cl, c);
+	TestConstants.update(cl, oGpuTrivialDrawConstants(W, V, P));
 
 	BlendState.set(cl, blend_state::opaque);
 	DepthStencilState.set(cl, depth_stencil_state::test_and_write);
@@ -180,7 +178,7 @@ void gpu_texture_test::render()
 	VertexShader.set(cl);
 	PixelShader.set(cl);
 	
-	TestConstants.set(cl, oGFX_DRAW_CONSTANTS_REGISTER);
+	TestConstants.set(cl, oGPU_TRIVIAL_DRAW_CONSTANTS_SLOT);
 	resource::set(cl, 0, 1, &Resource);
 	
 	PrimaryColorTarget.clear(cl, get_clear_color());

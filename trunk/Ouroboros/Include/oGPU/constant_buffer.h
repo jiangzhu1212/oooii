@@ -52,7 +52,7 @@ public:
 private:
 	void* impl;
 };
-	
+
 }}
 
 #endif

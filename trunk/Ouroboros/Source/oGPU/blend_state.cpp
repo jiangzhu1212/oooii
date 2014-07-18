@@ -55,7 +55,7 @@ namespace gpu {
 Device* get_device(device& dev);
 DeviceContext* get_dc(command_list& cl);
 
-void blend_state::initialize(device& dev)
+void blend_state::initialize(const char* name, device& dev)
 {
 	deinitialize();
 
@@ -73,7 +73,7 @@ void blend_state::initialize(device& dev)
 	};
 	static_assert(oCOUNTOF(sBlends) == count, "array mismatch");
 
-	mstring name;
+	mstring n;
 	D3D11_BLEND_DESC desc;
 	desc.AlphaToCoverageEnable = FALSE;
 	desc.IndependentBlendEnable = FALSE;
@@ -84,8 +84,8 @@ void blend_state::initialize(device& dev)
 		for (auto& bs : desc.RenderTarget)
 			bs = sBlends[i];
 		oV(D3DDevice->CreateBlendState(&desc, (BlendState**)&states[i]));
-		snprintf(name, "blend_state::%s", as_string(blend_state::value(i)));
-		debug_name((BlendState*)states[i], name);
+		snprintf(n, "%s::%s", name, as_string(blend_state::value(i)));
+		debug_name((BlendState*)states[i], n);
 	}
 }
 

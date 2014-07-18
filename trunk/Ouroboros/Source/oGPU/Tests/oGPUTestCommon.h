@@ -32,8 +32,7 @@
 
 #include <oGUI/window.h>
 
-#include <oGfx/oGfxDrawConstants.h>
-#include <oGfx/oGfxShaders.h>
+#include <oGPU/shaders.h>
 
 #include "../../test_services.h"
 
@@ -48,14 +47,14 @@ public:
 	struct pipeline
 	{
 		pipeline()
-			: input(gfx::vertex_input::pos)
-			, vs(gfx::vertex_shader::pass_through_pos)
-			, ps(gfx::pixel_shader::white)
+			: input(gpu::intrinsic::vertex_layout::pos)
+			, vs(gpu::intrinsic::vertex_shader::pass_through_pos)
+			, ps(gpu::intrinsic::pixel_shader::white)
 		{}
 
-		gfx::vertex_input::value input;
-		gfx::vertex_shader::value vs;
-		gfx::pixel_shader::value ps;
+		gpu::intrinsic::vertex_layout::value input;
+		gpu::intrinsic::vertex_shader::value vs;
+		gpu::intrinsic::pixel_shader::value ps;
 	};
 
 	gpu_test(const char* _Title, bool _Interactive, const int* _pSnapshotFrameIDs, size_t _NumSnapshotFrameIDs, const int2& _Size = int2(640, 480))
@@ -121,6 +120,7 @@ protected:
 	gpu::pixel_shader PixelShader;
 	gpu::primary_target PrimaryColorTarget;
 	gpu::depth_target PrimaryDepthTarget;
+	gpu::constant_buffer TestConstants;
 	int FrameID;
 };
 
@@ -141,7 +141,6 @@ public:
 protected:
 	gpu::resource* Resource;
 	gpu::util_mesh Mesh;
-	gpu::constant_buffer TestConstants;
 
 	static const int sSnapshotFrames[2];
 };

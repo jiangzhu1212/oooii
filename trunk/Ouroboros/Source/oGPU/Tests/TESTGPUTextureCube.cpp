@@ -37,7 +37,7 @@ struct gpu_test_texturecube : public gpu_texture_test
 {
 	gpu_test_texturecube() : gpu_texture_test("GPU test: texturecube", kIsDevMode) {}
 
-	pipeline get_pipeline() override { pipeline p; p.input = gfx::vertex_input::pos_uvw; p.vs = gfx::vertex_shader::texturecube; p.ps = gfx::pixel_shader::texturecube; return p; } 
+	pipeline get_pipeline() override { pipeline p; p.input = gpu::intrinsic::vertex_layout::pos_uvw; p.vs = gpu::intrinsic::vertex_shader::texturecube; p.ps = gpu::intrinsic::pixel_shader::texturecube; return p; } 
 	resource* make_test_texture() override
 	{
 		auto _0 = surface_load(filesystem::data_path() / "Test/Textures/CubePosX.png", false, surface::alpha_option::force_alpha);

@@ -47,12 +47,11 @@ struct gpu_test_render_target : public gpu_test
 		CLMainScene.initialize("CLMainScene", Device, 1);
 		CLRenderTarget.initialize("CLRenderTarget", Device, 0);
 		
-		TestConstants.initialize("TestConstants", Device, sizeof(oGfxDrawConstants));
 		Triangle.initialize_first_triangle(Device);
 
-		MainVertexLayout.initialize("Main layout", Device, gfx::elements(gfx::vertex_input::pos_uv), gfx::vs_byte_code(gfx::vertex_input::pos_uv));
-		MainVertexShader.initialize("Main layout", Device, gfx::byte_code(gfx::vertex_shader::texture2d));
-		MainPixelShader.initialize("Main layout", Device, gfx::byte_code(gfx::pixel_shader::texture2d));
+		MainVertexLayout.initialize("Main layout", Device, gpu::intrinsic::elements(gpu::intrinsic::vertex_layout::pos_uv), gpu::intrinsic::vs_byte_code(gpu::intrinsic::vertex_layout::pos_uv));
+		MainVertexShader.initialize("Main layout", Device, gpu::intrinsic::byte_code(gpu::intrinsic::vertex_shader::texture2d));
+		MainPixelShader.initialize("Main layout", Device, gpu::intrinsic::byte_code(gpu::intrinsic::pixel_shader::texture2d));
 
 		Cube.initialize_first_cube(Device);
 
@@ -60,9 +59,9 @@ struct gpu_test_render_target : public gpu_test
 		DepthTarget.initialize("DepthTarget", Device, surface::d24_unorm_s8_uint, 256, 256, 0, false, 0);
 	
 		pipeline p;
-		p.input = gfx::vertex_input::pos;
-		p.vs = gfx::vertex_shader::pass_through_pos;
-		p.ps = gfx::pixel_shader::white;
+		p.input = gpu::intrinsic::vertex_layout::pos;
+		p.vs = gpu::intrinsic::vertex_shader::pass_through_pos;
+		p.ps = gpu::intrinsic::pixel_shader::white;
 		return p;
 	}
 
@@ -90,7 +89,6 @@ private:
 	depth_target DepthTarget;
 	util_mesh Cube;
 	util_mesh Triangle;
-	constant_buffer TestConstants;
 
 	void render_to_target(command_list& cl, color_target& rt)
 	{
@@ -125,15 +123,13 @@ private:
 
 		float4x4 W = make_rotation(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
 
-		oGfxDrawConstants c(W, V, P, aaboxf());
-		c.Color = white;
-		TestConstants.update(cl, c);
+		TestConstants.update(cl, oGpuTrivialDrawConstants(W, V, P));
 
 		BlendState.set(cl, blend_state::opaque);
 		DepthStencilState.set(cl, depth_stencil_state::test_and_write);
 		RasterizerState.set(cl, rasterizer_state::front_face);
 		SamplerState.set(cl, sampler_state::linear_wrap, sampler_state::linear_wrap);
-		TestConstants.set(cl, oGFX_DRAW_CONSTANTS_REGISTER);
+		TestConstants.set(cl, oGPU_TRIVIAL_DRAW_CONSTANTS_SLOT);
 		texture.set(cl, 0);
 
 		MainVertexLayout.set(cl, mesh::primitive_type::triangles);

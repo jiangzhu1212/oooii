@@ -145,6 +145,7 @@
     <ClInclude Include="..\..\Include\oGPU\rwstructured_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\sampler_state.h" />
     <ClInclude Include="..\..\Include\oGPU\shader.h" />
+    <ClInclude Include="..\..\Include\oGPU\shaders.h" />
     <ClInclude Include="..\..\Include\oGPU\texture1d.h" />
     <ClInclude Include="..\..\Include\oGPU\texture2d.h" />
     <ClInclude Include="..\..\Include\oGPU\texture3d.h" />
@@ -152,7 +153,6 @@
     <ClInclude Include="..\..\Include\oGPU\timer_query.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_buffer.h" />
     <ClInclude Include="..\..\Include\oGPU\vertex_layout.h" />
-    <ClInclude Include="..\..\Include\oGPU\vertex_layouts.h" />
     <ClInclude Include="d3d11_as_string.h" />
     <ClInclude Include="d3d11_util.h" />
     <ClInclude Include="d3dx11_util.h" />
@@ -202,6 +202,7 @@
     <ClCompile Include="rwstructured_buffer.cpp" />
     <ClCompile Include="sampler_state.cpp" />
     <ClCompile Include="shader.cpp" />
+    <ClCompile Include="shaders.cpp" />
     <ClCompile Include="texture1d.cpp" />
     <ClCompile Include="texture2d.cpp" />
     <ClCompile Include="texture3d.cpp" />
@@ -214,7 +215,7 @@
     <CustomBuild Include="oGPUShaders.hlsl">
       <FileType>Document</FileType>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">echo // Satisfy Visual Studio Output Requirements &gt;&gt; $(IntDir)$(ProjectName)Shaders.h
-$(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(ProjectName)Shaders.txt $(IntDir)</Command>
+$(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(ProjectName)Shaders.txt $(IntDir) /I$(oSuiteDir)Include</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building $(ProjectName) Shaders...</Message>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)$(ProjectName)Shaders.h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)$(ProjectName)Shaders.h</Outputs>
@@ -224,11 +225,15 @@ $(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(Project
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Building $(ProjectName) Shaders...</Message>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building $(ProjectName) Shaders...</Message>
       <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">echo // Satisfy Visual Studio Output Requirements &gt;&gt; $(IntDir)$(ProjectName)Shaders.h
-$(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(ProjectName)Shaders.txt $(IntDir)</Command>
+$(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(ProjectName)Shaders.txt $(IntDir) /I$(oSuiteDir)Include</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">echo // Satisfy Visual Studio Output Requirements &gt;&gt; $(IntDir)$(ProjectName)Shaders.h
-$(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(ProjectName)Shaders.txt $(IntDir)</Command>
+$(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(ProjectName)Shaders.txt $(IntDir) /I$(oSuiteDir)Include</Command>
       <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">echo // Satisfy Visual Studio Output Requirements &gt;&gt; $(IntDir)$(ProjectName)Shaders.h
-$(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(ProjectName)Shaders.txt $(IntDir)</Command>
+$(oSuiteDir)Source/Build/CompileShaders.cmd $(ProjectName)Shaders.hlsl $(ProjectName)Shaders.txt $(IntDir) /I$(oSuiteDir)Include</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(oSuiteDir)Include/oGPU/shaders.h</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(oSuiteDir)Include/oGPU/shaders.h</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(oSuiteDir)Include/oGPU/shaders.h</AdditionalInputs>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(oSuiteDir)Include/oGPU/shaders.h</AdditionalInputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>

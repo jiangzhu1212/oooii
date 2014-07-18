@@ -42,9 +42,9 @@ struct gpu_test_triangle : public gpu_test
 		Mesh.initialize_first_triangle(Device);
 
 		pipeline p;
-		p.input = gfx::vertex_input::pos;
-		p.vs = gfx::vertex_shader::pass_through_pos;
-		p.ps = gfx::pixel_shader::white;
+		p.input = gpu::intrinsic::vertex_layout::pos;
+		p.vs = gpu::intrinsic::vertex_shader::pass_through_pos;
+		p.ps = gpu::intrinsic::pixel_shader::white;
 		return p;
 	}
 

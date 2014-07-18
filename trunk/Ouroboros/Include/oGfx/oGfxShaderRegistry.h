@@ -28,27 +28,28 @@
 #include <oGfx/shader_registry.h>
 #include <oGfx/oGfxShaders.h>
 #include <oGPU/shader.h>
+#include <oGPU/shaders.h>
 #include <oGPU/vertex_layout.h>
 
 namespace ouro { namespace gfx {
 
-class layout_state
+class gpu_layout_state
 {
 public:
 	typedef concurrent_registry::hash_type hash_type;
 
-	~layout_state() { deinitialize(); }
+	~gpu_layout_state() { deinitialize(); }
 
 	void initialize(gpu::device& dev);
 	void deinitialize();
 
-	inline void set(gpu::command_list& cl, const vertex_input::value& input, const mesh::primitive_type::value& prim_type) const { layouts[input].set(cl, prim_type); }
+	inline void set(gpu::command_list& cl, const gpu::intrinsic::vertex_layout::value& input, const mesh::primitive_type::value& prim_type) const { layouts[input].set(cl, prim_type); }
 
 private:
-	std::array<gpu::vertex_layout, vertex_input::count> layouts;
+	std::array<gpu::vertex_layout, gpu::intrinsic::vertex_layout::count> layouts;
 };
 
-class vs_registry : public shader_registry<gpu::vertex_shader>
+class gpu_vs_registry : public shader_registry<gpu::vertex_shader>
 {
 	typedef shader_registry<gpu::vertex_shader> base_type;
 
@@ -56,14 +57,14 @@ public:
 	typedef base_type::shader_type shader_type;
 	static const gpu::stage::value stage = base_type::stage;
 	
-	~vs_registry() { deinitialize(); }
+	~gpu_vs_registry() { deinitialize(); }
 
 	void initialize(gpu::device& dev);
 
-	void set(gpu::command_list& cl, const vertex_shader::value& shader) const;
+	void set(gpu::command_list& cl, const gpu::intrinsic::vertex_shader::value& shader) const;
 };
 
-class ps_registry : public shader_registry<gpu::pixel_shader>
+class pixel_shader_registry : public shader_registry<gpu::pixel_shader>
 {
 	typedef shader_registry<gpu::pixel_shader> base_type;
 
@@ -71,11 +72,11 @@ public:
 	typedef base_type::shader_type shader_type;
 	static const gpu::stage::value stage = base_type::stage;
 	
-	~ps_registry() { deinitialize(); }
+	~pixel_shader_registry() { deinitialize(); }
 
 	void initialize(gpu::device& dev);
 
-	void set(gpu::command_list& cl, const pixel_shader::value& shader) const;
+	void set(gpu::command_list& cl, const gpu::intrinsic::pixel_shader::value& shader) const;
 };
 
 }}

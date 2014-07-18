@@ -30,6 +30,8 @@
 #include "dxgi_util.h"
 #include <oBase/assert.h>
 
+#if 0
+
 namespace ouro {
 
 const char* as_string(const D3DX11_FILTER_FLAG& _Flag)
@@ -354,3 +356,5 @@ void convert(ID3D11Device* _pDevice
 		} // namespace d3dx11
 	} // namespace gpu
 } // namespace ouro
+
+#endif

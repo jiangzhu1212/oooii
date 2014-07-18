@@ -42,13 +42,12 @@ public:
 
 	pipeline initialize() override
 	{
-		TestConstants.initialize("TestConstants", Device, sizeof(oGfxDrawConstants));
 		Mesh.initialize_first_triangle(Device);
 
 		pipeline p;
-		p.input = gfx::vertex_input::pos;
-		p.vs = gfx::vertex_shader::test_transform;
-		p.ps = gfx::pixel_shader::white;
+		p.input = gpu::intrinsic::vertex_layout::pos;
+		p.vs = gpu::intrinsic::vertex_shader::trivial_pos;
+		p.ps = gpu::intrinsic::pixel_shader::white;
 		return p;
 	}
 
@@ -69,16 +68,13 @@ public:
 		float4x4 W = make_rotation(float3(0.0f, radians(rotationRate), 0.0f));
 
 		uint DrawID = 0;
-
-		oGfxDrawConstants c(W, V, P, aaboxf());
-		c.Color = white;
-		TestConstants.update(cl, c);
+		TestConstants.update(cl, oGpuTrivialDrawConstants(W, V, P));
 
 		BlendState.set(cl, blend_state::opaque);
 		DepthStencilState.set(cl, depth_stencil_state::test_and_write);
 		RasterizerState.set(cl, rasterizer_state::two_sided);
 
-		TestConstants.set(cl, oGFX_DRAW_CONSTANTS_REGISTER);
+		TestConstants.set(cl, oGPU_TRIVIAL_DRAW_CONSTANTS_SLOT);
 
 		VertexLayout.set(cl, mesh::primitive_type::triangles);
 		VertexShader.set(cl);
@@ -93,7 +89,6 @@ public:
 
 private:
 	util_mesh Mesh;
-	constant_buffer TestConstants;
 };
 
 oGPU_COMMON_TEST(spinning_triangle);

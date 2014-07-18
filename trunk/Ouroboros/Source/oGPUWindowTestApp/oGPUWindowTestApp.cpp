@@ -221,7 +221,7 @@ private:
 
 	// stubs until registries are fully debugged
 	gpu::vertex_shader VertexShader;
-	gpu::pixel_shader PixelShader;
+	gpu::intrinsic::pixel_shader PixelShader;
 
 	gfx::layout_state LayoutState;
 	gfx::vs_registry VertexShaders;
@@ -254,8 +254,8 @@ oGPUWindowThread::oGPUWindowThread()
 	VertexShaders.initialize(Device);
 	PixelShaders.initialize(Device);
 
-	VertexShader.initialize("VS", Device, gfx::byte_code(gfx::vertex_shader::pass_through_pos));
-	PixelShader.initialize("PS", Device, gfx::byte_code(gfx::pixel_shader::white));
+	VertexShader.initialize("VS", Device, gfx::byte_code(gpu::intrinsic::vertex_shader::pass_through_pos));
+	PixelShader.initialize("PS", Device, gfx::byte_code(pixel_shader::white));
 
 	// jist: load the library file knowing all registries where content will go.
 	// there is a registry per shader type. Shaders are registered by entry point 
@@ -395,7 +395,7 @@ void oGPUWindowThread::Render()
 		RasterizerState.set(cl, gpu::rasterizer_state::front_face);
 		SamplerState.set(cl, gpu::sampler_state::linear_wrap, gpu::sampler_state::linear_wrap);
 		
-		LayoutState.set(cl, gfx::vertex_input::pos, mesh::primitive_type::triangles);
+		LayoutState.set(cl, gpu::intrinsic::vertex_layout::pos, mesh::primitive_type::triangles);
 		VertexShader.set(cl);
 		PixelShader.set(cl);
 

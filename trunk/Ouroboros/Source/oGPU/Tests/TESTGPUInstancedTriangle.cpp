@@ -43,14 +43,13 @@ struct gpu_test_instanced_triangle : public gpu_test
 
 	pipeline initialize() override
 	{
-		TestConstants.initialize("TestConstants", Device, sizeof(oGfxDrawConstants));
-		InstanceList.initialize("Instances", Device, sizeof(oGfxTestInstance), 2);
+		InstanceList.initialize("Instances", Device, sizeof(oGpuTrivialInstanceConstants), 2);
 		Mesh.initialize_first_triangle(Device);
 
 		pipeline p;
-		p.input = gfx::vertex_input::pos;
-		p.vs = gfx::vertex_shader::test_instanced;
-		p.ps = gfx::pixel_shader::white;
+		p.input = gpu::intrinsic::vertex_layout::pos;
+		p.vs = gpu::intrinsic::vertex_shader::trivial_pos_color_instanced;
+		p.ps = gpu::intrinsic::pixel_shader::white;
 		return p;
 	}
 	
@@ -63,19 +62,16 @@ struct gpu_test_instanced_triangle : public gpu_test
 		uint2 dimensions = PrimaryColorTarget.dimensions();
 		float4x4 P = make_perspective_lh(oDEFAULT_FOVY_RADIANS, dimensions.x / static_cast<float>(dimensions.y), 0.001f, 1000.0f);
 
-		oGfxTestInstance instances[2];
-		instances[0].Translation = float3(-0.5f, 0.5f, 0.0f);
-		instances[1].Translation = float3(0.5f, -0.5f, 0.0f);
+		oGpuTrivialInstanceConstants instances[2];
+		instances[0].translation = float3(-0.5f, 0.5f, 0.0f);
+		instances[1].translation = float3(0.5f, -0.5f, 0.0f);
 
 		float rotationStep = FrameID * 1.0f;
-		instances[0].Rotation = make_quaternion(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
-		instances[1].Rotation = make_quaternion(float3(radians(rotationStep) * 0.5f, radians(rotationStep), radians(rotationStep) * 0.75f));
+		instances[0].rotation = make_quaternion(float3(radians(rotationStep) * 0.75f, radians(rotationStep), radians(rotationStep) * 0.5f));
+		instances[1].rotation = make_quaternion(float3(radians(rotationStep) * 0.5f, radians(rotationStep), radians(rotationStep) * 0.75f));
 
 		InstanceList.update(cl, instances);
-
-		oGfxDrawConstants c(oIDENTITY4x4, V, P, aaboxf());
-		c.Color = white;
-		TestConstants.update(cl, c);
+		TestConstants.update(cl, oGpuTrivialDrawConstants(oIDENTITY4x4, V, P));
 
 		BlendState.set(cl, blend_state::opaque);
 		DepthStencilState.set(cl, depth_stencil_state::test_and_write);
@@ -86,7 +82,7 @@ struct gpu_test_instanced_triangle : public gpu_test
 		PixelShader.set(cl);
 
 		const constant_buffer* CBs[2] = { &TestConstants, &InstanceList };
-		constant_buffer::set(cl, oGFX_DRAW_CONSTANTS_REGISTER, 2, CBs);
+		constant_buffer::set(cl, oGPU_TRIVIAL_DRAW_CONSTANTS_SLOT, 2, CBs);
 
 		PrimaryColorTarget.clear(cl, get_clear_color());
 		PrimaryDepthTarget.clear(cl);
@@ -97,7 +93,6 @@ struct gpu_test_instanced_triangle : public gpu_test
 
 private:
 	constant_buffer InstanceList;
-	constant_buffer TestConstants;
 	util_mesh Mesh;
 };
 
