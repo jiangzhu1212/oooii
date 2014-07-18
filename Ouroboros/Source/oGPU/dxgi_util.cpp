@@ -27,10 +27,7 @@
 #include <oBase/fixed_string.h>
 #include <oCore/windows/win_error.h>
 #include <oCore/windows/win_util.h>
-
-typedef ouro::guid oGUID;
-#define threadsafe volatile
-const oGUID& oGetGUID(threadsafe const IDXGISwapChain* threadsafe const*) { return (const oGUID&)__uuidof(IDXGISwapChain); }
+#include <d3d11.h>
 
 namespace ouro {
 
@@ -159,7 +156,7 @@ const char* as_string(const DXGI_FORMAT& _Format)
 	return "?";
 }
 
-	namespace dxgi {
+namespace gpu { namespace dxgi {
 
 surface::format to_surface_format(DXGI_FORMAT _Format)
 {
@@ -227,10 +224,10 @@ bool is_block_compressed(DXGI_FORMAT _Format)
 	return false;
 }
 
-unsigned int get_size(DXGI_FORMAT _Format, unsigned int plane)
+uint get_size(DXGI_FORMAT _Format, uint plane)
 {
 	oASSERT(plane == 0, "other planes not implemented yet");
-	unsigned int sSizes[] = 
+	uint sSizes[] = 
 	{
 		0, // DXGI_FORMAT_UNKNOWN
 		16, // DXGI_FORMAT_R32G32B32A32_TYPELESS
@@ -353,21 +350,21 @@ unsigned int get_size(DXGI_FORMAT _Format, unsigned int plane)
 	return sSizes[_Format];
 }
 
-intrusive_ptr<IDXGIAdapter> get_adapter(const adapter::id& _AdapterID)
+intrusive_ptr<IDXGIAdapter> get_adapter(const adapter::id& adapter_id)
 {
 	intrusive_ptr<IDXGIFactory> Factory;
 	oV(CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&Factory));
 
 	intrusive_ptr<IDXGIAdapter> Adapter;
-	if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(*(int*)&_AdapterID, &Adapter))
-		oTHROW(no_such_device, "adapter id=%d not found", *(int*)&_AdapterID);
+	if (DXGI_ERROR_NOT_FOUND == Factory->EnumAdapters(*(int*)&adapter_id, &Adapter))
+		oTHROW(no_such_device, "adapter id=%d not found", *(int*)&adapter_id);
 	return Adapter;
 }
 
-adapter::info get_info(IDXGIAdapter* _pAdapter)
+adapter::info get_info(IDXGIAdapter* adapter)
 {
 	DXGI_ADAPTER_DESC ad;
-	_pAdapter->GetDesc(&ad);
+	adapter->GetDesc(&ad);
 
 	adapter::info adapter_info;
 	adapter::enumerate([&](const adapter::info& _Info)->bool
@@ -386,24 +383,24 @@ adapter::info get_info(IDXGIAdapter* _pAdapter)
 	return adapter_info;
 }
 
-intrusive_ptr<IDXGISwapChain> make_swap_chain(IUnknown* _pDevice
-	, bool _Fullscreen
-	, const int2& _Dimensions
-	, bool _AutochangeMonitorResolution
+intrusive_ptr<SwapChain> make_swap_chain(IUnknown* dev
+	, bool fullscreen
+	, const int2& dimensions
+	, bool auto_change_monitor_resolution
 	, surface::format _Format
-	, unsigned int RefreshRateN
-	, unsigned int RefreshRateD
-	, HWND _hWnd
-	, bool _EnableGDICompatibility)
+	, uint refresh_rate_numerator
+	, uint refresh_rate_denominator
+	, HWND hwnd
+	, bool enable_gdi_compatibility)
 {
-	if (!_pDevice)
+	if (!dev)
 		throw std::invalid_argument("a valid device must be specified");
 
 	DXGI_SWAP_CHAIN_DESC d;
-	d.BufferDesc.Width = _Dimensions.x;
-	d.BufferDesc.Height = _Dimensions.y;
-	d.BufferDesc.RefreshRate.Numerator = RefreshRateN;
-	d.BufferDesc.RefreshRate.Denominator = RefreshRateD;
+	d.BufferDesc.Width = dimensions.x;
+	d.BufferDesc.Height = dimensions.y;
+	d.BufferDesc.RefreshRate.Numerator = refresh_rate_numerator;
+	d.BufferDesc.RefreshRate.Denominator = refresh_rate_denominator;
 	d.BufferDesc.Format = from_surface_format(_Format);
 	d.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	d.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
@@ -411,16 +408,16 @@ intrusive_ptr<IDXGISwapChain> make_swap_chain(IUnknown* _pDevice
 	d.SampleDesc.Quality = 0;
 	d.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 	d.BufferCount = 3;
-	d.OutputWindow = _hWnd;
-	d.Windowed = !_Fullscreen;
+	d.OutputWindow = hwnd;
+	d.Windowed = !fullscreen;
 	d.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	
 	d.Flags = 0;
-	if (_AutochangeMonitorResolution) d.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
-	if (_EnableGDICompatibility) d.Flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
+	if (auto_change_monitor_resolution) d.Flags |= DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
+	if (enable_gdi_compatibility) d.Flags |= DXGI_SWAP_CHAIN_FLAG_GDI_COMPATIBLE;
 	
 	intrusive_ptr<IDXGIDevice> D3DDevice;
-	oV(_pDevice->QueryInterface(&D3DDevice));
+	oV(dev->QueryInterface(&D3DDevice));
 
 	intrusive_ptr<IDXGIAdapter> Adapter;
 	oV(D3DDevice->GetAdapter(&Adapter));
@@ -428,29 +425,29 @@ intrusive_ptr<IDXGISwapChain> make_swap_chain(IUnknown* _pDevice
 	intrusive_ptr<IDXGIFactory> Factory;
 	oV(Adapter->GetParent(__uuidof(IDXGIFactory), (void**)&Factory));
 	
-	intrusive_ptr<IDXGISwapChain> SwapChain;
-	oV(Factory->CreateSwapChain(_pDevice, &d, &SwapChain));
+	intrusive_ptr<SwapChain> SwapChain;
+	oV(Factory->CreateSwapChain(dev, &d, &SwapChain));
 	
 	// DXGI_MWA_NO_ALT_ENTER seems bugged from comments at bottom of this link:
 	// http://stackoverflow.com/questions/2353178/disable-alt-enter-in-a-direct3d-directx-application
-	oV(Factory->MakeWindowAssociation(_hWnd, DXGI_MWA_NO_WINDOW_CHANGES|DXGI_MWA_NO_ALT_ENTER));
+	oV(Factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_WINDOW_CHANGES|DXGI_MWA_NO_ALT_ENTER));
 
 	return SwapChain;
 }
 
-void resize_buffers(IDXGISwapChain* _pSwapChain, const int2& _NewSize)
+void resize_buffers(SwapChain* sc, const int2& new_size)
 {
 	DXGI_SWAP_CHAIN_DESC d;
-	_pSwapChain->GetDesc(&d);
-	HRESULT HR = _pSwapChain->ResizeBuffers(d.BufferCount, _NewSize.x, _NewSize.y, d.BufferDesc.Format, d.Flags);
+	sc->GetDesc(&d);
+	HRESULT HR = sc->ResizeBuffers(d.BufferCount, new_size.x, new_size.y, d.BufferDesc.Format, d.Flags);
 	if (HR == DXGI_ERROR_INVALID_CALL)
 		oTHROW(permission_denied, "Cannot resize DXGISwapChain buffers because there still are dependent resources in client code. Ensure all dependent resources are freed before resize occurs.");
 }
 
-HDC get_dc(IDXGISwapChain* _pSwapChain)
+HDC get_dc(SwapChain* sc)
 {
-	intrusive_ptr<ID3D11Texture2D> RT;
-	oV(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
+	intrusive_ptr<d3d::Texture2D> RT;
+	oV(sc->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
 	intrusive_ptr<IDXGISurface1> DXGISurface;
 	oV(RT->QueryInterface(&DXGISurface));
 	//oTRACE("GetDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
@@ -459,10 +456,10 @@ HDC get_dc(IDXGISwapChain* _pSwapChain)
 	return hDC;
 }
 
-void release_dc(IDXGISwapChain* _pSwapChain, RECT* _pDirtyRect)
+void release_dc(SwapChain* sc, RECT* _pDirtyRect)
 {
-	intrusive_ptr<ID3D11Texture2D> RT;
-	oV(_pSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
+	intrusive_ptr<d3d::Texture2D> RT;
+	oV(sc->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&RT));
 	intrusive_ptr<IDXGISurface1> DXGISurface;
 	oV(RT->QueryInterface(&DXGISurface));
 	//oTRACE("ReleaseDC() exception below (if it happens) cannot be try-catch caught, so ignore it or don't use GDI drawing.");
@@ -489,68 +486,68 @@ void release_dc(ID3D11RenderTargetView* _pRTV, RECT* _pDirtyRect)
 	oV(DXGISurface->ReleaseDC(_pDirtyRect));
 }
 
-void get_compatible_formats(DXGI_FORMAT _DesiredFormat, DXGI_FORMAT* _pTextureFormat, DXGI_FORMAT* _pDepthStencilViewFormat, DXGI_FORMAT* _pShaderResourceViewFormat)
+void get_compatible_formats(DXGI_FORMAT desired_format, DXGI_FORMAT* out_texture_format, DXGI_FORMAT* out_dsv_format, DXGI_FORMAT* out_srv_format)
 {
-	switch (_DesiredFormat)
+	switch (desired_format)
 	{
 		case DXGI_FORMAT_R24G8_TYPELESS:
 		case DXGI_FORMAT_D24_UNORM_S8_UINT:
 		case DXGI_FORMAT_R24_UNORM_X8_TYPELESS:
-			*_pTextureFormat = DXGI_FORMAT_R24G8_TYPELESS;
-			*_pDepthStencilViewFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-			*_pShaderResourceViewFormat = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
+			*out_texture_format = DXGI_FORMAT_R24G8_TYPELESS;
+			*out_dsv_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			*out_srv_format = DXGI_FORMAT_R24_UNORM_X8_TYPELESS;
 			break;
 
 		case DXGI_FORMAT_D32_FLOAT:
 		case DXGI_FORMAT_R32_TYPELESS:
-			*_pTextureFormat = DXGI_FORMAT_R32_TYPELESS;
-			*_pDepthStencilViewFormat = DXGI_FORMAT_D32_FLOAT;
-			*_pShaderResourceViewFormat = DXGI_FORMAT_R32_FLOAT;
+			*out_texture_format = DXGI_FORMAT_R32_TYPELESS;
+			*out_dsv_format = DXGI_FORMAT_D32_FLOAT;
+			*out_srv_format = DXGI_FORMAT_R32_FLOAT;
 			break;
 
 		case DXGI_FORMAT_D32_FLOAT_S8X24_UINT:
 		case DXGI_FORMAT_R32_FLOAT_X8X24_TYPELESS:
-			*_pTextureFormat = DXGI_FORMAT_UNKNOWN;
-			*_pDepthStencilViewFormat = DXGI_FORMAT_UNKNOWN;
-			*_pShaderResourceViewFormat = DXGI_FORMAT_UNKNOWN;
+			*out_texture_format = DXGI_FORMAT_UNKNOWN;
+			*out_dsv_format = DXGI_FORMAT_UNKNOWN;
+			*out_srv_format = DXGI_FORMAT_UNKNOWN;
 			break;
 
 		case DXGI_FORMAT_D16_UNORM:
 		case DXGI_FORMAT_R16_TYPELESS:
-			*_pTextureFormat = DXGI_FORMAT_R16_TYPELESS;
-			*_pDepthStencilViewFormat = DXGI_FORMAT_D16_UNORM;
-			*_pShaderResourceViewFormat = DXGI_FORMAT_R16_UNORM;
+			*out_texture_format = DXGI_FORMAT_R16_TYPELESS;
+			*out_dsv_format = DXGI_FORMAT_D16_UNORM;
+			*out_srv_format = DXGI_FORMAT_R16_UNORM;
 			break;
 
 		default:
-			*_pTextureFormat = _DesiredFormat;
-			*_pDepthStencilViewFormat = _DesiredFormat;
-			*_pShaderResourceViewFormat = _DesiredFormat;
+			*out_texture_format = desired_format;
+			*out_dsv_format = desired_format;
+			*out_srv_format = desired_format;
 			break;
 	}
 }
 
-void set_fullscreen_exclusive(IDXGISwapChain* _pSwapChain, bool _FullscreenExclusive)
+void set_fullscreen_exclusive(SwapChain* sc, bool fullscreen_exclusive)
 {
 	DXGI_SWAP_CHAIN_DESC SCD;
-	_pSwapChain->GetDesc(&SCD);
+	sc->GetDesc(&SCD);
 	if (GetParent(SCD.OutputWindow))
 		oTHROW(operation_not_permitted, "child windows cannot go full screen exclusive");
 
 	BOOL FS = FALSE;
-	_pSwapChain->GetFullscreenState(&FS, nullptr);
-	if (_FullscreenExclusive != !!FS)
+	sc->GetFullscreenState(&FS, nullptr);
+	if (fullscreen_exclusive != !!FS)
 	{
 		// This can throw an exception for some reason, but there's no DXGI error, and everything seems just fine.
 		// so ignore?
-		_pSwapChain->SetFullscreenState(_FullscreenExclusive, nullptr);
+		sc->SetFullscreenState(fullscreen_exclusive, nullptr);
 	}
 }
 
-void present(IDXGISwapChain* _pSwapChain, uint _PresentInterval)
+void present(SwapChain* sc, uint interval)
 {
 	DXGI_SWAP_CHAIN_DESC SCD;
-	_pSwapChain->GetDesc(&SCD);
+	sc->GetDesc(&SCD);
 
 	std::thread::id tid = astid(GetWindowThreadProcessId(SCD.OutputWindow, nullptr));
 
@@ -560,10 +557,9 @@ void present(IDXGISwapChain* _pSwapChain, uint _PresentInterval)
 	if (tid != std::this_thread::get_id())
 		oTHROW(no_such_device, "Present() must be called from the window thread");
 
-	HRESULT hr = _pSwapChain->Present(_PresentInterval, 0);
+	HRESULT hr = sc->Present(interval, 0);
 	if (FAILED(hr))
 		oTHROW(no_such_device, "GPU device has been reset or removed");
 }
 
-	} // namespace dxgi
-} // namespace ouro
+}}}

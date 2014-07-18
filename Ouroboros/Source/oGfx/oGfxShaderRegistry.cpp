@@ -27,7 +27,7 @@
 
 namespace ouro { namespace gfx {
 
-void gpu_layout_state::initialize(gpu::device& dev)
+void layout_state::initialize(gpu::device& dev)
 {
 	deinitialize();
 
@@ -38,13 +38,13 @@ void gpu_layout_state::initialize(gpu::device& dev)
 	}
 }
 
-void gpu_layout_state::deinitialize()
+void layout_state::deinitialize()
 {
 	for (auto& layout : layouts)
 		layout.deinitialize();
 }
 
-void gpu_vs_registry::initialize(gpu::device& dev)
+void vs_registry::initialize(gpu::device& dev)
 {
 	static unsigned int kCapacity = 30;
 
@@ -63,13 +63,13 @@ void gpu_vs_registry::initialize(gpu::device& dev)
 	r.flush();
 }
 
-void gpu_vs_registry::set(gpu::command_list& cl, const gpu::intrinsic::vertex_shader::value& shader) const
+void vs_registry::set(gpu::command_list& cl, const gpu::intrinsic::vertex_shader::value& shader) const
 {
 	gpu::vertex_shader* s = (gpu::vertex_shader*)r.get(shader);
 	s->set(cl);
 }
 
-void pixel_shader_registry::initialize(gpu::device& dev)
+void ps_registry::initialize(gpu::device& dev)
 {
 	static unsigned int kCapacity = 30;
 
@@ -88,7 +88,7 @@ void pixel_shader_registry::initialize(gpu::device& dev)
 	r.flush();
 }
 
-void pixel_shader_registry::set(gpu::command_list& cl, const gpu::intrinsic::pixel_shader::value& shader) const
+void ps_registry::set(gpu::command_list& cl, const gpu::intrinsic::pixel_shader::value& shader) const
 {
 	gpu::pixel_shader* s = (gpu::pixel_shader*)r.get(shader);
 	s->set(cl);

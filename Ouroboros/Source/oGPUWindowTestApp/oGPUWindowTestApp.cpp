@@ -221,7 +221,7 @@ private:
 
 	// stubs until registries are fully debugged
 	gpu::vertex_shader VertexShader;
-	gpu::intrinsic::pixel_shader PixelShader;
+	gpu::pixel_shader PixelShader;
 
 	gfx::layout_state LayoutState;
 	gfx::vs_registry VertexShaders;
@@ -254,8 +254,8 @@ oGPUWindowThread::oGPUWindowThread()
 	VertexShaders.initialize(Device);
 	PixelShaders.initialize(Device);
 
-	VertexShader.initialize("VS", Device, gfx::byte_code(gpu::intrinsic::vertex_shader::pass_through_pos));
-	PixelShader.initialize("PS", Device, gfx::byte_code(pixel_shader::white));
+	VertexShader.initialize("VS", Device, gpu::intrinsic::byte_code(gpu::intrinsic::vertex_shader::pass_through_pos));
+	PixelShader.initialize("PS", Device, gpu::intrinsic::byte_code(gpu::intrinsic::pixel_shader::white));
 
 	// jist: load the library file knowing all registries where content will go.
 	// there is a registry per shader type. Shaders are registered by entry point 
@@ -264,10 +264,10 @@ oGPUWindowThread::oGPUWindowThread()
 		, std::bind(shader_on_loaded, std::ref(VertexShaders), std::ref(PixelShaders), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 		, filesystem::load_option::text_read);
 
-	BlendState.initialize(Device);
-	DepthStencilState.initialize(Device);
-	RasterizerState.initialize(Device);
-	SamplerState.initialize(Device);
+	BlendState.initialize("BlendState", Device);
+	DepthStencilState.initialize("DepthStencilState", Device);
+	RasterizerState.initialize("RasterizerState", Device);
+	SamplerState.initialize("SamplerState", Device);
 
 	Mesh.initialize_first_triangle(Device);
 
