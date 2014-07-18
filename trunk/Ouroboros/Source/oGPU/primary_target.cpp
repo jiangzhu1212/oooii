@@ -30,7 +30,6 @@
 #include "dxgi_util.h"
 
 #include <oGUI/window.h>
-#include <oGUI/windows/oWinWindowing.h> // todo: put set/get is_render_target into window.h
 
 using namespace ouro::gpu::d3d;
 
@@ -50,9 +49,9 @@ void primary_target::initialize(window* win, device& dev, bool enable_os_render)
 {
 	deinitialize();
 
+	oCHECK_ARG(!win->render_target(), "The specified window is already associated with a render target and cannot be reassociated.");
 	window_shape s = win->shape();
-	if (has_statusbar(s.style))
-		oTHROW_INVARG("A window used for rendering must not have a status bar");
+	oCHECK_ARG(!has_statusbar(s.style), "A window used for rendering must not have a status bar");
 
 	intrusive_ptr<SwapChain> sc = dxgi::make_swap_chain(get_device(dev)
 		, false
@@ -64,14 +63,13 @@ void primary_target::initialize(window* win, device& dev, bool enable_os_render)
 		, (HWND)win->native_handle()
 		, enable_os_render);
 
-	DXGI_SWAP_CHAIN_DESC desc;
-	sc->GetDesc(&desc);
-
-	oCHECK_ARG(!oWinIsRenderTarget(desc.OutputWindow), "The specified window is already associated with a render target and cannot be reassociated.");
-	oWinSetIsRenderTarget(desc.OutputWindow);
+	win->render_target(true);
 
 	swapchain = sc;
 	sc->AddRef();
+
+	DXGI_SWAP_CHAIN_DESC desc;
+	sc->GetDesc(&desc);
 	internal_resize(uint2(desc.BufferDesc.Width, desc.BufferDesc.Height), &dev);
 }
 

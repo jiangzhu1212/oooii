@@ -319,6 +319,12 @@ public:
  
 	// extended input API
 
+	// Returns true if this window has been associated with a rendering API that
+	// may take control and reformat the window. This is manually flagged/specified
+	// to keep GUI and rendering code orthogonal.
+	virtual void render_target(bool _RenderTarget) = 0;
+	virtual bool render_target() const = 0;
+
 	// If true, platform oTRACEs of every event and action will be enabled. This
 	// is false by default.
 	virtual void debug(bool _Debug) = 0;

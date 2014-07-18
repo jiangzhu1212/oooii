@@ -47,7 +47,7 @@ static inline int safe_array_size(const info& _Info) { return ::max(1, _Info.arr
 #define oCHECK_DIM3(_Format, _Dim) if (any(_Dim.xy < min_dimensions(_Format))) throw invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Dim.x, _Dim.y, _Dim.z));
 #define oCHECK_NOT_PLANAR(_Format) if (is_planar(_Format)) throw invalid_argument("Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
 
-struct bit_size { unsigned char r,g,b,a; };
+struct bit_size { uchar r,g,b,a; };
 struct subformats { enum format format[4]; };
 
 namespace traits
@@ -69,12 +69,12 @@ namespace traits
 struct format_info
 {
 	const char* string;
-	unsigned int fourcc;
-	unsigned int size;
+	uint fourcc;
+	uint size;
 	int2 min_dimensions;
 	struct bit_size bit_size;
-	unsigned char num_channels;
-	unsigned char num_subformats;
+	uchar num_channels;
+	uchar num_subformats;
 	
 	struct subformats subformats;
 	int traits;
@@ -325,7 +325,7 @@ oDEFINE_FROM_STRING(surface::cube_face::value, surface::cube_face::count)
 
 	namespace surface {
 
-static bool has_trait(format _Format, unsigned int _Trait)
+static bool has_trait(format _Format, uint _Trait)
 {
 	return ((_Format) < format_count) ? !!(sFormatInfo[_Format].traits & (_Trait)) : false;
 }
@@ -911,10 +911,10 @@ void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresour
 void put(const subresource_info& _SubresourceInfo, mapped_subresource* _Destination, const int2& _Coordinate, color _Color)
 {
 	const int elSize = element_size(format(_SubresourceInfo.format));
-	unsigned char* p = (unsigned char*)_Destination->data + (_Coordinate.y * _Destination->row_pitch) + (_Coordinate.x * elSize);
+	uchar* p = (uchar*)_Destination->data + (_Coordinate.y * _Destination->row_pitch) + (_Coordinate.x * elSize);
 	int rr, gg, bb, aa;
 	_Color.decompose(&rr, &gg, &bb, &aa);
-	unsigned char r = (unsigned char)rr, g = (unsigned char)gg, b = (unsigned char)bb, a = (unsigned char)aa;
+	uchar r = (uchar)rr, g = (uchar)gg, b = (uchar)bb, a = (uchar)aa;
 	switch (_SubresourceInfo.format)
 	{
 		case r8g8b8a8_unorm: *p++ = r; *p++ = g; *p++ = b; *p++ = a; break;
@@ -929,7 +929,7 @@ void put(const subresource_info& _SubresourceInfo, mapped_subresource* _Destinat
 color get(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, const int2& _Coordinate)
 {
 	const int elSize = element_size(_SubresourceInfo.format);
-	const unsigned char* p = (const unsigned char*)_Source.data + (_Coordinate.y * _Source.row_pitch) + (_Coordinate.x * elSize);
+	const uchar* p = (const uchar*)_Source.data + (_Coordinate.y * _Source.row_pitch) + (_Coordinate.x * elSize);
 	int r=0, g=0, b=0, a=255;
 	switch (_SubresourceInfo.format)
 	{
@@ -1219,41 +1219,41 @@ void enumerate_pixels(const info& _SurfaceInfoInput
 	}
 }
 
-typedef void (*rms_enumerator)(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, atomic<unsigned int>* _pAccum);
+typedef void (*rms_enumerator)(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, atomic<uint>* _pAccum);
 
-static void sum_squared_diff_r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, atomic<unsigned int>* _pAccum)
+static void sum_squared_diff_r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, atomic<uint>* _pAccum)
 {
-	const unsigned char* p1 = (const unsigned char*)_pPixel1;
-	const unsigned char* p2 = (const unsigned char*)_pPixel2;
-	unsigned char absDiff = unsigned char (abs(*p1 - *p2));
-	*(unsigned char*)_pPixelOut = absDiff;
-	_pAccum->fetch_add(unsigned int(absDiff * absDiff));
+	const uchar* p1 = (const uchar*)_pPixel1;
+	const uchar* p2 = (const uchar*)_pPixel2;
+	uchar absDiff = uchar (abs(*p1 - *p2));
+	*(uchar*)_pPixelOut = absDiff;
+	_pAccum->fetch_add(uint(absDiff * absDiff));
 }
 
-static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, atomic<unsigned int>* _pAccum)
+static void sum_squared_diff_b8g8r8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, atomic<uint>* _pAccum)
 {
-	const unsigned char* p = (const unsigned char*)_pPixel1;
-	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
+	const uchar* p = (const uchar*)_pPixel1;
+	uchar b = *p++; uchar g = *p++; uchar r = *p++;
 	float L1 = color(r, g, b, 255).luminance();
-	p = (const unsigned char*)_pPixel2;
+	p = (const uchar*)_pPixel2;
 	b = *p++; g = *p++; r = *p++;
 	float L2 = color(r, g, b, 255).luminance();
-	unsigned char absDiff = f32ton8(abs(L1 - L2));
-	*(unsigned char*)_pPixelOut = absDiff;
-	_pAccum->fetch_add(unsigned int(absDiff * absDiff));
+	uchar absDiff = f32ton8(abs(L1 - L2));
+	*(uchar*)_pPixelOut = absDiff;
+	_pAccum->fetch_add(uint(absDiff * absDiff));
 }
 
-static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, atomic<unsigned int>* _pAccum)
+static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut, atomic<uint>* _pAccum)
 {
-	const unsigned char* p = (const unsigned char*)_pPixel1;
-	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++; unsigned char a = *p++;
+	const uchar* p = (const uchar*)_pPixel1;
+	uchar b = *p++; uchar g = *p++; uchar r = *p++; uchar a = *p++;
 	float L1 = color(r, g, b, a).luminance();
-	p = (const unsigned char*)_pPixel2;
+	p = (const uchar*)_pPixel2;
 	b = *p++; g = *p++; r = *p++; a = *p++; 
 	float L2 = color(r, g, b, a).luminance();
-	unsigned char absDiff = f32ton8(abs(L1 - L2));
-	*(unsigned char*)_pPixelOut = absDiff;
-	_pAccum->fetch_add(unsigned int(absDiff * absDiff));
+	uchar absDiff = f32ton8(abs(L1 - L2));
+	*(uchar*)_pPixelOut = absDiff;
+	_pAccum->fetch_add(uint(absDiff * absDiff));
 }
 
 static rms_enumerator get_rms_enumerator(format _InFormat, format _OutFormat)
@@ -1279,8 +1279,8 @@ float calc_rms(const info& _SurfaceInfo
 	, const const_mapped_subresource& _MappedSubresource2)
 {
 	rms_enumerator en = get_rms_enumerator(_SurfaceInfo.format, r8_unorm);
-	atomic<unsigned int> SumOfSquares(0);
-	unsigned int DummyPixelOut[4]; // largest a pixel can ever be currently
+	atomic<uint> SumOfSquares(0);
+	uint DummyPixelOut[4]; // largest a pixel can ever be currently
 
 	enumerate_pixels(_SurfaceInfo
 		, _MappedSubresource1
@@ -1299,7 +1299,7 @@ float calc_rms(const info& _SurfaceInfoInput
 	function<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)> Fn;
 
 	rms_enumerator en = get_rms_enumerator(_SurfaceInfoInput.format, _SurfaceInfoOutput.format);
-	atomic<unsigned int> SumOfSquares(0);
+	atomic<uint> SumOfSquares(0);
 
 	enumerate_pixels(_SurfaceInfoInput
 		, _MappedSubresourceInput1
@@ -1311,29 +1311,29 @@ float calc_rms(const info& _SurfaceInfoInput
 	return sqrt(SumOfSquares / float(_SurfaceInfoInput.dimensions.x * _SurfaceInfoInput.dimensions.y));
 }
 
-typedef void (*histogram_enumerator)(const void* _pPixel, atomic<unsigned int>* _Histogram);
+typedef void (*histogram_enumerator)(const void* _pPixel, atomic<uint>* _Histogram);
 
-static void histogram_r8_unorm_8bit(const void* _pPixel, atomic<unsigned int>* _Histogram)
+static void histogram_r8_unorm_8bit(const void* _pPixel, atomic<uint>* _Histogram)
 {
-	unsigned char c = *(const unsigned char*)_pPixel;
+	uchar c = *(const uchar*)_pPixel;
 	_Histogram[c]++;
 }
 
-static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, atomic<unsigned int>* _Histogram)
+static void histogram_b8g8r8a8_unorm_8bit(const void* _pPixel, atomic<uint>* _Histogram)
 {
-	const unsigned char* p = (const unsigned char*)_pPixel;
-	unsigned char b = *p++; unsigned char g = *p++; unsigned char r = *p++;
-	unsigned char Index = f32ton8(color(r, g, b, 255).luminance());
+	const uchar* p = (const uchar*)_pPixel;
+	uchar b = *p++; uchar g = *p++; uchar r = *p++;
+	uchar Index = f32ton8(color(r, g, b, 255).luminance());
 	_Histogram[Index]++;
 }
 
-static void histogram_r16_unorm_16bit(const void* _pPixel, atomic<unsigned int>* _Histogram)
+static void histogram_r16_unorm_16bit(const void* _pPixel, atomic<uint>* _Histogram)
 {
 	unsigned short c = *(const unsigned short*)_pPixel;
 	_Histogram[c]++;
 }
 
-static void histogram_r16_float_16bit(const void* _pPixel, atomic<unsigned int>* _Histogram)
+static void histogram_r16_float_16bit(const void* _pPixel, atomic<uint>* _Histogram)
 {
 	half h = saturate(*(const half*)_pPixel);
 	unsigned short c = static_cast<unsigned short>(round(65535.0f * h));
@@ -1358,22 +1358,22 @@ histogram_enumerator get_histogram_enumerator(format _Format, int _Bitdepth)
 	#undef IO
 }
 
-void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[256])
+void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[256])
 {
-	atomic<unsigned int> H[256];
-	memset(H, 0, sizeof(unsigned int) * 256);
+	atomic<uint> H[256];
+	memset(H, 0, sizeof(uint) * 256);
 	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 8);
 	enumerate_pixels(_SurfaceInfo, _MappedSubresource, bind(en, _1, H));
-	memcpy(_Histogram, H, sizeof(unsigned int) * 256);
+	memcpy(_Histogram, H, sizeof(uint) * 256);
 }
 
-void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, unsigned int _Histogram[65536])
+void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[65536])
 {
-	atomic<unsigned int> H[65536];
-	memset(H, 0, sizeof(unsigned int) * 65536);
+	atomic<uint> H[65536];
+	memset(H, 0, sizeof(uint) * 65536);
 	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 16);
 	enumerate_pixels(_SurfaceInfo, _MappedSubresource, bind(en, _1, H));
-	memcpy(_Histogram, H, sizeof(unsigned int) * 65536);
+	memcpy(_Histogram, H, sizeof(uint) * 65536);
 }
 
 	} // namespace surface

@@ -197,6 +197,8 @@ struct window_impl : window
 	window_handle native_handle() const override;
 	display::id display_id() const override;
 	bool is_window_thread() const override;
+	void render_target(bool _RenderTarget) override;
+	bool render_target() const override;
 	void debug(bool _Debug = true) override;
 	bool debug() const override;
 	void flush_messages(bool _WaitForNext = false) override;
@@ -632,6 +634,16 @@ void window_impl::focus(bool _Focus)
 bool window_impl::has_focus() const
 {
 	return oWinHasFocus(hWnd);
+}
+
+void window_impl::render_target(bool _RenderTarget)
+{
+	oWinSetIsRenderTarget(hWnd, _RenderTarget);
+}
+
+bool window_impl::render_target() const
+{
+	return oWinIsRenderTarget(hWnd);
 }
 
 void window_impl::debug(bool _Debug)
