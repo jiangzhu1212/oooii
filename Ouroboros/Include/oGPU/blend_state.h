@@ -56,7 +56,7 @@ public:
 	blend_state() { states.fill(nullptr); }
 	~blend_state() { deinitialize(); }
 
-	void initialize(device& dev);
+	void initialize(const char* name, device& dev);
 	void deinitialize();
 
 	void set(command_list& cl, const value& state);

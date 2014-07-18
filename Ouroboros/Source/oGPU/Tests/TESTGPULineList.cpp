@@ -58,9 +58,9 @@ public:
 		LineList.initialize("LineList", Device, sizeof(oGPU_LINE_VERTEX), 6);
 
 		pipeline p;
-		p.input = gfx::vertex_input::pos_color;
-		p.vs = gfx::vertex_shader::pass_through_pos_color;
-		p.ps = gfx::pixel_shader::vertex_color;
+		p.input = gpu::intrinsic::vertex_layout::pos_color;
+		p.vs = gpu::intrinsic::vertex_shader::pass_through_pos_color;
+		p.ps = gpu::intrinsic::pixel_shader::vertex_color;
 
 		return p;
 	}

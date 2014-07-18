@@ -54,7 +54,7 @@ public:
 	sampler_state() { states.fill(nullptr); }
 	~sampler_state() { deinitialize(); }
 
-	void initialize(device& dev);
+	void initialize(const char* name, device& dev);
 	void deinitialize();
 
 	void set(command_list& cl, uint slot, uint num_samplers, const value* samplers);

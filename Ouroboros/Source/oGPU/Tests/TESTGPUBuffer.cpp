@@ -24,10 +24,10 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oGPU/device.h>
+#include <oGPU/shaders.h>
 #include <oGPU/readback_buffer.h>
 #include <oGPU/vertex_buffer.h>
 #include <oGPU/rwstructured_buffer.h>
-#include <oGfx/oGfxShaders.h>
 
 using namespace ouro::gpu;
 
@@ -52,13 +52,13 @@ void TESTbuffer()
 	AppendBufferCount.initialize("BufferAppendCount", Device, sizeof(int));
 
 	vertex_layout VL;
-	VL.initialize("vertex layout", Device, gfx::elements(gfx::vertex_input::pos), gfx::vs_byte_code(gfx::vertex_input::pos));
+	VL.initialize("vertex layout", Device, gpu::intrinsic::elements(gpu::intrinsic::vertex_layout::pos), gpu::intrinsic::vs_byte_code(gpu::intrinsic::vertex_layout::pos));
 
 	vertex_shader VS;
-	VS.initialize("VS", Device, gfx::byte_code(gfx::vertex_shader::test_buffer));
+	VS.initialize("VS", Device, gpu::intrinsic::byte_code(gpu::intrinsic::vertex_shader::test_buffer));
 
 	pixel_shader PS;
-	PS.initialize("PS", Device, gfx::byte_code(gfx::pixel_shader::test_buffer));
+	PS.initialize("PS", Device, gpu::intrinsic::byte_code(gpu::intrinsic::pixel_shader::test_buffer));
 
 	command_list& CommandList = Device.immediate();
 

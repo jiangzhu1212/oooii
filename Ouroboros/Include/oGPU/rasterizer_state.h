@@ -54,7 +54,7 @@ public:
 	rasterizer_state() { states.fill(nullptr); }
 	~rasterizer_state() { deinitialize(); }
 
-	void initialize(device& dev);
+	void initialize(const char* name, device& dev);
 	void deinitialize();
 
 	void set(command_list& cl, const value& state);

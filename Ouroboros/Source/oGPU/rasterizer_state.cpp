@@ -52,7 +52,7 @@ namespace gpu {
 Device* get_device(device& dev);
 DeviceContext* get_dc(command_list& cl);
 
-void rasterizer_state::initialize(device& dev)
+void rasterizer_state::initialize(const char* name, device& dev)
 {
 	deinitialize();
 
@@ -78,7 +78,7 @@ void rasterizer_state::initialize(device& dev)
 	};
 	static_assert(oCOUNTOF(sCulls) == count, "array mismatch");
 
-	mstring name;
+	mstring n;
 	D3D11_RASTERIZER_DESC desc;
   desc.FrontCounterClockwise = false;
   desc.DepthBias = D3D11_DEFAULT_DEPTH_BIAS;
@@ -95,8 +95,8 @@ void rasterizer_state::initialize(device& dev)
 		desc.FillMode = sFills[i];
 		desc.CullMode = sCulls[i];
 		oV(D3DDevice->CreateRasterizerState(&desc, (RasterizerState**)&states[i]));
-		snprintf(name, "rasterizer_state::%s", as_string(value(i)));
-		debug_name((RasterizerState*)states[i], name);
+		snprintf(n, "%s::%s", name, as_string(value(i)));
+		debug_name((RasterizerState*)states[i], n);
 	}
 }
 

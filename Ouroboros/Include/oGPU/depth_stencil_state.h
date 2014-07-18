@@ -56,7 +56,7 @@ public:
 	depth_stencil_state() { states.fill(nullptr); }
 	~depth_stencil_state() { deinitialize(); }
 
-	void initialize(device& dev);
+	void initialize(const char* name, device& dev);
 	void deinitialize();
 
 	void set(command_list& cl, const value& state, uint stencil_ref = 0);

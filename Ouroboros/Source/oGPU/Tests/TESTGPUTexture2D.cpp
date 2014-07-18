@@ -37,7 +37,7 @@ struct gpu_test_texture2d : public gpu_texture_test
 {
 	gpu_test_texture2d() : gpu_texture_test("GPU test: texture2d", kIsDevMode) {}
 
-	pipeline get_pipeline() override { pipeline p; p.input = gfx::vertex_input::pos_uv; p.vs = gfx::vertex_shader::texture2d; p.ps = gfx::pixel_shader::texture2d; return p; } 
+	pipeline get_pipeline() override { pipeline p; p.input = gpu::intrinsic::vertex_layout::pos_uv; p.vs = gpu::intrinsic::vertex_shader::texture2d; p.ps = gpu::intrinsic::pixel_shader::texture2d; return p; } 
 	resource* make_test_texture() override
 	{
 		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", false, surface::alpha_option::force_alpha);

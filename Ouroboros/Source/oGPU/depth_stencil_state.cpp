@@ -49,7 +49,7 @@ namespace gpu {
 Device* get_device(device& dev);
 DeviceContext* get_dc(command_list& cl);
 
-void depth_stencil_state::initialize(device& dev)
+void depth_stencil_state::initialize(const char* name, device& dev)
 {
 	deinitialize();
 
@@ -60,13 +60,13 @@ void depth_stencil_state::initialize(device& dev)
 		{ TRUE, D3D11_DEPTH_WRITE_MASK_ZERO, D3D11_COMPARISON_LESS_EQUAL, FALSE, 0xFF, 0XFF, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_STENCIL_OP_KEEP, D3D11_COMPARISON_ALWAYS },
 	};
 	
-	mstring name;
+	mstring n;
 	Device* D3DDevice = get_device(dev);
 	for (int i = 0; i < count; i++)
 	{
 		oV(D3DDevice->CreateDepthStencilState(&sDepthStencils[i], (DepthStencilState**)&states[i]));
-		snprintf(name, "depth_stencil_state::%s", as_string(value(i)));
-		debug_name((DepthStencilState*)states[i], name);
+		snprintf(n, "depth_stencil_state::%s", name, as_string(value(i)));
+		debug_name((DepthStencilState*)states[i], n);
 	}
 }
 

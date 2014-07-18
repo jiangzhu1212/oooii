@@ -52,7 +52,7 @@ namespace gpu {
 Device* get_device(device& dev);
 DeviceContext* get_dc(command_list& cl);
 
-void sampler_state::initialize(device& dev)
+void sampler_state::initialize(const char* name, device& dev)
 {
 	deinitialize();
 
@@ -78,17 +78,17 @@ void sampler_state::initialize(device& dev)
 	};
 	static_assert(oCOUNTOF(sAddresses) == count, "array mismatch");
 
-	mstring name;
+	mstring n;
 	CD3D11_SAMPLER_DESC desc(D3D11_DEFAULT);
 
 	Device* D3DDevice = get_device(dev);
-	for (int i = 0; i < states.size(); i++)
+	for (size_t i = 0; i < states.size(); i++)
 	{
 		desc.Filter = sFilters[i];
 		desc.AddressU = desc.AddressV = desc.AddressW = sAddresses[i];
 		oV(D3DDevice->CreateSamplerState(&desc, (SamplerState**)&states[i]));
-		snprintf(name, "sampler::%s", as_string(value(i)));
-		debug_name((SamplerState*)states[i], name);
+		snprintf(n, "%s::%s", name, as_string(value(i)));
+		debug_name((SamplerState*)states[i], n);
 	}
 }
 
