@@ -41,6 +41,7 @@
     <ClCompile Include="tests\TESTparallel_for.cpp" />
     <ClCompile Include="Tests\TESTpath.cpp" />
     <ClCompile Include="tests\TESTpool.cpp" />
+    <ClCompile Include="tests\TESTsbb.cpp" />
     <ClCompile Include="tests\TESTthreadpool.cpp" />
     <ClCompile Include="tests\TESTtlsf_allocator.cpp" />
     <ClCompile Include="Tests\TESTuri.cpp" />

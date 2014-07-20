@@ -105,7 +105,7 @@ pool::index_type pool::initialize(void* memory, size_type block_size, size_type 
 	if (block_size < sizeof(index_type))
 		return 0;
 
-	if (!is_pow2(alignment))
+	if (!ispow2(alignment))
 		return 0;
 
 	size_type req = __max(block_size, sizeof(index_type)) * capacity;
@@ -135,7 +135,7 @@ pool::size_type pool::initialize(size_type block_size, size_type capacity, size_
 		return 0;
 
 	allocate_options o;
-	o.alignment = bit_high(block_alignment);
+	o.alignment = bithigh(block_alignment);
 
 	void* p = default_allocate(req, o);
 	return initialize(p, block_size, capacity, block_alignment);

@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oBase/concurrent_hash_map.h>
 #include <oBase/allocate.h>
+#include <oBase/bit.h>
 #include <oBase/byte.h>
 #include <oBase/macros.h>
 #include <atomic>
@@ -82,7 +83,7 @@ concurrent_hash_map& concurrent_hash_map::operator=(concurrent_hash_map&& _That)
 
 concurrent_hash_map::size_type concurrent_hash_map::initialize(void* memory, size_type capacity)
 {
-	const size_type n = __max(8, next_pow2(capacity * 2));
+	const size_type n = __max(8, nextpow2(capacity * 2));
 	const size_type key_bytes = n * sizeof(std::atomic<key_type>);
 	const size_type value_bytes = n * sizeof(std::atomic<value_type>);
 	const size_type req = key_bytes + value_bytes;
