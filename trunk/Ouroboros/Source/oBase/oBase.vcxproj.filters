@@ -265,6 +265,9 @@
     <ClCompile Include="gpu_api.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
+    <ClCompile Include="sbb.cpp">
+      <Filter>Source\allocator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -576,6 +579,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\gpu_api.h">
       <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\cbtree.h">
+      <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\sbb.h">
+      <Filter>oBase\allocator</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

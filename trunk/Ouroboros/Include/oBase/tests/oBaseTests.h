@@ -60,6 +60,7 @@ namespace ouro {
 		void TESTparallel_for();
 		void TESTpath();
 		void TESTpool();
+		void TESTsbb(test_services& _Services);
 		void TESTtask_group();
 		void TESTtlsf_allocator(test_services& _Services);
 		void TESTthreadpool();

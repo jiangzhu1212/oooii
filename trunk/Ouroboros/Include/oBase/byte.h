@@ -47,12 +47,6 @@ template<typename T, typename U> ptrdiff_t byte_diff(T* t, U* u) { return (ptrdi
 template<typename T> size_t byte_padding(T value, size_t alignment) { return oSizeT(static_cast<T>(byte_align(value, alignment)) - value); }
 inline size_t index_of(const void* el, const void* base, size_t elSize) { return byte_diff(el, base) / elSize; }
 template<typename T> size_t index_of(const T* el, const T* base) { return index_of(el, base, sizeof(T)); }
-template<typename T> bool is_pow2(const T& n) { return n ? (((n) & ((n)-1)) == 0) : false; }
-inline int log2i(int pow2) { int n = 0; while (pow2 >>= 1) n++; return n; }
-
-// from: http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-inline unsigned int next_pow2(unsigned int n) { n--; n |= n >> 1; n |= n >> 2; n |= n >> 4; n |= n >> 8; n |= n >> 16; return ++n;}
-inline unsigned long long next_pow2(unsigned long long n) { n--; n |= n >> 1; n |= n >> 2; n |= n >> 4; n |= n >> 8; n |= n >> 16; n |= n >> 32; return ++n; }
 
 // Validation
 inline bool in_range(const void* _TestPointer, const void* _BasePointer, size_t _SizeofRange) { return (_TestPointer >= _BasePointer) && (_TestPointer < byte_add(_BasePointer, _SizeofRange)); }

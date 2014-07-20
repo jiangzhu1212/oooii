@@ -80,6 +80,7 @@
     <ClCompile Include="pool.cpp" />
     <ClCompile Include="quat.cpp" />
     <ClCompile Include="rgb.cpp" />
+    <ClCompile Include="sbb.cpp" />
     <ClCompile Include="scc.cpp" />
     <ClCompile Include="scc_svn.cpp" />
     <ClCompile Include="snappy.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="..\..\Include\oBase\bit.h" />
     <ClInclude Include="..\..\Include\oBase\byte.h" />
     <ClInclude Include="..\..\Include\oBase\callable.h" />
+    <ClInclude Include="..\..\Include\oBase\cbtree.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
     <ClInclude Include="..\..\Include\oBase\colors.h" />
     <ClInclude Include="..\..\Include\oBase\compiler_config.h" />
@@ -208,6 +210,7 @@
     <ClInclude Include="..\..\Include\oBase\quat.h" />
     <ClInclude Include="..\..\Include\oBase\resized_type.h" />
     <ClInclude Include="..\..\Include\oBase\rgb.h" />
+    <ClInclude Include="..\..\Include\oBase\sbb.h" />
     <ClInclude Include="..\..\Include\oBase\scc.h" />
     <ClInclude Include="..\..\Include\oBase\snappy.h" />
     <ClInclude Include="..\..\Include\oBase\sphere.h" />

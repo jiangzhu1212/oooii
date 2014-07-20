@@ -122,7 +122,7 @@ concurrent_pool::index_type concurrent_pool::initialize(void* memory, size_type 
 	if (block_size < sizeof(index_type))
 		return 0;
 
-	if (!is_pow2(alignment))
+	if (!ispow2(alignment))
 		return 0;
 
 	for (char& c : cache_padding)
@@ -154,7 +154,7 @@ concurrent_pool::size_type concurrent_pool::initialize(size_type block_size, siz
 		return 0;
 
 	allocate_options o;
-	o.alignment = bit_high(block_alignment);
+	o.alignment = bithigh(block_alignment);
 
 	void* p = default_allocate(req, o);
 	return initialize(p, block_size, capacity, block_alignment);
