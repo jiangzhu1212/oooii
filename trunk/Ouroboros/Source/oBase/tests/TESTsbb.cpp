@@ -51,31 +51,31 @@ void TESTsbb_trivial()
 	void* ExpectedFailBiggerThanArena = sbb_malloc(sbb, 65);
 	oCHECK0(!ExpectedFailBiggerThanArena);
 
-//   0    011111111111...
-//   1    0x7fffffffffffffff
+//   0    0x7fffffffffffffff
+//   1    
 // 1   1
 //1 1 1 1
 
 	void* a = sbb_malloc(sbb, 1);
 
-//   0    011101111111...
-//   1    0x77ffffffffffffff
-// 1   1
+//   0   0x17ffffffffffffff
+//   0
+// 0   1
 //0 1 1 1
 
-	oCHECK0(a);
+	oCHECK0(a == arena);
 	void* b = sbb_malloc(sbb, 1);
 
-//   0    010100111111...
-//   1    0x53ffffffffffffff
+//   0    0x13ffffffffffffff
+//   0    
 // 0   1
 //0 0 1 1
 
-	oCHECK0(b);
+	oCHECK0(b == ((char*)arena + kMinBlockSize));
 	void* c = sbb_malloc(sbb, 17);
 
-//   0    000000111111...
 //   0    0x03ffffffffffffff
+//   0    
 // 0   0
 //0 0 1 1
 
@@ -84,20 +84,23 @@ void TESTsbb_trivial()
 	oCHECK0(!ExpectedFailOOM);
 
 	sbb_free(sbb, b);
-//   0    011001111111...
-//   1    0x67ffffffffffffff
-// 1   0
+
+//   0   0x07ffffffffffffff
+//   0
+// 0   0
 //0 1 1 1
 
 	sbb_free(sbb, c);
-//   0    011101111111...
-//   1    0x77ffffffffffffff
-// 1   1
+
+//   0    0x17ffffffffffffff
+//   0    
+// 0   1
 //0 1 1 1
 
 	sbb_free(sbb, a);
-//   0    011011111111...
-//   1    0x7fffffffffffffff
+
+//   0  0x7fffffffffffffff  
+//   1    
 // 1   1
 //1 1 1 1
 

@@ -58,6 +58,14 @@ inline void cbtree_metrics(uint32_t num_leaf_nodes, uint32_t* out_num_nodes, uin
   *out_num_levels = log2i(pot) + 1;
 }
 
+// returns the node based on its index into the leaf level and the number of total nodes
+// as returned by cbtree_metrics.
+inline uint32_t cbtree_node_from_leaf_offset(uint32_t leaf_offset, uint32_t num_nodes)
+{
+	uint32_t first_leaf_node_index = num_nodes >> 1;
+	return first_leaf_node_index + leaf_offset;
+}
+
 // returns the index of the left-most node in level (start of the list 
 // of siblings). This is also the number of nodes in the level.
 inline uint32_t cbtree_level_first_and_count(uint32_t level)
@@ -76,13 +84,6 @@ inline uint32_t cbtree_level(uint32_t node)
 inline uint32_t cbtree_level_first_uncle(uint32_t node)
 {
   return prevpow2(node);
-}
-
-// returns the index (starting from 0) into this level's
-// sibling list where node is
-inline uint32_t cbtree_level_index(uint32_t node, uint32_t num_levels)
-{
-	return 0; // ?
 }
 
 // returns the node's parent or 0 node is the root

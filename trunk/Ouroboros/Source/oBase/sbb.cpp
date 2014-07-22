@@ -27,14 +27,12 @@ static const sbb_page_t kRootMask = 1ull << (kPageBits - 2);
 
 struct sbb_bookkeeping_t
 {
-	// todo: store log2i of min_block_size, log2i num_nodes, num_levels all in one word
-
   void* arena;
   size_t arena_bytes; // must be pow2
-  size_t min_block_size; // must be pow2
-  sbb_page_t* pages;
-  sbb_node_t num_levels;
-  sbb_node_t num_nodes;
+  uint32_t min_block_size; // must be pow2
+	uint32_t min_block_size_log2; // log2i(min_block_size)
+  uint32_t num_nodes;
+  uint32_t unused; // keeps size consistently aligned between 64- and 32-bit compiles
 };
 
 // returns a pointer to the page that contains the bit representation of the node
@@ -75,7 +73,7 @@ static inline sbb_page_t* sbb_children_page(sbb_bookkeeping_t* bookkeeping, sbb_
 	if (left >= bookkeeping->num_nodes)
 		return nullptr;
 	int bit = sbb_pagebit(bookkeeping, left);
-	*out_childrenmask = bit | (bit>>1);
+	*out_childrenmask = (sbb_page_t(1)<<bit) | (sbb_page_t(1)<<(bit-1));
 	return sbb_page(bookkeeping, left);
 }
 
@@ -116,16 +114,11 @@ static inline void* sbb_to_ptr(sbb_bookkeeping_t* bookkeeping, sbb_node_t node, 
 size_t sbb_bookkeeping_size(size_t arena_bytes, size_t min_block_size)
 {
   if (!ispow2(arena_bytes))
-  {
     SBB_FATAL("arena must be a power of two");
-  }
-    
   if (!ispow2(min_block_size))
-  {
     SBB_FATAL("min_block_size must be a power of two");
-  }
 
-  sbb_node_t nnodes, nlevels;
+	sbb_node_t nnodes, nlevels;
   cbtree_metrics(sbb_node_t(arena_bytes / min_block_size), &nnodes, &nlevels);
   sbb_node_t npages = SBB_MAX(1, nnodes >> kPageBitsLog2);
   
@@ -140,26 +133,26 @@ sbb_t sbb_create(void* arena, size_t arena_bytes, size_t min_block_size, void* b
 	// rather than true pointers.
 
   if (!bookkeeping)
-  {
     SBB_FATAL("a valid bookkeeping memory must be specified");
-  }
-    
   if (!ispow2(arena_bytes))
-  {
     SBB_FATAL("arena must be a power of two");
-  }
-    
   if (!ispow2(min_block_size))
-  {
     SBB_FATAL("min_block_size must be a power of two");
-  }
+
+	const uint32_t min_block_size_log2 = log2i(min_block_size);
 
   sbb->arena = arena;
   sbb->arena_bytes = arena_bytes;
-  sbb->min_block_size = min_block_size;
-  sbb->pages = (sbb_page_t*)(sbb + 1);
-  cbtree_metrics(sbb_node_t(arena_bytes / min_block_size), &sbb->num_nodes, &sbb->num_levels);
-  const size_t num_pages = SBB_MAX(1, sbb->num_nodes >> kPageBitsLog2);
+  sbb->min_block_size = (uint32_t)min_block_size;
+	sbb->min_block_size_log2 = min_block_size_log2;
+	uint32_t nlevels;
+  cbtree_metrics(sbb_node_t(arena_bytes >> sbb->min_block_size_log2), &sbb->num_nodes, &nlevels);
+	sbb->unused = 0;
+	
+	if ((size_t)sbb->min_block_size != min_block_size)
+		SBB_FATAL("alignment must be uint32_t");
+
+	const size_t num_pages = SBB_MAX(1, sbb->num_nodes >> kPageBitsLog2);
   
   // the top bit of the first page is a null since the binary tree's 
   // root starts a 1, so mark everything else as available
@@ -178,51 +171,45 @@ void sbb_destroy(sbb_t sbb)
 {
 }
 
-static void* sbb_allocate_recursive(sbb_bookkeeping_t* bookkeeping, sbb_node_t node, size_t size, size_t level_block_size, bool* out_mark_parent)
+static void* sbb_memalign_internal(sbb_bookkeeping_t* bookkeeping, sbb_node_t node, size_t block_size, size_t level_block_size)
 {
-  sbb_page_t mask, sibling_mask;
-  auto page = sbb_page(bookkeeping, node, &mask, &sibling_mask);
-
-  // nodes are marked as used if ALL children nodes are used, so either
-  // this was allocated and all child nodes are still free (1) or all
-  // children are used (0).
-  if (sbb_used(page, mask))
-    return nullptr;
-  
-  // the block is available: if it's the best-fit mark it used and return
-  if (size == level_block_size)
-  {
-		 // if this will be used then if its sibling is also used mark the parent as used as well
-		*out_mark_parent = sbb_used(page, sibling_mask);
-  
-		sbb_mark_used(page, mask);
-    return sbb_to_ptr(bookkeeping, node, level_block_size);
-  }
-  
-  // recurse on children: try left and if not try right
-  size_t child_level_block_size = level_block_size >> 1;
-  bool mark_parent;
-  int child = cbtree_left_child(node);
-  void* ptr = sbb_allocate_recursive(bookkeeping, child, size, child_level_block_size, &mark_parent);
-  if (!ptr)
-    ptr = sbb_allocate_recursive(bookkeeping, child + 1, size, child_level_block_size, &mark_parent);
-  
-  // if allocation was successful and sibling was also used, flag parent
-  // (this) as not having either child available.
-  if (ptr && mark_parent)
+	// recurse to the best-fit level
+	if (block_size < level_block_size)
 	{
-		 // if this is now used then if its sibling is also used mark the parent as used as well
-		*out_mark_parent = sbb_used(page, sibling_mask);
+		// if this is marked used and both children are free it means this is an allocated node
+		// so there's no more memory here.
+		sbb_page_t mask;
+		auto page = sbb_page(bookkeeping, node, &mask);
+		if (sbb_used(page, mask))
+		{
+			sbb_page_t children_mask;
+			auto children_page = sbb_children_page(bookkeeping, node, &children_mask);
+			if ((*children_page & children_mask) == children_mask)
+				return nullptr;
+		}
+
+		size_t child_level_block_size = level_block_size >> 1;
+		sbb_node_t left = cbtree_left_child(node);
+		void* ptr = sbb_memalign_internal(bookkeeping, left, block_size, child_level_block_size);
+		if (!ptr)
+			ptr = sbb_memalign_internal(bookkeeping, left + 1, block_size, child_level_block_size);
+		
+		// as unwinding from a found allocation, unmark parent nodes as wholly free
+		if (ptr)
+			sbb_mark_used(page, mask);
+		
+		return ptr;
+	}
+	
+	sbb_page_t mask;
+	auto page = sbb_page(bookkeeping, node, &mask);
+	if (sbb_free(page, mask))
+	{
 		sbb_mark_used(page, mask);
+		return sbb_to_ptr(bookkeeping, node, block_size);
 	}
 
-	else
-	{
-		// either this is a nullptr or not to mark the parent, so don't propagate
-		*out_mark_parent = false;
-	}
-
-  return ptr;
+	return nullptr;
 }
 
 void* sbb_memalign(sbb_t sbb, size_t align, size_t size)
@@ -232,104 +219,65 @@ void* sbb_memalign(sbb_t sbb, size_t align, size_t size)
   size_t level_block_size = bookkeeping->arena_bytes;
   if (block_size > level_block_size)
     return nullptr;
-  bool dummy; // no root sibling
-  return sbb_allocate_recursive(bookkeeping, 1, block_size, level_block_size, &dummy);
+  return sbb_memalign_internal(bookkeeping, 1, block_size, level_block_size);
 }
 
 void sbb_free(sbb_t sbb, void* ptr)
 {
-  if (!ptr)
-    return;
-   
+	// check validity of ptr
+	if (!ptr)
+		return;
+
   sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
-
   void* arena = bookkeeping->arena;
-  size_t arena_size = bookkeeping->arena_bytes;
-
-	size_t arena_block_count = arena_size / bookkeeping->min_block_size; // do a log2 or constant thing
+  const size_t arena_size = bookkeeping->arena_bytes;
 	
-	// ptr is not from this allocator
   if (ptr < arena || ptr >= ((char*)arena + arena_size))
     SBB_FATAL("ptr is not from this sbb allocator");
-  
+
+	// find the leaf node representation of the ptr. Without the block size we can't know
+	// what node represents the allocation, so start at the highest granularity and walk
+	// up the tree until a block is marked as used. When an internal node is marked as 
+	// used and all children are free, it means that internal node is the full allocation
+	// for this pointer.
+	const sbb_node_t num_nodes = bookkeeping->num_nodes;
+	const uint32_t min_block_size_log2 = bookkeeping->min_block_size_log2;
+	const size_t arena_block_count = arena_size >> min_block_size_log2;
 	// convert to an offset in nodes (i.e. # min_block_size's)
-	size_t byte_offset = size_t((char*)ptr - (char*)arena);
-	size_t offset = byte_offset / bookkeeping->min_block_size; // change to a log2 thing
+	const size_t byte_offset = size_t((char*)ptr - (char*)arena);
+	uint32_t offset = uint32_t(byte_offset >> min_block_size_log2);
 
-	// set up a mask for traversing the Morton number interpretation of the offce:
-	size_t mask = arena_block_count >> 1;
+	// we have the node of the allocation if it were the min_block_size
+	// the ruleset is that a node is 1 if all subchildren are free and 
+	// 0 if not, so from the bottom up the first 0 is the allocation.
+	uint32_t node = cbtree_node_from_leaf_offset(offset, num_nodes);
 
-	// start at the root
-	sbb_node_t node = 1;
-	while (mask)
+	// walk up to the first used node (NOTE: we don't need to calc the buddy_mask every iter here,
+	// just once at the end, so consider optimizing this by hoisting the bit-shift out of sbb_page.
+	sbb_page_t mask, buddy_mask;
+	auto page = sbb_page(bookkeeping, node, &mask, &buddy_mask);
+	while (sbb_free(page, mask))
 	{
-		// truth table for the state of a node and its children 
-		// (Node LeftChild RightChild nodes):
-		// NLR State desc 
-		// 000 node hints that all sub-nodes are separately used but this itself is not an allocation
-		// 001 invalid/corrupt heap: node says all subnodes are used but one is free
-		// 010 invalid/corrupt heap: node says all subnodes are used but one is free
-		// 011 node is an allocation and thus represents all its subnodes and can be freed
-		// 100 invalid/corrupt heap: node says it is part of a free path but both children are used
-		// 101 node hints that at least one subnode is available
-		// 110 node hints that at least one subnode is available
-		// 111 node hints that at least one subnode is available
+		node = cbtree_parent(node);
+		page = sbb_page(bookkeeping, node, &mask, &buddy_mask);
+	}
 	
-		// for the purposes of this function we only care about 011: node is an allocation
-		// so we want to grab both children at the same time and test against a 2-bit mask
-		// and ensure that this node itself is used
-
-		sbb_page_t node_mask;
-		auto node_page = sbb_page(bookkeeping, node, &node_mask);
-
-		if (sbb_used(node_page, node_mask))
-		{
-			if (node < bookkeeping->num_nodes)
-			{
-				sbb_page_t children_mask;
-				auto children_page = sbb_children_page(bookkeeping, node, &children_mask);
-
-				if (children_page && (*children_page & children_mask) == children_mask)
-				{
-					// go back up to the root marking the path as available
-					do
-					{
-						sbb_mark_free(node_page, node_mask);
-						node = cbtree_parent(node);
-					} while (node);
-
-					break;
-				}
-
-				#ifdef oDEBUG
-				else if ((*children_page & children_mask) != 0)
-					SBB_FATAL("corrupt heap b010 or b001");
-				#endif
-			}
-		}
-
-		#ifdef oDEBUG
-		else
-		{
-			sbb_page_t children_mask;
-			auto children_page = sbb_children_page(bookkeeping, node, &children_mask);
-			if ((*children_page & children_mask) == 0)
-				SBB_FATAL("corrupt heap b100");
-		}
-		#endif
-
-		// move to the left or right node
-		node += node + (offset & mask) ? 1 : 0;
-		mask >>= 1;
+	// node is the allocation, so flag it as freed. If its buddy is free too
+	// then promote it up the ancestry
+	
+	sbb_mark_free(page, mask);
+	while (sbb_free(page, buddy_mask))
+	{
+		node = cbtree_parent(node);
+		page = sbb_page(bookkeeping, node, &mask, &buddy_mask);
+		sbb_mark_free(page, mask);
 	}
 }
 
 // convert a node index to a page + bit index
 void* sbb_malloc(sbb_t sbb, size_t size)
 {
-  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
-  size_t default_alignment = SBB_MAX(16, bookkeeping->arena_bytes >> (bookkeeping->num_levels-1));
-  return sbb_memalign(sbb, default_alignment, size);
+  return sbb_memalign(sbb, sbb_min_block_size(sbb), size);
 }
 
 void* sbb_realloc(sbb_t sbb, void* ptr, size_t bytes)
@@ -361,9 +309,77 @@ void* sbb_bookkeeping(sbb_t sbb)
 	return sbb;
 }
 
-size_t sbb_block_size(void* ptr)
+size_t sbb_block_size(sbb_t sbb, void* ptr)
 {
-	SBB_FATAL("not yet implemented");
+	// this algorithm is the same algorithm as free: it just doesn't modify anything
+	// and keeps an extra recording of the block size
+
+  if (!ptr)
+    return 0;
+   
+  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+
+  void* arena = bookkeeping->arena;
+  const size_t arena_size = bookkeeping->arena_bytes;
+	const sbb_node_t num_nodes = bookkeeping->num_nodes;
+	const uint32_t min_block_size_log2 = bookkeeping->min_block_size_log2;
+	const size_t arena_block_count = arena_size >> min_block_size_log2;
+	
+	// ptr is not from this allocator
+  if (ptr < arena || ptr >= ((char*)arena + arena_size))
+    SBB_FATAL("ptr is not from this sbb allocator");
+  
+	// convert to an offset in nodes (i.e. # min_block_size's)
+	const size_t byte_offset = size_t((char*)ptr - (char*)arena);
+	size_t offset = byte_offset >> min_block_size_log2;
+
+	// set up a mask for traversing the Morton number interpretation of the offset:
+	size_t mask = arena_block_count >> 1;
+
+	size_t block_size = arena_size;
+
+	// start at the root
+	sbb_node_t node = 1;
+	while (mask)
+	{
+		sbb_page_t node_mask;
+		auto node_page = sbb_page(bookkeeping, node, &node_mask);
+
+		if (sbb_used(node_page, node_mask))
+		{
+			if (node < num_nodes)
+			{
+				sbb_page_t children_mask;
+				auto children_page = sbb_children_page(bookkeeping, node, &children_mask);
+
+				if (children_page && (*children_page & children_mask) == children_mask)
+					return block_size;
+
+				#ifdef oDEBUG
+				else if ((*children_page & children_mask) != 0)
+					SBB_FATAL("corrupt heap b010 or b001");
+				#endif
+			}
+		}
+
+		#ifdef oDEBUG
+		else
+		{
+			sbb_page_t children_mask;
+			auto children_page = sbb_children_page(bookkeeping, node, &children_mask);
+			if ((*children_page & children_mask) == 0)
+				SBB_FATAL("corrupt heap b100");
+		}
+		#endif
+
+		block_size >>= 1;
+
+		// move to the left or right node
+		node += node + (offset & mask) ? 1 : 0;
+		mask >>= 1;
+	}
+
+	SBB_FATAL("pointer not allocated (must be dangling)");
 }
 
 size_t sbb_min_block_size(sbb_t sbb)
@@ -373,12 +389,62 @@ size_t sbb_min_block_size(sbb_t sbb)
 
 size_t sbb_max_free_block_size(sbb_t sbb)
 {
-	SBB_FATAL("not yet implemented");
+	// find the first node that is marked free and both children are marked free
+
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+
+	size_t block_size = bookkeeping->arena_bytes;
+	sbb_node_t node = 1; // start at root
+	sbb_page_t mask, children_mask, children_flags, children_flags_test;
+	sbb_page_t* page, *children_page;
+	while (true)
+	{
+		page = sbb_page(bookkeeping, node, &mask);
+		if (sbb_used(page, mask))
+			break;
+
+		children_page = sbb_children_page(bookkeeping, node, &children_mask);
+
+		// at leaves
+		if (!children_page)
+			return block_size;
+		
+		children_flags = *children_page & children_mask;
+		
+		if (children_flags == children_mask)
+			return block_size;
+		else if (children_flags == 0)
+			SBB_FATAL("heap corrupt");
+
+		// ok we've culled the both-free and both-used cases, so which one is marked free?
+		children_flags_test = children_flags ^ children_mask;
+		if (children_flags_test > children_flags) // this means the right is available
+			node = cbtree_right_child(node);
+		else // left is available
+			node = cbtree_left_child(node);
+
+		block_size >>= 1;
+	}
+
+	return 0;
+}
+
+static inline size_t sbb_num_free_blocks_recursive(sbb_bookkeeping_t* bookkeeping, sbb_node_t node)
+{
+	sbb_page_t mask;
+	auto page = sbb_page(bookkeeping, node, &mask);
+	if (sbb_used(page, mask))
+		return 0;
+	sbb_page_t children_mask;
+	auto children_page = sbb_children_page(bookkeeping, node, &children_mask);
+	if (children_page && *children_page & children_mask)
+		return sbb_num_free_blocks_recursive(bookkeeping, cbtree_left_child(node)) + sbb_num_free_blocks_recursive(bookkeeping, cbtree_right_child(node));
+	return 1; // unused leaf node counts as free block
 }
 
 size_t sbb_num_free_blocks(sbb_t sbb)
 {
-	SBB_FATAL("not yet implemented");
+	return sbb_num_free_blocks_recursive((sbb_bookkeeping_t*)sbb, 1);
 }
 
 size_t sbb_overhead(sbb_t sbb)
@@ -387,7 +453,19 @@ size_t sbb_overhead(sbb_t sbb)
 	return sbb_bookkeeping_size(bookkeeping->arena_bytes, bookkeeping->min_block_size);
 }
 
-void sbb_walk_pool(sbbpool_t pool, sbb_walker walker, void* user)
+void sbb_walk_heap(sbb_t sbb, sbb_walker walker, void* user)
 {
 	SBB_FATAL("not yet implemented");
+	/*
+	NLR
+	000 hint, suballoctions exist, recurse
+	001 invalid
+	010 invalid
+	011 this is a used allocation, call walker
+	100 invalid
+	101 recurse both
+	110 recurse both
+	111 
+	*/
 }
+
