@@ -27,7 +27,9 @@
 // its bookkeeping separate from the heap itself so that write-combined 
 // memory can be managed. To keep the bookkeeping small this uses a compact 
 // binary tree comprised of 1 bit per allocation block at any level rather 
-// than a linked-list freelist node. O(n log n) allocation/free time.
+// than a linked-list freelist node. O(log n) allocation/free time.
+// Per-sbb overhead: 32-bit: 24-bytes + pages; 64-bit: 32-bytes + pages.
+
 #pragma once
 #ifndef sbb_h
 #define sbb_h
@@ -35,7 +37,6 @@
 #include <oBase/cbtree.h>
 
 typedef void* sbb_t;
-typedef void* sbbpool_t;
 
 // returns the bytes required to maintain bookkeeping for the allocator
 size_t sbb_bookkeeping_size(size_t arena_bytes, size_t min_block_size);
@@ -58,7 +59,8 @@ size_t sbb_arena_bytes(sbb_t sbb);
 void* sbb_bookkeeping(sbb_t sbb);
 
 // returns the internal block size (not user size) allocated for ptr
-size_t sbb_block_size(void* ptr);
+// O(log n)
+size_t sbb_block_size(sbb_t sbb, void* ptr);
 
 // returns the minimum block size specified in sbb_create
 size_t sbb_min_block_size(sbb_t sbb);
@@ -76,7 +78,7 @@ size_t sbb_overhead(sbb_t sbb);
 
 // walks used and largest available blocks
 typedef void (*sbb_walker)(void* ptr, size_t size, int used, void* user);
-void sbb_walk_pool(sbbpool_t pool, sbb_walker walker, void* user);
+void sbb_walk_heap(sbb_t sbb, sbb_walker walker, void* user);
 
 // common malloc api: bytes will be rounded to the next power of two consistent
 // with the binary-buddy algorithm.
