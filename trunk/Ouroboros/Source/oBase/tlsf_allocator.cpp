@@ -32,144 +32,156 @@
 
 namespace ouro {
 
-tlsf_allocator::tlsf_allocator()
-	: hHeap(nullptr)
-	, pArena(nullptr)
-	, Size(0)
-{}
-
-tlsf_allocator::tlsf_allocator(void* _pArena, size_t _Size)
-	: hHeap(nullptr)
-	, pArena(_pArena)
-	, Size(_Size)
+struct walk_stats
 {
-	reset();
-	if (!valid())
-		throw std::invalid_argument("invalid arena and/or size specified");
+	size_t largest_free_block_bytes;
+	size_t num_free_blocks;
+};
+
+static void find_largest_free_block(void* ptr, size_t bytes, int used, void* user)
+{
+	if (!used)
+	{
+		walk_stats* stats = (walk_stats*)user;
+		stats->largest_free_block_bytes = max(stats->largest_free_block_bytes, bytes);
+		stats->num_free_blocks++;
+	}
 }
 
-static void trace_leaks(void* ptr, size_t size, int used, void* user)
+void tlsf_allocator::initialize(void* arena, size_t bytes)
+{
+	oCHECK(byte_aligned(arena, default_alignment), "tlsf arena must be 16-byte aligned");
+	reset();
+}
+
+static void trace_leaks(void* ptr, size_t bytes, int used, void* user)
 {
 	if (used)
 	{
 		sstring mem;
-		format_bytes(mem, size, 2);
+		format_bytes(mem, bytes, 2);
 		oTRACE("tlsf leak: 0x%p %s", ptr, mem.c_str());
 	}
 }
 
-tlsf_allocator::~tlsf_allocator()
+void* tlsf_allocator::deinitialize()
 {
-	if (Stats.num_allocations)
+	if (stats.num_allocations)
 	{
-		tlsf_walk_heap(hHeap, trace_leaks, nullptr);
-		throw std::runtime_error(formatf("allocator destroyed with %u outstanding allocations", Stats.num_allocations));
+		tlsf_walk_heap(heap, trace_leaks, nullptr);
+		throw std::runtime_error(formatf("allocator destroyed with %u outstanding allocations", stats.num_allocations));
 	}
 
 	if (!valid())
 		throw std::runtime_error("tlsf heap is corrupt");
 
-	tlsf_destroy(hHeap);
+	void* arena = heap;
+	tlsf_destroy(heap);
+	heap = nullptr;
+	return arena;
 }
 
-tlsf_allocator::tlsf_allocator(tlsf_allocator&& _That)
+tlsf_allocator::tlsf_allocator(tlsf_allocator&& that)
 {
-	operator=(std::move(_That));
+	operator=(std::move(that));
 }
 
-tlsf_allocator& tlsf_allocator::operator=(tlsf_allocator&& _That)
+tlsf_allocator& tlsf_allocator::operator=(tlsf_allocator&& that)
 {
-	if (this != &_That)
+	if (this != &that)
 	{
-		hHeap = _That.hHeap; _That.hHeap = nullptr;
-		pArena = _That.pArena; _That.pArena = nullptr;
-		Size = _That.Size; _That.Size = 0;
-		Stats = _That.Stats; _That.Stats = stats();
+		heap = that.heap; that.heap = nullptr;
+		heap_size = that.heap_size; that.heap_size = 0;
+		stats = that.stats; that.stats = allocate_stats();
 	}
 
 	return *this;
 }
 
-void* tlsf_allocator::allocate(size_t _Size, size_t _Alignment)
+allocate_stats tlsf_allocator::get_stats() const
 {
-	void* p = tlsf_memalign(hHeap, _Alignment, __max(_Size, 1));
+	allocate_stats s = stats;
+	walk_stats ws;
+	tlsf_walk_heap(heap, find_largest_free_block, &ws);
+	s.largest_free_block_bytes = ws.largest_free_block_bytes;
+	s.num_free_blocks = ws.num_free_blocks;
+	return s;
+}
+
+void* tlsf_allocator::allocate(size_t bytes, size_t align)
+{
+	void* p = tlsf_memalign(heap, align, max(bytes, size_t(1)));
 	if (p)
 	{
-		size_t blockSize = tlsf_block_size(p);
-		Stats.num_allocations++;
-		Stats.bytes_allocated += blockSize;
-		Stats.bytes_free -= blockSize;
-		Stats.bytes_allocated_peak = max(Stats.bytes_allocated_peak, Stats.bytes_allocated);
+		size_t block_size = tlsf_block_size(p);
+		stats.num_allocations++;
+		stats.num_allocations_peak = max(stats.num_allocations_peak, stats.num_allocations);
+		stats.allocated_bytes += block_size;
+		stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
 	}
 
 	return p;
 }
 
-void* tlsf_allocator::reallocate(void* _Pointer, size_t _Size)
+void* tlsf_allocator::reallocate(void* ptr, size_t bytes)
 {
-	size_t oldBlockSize = _Pointer ? tlsf_block_size(_Pointer) : 0;
-	void* p = tlsf_realloc(hHeap, _Pointer, _Size);
+	size_t block_size = ptr ? tlsf_block_size(ptr) : 0;
+	void* p = tlsf_realloc(heap, ptr, bytes);
 	if (p)
 	{
-		size_t blockSizeDiff = tlsf_block_size(p) - oldBlockSize;
-		Stats.bytes_allocated += blockSizeDiff;
-		Stats.bytes_free -= blockSizeDiff;
-		Stats.bytes_allocated_peak = max(Stats.bytes_allocated_peak, Stats.bytes_allocated);
+		size_t diff = tlsf_block_size(p) - block_size;
+		stats.allocated_bytes += diff;
+		stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
 	}
-
-	return 0;
+	return p;
 }
 
-void tlsf_allocator::deallocate(void* _Pointer)
+void tlsf_allocator::deallocate(void* ptr)
 {
-	if (_Pointer)
+	if (ptr)
 	{
-		const size_t blockSize = tlsf_block_size(_Pointer);
-		tlsf_free(hHeap, _Pointer);
-		Stats.num_allocations--;
-		Stats.bytes_allocated -= blockSize;
-		Stats.bytes_free += blockSize;
+		const size_t block_size = tlsf_block_size(ptr);
+		tlsf_free(heap, ptr);
+		stats.num_allocations--;
+		stats.allocated_bytes -= block_size;
 	}
 }
 
-size_t tlsf_allocator::size(void* _Pointer) const 
+size_t tlsf_allocator::size(void* ptr) const 
 {
-	return tlsf_block_size(_Pointer);
+	return tlsf_block_size(ptr);
 }
 
-bool tlsf_allocator::in_range(void* _Pointer) const
+bool tlsf_allocator::in_range(void* ptr) const
 {
-	return _Pointer >= pArena && _Pointer < byte_add(pArena, Size);
+	return ptr >= heap && ptr < byte_add(heap, heap_size);
 }
 
 bool tlsf_allocator::valid() const
 {
-	return hHeap && !tlsf_check_heap(hHeap);
+	return heap && !tlsf_check_heap(heap);
 }
 
 void tlsf_allocator::reset()
 {
-	if (!pArena || !Size)
+	if (!heap || !heap_size)
 		throw std::runtime_error("allocator not valid");
-
-	void* pAlignedArena = byte_align(pArena, oDEFAULT_MEMORY_ALIGNMENT);
-	size_t alignedArenaSize = Size - std::distance((char*)pArena, (char*)pAlignedArena);
-	hHeap = tlsf_create(pAlignedArena, alignedArenaSize);
-	Stats = stats();
-	Stats.bytes_free = alignedArenaSize - tlsf_overhead();
+	heap = tlsf_create(heap, heap_size);
+	stats = allocate_stats();
+	stats.capacity_bytes = heap_size - tlsf_overhead();
 }
 
-static void tlsf_walker(void* ptr, size_t size, int used, void* user)
+static void tlsf_walker(void* ptr, size_t bytes, int used, void* user)
 {
-	std::function<void(void* _Pointer, size_t _Size, bool _IsUserAllocation)>& 
-		Walker = *(std::function<void(void* _Pointer, size_t _Size, bool _Used)>*)user;
-	Walker(ptr, size, !!used);
+	std::function<void(void* ptr, size_t bytes, bool used)>& 
+		walker = *(std::function<void(void* ptr, size_t bytes, bool used)>*)user;
+	walker(ptr, bytes, !!used);
 }
 
-void tlsf_allocator::walk_heap(const std::function<void(void* _Pointer, size_t _Size, bool _Used)>& _Enumerator)
+void tlsf_allocator::walk_heap(const std::function<void(void* ptr, size_t bytes, bool used)>& enumerator)
 {
-	if (_Enumerator)
-		tlsf_walk_heap(hHeap, tlsf_walker, (void*)&_Enumerator);
+	if (enumerator)
+		tlsf_walk_heap(heap, tlsf_walker, (void*)&enumerator);
 }
 
 } // namespace ouro
