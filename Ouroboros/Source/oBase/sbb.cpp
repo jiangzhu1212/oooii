@@ -421,3 +421,41 @@ void sbb_walk_heap(sbb_t sbb, sbb_walker walker, void* user)
 	sbb_walk_heap_internal(bookkeeping, (sbb_page_t*)(bookkeeping + 1), kRootMask, kRoot, bookkeeping->arena_bytes, walker, user);
 }
 
+static bool subnodes_free(sbb_bookkeeping_t* bookkeeping, sbb_node_t node)
+{
+	sbb_node_t left = cbtree_left_child(node);
+	if (left >= bookkeeping->num_nodes)
+		return true;
+	
+	auto page = sbb_page(bookkeeping, left);
+	int bit = sbb_pagebit(left);
+	auto mask = sbb_pagemask(bit);
+	if (!marked_free(page, mask)) // check left
+		return false;
+
+	mask = sbb_pagemask(bit+1);
+	return marked_free(page, mask); // check right
+}
+
+static bool check_node(sbb_bookkeeping_t* bookkeeping, sbb_node_t node)
+{
+	auto page = sbb_page(bookkeeping, node);
+	int bit = sbb_pagebit(node);
+	auto mask = sbb_pagemask(bit);
+	
+	if (marked_free(page, mask))
+	{
+		if (!subnodes_free(bookkeeping, node))
+			return false;
+		return true;
+	}
+
+	auto left = cbtree_left_child(node);
+	return check_node(bookkeeping, left) && check_node(bookkeeping, left+1);
+}
+
+bool sbb_check_heap(sbb_t sbb)
+{
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+	return check_node(bookkeeping, 1);
+}
