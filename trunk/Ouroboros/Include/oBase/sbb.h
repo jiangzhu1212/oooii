@@ -59,7 +59,8 @@ size_t sbb_arena_bytes(sbb_t sbb);
 void* sbb_bookkeeping(sbb_t sbb);
 
 // returns the internal block size (not user size) allocated for ptr
-// O(log n)
+// O(log n). If the size is already known, the blocks size is the next
+// larget power of 2.
 size_t sbb_block_size(sbb_t sbb, void* ptr);
 
 // returns the minimum block size specified in sbb_create
@@ -79,6 +80,9 @@ size_t sbb_overhead(sbb_t sbb);
 // walks used and largest available blocks
 typedef void (*sbb_walker)(void* ptr, size_t size, int used, void* user);
 void sbb_walk_heap(sbb_t sbb, sbb_walker walker, void* user);
+
+// returns true if the heap is valid
+bool sbb_check_heap(sbb_t sbb);
 
 // common malloc api: bytes will be rounded to the next power of two consistent
 // with the binary-buddy algorithm.

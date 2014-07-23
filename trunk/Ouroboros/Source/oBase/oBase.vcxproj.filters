@@ -268,6 +268,9 @@
     <ClCompile Include="sbb.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
+    <ClCompile Include="sbb_allocator.cpp">
+      <Filter>Source\allocator</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -584,6 +587,9 @@
       <Filter>oBase</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\sbb.h">
+      <Filter>oBase\allocator</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\sbb_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
   </ItemGroup>
