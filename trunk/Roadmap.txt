@@ -75,8 +75,8 @@ assumptions as it ties more building blocks together.
 
 == Legacy Libraries ==
 
-oBasis, oPlatform, oConcurrency, oKinect are legacy libraries that are slowly
-but surely being refactored. Some of the bigger subsystems like anything to do 
-with networking are being left to last because there isn't a big test case right 
-now to exercise the changes, so leave it alone until real attention can use 
-cases can be used to enhance it.
+oBasis, oPlatform, oConcurrency are legacy libraries that are slowly but surely 
+being refactored. Some of the bigger subsystems like anything to do with 
+networking are being left to last because there isn't a big test case right now 
+to exercise the changes so leave it alone until real attention can use cases can 
+be used to enhance it.
