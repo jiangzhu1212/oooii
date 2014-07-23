@@ -13,14 +13,14 @@ typedef uint32_t sbb_node_t;
 enum sbb_constants
 {
 #ifdef _M_X64
-  kPageBitsLog2 = 6,
+	kPageBitsLog2 = 6,
 #else
-  kPageBitsLog2 = 5,
+	kPageBitsLog2 = 5,
 #endif
-  kPageBytes = sizeof(sbb_page_t),
-  kPageBits = kPageBytes * 8,
-  kPageBitmask = kPageBits - 1,
-  kPageMaxBits = kPageBits - 1,
+	kPageBytes = sizeof(sbb_page_t),
+	kPageBits = kPageBytes * 8,
+	kPageBitmask = kPageBits - 1,
+	kPageMaxBits = kPageBits - 1,
 	kRoot = 1,
 };
 
@@ -28,12 +28,12 @@ static const sbb_page_t kRootMask = sbb_page_t(1) << (kPageBits - 2);
 
 struct sbb_bookkeeping_t
 {
-  void* arena;
-  size_t arena_bytes; // must be pow2
-  uint32_t min_block_size; // must be pow2
+	void* arena;
+	size_t arena_bytes; // must be pow2
+	uint32_t min_block_size; // must be pow2
 	uint32_t min_block_size_log2; // log2i(min_block_size)
-  uint32_t num_nodes;
-  uint32_t unused; // keeps size consistently aligned between 64- and 32-bit compiles
+	uint32_t num_nodes;
+	uint32_t unused; // keeps size consistently aligned between 64- and 32-bit compiles
 };
 
 // utils to convert a node index into its page and bit/bitmask within that page or a user pointer
@@ -48,48 +48,47 @@ static inline void mark_used(sbb_page_t* page, sbb_page_t mask) { *page &=~ mask
 static inline void mark_free(sbb_page_t* page, sbb_page_t mask) { *page |= mask; }
 
 #define SBB_CHECK_ALIGNMENT \
-  if (!ispow2(arena_bytes)) SBB_FATAL("arena must be a power of two"); \
-  if (!ispow2(min_block_size)) SBB_FATAL("min_block_size must be a power of two"); \
+	if (!ispow2(arena_bytes)) SBB_FATAL("arena must be a power of two"); \
+	if (!ispow2(min_block_size)) SBB_FATAL("min_block_size must be a power of two"); \
 	if ((size_t)(uint32_t)min_block_size != min_block_size) SBB_FATAL("min_block_size must fit in uint32_t");
 
 size_t sbb_bookkeeping_size(size_t arena_bytes, size_t min_block_size)
 {
-  SBB_CHECK_ALIGNMENT
+	SBB_CHECK_ALIGNMENT
 	sbb_node_t nnodes, nlevels;
-  cbtree_metrics(sbb_node_t(arena_bytes / min_block_size), &nnodes, &nlevels);
-  sbb_node_t npages = SBB_MAX(1, nnodes >> kPageBitsLog2);
-  
-  return npages * sizeof(sbb_page_t) + sizeof(sbb_bookkeeping_t);
+	cbtree_metrics(sbb_node_t(arena_bytes / min_block_size), &nnodes, &nlevels);
+	sbb_node_t npages = SBB_MAX(1, nnodes >> kPageBitsLog2);
+	return npages * sizeof(sbb_page_t) + sizeof(sbb_bookkeeping_t);
 }
 
 sbb_t sbb_create(void* arena, size_t arena_bytes, size_t min_block_size, void* bookkeeping)
 {
-  sbb_bookkeeping_t* sbb = (sbb_bookkeeping_t*)bookkeeping;
-  if (!bookkeeping)
-    SBB_FATAL("a valid bookkeeping memory must be specified");
-  SBB_CHECK_ALIGNMENT
+	sbb_bookkeeping_t* sbb = (sbb_bookkeeping_t*)bookkeeping;
+	if (!bookkeeping)
+		SBB_FATAL("a valid bookkeeping memory must be specified");
+	SBB_CHECK_ALIGNMENT
 	if (!arena || !SBB_ALIGNED(arena, min_block_size))
 		SBB_FATAL("arena must be valid and aligned to min_block_size");
 
 	const uint32_t min_block_size_log2 = log2i(min_block_size);
 
-  sbb->arena = arena;
-  sbb->arena_bytes = arena_bytes;
-  sbb->min_block_size = (uint32_t)min_block_size;
+	sbb->arena = arena;
+	sbb->arena_bytes = arena_bytes;
+	sbb->min_block_size = (uint32_t)min_block_size;
 	sbb->min_block_size_log2 = min_block_size_log2;
 	uint32_t nlevels;
-  cbtree_metrics(sbb_node_t(arena_bytes >> sbb->min_block_size_log2), &sbb->num_nodes, &nlevels);
+	cbtree_metrics(sbb_node_t(arena_bytes >> sbb->min_block_size_log2), &sbb->num_nodes, &nlevels);
 	sbb->unused = 0;
 
-  // the top bit of the first page is a null since the binary tree's 
-  // root starts a 1, so mark everything else as available
-  sbb_page_t* page = sbb_page(sbb, 0);
-  const sbb_page_t* page_end = page + SBB_MAX(1, sbb->num_nodes >> kPageBitsLog2);
-  *page++ = ~(sbb_pagemask(kPageBits-1));
-  for (; page < page_end; page++)
-    *page = sbb_page_t(-1);
+	// the top bit of the first page is a null since the binary tree's 
+	// root starts a 1, so mark everything else as available
+	sbb_page_t* page = sbb_page(sbb, 0);
+	const sbb_page_t* page_end = page + SBB_MAX(1, sbb->num_nodes >> kPageBitsLog2);
+	*page++ = ~(sbb_pagemask(kPageBits-1));
+	for (; page < page_end; page++)
+		*page = sbb_page_t(-1);
 
-  return sbb;
+	return sbb;
 }
 
 void sbb_destroy(sbb_t sbb)
@@ -112,13 +111,13 @@ static void* sbb_memalign_internal(sbb_bookkeeping_t* bookkeeping, sbb_page_t* n
 		void* ptr = sbb_memalign_internal(bookkeeping, children_page, left_mask, left, block_size, child_level_block_size);
 		if (!ptr)
 			ptr = sbb_memalign_internal(bookkeeping, children_page, right_mask, left + 1, block_size, child_level_block_size);
-		
+
 		if (ptr && marked_free(node_page, node_mask)) // dirty bits of parents
 			mark_used(node_page, node_mask);
-		
+
 		return ptr;
 	}
-	
+
 	if (marked_free(node_page, node_mask))
 	{
 		mark_used(node_page, node_mask);
@@ -130,12 +129,12 @@ static void* sbb_memalign_internal(sbb_bookkeeping_t* bookkeeping, sbb_page_t* n
 
 void* sbb_memalign(sbb_t sbb, size_t align, size_t size)
 {
-  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
-  size_t block_size = SBB_MAX(bookkeeping->min_block_size, nextpow2(size));
-  size_t level_block_size = bookkeeping->arena_bytes;
-  if (block_size > level_block_size)
-    return nullptr;
-  return sbb_memalign_internal(bookkeeping, (sbb_page_t*)(bookkeeping + 1), kRootMask, kRoot, block_size, level_block_size);
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+	size_t block_size = SBB_MAX(bookkeeping->min_block_size, nextpow2(size));
+	size_t level_block_size = bookkeeping->arena_bytes;
+	if (block_size > level_block_size)
+		return nullptr;
+	return sbb_memalign_internal(bookkeeping, (sbb_page_t*)(bookkeeping + 1), kRootMask, kRoot, block_size, level_block_size);
 }
 
 void sbb_free(sbb_t sbb, void* ptr)
@@ -143,12 +142,12 @@ void sbb_free(sbb_t sbb, void* ptr)
 	if (!ptr)
 		return;
 
-  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
-  void* arena = bookkeeping->arena;
-  const size_t arena_size = bookkeeping->arena_bytes;
-	
-  if (ptr < arena || ptr >= ((char*)arena + arena_size))
-    SBB_FATAL("ptr is not from this sbb allocator");
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+	void* arena = bookkeeping->arena;
+	const size_t arena_size = bookkeeping->arena_bytes;
+
+	if (ptr < arena || ptr >= ((char*)arena + arena_size))
+		SBB_FATAL("ptr is not from this sbb allocator");
 
 	// find ptr as a leaf node since ptr shares alignment with all left children and the size isn't known
 	const size_t byte_offset = size_t((char*)ptr - (char*)arena);
@@ -159,7 +158,7 @@ void sbb_free(sbb_t sbb, void* ptr)
 	// walk up from there to the first allocation
 	sbb_page_t* node_page = sbb_page(bookkeeping, node);
 	int node_bit = sbb_pagebit(node);
-  sbb_page_t node_mask = sbb_pagemask(node_bit);
+	sbb_page_t node_mask = sbb_pagemask(node_bit);
 	while (marked_free(node_page, node_mask))
 	{
 		node = cbtree_parent(node);
@@ -183,7 +182,7 @@ void sbb_free(sbb_t sbb, void* ptr)
 // convert a node index to a page + bit index
 void* sbb_malloc(sbb_t sbb, size_t size)
 {
-  return sbb_memalign(sbb, sbb_min_block_size(sbb), size);
+	return sbb_memalign(sbb, sbb_min_block_size(sbb), size);
 }
 
 void* sbb_realloc(sbb_t sbb, void* ptr, size_t bytes)
@@ -191,12 +190,12 @@ void* sbb_realloc(sbb_t sbb, void* ptr, size_t bytes)
 	if (!ptr)
 		return nullptr;
 
-  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
-  void* arena = bookkeeping->arena;
-  const size_t arena_size = bookkeeping->arena_bytes;
-	
-  if (ptr < arena || ptr >= ((char*)arena + arena_size))
-    SBB_FATAL("ptr is not from this sbb allocator");
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+	void* arena = bookkeeping->arena;
+	const size_t arena_size = bookkeeping->arena_bytes;
+
+	if (ptr < arena || ptr >= ((char*)arena + arena_size))
+		SBB_FATAL("ptr is not from this sbb allocator");
 
 	size_t level_block_size = bookkeeping->min_block_size;
 	size_t block_size = max(level_block_size, nextpow2(bytes));
@@ -212,7 +211,7 @@ void* sbb_realloc(sbb_t sbb, void* ptr, size_t bytes)
 	// walk up from there to the first allocation
 	sbb_page_t* node_page = sbb_page(bookkeeping, node);
 	int node_bit = sbb_pagebit(node);
-  sbb_page_t node_mask = sbb_pagemask(node_bit);
+	sbb_page_t node_mask = sbb_pagemask(node_bit);
 	while (marked_free(node_page, node_mask))
 	{
 		node = cbtree_parent(node);
@@ -234,7 +233,7 @@ void* sbb_realloc(sbb_t sbb, void* ptr, size_t bytes)
 		mark_used(node_page, node_mask);
 		level_block_size >>= 1;
 	}
-	
+
 	// check for adjacent free space
 	bool adjacent_free = true;
 	while (block_size > level_block_size)
@@ -300,12 +299,12 @@ size_t sbb_block_size(sbb_t sbb, void* ptr)
 	if (!ptr)
 		return 0;
 
-  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
-  void* arena = bookkeeping->arena;
-  const size_t arena_size = bookkeeping->arena_bytes;
-	
-  if (ptr < arena || ptr >= ((char*)arena + arena_size))
-    SBB_FATAL("ptr is not from this sbb allocator");
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+	void* arena = bookkeeping->arena;
+	const size_t arena_size = bookkeeping->arena_bytes;
+
+	if (ptr < arena || ptr >= ((char*)arena + arena_size))
+		SBB_FATAL("ptr is not from this sbb allocator");
 
 	// find ptr as a leaf node since ptr shares alignment with all left children and the size isn't known
 	const size_t byte_offset = size_t((char*)ptr - (char*)arena);
@@ -317,7 +316,7 @@ size_t sbb_block_size(sbb_t sbb, void* ptr)
 	// walk up from there to the first allocation
 	sbb_page_t* node_page = sbb_page(bookkeeping, node);
 	int node_bit = sbb_pagebit(node);
-  sbb_page_t node_mask = sbb_pagemask(node_bit);
+	sbb_page_t node_mask = sbb_pagemask(node_bit);
 	while (marked_free(node_page, node_mask))
 	{
 		node = cbtree_parent(node);
@@ -326,7 +325,7 @@ size_t sbb_block_size(sbb_t sbb, void* ptr)
 		node_mask = sbb_pagemask(node_bit);
 		block_size <<= 1;
 	}
-	
+
 	return block_size > arena_size ? 0 : block_size;
 }
 
@@ -356,7 +355,7 @@ static inline size_t sbb_max_free_block_size_internal(sbb_bookkeeping_t* bookkee
 
 size_t sbb_max_free_block_size(sbb_t sbb)
 {
-  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
 	return sbb_max_free_block_size_internal(bookkeeping, (sbb_page_t*)(bookkeeping + 1), kRootMask, kRoot, bookkeeping->arena_bytes);
 }
 
@@ -381,7 +380,7 @@ static inline size_t sbb_num_free_blocks_internal(sbb_bookkeeping_t* bookkeeping
 
 size_t sbb_num_free_blocks(sbb_t sbb)
 {
-  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
 	return sbb_num_free_blocks_internal(bookkeeping, (sbb_page_t*)(bookkeeping + 1), kRootMask, kRoot);
 }
 
@@ -418,7 +417,7 @@ void sbb_walk_heap_internal(sbb_bookkeeping_t* bookkeeping, sbb_page_t* node_pag
 
 void sbb_walk_heap(sbb_t sbb, sbb_walker walker, void* user)
 {
-  sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
+	sbb_bookkeeping_t* bookkeeping = (sbb_bookkeeping_t*)sbb;
 	sbb_walk_heap_internal(bookkeeping, (sbb_page_t*)(bookkeeping + 1), kRootMask, kRoot, bookkeeping->arena_bytes, walker, user);
 }
 
