@@ -106,6 +106,29 @@ union allocate_options
 	};
 };
 
+struct allocate_stats
+{
+	allocate_stats()
+		: allocated_bytes(0)
+		, allocated_bytes_peak(0)
+		, capacity_bytes(0)
+		, num_allocations(0)
+		, num_allocations_peak(0)
+		, allocation_capacity(0)
+		, largest_free_block_bytes(0)
+		, num_free_blocks(0)
+	{}
+
+	size_t allocated_bytes;
+	size_t allocated_bytes_peak;
+	size_t capacity_bytes;
+	size_t num_allocations;
+	size_t num_allocations_peak;
+	size_t allocation_capacity;
+	size_t largest_free_block_bytes;
+	size_t num_free_blocks;
+};
+
 typedef void* (*allocate_fn)(size_t num_bytes, unsigned int options);
 typedef void (*deallocate_fn)(const void* pointer);
 

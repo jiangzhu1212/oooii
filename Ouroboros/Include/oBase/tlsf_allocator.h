@@ -29,6 +29,7 @@
 #ifndef oBase_tlsf_allocator_h
 #define oBase_tlsf_allocator_h
 
+#include <oBase/allocate.h>
 #include <functional>
 
 namespace ouro {
@@ -36,50 +37,42 @@ namespace ouro {
 class tlsf_allocator
 {
 public:
-	static const size_t kDefaultAlignment = 16;
+	static const size_t default_alignment = 16;
 
-	struct stats
-	{
-		stats()
-			: num_allocations(0)
-			, bytes_allocated(0)
-			, bytes_allocated_peak(0)
-			, bytes_free(0)
-		{}
+	typedef 
 
-		size_t num_allocations;
-		size_t bytes_allocated;
-		size_t bytes_allocated_peak;
-		size_t bytes_free;
-	};
+	tlsf_allocator() : heap(nullptr), heap_size(0) {}
+	tlsf_allocator(void* arena, size_t bytes) { initialize(arena, bytes); }
+	~tlsf_allocator() { deinitialize(); }
 
-	tlsf_allocator();
-	tlsf_allocator(void* _pArena, size_t _Size);
-	~tlsf_allocator();
+	tlsf_allocator(tlsf_allocator&& that);
+	tlsf_allocator& operator=(tlsf_allocator&& that);
 
-	tlsf_allocator(tlsf_allocator&& _That);
-	tlsf_allocator& operator=(tlsf_allocator&& _That);
+	// creates an allocator for the specified arena
+	void initialize(void* arena, size_t bytes);
 
-	inline const void* arena() const { return pArena; }
-	inline size_t arena_size() const { return Size; }
-	inline stats get_stats() const { return Stats; }
-	void* allocate(size_t _Size, size_t _Alignment = kDefaultAlignment);
-	void* reallocate(void* _Pointer, size_t _Size);
-	void deallocate(void* _Pointer);
-	size_t size(void* _Pointer) const;
-	bool in_range(void* _Pointer) const;
+	// invalidates the allocator and returns the memory passed in initialize 
+	void* deinitialize();
+
+	inline const void* arena() const { return heap; }
+	inline size_t arena_size() const { return heap_size; }
+	allocate_stats get_stats() const;
+	void* allocate(size_t bytes, size_t align = default_alignment);
+	void* reallocate(void* ptr, size_t bytes);
+	void deallocate(void* ptr);
+	size_t size(void* ptr) const;
+	bool in_range(void* ptr) const;
 	bool valid() const;
 	void reset();
-	void walk_heap(const std::function<void(void* _Pointer, size_t _Size, bool _Used)>& _Enumerator);
+	void walk_heap(const std::function<void(void* ptr, size_t bytes, bool used)>& enumerator);
 
 private:
 	tlsf_allocator(const tlsf_allocator&);
 	const tlsf_allocator& operator=(const tlsf_allocator&);
 
-	void* hHeap;
-	void* pArena;
-	size_t Size;
-	stats Stats;
+	void* heap;
+	size_t heap_size;
+	allocate_stats stats;
 };
 
 } // namespace ouro
