@@ -28,10 +28,10 @@
 #include <oBase/throw.h>
 #include <oHLSL/oHLSLMath.h>
 
+#include <ispc_texcomp.h>
+
 namespace ouro {
 	namespace surface {
-
-#define SC_PARAMS int _Subresource, const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination
 
 typedef void (*pixel_convert)(const void* _pSourcePixel, void* _pDestinationPixel);
 
@@ -149,18 +149,89 @@ static void convert_subresource(pixel_convert _Convert
 			convert_subresource_scanline(_SubresourceInfo.dimensions.x, y, _Convert, selSize, delSize, _Source, _pDestination);
 }
 
+static void convert_subresource_bc7(const subresource_info& _SubresourceInfo
+	, const const_mapped_subresource& _Source
+	, format _DestinationFormat
+	, mapped_subresource* _pDestination
+	, bool _FlipVertically)
+{
+	oCHECK_ARG((_SubresourceInfo.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC7 compression");
+	oCHECK_ARG((_SubresourceInfo.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC7 compression");
+	
+	const uint BCRowPitch = (_SubresourceInfo.dimensions.x/4) * 8;
+
+	oCHECK(!_FlipVertically, "cannot flip vertically during BC7 compression");
+	oCHECK(_Source.row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
+	oCHECK(_pDestination->row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
+
+	bc7_enc_settings settings;
+	GetProfile_fast(&settings);
+	CompressBlocksBC7((const rgba_surface*)_Source.data, (uint8_t*)_pDestination->data, &settings);
+}
+
+/*static*/ void convert_subresource_bc6h(const subresource_info& _SubresourceInfo
+	, const const_mapped_subresource& _Source
+	, format _DestinationFormat
+	, mapped_subresource* _pDestination
+	, bool _FlipVertically)
+{
+	oCHECK_ARG((_SubresourceInfo.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC6h compression");
+	oCHECK_ARG((_SubresourceInfo.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC6h compression");
+
+	const uint BCRowPitch = (_SubresourceInfo.dimensions.x/4) * 8;
+
+	oCHECK(!_FlipVertically, "cannot flip vertically during BC6h compression");
+	oCHECK(_Source.row_pitch == BCRowPitch, "layout must be 'image' for a BC6h compression destination buffer");
+	oCHECK(_pDestination->row_pitch == BCRowPitch, "layout must be 'image' for a BC6h compression destination buffer");
+
+	bc6h_enc_settings settings;
+	GetProfile_bc6h_fast(&settings);
+	CompressBlocksBC6H((const rgba_surface*)_Source.data, (uint8_t*)_pDestination->data, &settings);
+}
+
 void convert_subresource(const subresource_info& _SubresourceInfo
 	, const const_mapped_subresource& _Source
 	, format _DestinationFormat
 	, mapped_subresource* _pDestination
 	, bool _FlipVertically)
 {
-	if (_SubresourceInfo.format == _DestinationFormat)
-		copy(_SubresourceInfo, _Source, _pDestination, false);
-	else
+	#define oCHECK_BC7(type) oCHECK_ARG(_SubresourceInfo.format == surface::a8b8g8r8_##type || _SubresourceInfo.format == surface::x8b8g8r8_##type, "source must be a8b8g8r8_" #type " or x8b8g8r8_" #type " for conversion to bc7_" #type);
+	#define oCHECK_BC6h(type) oCHECK_ARG(_SubresourceInfo.format == surface::x16b16g16r16_##type, "source must be a8b8g8r8_" #type " for conversion to bc7_" #type);
+	switch (_DestinationFormat)
 	{
-		pixel_convert cv = get_pixel_convert(_SubresourceInfo.format, _DestinationFormat);
-		convert_subresource(cv, _SubresourceInfo, _Source, _DestinationFormat, _pDestination, _FlipVertically);
+		case surface::bc7_unorm:
+		{
+			oCHECK_BC7(unorm)
+			convert_subresource_bc7(_SubresourceInfo, _Source, _DestinationFormat, _pDestination, _FlipVertically);
+			break;
+		}
+
+		case surface::bc7_unorm_srgb:
+		{
+			oCHECK_BC7(unorm_srgb)
+			convert_subresource_bc7(_SubresourceInfo, _Source, _DestinationFormat, _pDestination, _FlipVertically);
+			break;
+		}
+
+		case surface::bc6h_typeless:
+		case surface::bc6h_uf16:
+		case surface::bc6h_sf16:
+		{
+			// IIRC input is x16b16g16r16
+			oTHROW(operation_not_supported, "bc6h compression not yet integrated");
+			break;
+		}
+
+		default:
+		{
+			if (_SubresourceInfo.format == _DestinationFormat)
+				copy(_SubresourceInfo, _Source, _pDestination, false);
+			else
+			{
+				pixel_convert cv = get_pixel_convert(_SubresourceInfo.format, _DestinationFormat);
+				convert_subresource(cv, _SubresourceInfo, _Source, _DestinationFormat, _pDestination, _FlipVertically);
+			}
+		}
 	}
 }
 

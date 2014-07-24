@@ -34,6 +34,7 @@
 	oOUROBOROS_EXTERNAL("Ouroboros", "", "http://code.google.com/p/oooii/", "http://opensource.org/licenses/mit-license.php", "") \
 	oOUROBOROS_EXTERNAL("bullet", "v2.82", "http://bulletphysics.org/wordpress/", "https://code.google.com/p/bullet/source/browse/tags/bullet-2.82/BulletLicense.txt", "vectormath lib only.") \
 	oOUROBOROS_EXTERNAL("calfaq", "", "http://www.tondering.dk/claus/calendar.html", "http://www.boost.org/LICENSE_1_0.txt", "") \
+	oOUROBOROS_EXTERNAL("ispc_texcomp", "r2", "https://software.intel.com/en-us/articles/fast-ispc-texture-compressor-update", "https://software.intel.com/en-us/articles/fast-ispc-texture-compressor-update", "") \
 	oOUROBOROS_EXTERNAL("libjpegTurbo", "Version 8b", "http://libpng.sourceforge.net/index.html", "http://sourceforge.net/p/libjpeg-turbo/code/HEAD/tree/trunk/README-turbo.txt", "") \
 	oOUROBOROS_EXTERNAL("libpng", "v1.6.6", "http://libpng.sourceforge.net/index.html", "http://sourceforge.net/p/libpng/code/ci/master/tree/LICENSE", "") \
 	oOUROBOROS_EXTERNAL("lzma", "v9.20", "http://www.7-zip.org/sdk.html", "http://www.7-zip.org/sdk.html", "") \

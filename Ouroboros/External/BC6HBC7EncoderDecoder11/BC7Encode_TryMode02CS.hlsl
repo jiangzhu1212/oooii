@@ -1,1 +1,0 @@
-#include "BC7Encode.h"

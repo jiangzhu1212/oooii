@@ -1,1 +1,0 @@
-#include "BC6HEncode.h"
