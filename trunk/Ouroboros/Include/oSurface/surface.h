@@ -98,7 +98,7 @@
 namespace ouro {
 	namespace surface {
 
-oDECLARE_SMALL_ENUM(format, uchar)
+enum format : uchar
 {
 	unknown,
 	r32g32b32a32_typeless,
@@ -219,7 +219,13 @@ oDECLARE_SMALL_ENUM(format, uchar)
 
 	// formats below here are not currently directly loadable to directx.
 	r8g8b8_unorm,
+	r8g8b8_unorm_srgb,
 	b8g8r8_unorm,
+	b8g8r8_unorm_srgb,
+	a8b8g8r8_unorm,
+	a8b8g8r8_unorm_srgb,
+	x8b8g8r8_unorm,
+	x8b8g8r8_unorm_srgb,
 
 	// multi-surface yuv formats (for emulation ahead of hw and for more robust 
 	// compression); also not currently directly loadable to directx.
@@ -235,7 +241,7 @@ oDECLARE_SMALL_ENUM(format, uchar)
 	format_count,
 };
 
-oDECLARE_SMALL_ENUM(layout, uchar)
+enum layout : uchar
 {
 	// image: no mip chain, so RowSize == RowPitch
 	// tight: mips are right after each other, the naive/initial thing a person
@@ -277,7 +283,7 @@ oDECLARE_SMALL_ENUM(layout, uchar)
 };
 
 namespace cube_face
-{ oDECLARE_SMALL_ENUM(value, uchar) {
+{ enum value : uchar {
 
 	posx,
 	negx,
