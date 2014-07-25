@@ -87,7 +87,72 @@ std::shared_ptr<char> encode_bmp(const buffer* _pBuffer
 	, const alpha_option::value& _Option
 	, const compression::value& _Compression)
 {
-	throw std::exception("bmp encode unsupported");
+	auto info = _pBuffer->get_info();
+
+	oCHECK(info.format == surface::b8g8r8a8_unorm || info.format == surface::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
+
+	const uint ElementSize = surface::element_size(info.format);
+	const uint UnalignedPitch = ElementSize * info.dimensions.x;
+	const uint AlignedPitch = byte_align(UnalignedPitch, 4);
+	const uint BufferSize = AlignedPitch * info.dimensions.y;
+
+	const uint bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO);
+	const uint bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + BufferSize;
+
+	void* p = malloc(bfSize);
+	std::shared_ptr<char> buffer((char*)p, free);
+	if (_pSize)
+		*_pSize = bfSize;
+
+	BITMAPFILEHEADER* bfh = (BITMAPFILEHEADER*)p;
+	BITMAPINFO* bmi = (BITMAPINFO*)&bfh[1];
+	void* bits = &bmi[1];
+
+	bfh->bfType = 0x4d42; // 'BM'
+	bfh->bfReserved1 = 0;
+	bfh->bfReserved2 = 0;
+	bfh->bfSize = bfSize;
+	bfh->bfOffBits = bfOffBits;
+	
+	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi->bmiHeader.biWidth = info.dimensions.x;
+	bmi->bmiHeader.biHeight = info.dimensions.y;
+	bmi->bmiHeader.biPlanes = 1;
+	bmi->bmiHeader.biBitCount = info.format == surface::b8g8r8a8_unorm ? 32 : 24;
+	bmi->bmiHeader.biCompression = 0; // BI_RGB
+	bmi->bmiHeader.biSizeImage = BufferSize;
+	bmi->bmiHeader.biXPelsPerMeter = 0x0ec4;
+	bmi->bmiHeader.biYPelsPerMeter = 0x0ec4;
+	bmi->bmiHeader.biClrUsed = 0;
+	bmi->bmiHeader.biClrImportant = 0;
+	bmi->bmiColors[0].rgbBlue = 0;
+	bmi->bmiColors[0].rgbGreen = 0;
+	bmi->bmiColors[0].rgbRed = 0;
+	bmi->bmiColors[0].rgbReserved = 0;
+
+	shared_lock lock(*_pBuffer);
+	
+	uint Padding = AlignedPitch - UnalignedPitch;
+
+	for (int y = 0, y1 = info.dimensions.y-1; y < info.dimensions.y; y++, y1--)
+	{
+		uchar* scanline = (uchar*)byte_add(bits, y * AlignedPitch);
+		const uchar* src = (const uchar*)byte_add(lock.mapped.data, y1 * lock.mapped.row_pitch);
+		for (uint x = 0; x < UnalignedPitch; x += ElementSize)
+		{
+			*scanline++ = src[0];
+			*scanline++ = src[1];
+			*scanline++ = src[2];
+			if (bmi->bmiHeader.biBitCount == 32)
+				*scanline++ = src[3];
+			src += (bmi->bmiHeader.biBitCount >> 3);
+		}
+
+		for (uint x = UnalignedPitch; x < AlignedPitch; x++)
+			*scanline = 0;
+	}
+
+	return buffer;
 }
 
 std::shared_ptr<buffer> decode_bmp(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)

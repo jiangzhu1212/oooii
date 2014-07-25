@@ -90,7 +90,7 @@ static oooii_jpeg_memory_alloc s_jalloc =
 	o_init,
 	o_term
 };
-#if 0
+
 static J_COLOR_SPACE to_jcs(format _Format, int* _NumComponens)
 {
 	switch (_Format)
@@ -104,7 +104,7 @@ static J_COLOR_SPACE to_jcs(format _Format, int* _NumComponens)
 	}
 	return JCS_UNKNOWN;
 }
-#endif
+
 static format from_jcs(J_COLOR_SPACE _ColorSpace)
 {
 	switch (_ColorSpace)
@@ -145,7 +145,6 @@ std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
 	, const alpha_option::value& _Option
 	, const compression::value& _Compression)
 {
-#if 0
 	jpeg_compress_struct cinfo;
 	jpeg_error_mgr jerr;
 	cinfo.err = jpeg_std_error(&jerr);
@@ -197,14 +196,10 @@ std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
 	if (_pSize)
 		*_pSize = CompressedSize;
 	return buffer;
-#else
-	throw std::exception("jpg code disabled until freeimage can be removed or reconciled with ver 80");
-#endif
 }
 
 std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
-#if 0
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 	cinfo.err = jpeg_std_error(&jerr);
@@ -257,9 +252,6 @@ std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, con
 
 	jpeg_finish_decompress(&cinfo);
 	return b;
-#else
-	throw std::exception("jpg code disabled until freeimage can be removed or reconciled with ver 80");
-#endif
 }
 
 	} // namespace surface
