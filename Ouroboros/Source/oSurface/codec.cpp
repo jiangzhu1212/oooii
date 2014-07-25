@@ -33,9 +33,9 @@ const char* as_string(const surface::file_format::value& _FileFormat)
 {
 	switch (_FileFormat)
 	{
-		case surface::file_format::png: "PNG";
-		case surface::file_format::jpg: "JPEG";
-		case surface::file_format::bmp: "BMP";
+		case surface::file_format::png: return "png";
+		case surface::file_format::jpg: return "jpeg";
+		case surface::file_format::bmp: return "bmp";
 		default: break;
 	}
 	return "?";

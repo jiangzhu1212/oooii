@@ -225,7 +225,7 @@ void convert_subresource(const subresource_info& _SubresourceInfo
 		default:
 		{
 			if (_SubresourceInfo.format == _DestinationFormat)
-				copy(_SubresourceInfo, _Source, _pDestination, false);
+				copy(_SubresourceInfo, _Source, _pDestination, _FlipVertically);
 			else
 			{
 				pixel_convert cv = get_pixel_convert(_SubresourceInfo.format, _DestinationFormat);
