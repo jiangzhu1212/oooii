@@ -177,7 +177,6 @@ scoped_allocation encode_jpg(const texel_buffer& b
 	cinfo.image_height = si.dimensions.y;
 	cinfo.in_color_space = to_jcs(si.format, &cinfo.input_components);
 	
-	// todo: respect compression specification
 	jpeg_set_defaults(&cinfo);
 
 	int quality = 100;

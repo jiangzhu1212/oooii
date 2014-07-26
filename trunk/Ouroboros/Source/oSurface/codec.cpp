@@ -27,25 +27,10 @@
 #include <oBase/memory.h>
 #include <oBase/string.h>
 
-namespace ouro {
-
-const char* as_string(const surface::file_format& ff)
-{
-	switch (ff)
-	{
-		case surface::file_format::bmp: return "bmp";
-		case surface::file_format::jpg: return "jpeg";
-		case surface::file_format::png: return "png";
-		case surface::file_format::tga: return "tga";
-		default: break;
-	}
-	return "?";
-}
-
-	namespace surface {
+namespace ouro { namespace surface {
 
 // add format extension to this list and it will propagate to all the apis below
-#define FOREACH_EXT(macro) macro(bmp) macro(jpg) macro(png) macro(tga)
+#define FOREACH_EXT(macro) macro(bmp) macro(dds) macro(jpg) macro(png) macro(tga)
 
 // _____________________________________________________________________________
 // Boilerplate (don't use directly, they're registered with the functions below)
@@ -60,6 +45,7 @@ const char* as_string(const surface::file_format& ff)
 #define GET_INFO(ext) case file_format::##ext: return get_info_##ext(buffer, size);
 #define ENCODE(ext) case file_format::##ext: return encode_##ext(b, option, compression);
 #define DECODE(ext) case file_format::##ext: return decode_##ext(buffer, size, option, layout);
+#define AS_STRING(ext) case surface::file_format::##ext: return #ext;
 
 FOREACH_EXT(DECLARE_CODEC)
 
@@ -145,5 +131,16 @@ texel_buffer decode(const void* buffer, size_t size, const alpha_option& option,
 	throw std::exception("unknown image encoding");
 }
 
-	} // namespace surface
-} // namespace ouro
+	}
+
+const char* as_string(const surface::file_format& ff)
+{
+	switch (ff)
+	{
+		FOREACH_EXT(AS_STRING)
+		default: break;
+	}
+	return "?";
+}
+
+}
