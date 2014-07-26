@@ -71,7 +71,7 @@ struct BITMAPINFO
 info get_info_bmp(const void* _pBuffer, size_t _BufferSize)
 {
 	if (_BufferSize < 2 || memcmp(_pBuffer, "BM", 2))
-		throw std::invalid_argument("the buffer is not a bmp");
+		return info();
 
 	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)_pBuffer;
 	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
@@ -157,14 +157,12 @@ std::shared_ptr<char> encode_bmp(const buffer* _pBuffer
 
 std::shared_ptr<buffer> decode_bmp(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
-	if (_BufferSize < 2 || memcmp(_pBuffer, "BM", 2))
-		throw std::invalid_argument("the buffer is not a bmp");
-
 	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)_pBuffer;
 	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
 	const void* bits = &bmi[1];
 
 	info si = get_info_bmp(_pBuffer, _BufferSize);
+	oCHECK(si.format != unknown, "invalid bmp");
 	info dsi = si;
 	dsi.layout = _Layout;
 	const_mapped_subresource msr;
@@ -172,19 +170,7 @@ std::shared_ptr<buffer> decode_bmp(const void* _pBuffer, size_t _BufferSize, con
 	msr.depth_pitch = bmi->bmiHeader.biSizeImage;
 	msr.row_pitch = msr.depth_pitch / bmi->bmiHeader.biHeight;
 
-	switch (_Option)
-	{
-		case alpha_option::force_alpha:
-			if (si.format == b8g8r8_unorm)
-				dsi.format = b8g8r8a8_unorm;
-			break;
-		case alpha_option::force_no_alpha:
-			if (si.format == b8g8r8a8_unorm)
-				dsi.format = b8g8r8_unorm;
-			break;
-		default:
-			break;
-	}
+	dsi.format = alpha_option_format(si.format, _Option);
 
 	std::shared_ptr<buffer> s = buffer::make(dsi);
 	subresource_info sri = subresource(si, 0);

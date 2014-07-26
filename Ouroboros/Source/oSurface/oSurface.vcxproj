@@ -34,6 +34,7 @@
     </ClCompile>
     <ClCompile Include="resize.cpp" />
     <ClCompile Include="surface.cpp" />
+    <ClCompile Include="tga.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oSurface\all.h" />

@@ -39,6 +39,9 @@
     <ClCompile Include="bmp.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="tga.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
