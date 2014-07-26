@@ -47,12 +47,12 @@ void dont_output_message(j_common_ptr cinfo)
 
 void* o_get_small(j_common_ptr cinfo, size_t sizeofobject)
 {
-	return malloc(sizeofobject);
+	return default_allocate(sizeofobject, 0);
 }
 
 void o_free_small(j_common_ptr cinfo, void* object, size_t sizeofobject)
 {
-	free(object);
+	default_deallocate(object);
 }
 
 void* o_get_large(j_common_ptr cinfo, size_t sizeofobject)
@@ -204,7 +204,10 @@ scoped_allocation encode_jpg(const texel_buffer& b
 	}
 
 	jpeg_finish_compress(&cinfo);
-	return scoped_allocation(pCompressed, CompressedSize, free);
+	scoped_allocation a(pCompressed, CompressedSize, free);
+	pCompressed = nullptr; // so the finally doesn't kill it
+
+	return a;
 }
 
 texel_buffer decode_jpg(const void* buffer, size_t size, const alpha_option& option, const layout& layout)

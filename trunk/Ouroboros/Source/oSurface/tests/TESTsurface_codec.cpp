@@ -110,7 +110,7 @@ void TESTsurface_codec(test_services& _Services)
 	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::tga, 1.0f);
 	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::bmp, 1.0f);
 	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::png, 1.0f);
-	//compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::jpg, 4.0f);
+	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::jpg, 4.0f);
 }
 
 	} // namespace tests
