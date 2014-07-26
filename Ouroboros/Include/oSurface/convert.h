@@ -30,31 +30,29 @@
 
 #include <oSurface/surface.h>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
 // Converts the specified subresource into the destination subresource. This assumes
 // all memory has been properly allocated. If a conversion is not supported this
 // throws an exception.
-void convert_subresource(const subresource_info& _SubresourceInfo
-	, const const_mapped_subresource& _Source
-	, format _DestinationFormat
-	, mapped_subresource* _pDestination
-	, const copy_option::value& option = copy_option::none);
+void convert_subresource(const subresource_info& i
+	, const const_mapped_subresource& src
+	, format dst_format
+	, const mapped_subresource& dst
+	, const copy_option& option = copy_option::none);
 
 // Converts the specified source into the specified destination. This assumes
 // all memory has been properly allocated. If a conversion is not supported this
 // throws an exception.
-void convert(const info& _SourceInfo
-	, const const_mapped_subresource& _Source
-	, const info& _DestinationInfo
-	, mapped_subresource* _pDestination
-	, const copy_option::value& option = copy_option::none);
+void convert(const info& src_info
+	, const const_mapped_subresource& src
+	, const info& dst_info
+	, const mapped_subresource& dst
+	, const copy_option& option = copy_option::none);
 
 // This is a conversion in-place for RGB v. BGR and similar permutations.
-void convert_swizzle(const info& _SurfaceInfo, surface::format _NewFormat, mapped_subresource* _pSurface);
+void convert_swizzle(const info& i, const format& new_format, const mapped_subresource& mapped);
 
-	} // namespace surface
-} // namespace ouro
+}}
 
 #endif

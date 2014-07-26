@@ -30,15 +30,14 @@
 
 #include <ispc_texcomp.h>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
-typedef void (*pixel_convert)(const void* _pSourcePixel, void* _pDestinationPixel);
+typedef void (*pixel_convert)(const void* src_pixel, void* dst_pixel);
 
 static void r8g8b8a8_unorm_to_r8g8b8_unorm(const void* a, void* b)
 {
-	const unsigned char* aa = (const unsigned char*)a;
-	unsigned char* bb = (unsigned char*)b;
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
@@ -46,8 +45,8 @@ static void r8g8b8a8_unorm_to_r8g8b8_unorm(const void* a, void* b)
 
 static void r8g8b8_unorm_to_r8g8b8a8_unorm(const void* a, void* b)
 {
-	const unsigned char* aa = (const unsigned char*)a;
-	unsigned char* bb = (unsigned char*)b;
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
@@ -56,8 +55,8 @@ static void r8g8b8_unorm_to_r8g8b8a8_unorm(const void* a, void* b)
 
 static void b8g8r8a8_unorm_to_b8g8r8_unorm(const void* a, void* b)
 {
-	const unsigned char* aa = (const unsigned char*)a;
-	unsigned char* bb = (unsigned char*)b;
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
@@ -65,8 +64,8 @@ static void b8g8r8a8_unorm_to_b8g8r8_unorm(const void* a, void* b)
 
 static void b8g8r8_unorm_to_b8g8r8a8_unorm(const void* a, void* b)
 {
-	const unsigned char* aa = (const unsigned char*)a;
-	unsigned char* bb = (unsigned char*)b;
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
 	*bb++ = *aa++;
@@ -75,8 +74,8 @@ static void b8g8r8_unorm_to_b8g8r8a8_unorm(const void* a, void* b)
 
 static void swap_red_blue_r8g8b8_unorm(const void* a, void* b)
 {
-	const unsigned char* aa = (const unsigned char*)a;
-	unsigned char* bb = (unsigned char*)b;
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
 	bb[2] = aa[0];
 	bb[1] = aa[1];
 	bb[0] = aa[2];
@@ -84,18 +83,18 @@ static void swap_red_blue_r8g8b8_unorm(const void* a, void* b)
 
 static void swap_red_blue_r8g8b8a8_unorm(const void* a, void* b)
 {
-	const unsigned char* aa = (const unsigned char*)a;
-	unsigned char* bb = (unsigned char*)b;
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
 	bb[2] = aa[0];
 	bb[1] = aa[1];
 	bb[0] = aa[2];
 	bb[3] = aa[3];
 }
 
-pixel_convert get_pixel_convert(format _SourceFormat, format _DestinationFormat)
+pixel_convert get_pixel_convert(format srcfmt, format dstfmt)
 {
 	#define IO(s,d) (((s)<<16) | (d))
-	int sel = IO(_SourceFormat, _DestinationFormat);
+	int sel = IO(srcfmt, dstfmt);
 	switch (sel)
 	{
 		case IO(r8g8b8a8_unorm, r8g8b8_unorm): return r8g8b8a8_unorm_to_r8g8b8_unorm;
@@ -109,7 +108,7 @@ pixel_convert get_pixel_convert(format _SourceFormat, format _DestinationFormat)
 		case IO(r8g8b8a8_unorm, b8g8r8a8_unorm): return swap_red_blue_r8g8b8a8_unorm;
 		default: break;
 	}
-	throw std::invalid_argument(formatf("%s -> %s not supported", as_string(_SourceFormat), as_string(_DestinationFormat)));
+	throw std::invalid_argument(formatf("%s -> %s not supported", as_string(srcfmt), as_string(dstfmt)));
 	#undef IO
 }
 
@@ -118,98 +117,98 @@ static void convert_subresource_scanline(int _HorizontalElementCount
 	, pixel_convert _Convert
 	, int SourceElementSize
 	, int DestinationElementSize
-	, const const_mapped_subresource& _Source
-	, mapped_subresource* _pDestination)
+	, const const_mapped_subresource& src
+	, const mapped_subresource& dst)
 {
-	const unsigned char* srow = (const unsigned char*)_Source.data + (_Source.row_pitch * _NthScanline);
-	unsigned char* drow = (unsigned char*)_pDestination->data + (_pDestination->row_pitch * _NthScanline);
+	const uchar* srow = (const uchar*)src.data + (src.row_pitch * _NthScanline);
+	uchar* drow = (uchar*)dst.data + (dst.row_pitch * _NthScanline);
 
 	for (int x = 0; x < _HorizontalElementCount; x++)
 	{
-		const unsigned char* spixel = srow + (SourceElementSize * x);
-		unsigned char* dpixel = drow + (DestinationElementSize * x);
+		const uchar* spixel = srow + (SourceElementSize * x);
+		uchar* dpixel = drow + (DestinationElementSize * x);
 		_Convert(spixel, dpixel);
 	}
 }
 
-static void convert_subresource(pixel_convert _Convert
-	, const subresource_info& _SubresourceInfo
-	, const const_mapped_subresource& _Source
-	, format _DestinationFormat
-	, mapped_subresource* _pDestination
-	, const copy_option::value& option)
+static void convert_subresource(pixel_convert convert
+	, const subresource_info& i
+	, const const_mapped_subresource& src
+	, format dst_format
+	, const mapped_subresource& dst
+	, const copy_option& option)
 {
-	const int selSize = element_size(_SubresourceInfo.format);
-	const int delSize = element_size(_DestinationFormat);
-	if (option)
-		for (int y = _SubresourceInfo.dimensions.y-1; y >= 0; y--)
-			convert_subresource_scanline(_SubresourceInfo.dimensions.x, y, _Convert, selSize, delSize, _Source, _pDestination);
+	const int selSize = element_size(i.format);
+	const int delSize = element_size(dst_format);
+	if (option == copy_option::flip_vertically)
+		for (int y = i.dimensions.y-1; y >= 0; y--)
+			convert_subresource_scanline(i.dimensions.x, y, convert, selSize, delSize, src, dst);
 	else
-		for (int y = 0; y < _SubresourceInfo.dimensions.y; y++)
-			convert_subresource_scanline(_SubresourceInfo.dimensions.x, y, _Convert, selSize, delSize, _Source, _pDestination);
+		for (int y = 0; y < i.dimensions.y; y++)
+			convert_subresource_scanline(i.dimensions.x, y, convert, selSize, delSize, src, dst);
 }
 
-static void convert_subresource_bc7(const subresource_info& _SubresourceInfo
-	, const const_mapped_subresource& _Source
-	, format _DestinationFormat
-	, mapped_subresource* _pDestination
-	, const copy_option::value& option)
+static void convert_subresource_bc7(const subresource_info& i
+	, const const_mapped_subresource& src
+	, format dst_format
+	, const mapped_subresource& dst
+	, const copy_option& option)
 {
-	oCHECK_ARG((_SubresourceInfo.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC7 compression");
-	oCHECK_ARG((_SubresourceInfo.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC7 compression");
+	oCHECK_ARG((i.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC7 compression");
+	oCHECK_ARG((i.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC7 compression");
 	
-	const uint BCRowPitch = (_SubresourceInfo.dimensions.x/4) * 8;
+	const uint BCRowPitch = (i.dimensions.x/4) * 8;
 
-	oCHECK(!option, "cannot flip vertically during BC7 compression");
-	oCHECK(_Source.row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
-	oCHECK(_pDestination->row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
+	oCHECK(option == copy_option::none, "cannot flip vertically during BC7 compression");
+	oCHECK(src.row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
+	oCHECK(dst.row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
 
 	bc7_enc_settings settings;
 	GetProfile_fast(&settings);
-	CompressBlocksBC7((const rgba_surface*)_Source.data, (uint8_t*)_pDestination->data, &settings);
+	CompressBlocksBC7((const rgba_surface*)src.data, (uint8_t*)dst.data, &settings);
 }
 
-/*static*/ void convert_subresource_bc6h(const subresource_info& _SubresourceInfo
-	, const const_mapped_subresource& _Source
-	, format _DestinationFormat
-	, mapped_subresource* _pDestination
-	, const copy_option::value& option)
+/*static*/ void convert_subresource_bc6h(const subresource_info& i
+	, const const_mapped_subresource& src
+	, format dst_format
+	, const mapped_subresource& dst
+	, const copy_option& option)
 {
-	oCHECK_ARG((_SubresourceInfo.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC6h compression");
-	oCHECK_ARG((_SubresourceInfo.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC6h compression");
+	oCHECK_ARG((i.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC6h compression");
+	oCHECK_ARG((i.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC6h compression");
 
-	const uint BCRowPitch = (_SubresourceInfo.dimensions.x/4) * 8;
+	const uint BCRowPitch = (i.dimensions.x/4) * 8;
 
-	oCHECK(!option, "cannot flip vertically during BC6h compression");
-	oCHECK(_Source.row_pitch == BCRowPitch, "layout must be 'image' for a BC6h compression destination buffer");
-	oCHECK(_pDestination->row_pitch == BCRowPitch, "layout must be 'image' for a BC6h compression destination buffer");
+	oCHECK(option == copy_option::none, "cannot flip vertically during BC6h compression");
+	oCHECK(src.row_pitch == BCRowPitch, "layout must be 'image' for a BC6h compression destination buffer");
+	oCHECK(dst.row_pitch == BCRowPitch, "layout must be 'image' for a BC6h compression destination buffer");
 
 	bc6h_enc_settings settings;
 	GetProfile_bc6h_fast(&settings);
-	CompressBlocksBC6H((const rgba_surface*)_Source.data, (uint8_t*)_pDestination->data, &settings);
+	CompressBlocksBC6H((const rgba_surface*)src.data, (uint8_t*)dst.data, &settings);
 }
 
-void convert_subresource(const subresource_info& _SubresourceInfo
-	, const const_mapped_subresource& _Source
-	, format _DestinationFormat
-	, mapped_subresource* _pDestination
-	, const copy_option::value& option)
+void convert_subresource(const subresource_info& i
+	, const const_mapped_subresource& src
+	, format dst_format
+	, const mapped_subresource& dst
+	, const copy_option& option)
 {
-	#define oCHECK_BC7(type) oCHECK_ARG(_SubresourceInfo.format == surface::a8b8g8r8_##type || _SubresourceInfo.format == surface::x8b8g8r8_##type, "source must be a8b8g8r8_" #type " or x8b8g8r8_" #type " for conversion to bc7_" #type);
-	#define oCHECK_BC6h(type) oCHECK_ARG(_SubresourceInfo.format == surface::x16b16g16r16_##type, "source must be a8b8g8r8_" #type " for conversion to bc7_" #type);
-	switch (_DestinationFormat)
+	#define oCHECK_BC7(type) oCHECK_ARG(i.format == surface::a8b8g8r8_##type || i.format == surface::x8b8g8r8_##type, "source must be a8b8g8r8_" #type " or x8b8g8r8_" #type " for conversion to bc7_" #type);
+	#define oCHECK_BC6h(type) oCHECK_ARG(i.format == surface::x16b16g16r16_##type, "source must be a8b8g8r8_" #type " for conversion to bc7_" #type);
+	switch (dst_format)
 	{
 		case surface::bc7_unorm:
 		{
 			oCHECK_BC7(unorm)
-			convert_subresource_bc7(_SubresourceInfo, _Source, _DestinationFormat, _pDestination, option);
+			convert_subresource_bc7(i, src, dst_format, dst, option);
 			break;
 		}
 
 		case surface::bc7_unorm_srgb:
 		{
 			oCHECK_BC7(unorm_srgb)
-			convert_subresource_bc7(_SubresourceInfo, _Source, _DestinationFormat, _pDestination, option);
+			convert_subresource_bc7(i, src, dst_format, dst, option);
 			break;
 		}
 
@@ -224,45 +223,45 @@ void convert_subresource(const subresource_info& _SubresourceInfo
 
 		default:
 		{
-			if (_SubresourceInfo.format == _DestinationFormat)
-				copy(_SubresourceInfo, _Source, _pDestination, option);
+			if (i.format == dst_format)
+				copy(i, src, dst, option);
 			else
 			{
-				pixel_convert cv = get_pixel_convert(_SubresourceInfo.format, _DestinationFormat);
-				convert_subresource(cv, _SubresourceInfo, _Source, _DestinationFormat, _pDestination, option);
+				pixel_convert cv = get_pixel_convert(i.format, dst_format);
+				convert_subresource(cv, i, src, dst_format, dst, option);
 			}
 		}
 	}
 }
 
-void convert(const info& _SourceInfo
-	, const const_mapped_subresource& _Source
-	, const info& _DestinationInfo
-	, mapped_subresource* _pDestination
-	, const copy_option::value& option)
+void convert(const info& src_info
+	, const const_mapped_subresource& src
+	, const info& dst_info
+	, const mapped_subresource& dst
+	, const copy_option& option)
 {
-	if (any(_SourceInfo.dimensions != _DestinationInfo.dimensions))
+	if (any(src_info.dimensions != dst_info.dimensions))
 		throw std::invalid_argument("dimensions must be the same");
-	if (_SourceInfo.array_size != _SourceInfo.array_size)
+	if (src_info.array_size != src_info.array_size)
 		throw std::invalid_argument("array_size mismatch");
 
-	pixel_convert cv = get_pixel_convert(_SourceInfo.format, _DestinationInfo.format);
+	pixel_convert cv = get_pixel_convert(src_info.format, dst_info.format);
 
-	const int nSubresources = surface::num_subresources(_SourceInfo);
+	const int nSubresources = surface::num_subresources(src_info);
 	for (int subresource = 0; subresource < nSubresources; subresource++)
 	{
-		auto srcSri = surface::subresource(_SourceInfo, subresource);
-		auto dstSri = surface::subresource(_DestinationInfo, subresource);
+		auto srcSri = surface::subresource(src_info, subresource);
+		auto dstSri = surface::subresource(dst_info, subresource);
 
 		if (any(srcSri.dimensions != dstSri.dimensions))
 			throw std::invalid_argument("dimensions mismatch");
 
-		const_mapped_subresource Source = get_const_mapped_subresource(_SourceInfo, subresource, 0, _Source.data);
-		mapped_subresource Destination = get_mapped_subresource(_DestinationInfo, subresource, 0, _pDestination->data);
+		const_mapped_subresource Source = get_const_mapped_subresource(src_info, subresource, 0, src.data);
+		mapped_subresource Destination = get_mapped_subresource(dst_info, subresource, 0, dst.data);
 
 		for (int slice = 0; slice < srcSri.dimensions.z; slice++)
 		{
-			convert_subresource(cv, srcSri, Source, _DestinationInfo.format, &Destination, option);
+			convert_subresource(cv, srcSri, Source, dst_info.format, Destination, option);
 
 			Source.data = byte_add(Source.data, Source.depth_pitch);
 			Destination.data = byte_add(Destination.data, Source.depth_pitch);
@@ -274,15 +273,15 @@ typedef void (*pixel_swizzle)(void* _pPixel);
 
 static void sw_red_blue(void* _pPixel)
 {
-	unsigned char* r = (unsigned char*)_pPixel;
-	unsigned char* b = r + 2;
+	uchar* r = (uchar*)_pPixel;
+	uchar* b = r + 2;
 	std::swap(*r, *b);
 }
 
-pixel_swizzle get_pixel_swizzle(surface::format _SourceFormat, surface::format _DestinationFormat)
+pixel_swizzle get_pixel_swizzle(surface::format src_format, surface::format dst_format)
 {
 	#define IO(s,d) (((s)<<16) | (d))
-	int sel = IO(_SourceFormat, _DestinationFormat);
+	int sel = IO(src_format, dst_format);
 	switch (sel)
 	{
 		case IO(r8g8b8_unorm, b8g8r8_unorm):
@@ -291,15 +290,14 @@ pixel_swizzle get_pixel_swizzle(surface::format _SourceFormat, surface::format _
 		case IO(b8g8r8a8_unorm, r8g8b8a8_unorm): return sw_red_blue;
 		default: break;
 	}
-	throw std::invalid_argument(formatf("%s -> %s conversion not supported", as_string(_SourceFormat), as_string(_DestinationFormat)));
+	throw std::invalid_argument(formatf("%s -> %s conversion not supported", as_string(src_format), as_string(dst_format)));
 	#undef IO
 }
 
-void convert_swizzle(const info& _SurfaceInfo, surface::format _NewFormat, mapped_subresource* _pSurface)
+void convert_swizzle(const info& i, const surface::format& new_format, const mapped_subresource& mapped)
 {
-	pixel_swizzle sw = get_pixel_swizzle(_SurfaceInfo.format, _NewFormat);
-	surface::enumerate_pixels(_SurfaceInfo, *_pSurface, sw);
+	pixel_swizzle sw = get_pixel_swizzle(i.format, new_format);
+	surface::enumerate_pixels(i, mapped, sw);
 }
 
-	} // namespace surface
-} // namespace ouro
+}}

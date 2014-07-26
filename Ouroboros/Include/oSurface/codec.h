@@ -22,8 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Describes encoding and decoding functions (basically file formats) for 
-// surfaces.
+// Facade for encoding and decoding several image formats
 #pragma once
 #ifndef oSurface_codec_h
 #define oSurface_codec_h
@@ -31,66 +30,57 @@
 #include <oSurface/buffer.h>
 #include <oSurface/surface.h>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
-namespace file_format
-{	enum value {
-
+enum class file_format : uchar
+{
 	unknown,
 	bmp,
 	jpg,
 	png,
 	tga,
+};
 
-};}
-
-namespace compression
-{	enum value {
-
+enum class compression : uchar
+{
 	none,
   low,
   medium,
   high,
+};
 
-};}
-
-namespace alpha_option
-{	enum value {
-
+enum class alpha_option : uchar
+{
 	preserve,
 	force_alpha,
 	force_no_alpha,
-
-};}
+};
 
 // returns the input format with the specified option applied
-format alpha_option_format(const format& fmt, const alpha_option::value& option);
+format alpha_option_format(const format& fmt, const alpha_option& option);
 
-file_format::value get_file_format(const char* path);
+// checks the file extension
+file_format get_file_format(const char* path);
 
-// Analyzes the buffer to determine its file format
-file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize);
+// checks the first few bytes/header info
+file_format get_file_format(const void* buffer, size_t size);
 
-// Returns the info from a buffer formatted as a file in memory
-// If the buffer is not recognized the returned info's format will be 
-// surface::unknown.
-info get_info(const void* _pBuffer, size_t _BufferSize);
+// converts the first few bytes of a supported format into a surface::info
+// if not recognized the returned format will be surface::unknown
+info get_info(const void* buffer, size_t size);
 
-// Returns a buffer ready to be written to disk in the specified format.
-std::shared_ptr<char> encode(const buffer& _Buffer
-	, size_t* _pSize
-	, const file_format::value& _FileFormat
-	, const alpha_option::value& _Option = alpha_option::preserve
-	, const compression::value& _Compression = compression::low);
+// returns a buffer ready to be written to disk in the specified format.
+scoped_allocation encode(const texel_buffer& b
+	, const file_format& fmt
+	, const alpha_option& option = alpha_option::preserve
+	, const compression& compression = compression::low);
 
 // Parses the in-memory formatted buffer into a surface.
-buffer decode(const void* _pBuffer
-	, size_t _BufferSize
-	, const alpha_option::value& _Option = alpha_option::preserve
-	, const layout& _Layout = image);
+texel_buffer decode(const void* buffer
+	, size_t size
+	, const alpha_option& option = alpha_option::preserve
+	, const layout& layout = image);
 
-	} // namespace surface
-} // namespace ouro
+}}
 
 #endif

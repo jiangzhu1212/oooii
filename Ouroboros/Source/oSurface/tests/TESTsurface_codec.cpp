@@ -37,7 +37,7 @@ namespace ouro {
 
 static bool kSaveToDesktop = false;
 
-static void compare_checkboards(const int2& dimensions, surface::format format, surface::file_format::value file_format, float max_rms)
+static void compare_checkboards(const int2& dimensions, const surface::format& format, const surface::file_format& file_format, float max_rms)
 {
 	oTRACE("testing codec %s -> %s", as_string(format), as_string(file_format));
 
@@ -46,7 +46,7 @@ static void compare_checkboards(const int2& dimensions, surface::format format, 
 	si.format = format;
 	si.layout = surface::image;
 	si.dimensions = int3(dimensions, 1);
-	surface::buffer known(si);
+	surface::texel_buffer known(si);
 	size_t knownSize = known.size();
 	{
 		surface::lock_guard lock(known);
@@ -54,12 +54,11 @@ static void compare_checkboards(const int2& dimensions, surface::format format, 
 	}
 
 	size_t EncodedSize = 0;
-	std::shared_ptr<char> encoded;
+	scoped_allocation encoded;
 
 	{
 		scoped_timer("encode");
 		encoded = surface::encode(known
-			, &EncodedSize
 			, file_format
 			, surface::alpha_option::force_no_alpha
 			, surface::compression::none);
@@ -73,13 +72,13 @@ static void compare_checkboards(const int2& dimensions, surface::format format, 
 	{
 		mstring fname;
 		snprintf(fname, "encoded_from_known_%s.%s", as_string(file_format), as_string(file_format));
-		filesystem::save(filesystem::desktop_path() / path(fname), encoded.get(), EncodedSize);
+		filesystem::save(filesystem::desktop_path() / path(fname), encoded, encoded.size());
 	}
 
-	surface::buffer decoded;
+	surface::texel_buffer decoded;
 	{
 		scoped_timer("decode");
-		decoded = surface::decode(encoded.get(), EncodedSize, surface::alpha_option::force_alpha);
+		decoded = surface::decode(encoded, encoded.size(), surface::alpha_option::force_alpha);
 	}
 
 	{
@@ -92,13 +91,12 @@ static void compare_checkboards(const int2& dimensions, surface::format format, 
 		{
 			size_t Size = 0;
 			encoded = surface::encode(decoded
-				, &Size
 				, surface::file_format::bmp
 				, surface::alpha_option::force_no_alpha
 				, surface::compression::none);
 			mstring fname;
 			snprintf(fname, "encoded_from_decoded_%s.%s", as_string(file_format), as_string(file_format));
-			filesystem::save(filesystem::desktop_path() / path(fname), encoded.get(), Size);
+			filesystem::save(filesystem::desktop_path() / path(fname), encoded, encoded.size());
 		}
 
 		float rms = surface::calc_rms(known, decoded);

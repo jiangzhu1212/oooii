@@ -31,28 +31,23 @@
 
 #include <oSurface/surface.h>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
-namespace filter
-{	enum value {
-
+enum class filter : uchar
+{
 	point,
 	box,
 	triangle,
 	lanczos2, // sinc filter
 	lanczos3, // sharper than lancsos2, but adds slight ringing
-	filter_count,
 
-};}
+	count,
+};
 
-void resize(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, filter::value _Filter = filter::lanczos3);
+void resize(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, const filter& f = filter::lanczos3);
+void clip(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, int2 src_offset = int2(0, 0));
+void pad(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, int2 dst_offset = int2(0, 0));
 
-void clip(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _SourceOffset = int2(0, 0));
-
-void pad(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _DestinationOffset = int2(0, 0));
-
-	} // namespace surface
-} // namespace ouro
+}}
 
 #endif

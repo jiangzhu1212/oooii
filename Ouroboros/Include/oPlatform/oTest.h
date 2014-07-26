@@ -32,6 +32,7 @@
 #include <oPlatform/oSingleton.h> // @tony: Is it necessary to guarantee a test to be singular? If not this can take a step towards being cross-platform.
 #include <oBase/path.h>
 #include <oCore/process.h>
+#include <oSurface/buffer.h>
 
 namespace ouro { namespace surface { class buffer; } }
 
@@ -159,7 +160,7 @@ struct oTest : oProcessSingleton<oTest>
 	// policies for image comparisons. If so, _ColorChannelTolerance, 
 	// _MaxRMSError, and _DiffImageMultiplier can be overridden, else the default
 	// values specified here will be replaced with values from oTestManager::DESC.
-	bool TestImage(const ouro::surface::buffer& _TestImage
+	bool TestImage(const ouro::surface::texel_buffer& _TestImage
 		, const char* _GoldenImagePath
 		, const char* _FailedImagePath
 		, unsigned int _NthImage
@@ -168,7 +169,7 @@ struct oTest : oProcessSingleton<oTest>
 		, unsigned int _DiffImageMultiplier
 		, bool _OutputGoldenImage);
 
-	bool TestImage(const ouro::surface::buffer& _Buffer
+	bool TestImage(const ouro::surface::texel_buffer& _Buffer
 		, unsigned int _NthImage = 0
 		, int _ColorChannelTolerance = oDEFAULT
 		, float _MaxRMSError = -1.0f

@@ -868,34 +868,34 @@ mapped_subresource get_mapped_subresource(const info& _SurfaceInfo, int _Subreso
 	return (mapped_subresource&)msr;
 }
 
-void update(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, const copy_option::value& option)
+void update(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, const copy_option& option)
 {
 	int2 ByteDimensions;
 	mapped_subresource msr = get_mapped_subresource(_SurfaceInfo, _Subresource, _DepthIndex, _pDestinationSurface, &ByteDimensions);
 	memcpy2d(msr.data, msr.row_pitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y, option == copy_option::flip_vertically);
 }
 
-void copy(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, const copy_option::value& option)
+void copy(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, const copy_option& option)
 {
 	int2 ByteDimensions;
 	const_mapped_subresource msr = get_const_mapped_subresource(_SurfaceInfo, _Subresource, _DepthIndex, _pSourceSurface, &ByteDimensions);
 	memcpy2d(_pDestination, _DestinationRowPitch, msr.data, msr.row_pitch, ByteDimensions.x, ByteDimensions.y, option == copy_option::flip_vertically);
 }
 
-void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, const copy_option::value& option)
+void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, const mapped_subresource& _Destination, const copy_option& option)
 {
-	memcpy2d(_Destination->data, _Destination->row_pitch, _Source.data, _Source.row_pitch, _SurfaceInfo.dimensions.x*element_size(_SurfaceInfo.format), _SurfaceInfo.dimensions.y, option == copy_option::flip_vertically);
+	memcpy2d(_Destination.data, _Destination.row_pitch, _Source.data, _Source.row_pitch, _SurfaceInfo.dimensions.x*element_size(_SurfaceInfo.format), _SurfaceInfo.dimensions.y, option == copy_option::flip_vertically);
 }
 
-void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, const copy_option::value& option)
+void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, const mapped_subresource& _Destination, const copy_option& option)
 {
-	memcpy2d(_Destination->data, _Destination->row_pitch, _Source.data, _Source.row_pitch, _SubresourceInfo.dimensions.x*element_size(_SubresourceInfo.format), _SubresourceInfo.dimensions.y, option == copy_option::flip_vertically);
+	memcpy2d(_Destination.data, _Destination.row_pitch, _Source.data, _Source.row_pitch, _SubresourceInfo.dimensions.x*element_size(_SubresourceInfo.format), _SubresourceInfo.dimensions.y, option == copy_option::flip_vertically);
 }
 
-void put(const subresource_info& _SubresourceInfo, mapped_subresource* _Destination, const int2& _Coordinate, color _Color)
+void put(const subresource_info& _SubresourceInfo, const mapped_subresource& _Destination, const int2& _Coordinate, color _Color)
 {
 	const int elSize = element_size(format(_SubresourceInfo.format));
-	uchar* p = (uchar*)_Destination->data + (_Coordinate.y * _Destination->row_pitch) + (_Coordinate.x * elSize);
+	uchar* p = (uchar*)_Destination.data + (_Coordinate.y * _Destination.row_pitch) + (_Coordinate.x * elSize);
 	int rr, gg, bb, aa;
 	_Color.decompose(&rr, &gg, &bb, &aa);
 	uchar r = (uchar)rr, g = (uchar)gg, b = (uchar)bb, a = (uchar)aa;
@@ -1121,7 +1121,7 @@ void enumerate_pixels(const info& _SurfaceInfo
 }
 
 void enumerate_pixels(const info& _SurfaceInfo
-	, mapped_subresource& _MappedSubresource
+	, const mapped_subresource& _MappedSubresource
 	, const function<void(void* _pPixel)>& _Enumerator)
 {
 	void* pRow = _MappedSubresource.data;

@@ -50,7 +50,7 @@ void texturecube::initialize(const char* name, device& dev, surface::format form
 	ro = srv;
 }
 
-void texturecube::initialize(const char* name, device& dev, const surface::buffer& src, bool mips)
+void texturecube::initialize(const char* name, device& dev, const surface::texel_buffer& src, bool mips)
 {
 	auto si = src.get_info();
 	oCHECK((si.array_size % 6) == 0, "cubemaps require a multiple of 6 for their array_size value (%u specified)", si.array_size);

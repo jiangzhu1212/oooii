@@ -32,20 +32,20 @@
 namespace ouro { 
 	namespace tests {
 
-static const surface::filter::value kFilter = surface::filter::lanczos2;
+static const surface::filter kFilter = surface::filter::lanczos2;
 
-static surface::buffer surface_load(test_services& _Services, const path& _Path, surface::alpha_option::value _Option = surface::alpha_option::preserve)
+static surface::texel_buffer surface_load(test_services& _Services, const path& _Path, surface::alpha_option _Option = surface::alpha_option::preserve)
 {
 	scoped_allocation b = _Services.load_buffer(_Path);
 	return surface::decode(b, b.size(), _Option);
 }
 
-static surface::buffer make_test_1d(int _Width)
+static surface::texel_buffer make_test_1d(int _Width)
 {
 	surface::info si;
 	si.dimensions = int3(_Width, 1, 1);
 	si.format = surface::b8g8r8a8_unorm;
-	surface::buffer s(si);
+	surface::texel_buffer s(si);
 
 	{
 		surface::lock_guard lock(s);
@@ -58,7 +58,7 @@ static surface::buffer make_test_1d(int _Width)
 	return s;
 }
 
-static surface::buffer load_test_cube(test_services& _Services)
+static surface::texel_buffer load_test_cube(test_services& _Services)
 {
 	const char* face_paths[6] =
 	{
@@ -74,7 +74,7 @@ static surface::buffer load_test_cube(test_services& _Services)
 
 	auto si = image.get_info();
 	si.array_size = oCOUNTOF(face_paths);
-	surface::buffer cube_image(si);
+	surface::texel_buffer cube_image(si);
 	cube_image.copy_from(0, image, 0);
 
 	for (int i = 1; i < oCOUNTOF(face_paths); i++)
@@ -87,11 +87,11 @@ static surface::buffer load_test_cube(test_services& _Services)
 	return cube_image;
 }
 
-static void test_mipchain(test_services& _Services, const surface::buffer& _Image, surface::filter::value _Filter, surface::layout _Layout, int _StartIndex)
+static void test_mipchain(test_services& _Services, const surface::texel_buffer& _Image, surface::filter _Filter, surface::layout _Layout, int _StartIndex)
 {
 	auto si = _Image.get_info();
 	si.layout = _Layout;
-	surface::buffer mipchain(si);
+	surface::texel_buffer mipchain(si);
 	mipchain.clear();
 
 	int nSlices = max(si.array_size, si.dimensions.z);
@@ -130,7 +130,7 @@ static void test_mipchain(test_services& _Services, const surface::buffer& _Imag
 	_Services.check(mipchain, _StartIndex);
 }
 
-static void test_mipchain_layouts(test_services& _Services, const surface::buffer& _Image, surface::filter::value _Filter, int _StartIndex)
+static void test_mipchain_layouts(test_services& _Services, const surface::texel_buffer& _Image, surface::filter _Filter, int _StartIndex)
 {
 	test_mipchain(_Services, _Image, _Filter, surface::tight, _StartIndex);
 	test_mipchain(_Services, _Image, _Filter, surface::below, _StartIndex+1);
@@ -153,15 +153,15 @@ void TESTsurface_generate_mips(test_services& _Services)
 
 	{
 		image = surface_load(_Services, "Test/Textures/lena_npot.png"); // 2D NPOT
-		const surface::buffer* images[5] = { &image, &image, &image, &image, &image };
-		surface::buffer image3d;
+		const surface::texel_buffer* images[5] = { &image, &image, &image, &image, &image };
+		surface::texel_buffer image3d;
 		image3d.initialize_3d(images, oCOUNTOF(images));
 		test_mipchain_layouts(_Services, image3d, kFilter, 12);
 	}
 	{
 		image = surface_load(_Services, "Test/Textures/lena_1.png"); // 2D POT
-		const surface::buffer* images[5] = { &image, &image, &image, &image, &image };
-		surface::buffer image3d;
+		const surface::texel_buffer* images[5] = { &image, &image, &image, &image, &image };
+		surface::texel_buffer image3d;
 		image3d.initialize_3d(images, oCOUNTOF(images));
 		test_mipchain_layouts(_Services, image3d, kFilter, 15);
 	}

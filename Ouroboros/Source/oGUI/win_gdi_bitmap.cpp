@@ -127,7 +127,7 @@ static size_t get_bitmapinfo_size(surface::format _Format)
 	return surface::bits(_Format) == 8 ? (sizeof(BITMAPINFO) + sizeof(RGBQUAD) * 255) : sizeof(BITMAPINFO);
 }
 
-scoped_bitmap make_bitmap(const surface::buffer* _pBuffer)
+scoped_bitmap make_bitmap(const surface::texel_buffer* _pBuffer)
 {
 	ouro::surface::info si = _pBuffer->get_info();
 

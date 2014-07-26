@@ -54,7 +54,7 @@ public:
 	uint2 dimensions() const;
 	inline uint num_presents() const { return npresents; }
 
-	surface::buffer make_snapshot();
+	surface::texel_buffer make_snapshot();
 
 	inline void* get_target() const { return rw; }
 
