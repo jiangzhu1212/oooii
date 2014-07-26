@@ -90,6 +90,10 @@ static surface::format to_format(int _Type, int _BitDepth)
 
 info get_info_png(const void* _pBuffer, size_t _BufferSize)
 {
+	static const unsigned char png_sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+	if (_BufferSize < 8 || memcmp(png_sig, _pBuffer, sizeof(png_sig)))
+		return info();
+	
 	// initialze libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);

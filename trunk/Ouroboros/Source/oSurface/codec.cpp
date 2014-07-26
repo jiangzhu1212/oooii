@@ -29,13 +29,14 @@
 
 namespace ouro {
 
-const char* as_string(const surface::file_format::value& _FileFormat)
+const char* as_string(const surface::file_format::value& ff)
 {
-	switch (_FileFormat)
+	switch (ff)
 	{
-		case surface::file_format::png: return "png";
-		case surface::file_format::jpg: return "jpeg";
 		case surface::file_format::bmp: return "bmp";
+		case surface::file_format::jpg: return "jpeg";
+		case surface::file_format::png: return "png";
+		case surface::file_format::tga: return "tga";
 		default: break;
 	}
 	return "?";
@@ -43,37 +44,70 @@ const char* as_string(const surface::file_format::value& _FileFormat)
 
 	namespace surface {
 
-file_format::value get_file_format(const char* _FilePath)
+format alpha_option_format(const format& fmt, const alpha_option::value& option)
 {
-	const char* ext = rstrstr(_FilePath, ".");
-	if (!_stricmp(ext, ".png")) return file_format::png;
-	if (!_stricmp(ext, ".jpg")) return file_format::jpg;
+	switch (option)
+	{
+		case alpha_option::force_alpha:
+			switch (fmt)
+			{
+				case r8g8b8_unorm: return r8g8b8a8_unorm;
+				case r8g8b8_unorm_srgb: return r8g8b8a8_unorm_srgb;
+				case b8g8r8_unorm: return b8g8r8a8_unorm;
+				case b8g8r8_unorm_srgb: return b8g8r8a8_unorm_srgb;
+				case x8b8g8r8_unorm: return a8b8g8r8_unorm;
+				case x8b8g8r8_unorm_srgb: return a8b8g8r8_unorm_srgb;
+				case b5g6r5_unorm: return b5g5r5a1_unorm;
+				default: break;
+			}
+			break;
+
+		case alpha_option::force_no_alpha:
+			switch (fmt)
+			{
+				case r8g8b8a8_unorm: return r8g8b8_unorm;
+				case r8g8b8a8_unorm_srgb: return r8g8b8_unorm_srgb;
+				case b8g8r8a8_unorm: return b8g8r8_unorm;
+				case b8g8r8a8_unorm_srgb: return b8g8r8_unorm_srgb;
+				case a8b8g8r8_unorm: return x8b8g8r8_unorm;
+				case a8b8g8r8_unorm_srgb: return x8b8g8r8_unorm_srgb;
+				case b5g5r5a1_unorm: return b5g6r5_unorm;
+				default: break;
+			}
+			break;
+
+		default:
+			break;
+	}
+
+	return fmt;
+}
+
+file_format::value get_file_format(const char* path)
+{
+	const char* ext = rstrstr(path, ".");
 	if (!_stricmp(ext, ".bmp")) return file_format::bmp;
+	if (!_stricmp(ext, ".jpg")) return file_format::jpg;
+	if (!_stricmp(ext, ".png")) return file_format::png;
+	if (!_stricmp(ext, ".tga")) return file_format::tga;
 	return file_format::unknown;
 }
 
 #define DEFINE_API(ext) \
-	info get_info_##ext(const void* _pBuffer, size_t _BufferSize); \
-	std::shared_ptr<char> encode_##ext(const buffer* _pBuffer, size_t* _pSize, const alpha_option::value& _Option, const compression::value& _Compression); \
-	std::shared_ptr<buffer> decode_##ext(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout);
+	info get_info_##ext(const void* buffer, size_t size); \
+	std::shared_ptr<char> encode_##ext(const buffer* buffer, size_t* out_size, const alpha_option::value& option, const compression::value& compression); \
+	std::shared_ptr<buffer> decode_##ext(const void* buffer, size_t size, const alpha_option::value& option, const layout& layout);
 
-DEFINE_API(png) DEFINE_API(jpg) DEFINE_API(bmp)
+DEFINE_API(bmp) DEFINE_API(jpg) DEFINE_API(png) DEFINE_API(tga)
 
-file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize)
+file_format::value get_file_format(const void* _buffer, size_t size)
 {
-	static const unsigned char png_sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-	static const unsigned char jpg_sig1[4] = { 0xff, 0xd8, 0xff, 0xe0 };
-	static const char jpg_sig2[5] = "JFIF";
-
-	return (_BufferSize >= 8 && !memcmp(png_sig, _pBuffer, sizeof(png_sig)))
-		? file_format::png
-		: (_BufferSize >= 11 
-			&& !memcmp(jpg_sig1, _pBuffer, sizeof(jpg_sig1)) 
-			&& !memcmp(jpg_sig2, ((char*)_pBuffer) + 6, sizeof(jpg_sig2)))
-			? file_format::jpg
-			: (_BufferSize >= 2 && !memcmp(_pBuffer, "BM", 2))
-				? file_format::bmp
-				: file_format::unknown;
+	#define TEST_INFO(ext) if (get_info_##ext(_buffer, size).format != unknown) return file_format::##ext
+	TEST_INFO(bmp);
+	TEST_INFO(jpg);
+	TEST_INFO(png);
+	TEST_INFO(tga);
+	return file_format::unknown;
 }
 
 info get_info(const void* _pBuffer, size_t _BufferSize)
@@ -96,9 +130,10 @@ std::shared_ptr<char> encode(const buffer* _pBuffer
 {
 	switch (_FileFormat)
 	{
-		case file_format::png: return encode_png(_pBuffer, _pSize, _Option, _Compression);
-		case file_format::jpg: return encode_jpg(_pBuffer, _pSize, _Option, _Compression);
 		case file_format::bmp: return encode_bmp(_pBuffer, _pSize, _Option, _Compression);
+		case file_format::jpg: return encode_jpg(_pBuffer, _pSize, _Option, _Compression);
+		case file_format::png: return encode_png(_pBuffer, _pSize, _Option, _Compression);
+		case file_format::tga: return encode_tga(_pBuffer, _pSize, _Option, _Compression);
 		default: break;
 	}
 	throw std::exception("unknown image encoding");
@@ -108,9 +143,10 @@ std::shared_ptr<buffer> decode(const void* _pBuffer, size_t _BufferSize, const a
 {
 	switch (get_file_format(_pBuffer, _BufferSize))
 	{
-		case file_format::png: return decode_png(_pBuffer, _BufferSize, _Option, _Layout);
-		case file_format::jpg: return decode_jpg(_pBuffer, _BufferSize, _Option, _Layout);
 		case file_format::bmp: return decode_bmp(_pBuffer, _BufferSize, _Option, _Layout);
+		case file_format::jpg: return decode_jpg(_pBuffer, _BufferSize, _Option, _Layout);
+		case file_format::png: return decode_png(_pBuffer, _BufferSize, _Option, _Layout);
+		case file_format::tga: return decode_tga(_pBuffer, _BufferSize, _Option, _Layout);
 		default: break;
 	}
 	throw std::exception("unknown image encoding");

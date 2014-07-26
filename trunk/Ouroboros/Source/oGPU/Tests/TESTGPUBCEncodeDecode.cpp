@@ -23,42 +23,32 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oTest.h>
+#include <oSurface/surface.h>
 
 #include "../../test_services.h"
 
-//using namespace ouro::gpu;
+using namespace ouro::surface;
 
 namespace ouro {
 	namespace tests {
+
 #if 0
-static void load_original_and_save_converted(test_services& _Services, device* _pDevice, surface::format _TargetFormat, const char* _OriginalPath, const path& _ConvertedPath)
+
+static void load_original_and_save_converted(test_services& services, surface::format target_format, const char* original_path, const path& converted_path)
 {
-	scoped_allocation OriginalFile = _Services.load_buffer(_OriginalPath);
+	scoped_allocation file = services.load_buffer(original_path);
+	auto buffer = decode(file, file.size());
+	auto converted = buffer->convert(surface::x8b8g8r8_unorm);
+	
+	filesystem::remove(converted_path);
 
-	texture1_info i;
-	i.dimensions = ushort3(0, 0, 1);
-	i.array_size = 0;
-	i.format = surface::unknown;
-
-#if 0
-
-	std::shared_ptr<texture> OriginalAsTexture = ?;
-	oTESTB(oGPUTextureLoad(_pDevice, d, "Source Texture", OriginalFile->GetData(), OriginalFile->GetSize(), &OriginalAsTexture), "Failed to parse %s", OriginalFile->GetName());
-
-	std::shared_ptr<texture> ConvertedTexture;
-	oTESTB(oGPUSurfaceConvert(OriginalAsTexture, _TargetFormat, &ConvertedTexture), "Failed to convert %s to %s", OriginalFile->GetName(), ouro::as_string(_TargetFormat));
-
-	filesystem::remove(_ConvertedPath);
-
-	oTESTB(oGPUTextureSave(ConvertedTexture, oGPU_FILE_FORMAT_DDS, _ConvertedPath), "Failed to save %s", _ConvertedPath);
-#else
-	oTHROW(permission_denied, "oGPUTextureLoad needs a new impl");
-#endif
+	// save to dds.
 }
 
-static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test_services& _Services, device* _pDevice, const char* _ConvertedPath)
+static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test_services& _Services, const char* _ConvertedPath)
 {
 	scoped_allocation ConvertedFile = _Services.load_buffer(_ConvertedPath);
+#if 0
 
 	texture1_info i;
 	i.dimensions = ushort3(0, 0, 1);
@@ -66,7 +56,6 @@ static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test
 	i.format = surface::unknown;
 	i.type = texture_type::readback_2d;
 
-#if 0
 
 	std::shared_ptr<texture1> ConvertedFileAsTexture;
 	std::shared_ptr<texture1> BGRATexture;
@@ -86,65 +75,40 @@ static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test
 	_pDevice->map_read(BGRATexture, 0, &msrSource, true);
 	ConvertedImage->update_subresource(0, msrSource);
 	_pDevice->unmap_read(BGRATexture, 0);
-
-	return ConvertedImage;
-#else
-	if (1)
-		oTHROW(permission_denied, "oGPUTextureLoad needs a new impl");
 #endif
+	return nullptr;//ConvertedImage;
 }
 
-static void convert_and_test(test_services& _Services, device* _pDevice, surface::format _TargetFormat, const char* _FilenameSuffix, uint _NthTest)
+static void convert_and_test(test_services& services, surface::format target_format, const char* filename_suffix, uint nth_test)
 {
 	path TestImagePath = "Test/Textures/lena_1.png";
 
 	char fn[64];
-	snprintf(fn, "%s%s.dds", TestImagePath.basename().c_str(), _FilenameSuffix);
+	snprintf(fn, "%s%s.dds", TestImagePath.basename().c_str(), filename_suffix);
 	path ConvertedPath = ouro::filesystem::temp_path() / fn;
 
-	oTRACEA("Converting image to %s (may take a while)...", as_string(_TargetFormat));
-	load_original_and_save_converted(_Services, _pDevice, _TargetFormat, TestImagePath, ConvertedPath);
+	oTRACEA("Converting image to %s (may take a while)...", as_string(target_format));
+	load_original_and_save_converted(services, target_format, TestImagePath, ConvertedPath);
 
-	oTRACEA("Converting image back from %s (may take a while)...", as_string(_TargetFormat));
-	std::shared_ptr<surface::buffer> ConvertedImage = load_converted_and_convert_to_image(_Services, _pDevice, ConvertedPath);
+	oTRACEA("Converting image back from %s (may take a while)...", as_string(target_format));
+	std::shared_ptr<surface::buffer> ConvertedImage = load_converted_and_convert_to_image(services, ConvertedPath);
 
 	// Even on different series AMD cards there is a bit of variation so use a 
 	// more forgiving tolerance
-	const float MORE_FORGIVING_TOLERANCE = 7.2f;
-	if (_TargetFormat == surface::bc7_unorm)
-		_Services.check(ConvertedImage, _NthTest, MORE_FORGIVING_TOLERANCE);
-	else
-		_Services.check(ConvertedImage, _NthTest);
+	// THIS WONT BE TRUE WITH A CPU ENCODER (I HOPE)
+	//const float kMoreForgivingTolerance = 7.2f;
+	//if (target_format == surface::bc7_unorm)
+	//	services.check(ConvertedImage, nth_test, kMoreForgivingTolerance);
+	//else
+		services.check(ConvertedImage, nth_test);
 }
 #endif
-void TESTbccodec(test_services& _Services)
+void TESTbccodec(test_services& services)
 {
-	oTHROW_INVARG("borked until I refactor more of oGPU");
-#if 0
-	std::shared_ptr<device> Device;
-	{
-		device_init i("TESTBCEncDec Temp Device");
-		#ifdef _DEBUG
-			i.driver_debug_level = gpu::debug_level::normal;
-		#endif
-		try { Device = device::make(i); }
-		catch (std::exception&)
-		{
-			static const char* msg = "Non-D3D or Pre-D3D11 HW detected: Using the non-accelerated path will take too long, so this test will be skipped.";
-			_Services.report(msg);
-			oTHROW(permission_denied, msg);
-		}
-	}
-
-	device_info i = Device->get_info();
-
-	if (i.vendor != vendor::nvidia && i.vendor != vendor::amd)
-		oTHROW(permission_denied, "%s gpu device not trusted to run the DXSDK BC7 sample code correctly, so skip this test.", as_string(i.vendor));
-
-	convert_and_test(_Services, Device, surface::bc7_unorm, "_BC7", 0);
-	convert_and_test(_Services, Device, surface::bc6h_sf16, "_BC6HS", 1);
-	convert_and_test(_Services, Device, surface::bc6h_uf16, "_BC6HU", 2);
-#endif
+	oTHROW(operation_not_supported, "need a dds writer");
+	//convert_and_test(services, surface::bc7_unorm, "_BC7", 0);
+	//convert_and_test(services, surface::bc6h_sf16, "_BC6HS", 1);
+	//convert_and_test(services, surface::bc6h_uf16, "_BC6HU", 2);
 }
 
 	} // namespace tests

@@ -111,9 +111,18 @@ static format from_jcs(J_COLOR_SPACE _ColorSpace)
 	{
 		case JCS_GRAYSCALE: return r8_unorm;
 		case JCS_RGB: return r8g8b8_unorm;
+		case JCS_YCbCr: return y8_u8v8_unorm;
+		//case JCS_CMYK: return ?;/* C/M/Y/K */
+		//case JCS_YCCK: return ?;/* Y/Cb/Cr/K */
+		//case JCS_RGBX: return ?;
 		case JCS_EXT_BGR: return b8g8r8_unorm;
+		case JCS_EXT_BGRX: return b8g8r8x8_unorm;
+		case JCS_EXT_XBGR: return x8b8g8r8_unorm;
+		//case JCS_EXT_XRGB: return ?;
 		case JCS_EXT_RGBA: return r8g8b8a8_unorm;
 		case JCS_EXT_BGRA: return b8g8r8a8_unorm;
+		case JCS_EXT_ABGR: return a8b8g8r8_unorm;
+		//case JCS_EXT_ARGB: return ?;
 		default: break;
 	}
 	return unknown;
@@ -121,6 +130,13 @@ static format from_jcs(J_COLOR_SPACE _ColorSpace)
 
 info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 {
+	static const unsigned char jpg_sig1[4] = { 0xff, 0xd8, 0xff, 0xe0 };
+	static const char jpg_sig2[5] = "JFIF";
+
+	if (_BufferSize < 11 || memcmp(jpg_sig1, _pBuffer, sizeof(jpg_sig1))
+		|| memcmp(jpg_sig2, ((const char*)_pBuffer) + 6, sizeof(jpg_sig2)))
+		return info();
+
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 	cinfo.err = jpeg_std_error(&jerr);

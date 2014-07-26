@@ -33,7 +33,9 @@
 namespace ouro {
 	namespace surface {
 
-// Converts the specified subresource into the destination subresource.
+// Converts the specified subresource into the destination subresource. This assumes
+// all memory has been properly allocated. If a conversion is not supported this
+// throws an exception.
 void convert_subresource(const subresource_info& _SubresourceInfo
 	, const const_mapped_subresource& _Source
 	, format _DestinationFormat

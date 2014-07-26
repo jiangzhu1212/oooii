@@ -38,9 +38,10 @@ namespace file_format
 {	enum value {
 
 	unknown,
-	png,
-	jpg,
 	bmp,
+	jpg,
+	png,
+	tga,
 
 };}
 
@@ -63,12 +64,17 @@ namespace alpha_option
 
 };}
 
-file_format::value get_file_format(const char* _FilePath);
+// returns the input format with the specified option applied
+format alpha_option_format(const format& fmt, const alpha_option::value& option);
+
+file_format::value get_file_format(const char* path);
 
 // Analyzes the buffer to determine its file format
 file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize);
 
 // Returns the info from a buffer formatted as a file in memory
+// If the buffer is not recognized the returned info's format will be 
+// surface::unknown.
 info get_info(const void* _pBuffer, size_t _BufferSize);
 
 // Returns a buffer ready to be written to disk in the specified format.
