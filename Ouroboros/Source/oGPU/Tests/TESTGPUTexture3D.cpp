@@ -43,12 +43,12 @@ struct gpu_test_texture3d : public gpu_texture_test
 		surface::info si;
 		si.format = surface::b8g8r8a8_unorm;
 		si.dimensions = int3(64,64,64);
-		auto image = surface::buffer::make(si);
+		surface::buffer image(si);
 		{
 			surface::lock_guard lock(image);
 			surface::fill_color_cube((color*)lock.mapped.data, lock.mapped.row_pitch, lock.mapped.depth_pitch, si.dimensions);
 		}
-		t.initialize("Test 3D", Device, *image, false);
+		t.initialize("Test 3D", Device, image, false);
 		return &t;
 	}
 

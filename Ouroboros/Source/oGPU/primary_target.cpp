@@ -94,7 +94,7 @@ uint2 primary_target::dimensions() const
 	return uint2(desc.Width, desc.Height);
 }
 
-std::shared_ptr<surface::buffer> primary_target::make_snapshot()
+surface::buffer primary_target::make_snapshot()
 {
 	if (!ro)
 		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");

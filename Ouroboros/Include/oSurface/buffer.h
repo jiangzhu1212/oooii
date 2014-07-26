@@ -29,8 +29,10 @@
 #ifndef oSurface_buffer_h
 #define oSurface_buffer_h
 
-#include <memory>
+#include <oBase/allocate.h>
+#include <oCore/mutex.h>
 #include <oSurface/resize.h>
+#include <memory>
 
 namespace ouro {
 	namespace surface {
@@ -38,130 +40,176 @@ namespace ouro {
 class buffer
 {
 public:
+	buffer() : bits(nullptr) {}
+	buffer(const info& i, const allocator& a = default_allocator) { initialize(i, a); }
+	buffer(const info& i, const void* data, const allocator& a = noop_allocator) { initialize(i, data, a); }
 
-	enum make_type
-	{
-		image, // only reads first image, sets array_size to 0
-		image_array, // whether 1 or more images, array_size is set to 1 or more, never 0
-		mips, // image with mips
-		mips_array, // image_array with mips
-		image3d, // reads array of images as slices of a 3d image
-		mips3d, // image3d with mips
-	};
+	~buffer() { deinitialize(); }
 
-	static std::shared_ptr<buffer> make(const info& _Info);
-	static std::shared_ptr<buffer> make(const info& _Info, void* _pData);
+	buffer(buffer&& that);
+	buffer& operator=(buffer&& that);
 
-	// Given an array of same-formatted 2D buffers of the same size and image layout,
-	// form either an array or 3D buffer and optionally calculate mips for it.
-	static std::shared_ptr<buffer> make(const buffer* const* _ppSourceBuffers, size_t _NumBuffers, make_type _Type);
+	operator bool() const { return !!bits; }
 
-	virtual info get_info() const = 0;
+	// create a buffer with uninitialized bits
+	void initialize(const info& i, const allocator& a = default_allocator);
+	
+	// create a buffer using the specified pointer. the specified allocator will be used
+	// to manage its lifetime.
+	void initialize(const info& i, const void* data, const allocator& a = noop_allocator);
+
+	// create an array buffer out of several subbuffers of the same format
+	void initialize_array(const buffer* const* sources, uint num_sources, bool mips = false);
+	template<size_t N> void initialize_array(const buffer* const (&sources)[N], bool mips = false) { initialize_array(sources, N, mips); }
+
+	// creates a 3d surface out of several subbuffers of the same format
+	void initialize_3d(const buffer* const* sources, uint num_sources, bool mips = false);
+	template<size_t N> void initialize_3d(const buffer* const (&sources)[N], bool mips = false) { initialize_3d(sources, N, mips); }
+
+	void deinitialize();
+
+	inline info get_info() const { return inf; }
+
+	// returns the size of the bit data: all subresources and padding, not including the info
 	inline size_t size() const { return total_size(get_info()); }
 
 	// Sets all subresources to 0
-	virtual void clear() = 0;
+	void clear();
 
-	// Without modifying the data, this updates the Info to be an image layout 
-	// with an array_size of 0. This basically means that saving the buffer to a 
-	// file will save the layout of the entire surface.
-	virtual void flatten() = 0;
+	// Without modifying the data this updates the info to be an image layout with 
+	// array_size of 0. This is useful for saving the buffer to a files as the entire
+	// surface is laid out.
+	void flatten();
 
-	virtual void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
-	virtual void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) = 0;
+	// copies the specified src of the same format and dimensions into a subresource in the current instance
+	void update_subresource(uint subresource, const const_mapped_subresource& src, const copy_option::value& option = copy_option::none);
+	void update_subresource(uint subresource, const box& _box, const const_mapped_subresource& src, const copy_option::value& option = copy_option::none);
 
-	virtual void map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) = 0;
-	virtual void unmap(int _Subresource) = 0;
+	// locks internal memory for read/write and returns parameters for working with it
+	void map(uint subresource, mapped_subresource* out_mapped, int2* out_byte_dimensions = nullptr);
+	void unmap(uint subresource);
 
-	virtual void map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) const = 0;
-	virtual void unmap_const(int _Subresource) const = 0;
+	// locks internal memory for read-only and returns parameters for working with it
+	void map_const(uint subresource, const_mapped_subresource* out_mapped, int2* out_byte_dimensions = nullptr) const;
+	void unmap_const(uint subresource) const;
 
-	virtual void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const = 0;
-	inline void copy_from(int _Subresource, const_mapped_subresource& _Source, bool _FlipVertically = false) { update_subresource(_Subresource, _Source, _FlipVertically); }
+	// copies from a subresource in this instance to a mapped destination of the same format and dimensions 
+	void copy_to(uint subresource, const mapped_subresource& dst, const copy_option::value& option = copy_option::none) const;
+	inline void copy_from(uint subresource, const const_mapped_subresource& src, const copy_option::value& option = copy_option::none) { update_subresource(subresource, src, option); }
+	inline void copy_from(uint subresource, const buffer& src, uint src_subresource, const copy_option::value& option = copy_option::none);
 
-	inline void copy_from(int _DstSubresource, const buffer* _pBuffer, int _SrcSubresource, bool _FlipVertically = false);
+	// initializes a resized and reformatted copy of this buffer allocated from the same or a user-specified allocator
+	buffer convert(const info& dst_info) const;
+	buffer convert(const info& dst_info, const allocator& a) const;
 
-	virtual std::shared_ptr<buffer> convert(const info& _ConvertedInfo) const = 0;
-	inline std::shared_ptr<buffer> convert(format _NewFormat) const { info si = get_info(); si.format = _NewFormat; return convert(si); }
+	// initializes a reformatted copy of this buffer allocated from the same or a user-specified allocator
+	inline buffer convert(const format& dst_format) const { info si = get_info(); si.format = dst_format; return convert(si); }
+	inline buffer convert(const format& dst_format, const allocator& a) const { info si = get_info(); si.format = dst_format; return convert(si, a); }
 
-	// Only for compatible types, such as RGB <-> BGR. This is basically an 
-	// in-place conversion.
-	virtual void swizzle(format _NewFormat) = 0;
+	// copies to a mapped subresource of the same dimension but the specified format
+	void convert_to(uint subresource, const mapped_subresource& dst, const format& dst_format, const copy_option::value& option = copy_option::none) const;
 
-	// Takes the top-level mip and replaces all other mips with new contents.
-	virtual void generate_mips(filter::value _Filter = filter::lanczos2) = 0;
+	// copies into this instance from a source of the same dimension but a a different format
+	void convert_from(uint subresource, const const_mapped_subresource& src, const format& src_format, const copy_option::value& option = copy_option::none);
+
+	// For compatible types such as RGB <-> BGR do conversion in-place
+	void convert_in_place(const format& fmt);
+
+	// Uses the top-level mip as a source and replaces all other mips with a filtered version
+	void generate_mips(const filter::value& f = filter::lanczos2);
+
+private:
+	void* bits;
+	info inf;
+	allocator alloc;
+	
+	typedef ouro::shared_mutex mutex_t;
+	typedef ouro::lock_guard<mutex_t> lock_t;
+	typedef ouro::shared_lock<mutex_t> lock_shared_t;
+	
+	mutable mutex_t mtx;
+	inline void lock_shared() const { mtx.lock_shared(); }
+	inline void unlock_shared() const { mtx.unlock_shared(); }
+
+	buffer(const buffer&);
+	const buffer& operator=(const buffer&);
 };
 
 class lock_guard
 {
 public:
-	lock_guard(std::shared_ptr<buffer>& _Buffer, int _Subresource = 0)
-		: pBuffer(_Buffer.get())
-		, Subresource(_Subresource)
-	{ pBuffer->map(Subresource, &mapped, &byte_dimensions); }
+	lock_guard(buffer& b, uint subresource = 0)
+		: buf(&b)
+		, subresource(subresource)
+	{ buf->map(subresource, &mapped, &byte_dimensions); }
 
-	lock_guard(buffer* _pBuffer, int _Subresource = 0)
-		: pBuffer(_pBuffer)
-		, Subresource(_Subresource)
-	{ pBuffer->map(Subresource, &mapped, &byte_dimensions); }
+	lock_guard(buffer* b, uint subresource = 0)
+		: buf(b)
+		, subresource(subresource)
+	{ buf->map(subresource, &mapped, &byte_dimensions); }
 
-	~lock_guard() { pBuffer->unmap(Subresource); }
+	~lock_guard() { buf->unmap(subresource); }
 
 	mapped_subresource mapped;
 	int2 byte_dimensions;
 
 private:
-	buffer* pBuffer;
-	int Subresource;
+	buffer* buf;
+	int subresource;
+
+	lock_guard(const lock_guard&);
+	const lock_guard& operator=(const lock_guard&);
 };
 
 class shared_lock
 {
 public:
-	shared_lock(std::shared_ptr<buffer>& _Buffer, int _Subresource = 0)
-		: pBuffer(_Buffer.get())
-		, Subresource(_Subresource)
-	{ pBuffer->map_const(Subresource, &mapped, &byte_dimensions); }
+	shared_lock(buffer& b, uint subresource = 0)
+		: buf(&b)
+		, subresource(subresource)
+	{ buf->map_const(subresource, &mapped, &byte_dimensions); }
 
-	shared_lock(const buffer* _pBuffer, int _Subresource = 0)
-		: pBuffer(_pBuffer)
-		, Subresource(_Subresource)
-	{ pBuffer->map_const(Subresource, &mapped, &byte_dimensions); }
+	shared_lock(buffer* b, uint subresource = 0)
+		: buf(b)
+		, subresource(subresource)
+	{ buf->map_const(subresource, &mapped, &byte_dimensions); }
 
-	shared_lock(const buffer& _Buffer, int _Subresource = 0)
-		: pBuffer(&_Buffer)
-		, Subresource(_Subresource)
-	{ pBuffer->map_const(Subresource, &mapped, &byte_dimensions); }
+	shared_lock(const buffer* b, uint subresource = 0)
+		: buf(b)
+		, subresource(subresource)
+	{ buf->map_const(subresource, &mapped, &byte_dimensions); }
 
-	~shared_lock() { pBuffer->unmap_const(Subresource); }
+	shared_lock(const buffer& b, uint subresource = 0)
+		: buf(&b)
+		, subresource(subresource)
+	{ buf->map_const(subresource, &mapped, &byte_dimensions); }
+
+	~shared_lock() { buf->unmap_const(subresource); }
 
 	const_mapped_subresource mapped;
 	int2 byte_dimensions;
 
 private:
-	int Subresource;
-	const buffer* pBuffer;
+	uint subresource;
+	const buffer* buf;
+
+	shared_lock(const shared_lock&);
+	const shared_lock& operator=(const shared_lock&);
 };
 
-inline void buffer::copy_from(int _DstSubresource, const buffer* _pBuffer, int _SrcSubresource, bool _FlipVertically)
+inline void buffer::copy_from(uint subresource, const buffer& src, uint src_subresource, const copy_option::value& option)
 {
-	shared_lock locked(_pBuffer, _SrcSubresource);
-	copy_from(_DstSubresource, locked.mapped, _FlipVertically);
+	shared_lock locked(src, src_subresource);
+	copy_from(subresource, locked.mapped, option);
 }
 
-// Returns the root mean square of the difference between the two surfaces. If
-// the formats or sizes are different, this throws an exception.
-float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2, buffer* _pDifferences = nullptr, int _DifferenceScale = 1);
-inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), nullptr, 1); }
-inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), nullptr, 1); }
-inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), nullptr, 1); }
-inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), nullptr, 1); }
-inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2, std::shared_ptr<buffer>& _pDifferences, int _DifferenceScale = 1) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), _pDifferences.get(), _DifferenceScale); }
-inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<const buffer>& _pBuffer2, std::shared_ptr<buffer>& _pDifferences, int _DifferenceScale = 1) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), _pDifferences.get(), _DifferenceScale); }
-inline float calc_rms(std::shared_ptr<const buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2, std::shared_ptr<buffer>& _pDifferences, int _DifferenceScale = 1) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), _pDifferences.get(), _DifferenceScale); }
-inline float calc_rms(std::shared_ptr<buffer>& _pBuffer1, std::shared_ptr<buffer>& _pBuffer2, std::shared_ptr<buffer>& _pDifferences, int _DifferenceScale = 1) { return calc_rms(_pBuffer1.get(), _pBuffer2.get(), _pDifferences.get(), _DifferenceScale); }
+// returns the root mean square of the difference between the two surfaces. If
+// the formats or sizes are different, this throws an exception. If out_diffs
+// is passed in, it will be initialized using the specified allocator. The rms
+// grayscale color will be multiplied by diff_scale.
+float calc_rms(const buffer& b1, const buffer& b2);
+float calc_rms(const buffer& b1, const buffer& b2, buffer* out_diffs, int diff_scale = 1, const allocator& a = default_allocator);
 
-	} // namespace surface
-} // namespace ouro
+}}
 
 #endif

@@ -83,19 +83,7 @@ public:
 	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
 	// image should not have a suffix. If _MaxRMSError is negative a default 
 	// should be used. If the surfaces are not similar this throws an exception.
-	virtual void check(const surface::buffer* _pBuffer
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f) = 0;
-
-	inline void check(std::shared_ptr<surface::buffer>& _pBuffer
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f)
-	{ check(_pBuffer.get(), _NthTest, _MaxRMSError); }
-
-	inline void check(std::shared_ptr<const surface::buffer>& _pBuffer
-		, int _NthTest = 0
-		, float _MaxRMSError = -1.0f)
-	{ check(_pBuffer.get(), _NthTest, _MaxRMSError); }
+	virtual void check(const surface::buffer& _Buffer, int _NthTest = 0, float _MaxRMSError = -1.0f) = 0;
 };
 
 } // namespace ouro

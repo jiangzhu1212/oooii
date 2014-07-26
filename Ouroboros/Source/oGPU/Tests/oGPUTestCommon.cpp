@@ -88,7 +88,7 @@ void gpu_test::check_snapshot(test_services& _Services)
 {
 	if (SnapshotFrames.end() != find(SnapshotFrames, FrameID))
 	{
-		std::shared_ptr<surface::buffer> snap = PrimaryColorTarget.make_snapshot();
+		surface::buffer snap = PrimaryColorTarget.make_snapshot();
 		_Services.check(snap, NthSnapshot);
 		NthSnapshot++;
 	}
@@ -187,22 +187,22 @@ void gpu_texture_test::render()
 	Mesh.draw(cl);
 }
 
-std::shared_ptr<surface::buffer> surface_load(const path& _Path, bool _Mips, const surface::alpha_option::value& _Option)
+surface::buffer surface_load(const path& _Path, bool _Mips, const surface::alpha_option::value& _Option)
 {
 	scoped_allocation b = filesystem::load(_Path);
 	auto sb = surface::decode(b, b.size(), _Option, _Mips ? surface::tight : surface::image);
 	if (_Mips)
-		sb->generate_mips();
+		sb.generate_mips();
 	return sb;
 }
 
-std::shared_ptr<surface::buffer> make_1D(int _Width, bool _Mips)
+surface::buffer make_1D(int _Width, bool _Mips)
 {
 	surface::info si;
 	si.dimensions = int3(_Width, 1, 1);
 	si.layout = _Mips ? surface::tight : surface::image;
 	si.format = surface::b8g8r8a8_unorm;
-	auto s = surface::buffer::make(si);
+	surface::buffer s(si);
 
 	{
 		surface::lock_guard lock(s);
@@ -213,7 +213,7 @@ std::shared_ptr<surface::buffer> make_1D(int _Width, bool _Mips)
 	}
 
 	if (_Mips)
-		s->generate_mips();
+		s.generate_mips();
 
 	return s;
 }

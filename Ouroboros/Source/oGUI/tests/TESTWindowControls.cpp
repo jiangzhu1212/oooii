@@ -517,7 +517,7 @@ void TESTWindowControls(test_services& _Services)
 
 	} while (ouro::timer::now() < WaitForSettle);
 
-	ouro::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
+	ouro::future<ouro::surface::buffer> snapshot = test.GetWindow()->snapshot();
 		
 	do
 	{
@@ -525,7 +525,7 @@ void TESTWindowControls(test_services& _Services)
 		
 	} while ((kInteractiveMode && test.GetRunning()) || !snapshot.is_ready());
 
-	std::shared_ptr<ouro::surface::buffer> s = snapshot.get();
+	ouro::surface::buffer s = snapshot.get();
 	_Services.check(s, 0);
 }
 

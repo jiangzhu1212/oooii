@@ -296,6 +296,14 @@ namespace cube_face
 
 };}
 
+namespace copy_option
+{	enum value : uchar {
+
+	none,
+	flip_vertically,
+
+};}
+
 struct info
 {
 	info()
@@ -656,12 +664,12 @@ mapped_subresource get_mapped_subresource(const info& _SurfaceInfo, int _Subreso
 
 // Copies a source buffer into the specified subresource of the surface 
 // described by a base pointer and an info
-void update(const info& _SurfaceInfo, int _Subresource, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, bool _FlipVertical);
+void update(const info& _SurfaceInfo, int _Subresource, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, const copy_option::value& option);
 
 // Copies from a surface subresource to a specified destination buffer.
-void copy(const info& _SurfaceInfo, int _Subresource, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, bool _FlipVertical);
-void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, bool _FlipVertical);
-void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, bool _FlipVertical);
+void copy(const info& _SurfaceInfo, int _Subresource, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, const copy_option::value& option = copy_option::none);
+void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, const copy_option::value& option = copy_option::none);
+void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, const copy_option::value& option = copy_option::none);
 
 // For 3d textures a mapped subresource contains all depth slices at that mip level,
 // this function will output the data pointer adjusted for the requested depth index.

@@ -95,8 +95,8 @@ file_format::value get_file_format(const char* path)
 
 #define DEFINE_API(ext) \
 	info get_info_##ext(const void* buffer, size_t size); \
-	std::shared_ptr<char> encode_##ext(const buffer* buffer, size_t* out_size, const alpha_option::value& option, const compression::value& compression); \
-	std::shared_ptr<buffer> decode_##ext(const void* buffer, size_t size, const alpha_option::value& option, const layout& layout);
+	std::shared_ptr<char> encode_##ext(const buffer& buffer, size_t* out_size, const alpha_option::value& option, const compression::value& compression); \
+	buffer decode_##ext(const void* buffer, size_t size, const alpha_option::value& option, const layout& layout);
 
 DEFINE_API(bmp) DEFINE_API(jpg) DEFINE_API(png) DEFINE_API(tga)
 
@@ -122,7 +122,7 @@ info get_info(const void* _pBuffer, size_t _BufferSize)
 	throw std::exception("unknown image encoding");
 }
 	
-std::shared_ptr<char> encode(const buffer* _pBuffer
+std::shared_ptr<char> encode(const buffer& _Buffer
 	, size_t* _pSize
 	, const file_format::value& _FileFormat
 	, const alpha_option::value& _Option
@@ -130,16 +130,16 @@ std::shared_ptr<char> encode(const buffer* _pBuffer
 {
 	switch (_FileFormat)
 	{
-		case file_format::bmp: return encode_bmp(_pBuffer, _pSize, _Option, _Compression);
-		case file_format::jpg: return encode_jpg(_pBuffer, _pSize, _Option, _Compression);
-		case file_format::png: return encode_png(_pBuffer, _pSize, _Option, _Compression);
-		case file_format::tga: return encode_tga(_pBuffer, _pSize, _Option, _Compression);
+		case file_format::bmp: return encode_bmp(_Buffer, _pSize, _Option, _Compression);
+		case file_format::jpg: return encode_jpg(_Buffer, _pSize, _Option, _Compression);
+		case file_format::png: return encode_png(_Buffer, _pSize, _Option, _Compression);
+		case file_format::tga: return encode_tga(_Buffer, _pSize, _Option, _Compression);
 		default: break;
 	}
 	throw std::exception("unknown image encoding");
 }
 
-std::shared_ptr<buffer> decode(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
+buffer decode(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
 	switch (get_file_format(_pBuffer, _BufferSize))
 	{

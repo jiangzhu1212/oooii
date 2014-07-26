@@ -41,7 +41,7 @@ struct gpu_test_texture2d : public gpu_texture_test
 	resource* make_test_texture() override
 	{
 		auto image = surface_load(filesystem::data_path() / "Test/Textures/lena_1.png", false, surface::alpha_option::force_alpha);
-		t.initialize("Test 2D", Device, *image.get(), false);
+		t.initialize("Test 2D", Device, image, false);
 		return &t;
 	}
 

@@ -137,11 +137,11 @@ static void convert_subresource(pixel_convert _Convert
 	, const const_mapped_subresource& _Source
 	, format _DestinationFormat
 	, mapped_subresource* _pDestination
-	, bool _FlipVertically)
+	, const copy_option::value& option)
 {
 	const int selSize = element_size(_SubresourceInfo.format);
 	const int delSize = element_size(_DestinationFormat);
-	if (_FlipVertically)
+	if (option)
 		for (int y = _SubresourceInfo.dimensions.y-1; y >= 0; y--)
 			convert_subresource_scanline(_SubresourceInfo.dimensions.x, y, _Convert, selSize, delSize, _Source, _pDestination);
 	else
@@ -153,14 +153,14 @@ static void convert_subresource_bc7(const subresource_info& _SubresourceInfo
 	, const const_mapped_subresource& _Source
 	, format _DestinationFormat
 	, mapped_subresource* _pDestination
-	, bool _FlipVertically)
+	, const copy_option::value& option)
 {
 	oCHECK_ARG((_SubresourceInfo.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC7 compression");
 	oCHECK_ARG((_SubresourceInfo.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC7 compression");
 	
 	const uint BCRowPitch = (_SubresourceInfo.dimensions.x/4) * 8;
 
-	oCHECK(!_FlipVertically, "cannot flip vertically during BC7 compression");
+	oCHECK(!option, "cannot flip vertically during BC7 compression");
 	oCHECK(_Source.row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
 	oCHECK(_pDestination->row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
 
@@ -173,14 +173,14 @@ static void convert_subresource_bc7(const subresource_info& _SubresourceInfo
 	, const const_mapped_subresource& _Source
 	, format _DestinationFormat
 	, mapped_subresource* _pDestination
-	, bool _FlipVertically)
+	, const copy_option::value& option)
 {
 	oCHECK_ARG((_SubresourceInfo.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC6h compression");
 	oCHECK_ARG((_SubresourceInfo.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC6h compression");
 
 	const uint BCRowPitch = (_SubresourceInfo.dimensions.x/4) * 8;
 
-	oCHECK(!_FlipVertically, "cannot flip vertically during BC6h compression");
+	oCHECK(!option, "cannot flip vertically during BC6h compression");
 	oCHECK(_Source.row_pitch == BCRowPitch, "layout must be 'image' for a BC6h compression destination buffer");
 	oCHECK(_pDestination->row_pitch == BCRowPitch, "layout must be 'image' for a BC6h compression destination buffer");
 
@@ -193,7 +193,7 @@ void convert_subresource(const subresource_info& _SubresourceInfo
 	, const const_mapped_subresource& _Source
 	, format _DestinationFormat
 	, mapped_subresource* _pDestination
-	, bool _FlipVertically)
+	, const copy_option::value& option)
 {
 	#define oCHECK_BC7(type) oCHECK_ARG(_SubresourceInfo.format == surface::a8b8g8r8_##type || _SubresourceInfo.format == surface::x8b8g8r8_##type, "source must be a8b8g8r8_" #type " or x8b8g8r8_" #type " for conversion to bc7_" #type);
 	#define oCHECK_BC6h(type) oCHECK_ARG(_SubresourceInfo.format == surface::x16b16g16r16_##type, "source must be a8b8g8r8_" #type " for conversion to bc7_" #type);
@@ -202,14 +202,14 @@ void convert_subresource(const subresource_info& _SubresourceInfo
 		case surface::bc7_unorm:
 		{
 			oCHECK_BC7(unorm)
-			convert_subresource_bc7(_SubresourceInfo, _Source, _DestinationFormat, _pDestination, _FlipVertically);
+			convert_subresource_bc7(_SubresourceInfo, _Source, _DestinationFormat, _pDestination, option);
 			break;
 		}
 
 		case surface::bc7_unorm_srgb:
 		{
 			oCHECK_BC7(unorm_srgb)
-			convert_subresource_bc7(_SubresourceInfo, _Source, _DestinationFormat, _pDestination, _FlipVertically);
+			convert_subresource_bc7(_SubresourceInfo, _Source, _DestinationFormat, _pDestination, option);
 			break;
 		}
 
@@ -225,11 +225,11 @@ void convert_subresource(const subresource_info& _SubresourceInfo
 		default:
 		{
 			if (_SubresourceInfo.format == _DestinationFormat)
-				copy(_SubresourceInfo, _Source, _pDestination, _FlipVertically);
+				copy(_SubresourceInfo, _Source, _pDestination, option);
 			else
 			{
 				pixel_convert cv = get_pixel_convert(_SubresourceInfo.format, _DestinationFormat);
-				convert_subresource(cv, _SubresourceInfo, _Source, _DestinationFormat, _pDestination, _FlipVertically);
+				convert_subresource(cv, _SubresourceInfo, _Source, _DestinationFormat, _pDestination, option);
 			}
 		}
 	}
@@ -239,7 +239,7 @@ void convert(const info& _SourceInfo
 	, const const_mapped_subresource& _Source
 	, const info& _DestinationInfo
 	, mapped_subresource* _pDestination
-	, bool _FlipVertically)
+	, const copy_option::value& option)
 {
 	if (any(_SourceInfo.dimensions != _DestinationInfo.dimensions))
 		throw std::invalid_argument("dimensions must be the same");
@@ -262,7 +262,7 @@ void convert(const info& _SourceInfo
 
 		for (int slice = 0; slice < srcSri.dimensions.z; slice++)
 		{
-			convert_subresource(cv, srcSri, Source, _DestinationInfo.format, &Destination, _FlipVertically);
+			convert_subresource(cv, srcSri, Source, _DestinationInfo.format, &Destination, option);
 
 			Source.data = byte_add(Source.data, Source.depth_pitch);
 			Destination.data = byte_add(Destination.data, Source.depth_pitch);

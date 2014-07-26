@@ -590,7 +590,7 @@ bool copy_async_data(DeviceContext* dc, Asynchronous* async, void* dst, uint dst
 	return SUCCEEDED(hr);
 }
 
-std::shared_ptr<surface::buffer> make_snapshot(Texture2D* t)
+surface::buffer make_snapshot(Texture2D* t)
 {
 	oCHECK_ARG(t, "invalid texture");
 	intrusive_ptr<Resource> CPUResource = make_cpu_copy(t);
@@ -601,7 +601,7 @@ std::shared_ptr<surface::buffer> make_snapshot(Texture2D* t)
 	surface::info si;
 	si.format = surface::b8g8r8a8_unorm;
 	si.dimensions = int3(desc.Width, desc.Height, 1);
-	std::shared_ptr<surface::buffer> s = surface::buffer::make(si);
+	surface::buffer s(si);
 
 	surface::lock_guard lock(s);
 	copy(CPUResource, 0, lock.mapped);

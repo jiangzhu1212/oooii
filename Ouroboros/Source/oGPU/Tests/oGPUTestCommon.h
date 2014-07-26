@@ -145,9 +145,9 @@ protected:
 	static const int sSnapshotFrames[2];
 };
 
-std::shared_ptr<surface::buffer> surface_load(const path& _Path, bool _Mips, const surface::alpha_option::value& _Option = surface::alpha_option::force_alpha);
+surface::buffer surface_load(const path& _Path, bool _Mips, const surface::alpha_option::value& _Option = surface::alpha_option::force_alpha);
 
-std::shared_ptr<surface::buffer> make_1D(int _Width, bool _Mips);
+surface::buffer make_1D(int _Width, bool _Mips);
 
 	} // namespace tests
 } // namespace ouro

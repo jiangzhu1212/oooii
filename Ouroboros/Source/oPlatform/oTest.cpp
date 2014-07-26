@@ -442,16 +442,13 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	return true;
 }
 
-static void surface_save(const surface::buffer* _pSurface, surface::alpha_option::value _Option, const path& _Path)
+static void surface_save(const surface::buffer& _Buffer, surface::alpha_option::value _Option, const path& _Path)
 {
 	size_t size = 0;
-	std::shared_ptr<char> encoded = encode(_pSurface, &size, surface::get_file_format(_Path), _Option);
+	std::shared_ptr<char> encoded = encode(_Buffer, &size, surface::get_file_format(_Path), _Option);
 	filesystem::save(_Path, encoded.get(), size, filesystem::save_option::binary_write);
 }
-inline void surface_save(std::shared_ptr<const surface::buffer>& _pSurface, surface::alpha_option::value _Option, const path& _Path) { surface_save(_pSurface.get(), _Option, _Path); }
-inline void surface_save(std::shared_ptr<surface::buffer>& _pSurface, surface::alpha_option::value _Option, const path& _Path) { surface_save(_pSurface.get(), _Option, _Path); }
-
-bool oTest::TestImage(const surface::buffer* _pTestImage
+bool oTest::TestImage(const surface::buffer& _TestImage
 	, const char* _GoldenImagePath
 	, const char* _FailedImagePath
 	, unsigned int _NthImage
@@ -464,11 +461,11 @@ bool oTest::TestImage(const surface::buffer* _pTestImage
 	const char* gPath = _GoldenImagePath + commonPathLength;
 	const char* fPath = _FailedImagePath + commonPathLength;
 
-	surface::info si = _pTestImage->get_info();
+	surface::info si = _TestImage.get_info();
 
 	const surface::alpha_option::value ao = surface::has_alpha(si.format) ? surface::alpha_option::force_alpha : surface::alpha_option::force_no_alpha;
 
-	std::shared_ptr<surface::buffer> GoldenImage;
+	surface::buffer GoldenImage;
 	{
 		size_t bSize = 0;
 		scoped_allocation b;
@@ -479,20 +476,20 @@ bool oTest::TestImage(const surface::buffer* _pTestImage
 		catch (std::exception&) { return oErrorSetLast(std::errc::protocol_error, "Corrupt Image: (Golden)...%s", gPath); }
 	}
 
-	surface::info gsi = GoldenImage->get_info();
+	surface::info gsi = GoldenImage.get_info();
 
 	// Compare dimensions/format before going into pixels
 	{
 		if (any(si.dimensions != gsi.dimensions))
 		{
-			try { surface_save(_pTestImage, ao, _FailedImagePath); }
+			try { surface_save(_TestImage, ao, _FailedImagePath); }
 			catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
 			return oErrorSetLast(std::errc::protocol_error, "Differing dimensions: (Output %dx%d)...%s != (Golden %dx%d)...%s", si.dimensions.x, si.dimensions.y, fPath, gsi.dimensions.x, gsi.dimensions.y, gPath);
 		}
 
 		if (si.format != gsi.format)
 		{
-			try { surface_save(_pTestImage, ao, _FailedImagePath); }
+			try { surface_save(_TestImage, ao, _FailedImagePath); }
 			catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
 			return oErrorSetLast(std::errc::protocol_error, "Differing formats: (Golden %s)...%s != (Output %s)...%s", as_string(gsi.format), gPath, as_string(si.format), fPath);
 		}
@@ -510,16 +507,13 @@ bool oTest::TestImage(const surface::buffer* _pTestImage
 	}
 
 	// Do the real test
-	surface::info dsi;
-	dsi.format = surface::r8_unorm;
-	dsi.dimensions = si.dimensions;
-	std::shared_ptr<surface::buffer> diffs = surface::buffer::make(dsi);
-	float RMSError = surface::calc_rms(_pTestImage, GoldenImage.get(), diffs.get(), _DiffImageMultiplier);
+	surface::buffer diffs;
+	float RMSError = surface::calc_rms(_TestImage, GoldenImage, &diffs, _DiffImageMultiplier);
 
 	// Save out test image and diffs if there is a non-similar result.
 	if (RMSError > _MaxRMSError)
 	{
-		try { surface_save(_pTestImage, ao, _FailedImagePath); }
+		try { surface_save(_TestImage, ao, _FailedImagePath); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
 
 		path diffPath(_FailedImagePath);
@@ -579,7 +573,7 @@ static bool oInitialize(const char* _RootPath, const char* _Filename, const adap
 	return true;
 }
 
-bool oTest::TestImage(const surface::buffer* _pTestImage, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)
+bool oTest::TestImage(const surface::buffer& _TestImage, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)
 {
 	// Check: GoldenDir/CardName/DriverVersion/GoldenImage
 	// Then Check: GoldenDir/CardName/GoldenImage
@@ -599,24 +593,24 @@ bool oTest::TestImage(const surface::buffer* _pTestImage, unsigned int _NthImage
 	oVERIFY(oInitialize(TestDesc.OutputPath, Filename, DriverDesc, &FailurePaths));
 
 	if (filesystem::exists(GoldenPaths.DriverSpecific))
-		return TestImage(_pTestImage, GoldenPaths.DriverSpecific, FailurePaths.DriverSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+		return TestImage(_TestImage, GoldenPaths.DriverSpecific, FailurePaths.DriverSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
 
 	else if (filesystem::exists(GoldenPaths.VendorSpecific))
-		return TestImage(_pTestImage, GoldenPaths.VendorSpecific, FailurePaths.VendorSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+		return TestImage(_TestImage, GoldenPaths.VendorSpecific, FailurePaths.VendorSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
 
 	else if (filesystem::exists(GoldenPaths.CardSpecific))
-		return TestImage(_pTestImage, GoldenPaths.CardSpecific, FailurePaths.CardSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+		return TestImage(_TestImage, GoldenPaths.CardSpecific, FailurePaths.CardSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
 
 	else if (filesystem::exists(GoldenPaths.OperatingSystemSpecific))
-		return TestImage(_pTestImage, GoldenPaths.OperatingSystemSpecific, FailurePaths.OperatingSystemSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+		return TestImage(_TestImage, GoldenPaths.OperatingSystemSpecific, FailurePaths.OperatingSystemSpecific, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
 
 	else if (filesystem::exists(GoldenPaths.Generic))
-		return TestImage(_pTestImage, GoldenPaths.Generic, FailurePaths.Generic, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
+		return TestImage(_TestImage, GoldenPaths.Generic, FailurePaths.Generic, _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier, TestDesc.EnableOutputGoldenImages);
 
-	surface::info si = _pTestImage->get_info();
+	surface::info si = _TestImage.get_info();
 
 	surface::alpha_option::value ao = surface::has_alpha(si.format) ? surface::alpha_option::force_alpha : surface::alpha_option::force_no_alpha;
-	try { surface_save(_pTestImage, ao, FailurePaths.DriverSpecific); }
+	try { surface_save(_TestImage, ao, FailurePaths.DriverSpecific); }
 	catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)%s", FailurePaths.DriverSpecific.c_str()); }
 
 	return oErrorSetLast(std::errc::no_such_file_or_directory, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());

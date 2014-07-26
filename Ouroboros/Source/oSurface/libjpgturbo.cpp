@@ -29,8 +29,7 @@
 #define JPEG_LIB_VERSION 80
 #include <libjpegTurbo/jpeglib.h>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
 void error_exit_throw(j_common_ptr cinfo)
 {
@@ -156,7 +155,7 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 	return si;
 }
 
-std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
+std::shared_ptr<char> encode_jpg(const buffer& _Buffer
 	, size_t* _pSize
 	, const alpha_option::value& _Option
 	, const compression::value& _Compression)
@@ -174,7 +173,7 @@ std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
 	unsigned long CompressedSize = 0;
 	finally Destroy([&] { jpeg_destroy_compress(&cinfo); if (pCompressed) free(pCompressed); });
 
-	info si = _pBuffer->get_info();
+	info si = _Buffer.get_info();
 	cinfo.image_width = si.dimensions.x;
 	cinfo.image_height = si.dimensions.y;
 	cinfo.in_color_space = to_jcs(si.format, &cinfo.input_components);
@@ -198,7 +197,7 @@ std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
 
 	{
 		JSAMPROW row[1];
-		shared_lock lock(_pBuffer);
+		shared_lock lock(_Buffer);
 		while (cinfo.next_scanline < cinfo.image_height)
 		{
 			row[0] = (JSAMPLE*)byte_add(lock.mapped.data, cinfo.next_scanline * lock.mapped.row_pitch);
@@ -214,7 +213,7 @@ std::shared_ptr<char> encode_jpg(const buffer* _pBuffer
 	return buffer;
 }
 
-std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
+buffer decode_jpg(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -253,7 +252,7 @@ std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, con
 			throw std::exception("unsupported format");
 	}
 
-	std::shared_ptr<buffer> b = buffer::make(si);
+	buffer b(si);
 	{
 		JSAMPROW row[1];
 		lock_guard lock(b);
@@ -270,5 +269,4 @@ std::shared_ptr<buffer> decode_jpg(const void* _pBuffer, size_t _BufferSize, con
 	return b;
 }
 
-	} // namespace surface
-} // namespace ouro
+}}

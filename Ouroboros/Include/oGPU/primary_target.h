@@ -54,7 +54,7 @@ public:
 	uint2 dimensions() const;
 	inline uint num_presents() const { return npresents; }
 
-	std::shared_ptr<surface::buffer> make_snapshot();
+	surface::buffer make_snapshot();
 
 	inline void* get_target() const { return rw; }
 

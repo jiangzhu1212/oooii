@@ -7,18 +7,15 @@
     <Filter Include="Source">
       <UniqueIdentifier>{b2232d52-2b4a-4733-b54b-bf5c03daa24a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\codecs">
+      <UniqueIdentifier>{c10bd930-538b-4910-b68b-7ceae5aa0cb8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="fill.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="libjpgturbo.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="libpng.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="resize.cpp">
@@ -37,10 +34,16 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="bmp.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="libpng.cpp">
+      <Filter>Source\codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="libjpgturbo.cpp">
+      <Filter>Source\codecs</Filter>
     </ClCompile>
     <ClCompile Include="tga.cpp">
-      <Filter>Source</Filter>
+      <Filter>Source\codecs</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

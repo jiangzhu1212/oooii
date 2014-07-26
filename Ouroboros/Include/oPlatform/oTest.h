@@ -159,7 +159,7 @@ struct oTest : oProcessSingleton<oTest>
 	// policies for image comparisons. If so, _ColorChannelTolerance, 
 	// _MaxRMSError, and _DiffImageMultiplier can be overridden, else the default
 	// values specified here will be replaced with values from oTestManager::DESC.
-	bool oTest::TestImage(const ouro::surface::buffer* _pTestImage
+	bool TestImage(const ouro::surface::buffer& _TestImage
 		, const char* _GoldenImagePath
 		, const char* _FailedImagePath
 		, unsigned int _NthImage
@@ -168,25 +168,11 @@ struct oTest : oProcessSingleton<oTest>
 		, unsigned int _DiffImageMultiplier
 		, bool _OutputGoldenImage);
 
-	bool TestImage(const ouro::surface::buffer* _pBuffer
+	bool TestImage(const ouro::surface::buffer& _Buffer
 		, unsigned int _NthImage = 0
 		, int _ColorChannelTolerance = oDEFAULT
 		, float _MaxRMSError = -1.0f
 		, unsigned int _DiffImageMultiplier = oDEFAULT);
-
-	inline bool TestImage(std::shared_ptr<const ouro::surface::buffer> _pBuffer
-		, unsigned int _NthImage = 0
-		, int _ColorChannelTolerance = oDEFAULT
-		, float _MaxRMSError = -1.0f
-		, unsigned int _DiffImageMultiplier = oDEFAULT)
-	{ return TestImage(_pBuffer.get(), _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier); }
-
-	inline bool TestImage(std::shared_ptr<ouro::surface::buffer> _pBuffer
-		, unsigned int _NthImage = 0
-		, int _ColorChannelTolerance = oDEFAULT
-		, float _MaxRMSError = -1.0f
-		, unsigned int _DiffImageMultiplier = oDEFAULT)
-	{ return TestImage(_pBuffer.get(), _NthImage, _ColorChannelTolerance, _MaxRMSError, _DiffImageMultiplier); }
 
 	virtual RESULT Run(char* _StrStatus, size_t _SizeofStrStatus) = 0;
 

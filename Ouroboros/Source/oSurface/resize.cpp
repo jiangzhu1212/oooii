@@ -286,7 +286,7 @@ void resize_internal(const info& _SourceInfo, const const_mapped_subresource& _S
 	// Assuming all our filters are separable for now.
 
 	if (all(_SourceInfo.dimensions == _DestinationInfo.dimensions)) // no actual resize, just copy
-		copy(_SourceInfo, _Source, _pDestination, false);
+		copy(_SourceInfo, _Source, _pDestination);
 	else if (FILTER::Support == 1) // point sampling
 	{		
 		const char* srcData = (char*)_Source.data;
