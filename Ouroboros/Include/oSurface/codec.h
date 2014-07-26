@@ -36,6 +36,7 @@ enum class file_format : uchar
 {
 	unknown,
 	bmp,
+	dds,
 	jpg,
 	png,
 	tga,

@@ -45,6 +45,9 @@
     <ClCompile Include="texel_buffer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="dds.cpp">
+      <Filter>Source\codecs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

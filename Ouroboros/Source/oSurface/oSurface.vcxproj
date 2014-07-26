@@ -22,6 +22,7 @@
     <ClCompile Include="bmp.cpp" />
     <ClCompile Include="codec.cpp" />
     <ClCompile Include="convert.cpp" />
+    <ClCompile Include="dds.cpp" />
     <ClCompile Include="fill.cpp" />
     <ClCompile Include="libjpgturbo.cpp" />
     <ClCompile Include="libpng.cpp" />
