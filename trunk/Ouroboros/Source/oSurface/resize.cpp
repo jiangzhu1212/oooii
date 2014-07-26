@@ -30,7 +30,7 @@
 
 namespace ouro {
 
-const char* as_string(const surface::filter::value& _Filter)
+const char* as_string(const surface::filter& _Filter)
 {
 	switch (_Filter)
 	{
@@ -151,7 +151,7 @@ struct Filter : public T
 		float halfPixel = 0.5f/dstDim;
 		float srcHalfPixel = 0.5f/srcDim;
 
-		for (int i = 0; i < dstDim; ++i)
+		for (int i = 0; i < dstDim; i++)
 		{
 			float dstCenter = i / (float)dstDim + halfPixel;
 			int closestSource = static_cast<int>(round((dstCenter - srcHalfPixel) * srcDim));
@@ -197,24 +197,24 @@ struct Filter : public T
 	}
 };
 
-template<typename FILTER, int ELEMENT_SIZE>
-void resize_horizontal(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination)
+template<typename FILTER, size_t ELEMENT_SIZE>
+void resize_horizontal(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst)
 {
-	if (_SourceInfo.dimensions.y != _DestinationInfo.dimensions.y)
+	if (src_info.dimensions.y != dst_info.dimensions.y)
 		throw std::invalid_argument("Horizontal resize assumes y dimensions are the same for source and destination");
 
 	FILTER filter;
-	filter.InitFilter(_SourceInfo.dimensions.x, _DestinationInfo.dimensions.x);
+	filter.InitFilter(src_info.dimensions.x, dst_info.dimensions.x);
 
-	const char* srcData = (char*)_Source.data;
-	char* dstData = (char*)_pDestination->data;
+	const char* srcData = (char*)src.data;
+	char* dstData = (char*)dst.data;
 
-	for (int y = 0; y < _DestinationInfo.dimensions.y; y++)
+	for (int y = 0; y < dst_info.dimensions.y; y++)
 	{
-		const unsigned char* oRESTRICT srcRow = (unsigned char*)byte_add(srcData, y*_Source.row_pitch);
-		unsigned char* oRESTRICT dstRow = (unsigned char*)byte_add(dstData, y*_pDestination->row_pitch);
+		const uchar* oRESTRICT srcRow = (uchar*)byte_add(srcData, y*src.row_pitch);
+		uchar* oRESTRICT dstRow = (uchar*)byte_add(dstData, y*dst.row_pitch);
 
-		for (int x = 0; x < _DestinationInfo.dimensions.x; x++)
+		for (int x = 0; x < dst_info.dimensions.x; x++)
 		{
 			auto& filterEntry = filter.FilterCache[x];
 			std::array<float, ELEMENT_SIZE> result;
@@ -222,7 +222,7 @@ void resize_horizontal(const info& _SourceInfo, const const_mapped_subresource& 
 
 			for (int srcX = filterEntry.Left; srcX <= filterEntry.Right; srcX++)
 			{
-				for (int i = 0; i < ELEMENT_SIZE; ++i)
+				for (size_t i = 0; i < ELEMENT_SIZE; i++)
 				{
 					float src = srcRow[srcX*ELEMENT_SIZE + i];
 					src *= filterEntry.Cache[srcX - filterEntry.Left];
@@ -230,151 +230,148 @@ void resize_horizontal(const info& _SourceInfo, const const_mapped_subresource& 
 				}
 			}
 			
-			for (int i = 0; i < ELEMENT_SIZE; i++)
-				dstRow[x*ELEMENT_SIZE + i] = static_cast<unsigned char>(clamp(result[i], 0.0f, 255.0f));
+			for (size_t i = 0; i < ELEMENT_SIZE; i++)
+				dstRow[x*ELEMENT_SIZE + i] = static_cast<uchar>(clamp(result[i], 0.0f, 255.0f));
 		}
 	}
 }
 
 template<typename FILTER, int ELEMENT_SIZE>
-void resize_vertical(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination)
+void resize_vertical(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst)
 {
-	if (_SourceInfo.dimensions.x != _DestinationInfo.dimensions.x)
+	if (src_info.dimensions.x != dst_info.dimensions.x)
 		throw std::invalid_argument("vertical resize assumes x dimensions are the same for source and destination");
 
 	FILTER filter;
-	filter.InitFilter(_SourceInfo.dimensions.y, _DestinationInfo.dimensions.y);
+	filter.InitFilter(src_info.dimensions.y, dst_info.dimensions.y);
 
-	const unsigned char* oRESTRICT srcData = (unsigned char*)_Source.data;
-	unsigned char* oRESTRICT dstData = (unsigned char*)_pDestination->data;
+	const uchar* oRESTRICT srcData = (uchar*)src.data;
+	uchar* oRESTRICT dstData = (uchar*)dst.data;
 
-	for(int y = 0; y < _DestinationInfo.dimensions.y; y++)
+	for(int y = 0; y < dst_info.dimensions.y; y++)
 	{
-		unsigned char* oRESTRICT dstRow = byte_add(dstData, y*_pDestination->row_pitch);
+		uchar* oRESTRICT dstRow = byte_add(dstData, y*dst.row_pitch);
 
-		for(int x = 0; x < _DestinationInfo.dimensions.x; ++x)
+		for(int x = 0; x < dst_info.dimensions.x; ++x)
 		{
 			auto& filterEntry = filter.FilterCache[y];
-			float result[ELEMENT_SIZE];
-			for (int i = 0;i < ELEMENT_SIZE; ++i)
-			{
-				result[i] = 0;
-			}
+			std::array<float, ELEMENT_SIZE> result;
+			result.fill(0.0f);
 
 			for (int srcY = filterEntry.Left;srcY <= filterEntry.Right; ++srcY)
 			{
-				const unsigned char* oRESTRICT srcElement = byte_add(srcData, srcY*_Source.row_pitch + x*ELEMENT_SIZE);
+				const uchar* oRESTRICT srcElement = byte_add(srcData, srcY*src.row_pitch + x*ELEMENT_SIZE);
 
-				for (int i = 0;i < ELEMENT_SIZE; ++i)
+				for (size_t i = 0;i < ELEMENT_SIZE; i++)
 				{
 					float src = srcElement[i];
 					src *= filterEntry.Cache[srcY - filterEntry.Left];
 					result[i] += src;
 				}
 			}
-			for (int i = 0;i < ELEMENT_SIZE; ++i)
+			for (size_t i = 0;i < ELEMENT_SIZE; i++)
 			{
-				dstRow[x*ELEMENT_SIZE + i] = static_cast<unsigned char>(clamp(result[i], 0.0f, 255.0f));
+				dstRow[x*ELEMENT_SIZE + i] = static_cast<uchar>(clamp(result[i], 0.0f, 255.0f));
 			}
 		}
 	}
 }
 
 template<typename FILTER, int ELEMENT_SIZE>
-void resize_internal(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination)
+void resize_internal(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst)
 {
 	// Assuming all our filters are separable for now.
 
-	if (all(_SourceInfo.dimensions == _DestinationInfo.dimensions)) // no actual resize, just copy
-		copy(_SourceInfo, _Source, _pDestination);
+	if (all(src_info.dimensions == dst_info.dimensions)) // no actual resize, just copy
+		copy(src_info, src, dst);
 	else if (FILTER::Support == 1) // point sampling
 	{		
-		const char* srcData = (char*)_Source.data;
-		char* dstData = (char*)_pDestination->data;
+		const char* srcData = (char*)src.data;
+		char* dstData = (char*)dst.data;
 
 		// Bresenham style for x
-		int fixedStep = (_SourceInfo.dimensions.x / _DestinationInfo.dimensions.x)*ELEMENT_SIZE;
-		int remainder = (_SourceInfo.dimensions.x % _DestinationInfo.dimensions.x);
+		int fixedStep = (src_info.dimensions.x / dst_info.dimensions.x)*ELEMENT_SIZE;
+		int remainder = (src_info.dimensions.x % dst_info.dimensions.x);
 
-		for (int y = 0; y < _DestinationInfo.dimensions.y; y++)
+		for (int y = 0; y < dst_info.dimensions.y; y++)
 		{
-			int row = (y*_SourceInfo.dimensions.y)/_DestinationInfo.dimensions.y;
-			const char* oRESTRICT srcRow = byte_add(srcData, row*_Source.row_pitch);
-			char* oRESTRICT dstRow = byte_add(dstData, y*_pDestination->row_pitch);
+			int row = (y*src_info.dimensions.y)/dst_info.dimensions.y;
+			const char* oRESTRICT srcRow = byte_add(srcData, row*src.row_pitch);
+			char* oRESTRICT dstRow = byte_add(dstData, y*dst.row_pitch);
 
 			int step = 0;
-			for(int x = 0; x < _DestinationInfo.dimensions.x; ++x)
+			for(int x = 0; x < dst_info.dimensions.x; ++x)
 			{
-				for (int i = 0;i < ELEMENT_SIZE; ++i)
+				for (size_t i = 0; i < ELEMENT_SIZE; i++)
 					*dstRow++ = *(srcRow+i);
 				srcRow += fixedStep;
 				step += remainder;
-				if (step >= _DestinationInfo.dimensions.x)
+				if (step >= dst_info.dimensions.x)
 				{
 					srcRow += ELEMENT_SIZE;
-					step -= _DestinationInfo.dimensions.x;
+					step -= dst_info.dimensions.x;
 				}
 			}
 		}
 	}
 	else // have to run a real filter
 	{
-		if (_SourceInfo.dimensions.x == _DestinationInfo.dimensions.x) //Only need a y filter
-			resize_vertical<FILTER, ELEMENT_SIZE>(_SourceInfo, _Source, _DestinationInfo, _pDestination);
-		else if (_SourceInfo.dimensions.y == _DestinationInfo.dimensions.y) //Only need a x filter
-			resize_horizontal<FILTER, ELEMENT_SIZE>(_SourceInfo, _Source, _DestinationInfo, _pDestination);
-		else if (_DestinationInfo.dimensions.x*_SourceInfo.dimensions.y <= _DestinationInfo.dimensions.y*_SourceInfo.dimensions.x) //more efficient to run x filter then y
+		if (src_info.dimensions.x == dst_info.dimensions.x) //Only need a y filter
+			resize_vertical<FILTER, ELEMENT_SIZE>(src_info, src, dst_info, dst);
+		else if (src_info.dimensions.y == dst_info.dimensions.y) //Only need a x filter
+			resize_horizontal<FILTER, ELEMENT_SIZE>(src_info, src, dst_info, dst);
+		else if (dst_info.dimensions.x*src_info.dimensions.y <= dst_info.dimensions.y*src_info.dimensions.x) // more efficient to run x filter then y
 		{
-			info tempInfo = _SourceInfo;
-			tempInfo.dimensions.x = _DestinationInfo.dimensions.x;
+			info tempInfo = src_info;
+			tempInfo.dimensions.x = dst_info.dimensions.x;
 			tempInfo.layout = surface::layout::tight;
 			std::vector<char> tempImage;
 			tempImage.resize(total_size(tempInfo));
 
 			mapped_subresource tempMap = get_mapped_subresource(tempInfo, 0, 0, tempImage.data());
-			resize_horizontal<FILTER, ELEMENT_SIZE>(_SourceInfo, _Source, tempInfo, &tempMap);
+			resize_horizontal<FILTER, ELEMENT_SIZE>(src_info, src, tempInfo, tempMap);
 			const_mapped_subresource tempMapConst = tempMap;
-			resize_vertical<FILTER, ELEMENT_SIZE>(tempInfo, tempMapConst, _DestinationInfo, _pDestination);
+			resize_vertical<FILTER, ELEMENT_SIZE>(tempInfo, tempMapConst, dst_info, dst);
 		}
 		else // more efficient to run y filter then x
 		{
-			info tempInfo = _SourceInfo;
-			tempInfo.dimensions.y = _DestinationInfo.dimensions.y;
+			info tempInfo = src_info;
+			tempInfo.dimensions.y = dst_info.dimensions.y;
 			tempInfo.layout = surface::layout::tight;
-			std::vector<char> tempImage;
+			std::vector<char> tempImage; // todo: fix internal allocation
 			tempImage.resize(total_size(tempInfo));
 
 			mapped_subresource tempMap = get_mapped_subresource(tempInfo, 0, 0, tempImage.data());
-			resize_vertical<FILTER, ELEMENT_SIZE>(_SourceInfo, _Source, tempInfo, &tempMap);
+			resize_vertical<FILTER, ELEMENT_SIZE>(src_info, src, tempInfo, tempMap);
 			const_mapped_subresource tempMapConst = tempMap;
-			resize_horizontal<FILTER, ELEMENT_SIZE>(tempInfo, tempMapConst, _DestinationInfo, _pDestination);
+			resize_horizontal<FILTER, ELEMENT_SIZE>(tempInfo, tempMapConst, dst_info, dst);
 		}
 	}
 }
 
-void resize(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, filter::value _Filter)
+void resize(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, const filter& f)
 {
-	if (_SourceInfo.layout != _DestinationInfo.layout || _SourceInfo.format != _DestinationInfo.format)
+	if (src_info.layout != dst_info.layout || src_info.format != dst_info.format)
 		throw std::invalid_argument("incompatible surfaces");
 
-	if (is_block_compressed(_SourceInfo.format))
+	if (is_block_compressed(src_info.format))
 		throw std::invalid_argument("block compressed formats cannot be resized");
 
-	const int elementSize = element_size(_SourceInfo.format);
+	const int elementSize = element_size(src_info.format);
 
 	#define FILTER_CASE(filter_type) \
 	case filter::filter_type: \
 	{	switch (elementSize) \
-		{	case 1: resize_internal<Filter<filter_##filter_type>,1>(_SourceInfo, _Source, _DestinationInfo, _pDestination); break; \
-			case 2: resize_internal<Filter<filter_##filter_type>,2>(_SourceInfo, _Source, _DestinationInfo, _pDestination); break; \
-			case 3: resize_internal<Filter<filter_##filter_type>,3>(_SourceInfo, _Source, _DestinationInfo, _pDestination); break; \
-			case 4: resize_internal<Filter<filter_##filter_type>,4>(_SourceInfo, _Source, _DestinationInfo, _pDestination); break; \
+		{	case 1: resize_internal<Filter<filter_##filter_type>,1>(src_info, src, dst_info, dst); break; \
+			case 2: resize_internal<Filter<filter_##filter_type>,2>(src_info, src, dst_info, dst); break; \
+			case 3: resize_internal<Filter<filter_##filter_type>,3>(src_info, src, dst_info, dst); break; \
+			case 4: resize_internal<Filter<filter_##filter_type>,4>(src_info, src, dst_info, dst); break; \
 			oNODEFAULT; \
 		} \
 		break; \
 	}
 
-	switch (_Filter)
+	switch (f)
 	{
 		FILTER_CASE(point)
 		FILTER_CASE(box)
@@ -387,43 +384,42 @@ void resize(const info& _SourceInfo, const const_mapped_subresource& _Source, co
 	#undef FILTER_CASE
 }
 
-void clip(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _pDestination, int2 _SourceOffset)
+void clip(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, int2 src_offset)
 {
-	if (_SourceInfo.layout != _DestinationInfo.layout || _SourceInfo.format != _DestinationInfo.format)
+	if (src_info.layout != dst_info.layout || src_info.format != dst_info.format)
 		throw std::invalid_argument("incompatible surfaces");
 
-	if (ouro::surface::is_block_compressed(_SourceInfo.format))
+	if (ouro::surface::is_block_compressed(src_info.format))
 		throw std::invalid_argument("block compressed formats cannot be clipped");
 
-	if (_SourceOffset.x < 0 || _SourceOffset.y < 0)
+	if (src_offset.x < 0 || src_offset.y < 0)
 		throw std::invalid_argument("source offset must be >= 0");
 
-	int2 bottomRight = _SourceOffset + _DestinationInfo.dimensions.xy();
-	if (bottomRight.x > _SourceInfo.dimensions.x || bottomRight.y > _SourceInfo.dimensions.y)
-		throw std::invalid_argument("_SourceOffset + the dimensions of the destination, must be within the dimensions of the source");
+	int2 bottomRight = src_offset + dst_info.dimensions.xy();
+	if (bottomRight.x > src_info.dimensions.x || bottomRight.y > src_info.dimensions.y)
+		throw std::invalid_argument("src_offset + the dimensions of the destination, must be within the dimensions of the source");
 
-	int elementSize = ouro::surface::element_size(_SourceInfo.format);
-	memcpy2d(_pDestination->data, _pDestination->row_pitch, byte_add(_Source.data, _Source.row_pitch*_SourceOffset.y + elementSize*_SourceOffset.x), _Source.row_pitch, _DestinationInfo.dimensions.x*elementSize, _DestinationInfo.dimensions.y);
+	int elementSize = ouro::surface::element_size(src_info.format);
+	memcpy2d(dst.data, dst.row_pitch, byte_add(src.data, src.row_pitch*src_offset.y + elementSize*src_offset.x), src.row_pitch, dst_info.dimensions.x*elementSize, dst_info.dimensions.y);
 }
 
-void pad(const info& _SourceInfo, const const_mapped_subresource& _Source, const info& _DestinationInfo, mapped_subresource* _Destination, int2 _DestinationOffset)
+void pad(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, int2 dst_offset)
 {
-	if (_SourceInfo.layout != _DestinationInfo.layout || _SourceInfo.format != _DestinationInfo.format)
+	if (src_info.layout != dst_info.layout || src_info.format != dst_info.format)
 		throw std::invalid_argument("incompatible surfaces");
 
-	if (is_block_compressed(_SourceInfo.format))
+	if (is_block_compressed(src_info.format))
 		throw std::invalid_argument("block compressed formats cannot be padded");
 
-	if (any(_DestinationOffset < int2(0,0)))
+	if (any(dst_offset < int2(0,0)))
 		throw std::invalid_argument("destination offset must be >= 0");
 
-	int2 bottomRight = _DestinationOffset + _SourceInfo.dimensions.xy();
-	if (any(bottomRight > _DestinationInfo.dimensions.xy()))
-		throw std::invalid_argument("_DestinationOffset + destination dimensions must be within the dimensions of the source");
+	int2 bottomRight = dst_offset + src_info.dimensions.xy();
+	if (any(bottomRight > dst_info.dimensions.xy()))
+		throw std::invalid_argument("dst_offset + destination dimensions must be within the dimensions of the source");
 
-	int elementSize = element_size(_SourceInfo.format);
-	memcpy2d(byte_add(_Destination->data, _Destination->row_pitch*_DestinationOffset.y + elementSize*_DestinationOffset.x), _Destination->row_pitch, _Source.data, _Source.row_pitch, _SourceInfo.dimensions.x*elementSize, _SourceInfo.dimensions.y);
+	int elementSize = element_size(src_info.format);
+	memcpy2d(byte_add(dst.data, dst.row_pitch*dst_offset.y + elementSize*dst_offset.x), dst.row_pitch, src.data, src.row_pitch, src_info.dimensions.x*elementSize, src_info.dimensions.y);
 }
 
-	} // namespace surface
-} // namespace ouro
+}}

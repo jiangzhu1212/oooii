@@ -67,12 +67,12 @@ struct BITMAPINFO
 	RGBQUAD bmiColors[1];
 };
 
-info get_info_bmp(const void* _pBuffer, size_t _BufferSize)
+info get_info_bmp(const void* buffer, size_t size)
 {
-	if (_BufferSize < 2 || memcmp(_pBuffer, "BM", 2))
+	if (size < 2 || memcmp(buffer, "BM", 2))
 		return info();
 
-	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)_pBuffer;
+	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)buffer;
 	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
 
 	info si;
@@ -81,12 +81,9 @@ info get_info_bmp(const void* _pBuffer, size_t _BufferSize)
 	return si;
 }
 
-std::shared_ptr<char> encode_bmp(const buffer& _Buffer
-	, size_t* _pSize
-	, const alpha_option::value& _Option
-	, const compression::value& _Compression)
+scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, const compression& compression)
 {
-	auto info = _Buffer.get_info();
+	auto info = b.get_info();
 
 	oCHECK(info.format == surface::b8g8r8a8_unorm || info.format == surface::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 
@@ -98,10 +95,7 @@ std::shared_ptr<char> encode_bmp(const buffer& _Buffer
 	const uint bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO);
 	const uint bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + BufferSize;
 
-	void* p = malloc(bfSize);
-	std::shared_ptr<char> buffer((char*)p, free);
-	if (_pSize)
-		*_pSize = bfSize;
+	scoped_allocation p(malloc(bfSize), bfSize, free);
 
 	BITMAPFILEHEADER* bfh = (BITMAPFILEHEADER*)p;
 	BITMAPINFO* bmi = (BITMAPINFO*)&bfh[1];
@@ -129,7 +123,7 @@ std::shared_ptr<char> encode_bmp(const buffer& _Buffer
 	bmi->bmiColors[0].rgbRed = 0;
 	bmi->bmiColors[0].rgbReserved = 0;
 
-	shared_lock lock(_Buffer);
+	shared_lock lock(b);
 	
 	uint Padding = AlignedPitch - UnalignedPitch;
 
@@ -151,27 +145,27 @@ std::shared_ptr<char> encode_bmp(const buffer& _Buffer
 			*scanline = 0;
 	}
 
-	return buffer;
+	return p;
 }
 
-buffer decode_bmp(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
+texel_buffer decode_bmp(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
 {
-	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)_pBuffer;
+	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)buffer;
 	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
 	const void* bits = &bmi[1];
 
-	info si = get_info_bmp(_pBuffer, _BufferSize);
+	info si = get_info_bmp(buffer, size);
 	oCHECK(si.format != unknown, "invalid bmp");
 	info dsi = si;
-	dsi.layout = _Layout;
+	dsi.layout = layout;
 	const_mapped_subresource src;
 	src.data = bits;
 	src.depth_pitch = bmi->bmiHeader.biSizeImage;
 	src.row_pitch = src.depth_pitch / bmi->bmiHeader.biHeight;
 
-	dsi.format = alpha_option_format(si.format, _Option);
+	dsi.format = alpha_option_format(si.format, option);
 
-	buffer b(dsi);
+	texel_buffer b(dsi);
 	b.convert_from(0, src, si.format, copy_option::flip_vertically);
 	return b;
 }

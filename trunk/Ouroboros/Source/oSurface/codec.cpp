@@ -29,7 +29,7 @@
 
 namespace ouro {
 
-const char* as_string(const surface::file_format::value& ff)
+const char* as_string(const surface::file_format& ff)
 {
 	switch (ff)
 	{
@@ -44,7 +44,26 @@ const char* as_string(const surface::file_format::value& ff)
 
 	namespace surface {
 
-format alpha_option_format(const format& fmt, const alpha_option::value& option)
+// add format extension to this list and it will propagate to all the apis below
+#define FOREACH_EXT(macro) macro(bmp) macro(jpg) macro(png) macro(tga)
+
+// _____________________________________________________________________________
+// Boilerplate (don't use directly, they're registered with the functions below)
+
+#define DECLARE_CODEC(ext) \
+	info get_info_##ext(const void* buffer, size_t size); \
+	scoped_allocation encode_##ext(const texel_buffer& b, const alpha_option& option, const compression& compression); \
+	texel_buffer decode_##ext(const void* buffer, size_t size, const alpha_option& option, const layout& layout);
+
+#define GET_FILE_FORMAT_EXT(ext) if (!_stricmp(extension, "." #ext)) return file_format::##ext;
+#define GET_FILE_FORMAT_HDR(ext) if (get_info_##ext(buffer, size).format != unknown) return file_format::##ext;
+#define GET_INFO(ext) case file_format::##ext: return get_info_##ext(buffer, size);
+#define ENCODE(ext) case file_format::##ext: return encode_##ext(b, option, compression);
+#define DECODE(ext) case file_format::##ext: return decode_##ext(buffer, size, option, layout);
+
+FOREACH_EXT(DECLARE_CODEC)
+
+format alpha_option_format(const format& fmt, const alpha_option& option)
 {
 	switch (option)
 	{
@@ -83,70 +102,44 @@ format alpha_option_format(const format& fmt, const alpha_option::value& option)
 	return fmt;
 }
 
-file_format::value get_file_format(const char* path)
+file_format get_file_format(const char* path)
 {
-	const char* ext = rstrstr(path, ".");
-	if (!_stricmp(ext, ".bmp")) return file_format::bmp;
-	if (!_stricmp(ext, ".jpg")) return file_format::jpg;
-	if (!_stricmp(ext, ".png")) return file_format::png;
-	if (!_stricmp(ext, ".tga")) return file_format::tga;
+	const char* extension = rstrstr(path, ".");
+	FOREACH_EXT(GET_FILE_FORMAT_EXT)
 	return file_format::unknown;
 }
 
-#define DEFINE_API(ext) \
-	info get_info_##ext(const void* buffer, size_t size); \
-	std::shared_ptr<char> encode_##ext(const buffer& buffer, size_t* out_size, const alpha_option::value& option, const compression::value& compression); \
-	buffer decode_##ext(const void* buffer, size_t size, const alpha_option::value& option, const layout& layout);
-
-DEFINE_API(bmp) DEFINE_API(jpg) DEFINE_API(png) DEFINE_API(tga)
-
-file_format::value get_file_format(const void* _buffer, size_t size)
+file_format get_file_format(const void* buffer, size_t size)
 {
-	#define TEST_INFO(ext) if (get_info_##ext(_buffer, size).format != unknown) return file_format::##ext
-	TEST_INFO(bmp);
-	TEST_INFO(jpg);
-	TEST_INFO(png);
-	TEST_INFO(tga);
+	FOREACH_EXT(GET_FILE_FORMAT_HDR)
 	return file_format::unknown;
 }
 
-info get_info(const void* _pBuffer, size_t _BufferSize)
+info get_info(const void* buffer, size_t size)
 {
-	switch (get_file_format(_pBuffer, _BufferSize))
-	{
-		case file_format::png: return get_info_png(_pBuffer, _BufferSize);
-		case file_format::jpg: return get_info_jpg(_pBuffer, _BufferSize);
-		case file_format::bmp: return get_info_bmp(_pBuffer, _BufferSize);
+	switch (get_file_format(buffer, size))
+	{	FOREACH_EXT(GET_INFO)
 		default: break;
 	}
 	throw std::exception("unknown image encoding");
 }
 	
-std::shared_ptr<char> encode(const buffer& _Buffer
-	, size_t* _pSize
-	, const file_format::value& _FileFormat
-	, const alpha_option::value& _Option
-	, const compression::value& _Compression)
+scoped_allocation encode(const texel_buffer& b
+	, const file_format& fmt
+	, const alpha_option& option
+	, const compression& compression)
 {
-	switch (_FileFormat)
-	{
-		case file_format::bmp: return encode_bmp(_Buffer, _pSize, _Option, _Compression);
-		case file_format::jpg: return encode_jpg(_Buffer, _pSize, _Option, _Compression);
-		case file_format::png: return encode_png(_Buffer, _pSize, _Option, _Compression);
-		case file_format::tga: return encode_tga(_Buffer, _pSize, _Option, _Compression);
+	switch (fmt)
+	{ FOREACH_EXT(ENCODE)
 		default: break;
 	}
 	throw std::exception("unknown image encoding");
 }
 
-buffer decode(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
+texel_buffer decode(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
 {
-	switch (get_file_format(_pBuffer, _BufferSize))
-	{
-		case file_format::bmp: return decode_bmp(_pBuffer, _BufferSize, _Option, _Layout);
-		case file_format::jpg: return decode_jpg(_pBuffer, _BufferSize, _Option, _Layout);
-		case file_format::png: return decode_png(_pBuffer, _BufferSize, _Option, _Layout);
-		case file_format::tga: return decode_tga(_pBuffer, _BufferSize, _Option, _Layout);
+	switch (get_file_format(buffer, size))
+	{ FOREACH_EXT(DECODE)
 		default: break;
 	}
 	throw std::exception("unknown image encoding");

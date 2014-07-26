@@ -590,18 +590,18 @@ bool copy_async_data(DeviceContext* dc, Asynchronous* async, void* dst, uint dst
 	return SUCCEEDED(hr);
 }
 
-surface::buffer make_snapshot(Texture2D* t)
+surface::texel_buffer make_snapshot(Texture2D* t)
 {
 	oCHECK_ARG(t, "invalid texture");
 	intrusive_ptr<Resource> CPUResource = make_cpu_copy(t);
 
 	D3D_TEXTURE_DESC desc = get_texture_desc(CPUResource);
-	oCHECK_ARG(desc.Format != DXGI_FORMAT_UNKNOWN, "The specified texture's format %s is not supported by surface::buffer", as_string(desc.format));
+	oCHECK_ARG(desc.Format != DXGI_FORMAT_UNKNOWN, "The specified texture's format %s is not supported by surface::texel_buffer", as_string(desc.format));
 
 	surface::info si;
 	si.format = surface::b8g8r8a8_unorm;
 	si.dimensions = int3(desc.Width, desc.Height, 1);
-	surface::buffer s(si);
+	surface::texel_buffer s(si);
 
 	surface::lock_guard lock(s);
 	copy(CPUResource, 0, lock.mapped);

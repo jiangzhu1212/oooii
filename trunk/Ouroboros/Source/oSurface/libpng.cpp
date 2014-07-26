@@ -87,10 +87,10 @@ static surface::format to_format(int _Type, int _BitDepth)
 	return surface::unknown;
 }
 
-info get_info_png(const void* _pBuffer, size_t _BufferSize)
+info get_info_png(const void* buffer, size_t size)
 {
 	static const uchar png_sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-	if (_BufferSize < 8 || memcmp(png_sig, _pBuffer, sizeof(png_sig)))
+	if (size < 8 || memcmp(png_sig, buffer, sizeof(png_sig)))
 		return info();
 	
 	// initialze libpng with user functions pointing to _pBuffer
@@ -109,7 +109,7 @@ info get_info_png(const void* _pBuffer, size_t _BufferSize)
 	#pragma warning(default:4611) // interaction between '_setjmp' and C++ object destruction is non-portable
 
 	read_state rs;
-	rs.data = _pBuffer;
+	rs.data = buffer;
 	rs.offset = 0;
 	png_set_read_fn(png_ptr, &rs, user_read_data);
 	png_read_info(png_ptr, info_ptr);
@@ -127,16 +127,15 @@ info get_info_png(const void* _pBuffer, size_t _BufferSize)
 	return i;
 }
 
-std::shared_ptr<char> encode_png(const buffer& _Buffer
-	, size_t* _pSize
-	, const alpha_option::value& _Option
-	, const compression::value& _Compression)
+scoped_allocation encode_png(const texel_buffer& b
+	, const alpha_option& option
+	, const compression& compression)
 {
-	const buffer* pSource = &_Buffer;
-	buffer Converted;
+	const texel_buffer* pSource = &b;
+	texel_buffer Converted;
 
-	info si = _Buffer.get_info();
-	switch (_Option)
+	info si = b.get_info();
+	switch (option)
 	{
 		case alpha_option::force_alpha:
 		{
@@ -145,7 +144,7 @@ std::shared_ptr<char> encode_png(const buffer& _Buffer
 
 			if (si.format == r8g8b8_unorm || si.format == b8g8r8_unorm)
 			{
-				Converted = _Buffer.convert(r8g8b8a8_unorm);
+				Converted = b.convert(r8g8b8a8_unorm);
 				si = Converted.get_info();
 				pSource = &Converted;
 			}
@@ -157,7 +156,7 @@ std::shared_ptr<char> encode_png(const buffer& _Buffer
 		{
 			if (si.format == r8g8b8a8_unorm || si.format == b8g8r8a8_unorm)
 			{
-				Converted = _Buffer.convert(r8g8b8_unorm);
+				Converted = b.convert(r8g8b8_unorm);
 				si = Converted.get_info();
 				pSource = &Converted;
 			}
@@ -191,7 +190,7 @@ std::shared_ptr<char> encode_png(const buffer& _Buffer
 	png_set_write_fn(png_ptr, &ws, user_write_data, user_flush_data);
 
 	int zcomp = Z_NO_COMPRESSION;
-	switch (_Compression)
+	switch (compression)
 	{
 		case compression::none: zcomp = Z_NO_COMPRESSION; break;
 		case compression::low: zcomp = Z_BEST_SPEED; break;
@@ -233,13 +232,10 @@ std::shared_ptr<char> encode_png(const buffer& _Buffer
 		png_write_end(png_ptr, info_ptr);
 	}
 
-	std::shared_ptr<char> buffer((char*)ws.data, free);
-	if (_pSize)
-		*_pSize = ws.size;
-	return buffer;
+	return scoped_allocation(ws.data, ws.size, free);
 }
 
-buffer decode_png(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
+texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& option, const layout& _Layout)
 {
 	// initialze libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
@@ -257,7 +253,7 @@ buffer decode_png(const void* _pBuffer, size_t _BufferSize, const alpha_option::
 	#pragma warning(default:4611) // interaction between '_setjmp' and C++ object destruction is non-portable
 
 	read_state rs;
-	rs.data = _pBuffer;
+	rs.data = buffer;
 	rs.offset = 0;
 	png_set_read_fn(png_ptr, &rs, user_read_data);
 	png_read_info(png_ptr, info_ptr);
@@ -289,7 +285,7 @@ buffer decode_png(const void* _pBuffer, size_t _BufferSize, const alpha_option::
 			break;
 		case PNG_COLOR_TYPE_RGB:
 			si.format = b8g8r8_unorm;
-			if (_Option == alpha_option::force_alpha)
+			if (option == alpha_option::force_alpha)
 			{
 				si.format = b8g8r8a8_unorm;
 				png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
@@ -297,7 +293,7 @@ buffer decode_png(const void* _pBuffer, size_t _BufferSize, const alpha_option::
 			break;
 		case PNG_COLOR_TYPE_RGB_ALPHA:
 			si.format = b8g8r8a8_unorm;
-			if (_Option == alpha_option::force_no_alpha)
+			if (option == alpha_option::force_no_alpha)
 			{
 				si.format = b8g8r8_unorm;
 				png_set_strip_alpha(png_ptr);
@@ -310,7 +306,7 @@ buffer decode_png(const void* _pBuffer, size_t _BufferSize, const alpha_option::
 
 	// Set up the surface buffer
 	png_read_update_info(png_ptr, info_ptr);
-	buffer b(si);
+	texel_buffer b(si);
 	{
 		std::vector<uchar*> rows;
 		rows.resize(si.dimensions.y);

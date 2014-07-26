@@ -64,15 +64,15 @@ info get_info_tga(const void* buffer, size_t size)
 	return si;
 }
 
-std::shared_ptr<char> encode_tga(const buffer& buffer
-	, size_t* out_size
-	, const alpha_option::value& option
-	, const compression::value& compression)
+scoped_allocation encode_tga(const texel_buffer& b
+	, const alpha_option& option
+	, const compression& compression)
 {
 	oCHECK_ARG(compression == compression::none, "compression not supported");
 
-	auto info = buffer.get_info();
+	auto info = b.get_info();
 	oCHECK_ARG(info.format == b8g8r8a8_unorm || info.format == b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
+	oCHECK_ARG(info.dimensions.x <= 0xffff && info.dimensions.y <= 0xffff, "dimensions must be <= 65535");
 
 	auto dstinfo = info;
 	dstinfo.format = alpha_option_format(info.format, option);
@@ -85,22 +85,18 @@ std::shared_ptr<char> encode_tga(const buffer& buffer
 
 	const size_t size = sizeof(TGAHeader) + h.width * h.height * (h.bpp/8);
 
-	void* p = malloc(size);
-	std::shared_ptr<char> b((char*)p, free);
-	if (out_size)
-		*out_size = size;
-
+	scoped_allocation p(malloc(size), size, free);
 	memcpy(p, &h, sizeof(TGAHeader));
 	mapped_subresource dst;
-	dst.data = byte_add(p, sizeof(TGAHeader));
+	dst.data = byte_add((void*)p, sizeof(TGAHeader));
 	dst.row_pitch = element_size(dstinfo.format) * h.width;
 	dst.depth_pitch = dst.row_pitch * h.height;
 
-	buffer.convert_to(0, dst, dstinfo.format, copy_option::flip_vertically);
-	return b;
+	b.convert_to(0, dst, dstinfo.format, copy_option::flip_vertically);
+	return p;
 }
 
-buffer decode_tga(const void* _buffer, size_t size, const alpha_option::value& option, const layout& layout)
+texel_buffer decode_tga(const void* _buffer, size_t size, const alpha_option& option, const layout& layout)
 {
 	info si = get_info_tga(_buffer, size);
 	oCHECK(si.format != unknown, "invalid bmp");
@@ -110,7 +106,7 @@ buffer decode_tga(const void* _buffer, size_t size, const alpha_option::value& o
 	dsi.layout = layout;
 	auto src = get_const_mapped_subresource(si, 0, 0, &h[1]);
 
-	buffer b(dsi);
+	texel_buffer b(dsi);
 	b.convert_from(0, src, si.format, copy_option::flip_vertically);
 	return b;
 }

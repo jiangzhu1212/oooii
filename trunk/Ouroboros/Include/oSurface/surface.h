@@ -296,13 +296,11 @@ namespace cube_face
 
 };}
 
-namespace copy_option
-{	enum value : uchar {
-
+enum class copy_option : uchar
+{
 	none,
 	flip_vertically,
-
-};}
+};
 
 struct info
 {
@@ -664,12 +662,12 @@ mapped_subresource get_mapped_subresource(const info& _SurfaceInfo, int _Subreso
 
 // Copies a source buffer into the specified subresource of the surface 
 // described by a base pointer and an info
-void update(const info& _SurfaceInfo, int _Subresource, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, const copy_option::value& option);
+void update(const info& _SurfaceInfo, int _Subresource, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, const copy_option& option);
 
 // Copies from a surface subresource to a specified destination buffer.
-void copy(const info& _SurfaceInfo, int _Subresource, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, const copy_option::value& option = copy_option::none);
-void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, const copy_option::value& option = copy_option::none);
-void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, mapped_subresource* _Destination, const copy_option::value& option = copy_option::none);
+void copy(const info& _SurfaceInfo, int _Subresource, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, const copy_option& option = copy_option::none);
+void copy(const info& _SurfaceInfo, const const_mapped_subresource& src, const mapped_subresource& _Destination, const copy_option& option = copy_option::none);
+void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& src, const mapped_subresource& _Destination, const copy_option& option = copy_option::none);
 
 // For 3d textures a mapped subresource contains all depth slices at that mip level,
 // this function will output the data pointer adjusted for the requested depth index.
@@ -677,8 +675,8 @@ inline void* depth_index_offset(const mapped_subresource& _MappedSubresource, in
 
 // Single-pixel get/put API. Only use this for debug/non-performant cases. This
 // currently only supports common r rgb and rgba cases.
-void put(const subresource_info& _SubresourceInfo, mapped_subresource* _Destination, const int2& _Coordinate, color _Color);
-color get(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, const int2& _Coordinate);
+void put(const subresource_info& _SubresourceInfo, const mapped_subresource& _Destination, const int2& _Coordinate, color _Color);
+color get(const subresource_info& _SubresourceInfo, const const_mapped_subresource& src, const int2& _Coordinate);
 
 // _____________________________________________________________________________
 // Tile API
@@ -730,7 +728,7 @@ void enumerate_pixels(const info& _SurfaceInfo
 	, const std::function<void(const void* _pPixel)>& _Enumerator);
 
 void enumerate_pixels(const info& _SurfaceInfo
-	, mapped_subresource& _MappedSubresource
+	, const mapped_subresource& _MappedSubresource
 	, const std::function<void(void* _pPixel)>& _Enumerator);
 
 // Calls the specified function on each pixel of two same-formatted surfaces.

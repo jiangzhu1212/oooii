@@ -45,7 +45,7 @@ static void load_original_and_save_converted(test_services& services, surface::f
 	// save to dds.
 }
 
-static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test_services& _Services, const char* _ConvertedPath)
+static std::shared_ptr<surface::texel_buffer> load_converted_and_convert_to_image(test_services& _Services, const char* _ConvertedPath)
 {
 	scoped_allocation ConvertedFile = _Services.load_buffer(_ConvertedPath);
 #if 0
@@ -69,7 +69,7 @@ static std::shared_ptr<surface::buffer> load_converted_and_convert_to_image(test
 	surface::info si;
 	si.format = i.format;
 	si.dimensions = i.dimensions;
-	std::shared_ptr<surface::buffer> ConvertedImage = surface::buffer::make(si);
+	std::shared_ptr<surface::texel_buffer> ConvertedImage = surface::texel_buffer::make(si);
 
 	surface::mapped_subresource msrSource;
 	_pDevice->map_read(BGRATexture, 0, &msrSource, true);
@@ -91,7 +91,7 @@ static void convert_and_test(test_services& services, surface::format target_for
 	load_original_and_save_converted(services, target_format, TestImagePath, ConvertedPath);
 
 	oTRACEA("Converting image back from %s (may take a while)...", as_string(target_format));
-	std::shared_ptr<surface::buffer> ConvertedImage = load_converted_and_convert_to_image(services, ConvertedPath);
+	std::shared_ptr<surface::texel_buffer> ConvertedImage = load_converted_and_convert_to_image(services, ConvertedPath);
 
 	// Even on different series AMD cards there is a bit of variation so use a 
 	// more forgiving tolerance

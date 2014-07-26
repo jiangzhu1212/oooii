@@ -44,7 +44,7 @@ void texture1d::initialize(const char* name, device& dev, surface::format format
 	ro = srv;
 }
 
-void texture1d::initialize(const char* name, device& dev, const surface::buffer& src, bool mips)
+void texture1d::initialize(const char* name, device& dev, const surface::texel_buffer& src, bool mips)
 {
 	auto si = src.get_info();
 	initialize(name, dev, si.format, si.dimensions.x, si.array_size, mips);

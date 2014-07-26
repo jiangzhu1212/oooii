@@ -46,6 +46,7 @@
 #include <oBase/dec3n.h>
 #include <oBase/djb2.h>
 #include <oBase/endian.h>
+#include <oBase/enum_iterator.h>
 #include <oBase/equal.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>

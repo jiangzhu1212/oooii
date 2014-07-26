@@ -131,6 +131,7 @@ struct allocate_stats
 
 typedef void* (*allocate_fn)(size_t num_bytes, unsigned int options);
 typedef void (*deallocate_fn)(const void* pointer);
+typedef void (*deallocate_nonconst_fn)(void* pointer);
 
 class scoped_allocation
 {
@@ -145,6 +146,12 @@ public:
 		: pointer(_pointer)
 		, num_bytes(_num_bytes)
 		, deallocate(_deallocate)
+	{}
+
+	scoped_allocation(void* _pointer, size_t _num_bytes, deallocate_nonconst_fn _deallocate)
+		: pointer(_pointer)
+		, num_bytes(_num_bytes)
+		, deallocate((deallocate_fn)_deallocate)
 	{}
 
 	scoped_allocation(scoped_allocation&& that) 

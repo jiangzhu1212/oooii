@@ -44,7 +44,7 @@ surface::info get_info(const BITMAPV4HEADER& _Header);
 inline surface::info get_info(const BITMAPINFO& _Info) { return get_info(_Info.bmiHeader); }
 
 // Creates a bitmap with the contents of the specified buffer.
-scoped_bitmap make_bitmap(const surface::buffer* _pBuffer);
+scoped_bitmap make_bitmap(const surface::texel_buffer* _pBuffer);
 
 // Copy the contents of a bitmap to the specified buffer.
 void memcpy2d(void* _pDestination, size_t _DestinationPitch, HBITMAP _hBmp, size_t _NumRows, bool _FlipVertically = false);

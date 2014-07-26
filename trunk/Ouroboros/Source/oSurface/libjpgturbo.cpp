@@ -129,7 +129,7 @@ static format from_jcs(J_COLOR_SPACE _ColorSpace)
 
 info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 {
-	static const unsigned char jpg_sig1[4] = { 0xff, 0xd8, 0xff, 0xe0 };
+	static const uchar jpg_sig1[4] = { 0xff, 0xd8, 0xff, 0xe0 };
 	static const char jpg_sig2[5] = "JFIF";
 
 	if (_BufferSize < 11 || memcmp(jpg_sig1, _pBuffer, sizeof(jpg_sig1))
@@ -145,7 +145,7 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 
 	jpeg_create_decompress(&cinfo);
 	finally Destroy([&] { jpeg_destroy_decompress(&cinfo); });
-	jpeg_mem_src(&cinfo, (unsigned char*)_pBuffer, static_cast<unsigned long>(_BufferSize));
+	jpeg_mem_src(&cinfo, (uchar*)_pBuffer, static_cast<unsigned long>(_BufferSize));
 	jpeg_read_header(&cinfo, TRUE);
 
 	info si;
@@ -155,10 +155,9 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 	return si;
 }
 
-std::shared_ptr<char> encode_jpg(const buffer& _Buffer
-	, size_t* _pSize
-	, const alpha_option::value& _Option
-	, const compression::value& _Compression)
+scoped_allocation encode_jpg(const texel_buffer& b
+	, const alpha_option& option
+	, const compression& compression)
 {
 	jpeg_compress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -169,11 +168,11 @@ std::shared_ptr<char> encode_jpg(const buffer& _Buffer
 
 	jpeg_create_compress(&cinfo);
 
-	unsigned char* pCompressed = nullptr;
+	uchar* pCompressed = nullptr;
 	unsigned long CompressedSize = 0;
 	finally Destroy([&] { jpeg_destroy_compress(&cinfo); if (pCompressed) free(pCompressed); });
 
-	info si = _Buffer.get_info();
+	info si = b.get_info();
 	cinfo.image_width = si.dimensions.x;
 	cinfo.image_height = si.dimensions.y;
 	cinfo.in_color_space = to_jcs(si.format, &cinfo.input_components);
@@ -182,7 +181,7 @@ std::shared_ptr<char> encode_jpg(const buffer& _Buffer
 	jpeg_set_defaults(&cinfo);
 
 	int quality = 100;
-	switch (_Compression)
+	switch (compression)
 	{
 		case compression::none: quality = 100; break;
 		case compression::low: quality = 95; break;
@@ -197,7 +196,7 @@ std::shared_ptr<char> encode_jpg(const buffer& _Buffer
 
 	{
 		JSAMPROW row[1];
-		shared_lock lock(_Buffer);
+		shared_lock lock(b);
 		while (cinfo.next_scanline < cinfo.image_height)
 		{
 			row[0] = (JSAMPLE*)byte_add(lock.mapped.data, cinfo.next_scanline * lock.mapped.row_pitch);
@@ -206,14 +205,10 @@ std::shared_ptr<char> encode_jpg(const buffer& _Buffer
 	}
 
 	jpeg_finish_compress(&cinfo);
-	std::shared_ptr<char> buffer((char*)pCompressed, free);
-	pCompressed = nullptr; // prevent garbage collection
-	if (_pSize)
-		*_pSize = CompressedSize;
-	return buffer;
+	return scoped_allocation(pCompressed, CompressedSize, free);
 }
 
-buffer decode_jpg(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
+texel_buffer decode_jpg(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
 {
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -224,27 +219,27 @@ buffer decode_jpg(const void* _pBuffer, size_t _BufferSize, const alpha_option::
 
 	jpeg_create_decompress(&cinfo);
 	finally Destroy([&] { jpeg_destroy_decompress(&cinfo); });
-	jpeg_mem_src(&cinfo, (unsigned char*)_pBuffer, static_cast<unsigned long>(_BufferSize));
+	jpeg_mem_src(&cinfo, (uchar*)buffer, static_cast<ulong>(size));
 	jpeg_read_header(&cinfo, TRUE);
 
 	info si;
 	si.format = from_jcs(cinfo.out_color_space);
-	si.layout = _Layout;
+	si.layout = layout;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
 
 	switch (si.format)
 	{
 		case b8g8r8_unorm:
 		case r8g8b8_unorm:
-			si.format = _Option == alpha_option::force_alpha ? b8g8r8a8_unorm : b8g8r8_unorm;
-			cinfo.out_color_space = alpha_option::force_alpha ? JCS_EXT_BGRA : JCS_EXT_BGR;
-			cinfo.out_color_components = alpha_option::force_alpha ? 4 : 3;
+			si.format = option == alpha_option::force_alpha ? b8g8r8a8_unorm : b8g8r8_unorm;
+			cinfo.out_color_space = option == alpha_option::force_alpha ? JCS_EXT_BGRA : JCS_EXT_BGR;
+			cinfo.out_color_components = option == alpha_option::force_alpha ? 4 : 3;
 			break;
 		case b8g8r8a8_unorm:
 		case r8g8b8a8_unorm:
-			si.format = _Option == alpha_option::force_no_alpha ? b8g8r8_unorm : b8g8r8a8_unorm;
-			cinfo.out_color_space = alpha_option::force_no_alpha ? JCS_EXT_BGR : JCS_EXT_BGRA;
-			cinfo.out_color_components = alpha_option::force_no_alpha ? 3 : 4;
+			si.format = option == alpha_option::force_no_alpha ? b8g8r8_unorm : b8g8r8a8_unorm;
+			cinfo.out_color_space = option == alpha_option::force_no_alpha ? JCS_EXT_BGR : JCS_EXT_BGRA;
+			cinfo.out_color_components = option == alpha_option::force_no_alpha ? 3 : 4;
 			break;
 		case r8_unorm:
 			break;
@@ -252,7 +247,7 @@ buffer decode_jpg(const void* _pBuffer, size_t _BufferSize, const alpha_option::
 			throw std::exception("unsupported format");
 	}
 
-	buffer b(si);
+	texel_buffer b(si);
 	{
 		JSAMPROW row[1];
 		lock_guard lock(b);
