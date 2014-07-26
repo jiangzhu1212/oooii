@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bmp.cpp" />
-    <ClCompile Include="buffer.cpp" />
     <ClCompile Include="codec.cpp" />
     <ClCompile Include="convert.cpp" />
     <ClCompile Include="fill.cpp" />
@@ -34,16 +33,17 @@
     </ClCompile>
     <ClCompile Include="resize.cpp" />
     <ClCompile Include="surface.cpp" />
+    <ClCompile Include="texel_buffer.cpp" />
     <ClCompile Include="tga.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oSurface\all.h" />
-    <ClInclude Include="..\..\Include\oSurface\buffer.h" />
     <ClInclude Include="..\..\Include\oSurface\codec.h" />
     <ClInclude Include="..\..\Include\oSurface\convert.h" />
     <ClInclude Include="..\..\Include\oSurface\fill.h" />
     <ClInclude Include="..\..\Include\oSurface\resize.h" />
     <ClInclude Include="..\..\Include\oSurface\surface.h" />
+    <ClInclude Include="..\..\Include\oSurface\texel_buffer.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

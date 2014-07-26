@@ -22,65 +22,40 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-// Facade for encoding and decoding several image formats
+// support for iterating enum classes with range based for under the 
+// assumption the enum starts at 0 and has a member called count
 #pragma once
-#ifndef oSurface_codec_h
-#define oSurface_codec_h
+#ifndef oBase_enum_iterator_h
+#define oBase_enum_iterator_h
 
-#include <oSurface/texel_buffer.h>
-#include <oSurface/surface.h>
+#include <type_traits>
 
-namespace ouro { namespace surface {
+namespace ouro {
 
-enum class file_format : uchar
+template<typename E>
+class enum_iterator
 {
-	unknown,
-	bmp,
-	jpg,
-	png,
-	tga,
+public:
+   class iterator
+   {
+		public:
+			typedef typename std::underlying_type<E>::type type_t;
+			iterator(type_t _e) : e(_e) { static_assert(std::is_enum<E>::value, "invalid enum type"); }
+			E operator*( void ) const { return (E)e; }
+			void operator++(void) { e++; }
+			bool operator!=(iterator that) { return e != that.e; }
+	 private:
+			type_t e;
+   };
 };
 
-enum class compression : uchar
-{
-	none,
-  low,
-  medium,
-  high,
-};
+}
 
-enum class alpha_option : uchar
-{
-	preserve,
-	force_alpha,
-	force_no_alpha,
-};
+namespace std {
 
-// returns the input format with the specified option applied
-format alpha_option_format(const format& fmt, const alpha_option& option);
+template<typename E> typename ouro::enum_iterator<E>::iterator begin(ouro::enum_iterator<E>) { return typename ouro::enum_iterator<E>::iterator((int)0); }
+template<typename E> typename ouro::enum_iterator<E>::iterator end(ouro::enum_iterator<E>) { return typename ouro::enum_iterator<E>::iterator((int)E::count); }
 
-// checks the file extension
-file_format get_file_format(const char* path);
-
-// checks the first few bytes/header info
-file_format get_file_format(const void* buffer, size_t size);
-
-// converts the first few bytes of a supported format into a surface::info
-// if not recognized the returned format will be surface::unknown
-info get_info(const void* buffer, size_t size);
-
-// returns a buffer ready to be written to disk in the specified format.
-scoped_allocation encode(const texel_buffer& b
-	, const file_format& fmt
-	, const alpha_option& option = alpha_option::preserve
-	, const compression& compression = compression::low);
-
-// Parses the in-memory formatted buffer into a surface.
-texel_buffer decode(const void* buffer
-	, size_t size
-	, const alpha_option& option = alpha_option::preserve
-	, const layout& layout = image);
-
-}}
+}
 
 #endif
