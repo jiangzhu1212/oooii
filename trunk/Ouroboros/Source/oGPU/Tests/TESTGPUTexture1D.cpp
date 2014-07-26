@@ -41,7 +41,7 @@ struct gpu_test_texture1d : public gpu_texture_test
 	resource* make_test_texture() override
 	{
 		auto image = make_1D(512, false);
-		t.initialize("Test 1D", Device, *image.get(), false);
+		t.initialize("Test 1D", Device, image, false);
 		return &t;
 	}
 

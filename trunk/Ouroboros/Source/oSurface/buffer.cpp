@@ -28,298 +28,310 @@
 #include <oBase/throw.h>
 #include <mutex>
 
-namespace ouro {
+namespace ouro { namespace surface {
 
-const char* as_string(const surface::buffer::make_type& _Type)
+buffer::buffer(buffer&& that) 
+	: bits(that.bits)
+	, inf(that.inf)
+	, alloc(that.alloc)
 {
-	switch (_Type)
+	that.bits = nullptr;
+	that.inf = info();
+	that.alloc = allocator();
+}
+
+buffer& buffer::operator=(buffer&& that)
+{
+	if (this != &that)
 	{
-		case surface::buffer::image: return "image";
-		case surface::buffer::image_array: return "image_array";
-		case surface::buffer::mips: return "mips";
-		case surface::buffer::mips_array: return "mips_array";
-		case surface::buffer::image3d: return "image3d";
-		case surface::buffer::mips3d: return "mips3d";
-		default: break;
+		mtx.lock();
+		that.mtx.lock();
+		deinitialize();
+		bits = that.bits; that.bits = nullptr; 
+		inf = that.inf; that.inf = info();
+		alloc = that.alloc; that.alloc = allocator();
+		that.mtx.unlock();
+		mtx.unlock();
 	}
-	return "?";
+	return *this;
 }
 
-	namespace surface {
-
-class buffer_impl : public buffer
+void buffer::initialize(const info& i, const allocator& a)
 {
-public:
-	buffer_impl(const surface::info& _SurfaceInfo, void* _pData); // _pData will be freed in ~buffer_impl()
-	buffer_impl(const surface::info& _SurfaceInfo);
-	~buffer_impl();
-
-	info get_info() const override;
-	void clear() override;
-	void flatten() override;
-	void update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
-	void update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically = false) override;
-	void map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) override;
-	void unmap(int _Subresource) override;
-	void map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions = nullptr) const override;
-	void unmap_const(int _Subresource) const override;
-	void copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically = false) const override;
-	std::shared_ptr<buffer> convert(const info& _ConvertedInfo) const override;
-	void swizzle(format _NewFormat) override;
-	void generate_mips(filter::value _Filter = filter::lanczos2) override;
-private:
-	void* Data;
-	info Info;
-
-	typedef std::mutex mutex_t;
-	typedef std::lock_guard<mutex_t> lock_t;
-	typedef std::lock_guard<mutex_t> lock_shared_t;
-
-	mutable mutex_t Mutex; // todo: separate locking mechanism to be per-subresource
-	inline void lock_shared() const { Mutex.lock(); }
-	inline void unlock_shared() const { Mutex.unlock(); }
-};
-
-buffer_impl::buffer_impl(const surface::info& _SurfaceInfo, void* _pData)
-	: Data(_pData)
-	, Info(_SurfaceInfo)
-{}
-
-// use c-style malloc/free to be compatible with many file format c libraries
-buffer_impl::buffer_impl(const surface::info& _SurfaceInfo)
-	: Data(malloc(total_size(_SurfaceInfo)))
-	, Info(_SurfaceInfo)
-{}
-
-buffer_impl::~buffer_impl()
-{
-	if (Data)
-		free(Data);
+	deinitialize();
+	inf = i;
+	alloc = a;
+	bits = alloc.allocate(size(), 0);
 }
 
-std::shared_ptr<buffer> buffer::make(const info& _Info)
+void buffer::initialize(const info& i, const void* data, const allocator& a)
 {
-	return std::make_shared<buffer_impl>(_Info);
+	deinitialize();
+	inf = i;
+	alloc = a;
+	bits = (void*)data;
 }
 
-std::shared_ptr<buffer> buffer::make(const info& _Info, void* _pData)
+void buffer::initialize_array(const buffer* const* sources, uint num_sources, bool mips)
 {
-	return std::make_shared<buffer_impl>(_Info, _pData);
-}
+	deinitialize();
+	info si = sources[0]->get_info();
+	oCHECK_ARG(si.layout == layout::image, "all images in the specified array must be simple types and the same 2D dimensions");
+	oCHECK_ARG(si.dimensions.z == 1, "all images in the specified array must be simple types and the same 2D dimensions");
+	si.layout = mips ? layout::tight : layout::image;
+	si.array_size = static_cast<int>(num_sources);
+	initialize(si);
 
-std::shared_ptr<buffer> buffer::make(const buffer* const* _ppSourceBuffers, size_t _NumBuffers, make_type _Type)
-{
-	info si = _ppSourceBuffers[0]->get_info();
-	if (si.layout != layout::image)
-		oTHROW_INVARG("all images in the specified array must be simple types and the same 2D dimensions");
-	if (si.dimensions.z != 1)
-		oTHROW_INVARG("all images in the specified array must be simple types and the same 2D dimensions");
-
-	const bool Is3D = _Type == image3d || _Type == mips3d;
-	const bool HasMips = _Type == mips || _Type == mips_array || _Type == mips3d;
-	const bool IsArray = _Type == image_array || _Type == mips_array;
-
-	si.layout = HasMips ? layout::tight : layout::image;
-	si.dimensions.z = Is3D ? static_cast<int>(_NumBuffers) : 1;
-	si.array_size = Is3D || !IsArray ? 0 : static_cast<int>(_NumBuffers);
-
-	auto NewBuffer = buffer::make(si);
-
-	if (Is3D)
+	const uint nMips = num_mips(mips, si.dimensions);
+	const uint nSlices = max(1, si.array_size);
+	for (uint i = 0; i < nSlices; i++)
 	{
-		box region;
-		region.right = si.dimensions.x;
-		region.bottom = si.dimensions.y;
-		for (int i = 0; i < si.dimensions.z; i++)
-		{
-			region.front = i;
-			region.back = i + 1;
-			shared_lock lock(_ppSourceBuffers[i]);
-			NewBuffer->update_subresource(0, region, lock.mapped);
-		}
+		int dst = calc_subresource(0, i, 0, nMips, nSlices);
+		int src = calc_subresource(0, 0, 0, nMips, 0);
+		copy_from(dst, *sources[i], src);
 	}
 
-	else
+	if (mips)
+		generate_mips();
+}
+
+void buffer::initialize_3d(const buffer* const* sources, uint num_sources, bool mips)
+{
+	deinitialize();
+	info si = sources[0]->get_info();
+	oCHECK_ARG(si.layout == layout::image, "all images in the specified array must be simple types and the same 2D dimensions");
+	oCHECK_ARG(si.dimensions.z == 1, "all images in the specified array must be simple types and the same 2D dimensions");
+	oCHECK_ARG(si.array_size == 0, "arrays of 3d surfaces not yet supported");
+	si.layout = mips ? layout::tight : layout::image;
+	si.dimensions.z = static_cast<int>(num_sources);
+	si.array_size = 0;
+	initialize(si);
+
+	box region;
+	region.right = si.dimensions.x;
+	region.bottom = si.dimensions.y;
+	for (int i = 0; i < si.dimensions.z; i++)
 	{
-		const int nMips = num_mips(HasMips, si.dimensions);
-		const int nSlices = max(1, si.array_size);
-		for (int i = 0; i < nSlices; i++)
-		{
-			int DstSubresource = calc_subresource(0, i, 0, nMips, nSlices);
-			int SrcSubresource = calc_subresource(0, 0, 0, nMips, 0);
-			NewBuffer->copy_from(DstSubresource, _ppSourceBuffers[i], SrcSubresource);
-		}
+		region.front = i;
+		region.back = i + 1;
+		shared_lock lock(sources[i]);
+		update_subresource(0, region, lock.mapped);
 	}
 
-	if (HasMips)
-		NewBuffer->generate_mips();
-	return NewBuffer;
+	if (mips)
+		generate_mips();
 }
 
-info buffer_impl::get_info() const
+void buffer::deinitialize()
 {
-	return Info;
+	if (bits && alloc.deallocate)
+		alloc.deallocate(bits);
+	bits = nullptr;
+	alloc = allocator();
 }
 
-void buffer_impl::clear()
+void buffer::clear()
 {
-	lock_t lock(Mutex);
-	memset(Data, 0, total_size(Info));
+	lock_t lock(mtx);
+	memset(bits, 0, size());
 }
 
-void buffer_impl::flatten()
+void buffer::flatten()
 {
-	if (is_block_compressed(Info.format))
+	if (is_block_compressed(inf.format))
 		oTHROW(not_supported, "block compressed formats not handled yet");
 
-	int rp = row_pitch(Info);
+	int rp = row_pitch(inf);
 	size_t sz = size();
-	Info.layout = surface::image;
-	Info.dimensions = int3(rp / element_size(Info.format), int(sz / rp), 1);
-	Info.array_size = 0;
+	inf.layout = surface::image;
+	inf.dimensions = int3(rp / element_size(inf.format), int(sz / rp), 1);
+	inf.array_size = 0;
 }
 
-void buffer_impl::update_subresource(int _Subresource, const const_mapped_subresource& _Source, bool _FlipVertically)
+void buffer::update_subresource(uint subresource, const const_mapped_subresource& src, const copy_option::value& option)
 {
-	int2 ByteDimensions;
-	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	lock_t lock(Mutex);
-	memcpy2d(Dest.data, Dest.row_pitch, _Source.data, _Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
+	int2 bd;
+	mapped_subresource dst = get_mapped_subresource(inf, subresource, 0, bits, &bd);
+	lock_t lock(mtx);
+	memcpy2d(dst.data, dst.row_pitch, src.data, src.row_pitch, bd.x, bd.y, option == copy_option::flip_vertically);
 }
 
-void buffer_impl::update_subresource(int _Subresource, const box& _Box, const const_mapped_subresource& _Source, bool _FlipVertically)
+void buffer::update_subresource(uint subresource, const box& _box, const const_mapped_subresource& src, const copy_option::value& option)
 {
-	if (is_block_compressed(Info.format) || Info.format == r1_unorm)
+	if (is_block_compressed(inf.format) || inf.format == r1_unorm)
 		throw std::invalid_argument("block compressed and bit formats not supported");
 
-	int2 ByteDimensions;
-	mapped_subresource Dest = get_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
+	int2 bd;
+	mapped_subresource Dest = get_mapped_subresource(inf, subresource, 0, bits, &bd);
 
-	const int NumRows = _Box.height();
-	int PixelSize = element_size(Info.format);
-	int RowSize = PixelSize * _Box.width();
+	const int NumRows = _box.height();
+	int PixelSize = element_size(inf.format);
+	int RowSize = PixelSize * _box.width();
 
 	// Dest points at start of subresource, so offset to subrect of first slice
-	Dest.data = byte_add(Dest.data, _Box.front * Dest.depth_pitch + _Box.top * Dest.row_pitch + _Box.left * PixelSize);
+	Dest.data = byte_add(Dest.data, _box.front * Dest.depth_pitch + _box.top * Dest.row_pitch + _box.left * PixelSize);
 
-	const void* pSource = _Source.data;
+	const void* pSource = src.data;
 
-	lock_t lock(Mutex);
-	for (uint slice = _Box.front; slice < _Box.back; slice++)
+	lock_t lock(mtx);
+	for (uint slice = _box.front; slice < _box.back; slice++)
 	{
-		memcpy2d(Dest.data, Dest.row_pitch, pSource, _Source.row_pitch, RowSize, NumRows, _FlipVertically);
+		memcpy2d(Dest.data, Dest.row_pitch, pSource, src.row_pitch, RowSize, NumRows, option == copy_option::flip_vertically);
 		Dest.data = byte_add(Dest.data, Dest.depth_pitch);
-		pSource = byte_add(pSource, _Source.depth_pitch);
+		pSource = byte_add(pSource, src.depth_pitch);
 	}
 }
 
-void buffer_impl::map(int _Subresource, mapped_subresource* _pMapped, int2* _pByteDimensions)
+void buffer::map(uint subresource, mapped_subresource* _pMapped, int2* _pByteDimensions)
 {
-	Mutex.lock();
-	*_pMapped = get_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
+	mtx.lock();
+	*_pMapped = get_mapped_subresource(inf, subresource, 0, bits, _pByteDimensions);
 }
 
-void buffer_impl::unmap(int _Subresource)
+void buffer::unmap(uint subresource)
 {
-	Mutex.unlock();
+	mtx.unlock();
 }
 
-void buffer_impl::map_const(int _Subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
+void buffer::map_const(uint subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
 {
 	lock_shared();
-	*_pMapped = get_const_mapped_subresource(Info, _Subresource, 0, Data, _pByteDimensions);
+	*_pMapped = get_const_mapped_subresource(inf, subresource, 0, bits, _pByteDimensions);
 }
 
-void buffer_impl::unmap_const(int _Subresource) const
+void buffer::unmap_const(uint subresource) const
 {
 	unlock_shared();
 }
 
-void buffer_impl::copy_to(int _Subresource, mapped_subresource* _pMapped, bool _FlipVertically) const
+void buffer::copy_to(uint subresource, const mapped_subresource& dst, const copy_option::value& option) const
 {
-	int2 ByteDimensions;
-	const_mapped_subresource Source = get_const_mapped_subresource(Info, _Subresource, 0, Data, &ByteDimensions);
-	lock_shared_t lock(Mutex);
-	memcpy2d(_pMapped->data, _pMapped->row_pitch, Source.data, Source.row_pitch, ByteDimensions.x, ByteDimensions.y, _FlipVertically);
+	int2 bd;
+	const_mapped_subresource src = get_const_mapped_subresource(inf, subresource, 0, bits, &bd);
+	lock_shared_t lock(mtx);
+	memcpy2d(dst.data, dst.row_pitch, src.data, src.row_pitch, bd.x, bd.y, option == copy_option::flip_vertically);
 }
 
-std::shared_ptr<buffer> buffer_impl::convert(const info& _ConvertedInfo) const
+buffer buffer::convert(const info& dst_info) const
 {
-	info SourceInfo = get_info();
-	std::shared_ptr<buffer> converted = buffer::make(_ConvertedInfo);
+	return convert(dst_info, alloc);
+}
+
+buffer buffer::convert(const info& dst_info, const allocator& a) const
+{
+	info src_info = get_info();
+	buffer converted(dst_info);
 	shared_lock slock(this);
-	lock_guard dlock(converted.get());
-	surface::convert(SourceInfo, slock.mapped, _ConvertedInfo, &dlock.mapped);
+	lock_guard dlock(converted);
+	surface::convert(src_info, slock.mapped, dst_info, &dlock.mapped);
 	return converted;
 }
 
-void buffer_impl::swizzle(format _NewFormat)
+void buffer::convert_to(uint subresource, const mapped_subresource& dst, const format& dst_format, const copy_option::value& option) const
 {
-	lock_guard lock(this);
-	convert_swizzle(Info, _NewFormat, &lock.mapped);
-	Info.format = _NewFormat;
+	if (inf.format == dst_format)
+		copy_to(subresource, dst, option);
+	else
+	{
+		shared_lock slock(this, subresource);
+		info src_info = get_info();
+		info dst_info = src_info;
+		dst_info.format = dst_format;
+		surface::convert(src_info, slock.mapped, dst_info, (mapped_subresource*)&dst);
+	}
 }
 
-void buffer_impl::generate_mips(filter::value _Filter)
+void buffer::convert_from(uint subresource, const const_mapped_subresource& src, const format& src_format, const copy_option::value& option)
 {
-	lock_t lock(Mutex);
+	if (inf.format == src_format)
+		copy_from(subresource, src, option);
+	else
+	{
+		info src_info = inf;
+		src_info.format = src_format;
+		subresource_info sri = surface::subresource(src_info, subresource);
+		lock_guard lock(this);
+		convert_subresource(sri, src, inf.format, &lock.mapped, option);
+	}
+}
 
-	int nMips = num_mips(Info);
-	int nSlices = max(1, Info.array_size);
+void buffer::convert_in_place(const format& fmt)
+{
+	lock_guard lock(this);
+	convert_swizzle(inf, fmt, &lock.mapped);
+	inf.format = fmt;
+}
+
+void buffer::generate_mips(const filter::value& f)
+{
+	lock_t lock(mtx);
+
+	int nMips = num_mips(inf);
+	int nSlices = max(1, inf.array_size);
 
 	for (int slice = 0; slice < nSlices; slice++)
 	{
-		int mip0subresource = calc_subresource(0, slice, 0, nMips, Info.array_size);
-		const_mapped_subresource mip0 = get_const_mapped_subresource(Info, mip0subresource, 0, Data);
+		int mip0subresource = calc_subresource(0, slice, 0, nMips, inf.array_size);
+		const_mapped_subresource mip0 = get_const_mapped_subresource(inf, mip0subresource, 0, bits);
 
 		for (int mip = 1; mip < nMips; mip++)
 		{
-			int subresource = calc_subresource(mip, slice, 0, nMips, Info.array_size);
-			subresource_info subinfo = surface::subresource(Info, subresource);
+			uint subresource = calc_subresource(mip, slice, 0, nMips, inf.array_size);
+			subresource_info subinfo = surface::subresource(inf, subresource);
 
 			for (int DepthIndex = 0; DepthIndex < subinfo.dimensions.z; DepthIndex++)
 			{
-				mapped_subresource dst = get_mapped_subresource(Info, subresource, DepthIndex, Data);
-				info di = Info;
+				mapped_subresource dst = get_mapped_subresource(inf, subresource, DepthIndex, bits);
+				info di = inf;
 				di.dimensions = subinfo.dimensions;
-				resize(Info, mip0, di, &dst, _Filter);
+				resize(inf, mip0, di, &dst, f);
 			}
 		}
 	}
 }
 
-float calc_rms(const buffer* _pBuffer1, const buffer* _pBuffer2, buffer* _pDifferences, int _DifferenceScale)
+float calc_rms(const buffer& b1, const buffer& b2)
 {
-	info si1 = _pBuffer1->get_info();
-	info si2 = _pBuffer2->get_info();
-	info dsi;
-	if (_pDifferences)
-		dsi = _pDifferences->get_info();
+	return calc_rms(b1, b2, nullptr);
+}
 
-	if (any(si1.dimensions != si2.dimensions) || (_pDifferences && any(si1.dimensions != dsi.dimensions))) throw std::invalid_argument("mismatched dimensions");
+float calc_rms(const buffer& b1, const buffer& b2, buffer* out_diffs, int diff_scale, const allocator& a)
+{
+	info si1 = b1.get_info();
+	info si2 = b2.get_info();
+
+	if (any(si1.dimensions != si2.dimensions)) throw std::invalid_argument("mismatched dimensions");
 	if (si1.format != si2.format) throw std::invalid_argument("mismatched format");
 	if (si1.array_size != si2.array_size) throw std::invalid_argument("mismatched array_size");
 	int n1 = num_subresources(si1);
 	int n2 = num_subresources(si2);
 	if (n1 != n2) throw std::invalid_argument("incompatible layouts");
 
+	info dsi;
+	if (out_diffs)
+	{
+		dsi = si1;
+		dsi.format = r8_unorm;
+		out_diffs->initialize(dsi);
+	}
+
 	float rms = 0.0f;
 	for (int i = 0; i < n1; i++)
 	{
 		mapped_subresource msr;
-		if (_pDifferences)
-		_pDifferences->map(i, &msr);
+		if (out_diffs)
+			out_diffs->map(i, &msr);
 
-		shared_lock lock1(_pBuffer1, i);
-		shared_lock lock2(_pBuffer2, i);
+		shared_lock lock1(b1, i);
+		shared_lock lock2(b2, i);
 	
-		if (_pDifferences)
+		if (out_diffs)
 			rms += calc_rms(si1, lock1.mapped, lock2.mapped, dsi, msr);
 		else
 			rms += calc_rms(si1, lock1.mapped, lock2.mapped);
 
-		if (_pDifferences)
-			_pDifferences->unmap(i);
+		if (out_diffs)
+			out_diffs->unmap(i);
 	}
 
 	return rms / static_cast<float>(n1);

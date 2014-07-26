@@ -34,18 +34,18 @@ namespace ouro {
 
 static const surface::filter::value kFilter = surface::filter::lanczos2;
 
-static std::shared_ptr<surface::buffer> surface_load(test_services& _Services, const path& _Path, surface::alpha_option::value _Option = surface::alpha_option::preserve)
+static surface::buffer surface_load(test_services& _Services, const path& _Path, surface::alpha_option::value _Option = surface::alpha_option::preserve)
 {
 	scoped_allocation b = _Services.load_buffer(_Path);
 	return surface::decode(b, b.size(), _Option);
 }
 
-static std::shared_ptr<surface::buffer> make_test_1d(int _Width)
+static surface::buffer make_test_1d(int _Width)
 {
 	surface::info si;
 	si.dimensions = int3(_Width, 1, 1);
 	si.format = surface::b8g8r8a8_unorm;
-	auto s = surface::buffer::make(si);
+	surface::buffer s(si);
 
 	{
 		surface::lock_guard lock(s);
@@ -58,7 +58,7 @@ static std::shared_ptr<surface::buffer> make_test_1d(int _Width)
 	return s;
 }
 
-static std::shared_ptr<surface::buffer> load_test_cube(test_services& _Services)
+static surface::buffer load_test_cube(test_services& _Services)
 {
 	const char* face_paths[6] =
 	{
@@ -72,27 +72,27 @@ static std::shared_ptr<surface::buffer> load_test_cube(test_services& _Services)
 
 	auto image = surface_load(_Services, face_paths[0]);
 
-	auto si = image->get_info();
+	auto si = image.get_info();
 	si.array_size = oCOUNTOF(face_paths);
-	auto cube_image = surface::buffer::make(si);
-	cube_image->copy_from(0, image.get(), 0);
+	surface::buffer cube_image(si);
+	cube_image.copy_from(0, image, 0);
 
 	for (int i = 1; i < oCOUNTOF(face_paths); i++)
 	{
 		image = surface_load(_Services, face_paths[i]);
 		int subresource = surface::calc_subresource(0, i, 0, 0, si.array_size);
-		cube_image->copy_from(subresource, image.get(), 0);
+		cube_image.copy_from(subresource, image, 0);
 	}
 
 	return cube_image;
 }
 
-static void test_mipchain(test_services& _Services, const surface::buffer* _pImage, surface::filter::value _Filter, surface::layout _Layout, int _StartIndex)
+static void test_mipchain(test_services& _Services, const surface::buffer& _Image, surface::filter::value _Filter, surface::layout _Layout, int _StartIndex)
 {
-	auto si = _pImage->get_info();
+	auto si = _Image.get_info();
 	si.layout = _Layout;
-	auto mipchain = surface::buffer::make(si);
-	mipchain->clear();
+	surface::buffer mipchain(si);
+	mipchain.clear();
 
 	int nSlices = max(si.array_size, si.dimensions.z);
 	int nMips = surface::num_mips(si.layout, si.dimensions);
@@ -103,13 +103,13 @@ static void test_mipchain(test_services& _Services, const surface::buffer* _pIma
 		surface::box region;
 		region.right = si.dimensions.x;
 		region.bottom = si.dimensions.y;
-		surface::shared_lock lock(_pImage, subresource);
+		surface::shared_lock lock(_Image, subresource);
 		for (int i = 0; i < nSlices; i++)
 		{
 			region.front = i;
 			region.back = i + 1;
 
-			mipchain->update_subresource(subresource, region, lock.mapped);
+			mipchain.update_subresource(subresource, region, lock.mapped);
 			lock.mapped.data = byte_add(lock.mapped.data, lock.mapped.depth_pitch);
 		}
 	}
@@ -121,51 +121,53 @@ static void test_mipchain(test_services& _Services, const surface::buffer* _pIma
 		{
 			int DstSubresource = surface::calc_subresource(0, i, 0, nMips, nSlices);
 			int SrcSubresource = surface::calc_subresource(0, i, 0, 0, nSlices);
-			mipchain->copy_from(DstSubresource, _pImage, SrcSubresource);
+			mipchain.copy_from(DstSubresource, _Image, SrcSubresource);
 		}
 	}
 
-	mipchain->generate_mips(_Filter);
-	mipchain->flatten();
-	_Services.check(mipchain.get(), _StartIndex);
+	mipchain.generate_mips(_Filter);
+	mipchain.flatten();
+	_Services.check(mipchain, _StartIndex);
 }
 
-static void test_mipchain_layouts(test_services& _Services, const surface::buffer* _pImage, surface::filter::value _Filter, int _StartIndex)
+static void test_mipchain_layouts(test_services& _Services, const surface::buffer& _Image, surface::filter::value _Filter, int _StartIndex)
 {
-	test_mipchain(_Services, _pImage, _Filter, surface::tight, _StartIndex);
-	test_mipchain(_Services, _pImage, _Filter, surface::below, _StartIndex+1);
-	test_mipchain(_Services, _pImage, _Filter, surface::right, _StartIndex+2);
+	test_mipchain(_Services, _Image, _Filter, surface::tight, _StartIndex);
+	test_mipchain(_Services, _Image, _Filter, surface::below, _StartIndex+1);
+	test_mipchain(_Services, _Image, _Filter, surface::right, _StartIndex+2);
 }
 
 void TESTsurface_generate_mips(test_services& _Services)
 {
 	auto image = make_test_1d(227); // 1D NPOT
-	test_mipchain_layouts(_Services, image.get(), kFilter, 0);
+	test_mipchain_layouts(_Services, image, kFilter, 0);
 
 	image = make_test_1d(512); // 1D POT
-	test_mipchain_layouts(_Services, image.get(), kFilter, 3);
+	test_mipchain_layouts(_Services, image, kFilter, 3);
 
 	image = surface_load(_Services, "Test/Textures/lena_npot.png"); // 2D NPOT
-	test_mipchain_layouts(_Services, image.get(), kFilter, 6);
+	test_mipchain_layouts(_Services, image, kFilter, 6);
 
 	image = surface_load(_Services, "Test/Textures/lena_1.png"); // 2D POT
-	test_mipchain_layouts(_Services, image.get(), kFilter, 9);
+	test_mipchain_layouts(_Services, image, kFilter, 9);
 
 	{
 		image = surface_load(_Services, "Test/Textures/lena_npot.png"); // 2D NPOT
-		const surface::buffer* images[5] = { image.get(), image.get(), image.get(), image.get(), image.get() };
-		auto image3d = surface::buffer::make(images, oCOUNTOF(images), surface::buffer::image3d);
-		test_mipchain_layouts(_Services, image3d.get(), kFilter, 12);
+		const surface::buffer* images[5] = { &image, &image, &image, &image, &image };
+		surface::buffer image3d;
+		image3d.initialize_3d(images, oCOUNTOF(images));
+		test_mipchain_layouts(_Services, image3d, kFilter, 12);
 	}
 	{
 		image = surface_load(_Services, "Test/Textures/lena_1.png"); // 2D POT
-		const surface::buffer* images[5] = { image.get(), image.get(), image.get(), image.get(), image.get() };
-		auto image3d = surface::buffer::make(images, oCOUNTOF(images), surface::buffer::image3d);
-		test_mipchain_layouts(_Services, image3d.get(), kFilter, 15);
+		const surface::buffer* images[5] = { &image, &image, &image, &image, &image };
+		surface::buffer image3d;
+		image3d.initialize_3d(images, oCOUNTOF(images));
+		test_mipchain_layouts(_Services, image3d, kFilter, 15);
 	}
 
 	image = load_test_cube(_Services);
-	test_mipchain_layouts(_Services, image.get(), kFilter, 18);
+	test_mipchain_layouts(_Services, image, kFilter, 18);
 }
 
 	} // namespace tests

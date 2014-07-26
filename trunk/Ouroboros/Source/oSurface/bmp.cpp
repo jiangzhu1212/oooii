@@ -25,40 +25,39 @@
 #include <oSurface/codec.h>
 #include <oSurface/convert.h>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
 struct RGBQUAD
 {
-	unsigned char rgbBlue;
-	unsigned char rgbGreen;
-	unsigned char rgbRed;
-	unsigned char rgbReserved;
+	uchar rgbBlue;
+	uchar rgbGreen;
+	uchar rgbRed;
+	uchar rgbReserved;
 };
 
 struct BITMAPINFOHEADER
 {
-	unsigned int biSize;
+	uint biSize;
 	long biWidth;
 	long biHeight;
-	unsigned short biPlanes;
-	unsigned short biBitCount;
-	unsigned int biCompression;
-	unsigned int biSizeImage;
+	ushort biPlanes;
+	ushort biBitCount;
+	uint biCompression;
+	uint biSizeImage;
 	long biXPelsPerMeter;
 	long biYPelsPerMeter;
-	unsigned int biClrUsed;
-	unsigned int biClrImportant;
+	uint biClrUsed;
+	uint biClrImportant;
 };
 
 #pragma pack(push,2)
 struct BITMAPFILEHEADER
 {
-	unsigned short bfType;
-	unsigned int bfSize;
-	unsigned short bfReserved1;
-	unsigned short bfReserved2;
-	unsigned int bfOffBits;
+	ushort bfType;
+	uint bfSize;
+	ushort bfReserved1;
+	ushort bfReserved2;
+	uint bfOffBits;
 };
 #pragma pack(pop)
 
@@ -82,12 +81,12 @@ info get_info_bmp(const void* _pBuffer, size_t _BufferSize)
 	return si;
 }
 
-std::shared_ptr<char> encode_bmp(const buffer* _pBuffer
+std::shared_ptr<char> encode_bmp(const buffer& _Buffer
 	, size_t* _pSize
 	, const alpha_option::value& _Option
 	, const compression::value& _Compression)
 {
-	auto info = _pBuffer->get_info();
+	auto info = _Buffer.get_info();
 
 	oCHECK(info.format == surface::b8g8r8a8_unorm || info.format == surface::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 
@@ -130,7 +129,7 @@ std::shared_ptr<char> encode_bmp(const buffer* _pBuffer
 	bmi->bmiColors[0].rgbRed = 0;
 	bmi->bmiColors[0].rgbReserved = 0;
 
-	shared_lock lock(*_pBuffer);
+	shared_lock lock(_Buffer);
 	
 	uint Padding = AlignedPitch - UnalignedPitch;
 
@@ -155,7 +154,7 @@ std::shared_ptr<char> encode_bmp(const buffer* _pBuffer
 	return buffer;
 }
 
-std::shared_ptr<buffer> decode_bmp(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
+buffer decode_bmp(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
 	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)_pBuffer;
 	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
@@ -165,22 +164,16 @@ std::shared_ptr<buffer> decode_bmp(const void* _pBuffer, size_t _BufferSize, con
 	oCHECK(si.format != unknown, "invalid bmp");
 	info dsi = si;
 	dsi.layout = _Layout;
-	const_mapped_subresource msr;
-	msr.data = bits;
-	msr.depth_pitch = bmi->bmiHeader.biSizeImage;
-	msr.row_pitch = msr.depth_pitch / bmi->bmiHeader.biHeight;
+	const_mapped_subresource src;
+	src.data = bits;
+	src.depth_pitch = bmi->bmiHeader.biSizeImage;
+	src.row_pitch = src.depth_pitch / bmi->bmiHeader.biHeight;
 
 	dsi.format = alpha_option_format(si.format, _Option);
 
-	std::shared_ptr<buffer> s = buffer::make(dsi);
-	subresource_info sri = subresource(si, 0);
-	{
-		lock_guard lock(s);
-		convert_subresource(sri, msr, dsi.format, &lock.mapped, true);
-	}
-
-	return s;
+	buffer b(dsi);
+	b.convert_from(0, src, si.format, copy_option::flip_vertically);
+	return b;
 }
 
-	} // namespace surface
-} // namespace ouro
+}}

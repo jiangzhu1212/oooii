@@ -70,8 +70,7 @@ void user_flush_data(png_structp png_ptr)
 {
 }
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
 static surface::format to_format(int _Type, int _BitDepth)
 {
@@ -90,7 +89,7 @@ static surface::format to_format(int _Type, int _BitDepth)
 
 info get_info_png(const void* _pBuffer, size_t _BufferSize)
 {
-	static const unsigned char png_sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+	static const uchar png_sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
 	if (_BufferSize < 8 || memcmp(png_sig, _pBuffer, sizeof(png_sig)))
 		return info();
 	
@@ -128,15 +127,15 @@ info get_info_png(const void* _pBuffer, size_t _BufferSize)
 	return i;
 }
 
-std::shared_ptr<char> encode_png(const buffer* _pBuffer
+std::shared_ptr<char> encode_png(const buffer& _Buffer
 	, size_t* _pSize
 	, const alpha_option::value& _Option
 	, const compression::value& _Compression)
 {
-	const buffer* pSource = _pBuffer;
-	std::shared_ptr<const buffer> Converted;
+	const buffer* pSource = &_Buffer;
+	buffer Converted;
 
-	info si = _pBuffer->get_info();
+	info si = _Buffer.get_info();
 	switch (_Option)
 	{
 		case alpha_option::force_alpha:
@@ -146,9 +145,9 @@ std::shared_ptr<char> encode_png(const buffer* _pBuffer
 
 			if (si.format == r8g8b8_unorm || si.format == b8g8r8_unorm)
 			{
-				Converted = _pBuffer->convert(r8g8b8a8_unorm);
-				si = Converted->get_info();
-				pSource = Converted.get();
+				Converted = _Buffer.convert(r8g8b8a8_unorm);
+				si = Converted.get_info();
+				pSource = &Converted;
 			}
 
 			break;
@@ -158,9 +157,9 @@ std::shared_ptr<char> encode_png(const buffer* _pBuffer
 		{
 			if (si.format == r8g8b8a8_unorm || si.format == b8g8r8a8_unorm)
 			{
-				Converted = _pBuffer->convert(r8g8b8_unorm);
-				si = Converted->get_info();
-				pSource = Converted.get();
+				Converted = _Buffer.convert(r8g8b8_unorm);
+				si = Converted.get_info();
+				pSource = &Converted;
 			}
 			break;
 		}
@@ -214,9 +213,6 @@ std::shared_ptr<char> encode_png(const buffer* _pBuffer
 	}
 
 	// how big a buffer?
-
-	//std::shared_ptr<char>
-
 	png_set_IHDR(png_ptr, info_ptr, si.dimensions.x, si.dimensions.y, 8
 		, color_type, PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
 
@@ -226,11 +222,11 @@ std::shared_ptr<char> encode_png(const buffer* _pBuffer
 		png_set_bgr(png_ptr);
 
 	{
-		std::vector<unsigned char*> rows;
+		std::vector<uchar*> rows;
 		rows.resize(si.dimensions.y);
 		const_mapped_subresource msr;
 		shared_lock lock(pSource);
-		rows[0] = (unsigned char*)lock.mapped.data;
+		rows[0] = (uchar*)lock.mapped.data;
 		for (int y = 1; y < si.dimensions.y; y++)
 			rows[y] = byte_add(rows[y-1], lock.mapped.row_pitch);
 		png_write_image(png_ptr, rows.data());
@@ -243,7 +239,7 @@ std::shared_ptr<char> encode_png(const buffer* _pBuffer
 	return buffer;
 }
 
-std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
+buffer decode_png(const void* _pBuffer, size_t _BufferSize, const alpha_option::value& _Option, const layout& _Layout)
 {
 	// initialze libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
@@ -314,13 +310,13 @@ std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, con
 
 	// Set up the surface buffer
 	png_read_update_info(png_ptr, info_ptr);
-	std::shared_ptr<buffer> b = buffer::make(si);
+	buffer b(si);
 	{
-		std::vector<unsigned char*> rows;
+		std::vector<uchar*> rows;
 		rows.resize(si.dimensions.y);
 		lock_guard lock(b);
 
-		rows[0] = (unsigned char*)lock.mapped.data;
+		rows[0] = (uchar*)lock.mapped.data;
 		for (int y = 1; y < si.dimensions.y; y++)
 			rows[y] = byte_add(rows[y-1], lock.mapped.row_pitch);
 
@@ -329,5 +325,4 @@ std::shared_ptr<buffer> decode_png(const void* _pBuffer, size_t _BufferSize, con
 	return b;
 }
 
-	} // namespace surface
-} // namespace ouro
+}}

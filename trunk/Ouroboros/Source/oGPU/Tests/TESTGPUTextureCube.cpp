@@ -47,9 +47,10 @@ struct gpu_test_texturecube : public gpu_texture_test
 		auto _4 = surface_load(filesystem::data_path() / "Test/Textures/CubePosZ.png", false, surface::alpha_option::force_alpha);
 		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", false, surface::alpha_option::force_alpha);
 
-		const surface::buffer* images[6] = { _0.get(), _1.get(), _2.get(), _3.get(), _4.get(), _5.get() };
-		auto image = surface::buffer::make(images, 6, surface::buffer::image_array);
-		t.initialize("Test cube", Device, *image, false);
+		const surface::buffer* images[6] = { &_0, &_1, &_2, &_3, &_4, &_5 };
+		surface::buffer image;
+		image.initialize_array(images);
+		t.initialize("Test cube", Device, image, false);
 		return &t;
 	}
 

@@ -117,7 +117,7 @@ bool copy_async_data(DeviceContext* dc, Asynchronous* async, void* dst, uint dst
 template<typename T> bool copy_async_data(DeviceContext* dc, Asynchronous* async, T* data, bool blocking = true) { return copy_async_data(dc, async, data, sizeof(T), blocking); }
 
 // copies the contents of t to a new surface buffer
-std::shared_ptr<surface::buffer> make_snapshot(Texture2D* t);
+surface::buffer make_snapshot(Texture2D* t);
 
 // calls UpdateSubresource for the specified buffer. This won't work for a D3D11_BIND_CONSTANT_BUFFER.
 void update_buffer(DeviceContext* dc, Buffer* b, uint byte_offset, uint num_bytes, const void* src);

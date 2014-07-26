@@ -388,7 +388,7 @@ public:
 	// Schedules an oImage to be generated from the window. In the simple case,
 	// _Frame is not used and the front buffer is captured. Due to platform rules
 	// this may involve bringing the specified window to focus.
-	virtual future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = -1, bool _IncludeBorder = false) const = 0;
+	virtual future<surface::buffer> snapshot(int _Frame = -1, bool _IncludeBorder = false) const = 0;
 
 	// Causes an event_type::timer event to occur with the specified context after the 
 	// specified time. This will be called every specified milliseconds until 

@@ -78,14 +78,14 @@ file_format::value get_file_format(const void* _pBuffer, size_t _BufferSize);
 info get_info(const void* _pBuffer, size_t _BufferSize);
 
 // Returns a buffer ready to be written to disk in the specified format.
-std::shared_ptr<char> encode(const buffer* _pBuffer
+std::shared_ptr<char> encode(const buffer& _Buffer
 	, size_t* _pSize
 	, const file_format::value& _FileFormat
 	, const alpha_option::value& _Option = alpha_option::preserve
 	, const compression::value& _Compression = compression::low);
 
 // Parses the in-memory formatted buffer into a surface.
-std::shared_ptr<buffer> decode(const void* _pBuffer
+buffer decode(const void* _pBuffer
 	, size_t _BufferSize
 	, const alpha_option::value& _Option = alpha_option::preserve
 	, const layout& _Layout = image);

@@ -391,12 +391,12 @@ void oSystemProperties::Show(int _First, int _Last, bool _Show)
 		oWinControlSetVisible(ControlSet[i], _Show);
 }
 
-static void OverwriteVariableColors(ouro::surface::buffer* _pBuffer)
+static void OverwriteVariableColors(ouro::surface::buffer& _Buffer)
 {
 	static const int2 VarCoords[] = { int2(25,125), int2(26,125), int2(30,125), int2(31,125), int2(32,125), int2(83,125), int2(84,125), int2(135,125), int2(136,125), int2(137,125), int2(173,125), int2(174,125), int2(175,125), };
 
-	ouro::surface::subresource_info sri = ouro::surface::subresource(_pBuffer->get_info(), 0);
-	ouro::surface::lock_guard lock(_pBuffer);
+	ouro::surface::subresource_info sri = ouro::surface::subresource(_Buffer.get_info(), 0);
+	ouro::surface::lock_guard lock(_Buffer);
 	for (const int2& c : VarCoords)
 		ouro::surface::put(sri, &lock.mapped, c, ouro::red);
 }
@@ -416,10 +416,10 @@ void TESTSysDialog(test_services& _Services)
 
 	if (!kInteractiveMode)
 	{
-		ouro::future<std::shared_ptr<ouro::surface::buffer>> snapshot = test.GetWindow()->snapshot();
+		ouro::future<ouro::surface::buffer> snapshot = test.GetWindow()->snapshot();
 		test.GetWindow()->flush_messages();
 
-		std::shared_ptr<ouro::surface::buffer> s = snapshot.get();
+		ouro::surface::buffer s = snapshot.get();
 		_Services.check(s, 0);
 
 		for (int i = 0; i < 5; i++)
@@ -433,7 +433,7 @@ void TESTSysDialog(test_services& _Services)
 			// be indeterminate behavior in win32 rendering (clear type) that cannot
 			// be turned off dynamically.
 			if (i == 3)
-				OverwriteVariableColors(s.get());
+				OverwriteVariableColors(s);
 
 			_Services.check(s, i);
 		}

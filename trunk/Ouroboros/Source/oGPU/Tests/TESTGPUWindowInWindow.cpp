@@ -141,9 +141,9 @@ public:
 
 	window* get_window() { return ParentWindow.get(); }
 
-	std::shared_ptr<surface::buffer> snapshot_and_wait()
+	surface::buffer snapshot_and_wait()
 	{
-		future<std::shared_ptr<surface::buffer>> snapshot = ParentWindow->snapshot();
+		future<surface::buffer> snapshot = ParentWindow->snapshot();
 		while (!snapshot.is_ready()) { flush_messages(); }
 		return snapshot.get();
 	}
@@ -199,7 +199,7 @@ void TESTwindow_in_window(test_services& _Services)
 	{
 		test.flush_messages();
 		test.render();
-		std::shared_ptr<surface::buffer> snapshot = test.snapshot_and_wait();
+		surface::buffer snapshot = test.snapshot_and_wait();
 		_Services.check(snapshot);
 		test.increment_clear_counter();
 		test.flush_messages();

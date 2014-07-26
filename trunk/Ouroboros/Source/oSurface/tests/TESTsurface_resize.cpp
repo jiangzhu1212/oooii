@@ -34,17 +34,17 @@ namespace ouro {
 	namespace tests {
 
 static void TESTsurface_resize_test_size(test_services& _Services
-	, const surface::buffer* _pBuffer
+	, const surface::buffer& _Buffer
 	, surface::filter::value _Filter
 	, const int3& _NewSize
 	, int _NthImage)
 {
-	surface::info srcInfo = _pBuffer->get_info();
+	surface::info srcInfo = _Buffer.get_info();
 	surface::info destInfo = srcInfo;
 	destInfo.dimensions = _NewSize;
-	std::shared_ptr<surface::buffer> dst = surface::buffer::make(destInfo);
+	surface::buffer dst(destInfo);
 	{
-		surface::shared_lock lock(_pBuffer);
+		surface::shared_lock lock(_Buffer);
 		surface::lock_guard lock2(dst);
 
 		scoped_timer timer("resize time");
@@ -55,23 +55,23 @@ static void TESTsurface_resize_test_size(test_services& _Services
 }
 
 static void TESTsurface_resize_test_filter(test_services& _Services
-	, const surface::buffer* _pBuffer
+	, const surface::buffer& _Buffer
 	, surface::filter::value _Filter
 	, int _NthImage)
 {
-	TESTsurface_resize_test_size(_Services, _pBuffer, _Filter, _pBuffer->get_info().dimensions * int3(2,2,1), _NthImage);
-	TESTsurface_resize_test_size(_Services, _pBuffer, _Filter, _pBuffer->get_info().dimensions / int3(2,2,1), _NthImage+1);
+	TESTsurface_resize_test_size(_Services, _Buffer, _Filter, _Buffer.get_info().dimensions * int3(2,2,1), _NthImage);
+	TESTsurface_resize_test_size(_Services, _Buffer, _Filter, _Buffer.get_info().dimensions / int3(2,2,1), _NthImage+1);
 }
 
 void TESTsurface_resize(test_services& _Services)
 {
 	scoped_allocation b = _Services.load_buffer("Test/Textures/lena_1.png");
-	std::shared_ptr<surface::buffer> s = surface::decode(b, b.size());
+	surface::buffer s = surface::decode(b, b.size());
 
 	int NthImage = 0;
 	for (int i = 0; i < surface::filter::filter_count; i++, NthImage += 2)
 	{
-		TESTsurface_resize_test_filter(_Services, s.get(), surface::filter::value(i), NthImage);
+		TESTsurface_resize_test_filter(_Services, s, surface::filter::value(i), NthImage);
 	}
 }
 

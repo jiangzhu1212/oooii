@@ -43,9 +43,9 @@ void core_fill_grid_numbers(surface::buffer* _pBuffer, const int2& _GridDimensio
 	si.format = surface::b8g8r8a8_unorm; \
 	si.layout = surface::image; \
 	si.dimensions = int3(_Dimensions, 1); \
-	std::shared_ptr<surface::buffer> s = surface::buffer::make(si);
+	surface::buffer s(si);
 
-std::shared_ptr<surface::buffer> make_numbered_grid(
+surface::buffer make_numbered_grid(
 	const int2& _Dimensions
 	, const int2& _GridDimensions
 	, color _GridColor
@@ -61,11 +61,11 @@ std::shared_ptr<surface::buffer> make_numbered_grid(
 		surface::fill_grid_lines(c, lock.mapped.row_pitch, si.dimensions.xy(), _GridDimensions, _GridColor);
 	}
 	
-	core_fill_grid_numbers(s.get(), _GridDimensions, _NumberColor);
+	core_fill_grid_numbers(&s, _GridDimensions, _NumberColor);
 	return s;
 }
 
-static std::shared_ptr<surface::buffer> make_checkerboard(
+surface::buffer make_checkerboard(
 	const int2& _Dimensions
 	, const int2& _GridDimensions
 	, color _Color0
@@ -78,7 +78,7 @@ static std::shared_ptr<surface::buffer> make_checkerboard(
 	return s;
 }
 
-static std::shared_ptr<surface::buffer> make_solid(const int2& _Dimensions, color _Color)
+surface::buffer make_solid(const int2& _Dimensions, color _Color)
 {
 	SETUP_AND_MAKE();
 	surface::lock_guard lock(s);
@@ -90,7 +90,7 @@ void TESTsurface_fill(test_services& _Services)
 {
 	static const color gradiantColors0[4] = { blue, purple, lime, orange };
 	static const color gradiantColors1[4] = { midnight_blue, dark_slate_blue, green, chocolate };
-	std::shared_ptr<surface::buffer> s;
+	surface::buffer s;
 	s = make_numbered_grid(int2(256,256), int2(64,64), black, black, gradiantColors0);
 	_Services.check(s, 0);
 	s = make_numbered_grid(int2(512,512), int2(32,32), gray, white, gradiantColors1);

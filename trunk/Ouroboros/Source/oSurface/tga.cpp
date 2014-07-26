@@ -26,8 +26,7 @@
 #include <oSurface/convert.h>
 #include <oBase/throw.h>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
 #define TGA_RGB 2
 
@@ -65,14 +64,14 @@ info get_info_tga(const void* buffer, size_t size)
 	return si;
 }
 
-std::shared_ptr<char> encode_tga(const buffer* buffer
+std::shared_ptr<char> encode_tga(const buffer& buffer
 	, size_t* out_size
 	, const alpha_option::value& option
 	, const compression::value& compression)
 {
 	oCHECK_ARG(compression == compression::none, "compression not supported");
 
-	auto info = buffer->get_info();
+	auto info = buffer.get_info();
 	oCHECK_ARG(info.format == b8g8r8a8_unorm || info.format == b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 
 	auto dstinfo = info;
@@ -92,25 +91,16 @@ std::shared_ptr<char> encode_tga(const buffer* buffer
 		*out_size = size;
 
 	memcpy(p, &h, sizeof(TGAHeader));
-	mapped_subresource mapped;
-	mapped.data = byte_add(p, sizeof(TGAHeader));
-	mapped.row_pitch = element_size(dstinfo.format) * h.width;
-	mapped.depth_pitch = mapped.row_pitch * h.height;
+	mapped_subresource dst;
+	dst.data = byte_add(p, sizeof(TGAHeader));
+	dst.row_pitch = element_size(dstinfo.format) * h.width;
+	dst.depth_pitch = dst.row_pitch * h.height;
 
-	if (info.format == dstinfo.format)
-		buffer->copy_to(0, &mapped, true);
-	else
-	{
-		const_mapped_subresource cmapped;
-		buffer->map_const(0, &cmapped);
-		finally Unmap([&] { buffer->unmap_const(0); });
-		convert(info, cmapped, dstinfo, &mapped, true);
-	}
-	
+	buffer.convert_to(0, dst, dstinfo.format, copy_option::flip_vertically);
 	return b;
 }
 
-std::shared_ptr<buffer> decode_tga(const void* _buffer, size_t size, const alpha_option::value& option, const layout& layout)
+buffer decode_tga(const void* _buffer, size_t size, const alpha_option::value& option, const layout& layout)
 {
 	info si = get_info_tga(_buffer, size);
 	oCHECK(si.format != unknown, "invalid bmp");
@@ -118,17 +108,11 @@ std::shared_ptr<buffer> decode_tga(const void* _buffer, size_t size, const alpha
 	info dsi = si;
 	dsi.format = alpha_option_format(si.format, option);
 	dsi.layout = layout;
+	auto src = get_const_mapped_subresource(si, 0, 0, &h[1]);
 
-	std::shared_ptr<buffer> s = buffer::make(dsi);
-	subresource_info sri = subresource(si, 0);
-	{
-		auto cmapped = get_const_mapped_subresource(si, 0, 0, &h[1]);
-		lock_guard lock(s);
-		convert_subresource(sri, cmapped, dsi.format, &lock.mapped, true);
-	}
-
-	return s;
+	buffer b(dsi);
+	b.convert_from(0, src, si.format, copy_option::flip_vertically);
+	return b;
 }
 
-	} // namespace surface
-} // namespace ouro
+}}

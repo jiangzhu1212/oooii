@@ -261,7 +261,7 @@ struct window_impl : window
 	void trigger(const input::action& _Action) override;
 	void post(int _CustomEventCode, uintptr_t _Context) override;
 	void dispatch(const std::function<void()>& _Task) override;
-	future<std::shared_ptr<surface::buffer>> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override;
+	future<surface::buffer> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override;
 	void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) override;
 	void stop_timer(uintptr_t _Context) override;
 
@@ -821,9 +821,9 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 	return true;
 }
 
-future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame, bool _IncludeBorder) const
+future<surface::buffer> window_impl::snapshot(int _Frame, bool _IncludeBorder) const
 {
-	auto PromisedSnap = std::make_shared<ouro::promise<std::shared_ptr<surface::buffer>>>();
+	auto PromisedSnap = std::make_shared<ouro::promise<surface::buffer>>();
 	auto Image = PromisedSnap->get_future();
 
 	const_cast<window_impl*>(this)->dispatch([=]() mutable
@@ -838,13 +838,13 @@ future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame, bool 
 				oCHECK(false, "A non-hidden window timed out waiting to become opaque");
 		}
 
-		std::shared_ptr<surface::buffer> snap;
+		surface::buffer snap;
 		void* buf = nullptr;
 		size_t size = 0;
 		oWinSetFocus(hWnd); // Windows doesn't do well with hidden contents.
 		try
 		{
-			oGDIScreenCaptureWindow(hWnd, _IncludeBorder, malloc, &buf, &size, false, true);
+			oGDIScreenCaptureWindow(hWnd, _IncludeBorder, malloc, &buf, &size, false, false);
 			snap = surface::decode(buf, size);
 			free(buf);
 		}
@@ -852,11 +852,11 @@ future<std::shared_ptr<surface::buffer>> window_impl::snapshot(int _Frame, bool 
 		catch (std::exception)
 		{
 			PromisedSnap->set_exception(std::current_exception());
-			snap = nullptr;
+			snap.deinitialize();
 		}
 
 		if (!!snap)
-			PromisedSnap->set_value(snap);
+			PromisedSnap->set_value(std::move(snap));
 	});
 
 	return Image;
