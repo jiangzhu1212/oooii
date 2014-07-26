@@ -592,6 +592,9 @@
     <ClInclude Include="..\..\Include\oBase\sbb_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\enum_iterator.h">
+      <Filter>oBase\c++ support</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">

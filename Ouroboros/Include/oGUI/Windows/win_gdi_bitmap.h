@@ -28,7 +28,7 @@
 #define oGUI_win_gdi_bitmap_h
 
 #include <oGUI/Windows/win_gdi.h>
-#include <oSurface/buffer.h>
+#include <oSurface/texel_buffer.h>
 
 namespace ouro {
 	namespace windows {

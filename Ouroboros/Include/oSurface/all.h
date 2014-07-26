@@ -27,10 +27,10 @@
 #pragma once
 #ifndef oSurface_all_h
 #define oSurface_all_h
-#include <oSurface/buffer.h>
 #include <oSurface/codec.h>
 #include <oSurface/convert.h>
 #include <oSurface/fill.h>
 #include <oSurface/resize.h>
 #include <oSurface/surface.h>
+#include <oSurface/texel_buffer.h>
 #endif

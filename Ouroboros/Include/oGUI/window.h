@@ -33,7 +33,7 @@
 #include <oGUI/oGUI.h>
 #include <oBase/future.h>
 #include <oCore/display.h>
-#include <oSurface/buffer.h>
+#include <oSurface/texel_buffer.h>
 
 namespace ouro {
 
