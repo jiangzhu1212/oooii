@@ -50,7 +50,7 @@ BITMAPINFOHEADER make_header(const surface::info& _SurfaceInfo, bool _TopDown)
 	BITMAPINFOHEADER h;
 	h.biSize = sizeof(BITMAPINFOHEADER);
 	h.biWidth = _SurfaceInfo.dimensions.x;
-	h.biHeight = _TopDown ? -_SurfaceInfo.dimensions.y : _SurfaceInfo.dimensions.y;
+	h.biHeight = _TopDown ? -(int)_SurfaceInfo.dimensions.y : (int)_SurfaceInfo.dimensions.y;
 	h.biPlanes = 1; 
 	h.biBitCount = static_cast<WORD>(surface::bits(_SurfaceInfo.format));
 	h.biCompression = BI_RGB;
@@ -106,8 +106,8 @@ surface::info get_info(const BITMAPINFOHEADER& _Header)
 
 	switch (_Header.biBitCount)
 	{
-		case 1: si.format = surface::r1_unorm; break;
-		case 16: si.format = surface::b5g5r5a1_unorm; break;
+		case 1: si.format = surface::format::r1_unorm; break;
+		case 16: si.format = surface::format::b5g5r5a1_unorm; break;
 		case 8: si.format = surface::format::r8_unorm; break;
 		case 24: case 0: si.format = surface::format::b8g8r8_unorm; break;
 		case 32: si.format = surface::format::b8g8r8a8_unorm; break;
@@ -131,7 +131,7 @@ scoped_bitmap make_bitmap(const surface::texel_buffer* _pBuffer)
 {
 	ouro::surface::info si = _pBuffer->get_info();
 
-	if (si.format != ouro::surface::b8g8r8a8_unorm)
+	if (si.format != ouro::surface::format::b8g8r8a8_unorm)
 		throw std::invalid_argument("only b8g8r8a8_unorm currently supported");
 
 	surface::shared_lock lock(_pBuffer);

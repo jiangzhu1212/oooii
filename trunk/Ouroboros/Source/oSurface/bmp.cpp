@@ -76,7 +76,7 @@ info get_info_bmp(const void* buffer, size_t size)
 	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
 
 	info si;
-	si.format = bmi->bmiHeader.biBitCount == 32 ? b8g8r8a8_unorm : b8g8r8_unorm;
+	si.format = bmi->bmiHeader.biBitCount == 32 ? format::b8g8r8a8_unorm : format::b8g8r8_unorm;
 	si.dimensions = int3(bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, 1);
 	return si;
 }
@@ -85,7 +85,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 {
 	auto info = b.get_info();
 
-	oCHECK(info.format == surface::b8g8r8a8_unorm || info.format == surface::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
+	oCHECK(info.format == surface::format::b8g8r8a8_unorm || info.format == surface::format::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 
 	const uint ElementSize = surface::element_size(info.format);
 	const uint UnalignedPitch = ElementSize * info.dimensions.x;
@@ -111,7 +111,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 	bmi->bmiHeader.biWidth = info.dimensions.x;
 	bmi->bmiHeader.biHeight = info.dimensions.y;
 	bmi->bmiHeader.biPlanes = 1;
-	bmi->bmiHeader.biBitCount = info.format == surface::b8g8r8a8_unorm ? 32 : 24;
+	bmi->bmiHeader.biBitCount = info.format == surface::format::b8g8r8a8_unorm ? 32 : 24;
 	bmi->bmiHeader.biCompression = 0; // BI_RGB
 	bmi->bmiHeader.biSizeImage = BufferSize;
 	bmi->bmiHeader.biXPelsPerMeter = 0x0ec4;
@@ -127,7 +127,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 	
 	uint Padding = AlignedPitch - UnalignedPitch;
 
-	for (int y = 0, y1 = info.dimensions.y-1; y < info.dimensions.y; y++, y1--)
+	for (uint y = 0, y1 = info.dimensions.y-1; y < info.dimensions.y; y++, y1--)
 	{
 		uchar* scanline = (uchar*)byte_add(bits, y * AlignedPitch);
 		const uchar* src = (const uchar*)byte_add(lock.mapped.data, y1 * lock.mapped.row_pitch);
@@ -155,7 +155,7 @@ texel_buffer decode_bmp(const void* buffer, size_t size, const alpha_option& opt
 	const void* bits = &bmi[1];
 
 	info si = get_info_bmp(buffer, size);
-	oCHECK(si.format != unknown, "invalid bmp");
+	oCHECK(si.format != format::unknown, "invalid bmp");
 	info dsi = si;
 	dsi.layout = layout;
 	const_mapped_subresource src;

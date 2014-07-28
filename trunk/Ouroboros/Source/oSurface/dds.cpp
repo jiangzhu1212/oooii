@@ -284,7 +284,7 @@ info get_info_dds(const void* buffer, size_t size)
 
 	info si;
 	si.dimensions = int3(h->dwWidth, h->dwHeight, h->dwDepth);
-	si.layout = h->dwMipMapCount == 1 ? image : tight;
+	si.layout = h->dwMipMapCount == 1 ? layout::image : layout::tight;
 
 	if (kIsD3D10)
 	{
@@ -341,7 +341,7 @@ info get_info_dds(const void* buffer, size_t size)
 	else
 	{
 		si.format = GetSurfaceFormat(GetDXGIFormat(h->ddspf));
-		if (si.format == unknown)
+		if (si.format == format::unknown)
 			return info();
 
 		if (h->dwFlags & DDS_HEADER_FLAGS_VOLUME)
@@ -371,7 +371,7 @@ info get_info_dds(const void* buffer, size_t size)
 static void map_bits(const info& inf, const void* src_dds_buffer, size_t src_dds_size, const_mapped_subresource* subresources, size_t num_subresources)
 {
 	const void* end = byte_add(src_dds_buffer, src_dds_size);
-	const int nMips = num_mips(inf.layout != image, inf.dimensions);
+	const int nMips = num_mips(inf.layout != layout::image, inf.dimensions);
 	const int nSlices = inf.array_size;
 
 	size_t index = 0;
@@ -395,7 +395,7 @@ texel_buffer decode_dds(const void* buffer, size_t size, const alpha_option& opt
 {
 	oCHECK(option == alpha_option::preserve, "changing alpha option not supported for dds");
 	info si = get_info_dds(buffer, size);
-	oCHECK(si.format != unknown, "invalid dds");
+	oCHECK(si.format != format::unknown, "invalid dds");
 
 	texel_buffer b(si);
 

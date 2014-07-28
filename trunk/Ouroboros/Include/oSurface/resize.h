@@ -45,8 +45,8 @@ enum class filter : uchar
 };
 
 void resize(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, const filter& f = filter::lanczos3);
-void clip(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, int2 src_offset = int2(0, 0));
-void pad(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, int2 dst_offset = int2(0, 0));
+void clip(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, uint2 src_offset = uint2(0, 0));
+void pad(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, uint2 dst_offset = uint2(0, 0));
 
 }}
 

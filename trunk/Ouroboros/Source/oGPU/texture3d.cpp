@@ -61,7 +61,7 @@ void texture3d::initialize(const char* name, device& dev, const surface::texel_b
 		region.right = sri.dimensions.x;
 		region.bottom = sri.dimensions.y;
 		surface::shared_lock lock(src, subresource);
-		for (int slice = 0; slice < sri.dimensions.z; slice++)
+		for (uint slice = 0; slice < sri.dimensions.z; slice++)
 		{
 			region.front = slice;
 			region.back = slice + 1;

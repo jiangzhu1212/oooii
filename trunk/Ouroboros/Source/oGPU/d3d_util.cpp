@@ -599,7 +599,7 @@ surface::texel_buffer make_snapshot(Texture2D* t)
 	oCHECK_ARG(desc.Format != DXGI_FORMAT_UNKNOWN, "The specified texture's format %s is not supported by surface::texel_buffer", as_string(desc.format));
 
 	surface::info si;
-	si.format = surface::b8g8r8a8_unorm;
+	si.format = surface::format::b8g8r8a8_unorm;
 	si.dimensions = int3(desc.Width, desc.Height, 1);
 	surface::texel_buffer s(si);
 

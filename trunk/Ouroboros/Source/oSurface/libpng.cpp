@@ -78,13 +78,13 @@ static surface::format to_format(int _Type, int _BitDepth)
 	{
 		switch (_Type)
 		{
-			case PNG_COLOR_TYPE_GRAY: return surface::r8_unorm;
-			case PNG_COLOR_TYPE_RGB: return surface::b8g8r8_unorm;
-			case PNG_COLOR_TYPE_RGB_ALPHA: return surface::b8g8r8a8_unorm;
+			case PNG_COLOR_TYPE_GRAY: return surface::format::r8_unorm;
+			case PNG_COLOR_TYPE_RGB: return surface::format::b8g8r8_unorm;
+			case PNG_COLOR_TYPE_RGB_ALPHA: return surface::format::b8g8r8a8_unorm;
 			default: break;
 		}
 	}
-	return surface::unknown;
+	return surface::format::unknown;
 }
 
 info get_info_png(const void* buffer, size_t size)
@@ -122,7 +122,7 @@ info get_info_png(const void* buffer, size_t size)
 	
 	surface::info i;
 	i.format = to_format(color_type, depth);
-	i.layout = image;
+	i.layout = layout::image;
 	i.dimensions = int3(w, h, 1);
 	return i;
 }
@@ -139,12 +139,12 @@ scoped_allocation encode_png(const texel_buffer& b
 	{
 		case alpha_option::force_alpha:
 		{
-			if (si.format == r8_unorm)
+			if (si.format == format::r8_unorm)
 				throw std::exception("can't force alpha on r8_unorm");
 
-			if (si.format == r8g8b8_unorm || si.format == b8g8r8_unorm)
+			if (si.format == format::r8g8b8_unorm || si.format == format::b8g8r8_unorm)
 			{
-				Converted = b.convert(r8g8b8a8_unorm);
+				Converted = b.convert(format::r8g8b8a8_unorm);
 				si = Converted.get_info();
 				pSource = &Converted;
 			}
@@ -154,9 +154,9 @@ scoped_allocation encode_png(const texel_buffer& b
 
 		case alpha_option::force_no_alpha:
 		{
-			if (si.format == r8g8b8a8_unorm || si.format == b8g8r8a8_unorm)
+			if (si.format == format::r8g8b8a8_unorm || si.format == format::b8g8r8a8_unorm)
 			{
-				Converted = b.convert(r8g8b8_unorm);
+				Converted = b.convert(format::r8g8b8_unorm);
 				si = Converted.get_info();
 				pSource = &Converted;
 			}
@@ -203,11 +203,11 @@ scoped_allocation encode_png(const texel_buffer& b
 	int color_type = 0;
 	switch (si.format)
 	{
-		case r8_unorm: color_type = PNG_COLOR_TYPE_GRAY; break;
-		case b8g8r8_unorm: 
-		case r8g8b8_unorm: color_type = PNG_COLOR_TYPE_RGB; break;
-		case b8g8r8a8_unorm: 
-		case r8g8b8a8_unorm: color_type = PNG_COLOR_TYPE_RGB_ALPHA; break;
+		case format::r8_unorm: color_type = PNG_COLOR_TYPE_GRAY; break;
+		case format::b8g8r8_unorm: 
+		case format::r8g8b8_unorm: color_type = PNG_COLOR_TYPE_RGB; break;
+		case format::b8g8r8a8_unorm: 
+		case format::r8g8b8a8_unorm: color_type = PNG_COLOR_TYPE_RGB_ALPHA; break;
 		default: throw std::exception("invalid format");
 	}
 
@@ -217,7 +217,7 @@ scoped_allocation encode_png(const texel_buffer& b
 
 	png_write_info(png_ptr, info_ptr);
 	
-	if (si.format == b8g8r8_unorm || si.format == b8g8r8a8_unorm)
+	if (si.format == format::b8g8r8_unorm || si.format == format::b8g8r8a8_unorm)
 		png_set_bgr(png_ptr);
 
 	{
@@ -226,7 +226,7 @@ scoped_allocation encode_png(const texel_buffer& b
 		const_mapped_subresource msr;
 		shared_lock lock(pSource);
 		rows[0] = (uchar*)lock.mapped.data;
-		for (int y = 1; y < si.dimensions.y; y++)
+		for (uint y = 1; y < si.dimensions.y; y++)
 			rows[y] = byte_add(rows[y-1], lock.mapped.row_pitch);
 		png_write_image(png_ptr, rows.data());
 		png_write_end(png_ptr, info_ptr);
@@ -275,27 +275,27 @@ texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& opt
 	switch (color_type)
 	{
 		case PNG_COLOR_TYPE_GRAY:
-			si.format = r8_unorm;
+			si.format = format::r8_unorm;
 			if (depth < 8)
 				png_set_expand_gray_1_2_4_to_8(png_ptr);
 			break;
 		case PNG_COLOR_TYPE_PALETTE:
-			si.format = b8g8r8_unorm;
+			si.format = format::b8g8r8_unorm;
 			png_set_palette_to_rgb(png_ptr);
 			break;
 		case PNG_COLOR_TYPE_RGB:
-			si.format = b8g8r8_unorm;
+			si.format = format::b8g8r8_unorm;
 			if (option == alpha_option::force_alpha)
 			{
-				si.format = b8g8r8a8_unorm;
+				si.format = format::b8g8r8a8_unorm;
 				png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
 			}
 			break;
 		case PNG_COLOR_TYPE_RGB_ALPHA:
-			si.format = b8g8r8a8_unorm;
+			si.format = format::b8g8r8a8_unorm;
 			if (option == alpha_option::force_no_alpha)
 			{
-				si.format = b8g8r8_unorm;
+				si.format = format::b8g8r8_unorm;
 				png_set_strip_alpha(png_ptr);
 			}
 			break;
@@ -313,7 +313,7 @@ texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& opt
 		lock_guard lock(b);
 
 		rows[0] = (uchar*)lock.mapped.data;
-		for (int y = 1; y < si.dimensions.y; y++)
+		for (uint y = 1; y < si.dimensions.y; y++)
 			rows[y] = byte_add(rows[y-1], lock.mapped.row_pitch);
 
 		png_read_image(png_ptr, rows.data());

@@ -44,14 +44,14 @@ static surface::texel_buffer make_test_1d(int _Width)
 {
 	surface::info si;
 	si.dimensions = int3(_Width, 1, 1);
-	si.format = surface::b8g8r8a8_unorm;
+	si.format = surface::format::b8g8r8a8_unorm;
 	surface::texel_buffer s(si);
 
 	{
 		surface::lock_guard lock(s);
 		static const color sConsoleColors[] = { black, navy, green, teal, maroon, purple, olive, silver, gray, blue, lime, aqua, red, fuchsia, yellow, white };
 		color* texture1Ddata = (color*)lock.mapped.data;
-		for (int i = 0; i < si.dimensions.x; i++)
+		for (uint i = 0; i < si.dimensions.x; i++)
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
 	}
 
@@ -116,8 +116,8 @@ static void test_mipchain(test_services& _Services, const surface::texel_buffer&
 
 	else
 	{
-		int nSlices = max(1, si.array_size);
-		for (int i = 0; i < nSlices; i++)
+		uint nSlices = max(1u, si.array_size);
+		for (uint i = 0; i < nSlices; i++)
 		{
 			int DstSubresource = surface::calc_subresource(0, i, 0, nMips, nSlices);
 			int SrcSubresource = surface::calc_subresource(0, i, 0, 0, nSlices);
@@ -132,9 +132,9 @@ static void test_mipchain(test_services& _Services, const surface::texel_buffer&
 
 static void test_mipchain_layouts(test_services& _Services, const surface::texel_buffer& _Image, surface::filter _Filter, int _StartIndex)
 {
-	test_mipchain(_Services, _Image, _Filter, surface::tight, _StartIndex);
-	test_mipchain(_Services, _Image, _Filter, surface::below, _StartIndex+1);
-	test_mipchain(_Services, _Image, _Filter, surface::right, _StartIndex+2);
+	test_mipchain(_Services, _Image, _Filter, surface::layout::tight, _StartIndex);
+	test_mipchain(_Services, _Image, _Filter, surface::layout::below, _StartIndex+1);
+	test_mipchain(_Services, _Image, _Filter, surface::layout::right, _StartIndex+2);
 }
 
 void TESTsurface_generate_mips(test_services& _Services)

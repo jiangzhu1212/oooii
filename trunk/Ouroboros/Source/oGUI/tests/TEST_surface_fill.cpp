@@ -36,7 +36,7 @@ void core_fill_grid_numbers(surface::texel_buffer* _pBuffer, const int2& _GridDi
 {
 	surface::info si = _pBuffer->get_info();
 
-	if (si.format != surface::b8g8r8a8_unorm)
+	if (si.format != surface::format::b8g8r8a8_unorm)
 		throw std::invalid_argument("only b8g8r8a8_unorm currently supported");
 
 	scoped_bitmap hBmp = make_bitmap(_pBuffer);

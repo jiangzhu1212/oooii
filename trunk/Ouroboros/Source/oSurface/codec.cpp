@@ -41,7 +41,7 @@ namespace ouro { namespace surface {
 	texel_buffer decode_##ext(const void* buffer, size_t size, const alpha_option& option, const layout& layout);
 
 #define GET_FILE_FORMAT_EXT(ext) if (!_stricmp(extension, "." #ext)) return file_format::##ext;
-#define GET_FILE_FORMAT_HDR(ext) if (get_info_##ext(buffer, size).format != unknown) return file_format::##ext;
+#define GET_FILE_FORMAT_HDR(ext) if (get_info_##ext(buffer, size).format != format::unknown) return file_format::##ext;
 #define GET_INFO(ext) case file_format::##ext: return get_info_##ext(buffer, size);
 #define ENCODE(ext) case file_format::##ext: return encode_##ext(b, option, compression);
 #define DECODE(ext) case file_format::##ext: return decode_##ext(buffer, size, option, layout);
@@ -56,13 +56,13 @@ format alpha_option_format(const format& fmt, const alpha_option& option)
 		case alpha_option::force_alpha:
 			switch (fmt)
 			{
-				case r8g8b8_unorm: return r8g8b8a8_unorm;
-				case r8g8b8_unorm_srgb: return r8g8b8a8_unorm_srgb;
-				case b8g8r8_unorm: return b8g8r8a8_unorm;
-				case b8g8r8_unorm_srgb: return b8g8r8a8_unorm_srgb;
-				case x8b8g8r8_unorm: return a8b8g8r8_unorm;
-				case x8b8g8r8_unorm_srgb: return a8b8g8r8_unorm_srgb;
-				case b5g6r5_unorm: return b5g5r5a1_unorm;
+				case format::r8g8b8_unorm: return format::r8g8b8a8_unorm;
+				case format::r8g8b8_unorm_srgb: return format::r8g8b8a8_unorm_srgb;
+				case format::b8g8r8_unorm: return format::b8g8r8a8_unorm;
+				case format::b8g8r8_unorm_srgb: return format::b8g8r8a8_unorm_srgb;
+				case format::x8b8g8r8_unorm: return format::a8b8g8r8_unorm;
+				case format::x8b8g8r8_unorm_srgb: return format::a8b8g8r8_unorm_srgb;
+				case format::b5g6r5_unorm: return format::b5g5r5a1_unorm;
 				default: break;
 			}
 			break;
@@ -70,13 +70,13 @@ format alpha_option_format(const format& fmt, const alpha_option& option)
 		case alpha_option::force_no_alpha:
 			switch (fmt)
 			{
-				case r8g8b8a8_unorm: return r8g8b8_unorm;
-				case r8g8b8a8_unorm_srgb: return r8g8b8_unorm_srgb;
-				case b8g8r8a8_unorm: return b8g8r8_unorm;
-				case b8g8r8a8_unorm_srgb: return b8g8r8_unorm_srgb;
-				case a8b8g8r8_unorm: return x8b8g8r8_unorm;
-				case a8b8g8r8_unorm_srgb: return x8b8g8r8_unorm_srgb;
-				case b5g5r5a1_unorm: return b5g6r5_unorm;
+				case format::r8g8b8a8_unorm: return format::r8g8b8_unorm;
+				case format::r8g8b8a8_unorm_srgb: return format::r8g8b8_unorm_srgb;
+				case format::b8g8r8a8_unorm: return format::b8g8r8_unorm;
+				case format::b8g8r8a8_unorm_srgb: return format::b8g8r8_unorm_srgb;
+				case format::a8b8g8r8_unorm: return format::x8b8g8r8_unorm;
+				case format::a8b8g8r8_unorm_srgb: return format::x8b8g8r8_unorm_srgb;
+				case format::b5g5r5a1_unorm: return format::b5g6r5_unorm;
 				default: break;
 			}
 			break;

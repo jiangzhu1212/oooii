@@ -86,11 +86,11 @@ public:
 	void update_subresource(uint subresource, const box& b, const const_mapped_subresource& src, const copy_option& option = copy_option::none);
 
 	// locks internal memory for read/write and returns parameters for working with it
-	void map(uint subresource, mapped_subresource* out_mapped, int2* out_byte_dimensions = nullptr);
+	void map(uint subresource, mapped_subresource* out_mapped, uint2* out_byte_dimensions = nullptr);
 	void unmap(uint subresource);
 
 	// locks internal memory for read-only and returns parameters for working with it
-	void map_const(uint subresource, const_mapped_subresource* out_mapped, int2* out_byte_dimensions = nullptr) const;
+	void map_const(uint subresource, const_mapped_subresource* out_mapped, uint2* out_byte_dimensions = nullptr) const;
 	void unmap_const(uint subresource) const;
 
 	// copies from a subresource in this instance to a mapped destination of the same format and dimensions 
@@ -151,11 +151,11 @@ public:
 	~lock_guard() { buf->unmap(subresource); }
 
 	mapped_subresource mapped;
-	int2 byte_dimensions;
+	uint2 byte_dimensions;
 
 private:
 	texel_buffer* buf;
-	int subresource;
+	uint subresource;
 
 	lock_guard(const lock_guard&);
 	const lock_guard& operator=(const lock_guard&);
@@ -187,7 +187,7 @@ public:
 	~shared_lock() { buf->unmap_const(subresource); }
 
 	const_mapped_subresource mapped;
-	int2 byte_dimensions;
+	uint2 byte_dimensions;
 
 private:
 	uint subresource;

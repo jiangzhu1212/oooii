@@ -209,12 +209,12 @@ void resize_horizontal(const info& src_info, const const_mapped_subresource& src
 	const char* srcData = (char*)src.data;
 	char* dstData = (char*)dst.data;
 
-	for (int y = 0; y < dst_info.dimensions.y; y++)
+	for (uint y = 0; y < dst_info.dimensions.y; y++)
 	{
 		const uchar* oRESTRICT srcRow = (uchar*)byte_add(srcData, y*src.row_pitch);
 		uchar* oRESTRICT dstRow = (uchar*)byte_add(dstData, y*dst.row_pitch);
 
-		for (int x = 0; x < dst_info.dimensions.x; x++)
+		for (uint x = 0; x < dst_info.dimensions.x; x++)
 		{
 			auto& filterEntry = filter.FilterCache[x];
 			std::array<float, ELEMENT_SIZE> result;
@@ -248,11 +248,11 @@ void resize_vertical(const info& src_info, const const_mapped_subresource& src, 
 	const uchar* oRESTRICT srcData = (uchar*)src.data;
 	uchar* oRESTRICT dstData = (uchar*)dst.data;
 
-	for(int y = 0; y < dst_info.dimensions.y; y++)
+	for (uint y = 0; y < dst_info.dimensions.y; y++)
 	{
 		uchar* oRESTRICT dstRow = byte_add(dstData, y*dst.row_pitch);
 
-		for(int x = 0; x < dst_info.dimensions.x; ++x)
+		for (uint x = 0; x < dst_info.dimensions.x; x++)
 		{
 			auto& filterEntry = filter.FilterCache[y];
 			std::array<float, ELEMENT_SIZE> result;
@@ -293,14 +293,14 @@ void resize_internal(const info& src_info, const const_mapped_subresource& src, 
 		int fixedStep = (src_info.dimensions.x / dst_info.dimensions.x)*ELEMENT_SIZE;
 		int remainder = (src_info.dimensions.x % dst_info.dimensions.x);
 
-		for (int y = 0; y < dst_info.dimensions.y; y++)
+		for (uint y = 0; y < dst_info.dimensions.y; y++)
 		{
 			int row = (y*src_info.dimensions.y)/dst_info.dimensions.y;
 			const char* oRESTRICT srcRow = byte_add(srcData, row*src.row_pitch);
 			char* oRESTRICT dstRow = byte_add(dstData, y*dst.row_pitch);
 
-			int step = 0;
-			for(int x = 0; x < dst_info.dimensions.x; ++x)
+			uint step = 0;
+			for (uint x = 0; x < dst_info.dimensions.x; ++x)
 			{
 				for (size_t i = 0; i < ELEMENT_SIZE; i++)
 					*dstRow++ = *(srcRow+i);
@@ -384,7 +384,7 @@ void resize(const info& src_info, const const_mapped_subresource& src, const inf
 	#undef FILTER_CASE
 }
 
-void clip(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, int2 src_offset)
+void clip(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, uint2 src_offset)
 {
 	if (src_info.layout != dst_info.layout || src_info.format != dst_info.format)
 		throw std::invalid_argument("incompatible surfaces");
@@ -395,15 +395,15 @@ void clip(const info& src_info, const const_mapped_subresource& src, const info&
 	if (src_offset.x < 0 || src_offset.y < 0)
 		throw std::invalid_argument("source offset must be >= 0");
 
-	int2 bottomRight = src_offset + dst_info.dimensions.xy();
+	auto bottomRight = src_offset + dst_info.dimensions.xy();
 	if (bottomRight.x > src_info.dimensions.x || bottomRight.y > src_info.dimensions.y)
 		throw std::invalid_argument("src_offset + the dimensions of the destination, must be within the dimensions of the source");
 
-	int elementSize = ouro::surface::element_size(src_info.format);
+	auto elementSize = ouro::surface::element_size(src_info.format);
 	memcpy2d(dst.data, dst.row_pitch, byte_add(src.data, src.row_pitch*src_offset.y + elementSize*src_offset.x), src.row_pitch, dst_info.dimensions.x*elementSize, dst_info.dimensions.y);
 }
 
-void pad(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, int2 dst_offset)
+void pad(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, uint2 dst_offset)
 {
 	if (src_info.layout != dst_info.layout || src_info.format != dst_info.format)
 		throw std::invalid_argument("incompatible surfaces");

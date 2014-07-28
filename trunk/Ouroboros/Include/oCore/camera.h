@@ -38,11 +38,11 @@ class camera
 public:
 	enum format
 	{
-		unknown = surface::unknown,
-		rgb565 = surface::b5g5r5a1_unorm,
-		rgb24 = surface::b8g8r8_unorm,
-		argb32 = surface::b8g8r8a8_unorm,
-		rgb32 = surface::b8g8r8x8_unorm,
+		unknown = surface::format::unknown,
+		rgb565 = surface::format::b5g5r5a1_unorm,
+		rgb24 = surface::format::b8g8r8_unorm,
+		argb32 = surface::format::b8g8r8a8_unorm,
+		rgb32 = surface::format::b8g8r8x8_unorm,
 	};
 
 	struct mode

@@ -93,19 +93,19 @@ static void swap_red_blue_r8g8b8a8_unorm(const void* a, void* b)
 
 pixel_convert get_pixel_convert(format srcfmt, format dstfmt)
 {
-	#define IO(s,d) (((s)<<16) | (d))
-	int sel = IO(srcfmt, dstfmt);
+	#define IO(s,d) ((uint(s)<<16) | uint(d))
+	uint sel = IO(srcfmt, dstfmt);
 	switch (sel)
 	{
-		case IO(r8g8b8a8_unorm, r8g8b8_unorm): return r8g8b8a8_unorm_to_r8g8b8_unorm;
-		case IO(r8g8b8_unorm, r8g8b8a8_unorm): return r8g8b8_unorm_to_r8g8b8a8_unorm;
-		case IO(b8g8r8a8_unorm, b8g8r8_unorm): return b8g8r8a8_unorm_to_b8g8r8_unorm;
-		case IO(b8g8r8a8_unorm, r8g8b8_unorm): return swap_red_blue_r8g8b8_unorm;
-		case IO(b8g8r8_unorm, b8g8r8a8_unorm): return b8g8r8_unorm_to_b8g8r8a8_unorm;
-		case IO(b8g8r8_unorm, r8g8b8_unorm): 
-		case IO(r8g8b8_unorm, b8g8r8_unorm): return swap_red_blue_r8g8b8_unorm;
-		case IO(b8g8r8a8_unorm, r8g8b8a8_unorm): 
-		case IO(r8g8b8a8_unorm, b8g8r8a8_unorm): return swap_red_blue_r8g8b8a8_unorm;
+		case IO(format::r8g8b8a8_unorm, format::r8g8b8_unorm): return r8g8b8a8_unorm_to_r8g8b8_unorm;
+		case IO(format::r8g8b8_unorm, format::r8g8b8a8_unorm): return r8g8b8_unorm_to_r8g8b8a8_unorm;
+		case IO(format::b8g8r8a8_unorm, format::b8g8r8_unorm): return b8g8r8a8_unorm_to_b8g8r8_unorm;
+		case IO(format::b8g8r8a8_unorm, format::r8g8b8_unorm): return swap_red_blue_r8g8b8_unorm;
+		case IO(format::b8g8r8_unorm, format::b8g8r8a8_unorm): return b8g8r8_unorm_to_b8g8r8a8_unorm;
+		case IO(format::b8g8r8_unorm, format::r8g8b8_unorm): 
+		case IO(format::r8g8b8_unorm, format::b8g8r8_unorm): return swap_red_blue_r8g8b8_unorm;
+		case IO(format::b8g8r8a8_unorm, format::r8g8b8a8_unorm): 
+		case IO(format::r8g8b8a8_unorm, format::b8g8r8a8_unorm): return swap_red_blue_r8g8b8a8_unorm;
 		default: break;
 	}
 	throw std::invalid_argument(formatf("%s -> %s not supported", as_string(srcfmt), as_string(dstfmt)));
@@ -138,13 +138,13 @@ static void convert_subresource(pixel_convert convert
 	, const mapped_subresource& dst
 	, const copy_option& option)
 {
-	const int selSize = element_size(i.format);
-	const int delSize = element_size(dst_format);
+	const auto selSize = element_size(i.format);
+	const auto delSize = element_size(dst_format);
 	if (option == copy_option::flip_vertically)
-		for (int y = i.dimensions.y-1; y >= 0; y--)
+		for (uint y = i.dimensions.y-1; y >= 0; y--)
 			convert_subresource_scanline(i.dimensions.x, y, convert, selSize, delSize, src, dst);
 	else
-		for (int y = 0; y < i.dimensions.y; y++)
+		for (uint y = 0; y < i.dimensions.y; y++)
 			convert_subresource_scanline(i.dimensions.x, y, convert, selSize, delSize, src, dst);
 }
 
@@ -194,27 +194,27 @@ void convert_subresource(const subresource_info& i
 	, const mapped_subresource& dst
 	, const copy_option& option)
 {
-	#define oCHECK_BC7(type) oCHECK_ARG(i.format == surface::a8b8g8r8_##type || i.format == surface::x8b8g8r8_##type, "source must be a8b8g8r8_" #type " or x8b8g8r8_" #type " for conversion to bc7_" #type);
-	#define oCHECK_BC6h(type) oCHECK_ARG(i.format == surface::x16b16g16r16_##type, "source must be a8b8g8r8_" #type " for conversion to bc7_" #type);
+	#define oCHECK_BC7(type) oCHECK_ARG(i.format == surface::format::a8b8g8r8_##type || i.format == surface::format::x8b8g8r8_##type, "source must be a8b8g8r8_" #type " or x8b8g8r8_" #type " for conversion to bc7_" #type);
+	#define oCHECK_BC6h(type) oCHECK_ARG(i.format == surface::format::x16b16g16r16_##type, "source must be a8b8g8r8_" #type " for conversion to bc7_" #type);
 	switch (dst_format)
 	{
-		case surface::bc7_unorm:
+	case surface::format::bc7_unorm:
 		{
 			oCHECK_BC7(unorm)
 			convert_subresource_bc7(i, src, dst_format, dst, option);
 			break;
 		}
 
-		case surface::bc7_unorm_srgb:
+		case surface::format::bc7_unorm_srgb:
 		{
 			oCHECK_BC7(unorm_srgb)
 			convert_subresource_bc7(i, src, dst_format, dst, option);
 			break;
 		}
 
-		case surface::bc6h_typeless:
-		case surface::bc6h_uf16:
-		case surface::bc6h_sf16:
+		case surface::format::bc6h_typeless:
+		case surface::format::bc6h_uf16:
+		case surface::format::bc6h_sf16:
 		{
 			// IIRC input is x16b16g16r16
 			oTHROW(operation_not_supported, "bc6h compression not yet integrated");
@@ -259,7 +259,7 @@ void convert(const info& src_info
 		const_mapped_subresource Source = get_const_mapped_subresource(src_info, subresource, 0, src.data);
 		mapped_subresource Destination = get_mapped_subresource(dst_info, subresource, 0, dst.data);
 
-		for (int slice = 0; slice < srcSri.dimensions.z; slice++)
+		for (uint slice = 0; slice < srcSri.dimensions.z; slice++)
 		{
 			convert_subresource(cv, srcSri, Source, dst_info.format, Destination, option);
 
@@ -280,14 +280,14 @@ static void sw_red_blue(void* _pPixel)
 
 pixel_swizzle get_pixel_swizzle(surface::format src_format, surface::format dst_format)
 {
-	#define IO(s,d) (((s)<<16) | (d))
-	int sel = IO(src_format, dst_format);
+	#define IO(s,d) ((uint(s)<<16) | uint(d))
+	uint sel = IO(src_format, dst_format);
 	switch (sel)
 	{
-		case IO(r8g8b8_unorm, b8g8r8_unorm):
-		case IO(b8g8r8_unorm, r8g8b8_unorm):
-		case IO(r8g8b8a8_unorm, b8g8r8a8_unorm):
-		case IO(b8g8r8a8_unorm, r8g8b8a8_unorm): return sw_red_blue;
+		case IO(format::r8g8b8_unorm, format::b8g8r8_unorm):
+		case IO(format::b8g8r8_unorm, format::r8g8b8_unorm):
+		case IO(format::r8g8b8a8_unorm, format::b8g8r8a8_unorm):
+		case IO(format::b8g8r8a8_unorm, format::r8g8b8a8_unorm): return sw_red_blue;
 		default: break;
 	}
 	throw std::invalid_argument(formatf("%s -> %s conversion not supported", as_string(src_format), as_string(dst_format)));

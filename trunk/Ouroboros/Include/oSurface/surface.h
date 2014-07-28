@@ -98,7 +98,7 @@
 namespace ouro {
 	namespace surface {
 
-enum format : uchar
+enum class format : uchar
 {
 	unknown,
 	r32g32b32a32_typeless,
@@ -238,10 +238,10 @@ enum format : uchar
 	ybc4_uvbc5_unorm, // y: bc4_unorm uv: bc5_unorm (half-res)
 	yabc5_uvbc5_unorm, // ay: bc5_unorm uv: bc5_unorm (half-res)
 	
-	format_count,
+	count,
 };
 
-enum layout : uchar
+enum class layout : uchar
 {
 	// image: no mip chain, so RowSize == RowPitch
 	// tight: mips are right after each other, the naive/initial thing a person
@@ -279,12 +279,10 @@ enum layout : uchar
 	tight,
 	below,
 	right,
-
 };
 
-namespace cube_face
-{ enum value : uchar {
-
+enum class cube_face : uchar
+{
 	posx,
 	negx,
 	posy,
@@ -293,8 +291,7 @@ namespace cube_face
 	negz,
 
 	count,
-
-};}
+};
 
 enum class copy_option : uchar
 {
@@ -302,11 +299,31 @@ enum class copy_option : uchar
 	flip_vertically,
 };
 
+struct bit_size
+{
+	uchar r;
+	uchar g;
+	uchar b;
+	uchar a;
+};
+
 struct info
 {
+	// this thing might need more. Questions I want this to answer:
+	// 1. Am I 1d, 2d, 3d or cube
+	// 2. Am I single or array
+	// 3. Do I have all mips or no mips
+	// 4. What is the subresource layout (hopes of direct-HW mapping or megatexture)
+	// 5. What is the format of pixels
+	// 6. Is the data block-compressed
+	// 7. Is the data sRGB
+	// 8. Is the data a normal or spec map (for toksvig)
+
+	// think about this: layout is tight, horz, vert separately distinguish mips from no mips
+
 	info()
-		: layout(image)
-		, format(unknown)
+		: layout(layout::image)
+		, format(format::unknown)
 		, dimensions(0, 0, 0)
 		, array_size(0)
 	{}
@@ -321,10 +338,10 @@ struct info
 			&& array_size == _That.array_size;
 	}
 
-	enum layout layout;
-	enum format format;
-	int3 dimensions;
-	int array_size;
+	layout layout;
+	format format;
+	uint3 dimensions;
+	uint array_size;
 };
 
 struct box
@@ -364,17 +381,17 @@ struct subresource_info
 {
 	subresource_info()
 		: dimensions(0, 0, 0)
-		, format(unknown)
+		, format(format::unknown)
 		, mip_level(0)
 		, array_slice(0)
 		, subsurface(0)
 	{}
 
-	int3 dimensions;
-	enum format format;
-	int mip_level;
-	int array_slice;
-	int subsurface;
+	uint3 dimensions;
+	format format;
+	uint mip_level;
+	uint array_slice;
+	uint subsurface;
 };
 
 struct mapped_subresource
@@ -415,169 +432,147 @@ struct const_mapped_subresource
 
 struct tile_info
 {
-	int2 position;
-	int2 dimensions;
-	int mip_level;
-	int array_slice;
+	uint2 position;
+	uint2 dimensions;
+	uint mip_level;
+	uint array_slice;
 };
 
-static const int max_num_subsurfaces = 4;
+static const uint max_num_subsurfaces = 4;
 
 // _____________________________________________________________________________
 // format introspection
 
-// Returns true if the specified format is a block-compressed format.
-bool is_block_compressed(format _Format);
+// true if a block-compressed format
+bool is_block_compressed(const format& f);
 
-// Returns true if the specified format is one typically used to write Z-buffer 
-// depth information.
-bool is_depth(format _Format);
+// true if typically used to write Z-buffer/depth information
+bool is_depth(const format& f);
 
-// Returns true of the specified format includes RGB and A or S. SRGB formats
-// will result in true from this function.
-bool has_alpha(format _Format);
+// true if has alpha - rgbx types do not have alpha
+bool has_alpha(const format& f);
 
-// Returns true if the specified format is normalized between 0.0f and 1.0f
-bool is_unorm(format _Format);
+// true if normalized between 0.0f and 1.0f
+bool is_unorm(const format& f);
 
-// Returns true if the specified format is organized such that its elements are
-// not interleaved in memory.
-bool is_planar(format _Format);
+// true if srgb format
+bool is_srgb(const format& f);
 
-// Returns true if the specified format is in YUV space. YUV can apply to both
-// single-surface and multi-surface YUV formats.
-bool is_yuv(format _Format);
+// true if channels of a pixel are not interleaved
+bool is_planar(const format& f);
 
-// Returns the number of separate channels used for a pixel. For example RGB has  
-// 3 channels, XRGB has 4, RGBA has 4.
-int num_channels(format _Format);
+// true if in YUV space
+bool is_yuv(const format& f);
 
-// Emulated YUV formats can have more than one surface format associated with 
-// them, such as r8_unorm for surface index 0 and r8g8_unorm for surface index 
-// 0. For most formats this will return 0 meaning the format is for one and only 
-// one surface.
-int num_subformats(format _Format);
+// returns the number of separate channels used for a pixel
+uint num_channels(const format& f);
 
-// Returns the offset to MipLevel that the specified sub-surface uses. For some 
-// YUV formats, the second plane (UV) is half the size of the first plane (AY). 
-// For most formats this will return 0 and for those down-sampled planes, this 
-// will return a value to add to the mip level to evaluate/base size off of.
-int subsample_bias(format _Format, int _SubsurfaceIndex);
+// returns the number of separate plane's for planar formats
+uint num_subformats(const format& f);
 
-// Returns the number of bytes required to store the smallest atom of a surface. 
-// For single-bit image formats, this will return 1. For tiled formats this will 
-// return the byte size of 1 tile.
-uint element_size(format _Format, int _SubsurfaceIndex = 0);
+// returns the offset that should be applied to the main surface's mip level.
+// Many planar formats store some planes at a different resolution than the
+// first.
+uint subsample_bias(const format& f, uint subsurface);
 
-// Returns the minimum dimensions the format supports.  For most formats this is 
-// 1,1 but for block formats it can be something else.
-int2 min_dimensions(format _Format);
+// returns byte size of the smallest element the format uses either a pixel, 
+// a byte (for 1-bit formats) or a block size for block compressed types
+uint element_size(const format& f, uint subsurface = 0);
 
-// Get number of bits per format. This includes any X bits as described in the 
-// format enum.
-int bits(format _Format);
+// for most formats this is 1,1 but block formats and yuv may differ
+uint2 min_dimensions(const format& f);
 
-// Returns the number of bits per channel, either R,G,B,A or Y,U,V,A.
-void channel_bits(format _Format, int* _pNBitsR, int* _pNBitsG, int* _pNBitsB, int* _pNBitsA);
+// returns number of bits for an element including X bits
+uint bits(const format& f);
 
-// Returns the surface format of the specified format's nth subformat. For RGBA-
-// based formats, this will return the same value as _Format for index 0 and 
-// surface::unknown for any other plane. For YUV formats this will return the
-// format needed for each oSURFACE used to emulate the YUV format.
-format subformat(format _Format, int _SubsurfaceIndex);
+// returns number of bits per channel: either r,g,b,a or y,u,v,a
+bit_size channel_bits(const format& f);
 
-// Most formats for data types have a fourcc that is unique at least amongst 
-// other formats. This is useful for serialization where you want 
-// something a bit more version-stable than an enum value.
-fourcc to_fourcc(format _Format);
+// returns the surface format of the plane of planar format or unknown for non-planar formats
+format subformat(const format& f, uint subsurface);
 
-// Convert an fourcc as returned from oSurfaceFormatToFourCC to its associated 
-// format.
-format from_fourcc(fourcc _FourCC);
+// get the typical fourcc code associated with the format
+fourcc to_fourcc(const format& f);
 
-// Given a surface format, determine the NV12 format that comes closest to it.
-format closest_nv12(format _Format);
+// converts a fourcc returned from to_fourcc to a format
+format from_fourcc(const fourcc& fcc);
+
+// given a surface format determine the NV12 format that comes closest to it
+format closest_nv12(const format& f);
 
 // _____________________________________________________________________________
 // Mip Level (1 2D plane/slice, a simple image) introspection
 
-// Returns the number of mipmaps generated from the specified dimensions down to 
-// a 1x1 mip level. If _HasMips is false or dimensions are degenerate then this
-// will return 0.
-int num_mips(bool _HasMips, const int3& _Mip0Dimensions);
-inline int num_mips(bool _HasMips, const int2& _Mip0Dimensions) { return num_mips(_HasMips, int3(_Mip0Dimensions, 1)); }
-inline int num_mips(layout _Layout, const int3& _Mip0Dimensions) { return num_mips(_Layout != image, _Mip0Dimensions); }
-inline int num_mips(layout _Layout, const int2& _Mip0Dimensions) { return num_mips(_Layout != image, int3(_Mip0Dimensions, 1)); }
-inline int num_mips(const info& _SurfaceInfo) { return num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions); }
+// returns number of mipmaps generated from the top dimension down to smallest or
+// 0 if mips is false
+uint num_mips(bool mips, const uint3& mip0dimensions);
+inline uint num_mips(bool mips, const uint2& mip0dimensions) { return num_mips(mips, uint3(mip0dimensions, 1)); }
+inline uint num_mips(const layout& _layout, const uint3& mip0dimensions) { return num_mips(_layout != layout::image, mip0dimensions); }
+inline uint num_mips(const layout& _layout, const uint2& mip0dimensions) { return num_mips(_layout != layout::image, uint3(mip0dimensions, 1)); }
+inline uint num_mips(const info& inf) { return num_mips(inf.layout, inf.dimensions); }
 
-// Returns the width, height, or depth dimension of the specified mip level
-// given mip0's dimension. This appropriately pads BC formats and conforms to 
-// hardware-expected sizes all the way down to 1x1. Because oSurface is meant to
-// be used with hardware-compatible surfaces, all dimensions must be a power 
-// of 2.
-int dimension(format _Format, int _Mip0Dimension, int _MipLevel = 0, int _SubsurfaceIndex = 0);
-int2 dimensions(format _Format, const int2& _Mip0Dimensions, int _MipLevel = 0, int _SubsurfaceIndex = 0);
-int3 dimensions(format _Format, const int3& _Mip0Dimensions, int _MipLevel = 0, int _SubsurfaceIndex = 0);
+// returns width, height, or depth dimension for a specific mip level given mip0's dimension
+// This appropriately pads BC formats and conforms to hardware-expected sizes all the way 
+// down to 1x1. Because surface is meant to be used with hardware-compatible surfaces, 
+// all dimensions must be a power of 2.
+uint dimension(const format& f, uint mip0dimensions, uint miplevel = 0, uint subsurface = 0);
+uint2 dimensions(const format& f, const uint2& mip0dimensions, uint miplevel = 0, uint subsurface = 0);
+uint3 dimensions(const format& f, const uint3& mip0dimensions, uint miplevel = 0, uint subsurface = 0);
 
-// Calculate mip dimensions for non-power-of-2 textures using the D3D/OGL2.0
+// calculate mip dimensions for non-power-of-2 textures using the D3D/OGL2.0
 // floor convention: http://www.opengl.org/registry/specs/ARB/texture_non_power_of_two.txt
-int dimension_npot(format _Format, int _Mip0Dimension, int _MipLevel = 0, int _SubsurfaceIndex = 0);
-int2 dimensions_npot(format _Format, const int2& _Mip0Dimensions, int _MipLevel = 0, int _SubsurfaceIndex = 0);
-int3 dimensions_npot(format _Format, const int3& _Mip0Dimensions, int _MipLevel = 0, int _SubsurfaceIndex = 0);
+uint dimension_npot(const format& f, uint mip0dimensions, uint miplevel = 0, uint subsurface = 0);
+uint2 dimensions_npot(const format& f, const uint2& mip0dimensions, uint miplevel = 0, uint subsurface = 0);
+uint3 dimensions_npot(const format& f, const uint3& mip0dimensions, uint miplevel = 0, uint subsurface = 0);
 
-// Returns the size in bytes for one row of valid data for the specified mip 
-// level. This does a bit more than a simple multiply because it takes into 
-// consideration block compressed formats. This IS NOT the calculation to use to
-// get to the next scanline of data unless it can be guaranteed that there is
-// no padding nor is the valid data merely a subregion of a larger 2D plane, but 
-// this IS the calculate for the number of bytes in the current scanline.
-uint row_size(format _Format, int _MipWidth, int _SubsurfaceIndex = 0);
-inline uint row_size(format _Format, const int2& _MipDimensions, int _SubsurfaceIndex = 0) { return row_size(_Format, _MipDimensions.x, _SubsurfaceIndex); }
-inline uint row_size(format _Format, const int3& _MipDimensions, int _SubsurfaceIndex = 0) { return row_size(_Format, _MipDimensions.x, _SubsurfaceIndex); }
+// returns the number of bytes for one row of valid data excluding padding and 
+// considering non-single pixel sizes such as block-compressed sizes
+uint row_size(const format& f, uint mipwidth, uint subsurface = 0);
+inline uint row_size(const format& f, const uint2& mipdimensions, uint subsurface = 0) { return row_size(f, mipdimensions.x, subsurface); }
+inline uint row_size(const format& f, const uint3& mipdimensions, uint subsurface = 0) { return row_size(f, mipdimensions.x, subsurface); }
 
-// Returns the number of bytes to increment to get to the next row of a 2D 
-// surface. Do not read or write using this value as padding may be used for 
-// other reasons such as internal data or to store other elements/mip levels.
-uint row_pitch(const info& _SurfaceInfo, int _MipLevel = 0, int _SubsurfaceIndex = 0);
+// returns the number of bytes to increment to get to the next row of a 2d 
+// surface including padding and considerion non-single pixel sizes such as 
+// block-compressed sizes
+uint row_pitch(const info& inf, uint miplevel = 0, uint subsurface = 0);
 
-// Returns the number of bytes to increment to get to the next slice of a 3D
-// surface. Its calculated as RowPitch * number of rows at the requested
-// mip level.
-uint depth_pitch(const info& _SurfaceInfo, int _MipLevel = 0, int _SubsurfaceIndex = 0);
+// returns the number of bytes to increment to get to the next slice of a 3d
+// surface
+uint depth_pitch(const info& inf, uint miplevel = 0, uint subsurface = 0);
 
-// Returns the number of columns (number of elements in a row) in a mip level 
-// with the specified width in pixels. Block compressed formats will return 1/4
-// the columns since their atomic element - the block - is 4x4 pixels.
-int num_columns(format _Format, int _MipWidth, int _SubsurfaceIndex = 0);
-inline int num_columns(format _Format, const int2& _MipDimensions, int _SubsurfaceIndex = 0) { return num_columns(_Format, _MipDimensions.x, _SubsurfaceIndex); }
+// returns number of columns (number of elements in a row) in a mip level 
+// with the specified width in pixels. Block compressed formats will return
+// 1/4 the columns since their atomic element - the block - is 4x4 pixels.
+uint num_columns(const format& f, uint mipwidth, uint subsurface = 0);
+inline uint num_columns(const format& f, const uint2& mipdimensions, uint subsurface = 0) { return num_columns(f, mipdimensions.x, subsurface); }
 
 // Returns the number of rows in a mip level with the specified height in 
 // pixels. Block compressed formats have 1/4 the rows since their pitch includes 
 // 4 rows at a time.
-int num_rows(format _Format, int _MipHeight, int _SubsurfaceIndex = 0);
-inline int num_rows(format _Format, const int2& _MipDimensions, int _SubsurfaceIndex = 0) { return num_rows(_Format, _MipDimensions.y, _SubsurfaceIndex); }
-inline int num_rows(format _Format, const int3& _MipDimensions, int _SubsurfaceIndex = 0) { return num_rows(_Format, _MipDimensions.y, _SubsurfaceIndex) * _MipDimensions.z; }
+uint num_rows(const format& f, uint mipheight, uint subsurface = 0);
+inline uint num_rows(const format& f, const uint2& mipdimensions, uint subsurface = 0) { return num_rows(f, mipdimensions.y, subsurface); }
+inline uint num_rows(const format& f, const uint3& mipdimensions, uint subsurface = 0) { return num_rows(f, mipdimensions.y, subsurface) * mipdimensions.z; }
 
 // Returns the number of columns (x) and rows (y) in one call. This is different
 // than dimensions, which is pixels. This is in elements, which can be 4x4 pixel 
 // blocks for block compressed formats
-inline int2 num_columns_and_rows(format _Format, const int2& _MipDimensions, int _SubsurfaceIndex = 0) { return int2(num_columns(_Format, _MipDimensions, _SubsurfaceIndex), num_rows(_Format, _MipDimensions, _SubsurfaceIndex)); }
+inline uint2 num_columns_and_rows(const format& f, const uint2& mipdimensions, uint subsurface = 0) { return uint2(num_columns(f, mipdimensions, subsurface), num_rows(f, mipdimensions, subsurface)); }
 
-// Returns the RowSize and NumRows as one operation in an int2
-inline int2 byte_dimensions(format _Format, const int2& _MipDimensions, int _SubsurfaceIndex = 0) { return int2(row_size(_Format, _MipDimensions, _SubsurfaceIndex), num_rows(_Format, _MipDimensions, _SubsurfaceIndex)); }
-inline int2 byte_dimensions(format _Format, const int3& _MipDimensions, int _SubsurfaceIndex = 0) { return int2(row_size(_Format, _MipDimensions, _SubsurfaceIndex), num_rows(_Format, _MipDimensions, _SubsurfaceIndex)); }
+// Returns the row size and number of rows as one operation in an uint2
+inline uint2 byte_dimensions(const format& f, const uint2& mipdimensions, uint subsurface = 0) { return uint2(row_size(f, mipdimensions, subsurface), num_rows(f, mipdimensions, subsurface)); }
+inline uint2 byte_dimensions(const format& f, const uint3& mipdimensions, uint subsurface = 0) { return uint2(row_size(f, mipdimensions, subsurface), num_rows(f, mipdimensions, subsurface)); }
 
-// Returns the size in bytes for the specified mip level. CAREFUL, this does not 
-// always imply the size that should be passed to memcpy. Ensure you have 
-// enforced that there is no scanline padding or that data using these 
+// Returns the size in bytes for the specified mip level. CAREFUL, this 
+// does not always imply the size that should be passed to memcpy. Ensure 
+// you have enforced there is no scanline padding or data using these 
 // calculations aren't a subregion in a larger surface.
-int mip_size(format _Format, const int2& _MipDimensions, int _SubsurfaceIndex = 0);
-inline int mip_size(format _Format, const int3& _MipDimensions, int _SubsurfaceIndex = 0) { return mip_size(_Format, _MipDimensions.xy(), _SubsurfaceIndex) * _MipDimensions.z; }
+uint mip_size(const format& f, const uint2& mipdimensions, uint subsurface = 0);
+inline uint mip_size(const format& f, const uint3& mipdimensions, uint subsurface = 0) { return mip_size(f, mipdimensions.xy(), subsurface) * mipdimensions.z; }
 
 // Returns the number of bytes from the start of Mip0 where the upper left
 // corner of the specified mip level's data begins. The dimensions must always
 // be specified as the mip0 dimensions since this is a cumulative offset.
-int offset(const info& _SurfaceInfo, int _MipLevel = 0, int _SubsurfaceIndex = 0);
+uint offset(const info& inf, uint miplevel = 0, uint subsurface = 0);
 
 // _____________________________________________________________________________
 // Slice/surface introspection
@@ -588,7 +583,7 @@ int offset(const info& _SurfaceInfo, int _MipLevel = 0, int _SubsurfaceIndex = 0
 // textures. This is the same as calculating the size of a mip page as described 
 // by layout. For 3d textures, make sure that array_size is set to 1 and use 
 // depth to supply the size in the 3rd dimension.
-uint slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex = 0);
+uint slice_pitch(const info& inf, uint subsurface = 0);
 
 // Calculates the size for a total buffer of 1d/2d/3d/cube textures by summing 
 // the various mip chains, then multiplying it by the number of slices. 
@@ -600,15 +595,15 @@ uint slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex = 0);
 // first mip level for a 3d texture is (4,3,5) that the next mip level is 
 // (2,1,2) and the next (1,1,1) whereas array_size set to 5 would mean: 5*(4,3), 
 // 5*(2,1), 5*(1,1).
-uint total_size(const info& _SurfaceInfo, int _SubsurfaceIndex = -1);
+uint total_size(const info& inf, uint subsurface = 0);
 
 // Calculates the dimensions you would need for an image to fit this surface
 // natively and in its entirety.
-int2 dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex = 0);
+uint2 dimensions(const info& inf, uint subsurface = 0);
 
 // Calculates the dimensions you would need for an image to fit a slice of this 
 // surface natively and in its entirety.
-int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex = 0);
+uint2 slice_dimensions(const info& inf, uint subsurface = 0);
 
 // _____________________________________________________________________________
 // Subresource API
@@ -616,33 +611,34 @@ int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex = 0);
 // To simplify the need for much of the above API, interfaces should be 
 // developed that take a subresource id and internally use these API to
 // translate that into the proper byte locations and sizes. 
-inline int calc_subresource(int _MipLevel, int _ArraySliceIndex, int _SubsurfaceIndex, int _NumMips, int _NumArraySlices) { int nMips = max(1, _NumMips); return _MipLevel + (_ArraySliceIndex * nMips) + (_SubsurfaceIndex * nMips * max(1, _NumArraySlices)); }
+inline uint calc_subresource(uint miplevel, uint arrayslice, uint subsurface, uint num_mips, uint num_slices) { uint nMips = max(1u, num_mips); return miplevel + (arrayslice * nMips) + (subsurface * nMips * max(1u, num_slices)); }
 
-// Converts _Subresource back to its mip level and slice as long as the num mips
+// Converts subresource back to its mip level and slice as long as the num mips
 // in the mip chain is specified.
-inline void unpack_subresource(int _Subresource, int _NumMips, int _NumArraySlices, int* _pMipLevel, int* _pArraySliceIndex, int* _pSubsurfaceIndex) { int nMips = max(1, _NumMips); int as = max(1, _NumArraySlices); *_pMipLevel = _Subresource % nMips; *_pArraySliceIndex = (_Subresource / nMips) % as; *_pSubsurfaceIndex = _Subresource / (nMips * as); }
+inline void unpack_subresource(uint subresource, uint num_mips, uint num_slices, 
+	uint* out_miplevel, uint* out_arrayslice, uint* out_subsurface) { uint nMips = max(1u, num_mips); uint as = max(1u, num_slices); *out_miplevel = subresource % nMips; *out_arrayslice = (subresource / nMips) % as; *out_subsurface = subresource / (nMips * as); }
 
 // Returns the number of all subresources described by the info.
-inline int num_subresources(const info& _SurfaceInfo) { return max(1, num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions)) * max(1, _SurfaceInfo.array_size); }
+inline uint num_subresources(const info& inf) { return max(1u, num_mips(inf.layout, inf.dimensions)) * max(1u, inf.array_size); }
 
 // Returns the info for a given subresource.
-subresource_info subresource(const info& _SurfaceInfo, int _Subresource);
-
+subresource_info subresource(const info& inf, uint subresource);
+	
 // Returns a surface::info for the nth subsurfaces miplevel. Optionally also 
 // calculate the byte dimensions for the specified subresource. i.e. the width 
 // in bytes to copy (different than pitch) and number of rows of that width to 
 // copy.
-info subsurface(const info& _SurfaceInfo, int _SubsurfaceIndex, int _MipLevel, int2* _pByteDimensions = nullptr);
+info subsurface(const info& inf, uint subsurface, uint miplevel, uint2* out_byte_dimensions = nullptr);
 
 // Returns the number of bytes required to contain the subresource (mip level
 // from a particular slice) when what you got is a subresource as returned from
 // calc_subresource().
-uint subresource_size(const subresource_info& _SubresourceInfo);
-inline uint subresource_size(const info& _SurfaceInfo, int _Subresource) { return subresource_size(subresource(_SurfaceInfo, _Subresource)); }
+uint subresource_size(const subresource_info& subresource_info);
+inline uint subresource_size(const info& inf, uint subresource) { return subresource_size(surface::subresource(inf, subresource)); }
 
 // Returns the offset from a base pointer to the start of the specified 
 // subresource.
-uint subresource_offset(const info& _SurfaceInfo, int _Subresource, int _DepthIndex = 0);
+uint subresource_offset(const info& inf, uint subresource, uint depth = 0);
 
 // Returns the RowSize (width in bytes of one row) in x and the NumRows (number 
 // of rows to copy) in y. Remember that this calculation is necessary 
@@ -650,52 +646,52 @@ uint subresource_offset(const info& _SurfaceInfo, int _Subresource, int _DepthIn
 // different than the height of the surface in pixels/texels. The results of 
 // this function are particularly useful when using oMemcpy2D for the 
 // _SourceRowSize and _NumRows parameters.
-inline uint2 byte_dimensions(const subresource_info& _SubresourceInfo) { return uint2(row_size(_SubresourceInfo.format, _SubresourceInfo.dimensions.xy(), _SubresourceInfo.subsurface), num_rows(_SubresourceInfo.format, _SubresourceInfo.dimensions.xy(), _SubresourceInfo.subsurface)); }
-inline uint2 byte_dimensions(const info& _SurfaceInfo, int _Subresource) { return byte_dimensions(subresource(_SurfaceInfo, _Subresource)); }
+inline uint2 byte_dimensions(const subresource_info& subresource_info) { return uint2(row_size(subresource_info.format, subresource_info.dimensions.xy(), subresource_info.subsurface), num_rows(subresource_info.format, subresource_info.dimensions.xy(), subresource_info.subsurface)); }
+inline uint2 byte_dimensions(const info& inf, uint subresource) { return byte_dimensions(surface::subresource(inf, subresource)); }
 
 // Given the surface info, a subresource into the surface, and the base pointer
 // to the surface, this will return a populated mapped_subresource or an 
 // const_mapped_subresource. _pByteDimensions is optional and if valid will 
 // return the byte dimensions for the specified subresource.
-const_mapped_subresource get_const_mapped_subresource(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, const void* _pSurface, int2* _pByteDimensions = nullptr);
-mapped_subresource get_mapped_subresource(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, void* _pSurface, int2* _pByteDimensions = nullptr);
+const_mapped_subresource get_const_mapped_subresource(const info& inf, uint subresource, uint depth, const void* surface_bytes, uint2* out_byte_dimensions = nullptr);
+mapped_subresource get_mapped_subresource(const info& inf, uint subresource, uint depth, void* surface_bytes, uint2* out_byte_dimensions = nullptr);
 
 // Copies a source buffer into the specified subresource of the surface 
 // described by a base pointer and an info
-void update(const info& _SurfaceInfo, int _Subresource, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, const copy_option& option);
+void update(const info& inf, uint subresource, void* dst_surface, const void* src_surface, uint src_row_pitch, const copy_option& option);
 
 // Copies from a surface subresource to a specified destination buffer.
-void copy(const info& _SurfaceInfo, int _Subresource, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, const copy_option& option = copy_option::none);
-void copy(const info& _SurfaceInfo, const const_mapped_subresource& src, const mapped_subresource& _Destination, const copy_option& option = copy_option::none);
-void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& src, const mapped_subresource& _Destination, const copy_option& option = copy_option::none);
+void copy(const info& inf, uint subresource, const void* src_surface, void* dst_surface, uint dst_row_pitch, const copy_option& option = copy_option::none);
+void copy(const info& inf, const const_mapped_subresource& src, const mapped_subresource& dst, const copy_option& option = copy_option::none);
+void copy(const subresource_info& subresource_info, const const_mapped_subresource& src, const mapped_subresource& dst, const copy_option& option = copy_option::none);
 
 // For 3d textures a mapped subresource contains all depth slices at that mip level,
 // this function will output the data pointer adjusted for the requested depth index.
-inline void* depth_index_offset(const mapped_subresource& _MappedSubresource, int _DepthIndex) { return byte_add(_MappedSubresource.data, _MappedSubresource.depth_pitch, _DepthIndex); }
+inline void* depth_index_offset(const mapped_subresource& mapped, uint depth) { return byte_add(mapped.data, mapped.depth_pitch, depth); }
 
 // Single-pixel get/put API. Only use this for debug/non-performant cases. This
 // currently only supports common r rgb and rgba cases.
-void put(const subresource_info& _SubresourceInfo, const mapped_subresource& _Destination, const int2& _Coordinate, color _Color);
-color get(const subresource_info& _SubresourceInfo, const const_mapped_subresource& src, const int2& _Coordinate);
+void put(const subresource_info& subresource_info, const mapped_subresource& dst, const uint2& _Coordinate, color _Color);
+color get(const subresource_info& subresource_info, const const_mapped_subresource& src, const uint2& _Coordinate);
 
 // _____________________________________________________________________________
 // Tile API
 
 // Returns the number of tiles required to hold the full resolution specified by 
-// _MipDimensions. If tile dimensions don't divide perfectly into the mip 
+// mipdimensions. If tile dimensions don't divide perfectly into the mip 
 // dimensions the extra tile required to store the difference is included in 
 // this calculation.
-int2 dimensions_in_tiles(const int2& _MipDimensions, const int2& _TileDimensions);
-int3 dimensions_in_tiles(const int3& _MipDimensions, const int2& _TileDimensions);
+uint2 dimensions_in_tiles(const uint2& mipdimensions, const uint2& tiledimensions);
+uint3 dimensions_in_tiles(const uint3& mipdimensions, const uint2& tiledimensions);
 
 // Returns the number of tiles required to store all data for a mip of the 
 // specified dimensions.
-int num_tiles(const int2& _MipDimensions, const int2& _TileDimensions);
-int num_tiles(const int3& _MipDimensions, const int2& _TileDimensions);
+uint num_tiles(const uint2& mipdimensions, const uint2& tiledimensions);
+uint num_tiles(const uint3& mipdimensions, const uint2& tiledimensions);
 
 // Returns the number of tiles required to store all data for all mips in a 
 // slice.
-int num_slice_tiles(const info& _SurfaceInfo, const int2& _TileDimensions);
+uint num_slice_tiles(const info& inf, const uint2& tiledimensions);
 
 // Given the specified position, return the tile ID. This also will update 
 // _TileDesc.Position start position that is aligned to the tile, which might be 
@@ -703,11 +699,11 @@ int num_slice_tiles(const info& _SurfaceInfo, const int2& _TileDimensions);
 // calculated from the top-left and count up left-to-right, then top-to-bottom,
 // then to the next smaller mip as described by surface::layout, then continues
 // counting into the top level mip of the next slice and so on.
-int calc_tile_id(const info& _SurfaceInfo, const tile_info& _TileInfo, int2* _pPosition);
+uint calc_tile_id(const info& inf, const tile_info& _TileInfo, uint2* out_position);
 
 // Returns more detailed info from a tile ID
-// from upper left) for the tile specified by _TileID.
-tile_info get_tile(const info& _SurfaceInfo, const int2& _TileDimensions, int _TileID);
+// from upper left) for the tile specified by tileid.
+tile_info get_tile(const info& inf, const uint2& tiledimensions, uint tileid);
 
 // A suggestion on whether or not you should use large memory pages. A little 
 // bit arbitrary, but initially always returns false if your image is smaller 
@@ -716,54 +712,55 @@ tile_info get_tile(const info& _SurfaceInfo, const int2& _TileDimensions, int _T
 // worth before encountering a tlb miss.
 // TODO: currently have to pass in the page sizes which is platform code, maybe 
 // thats fine, or should this go somewhere else?
-bool use_large_pages(const info& _SurfaceInfo, const int2& _TileDimensions, int _SmallPageSize, int _LargePageSize);
+// NOTE: the criteria used by this function is not for consoles, PC-only
+bool use_large_pages(const info& inf, const uint2& tiledimensions, uint small_page_size_bytes, uint large_page_size_bytes);
 
 // _____________________________________________________________________________
 // Heavier-weight util functions that might need to be broken out into their own
 // headers, but there's not enough to do that yet...
 
 // Calls the specified function on each pixel.
-void enumerate_pixels(const info& _SurfaceInfo
-	, const const_mapped_subresource& _MappedSubresource
-	, const std::function<void(const void* _pPixel)>& _Enumerator);
+void enumerate_pixels(const info& inf
+	, const const_mapped_subresource& cmapped
+	, const std::function<void(const void* _pPixel)>& enumerator);
 
-void enumerate_pixels(const info& _SurfaceInfo
-	, const mapped_subresource& _MappedSubresource
-	, const std::function<void(void* _pPixel)>& _Enumerator);
+void enumerate_pixels(const info& inf
+	, const mapped_subresource& cmapped
+	, const std::function<void(void* _pPixel)>& enumerator);
 
 // Calls the specified function on each pixel of two same-formatted surfaces.
-void enumerate_pixels(const info& _SurfaceInfo
-	, const const_mapped_subresource& _MappedSubresource1
-	, const const_mapped_subresource& _MappedSubresource2
-	, const std::function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2)>& _Enumerator);
+void enumerate_pixels(const info& inf
+	, const const_mapped_subresource& mapped1
+	, const const_mapped_subresource& mapped2
+	, const std::function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2)>& enumerator);
 
 // Calls the specified function on each pixel of two same-formatted surfaces.
 // and writes to a 3rd other-format surface.
 void enumerate_pixels(const info& _SurfaceInfoInput
-	, const const_mapped_subresource& _MappedSubresourceInput1
-	, const const_mapped_subresource& _MappedSubresourceInput2
+	, const const_mapped_subresource& mappedInput1
+	, const const_mapped_subresource& mappedInput2
 	, const info& _SurfaceInfoOutput
-	, mapped_subresource& _MappedSubresourceOutput
-	, const std::function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut)>& _Enumerator);
+	, mapped_subresource& mappedOutput
+	, const std::function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut)>& enumerator);
 
 // Returns the root mean square of the difference between the two surfaces.
-float calc_rms(const info& _SurfaceInfo
-	, const const_mapped_subresource& _MappedSubresource1
-	, const const_mapped_subresource& _MappedSubresource2);
+float calc_rms(const info& inf
+	, const const_mapped_subresource& mapped1
+	, const const_mapped_subresource& mapped2);
 
 // Fills the output surface with abs(Input1 - Input2) for each pixel and returns 
 // the root mean square. Currently the only supportedoutput image is r8_unorm.
 // Inputs can be r8_unorm, b8g8r8_unorm, b8g8r8a8_unorm
 float calc_rms(const info& _SurfaceInfoInput
-	, const const_mapped_subresource& _MappedSubresourceInput1
-	, const const_mapped_subresource& _MappedSubresourceInput2
+	, const const_mapped_subresource& mappedInput1
+	, const const_mapped_subresource& mappedInput2
 	, const info& _SurfaceInfoOutput
-	, mapped_subresource& _MappedSubresourceOutput);
+	, mapped_subresource& mappedOutput);
 
 // Fills the specified array with the count of pixels at each luminance value.
 // (lum [0,1] mapped to [0,255] or [0,256]).
-void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[256]);
-void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[65536]);
+void histogram8(const info& inf, const const_mapped_subresource& mapped, uint _Histogram[256]);
+void histogram16(const info& inf, const const_mapped_subresource& mapped, uint _Histogram[65536]);
 
 	} // namespace surface
 } // namespace ouro

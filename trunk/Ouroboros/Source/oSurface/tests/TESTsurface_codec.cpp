@@ -44,7 +44,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 	// Create a buffer with a known format
 	surface::info si;
 	si.format = format;
-	si.layout = surface::image;
+	si.layout = surface::layout::image;
 	si.dimensions = int3(dimensions, 1);
 	surface::texel_buffer known(si);
 	size_t knownSize = known.size();
@@ -107,10 +107,10 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 
 void TESTsurface_codec(test_services& _Services)
 {
-	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::tga, 1.0f);
-	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::bmp, 1.0f);
-	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::png, 1.0f);
-	compare_checkboards(int2(11,21), surface::b8g8r8a8_unorm, surface::file_format::jpg, 4.0f);
+	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::tga, 1.0f);
+	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::bmp, 1.0f);
+	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::png, 1.0f);
+	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::jpg, 4.0f);
 }
 
 	} // namespace tests

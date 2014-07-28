@@ -80,7 +80,7 @@ scoped_allocation encode(const texel_buffer& b
 texel_buffer decode(const void* buffer
 	, size_t size
 	, const alpha_option& option = alpha_option::preserve
-	, const layout& layout = image);
+	, const layout& layout = layout::image);
 
 }}
 

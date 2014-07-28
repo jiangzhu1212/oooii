@@ -503,13 +503,12 @@ void directshow_camera::capturing(bool _Capturing)
 
 static bool operator<(const camera::mode& _This, const camera::mode& _That)
 {
-	int nBitsR1, nBitsG1, nBitsB1, nBitsA1, nBitsR2, nBitsG2, nBitsB2, nBitsA2;
-	surface::channel_bits(surface::format(_This.format), &nBitsR1, &nBitsG1, &nBitsB1, &nBitsA1);
-	surface::channel_bits(surface::format(_That.format), &nBitsR2, &nBitsG2, &nBitsB2, &nBitsA2);
-	if (nBitsR1 >= nBitsR2) return false;
-	if (nBitsG1 >= nBitsG2) return false;
-	if (nBitsB1 >= nBitsG2) return false;
-	if (nBitsA1 >= nBitsA2) return false;
+	auto b1 = surface::channel_bits(surface::format(_This.format));
+	auto b2 = surface::channel_bits(surface::format(_That.format));
+	if (b1.r >= b2.r) return false;
+	if (b1.g >= b2.g) return false;
+	if (b1.b >= b2.b) return false;
+	if (b1.a >= b2.a) return false;
 	if (!surface::is_block_compressed(surface::format(_This.format)) && surface::is_block_compressed(surface::format(_That.format))) return false;
 
 	size_t thisSize = surface::element_size(surface::format(_This.format));
@@ -551,11 +550,10 @@ static float distance(const camera::mode& _ModeToMatch, const camera::mode _Test
 	static const float kHeightWeight = 0.33f;
 	static const float kBitRateWeight = 0.0f;
 
-	int nBitsR1, nBitsG1, nBitsB1, nBitsA1, nBitsR2, nBitsG2, nBitsB2, nBitsA2;
-	surface::channel_bits(surface::format(_ModeToMatch.format), &nBitsR1, &nBitsG1, &nBitsB1, &nBitsA1);
-	surface::channel_bits(surface::format(_TestMode.format), &nBitsR2, &nBitsG2, &nBitsB2, &nBitsA2);
+	auto b1 = surface::channel_bits(surface::format(_ModeToMatch.format));
+	auto b2 = surface::channel_bits(surface::format(_TestMode.format));
 
-	int FormatDiff = sqDiff(nBitsR1, nBitsR2) + sqDiff(nBitsG1, nBitsG2) + sqDiff(nBitsB1, nBitsB2) + sqDiff(nBitsA1, nBitsA2);
+	int FormatDiff = sqDiff(b1.r, b2.r) + sqDiff(b1.g, b2.g) + sqDiff(b2.b, b2.b) + sqDiff(b1.a, b2.a);
 	int2 SizeDiff = sqDiff(_ModeToMatch.dimensions, _TestMode.dimensions);
 	int BitRateDiff = sqDiff(_ModeToMatch.bit_rate, _TestMode.bit_rate);
 
@@ -602,14 +600,14 @@ surface::format get_format(const BITMAPINFOHEADER& _BitmapInfoHeader)
 {
 	switch (_BitmapInfoHeader.biBitCount)
 	{
-		case 1: return surface::r1_unorm;
-		case 16: return surface::b5g5r5a1_unorm; // not sure if alpha is respected/but there is no B5G5R5X1_UNORM currently
+		case 1: return surface::format::r1_unorm;
+		case 16: return surface::format::b5g5r5a1_unorm; // not sure if alpha is respected/but there is no B5G5R5X1_UNORM currently
 		case 0:
-		case 24: return surface::b8g8r8_unorm;
-		case 32: return surface::b8g8r8x8_unorm;
+		case 24: return surface::format::b8g8r8_unorm;
+		case 32: return surface::format::b8g8r8x8_unorm;
 		default: break;
 	}
-	return surface::unknown; // no format for paletted types currently
+	return surface::format::unknown; // no format for paletted types currently
 }
 
 void directshow_camera::get_set_mode_list(unsigned int* _pNumModes, mode* _pModes, const mode* _pNewMode)
@@ -637,7 +635,7 @@ void directshow_camera::get_set_mode_list(unsigned int* _pNumModes, mode* _pMode
 		{
 			surface::format Format = get_format(pVideoHeader->bmiHeader);
 
-			if (Format != surface::unknown)
+			if (Format != surface::format::unknown)
 			{
 				mode& m = _pModes ? _pModes[(*_pNumModes)] : testMode;
 				m.format = camera::format(Format);

@@ -57,7 +57,7 @@ void primary_target::initialize(window* win, device& dev, bool enable_os_render)
 		, false
 		, max(int2(1,1), s.client_size)
 		, false
-		, surface::b8g8r8a8_unorm
+		, surface::format::b8g8r8a8_unorm
 		, 0
 		, 0
 		, (HWND)win->native_handle()

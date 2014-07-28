@@ -352,7 +352,7 @@ void oGPUWindowThread::Run()
 			GPUWindow->set_hotkeys(HotKeys);
 			WindowColorTarget.initialize(GPUWindow.get(), Device, true);
 			uint2 dimensions = WindowColorTarget.dimensions();
-			WindowDepthTarget.initialize("primary depth", Device, surface::d24_unorm_s8_uint, dimensions.x, dimensions.y, 0, false, 0);
+			WindowDepthTarget.initialize("primary depth", Device, surface::format::d24_unorm_s8_uint, dimensions.x, dimensions.y, 0, false, 0);
 			GPUWindow->parent(Parent);
 			GPUWindow->show(); // now that the window is a child, show it (it will only show when parent shows)
 			pGPUWindow = GPUWindow.get();
