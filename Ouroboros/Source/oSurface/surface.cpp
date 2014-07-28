@@ -36,19 +36,18 @@ using namespace std;
 namespace ouro {
 	namespace surface {
 
-static inline int safe_array_size(const info& _Info) { return ::max(1, _Info.array_size); }
+static inline uint safe_array_size(const info& _Info) { return ::max(1u, _Info.array_size); }
 
 #define oCHECK_INFO(_Info) \
 	if (any(_Info.dimensions < int3(1,1,1))) throw invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Info.dimensions.x, _Info.dimensions.y, _Info.dimensions.z)); \
 	if (safe_array_size(_Info) != 1 && _Info.dimensions.z != 1) throw invalid_argument(formatf("array_size or depth has to be 1 [%d,%d]", _Info.array_size, _Info.dimensions.z));
 
-#define oCHECK_DIM(_Format, _Dim) if (_Dim < min_dimensions(_Format).x) throw invalid_argument(formatf("invalid dimension: %d", _Dim));
-#define oCHECK_DIM2(_Format, _Dim) if (any(_Dim < min_dimensions(_Format))) throw invalid_argument(formatf("invalid dimensions: [%d,%d]", _Dim.x, _Dim.y));
-#define oCHECK_DIM3(_Format, _Dim) if (any(_Dim.xy < min_dimensions(_Format))) throw invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Dim.x, _Dim.y, _Dim.z));
-#define oCHECK_NOT_PLANAR(_Format) if (is_planar(_Format)) throw invalid_argument("Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
+#define oCHECK_DIM(f, _Dim) if (_Dim < min_dimensions(f).x) throw invalid_argument(formatf("invalid dimension: %u", _Dim));
+#define oCHECK_DIM2(f, _Dim) if (any(_Dim < min_dimensions(f))) throw invalid_argument(formatf("invalid dimensions: [%u,%u]", _Dim.x, _Dim.y));
+#define oCHECK_DIM3(f, _Dim) if (any(_Dim.xy < min_dimensions(f))) throw invalid_argument(formatf("invalid dimensions: [%u,%u,%u]", _Dim.x, _Dim.y, _Dim.z));
+#define oCHECK_NOT_PLANAR(f) if (is_planar(f)) throw invalid_argument("Planar formats may not behave well with this API. Review usage in this code and remove this when verified.");
 
-struct bit_size { uchar r,g,b,a; };
-struct subformats { enum format format[4]; };
+struct subformats { format format[4]; };
 
 namespace traits
 {	enum value : short {
@@ -109,18 +108,18 @@ static const bit_size kBS_1_4 = {4,0,0,0};
 
 static const fourcc kUnknownFCC = oFCC('????');
 
-static const subformats kNoSubformats = {unknown, unknown, unknown, unknown};
-static const subformats kSFD_R8_R8 = {r8_unorm, r8_unorm, unknown, unknown};
-static const subformats kSFD_R8_RG8 = {r8_unorm, r8g8_unorm, unknown, unknown};
-static const subformats kSFD_RG8_RG8 = {r8g8_unorm, r8g8_unorm, unknown, unknown};
-static const subformats kSFD_R16_RG16 = {r16_unorm, r16g16_unorm, unknown, unknown};
-static const subformats kSFD_BC4_BC4 = {bc4_unorm, bc4_unorm, unknown, unknown};
-static const subformats kSFD_BC4_BC5 = {bc4_unorm, bc5_unorm, unknown, unknown};
-static const subformats kSFD_BC5_BC5 = {bc5_unorm, bc5_unorm, unknown, unknown};
-static const subformats kSFD_R8_4 = {r8_unorm, r8_unorm, r8_unorm, r8_unorm};
-static const subformats kSFD_R8_3 = {r8_unorm, r8_unorm, r8_unorm, unknown};
-static const subformats kSFD_BC4_4 = {bc4_unorm, bc4_unorm, bc4_unorm, bc4_unorm};
-static const subformats kSFD_BC4_3 = {bc4_unorm, bc4_unorm, bc4_unorm, unknown};
+static const subformats kNoSubformats = {format::unknown, format::unknown, format::unknown, format::unknown};
+static const subformats kSFD_R8_R8 = {format::r8_unorm, format::r8_unorm, format::unknown, format::unknown};
+static const subformats kSFD_R8_RG8 = {format::r8_unorm, format::r8g8_unorm, format::unknown, format::unknown};
+static const subformats kSFD_RG8_RG8 = {format::r8g8_unorm, format::r8g8_unorm, format::unknown, format::unknown};
+static const subformats kSFD_R16_RG16 = {format::r16_unorm, format::r16g16_unorm, format::unknown, format::unknown};
+static const subformats kSFD_BC4_BC4 = {format::bc4_unorm, format::bc4_unorm, format::unknown, format::unknown};
+static const subformats kSFD_BC4_BC5 = {format::bc4_unorm, format::bc5_unorm, format::unknown, format::unknown};
+static const subformats kSFD_BC5_BC5 = {format::bc5_unorm, format::bc5_unorm, format::unknown, format::unknown};
+static const subformats kSFD_R8_4 = {format::r8_unorm, format::r8_unorm, format::r8_unorm, format::r8_unorm};
+static const subformats kSFD_R8_3 = {format::r8_unorm, format::r8_unorm, format::r8_unorm, format::unknown};
+static const subformats kSFD_BC4_4 = {format::bc4_unorm, format::bc4_unorm, format::bc4_unorm, format::bc4_unorm};
+static const subformats kSFD_BC4_3 = {format::bc4_unorm, format::bc4_unorm, format::bc4_unorm, format::unknown};
 
 static const format_info sFormatInfo[] = 
 {
@@ -225,8 +224,8 @@ static const format_info sFormatInfo[] =
   { "bc7_unorm",                  oFCC('BC7u'), kUnknownBits, kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::is_unorm|traits::has_alpha },
   { "bc7_unorm_srgb",             oFCC('BC7s'), kUnknownBits, kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::is_unorm|traits::is_srgb|traits::has_alpha },
   { "ayuv",                       oFCC('AYUV'), kBS_4_4,      kNoSubformats,   16, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
-  { "y410",                       oFCC('Y410'), kBS_DEC3N,    {r10g10b10a2_unorm,unknown}, 4, kMinMip, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
-  { "y416",                       oFCC('Y416'), kBS_4_16,     {b8g8r8a8_unorm,unknown}, 4, kMinMip, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+  { "y410",                       oFCC('Y410'), kBS_DEC3N,    {format::r10g10b10a2_unorm,format::unknown}, 4, kMinMip, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+  { "y416",                       oFCC('Y416'), kBS_4_16,     {format::b8g8r8a8_unorm,format::unknown}, 4, kMinMip, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
   { "nv12",                       oFCC('NV12'), kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_yuv },
   { "yuv2",                       oFCC('YUV2'), kBS_4_8,      kSFD_R8_RG8,      4, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
   { "p010",                       oFCC('P010'), {10,10,10,0}, kSFD_R16_RG16,    2, kMinMip,   3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
@@ -257,23 +256,23 @@ static const format_info sFormatInfo[] =
   { "ybc4_uvbc5_unorm",           oFCC('yvbu'), kBS_3_8,      kSFD_BC4_BC5,     8, kMinMipYUV,3, 2, traits::is_bc|traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
   { "yabc5_uvbc5_unorM",          oFCC('avbu'), kBS_4_8,      kSFD_BC5_BC5,    16, kMinMipYUV,4, 2, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
 };
-static_assert(oCOUNTOF(sFormatInfo) == format_count, "");
+static_assert(oCOUNTOF(sFormatInfo) == (int)format::count, "");
 
 	} // namespace surface
 
-const char* as_string(const surface::format& _Format)
+const char* as_string(const surface::format& f)
 {
-	return (_Format < surface::format_count) ? surface::sFormatInfo[_Format].string : "unknown";
+	return (f < surface::format::count) ? surface::sFormatInfo[int(f)].string : "unknown";
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const surface::format& _Format)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const surface::format& f)
 {
-	return strlcpy(_StrDestination, as_string(_Format), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
+	return strlcpy(_StrDestination, as_string(f), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 }
 
 bool from_string(surface::format* _pFormat, const char* _StrSource)
 {
-	*_pFormat = surface::unknown;
+	*_pFormat = surface::format::unknown;
 	oFORI(i, surface::sFormatInfo)
 	{
 		if (!_stricmp(_StrSource, surface::sFormatInfo[i].string))
@@ -289,9 +288,9 @@ oDEFINE_RESIZED_AS_STRING(surface::format);
 oDEFINE_RESIZED_TO_STRING(surface::format);
 oDEFINE_RESIZED_FROM_STRING(surface::format);
 
-const char* as_string(const surface::cube_face::value& _Value)
+const char* as_string(const surface::cube_face& f)
 {
-	switch (_Value)
+	switch (f)
 	{
 		case surface::cube_face::posx: return "posx";
 		case surface::cube_face::negx: return "negx";
@@ -304,268 +303,263 @@ const char* as_string(const surface::cube_face::value& _Value)
 	return "?";
 }
 
-oDEFINE_TO_STRING(surface::cube_face::value)
-oDEFINE_FROM_STRING(surface::cube_face::value, surface::cube_face::count)
+oDEFINE_TO_STRING(surface::cube_face)
+oDEFINE_FROM_STRING_ENUM_CLASS(surface::cube_face)
 
 	namespace surface {
 
-static bool has_trait(format _Format, uint _Trait)
+static const format_info& finf(const format& f)
 {
-	return ((_Format) < format_count) ? !!(sFormatInfo[_Format].traits & (_Trait)) : false;
+	return sFormatInfo[(int) (f < format::count ? f : format::unknown)];
 }
 
-bool is_block_compressed(format _Format)
+static bool has_trait(const format& f, uint traits)
 {
-	return has_trait(_Format, traits::is_bc);
+	return !!(finf(f).traits & traits);
 }
 
-bool is_depth(format _Format)
+bool is_block_compressed(const format& f)
 {
-	return has_trait(_Format, traits::is_depth);
+	return has_trait(f, traits::is_bc);
 }
 
-bool has_alpha(format _Format)
+bool is_depth(const format& f)
 {
-	return has_trait(_Format, traits::has_alpha);
+	return has_trait(f, traits::is_depth);
 }
 
-bool is_unorm(format _Format)
+bool has_alpha(const format& f)
 {
-	return has_trait(_Format, traits::is_unorm);
+	return has_trait(f, traits::has_alpha);
 }
 
-bool is_planar(format _Format)
+bool is_unorm(const format& f)
 {
-	return has_trait(_Format, traits::is_planar);
+	return has_trait(f, traits::is_unorm);
 }
 
-bool is_yuv(format _Format)
+bool is_srgb(const format& f)
 {
-	return has_trait(_Format, traits::is_yuv);
+	return has_trait(f, traits::is_srgb);
 }
 
-int num_channels(format _Format)
+bool is_planar(const format& f)
 {
-	return (_Format < format_count) ? sFormatInfo[_Format].num_channels : 0;
+	return has_trait(f, traits::is_planar);
 }
 
-int num_subformats(format _Format)
+bool is_yuv(const format& f)
 {
-	return (_Format < format_count) ? sFormatInfo[_Format].num_subformats: 0;
+	return has_trait(f, traits::is_yuv);
 }
 
-int subsample_bias(format _Format, int _SubsurfaceIndex)
+uint num_channels(const format& f)
 {
-	if (_Format < format_count)
-	{
-		if (_SubsurfaceIndex == 1 && sFormatInfo[_Format].traits & traits::subsurface1_bias1) return 1;
-		if (_SubsurfaceIndex == 2 && sFormatInfo[_Format].traits & traits::subsurface2_bias1) return 1;
-		if (_SubsurfaceIndex == 3 && sFormatInfo[_Format].traits & traits::subsurface3_bias1) return 1;
-	}
+	return finf(f).num_channels;
+}
 
+uint num_subformats(const format& f)
+{
+	return finf(f).num_subformats;
+}
+
+uint subsample_bias(const format& f, uint subsurface)
+{
+	const auto& i = finf(f);
+	if (subsurface == 1 && i.traits & traits::subsurface1_bias1) return 1;
+	if (subsurface == 2 && i.traits & traits::subsurface2_bias1) return 1;
+	if (subsurface == 3 && i.traits & traits::subsurface3_bias1) return 1;
 	return 0;
 }
 
-uint element_size(format _Format, int _SubsurfaceIndex)
+uint element_size(const format& f, uint subsurface)
 {
-	return (_Format < format_count) ? (_SubsurfaceIndex ? element_size(sFormatInfo[_Format].subformats.format[_SubsurfaceIndex]) : sFormatInfo[_Format].element_size) : 0;
+	return subsurface ? element_size(finf(f).subformats.format[subsurface]) : finf(f).element_size;
 }
 
-int2 min_dimensions(format _Format)
+uint2 min_dimensions(const format& f)
 {
-	return (_Format < format_count) ? sFormatInfo[_Format].smallest_mip : int2(0, 0);
+	return finf(f).smallest_mip;
 }
 
-int bits(format _Format)
+uint bits(const format& f)
 {
-	if (_Format == r1_unorm) return 1;
-	return 8 * element_size(_Format);
+	if (f == format::r1_unorm) return 1;
+	return 8 * element_size(f);
 }
 
-void channel_bits(format _Format, int* _pNBitsR, int* _pNBitsG, int* _pNBitsB, int* _pNBitsA)
+bit_size channel_bits(const format& f)
 {
-	if (_Format < format_count)
+	return finf(f).bit_size;
+}
+
+format subformat(const format& f, uint subsurface)
+{
+	const auto& i = finf(f);
+	if (!!(i.traits & traits::is_yuv))
 	{
-		const struct bit_size& b = sFormatInfo[_Format].bit_size;
-		*_pNBitsR = b.r; *_pNBitsG = b.g; *_pNBitsB = b.b; *_pNBitsA = b.a;
+		if (i.num_subformats < subsurface)
+			return format::unknown;
+		return i.subformats.format[subsurface];
 	}
-
-	else
-		*_pNBitsR = *_pNBitsG = *_pNBitsB = *_pNBitsA = 0;
+	return f;
 }
 
-format subformat(format _Format, int _SubsurfaceIndex)
+fourcc to_fourcc(const format& f)
 {
-	if (_SubsurfaceIndex < 0)
-		throw invalid_argument("SubsurfaceIndex can't be negative");
-
-	if (sFormatInfo[_Format].num_subformats < _SubsurfaceIndex)
-		return unknown;
-
-	if (!!(sFormatInfo[_Format].traits & traits::is_yuv))
-		return sFormatInfo[_Format].subformats.format[_SubsurfaceIndex];
-
-	return _Format;
+	return finf(f).fourcc;
 }
 
-fourcc to_fourcc(format _Format)
-{
-	return (_Format < format_count) ? sFormatInfo[_Format].fourcc : fourcc(0);
-}
-
-format from_fourcc(fourcc _FourCC)
+format from_fourcc(const fourcc& fcc)
 {
 	oFORI(i, sFormatInfo)
 	{
-		if (_FourCC == sFormatInfo[i].fourcc)
+		if (fcc == sFormatInfo[i].fourcc)
 			return format(i);
 	}
-	return unknown;
+	return format::unknown;
 }
 
-format closest_nv12(format _Format)
+format closest_nv12(const format& f)
 {
-	if (num_subformats(_Format) == 2) // already nv12
-		return _Format;
-	if (num_subformats(_Format) == 3) // no alpha
-		return (is_block_compressed(_Format)) ? ybc4_uvbc5_unorm : y8_u8v8_unorm;
-	if (is_block_compressed(_Format)) // alpha
-		return yabc5_uvbc5_unorm;
-	return y8a8_u8v8_unorm;
+	if (num_subformats(f) == 2) // already nv12
+		return f;
+	if (num_subformats(f) == 3) // no alpha
+		return (is_block_compressed(f)) ? format::ybc4_uvbc5_unorm : format::y8_u8v8_unorm;
+	if (is_block_compressed(f)) // alpha
+		return format::yabc5_uvbc5_unorm;
+	return format::y8a8_u8v8_unorm;
 }
 
-int num_mips(bool _HasMips, const int3& _Mip0Dimensions)
+uint num_mips(bool mips, const uint3& mip0dimensions)
 {
 	// Rules of mips are to go to 1x1... so a 1024x8 texture has many more than 4
 	// mips.
 
-	if (!_HasMips || _Mip0Dimensions.x <= 0 || _Mip0Dimensions.y <= 0 || _Mip0Dimensions.z <= 0)
+	if (!mips)
 		return 0;
 
-	int nMips = 1;
-	int3 mip = _Mip0Dimensions;
+	uint nMips = 1;
+	uint3 mip = mip0dimensions;
 
-	while (any(mip != int3(1,1,1)))
+	while (any(mip != 1))
 	{
 		nMips++;
-		mip = ::max(int3(1,1,1), mip / int3(2,2,2));
+		mip = max(uint3(1), mip / uint3(2));
 	}
 
 	return nMips;
 }
 
-int dimension(format _Format, int _Mip0Dimension, int _MipLevel, int _SubsurfaceIndex)
+uint dimension(const format& f, uint mip0dimension, uint miplevel, uint subsurface)
 {
-	oCHECK_DIM(_Format, _Mip0Dimension);
-	if (_Format == unknown)
+	oCHECK_DIM(f, mip0dimension);
+	if (f == format::unknown)
 		throw invalid_argument("Unknown surface format passed to surface::dimension");
-	const int subsampleBias = subsample_bias(_Format, _SubsurfaceIndex);
-	int d = ::max(1, _Mip0Dimension >> (_MipLevel + subsampleBias));
-	return is_block_compressed(_Format) ? static_cast<int>(byte_align(d, 4)) : d;
+	const uint subsampleBias = subsample_bias(f, subsurface);
+	uint d = ::max(1u, mip0dimension >> (miplevel + subsampleBias));
+	return is_block_compressed(f) ? static_cast<uint>(byte_align(d, 4)) : d;
 }
 
-int2 dimensions(format _Format, const int2& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
+uint2 dimensions(const format& f, const uint2& mip0dimensions, uint miplevel, uint subsurface)
 {
-	return int2(dimension(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
-		, dimension(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex));
+	return uint2(dimension(f, mip0dimensions.x, miplevel, subsurface)
+		, dimension(f, mip0dimensions.y, miplevel, subsurface));
 }
 
-int3 dimensions(format _Format, const int3& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
+uint3 dimensions(const format& f, const uint3& mip0dimensions, uint miplevel, uint subsurface)
 {
-	return int3(dimension(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
-		, dimension(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex)
-		, dimension(r32_uint, _Mip0Dimensions.z, _MipLevel, _SubsurfaceIndex)); // No block-compression alignment for depth
+	return uint3(dimension(f, mip0dimensions.x, miplevel, subsurface)
+		, dimension(f, mip0dimensions.y, miplevel, subsurface)
+		, dimension(format::r32_uint, mip0dimensions.z, miplevel, subsurface)); // no block-compression alignment for depth
 }
 
-int dimension_npot(format _Format, int _Mip0Dimension, int _MipLevel, int _SubsurfaceIndex)
+uint dimension_npot(const format& f, uint mip0dimension, uint miplevel, uint subsurface)
 {
-	oCHECK_DIM(_Format, _Mip0Dimension);
+	oCHECK_DIM(f, mip0dimension);
 
-	format NthSurfaceFormat = subformat(_Format, _SubsurfaceIndex);
-	const int MipLevelBias = subsample_bias(_Format, _SubsurfaceIndex);
+	format NthSurfaceFormat = subformat(f, subsurface);
+	const auto MipLevelBias = subsample_bias(f, subsurface);
 	
 	// @tony: This was added while merging oYUVSurface functionality into 
 	// oSurface, so we recognize that the int2 values may not be the same and 
 	// won't be for formats like YUV9, but first get the lion's share of the code
 	// across and revisit this once the main algo is vetted.
-	const int2 MinDimension = min_dimensions(_Format);
+	const auto MinDimension = min_dimensions(f);
 
-	int d = ::max(1, _Mip0Dimension >> (_MipLevel + MipLevelBias));
-	int NPOTDim = is_block_compressed(NthSurfaceFormat) ? static_cast<int>(byte_align(d, 4)) : d;
+	auto d = ::max(1u, mip0dimension >> (miplevel + MipLevelBias));
+	auto NPOTDim = is_block_compressed(NthSurfaceFormat) ? static_cast<uint>(byte_align(d, 4)) : d;
 
-	if (_SubsurfaceIndex == 0 && subsample_bias(_Format, 1) != 0)
+	if (subsurface == 0 && subsample_bias(f, 1) != 0)
 		NPOTDim = ::max(MinDimension.x, NPOTDim & ~(MinDimension.x-1)); // always even down to 2x2
 
 	return NPOTDim;
 }
 
-int2 dimensions_npot(format _Format, const int2& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
+uint2 dimensions_npot(const format& f, const uint2& mip0dimensions, uint miplevel, uint subsurface)
 {
 	#ifdef _DEBUG
-		const int2 MinDimension = min_dimensions(_Format);
+		const auto MinDimension = min_dimensions(f);
 		oASSERT(MinDimension.x == MinDimension.y, "There is currently no support for aniso min dimensions");
 	#endif
 
-	return int2(
-		dimension_npot(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
-		, dimension_npot(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex));
+	return uint2(dimension_npot(f, mip0dimensions.x, miplevel, subsurface)
+		, dimension_npot(f, mip0dimensions.y, miplevel, subsurface));
 }
 
-int3 dimensions_npot(format _Format, const int3& _Mip0Dimensions, int _MipLevel, int _SubsurfaceIndex)
+uint3 dimensions_npot(const format& f, const uint3& mip0dimensions, uint miplevel, uint subsurface)
 {
 	#ifdef _DEBUG
-		const int2 MinDimension = min_dimensions(_Format);
+		const uint2 MinDimension = min_dimensions(f);
 		oASSERT(MinDimension.x == MinDimension.y, "There is currently no support for aniso min dimensions");
 	#endif
 
-	return int3(
-		dimension_npot(_Format, _Mip0Dimensions.x, _MipLevel, _SubsurfaceIndex)
-		, dimension_npot(_Format, _Mip0Dimensions.y, _MipLevel, _SubsurfaceIndex)
-		, dimension_npot(r32_uint, _Mip0Dimensions.z, _MipLevel, _SubsurfaceIndex)); // No block-compression alignment for depth
+	return uint3(dimension_npot(f, mip0dimensions.x, miplevel, subsurface)
+		, dimension_npot(f, mip0dimensions.y, miplevel, subsurface)
+		, dimension_npot(format::r32_uint, mip0dimensions.z, miplevel, subsurface)); // no block-compression alignment for depth
 }
 
-uint row_size(format _Format, int _MipWidth, int _SubsurfaceIndex)
+uint row_size(const format& f, uint mipwidth, uint subsurface)
 {
-	oCHECK_DIM(_Format, _MipWidth);
-	oASSERT(_Format != unknown, "Unknown surface format passed to GetRowPitch");
-	uint w = dimension(_Format, _MipWidth, 0, _SubsurfaceIndex);
-	if (is_block_compressed(_Format)) // because the atom is a 4x4 block
+	oCHECK_DIM(f, mipwidth);
+	uint w = dimension(f, mipwidth, 0, subsurface);
+	if (is_block_compressed(f)) // because the atom is a 4x4 block
 		w /= 4;
-	const uint s = element_size(_Format, _SubsurfaceIndex);
+	const auto s = element_size(f, subsurface);
 	return byte_align(w * s, s);
 }
 
-uint row_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+uint row_pitch(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	const int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
-	if (numMips && _MipLevel >= numMips)
-		throw invalid_argument("invalid _MipLevel");
+	oCHECK_INFO(inf)
+	const auto nMips = num_mips(inf.layout, inf.dimensions);
+	if (nMips && miplevel >= nMips)
+		throw invalid_argument("invalid miplevel");
 
-	switch (_SurfaceInfo.layout)
+	switch (inf.layout)
 	{
-		case image: 
-			return row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions, _SubsurfaceIndex);
-		case tight: 
-			return row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _MipLevel, _SubsurfaceIndex), _SubsurfaceIndex);
-		case below: 
+		case layout::image: 
+			return row_size(inf.format, inf.dimensions, subsurface);
+		case layout::tight: 
+			return row_size(inf.format, dimension_npot(inf.format, inf.dimensions.x, miplevel, subsurface), subsurface);
+		case layout::below: 
 		{
-			const uint mip0RowSize = row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _SubsurfaceIndex);
-			if (numMips > 2)
+			const auto mip0RowSize = row_size(inf.format, inf.dimensions.x, subsurface);
+			if (nMips > 2)
 			{
 					return ::max(mip0RowSize, 
-					row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, 1, _SubsurfaceIndex)) + 
-					row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, 2, _SubsurfaceIndex)) );
+					row_size(inf.format, dimension_npot(inf.format, inf.dimensions.x, 1, subsurface)) + 
+					row_size(inf.format, dimension_npot(inf.format, inf.dimensions.x, 2, subsurface)) );
 			}
 			else
 				return mip0RowSize;
 		}
 
-		case right: 
+		case layout::right: 
 		{
-			const uint mip0RowSize = row_size(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, _SubsurfaceIndex);
-			if (numMips > 1)
-				return mip0RowSize + row_size(_SurfaceInfo.format, dimension_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions.x, 1, _SubsurfaceIndex), _SubsurfaceIndex);
+			const auto mip0RowSize = row_size(inf.format, inf.dimensions.x, subsurface);
+			if (nMips > 1)
+				return mip0RowSize + row_size(inf.format, dimension_npot(inf.format, inf.dimensions.x, 1, subsurface), subsurface);
 			else
 				return mip0RowSize;
 		}
@@ -574,152 +568,152 @@ uint row_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
 	}
 }
 
-uint depth_pitch(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+uint depth_pitch(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	int3 mipDimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, _MipLevel, 0);
-	return row_pitch(_SurfaceInfo, _MipLevel, _SubsurfaceIndex) * num_rows(_SurfaceInfo.format, mipDimensions.xy(), _SubsurfaceIndex);
+	oCHECK_INFO(inf)
+	auto mipDimensions = dimensions_npot(inf.format, inf.dimensions, miplevel, 0);
+	return row_pitch(inf, miplevel, subsurface) * num_rows(inf.format, mipDimensions.xy(), subsurface);
 }
 
-int num_columns(format _Format, int _MipWidth, int _SubsurfaceIndex)
+uint num_columns(const format& f, uint mipwidth, uint subsurface)
 {
-	oCHECK_DIM(_Format, _MipWidth);
-	int widthInPixels = dimension(_Format, _MipWidth, _SubsurfaceIndex);
-	return is_block_compressed(_Format) ? ::max(1, widthInPixels/4) : widthInPixels;
+	oCHECK_DIM(f, mipwidth);
+	auto widthInPixels = dimension(f, mipwidth, subsurface);
+	return is_block_compressed(f) ? ::max(1u, widthInPixels/4) : widthInPixels;
 }
 
-int num_rows(format _Format, int _MipHeight, int _SubsurfaceIndex)
+uint num_rows(const format& f, uint mipheight, uint subsurface)
 {
-	oCHECK_DIM(_Format, _MipHeight);
-	int heightInPixels = dimension_npot(_Format, _MipHeight, 0, _SubsurfaceIndex);
-	return is_block_compressed(_Format) ? ::max(1, heightInPixels/4) : heightInPixels;
+	oCHECK_DIM(f, mipheight);
+	auto heightInPixels = dimension_npot(f, mipheight, 0, subsurface);
+	return is_block_compressed(f) ? ::max(1u, heightInPixels/4) : heightInPixels;
 }
 
-int mip_size(format _Format, const int2& _MipDimensions, int _SubsurfaceIndex)
+uint mip_size(const format& f, const uint2& mipdimensions, uint subsurface)
 {
-	oCHECK_DIM2(_Format, _MipDimensions);
-	return row_size(_Format, _MipDimensions, _SubsurfaceIndex) * num_rows(_Format, _MipDimensions, _SubsurfaceIndex);
+	oCHECK_DIM2(f, mipdimensions);
+	return row_size(f, mipdimensions, subsurface) * num_rows(f, mipdimensions, subsurface);
 }
 
-static int offset_image(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+static int offset_image(const info& inf, uint miplevel, uint subsurface)
 {
-	oASSERT(_MipLevel == 0, "layout::image doesn't have mip levels");
-	int offset = 0;
-	for (int i = 0; i < _SubsurfaceIndex; i++)
-		offset += byte_align(total_size(_SurfaceInfo, i), oDEFAULT_MEMORY_ALIGNMENT);
+	oASSERT(miplevel == 0, "layout::image doesn't have mip levels");
+	uint offset = 0;
+	for (uint i = 0; i < subsurface; i++)
+		offset += byte_align(total_size(inf, i), oDEFAULT_MEMORY_ALIGNMENT);
 	return offset;
 }
 
-static int offset_tight(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+static uint offset_tight(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	int3 mip0dimensions = _SurfaceInfo.dimensions;
-	int offset = 0;
-	int mip = 0;
-	while (mip != _MipLevel)
+	oCHECK_INFO(inf)
+	auto mip0dimensions = inf.dimensions;
+	uint offset = 0;
+	uint mip = 0;
+	while (mip != miplevel)
 	{
-		int3 previousMipDimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
-		offset += mip_size(_SurfaceInfo.format, previousMipDimensions, _SubsurfaceIndex);
+		auto previousMipDimensions = dimensions_npot(inf.format, mip0dimensions, mip, subsurface);
+		offset += mip_size(inf.format, previousMipDimensions, subsurface);
 		mip++;
 	}
 	return offset;
 }
 
-static int offset_below(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+static int offset_below(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	if (0 == _MipLevel)
+	oCHECK_INFO(inf)
+	if (0 == miplevel)
 		return 0;
 
-	int3 mip0dimensions = _SurfaceInfo.dimensions;
-	int3 mip1dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, 1, _SubsurfaceIndex);
-	int surfaceRowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
+	auto mip0dimensions = inf.dimensions;
+	auto mip1dimensions = dimensions_npot(inf.format, inf.dimensions, 1, subsurface);
+	auto surfaceRowPitch = row_pitch(inf, 0, subsurface);
 
 	// Step down when moving from Mip0 to Mip1
-	int offset = surfaceRowPitch * num_rows(_SurfaceInfo.format, mip0dimensions, _SubsurfaceIndex);
-	if (1 == _MipLevel)
+	auto offset = surfaceRowPitch * num_rows(inf.format, mip0dimensions, subsurface);
+	if (1 == miplevel)
 		return offset;
 
 	// Step right when moving from Mip1 to Mip2
-	offset += row_size(_SurfaceInfo.format, mip1dimensions, _SubsurfaceIndex);
+	offset += row_size(inf.format, mip1dimensions, subsurface);
 
 	// Step down for all of the other MIPs
-	int mip = 2;
-	while (mip != _MipLevel)
+	uint mip = 2;
+	while (mip != miplevel)
 	{
-		int3 previousMipDimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
-		offset += surfaceRowPitch * num_rows(_SurfaceInfo.format, previousMipDimensions, _SubsurfaceIndex);
+		auto previousMipDimensions = dimensions_npot(inf.format, mip0dimensions, mip, subsurface);
+		offset += surfaceRowPitch * num_rows(inf.format, previousMipDimensions, subsurface);
 		mip++;
 	}		
 
 	return offset;
 }
 
-static int offset_right(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+static uint offset_right(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	if (0 == _MipLevel)
+	oCHECK_INFO(inf)
+	if (0 == miplevel)
 		return 0;
 
-	int3 mip0dimensions = _SurfaceInfo.dimensions;
-	int surfaceRowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
+	auto mip0dimensions = inf.dimensions;
+	auto surfaceRowPitch = row_pitch(inf, 0, subsurface);
 
 	// Step right when moving from Mip0 to Mip1
-	int offset = row_size(_SurfaceInfo.format, mip0dimensions, _SubsurfaceIndex);
+	auto offset = row_size(inf.format, mip0dimensions, subsurface);
 
 	// Step down for all of the other MIPs
-	int mip = 1;
-	while (mip != _MipLevel)
+	uint mip = 1;
+	while (mip != miplevel)
 	{
-		int3 previousMipDimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
-		offset += surfaceRowPitch * num_rows(_SurfaceInfo.format, previousMipDimensions, _SubsurfaceIndex);
+		auto previousMipDimensions = dimensions_npot(inf.format, mip0dimensions, mip, subsurface);
+		offset += surfaceRowPitch * num_rows(inf.format, previousMipDimensions, subsurface);
 		mip++;
 	}		
 
 	return offset;
 }
 
-int offset(const info& _SurfaceInfo, int _MipLevel, int _SubsurfaceIndex)
+uint offset(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	const int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
-	if (numMips && _MipLevel >= numMips) 
-		throw invalid_argument("invalid _MipLevel");
+	oCHECK_INFO(inf)
+	const auto nMips = num_mips(inf.layout, inf.dimensions);
+	if (nMips && miplevel >= nMips) 
+		throw invalid_argument("invalid miplevel");
 
-	switch (_SurfaceInfo.layout)
+	switch (inf.layout)
 	{
-		case image: return offset_image(_SurfaceInfo, _MipLevel, _SubsurfaceIndex);
-		case tight: return offset_tight(_SurfaceInfo, _MipLevel, _SubsurfaceIndex);
-		case below: return offset_below(_SurfaceInfo, _MipLevel, _SubsurfaceIndex);
-		case right: return offset_right(_SurfaceInfo, _MipLevel, _SubsurfaceIndex);
+		case layout::image: return offset_image(inf, miplevel, subsurface);
+		case layout::tight: return offset_tight(inf, miplevel, subsurface);
+		case layout::below: return offset_below(inf, miplevel, subsurface);
+		case layout::right: return offset_right(inf, miplevel, subsurface);
 		oNODEFAULT;
 	}
 }
 
-uint slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex)
+uint slice_pitch(const info& inf, uint subsurface)
 {
-	oCHECK_INFO(_SurfaceInfo)
+	oCHECK_INFO(inf)
 	uint pitch = 0;
 
-	switch (_SurfaceInfo.layout)
+	switch (inf.layout)
 	{
-		case image: case right: case below:
-			return mip_size(_SurfaceInfo.format, slice_dimensions(_SurfaceInfo, 0), _SubsurfaceIndex);
+		case layout::image: case layout::right: case layout::below:
+			return mip_size(inf.format, slice_dimensions(inf, 0), subsurface);
 
-		case tight:
+		case layout::tight:
 		{
 			// Sum the size of all mip levels
-			int3 dimensions = _SurfaceInfo.dimensions;
-			int nMips = num_mips(_SurfaceInfo.layout, dimensions);
+			int3 dimensions = inf.dimensions;
+			int nMips = num_mips(inf.layout, dimensions);
 			while (nMips > 0)
 			{
-				pitch += mip_size(_SurfaceInfo.format, dimensions.xy(), _SubsurfaceIndex) * dimensions.z;
+				pitch += mip_size(inf.format, dimensions.xy(), subsurface) * dimensions.z;
 				dimensions = ::max(int3(1,1,1), dimensions / int3(2,2,2));
 				nMips--;
 			}
 
 			// Align slicePitch to mip0RowPitch
-			const uint mip0RowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
+			const uint mip0RowPitch = row_pitch(inf, 0, subsurface);
 			pitch = (((pitch + (mip0RowPitch - 1)) / mip0RowPitch) * mip0RowPitch);
 			break;
 		}
@@ -729,72 +723,72 @@ uint slice_pitch(const info& _SurfaceInfo, int _SubsurfaceIndex)
 	return pitch;
 }
 
-uint total_size(const info& _SurfaceInfo, int _SubsurfaceIndex)
+uint total_size(const info& inf, uint subsurface)
 {
-	if (_SubsurfaceIndex < 0)
+	if (subsurface < 0)
 	{
 		uint size = 0;
-		const int nSurfaces = num_subformats(_SurfaceInfo.format);
+		const int nSurfaces = num_subformats(inf.format);
 		for (int i = 0; i < nSurfaces; i++)
 		{
 			// byte_align is needed here to avoid a memory corruption crash. I'm not 
 			// sure why it is needed, but I think that size is a memory structure 
 			// containing all surface sizes, so they are all expected to be aligned.
-			size += byte_align(total_size(_SurfaceInfo, i), oDEFAULT_MEMORY_ALIGNMENT);
+			size += byte_align(total_size(inf, i), oDEFAULT_MEMORY_ALIGNMENT);
 		}
 		return size;
 	}
 	
-	return slice_pitch(_SurfaceInfo, _SubsurfaceIndex) * safe_array_size(_SurfaceInfo);
+	return slice_pitch(inf, subsurface) * safe_array_size(inf);
 }
 
-int2 dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
+uint2 dimensions(const info& inf, uint subsurface)
 {
-	int2 sliceDimensions = slice_dimensions(_SurfaceInfo, _SubsurfaceIndex);
-	return int2(sliceDimensions.x, sliceDimensions.y * safe_array_size(_SurfaceInfo));
+	auto sliceDimensions = slice_dimensions(inf, subsurface);
+	return uint2(sliceDimensions.x, sliceDimensions.y * safe_array_size(inf));
 }
 
-int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
+uint2 slice_dimensions(const info& inf, uint subsurface)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	int3 mip0dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, 0, _SubsurfaceIndex);
-	switch (_SurfaceInfo.layout)
+	oCHECK_INFO(inf)
+	auto mip0dimensions = dimensions_npot(inf.format, inf.dimensions, 0, subsurface);
+	switch (inf.layout)
 	{
-		case image: 
-			return int2(mip0dimensions.x, (mip0dimensions.y * mip0dimensions.z));
+		case layout::image:
+			return uint2(mip0dimensions.x, (mip0dimensions.y * mip0dimensions.z));
 		
-		case tight: 
+		case layout::tight:
 		{
-			const int surfaceSlicePitch = slice_pitch(_SurfaceInfo, _SubsurfaceIndex);
-			const int mip0RowPitch = row_pitch(_SurfaceInfo, 0, _SubsurfaceIndex);
-			return int2(mip0dimensions.x, (surfaceSlicePitch / mip0RowPitch));
+			const auto surfaceSlicePitch = slice_pitch(inf, subsurface);
+			const auto mip0RowPitch = row_pitch(inf, 0, subsurface);
+			return uint2(mip0dimensions.x, (surfaceSlicePitch / mip0RowPitch));
 		}
-		case below: 
+		case layout::below: 
 		{
-			int numMips = num_mips(_SurfaceInfo.layout, mip0dimensions);
-			int3 mip1dimensions = numMips > 1 ? dimensions_npot(_SurfaceInfo.format, mip0dimensions, 1, _SubsurfaceIndex) : int3(0);
-			int3 mip2dimensions = numMips > 2 ? dimensions_npot(_SurfaceInfo.format, mip0dimensions, 2, _SubsurfaceIndex) : int3(0);
+			auto nMips = num_mips(inf.layout, mip0dimensions);
+			auto mip1dimensions = nMips > 1 ? dimensions_npot(inf.format, mip0dimensions, 1, subsurface) : uint3(0);
+			auto mip2dimensions = nMips > 2 ? dimensions_npot(inf.format, mip0dimensions, 2, subsurface) : uint3(0);
 
-			int mip0height = mip0dimensions.y * mip0dimensions.z;
-			int mip1height = mip1dimensions.y * mip1dimensions.z;
-			int mip2andUpHeight = mip2dimensions.y * mip2dimensions.z;
-			for (int mip=3; mip<numMips; ++mip)
+			auto mip0height = mip0dimensions.y * mip0dimensions.z;
+			auto mip1height = mip1dimensions.y * mip1dimensions.z;
+			auto mip2andUpHeight = mip2dimensions.y * mip2dimensions.z;
+			for (uint mip = 3; mip < nMips; mip++)
 			{
-				int3 mipNdimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
+				auto mipNdimensions = dimensions_npot(inf.format, mip0dimensions, mip, subsurface);
 				mip2andUpHeight += mipNdimensions.y * mipNdimensions.z;
 			}
-			return int2(::max(mip0dimensions.x, mip1dimensions.x + mip2dimensions.x), (mip0height + ::max(mip1height, mip2andUpHeight)));
+			return uint2(::max(mip0dimensions.x, mip1dimensions.x + mip2dimensions.x), (mip0height + ::max(mip1height, mip2andUpHeight)));
 		}
-		case right: 
+		case layout::right: 
 		{
-			int numMips = num_mips(_SurfaceInfo.layout, mip0dimensions);
-			int3 mip1dimensions = numMips > 1 ? dimensions_npot(_SurfaceInfo.format, mip0dimensions, 1, _SubsurfaceIndex) : int3(0);
+			auto nMips = num_mips(inf.layout, mip0dimensions);
+			auto mip1dimensions = nMips > 1 ? dimensions_npot(inf.format, mip0dimensions, 1, subsurface) : int3(0);
 
-			int mip0height = mip0dimensions.y * mip0dimensions.z;
-			int mip1andUpHeight = mip1dimensions.y * mip1dimensions.z;
-			for (int mip=2; mip<numMips; ++mip)
+			auto mip0height = mip0dimensions.y * mip0dimensions.z;
+			auto mip1andUpHeight = mip1dimensions.y * mip1dimensions.z;
+			for (uint mip = 2; mip < nMips; mip++)
 			{
-				int3 mipNdimensions = dimensions_npot(_SurfaceInfo.format, mip0dimensions, mip, _SubsurfaceIndex);
+				int3 mipNdimensions = dimensions_npot(inf.format, mip0dimensions, mip, subsurface);
 				mip1andUpHeight += mipNdimensions.y * mipNdimensions.z;
 			}
 			return int2(mip0dimensions.x + mip1dimensions.x, ::max(mip0height, mip1andUpHeight));
@@ -803,125 +797,125 @@ int2 slice_dimensions(const info& _SurfaceInfo, int _SubsurfaceIndex)
 	}
 }
 
-subresource_info subresource(const info& _SurfaceInfo, int _Subresource)
+subresource_info subresource(const info& inf, uint subresource)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	subresource_info inf;
-	int numMips = num_mips(_SurfaceInfo.layout, _SurfaceInfo.dimensions);
-	unpack_subresource(_Subresource, numMips, _SurfaceInfo.array_size, &inf.mip_level, &inf.array_slice, &inf.subsurface);
-	if (_SurfaceInfo.array_size && inf.array_slice >= safe_array_size(_SurfaceInfo)) throw invalid_argument("array slice index is out of range");
-	if (inf.subsurface >= num_subformats(_SurfaceInfo.format)) throw invalid_argument("subsurface index is out of range for the specified surface");
-	inf.dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, inf.mip_level, inf.subsurface);
-	inf.format = _SurfaceInfo.format;
-	return inf;
+	oCHECK_INFO(inf)
+	subresource_info subinf;
+	int nMips = num_mips(inf.layout, inf.dimensions);
+	unpack_subresource(subresource, nMips, inf.array_size, &subinf.mip_level, &subinf.array_slice, &subinf.subsurface);
+	if (inf.array_size && subinf.array_slice >= safe_array_size(inf)) throw invalid_argument("array slice index is out of range");
+	if (subinf.subsurface >= num_subformats(inf.format)) throw invalid_argument("subsurface index is out of range for the specified surface");
+	subinf.dimensions = dimensions_npot(inf.format, inf.dimensions, subinf.mip_level, subinf.subsurface);
+	subinf.format = inf.format;
+	return subinf;
 }
 
-info subsurface(const info& _SurfaceInfo, int _SubsurfaceIndex, int _MipLevel, int2* _pByteDimensions)
+info subsurface(const info& inf, uint subsurface, uint miplevel, uint2* out_byte_dimensions)
 {
-	info inf;
-	inf.dimensions = dimensions_npot(_SurfaceInfo.format, _SurfaceInfo.dimensions, _MipLevel, _SubsurfaceIndex);
-	inf.array_size = _SurfaceInfo.array_size;
-	inf.format = subformat(_SurfaceInfo.format, _SubsurfaceIndex);
-	inf.layout = _SurfaceInfo.layout;
-	if (_pByteDimensions)
+	info subinf;
+	subinf.dimensions = dimensions_npot(inf.format, inf.dimensions, miplevel, subsurface);
+	subinf.array_size = inf.array_size;
+	subinf.format = subformat(inf.format, subsurface);
+	subinf.layout = inf.layout;
+	if (out_byte_dimensions)
 	{
-		_pByteDimensions->x = row_size(inf.format, inf.dimensions);
-		_pByteDimensions->y = num_rows(inf.format, inf.dimensions);
+		out_byte_dimensions->x = row_size(inf.format, inf.dimensions);
+		out_byte_dimensions->y = num_rows(inf.format, inf.dimensions);
 	}
 	return inf;
 }
 
-uint subresource_size(const subresource_info& _SubresourceInfo)
+uint subresource_size(const subresource_info& subresource_info)
 {
-	return mip_size(_SubresourceInfo.format, _SubresourceInfo.dimensions, _SubresourceInfo.subsurface);
+	return mip_size(subresource_info.format, subresource_info.dimensions, subresource_info.subsurface);
 }
 
-uint subresource_offset(const info& _SurfaceInfo, int _Subresource, int _DepthIndex)
+uint subresource_offset(const info& inf, uint subresource, uint depth)
 {
-	oASSERT(_DepthIndex < _SurfaceInfo.dimensions.z, "Depth index is out of range");
-	subresource_info inf = subresource(_SurfaceInfo, _Subresource);
-	uint off = offset(_SurfaceInfo, inf.mip_level, inf.subsurface);
-	if (_DepthIndex)
-		off += depth_pitch(_SurfaceInfo, inf.mip_level, inf.subsurface) * _DepthIndex;
-	else if (inf.array_slice > 0)
-		off += slice_pitch(_SurfaceInfo, inf.subsurface) * inf.array_slice;
+	oASSERT(depth < inf.dimensions.z, "Depth index is out of range");
+	subresource_info subinf = surface::subresource(inf, subresource);
+	uint off = offset(inf, subinf.mip_level, subinf.subsurface);
+	if (depth)
+		off += depth_pitch(inf, subinf.mip_level, subinf.subsurface) * depth;
+	else if (subinf.array_slice > 0)
+		off += slice_pitch(inf, subinf.subsurface) * subinf.array_slice;
 	return off;
 }
 
-const_mapped_subresource get_const_mapped_subresource(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, const void* _pSurface, int2* _pByteDimensions)
+const_mapped_subresource get_const_mapped_subresource(const info& inf, uint subresource, uint depth, const void* surface_bytes, uint2* out_byte_dimensions)
 {
-	subresource_info inf = subresource(_SurfaceInfo, _Subresource);
+	subresource_info subinf = surface::subresource(inf, subresource);
 
-	const_mapped_subresource msr;
-	msr.row_pitch = row_pitch(_SurfaceInfo, inf.mip_level, inf.subsurface);
-	msr.depth_pitch = depth_pitch(_SurfaceInfo, inf.mip_level, inf.subsurface);
-	msr.data = byte_add(_pSurface, subresource_offset(_SurfaceInfo, _Subresource, _DepthIndex));
+	const_mapped_subresource cmapped;
+	cmapped.row_pitch = row_pitch(inf, subinf.mip_level, subinf.subsurface);
+	cmapped.depth_pitch = depth_pitch(inf, subinf.mip_level, subinf.subsurface);
+	cmapped.data = byte_add(surface_bytes, subresource_offset(inf, subresource, depth));
 
-	if (_pByteDimensions)
-		*_pByteDimensions = byte_dimensions(_SurfaceInfo.format, inf.dimensions.xy(), inf.subsurface);
-	return msr;
+	if (out_byte_dimensions)
+		*out_byte_dimensions = byte_dimensions(inf.format, subinf.dimensions.xy(), subinf.subsurface);
+	return cmapped;
 }
 
-mapped_subresource get_mapped_subresource(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, void* _pSurface, int2* _pByteDimensions)
+mapped_subresource get_mapped_subresource(const info& inf, uint subresource, uint depth, void* surface_bytes, uint2* out_byte_dimensions)
 {
-	const_mapped_subresource msr = get_const_mapped_subresource(_SurfaceInfo, _Subresource, _DepthIndex, _pSurface, _pByteDimensions);
+	const_mapped_subresource msr = get_const_mapped_subresource(inf, subresource, depth, surface_bytes, out_byte_dimensions);
 	return (mapped_subresource&)msr;
 }
 
-void update(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, void* _pDestinationSurface, const void* _pSource, size_t _SourceRowPitch, const copy_option& option)
+void update(const info& inf, uint subresource, uint depth, void* dst_surface, const void* src_surface, uint src_row_pitch, const copy_option& option)
 {
-	int2 ByteDimensions;
-	mapped_subresource msr = get_mapped_subresource(_SurfaceInfo, _Subresource, _DepthIndex, _pDestinationSurface, &ByteDimensions);
-	memcpy2d(msr.data, msr.row_pitch, _pSource, _SourceRowPitch, ByteDimensions.x, ByteDimensions.y, option == copy_option::flip_vertically);
+	uint2 ByteDimensions;
+	mapped_subresource msr = get_mapped_subresource(inf, subresource, depth, dst_surface, &ByteDimensions);
+	memcpy2d(msr.data, msr.row_pitch, src_surface, src_row_pitch, ByteDimensions.x, ByteDimensions.y, option == copy_option::flip_vertically);
 }
 
-void copy(const info& _SurfaceInfo, int _Subresource, int _DepthIndex, const void* _pSourceSurface, void* _pDestination, size_t _DestinationRowPitch, const copy_option& option)
+void copy(const info& inf, uint subresource, uint depth, const void* src_surface, void* dst_surface, uint dst_row_pitch, const copy_option& option)
 {
-	int2 ByteDimensions;
-	const_mapped_subresource msr = get_const_mapped_subresource(_SurfaceInfo, _Subresource, _DepthIndex, _pSourceSurface, &ByteDimensions);
-	memcpy2d(_pDestination, _DestinationRowPitch, msr.data, msr.row_pitch, ByteDimensions.x, ByteDimensions.y, option == copy_option::flip_vertically);
+	uint2 ByteDimensions;
+	const_mapped_subresource msr = get_const_mapped_subresource(inf, subresource, depth, src_surface, &ByteDimensions);
+	memcpy2d(dst_surface, dst_row_pitch, msr.data, msr.row_pitch, ByteDimensions.x, ByteDimensions.y, option == copy_option::flip_vertically);
 }
 
-void copy(const info& _SurfaceInfo, const const_mapped_subresource& _Source, const mapped_subresource& _Destination, const copy_option& option)
+void copy(const info& inf, const const_mapped_subresource& _Source, const mapped_subresource& dst, const copy_option& option)
 {
-	memcpy2d(_Destination.data, _Destination.row_pitch, _Source.data, _Source.row_pitch, _SurfaceInfo.dimensions.x*element_size(_SurfaceInfo.format), _SurfaceInfo.dimensions.y, option == copy_option::flip_vertically);
+	memcpy2d(dst.data, dst.row_pitch, _Source.data, _Source.row_pitch, inf.dimensions.x*element_size(inf.format), inf.dimensions.y, option == copy_option::flip_vertically);
 }
 
-void copy(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, const mapped_subresource& _Destination, const copy_option& option)
+void copy(const subresource_info& subresource_info, const const_mapped_subresource& _Source, const mapped_subresource& dst, const copy_option& option)
 {
-	memcpy2d(_Destination.data, _Destination.row_pitch, _Source.data, _Source.row_pitch, _SubresourceInfo.dimensions.x*element_size(_SubresourceInfo.format), _SubresourceInfo.dimensions.y, option == copy_option::flip_vertically);
+	memcpy2d(dst.data, dst.row_pitch, _Source.data, _Source.row_pitch, subresource_info.dimensions.x*element_size(subresource_info.format), subresource_info.dimensions.y, option == copy_option::flip_vertically);
 }
 
-void put(const subresource_info& _SubresourceInfo, const mapped_subresource& _Destination, const int2& _Coordinate, color _Color)
+void put(const subresource_info& subresource_info, const mapped_subresource& dst, const uint2& _Coordinate, color _Color)
 {
-	const int elSize = element_size(format(_SubresourceInfo.format));
-	uchar* p = (uchar*)_Destination.data + (_Coordinate.y * _Destination.row_pitch) + (_Coordinate.x * elSize);
+	const int elSize = element_size(format(subresource_info.format));
+	uchar* p = (uchar*)dst.data + (_Coordinate.y * dst.row_pitch) + (_Coordinate.x * elSize);
 	int rr, gg, bb, aa;
 	_Color.decompose(&rr, &gg, &bb, &aa);
 	uchar r = (uchar)rr, g = (uchar)gg, b = (uchar)bb, a = (uchar)aa;
-	switch (_SubresourceInfo.format)
+	switch (subresource_info.format)
 	{
-		case r8g8b8a8_unorm: *p++ = r; *p++ = g; *p++ = b; *p++ = a; break;
-		case r8g8b8_unorm: *p++ = r; *p++ = g; *p++ = b; break;
-		case b8g8r8a8_unorm: *p++ = b; *p++ = g; *p++ = r; *p++ = a; break;
-		case b8g8r8_unorm: *p++ = b; *p++ = g; *p++ = r; break;
-		case r8_unorm: *p++ = r; break;
+		case format::r8g8b8a8_unorm: *p++ = r; *p++ = g; *p++ = b; *p++ = a; break;
+		case format::r8g8b8_unorm: *p++ = r; *p++ = g; *p++ = b; break;
+		case format::b8g8r8a8_unorm: *p++ = b; *p++ = g; *p++ = r; *p++ = a; break;
+		case format::b8g8r8_unorm: *p++ = b; *p++ = g; *p++ = r; break;
+		case format::r8_unorm: *p++ = r; break;
 		default: throw invalid_argument("unsupported format");
 	}
 }
 
-color get(const subresource_info& _SubresourceInfo, const const_mapped_subresource& _Source, const int2& _Coordinate)
+color get(const subresource_info& subresource_info, const const_mapped_subresource& _Source, const uint2& _Coordinate)
 {
-	const int elSize = element_size(_SubresourceInfo.format);
+	const int elSize = element_size(subresource_info.format);
 	const uchar* p = (const uchar*)_Source.data + (_Coordinate.y * _Source.row_pitch) + (_Coordinate.x * elSize);
 	int r=0, g=0, b=0, a=255;
-	switch (_SubresourceInfo.format)
+	switch (subresource_info.format)
 	{
-		case r8g8b8a8_unorm: r = *p++; g = *p++; b = *p++; a = *p++; break;
-		case r8g8b8_unorm: r = *p++; g = *p++; b = *p++; break;
-		case b8g8r8a8_unorm: b = *p++; g = *p++; r = *p++; a = *p++; break;
-		case b8g8r8_unorm: b = *p++; g = *p++; r = *p++; break;
-		case r8_unorm: r = *p++; g=r; b=r; break;
+		case format::r8g8b8a8_unorm: r = *p++; g = *p++; b = *p++; a = *p++; break;
+		case format::r8g8b8_unorm: r = *p++; g = *p++; b = *p++; break;
+		case format::b8g8r8a8_unorm: b = *p++; g = *p++; r = *p++; a = *p++; break;
+		case format::b8g8r8_unorm: b = *p++; g = *p++; r = *p++; break;
+		case format::r8_unorm: r = *p++; g=r; b=r; break;
 		default: break;
 	}
 	
@@ -931,124 +925,123 @@ color get(const subresource_info& _SubresourceInfo, const const_mapped_subresour
 // Returns the nth mip where the mip level best-fits into a tile. i.e. several
 // tiles are no longer required to store all the mip data, and all mip levels
 // after the one returned by this function can together fit into one mip level.
-static int best_fit_mip_level(const info& _SurfaceInfo, const int2& _TileDimensions)
+static uint best_fit_mip_level(const info& inf, const uint2& tiledimensions)
 {
-	oCHECK_INFO(_SurfaceInfo)
-	if (image == _SurfaceInfo.layout)
+	oCHECK_INFO(inf)
+	if (layout::image == inf.layout)
 		return 0;
 
-	int nthMip = 0;
-	int3 mip = _SurfaceInfo.dimensions;
-	while (any(mip != int3(1,1,1)))
+	uint nthMip = 0;
+	auto mip = inf.dimensions;
+	while (any(mip != uint3(1)))
 	{
-		if (all(_SurfaceInfo.dimensions.xy() <= _TileDimensions))
+		if (all(inf.dimensions.xy() <= tiledimensions))
 			break;
 
 		nthMip++;
-		mip = ::max(int3(1,1,1), mip / int3(2,2,2));
+		mip = ::max(uint3(1), mip / uint3(2));
 	}
 
 	return nthMip;
 }
 
-int num_slice_tiles(const info& _SurfaceInfo, const int2& _TileDimensions)
+uint num_slice_tiles(const info& inf, const uint2& tiledimensions)
 {
-	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
+	oCHECK_NOT_PLANAR(inf.format);
 
-	if (image == _SurfaceInfo.layout)
-		return num_tiles(_SurfaceInfo.dimensions, _TileDimensions);
+	if (layout::image == inf.layout)
+		return num_tiles(inf.dimensions, tiledimensions);
 
-	int numTiles = 0;
-	int lastMip = 1 + best_fit_mip_level(_SurfaceInfo, _TileDimensions);
-	for (int i = 0; i <= lastMip; i++)
+	uint numTiles = 0;
+	uint lastMip = 1 + best_fit_mip_level(inf, tiledimensions);
+	for (uint i = 0; i <= lastMip; i++)
 	{
-		int3 mipDim = dimensions(_SurfaceInfo.format, _SurfaceInfo.dimensions, i);
-		numTiles += num_tiles(mipDim, _TileDimensions);
+		auto mipDim = dimensions(inf.format, inf.dimensions, i);
+		numTiles += num_tiles(mipDim, tiledimensions);
 	}
 
 	return numTiles;
 }
 
-int dimension_in_tiles(int _MipDimension, int _TileDimension)
+uint dimension_in_tiles(int _MipDimension, int _TileDimension)
 {
-	int div = _MipDimension / _TileDimension;
+	uint div = _MipDimension / _TileDimension;
 	if (0 != (_MipDimension % _TileDimension))
 		div++;
 	return div;
 }
 
-int2 dimensions_in_tiles(const int2& _MipDimensions, const int2& _TileDimensions)
+uint2 dimensions_in_tiles(const uint2& mipdimensions, const uint2& tiledimensions)
 {
-	return int2(dimension_in_tiles(_MipDimensions.x, _TileDimensions.x)
-		, dimension_in_tiles(_MipDimensions.y, _TileDimensions.y));
+	return uint2(dimension_in_tiles(mipdimensions.x, tiledimensions.x)
+		, dimension_in_tiles(mipdimensions.y, tiledimensions.y));
 }
 
-int3 dimensions_in_tiles(const int3& _MipDimensions, const int2& _TileDimensions)
+uint3 dimensions_in_tiles(const uint3& mipdimensions, const uint2& tiledimensions)
 {
-	return int3(dimension_in_tiles(_MipDimensions.x, _TileDimensions.x)
-		, dimension_in_tiles(_MipDimensions.y, _TileDimensions.y)
-		, _MipDimensions.z);
+	return uint3(dimension_in_tiles(mipdimensions.x, tiledimensions.x)
+		, dimension_in_tiles(mipdimensions.y, tiledimensions.y)
+		, mipdimensions.z);
 }
 
-int num_tiles(const int2& _MipDimensions, const int2& _TileDimensions)
+uint num_tiles(const uint2& mipdimensions, const uint2& tiledimensions)
 {
-	int2 mipDimInTiles = dimensions_in_tiles(_MipDimensions, _TileDimensions);
+	auto mipDimInTiles = dimensions_in_tiles(mipdimensions, tiledimensions);
 	return mipDimInTiles.x * mipDimInTiles.y;
 }
 
-int num_tiles(const int3& _MipDimensions, const int2& _TileDimensions)
+uint num_tiles(const uint3& mipdimensions, const uint2& tiledimensions)
 {
-	int3 mipDimInTiles = dimensions_in_tiles(_MipDimensions, _TileDimensions);
+	auto mipDimInTiles = dimensions_in_tiles(mipdimensions, tiledimensions);
 	return mipDimInTiles.x * mipDimInTiles.y;
 }
 
 // calculate the tile id of the first tile in the specified slice
-static int slice_first_tile_id(const info& _SurfaceInfo, const int2& _TileDimensions, int _Slice)
+static uint slice_first_tile_id(const info& inf, const uint2& tiledimensions, uint slice)
 {
-	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
-	int numTilesPerSlice = num_slice_tiles(_SurfaceInfo, _TileDimensions);
-	return _Slice * numTilesPerSlice;
+	oCHECK_NOT_PLANAR(inf.format);
+	auto numTilesPerSlice = num_slice_tiles(inf, tiledimensions);
+	return slice * numTilesPerSlice;
 }
 
 // how many tiles from the startID to start the specified mip
-static int tile_id_offset(const info& _SurfaceInfo, const int2& _TileDimensions, int _MipLevel)
+static uint tile_id_offset(const info& inf, const uint2& tiledimensions, uint miplevel)
 {
-	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
-	if (image == _SurfaceInfo.layout)
+	oCHECK_NOT_PLANAR(inf.format);
+	if (layout::image == inf.layout)
 		return 0;
-	int numTiles = 0;
-	int numMips = __min(_MipLevel, 1 + best_fit_mip_level(_SurfaceInfo, _TileDimensions));
-	for (int i = 0; i < numMips; i++)
+	uint numTiles = 0;
+	uint nMips = ::min(miplevel, 1u + best_fit_mip_level(inf, tiledimensions));
+	for (uint i = 0; i < nMips; i++)
 	{
-		int3 mipDim = dimensions(_SurfaceInfo.format, _SurfaceInfo.dimensions, i);
-		numTiles += num_tiles(mipDim, _TileDimensions);
+		auto mipDim = dimensions(inf.format, inf.dimensions, i);
+		numTiles += num_tiles(mipDim, tiledimensions);
 	}
 
 	return numTiles;
 }
 
-static int mip_first_tile_id(const info& _SurfaceInfo, const int2& _TileDimensions, int _MipLevel, int _Slice)
+static uint mip_first_tile_id(const info& inf, const uint2& tiledimensions, uint miplevel, uint slice)
 {
-	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
-
-	int sliceStartID = slice_first_tile_id(_SurfaceInfo, _TileDimensions, _Slice);
-	int mipIDOffset = tile_id_offset(_SurfaceInfo, _TileDimensions, _MipLevel);
+	oCHECK_NOT_PLANAR(inf.format);
+	auto sliceStartID = slice_first_tile_id(inf, tiledimensions, slice);
+	auto mipIDOffset = tile_id_offset(inf, tiledimensions, miplevel);
 	return sliceStartID + mipIDOffset;
 }
 
-bool use_large_pages(const info& _SurfaceInfo, const int2& _TileDimensions, int _SmallPageSize, int _LargePageSize)
+bool use_large_pages(const info& inf, const uint2& tiledimensions, uint small_page_size_bytes, uint large_page_size_bytes)
 {
-	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
-	int surfaceSize = mip_size(_SurfaceInfo.format, _SurfaceInfo.dimensions);
-	if (surfaceSize < (_LargePageSize / 4))
+	oCHECK_NOT_PLANAR(inf.format);
+	auto surfaceSize = mip_size(inf.format, inf.dimensions);
+	if (surfaceSize < (large_page_size_bytes / 4))
 		return false;
 
-	int surfacePitch = row_pitch(_SurfaceInfo);
+	auto surfacePitch = row_pitch(inf);
 
 	// number of rows before we get a page miss
-	float numRowsPerPage = _SmallPageSize / static_cast<float>(surfacePitch);
+	float numRowsPerPage = small_page_size_bytes / static_cast<float>(surfacePitch);
 
-	int tileByteWidth = row_size(_SurfaceInfo.format, _TileDimensions);
+	auto tileByteWidth = row_size(inf.format, tiledimensions);
 	
 	// estimate how many bytes we would work on in a tile before encountering a 
 	// tlb cache miss... not precise, but should be close enough for our purpose 
@@ -1056,119 +1049,120 @@ bool use_large_pages(const info& _SurfaceInfo, const int2& _TileDimensions, int 
 	float numBytesPerTLBMiss = tileByteWidth * numRowsPerPage - numeric_limits<float>::epsilon(); 
 	
 	// If we are not going to get at least half a small page size of work done per tlb miss, better to use large pages instead.
-	return numBytesPerTLBMiss <= (_SmallPageSize / 2);
+	return numBytesPerTLBMiss <= (small_page_size_bytes / 2);
 }
 
-int calc_tile_id(const info& _SurfaceInfo, const tile_info& _TileInfo, int2* _pPosition)
+uint calc_tile_id(const info& inf, const tile_info& _TileInfo, uint2* out_position)
 {
-	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
-	int mipStartTileID = mip_first_tile_id(_SurfaceInfo, _TileInfo.dimensions, _TileInfo.mip_level, _TileInfo.array_slice);
+	oCHECK_NOT_PLANAR(inf.format);
+	int mipStartTileID = mip_first_tile_id(inf, _TileInfo.dimensions, _TileInfo.mip_level, _TileInfo.array_slice);
 	int2 PositionInTiles = _TileInfo.position / _TileInfo.dimensions;
-	int2 mipDim = dimensions(_SurfaceInfo.format, _SurfaceInfo.dimensions.xy(), _TileInfo.mip_level);
+	int2 mipDim = dimensions(inf.format, inf.dimensions.xy(), _TileInfo.mip_level);
 	int2 mipDimInTiles = dimensions_in_tiles(mipDim, _TileInfo.dimensions);
 	int tileID = mipStartTileID + (mipDimInTiles.x * PositionInTiles.y) + PositionInTiles.x;
-	if (_pPosition)
-		*_pPosition = PositionInTiles * _TileInfo.dimensions;
+	if (out_position)
+		*out_position = PositionInTiles * _TileInfo.dimensions;
 	return tileID;
 }
 
-tile_info get_tile(const info& _SurfaceInfo, const int2& _TileDimensions, int _TileID)
+tile_info get_tile(const info& inf, const uint2& tiledimensions, uint tileid)
 {
-	tile_info inf;
+	tile_info tileinf;
 
-	oCHECK_NOT_PLANAR(_SurfaceInfo.format);
-	int numTilesPerSlice = num_slice_tiles(_SurfaceInfo, _TileDimensions);
-	inf.dimensions = _TileDimensions;
-	inf.array_slice = _TileID / numTilesPerSlice;
-	if (::max(1, inf.array_slice) >= safe_array_size(_SurfaceInfo)) throw invalid_argument("TileID is out of range for the specified mip dimensions");
+	oCHECK_NOT_PLANAR(inf.format);
+	auto numTilesPerSlice = num_slice_tiles(inf, tiledimensions);
+	tileinf.dimensions = tiledimensions;
+	tileinf.array_slice = tileid / numTilesPerSlice;
+	if (::max(1u, tileinf.array_slice) >= safe_array_size(inf))
+		throw invalid_argument("TileID is out of range for the specified mip dimensions");
 
-	int firstTileInMip = 0;
-	int3 mipDim = _SurfaceInfo.dimensions;
-	inf.mip_level = 0;
-	int nthTileIntoSlice = _TileID % numTilesPerSlice; 
+	uint firstTileInMip = 0;
+	auto mipDim = inf.dimensions;
+	tileinf.mip_level = 0;
+	uint nthTileIntoSlice = tileid % numTilesPerSlice; 
 
 	if (nthTileIntoSlice > 0)
 	{
 		do 
 		{
-			mipDim = dimensions(_SurfaceInfo.format, _SurfaceInfo.dimensions, ++inf.mip_level);
-			firstTileInMip += num_tiles(mipDim, _TileDimensions);
+			mipDim = dimensions(inf.format, inf.dimensions, ++tileinf.mip_level);
+			firstTileInMip += num_tiles(mipDim, tiledimensions);
 
 		} while (nthTileIntoSlice < firstTileInMip);
 	}
 	
-	int tileOffsetFromMipStart = nthTileIntoSlice - firstTileInMip;
-	int3 mipDimInTiles = dimensions_in_tiles(mipDim, _TileDimensions);
-	int2 positionInTiles = int2(tileOffsetFromMipStart % mipDimInTiles.x, tileOffsetFromMipStart / mipDimInTiles.y);
-	inf.position = positionInTiles * _TileDimensions;
-	return inf;
+	auto tileOffsetFromMipStart = nthTileIntoSlice - firstTileInMip;
+	auto mipDimInTiles = dimensions_in_tiles(mipDim, tiledimensions);
+	auto positionInTiles = uint2(tileOffsetFromMipStart % mipDimInTiles.x, tileOffsetFromMipStart / mipDimInTiles.y);
+	tileinf.position = positionInTiles * tiledimensions;
+	return tileinf;
 }
 
-void enumerate_pixels(const info& _SurfaceInfo
-	, const const_mapped_subresource& _MappedSubresource
-	, const function<void(const void* _pPixel)>& _Enumerator)
+void enumerate_pixels(const info& inf
+	, const const_mapped_subresource& mapped
+	, const function<void(const void* _pPixel)>& enumerator)
 {
-	const void* pRow = _MappedSubresource.data;
-	const void* pEnd = byte_add(pRow, _SurfaceInfo.dimensions.y * _MappedSubresource.row_pitch); // should this be depth/slice pitch?
-	const int FormatSize = element_size(_SurfaceInfo.format);
-	for (; pRow < pEnd; pRow = byte_add(pRow, _MappedSubresource.row_pitch))
+	const void* pRow = mapped.data;
+	const void* pEnd = byte_add(pRow, inf.dimensions.y * mapped.row_pitch); // should this be depth/slice pitch?
+	const int FormatSize = element_size(inf.format);
+	for (; pRow < pEnd; pRow = byte_add(pRow, mapped.row_pitch))
 	{
 		const void* pPixel = pRow;
-		const void* pRowEnd = byte_add(pPixel, _SurfaceInfo.dimensions.x * FormatSize);
+		const void* pRowEnd = byte_add(pPixel, inf.dimensions.x * FormatSize);
 		for (; pPixel < pRowEnd; pPixel = byte_add(pPixel, FormatSize))
-			_Enumerator(pPixel);
+			enumerator(pPixel);
 	}
 }
 
-void enumerate_pixels(const info& _SurfaceInfo
-	, const mapped_subresource& _MappedSubresource
-	, const function<void(void* _pPixel)>& _Enumerator)
+void enumerate_pixels(const info& inf
+	, const mapped_subresource& mapped
+	, const function<void(void* _pPixel)>& enumerator)
 {
-	void* pRow = _MappedSubresource.data;
-	void* pEnd = byte_add(pRow, _SurfaceInfo.dimensions.y * _MappedSubresource.row_pitch); // should this be depth/slice pitch?
-	const int FormatSize = element_size(_SurfaceInfo.format);
-	for (; pRow < pEnd; pRow = byte_add(pRow, _MappedSubresource.row_pitch))
+	void* pRow = mapped.data;
+	void* pEnd = byte_add(pRow, inf.dimensions.y * mapped.row_pitch); // should this be depth/slice pitch?
+	const int FormatSize = element_size(inf.format);
+	for (; pRow < pEnd; pRow = byte_add(pRow, mapped.row_pitch))
 	{
 		void* pPixel = pRow;
-		void* pRowEnd = byte_add(pPixel, _SurfaceInfo.dimensions.x * FormatSize);
+		void* pRowEnd = byte_add(pPixel, inf.dimensions.x * FormatSize);
 		for (; pPixel < pRowEnd; pPixel = byte_add(pPixel, FormatSize))
-			_Enumerator(pPixel);
+			enumerator(pPixel);
 	}
 }
 
 // Calls the specified function on each pixel of two same-formatted images.
-void enumerate_pixels(const info& _SurfaceInfo
-	, const const_mapped_subresource& _MappedSubresource1
-	, const const_mapped_subresource& _MappedSubresource2
-	, const function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2)>& _Enumerator)
+void enumerate_pixels(const info& inf
+	, const const_mapped_subresource& mapped1
+	, const const_mapped_subresource& mapped2
+	, const function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2)>& enumerator)
 {
-	const void* pRow1 = _MappedSubresource1.data;
-	const void* pRow2 = _MappedSubresource2.data;
-	const void* pEnd1 = byte_add(pRow1, _SurfaceInfo.dimensions.y * _MappedSubresource1.row_pitch);
-	const int FormatSize = element_size(_SurfaceInfo.format);
+	const void* pRow1 = mapped1.data;
+	const void* pRow2 = mapped2.data;
+	const void* pEnd1 = byte_add(pRow1, inf.dimensions.y * mapped1.row_pitch);
+	const int FormatSize = element_size(inf.format);
 	while (pRow1 < pEnd1)
 	{
 		const void* pPixel1 = pRow1;
 		const void* pPixel2 = pRow2;
-		const void* pRowEnd1 = byte_add(pPixel1, _SurfaceInfo.dimensions.x * FormatSize);
+		const void* pRowEnd1 = byte_add(pPixel1, inf.dimensions.x * FormatSize);
 		while (pPixel1 < pRowEnd1)
 		{
-			_Enumerator(pPixel1, pPixel2);
+			enumerator(pPixel1, pPixel2);
 			pPixel1 = byte_add(pPixel1, FormatSize);
 			pPixel2 = byte_add(pPixel2, FormatSize);
 		}
 
-		pRow1 = byte_add(pRow1, _MappedSubresource1.row_pitch);
-		pRow2 = byte_add(pRow2, _MappedSubresource2.row_pitch);
+		pRow1 = byte_add(pRow1, mapped1.row_pitch);
+		pRow2 = byte_add(pRow2, mapped2.row_pitch);
 	}
 }
 
 void enumerate_pixels(const info& _SurfaceInfoInput
-	, const const_mapped_subresource& _MappedSubresourceInput1
-	, const const_mapped_subresource& _MappedSubresourceInput2
+	, const const_mapped_subresource& mappedInput1
+	, const const_mapped_subresource& mappedInput2
 	, const info& _SurfaceInfoOutput
-	, mapped_subresource& _MappedSubresourceOutput
-	, const function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut)>& _Enumerator)
+	, mapped_subresource& mappedOutput
+	, const function<void(const void* oRESTRICT _pPixel1, const void* oRESTRICT _pPixel2, void* oRESTRICT _pPixelOut)>& enumerator)
 {
 	if (any(_SurfaceInfoInput.dimensions != _SurfaceInfoOutput.dimensions))
 		throw invalid_argument(formatf("Dimensions mismatch In(%dx%d) != Out(%dx%d)"
@@ -1177,10 +1171,10 @@ void enumerate_pixels(const info& _SurfaceInfoInput
 			, _SurfaceInfoOutput.dimensions.x
 			, _SurfaceInfoOutput.dimensions.y));
 	
-	const void* pRow1 = _MappedSubresourceInput1.data;
-	const void* pRow2 = _MappedSubresourceInput2.data;
-	const void* pEnd1 = byte_add(pRow1, _SurfaceInfoInput.dimensions.y * _MappedSubresourceInput1.row_pitch);
-	void* pRowOut = _MappedSubresourceOutput.data;
+	const void* pRow1 = mappedInput1.data;
+	const void* pRow2 = mappedInput2.data;
+	const void* pEnd1 = byte_add(pRow1, _SurfaceInfoInput.dimensions.y * mappedInput1.row_pitch);
+	void* pRowOut = mappedOutput.data;
 	const int InputFormatSize = element_size(_SurfaceInfoInput.format);
 	const int OutputFormatSize = element_size(_SurfaceInfoOutput.format);
 	while (pRow1 < pEnd1)
@@ -1191,15 +1185,15 @@ void enumerate_pixels(const info& _SurfaceInfoInput
 		void* pOutPixel = pRowOut;
 		while (pPixel1 < pRowEnd1)
 		{
-			_Enumerator(pPixel1, pPixel2, pOutPixel);
+			enumerator(pPixel1, pPixel2, pOutPixel);
 			pPixel1 = byte_add(pPixel1, InputFormatSize);
 			pPixel2 = byte_add(pPixel2, InputFormatSize);
 			pOutPixel = byte_add(pOutPixel, OutputFormatSize);
 		}
 
-		pRow1 = byte_add(pRow1, _MappedSubresourceInput1.row_pitch);
-		pRow2 = byte_add(pRow2, _MappedSubresourceInput2.row_pitch);
-		pRowOut = byte_add(pRowOut, _MappedSubresourceOutput.row_pitch);
+		pRow1 = byte_add(pRow1, mappedInput1.row_pitch);
+		pRow2 = byte_add(pRow2, mappedInput2.row_pitch);
+		pRowOut = byte_add(pRowOut, mappedOutput.row_pitch);
 	}
 }
 
@@ -1240,45 +1234,44 @@ static void sum_squared_diff_b8g8r8a8_to_r8(const void* oRESTRICT _pPixel1, cons
 	_pAccum->fetch_add(uint(absDiff * absDiff));
 }
 
-static rms_enumerator get_rms_enumerator(format _InFormat, format _OutFormat)
+static rms_enumerator get_rms_enumerator(format in_format, format out_format)
 {
-	#define IO(i,o) (((i)<<16) | (o))
-	int req = IO(_InFormat, _OutFormat);
+	#define IO(i,o) ((uint(i)<<16) | uint(o))
+	uint req = IO(in_format, out_format);
 
 	switch (req)
 	{
-		case IO(r8_unorm, r8_unorm): return sum_squared_diff_r8_to_r8;
-		case IO(b8g8r8_unorm, r8_unorm): return sum_squared_diff_b8g8r8_to_r8;
-		case IO(b8g8r8a8_unorm, r8_unorm): return sum_squared_diff_b8g8r8a8_to_r8;
+		case IO(format::r8_unorm, format::r8_unorm): return sum_squared_diff_r8_to_r8;
+		case IO(format::b8g8r8_unorm, format::r8_unorm): return sum_squared_diff_b8g8r8_to_r8;
+		case IO(format::b8g8r8a8_unorm, format::r8_unorm): return sum_squared_diff_b8g8r8a8_to_r8;
 		default: break;
 	}
 
-	throw invalid_argument(formatf("%s -> %s not supported", as_string(_InFormat), as_string(_OutFormat)));
-
+	throw invalid_argument(formatf("%s -> %s not supported", as_string(in_format), as_string(out_format)));
 	#undef IO
 }
 
-float calc_rms(const info& _SurfaceInfo
-	, const const_mapped_subresource& _MappedSubresource1
-	, const const_mapped_subresource& _MappedSubresource2)
+float calc_rms(const info& inf
+	, const const_mapped_subresource& mapped1
+	, const const_mapped_subresource& mapped2)
 {
-	rms_enumerator en = get_rms_enumerator(_SurfaceInfo.format, r8_unorm);
+	rms_enumerator en = get_rms_enumerator(inf.format, format::r8_unorm);
 	atomic<uint> SumOfSquares(0);
 	uint DummyPixelOut[4]; // largest a pixel can ever be currently
 
-	enumerate_pixels(_SurfaceInfo
-		, _MappedSubresource1
-		, _MappedSubresource2
+	enumerate_pixels(inf
+		, mapped1
+		, mapped2
 		, bind(en, _1, _2, &DummyPixelOut, &SumOfSquares));
 
-	return sqrt(SumOfSquares / float(_SurfaceInfo.dimensions.x * _SurfaceInfo.dimensions.y));
+	return sqrt(SumOfSquares / float(inf.dimensions.x * inf.dimensions.y));
 }
 
 float calc_rms(const info& _SurfaceInfoInput
-	, const const_mapped_subresource& _MappedSubresourceInput1
-	, const const_mapped_subresource& _MappedSubresourceInput2
+	, const const_mapped_subresource& mappedInput1
+	, const const_mapped_subresource& mappedInput2
 	, const info& _SurfaceInfoOutput
-	, mapped_subresource& _MappedSubresourceOutput)
+	, mapped_subresource& mappedOutput)
 {
 	function<void(const void* _pPixel1, const void* _pPixel2, void* _pPixelOut)> Fn;
 
@@ -1286,16 +1279,16 @@ float calc_rms(const info& _SurfaceInfoInput
 	atomic<uint> SumOfSquares(0);
 
 	enumerate_pixels(_SurfaceInfoInput
-		, _MappedSubresourceInput1
-		, _MappedSubresourceInput2
+		, mappedInput1
+		, mappedInput2
 		, _SurfaceInfoOutput
-		, _MappedSubresourceOutput
+		, mappedOutput
 		, bind(en, _1, _2, _3, &SumOfSquares));
 
 	return sqrt(SumOfSquares / float(_SurfaceInfoInput.dimensions.x * _SurfaceInfoInput.dimensions.y));
 }
 
-typedef void (*histogram_enumerator)(const void* _pPixel, atomic<uint>* _Histogram);
+typedef void (*histogramenumerator)(const void* _pPixel, atomic<uint>* _Histogram);
 
 static void histogram_r8_unorm_8bit(const void* _pPixel, atomic<uint>* _Histogram)
 {
@@ -1324,39 +1317,39 @@ static void histogram_r16_float_16bit(const void* _pPixel, atomic<uint>* _Histog
 	_Histogram[c]++;
 }
 
-histogram_enumerator get_histogram_enumerator(format _Format, int _Bitdepth)
+histogramenumerator get_histogramenumerator(const format& f, int _Bitdepth)
 {
-	#define IO(f,b) (((f) << 16) | (b))
-	int sel = IO(_Format, _Bitdepth);
+	#define IO(f,b) ((uint(f) << 16) | uint(b))
+	uint sel = IO(f, _Bitdepth);
 	switch (sel)
 	{
-		case IO(r8_unorm, 8): return histogram_r8_unorm_8bit;
-		case IO(b8g8r8a8_unorm, 8): return histogram_b8g8r8a8_unorm_8bit;
-		case IO(r16_unorm, 16): return histogram_r16_unorm_16bit;
-		case IO(r16_float, 16): return histogram_r16_float_16bit;
+		case IO(format::r8_unorm, 8): return histogram_r8_unorm_8bit;
+		case IO(format::b8g8r8a8_unorm, 8): return histogram_b8g8r8a8_unorm_8bit;
+		case IO(format::r16_unorm, 16): return histogram_r16_unorm_16bit;
+		case IO(format::r16_float, 16): return histogram_r16_float_16bit;
 		default: break;
 	}
 
-	throw invalid_argument(formatf("%dbit histogram on %s not supported", _Bitdepth, as_string(_Format)));
+	throw invalid_argument(formatf("%dbit histogram on %s not supported", _Bitdepth, as_string(f)));
 
 	#undef IO
 }
 
-void histogram8(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[256])
+void histogram8(const info& inf, const const_mapped_subresource& mapped, uint _Histogram[256])
 {
 	atomic<uint> H[256];
 	memset(H, 0, sizeof(uint) * 256);
-	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 8);
-	enumerate_pixels(_SurfaceInfo, _MappedSubresource, bind(en, _1, H));
+	histogramenumerator en = get_histogramenumerator(inf.format, 8);
+	enumerate_pixels(inf, mapped, bind(en, _1, H));
 	memcpy(_Histogram, H, sizeof(uint) * 256);
 }
 
-void histogram16(const info& _SurfaceInfo, const const_mapped_subresource& _MappedSubresource, uint _Histogram[65536])
+void histogram16(const info& inf, const const_mapped_subresource& mapped, uint _Histogram[65536])
 {
 	atomic<uint> H[65536];
 	memset(H, 0, sizeof(uint) * 65536);
-	histogram_enumerator en = get_histogram_enumerator(_SurfaceInfo.format, 16);
-	enumerate_pixels(_SurfaceInfo, _MappedSubresource, bind(en, _1, H));
+	histogramenumerator en = get_histogramenumerator(inf.format, 16);
+	enumerate_pixels(inf, mapped, bind(en, _1, H));
 	memcpy(_Histogram, H, sizeof(uint) * 65536);
 }
 

@@ -41,8 +41,8 @@ struct gpu_test_texture3dmip : public gpu_texture_test
 	resource* make_test_texture() override
 	{
 		surface::info si;
-		si.layout = surface::tight;
-		si.format = surface::b8g8r8a8_unorm;
+		si.layout = surface::layout::tight;
+		si.format = surface::format::b8g8r8a8_unorm;
 		si.dimensions = int3(64,64,64);
 		surface::texel_buffer image(si);
 		{

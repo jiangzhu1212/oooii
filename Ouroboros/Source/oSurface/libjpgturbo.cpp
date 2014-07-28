@@ -94,11 +94,11 @@ static J_COLOR_SPACE to_jcs(format _Format, int* _NumComponens)
 {
 	switch (_Format)
 	{
-		case r8_unorm: *_NumComponens = 1; return JCS_GRAYSCALE;
-		case r8g8b8_unorm: *_NumComponens = 3; return JCS_RGB;
-		case b8g8r8_unorm: *_NumComponens = 3; return JCS_EXT_BGR;
-		case r8g8b8a8_unorm: *_NumComponens = 4; return JCS_EXT_RGBA;
-		case b8g8r8a8_unorm: *_NumComponens = 4; return JCS_EXT_BGRA;
+		case format::r8_unorm: *_NumComponens = 1; return JCS_GRAYSCALE;
+		case format::r8g8b8_unorm: *_NumComponens = 3; return JCS_RGB;
+		case format::b8g8r8_unorm: *_NumComponens = 3; return JCS_EXT_BGR;
+		case format::r8g8b8a8_unorm: *_NumComponens = 4; return JCS_EXT_RGBA;
+		case format::b8g8r8a8_unorm: *_NumComponens = 4; return JCS_EXT_BGRA;
 		default: break;
 	}
 	return JCS_UNKNOWN;
@@ -108,23 +108,23 @@ static format from_jcs(J_COLOR_SPACE _ColorSpace)
 {
 	switch (_ColorSpace)
 	{
-		case JCS_GRAYSCALE: return r8_unorm;
-		case JCS_RGB: return r8g8b8_unorm;
-		case JCS_YCbCr: return y8_u8v8_unorm;
+		case JCS_GRAYSCALE: return format::r8_unorm;
+		case JCS_RGB: return format::r8g8b8_unorm;
+		case JCS_YCbCr: return format::y8_u8v8_unorm;
 		//case JCS_CMYK: return ?;/* C/M/Y/K */
 		//case JCS_YCCK: return ?;/* Y/Cb/Cr/K */
 		//case JCS_RGBX: return ?;
-		case JCS_EXT_BGR: return b8g8r8_unorm;
-		case JCS_EXT_BGRX: return b8g8r8x8_unorm;
-		case JCS_EXT_XBGR: return x8b8g8r8_unorm;
+		case JCS_EXT_BGR: return format::b8g8r8_unorm;
+		case JCS_EXT_BGRX: return format::b8g8r8x8_unorm;
+		case JCS_EXT_XBGR: return format::x8b8g8r8_unorm;
 		//case JCS_EXT_XRGB: return ?;
-		case JCS_EXT_RGBA: return r8g8b8a8_unorm;
-		case JCS_EXT_BGRA: return b8g8r8a8_unorm;
-		case JCS_EXT_ABGR: return a8b8g8r8_unorm;
+		case JCS_EXT_RGBA: return format::r8g8b8a8_unorm;
+		case JCS_EXT_BGRA: return format::b8g8r8a8_unorm;
+		case JCS_EXT_ABGR: return format::a8b8g8r8_unorm;
 		//case JCS_EXT_ARGB: return ?;
 		default: break;
 	}
-	return unknown;
+	return format::unknown;
 }
 
 info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
@@ -150,7 +150,7 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 
 	info si;
 	si.format = from_jcs(cinfo.jpeg_color_space);
-	si.layout = image;
+	si.layout = layout::image;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
 	return si;
 }
@@ -231,19 +231,19 @@ texel_buffer decode_jpg(const void* buffer, size_t size, const alpha_option& opt
 
 	switch (si.format)
 	{
-		case b8g8r8_unorm:
-		case r8g8b8_unorm:
-			si.format = option == alpha_option::force_alpha ? b8g8r8a8_unorm : b8g8r8_unorm;
+		case format::b8g8r8_unorm:
+		case format::r8g8b8_unorm:
+			si.format = option == alpha_option::force_alpha ? format::b8g8r8a8_unorm : format::b8g8r8_unorm;
 			cinfo.out_color_space = option == alpha_option::force_alpha ? JCS_EXT_BGRA : JCS_EXT_BGR;
 			cinfo.out_color_components = option == alpha_option::force_alpha ? 4 : 3;
 			break;
-		case b8g8r8a8_unorm:
-		case r8g8b8a8_unorm:
-			si.format = option == alpha_option::force_no_alpha ? b8g8r8_unorm : b8g8r8a8_unorm;
+		case format::b8g8r8a8_unorm:
+		case format::r8g8b8a8_unorm:
+			si.format = option == alpha_option::force_no_alpha ? format::b8g8r8_unorm : format::b8g8r8a8_unorm;
 			cinfo.out_color_space = option == alpha_option::force_no_alpha ? JCS_EXT_BGR : JCS_EXT_BGRA;
 			cinfo.out_color_components = option == alpha_option::force_no_alpha ? 3 : 4;
 			break;
-		case r8_unorm:
+		case format::r8_unorm:
 			break;
 		default:
 			throw std::exception("unsupported format");

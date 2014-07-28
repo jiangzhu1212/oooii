@@ -166,7 +166,7 @@ surface::format to_surface_format(DXGI_FORMAT _Format)
 
 DXGI_FORMAT from_surface_format(surface::format _Format)
 {
-	if (_Format <= DXGI_FORMAT_BC7_UNORM_SRGB)
+	if ((int)_Format <= DXGI_FORMAT_BC7_UNORM_SRGB)
 		return static_cast<DXGI_FORMAT>(_Format);
 
 	if (surface::is_yuv(_Format) && surface::num_subformats(_Format) > 1)

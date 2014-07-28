@@ -83,7 +83,7 @@ void texel_buffer::initialize_array(const texel_buffer* const* sources, uint num
 	initialize(si);
 
 	const uint nMips = num_mips(mips, si.dimensions);
-	const uint nSlices = max(1, si.array_size);
+	const uint nSlices = max(1u, si.array_size);
 	for (uint i = 0; i < nSlices; i++)
 	{
 		int dst = calc_subresource(0, i, 0, nMips, nSlices);
@@ -110,7 +110,7 @@ void texel_buffer::initialize_3d(const texel_buffer* const* sources, uint num_so
 	box region;
 	region.right = si.dimensions.x;
 	region.bottom = si.dimensions.y;
-	for (int i = 0; i < si.dimensions.z; i++)
+	for (uint i = 0; i < si.dimensions.z; i++)
 	{
 		region.front = i;
 		region.back = i + 1;
@@ -143,14 +143,14 @@ void texel_buffer::flatten()
 
 	int rp = row_pitch(inf);
 	size_t sz = size();
-	inf.layout = surface::image;
+	inf.layout = surface::layout::image;
 	inf.dimensions = int3(rp / element_size(inf.format), int(sz / rp), 1);
 	inf.array_size = 0;
 }
 
 void texel_buffer::update_subresource(uint subresource, const const_mapped_subresource& src, const copy_option& option)
 {
-	int2 bd;
+	uint2 bd;
 	mapped_subresource dst = get_mapped_subresource(inf, subresource, 0, bits, &bd);
 	lock_t lock(mtx);
 	memcpy2d(dst.data, dst.row_pitch, src.data, src.row_pitch, bd.x, bd.y, option == copy_option::flip_vertically);
@@ -158,15 +158,15 @@ void texel_buffer::update_subresource(uint subresource, const const_mapped_subre
 
 void texel_buffer::update_subresource(uint subresource, const box& _box, const const_mapped_subresource& src, const copy_option& option)
 {
-	if (is_block_compressed(inf.format) || inf.format == r1_unorm)
+	if (is_block_compressed(inf.format) || inf.format == format::r1_unorm)
 		throw std::invalid_argument("block compressed and bit formats not supported");
 
-	int2 bd;
+	uint2 bd;
 	mapped_subresource Dest = get_mapped_subresource(inf, subresource, 0, bits, &bd);
 
-	const int NumRows = _box.height();
-	int PixelSize = element_size(inf.format);
-	int RowSize = PixelSize * _box.width();
+	const auto NumRows = _box.height();
+	auto PixelSize = element_size(inf.format);
+	auto RowSize = PixelSize * _box.width();
 
 	// Dest points at start of subresource, so offset to subrect of first slice
 	Dest.data = byte_add(Dest.data, _box.front * Dest.depth_pitch + _box.top * Dest.row_pitch + _box.left * PixelSize);
@@ -182,10 +182,10 @@ void texel_buffer::update_subresource(uint subresource, const box& _box, const c
 	}
 }
 
-void texel_buffer::map(uint subresource, mapped_subresource* _pMapped, int2* _pByteDimensions)
+void texel_buffer::map(uint subresource, mapped_subresource* _pMapped, uint2* out_byte_dimensions)
 {
 	mtx.lock();
-	*_pMapped = get_mapped_subresource(inf, subresource, 0, bits, _pByteDimensions);
+	*_pMapped = get_mapped_subresource(inf, subresource, 0, bits, out_byte_dimensions);
 }
 
 void texel_buffer::unmap(uint subresource)
@@ -193,10 +193,10 @@ void texel_buffer::unmap(uint subresource)
 	mtx.unlock();
 }
 
-void texel_buffer::map_const(uint subresource, const_mapped_subresource* _pMapped, int2* _pByteDimensions) const
+void texel_buffer::map_const(uint subresource, const_mapped_subresource* _pMapped, uint2* out_byte_dimensions) const
 {
 	lock_shared();
-	*_pMapped = get_const_mapped_subresource(inf, subresource, 0, bits, _pByteDimensions);
+	*_pMapped = get_const_mapped_subresource(inf, subresource, 0, bits, out_byte_dimensions);
 }
 
 void texel_buffer::unmap_const(uint subresource) const
@@ -206,7 +206,7 @@ void texel_buffer::unmap_const(uint subresource) const
 
 void texel_buffer::copy_to(uint subresource, const mapped_subresource& dst, const copy_option& option) const
 {
-	int2 bd;
+	uint2 bd;
 	const_mapped_subresource src = get_const_mapped_subresource(inf, subresource, 0, bits, &bd);
 	lock_shared_t lock(mtx);
 	memcpy2d(dst.data, dst.row_pitch, src.data, src.row_pitch, bd.x, bd.y, option == copy_option::flip_vertically);
@@ -266,22 +266,22 @@ void texel_buffer::generate_mips(const filter& f)
 {
 	lock_t lock(mtx);
 
-	int nMips = num_mips(inf);
-	int nSlices = max(1, inf.array_size);
+	uint nMips = num_mips(inf);
+	uint nSlices = max(1u, inf.array_size);
 
-	for (int slice = 0; slice < nSlices; slice++)
+	for (uint slice = 0; slice < nSlices; slice++)
 	{
 		int mip0subresource = calc_subresource(0, slice, 0, nMips, inf.array_size);
 		const_mapped_subresource mip0 = get_const_mapped_subresource(inf, mip0subresource, 0, bits);
 
-		for (int mip = 1; mip < nMips; mip++)
+		for (uint mip = 1; mip < nMips; mip++)
 		{
 			uint subresource = calc_subresource(mip, slice, 0, nMips, inf.array_size);
 			subresource_info subinfo = surface::subresource(inf, subresource);
 
-			for (int DepthIndex = 0; DepthIndex < subinfo.dimensions.z; DepthIndex++)
+			for (uint depth = 0; depth < subinfo.dimensions.z; depth++)
 			{
-				mapped_subresource dst = get_mapped_subresource(inf, subresource, DepthIndex, bits);
+				mapped_subresource dst = get_mapped_subresource(inf, subresource, depth, bits);
 				info di = inf;
 				di.dimensions = subinfo.dimensions;
 				resize(inf, mip0, di, dst, f);
@@ -311,7 +311,7 @@ float calc_rms(const texel_buffer& b1, const texel_buffer& b2, texel_buffer* out
 	if (out_diffs)
 	{
 		dsi = si1;
-		dsi.format = r8_unorm;
+		dsi.format = format::r8_unorm;
 		out_diffs->initialize(dsi);
 	}
 

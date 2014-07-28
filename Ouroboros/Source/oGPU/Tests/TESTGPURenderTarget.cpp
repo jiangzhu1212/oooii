@@ -55,8 +55,8 @@ struct gpu_test_render_target : public gpu_test
 
 		Cube.initialize_first_cube(Device);
 
-		ColorTarget.initialize("ColorTarget", Device, surface::b8g8r8a8_unorm, 256, 256, 0, false);
-		DepthTarget.initialize("DepthTarget", Device, surface::d24_unorm_s8_uint, 256, 256, 0, false, 0);
+		ColorTarget.initialize("ColorTarget", Device, surface::format::b8g8r8a8_unorm, 256, 256, 0, false);
+		DepthTarget.initialize("DepthTarget", Device, surface::format::d24_unorm_s8_uint, 256, 256, 0, false, 0);
 	
 		pipeline p;
 		p.input = gpu::intrinsic::vertex_layout::pos;

@@ -64,7 +64,7 @@ void gpu_test::create(const char* _Title, bool _DevMode, const int* _pSnapshotFr
 
 	PrimaryColorTarget.initialize(Window.get(), Device, true);
 	uint2 dim = PrimaryColorTarget.dimensions();
-	PrimaryDepthTarget.initialize("Depth", Device, surface::d24_unorm_s8_uint, dim.x, dim.y, 0, false, 0);
+	PrimaryDepthTarget.initialize("Depth", Device, surface::format::d24_unorm_s8_uint, dim.x, dim.y, 0, false, 0);
 	BlendState.initialize("TestBlendState", Device);
 	DepthStencilState.initialize("TestDepthState", Device);
 	RasterizerState.initialize("TestRasterizer", Device);
@@ -190,7 +190,7 @@ void gpu_texture_test::render()
 surface::texel_buffer surface_load(const path& _Path, bool _Mips, const surface::alpha_option& _Option)
 {
 	scoped_allocation b = filesystem::load(_Path);
-	auto sb = surface::decode(b, b.size(), _Option, _Mips ? surface::tight : surface::image);
+	auto sb = surface::decode(b, b.size(), _Option, _Mips ? surface::layout::tight : surface::layout::image);
 	if (_Mips)
 		sb.generate_mips();
 	return sb;
@@ -200,15 +200,15 @@ surface::texel_buffer make_1D(int _Width, bool _Mips)
 {
 	surface::info si;
 	si.dimensions = int3(_Width, 1, 1);
-	si.layout = _Mips ? surface::tight : surface::image;
-	si.format = surface::b8g8r8a8_unorm;
+	si.layout = _Mips ? surface::layout::tight : surface::layout::image;
+	si.format = surface::format::b8g8r8a8_unorm;
 	surface::texel_buffer s(si);
 
 	{
 		surface::lock_guard lock(s);
 		static const color sConsoleColors[] = { black, navy, green, teal, maroon, purple, olive, silver, gray, blue, lime, aqua, red, fuchsia, yellow, white };
 		color* texture1Ddata = (color*)lock.mapped.data;
-		for (int i = 0; i < si.dimensions.x; i++)
+		for (uint i = 0; i < si.dimensions.x; i++)
 			texture1Ddata[i] = sConsoleColors[i % oCOUNTOF(sConsoleColors)];
 	}
 

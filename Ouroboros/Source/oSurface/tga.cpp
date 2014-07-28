@@ -59,7 +59,7 @@ info get_info_tga(const void* buffer, size_t size)
 		return info();
 
 	info si;
-	si.format = h->bpp == 32 ? b8g8r8a8_unorm : b8g8r8_unorm;
+	si.format = h->bpp == 32 ? format::b8g8r8a8_unorm : format::b8g8r8_unorm;
 	si.dimensions = int3(h->width, h->height, 1);
 	return si;
 }
@@ -71,7 +71,7 @@ scoped_allocation encode_tga(const texel_buffer& b
 	oCHECK_ARG(compression == compression::none, "compression not supported");
 
 	auto info = b.get_info();
-	oCHECK_ARG(info.format == b8g8r8a8_unorm || info.format == b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
+	oCHECK_ARG(info.format == format::b8g8r8a8_unorm || info.format == format::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 	oCHECK_ARG(info.dimensions.x <= 0xffff && info.dimensions.y <= 0xffff, "dimensions must be <= 65535");
 
 	auto dstinfo = info;
@@ -99,7 +99,7 @@ scoped_allocation encode_tga(const texel_buffer& b
 texel_buffer decode_tga(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
 {
 	info si = get_info_tga(buffer, size);
-	oCHECK(si.format != unknown, "invalid bmp");
+	oCHECK(si.format != format::unknown, "invalid bmp");
 	const TGAHeader* h = (const TGAHeader*)buffer;
 	info dsi = si;
 	dsi.format = alpha_option_format(si.format, option);

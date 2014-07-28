@@ -31,11 +31,13 @@
 #ifndef oBase_stringize_h
 #define oBase_stringize_h
 
+#include <oBase/enum_iterator.h>
 #include <oBase/string.h>
 #include <vector>
 
 #define oDEFINE_TO_STRING(_T) char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const _T& _Value) { return detail::to_string(_StrDestination, _SizeofStrDestination, _Value); }
 #define oDEFINE_FROM_STRING(_T, _NumTs) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string<_T, _NumTs>(_pValue, _StrSource); }
+#define oDEFINE_FROM_STRING_ENUM_CLASS(_T) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string_enum<_T>(_pValue, _StrSource); }
 #define oDEFINE_FROM_STRING2(_T, _NumTs, _InvalidValue) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string<_T, _NumTs>(_pValue, _StrSource, _InvalidValue); }
 #define oDEFINE_TO_FROM_STRING(_T, _NumTs) oDEFINE_TO_STRING(_T) oDEFINE_FROM_STRING(_T, _NumTs)
 
@@ -90,6 +92,22 @@ namespace detail {
 			if (!_stricmp(_StrSource, as_string(T(i))))
 			{
 				*_pValue = T(i);
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// todo: unify this with the above impl... this is for class enum types that assumes a count member
+	template<typename T> bool from_string_enum(T* _pValue, const char* _StrSource, const T& _InvalidValue = T(0))
+	{
+		static_assert(std::is_enum<T>::value, "not enum");
+		*_pValue = _InvalidValue;
+		for (const auto& e : enum_iterator<T>())
+		{
+			if (!_stricmp(_StrSource, as_string(e)))
+			{
+				*_pValue = e;
 				return true;
 			}
 		}
