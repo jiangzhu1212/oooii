@@ -31,6 +31,12 @@
 
 namespace ouro {
 
+// How do I walk all pools?
+static void o_tlsf_walk_heap(tlsf_t tlsf, tlsf_walker walker, void* user)
+{
+	tlsf_walk_pool(tlsf_get_pool(tlsf), walker, user);
+}
+
 struct walk_stats
 {
 	size_t largest_free_block_bytes;
@@ -50,6 +56,8 @@ static void find_largest_free_block(void* ptr, size_t bytes, int used, void* use
 void tlsf_allocator::initialize(void* arena, size_t bytes)
 {
 	oCHECK(byte_aligned(arena, default_alignment), "tlsf arena must be 16-byte aligned");
+	heap = arena;
+	heap_size = bytes;
 	reset();
 }
 
@@ -67,7 +75,7 @@ void* tlsf_allocator::deinitialize()
 {
 	if (stats.num_allocations)
 	{
-		tlsf_walk_heap(heap, trace_leaks, nullptr);
+		o_tlsf_walk_heap(heap, trace_leaks, nullptr);
 		throw std::runtime_error(formatf("allocator destroyed with %u outstanding allocations", stats.num_allocations));
 	}
 
@@ -89,6 +97,7 @@ tlsf_allocator& tlsf_allocator::operator=(tlsf_allocator&& that)
 {
 	if (this != &that)
 	{
+		oASSERT(!heap, "how to clean up a maybe-has-allocs heap?");
 		heap = that.heap; that.heap = nullptr;
 		heap_size = that.heap_size; that.heap_size = 0;
 		stats = that.stats; that.stats = allocate_stats();
@@ -101,7 +110,7 @@ allocate_stats tlsf_allocator::get_stats() const
 {
 	allocate_stats s = stats;
 	walk_stats ws;
-	tlsf_walk_heap(heap, find_largest_free_block, &ws);
+	o_tlsf_walk_heap(heap, find_largest_free_block, &ws);
 	s.largest_free_block_bytes = ws.largest_free_block_bytes;
 	s.num_free_blocks = ws.num_free_blocks;
 	return s;
@@ -158,16 +167,16 @@ bool tlsf_allocator::in_range(void* ptr) const
 
 bool tlsf_allocator::valid() const
 {
-	return heap && !tlsf_check_heap(heap);
+	return heap && !tlsf_check(heap);
 }
 
 void tlsf_allocator::reset()
 {
 	if (!heap || !heap_size)
 		throw std::runtime_error("allocator not valid");
-	heap = tlsf_create(heap, heap_size);
+	heap = tlsf_create_with_pool(heap, heap_size);
 	stats = allocate_stats();
-	stats.capacity_bytes = heap_size - tlsf_overhead();
+	stats.capacity_bytes = heap_size - tlsf_size();
 }
 
 static void tlsf_walker(void* ptr, size_t bytes, int used, void* user)
@@ -180,7 +189,7 @@ static void tlsf_walker(void* ptr, size_t bytes, int used, void* user)
 void tlsf_allocator::walk_heap(const std::function<void(void* ptr, size_t bytes, bool used)>& enumerator)
 {
 	if (enumerator)
-		tlsf_walk_heap(heap, tlsf_walker, (void*)&enumerator);
+		o_tlsf_walk_heap(heap, tlsf_walker, (void*)&enumerator);
 }
 
 } // namespace ouro

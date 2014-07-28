@@ -26,6 +26,15 @@
 */
 
 /*
+** Detect whether or not we are building for a 32- or 64-bit (LP/LLP)
+** architecture. There is no reliable portable method at compile-time.
+*/
+#if defined (__alpha__) || defined (__ia64__) || defined (__x86_64__) \
+	|| defined (_WIN64) || defined (__LP64__) || defined (__LLP64__)
+#define TLSF_64BIT
+#endif
+
+/*
 ** gcc 3.4 and above have builtin support, specialized for architecture.
 ** Some compilers masquerade as gcc; patchlevel test filters them out.
 */
@@ -43,8 +52,8 @@ tlsf_decl int tlsf_fls(unsigned int word)
 	return bit - 1;
 }
 
-#elif defined (_MSC_VER) && defined (_M_IX86) && (_MSC_VER >= 1400)
-/* Microsoft Visual C++ 2005 support on x86 architectures. */
+#elif defined (_MSC_VER) && (_MSC_VER >= 1400) && (defined (_M_IX86) || defined (_M_X64))
+/* Microsoft Visual C++ support on x86/X64 architectures. */
 
 #include <intrin.h>
 
@@ -63,26 +72,6 @@ tlsf_decl int tlsf_ffs(unsigned int word)
 	return _BitScanForward(&index, word) ? index : -1;
 }
 
-#elif defined (_MSC_VER) && defined (_M_X64) && (_MSC_VER >= 1400) // @oooii-tony: Add 64-bit versions if intrinsics
-/* Microsoft Visual C++ 2005 support on x86 architectures. */
-
-#include <intrin.h>
-
-#pragma intrinsic(_BitScanReverse64)
-#pragma intrinsic(_BitScanForward64)
-
-tlsf_decl int tlsf_fls(unsigned long long word)
-{
-	unsigned long index;
-	return _BitScanReverse64(&index, word) ? index : -1;
-}
-
-tlsf_decl int tlsf_ffs(unsigned long long word)
-{
-	unsigned long index;
-	return _BitScanForward64(&index, word) ? index : -1;
-}
-
 #elif defined (_MSC_VER) && defined (_M_PPC)
 /* Microsoft Visual C++ support on PowerPC architectures. */
 
@@ -98,6 +87,40 @@ tlsf_decl int tlsf_ffs(unsigned int word)
 {
 	const unsigned int reverse = word & (~word + 1);
 	const int bit = 32 - _CountLeadingZeros(reverse);
+	return bit - 1;
+}
+
+#elif defined (__ARMCC_VERSION)
+/* RealView Compilation Tools for ARM */
+
+tlsf_decl int tlsf_ffs(unsigned int word)
+{
+	const unsigned int reverse = word & (~word + 1);
+	const int bit = 32 - __clz(reverse);
+	return bit - 1;
+}
+
+tlsf_decl int tlsf_fls(unsigned int word)
+{
+	const int bit = word ? 32 - __clz(word) : 0;
+	return bit - 1;
+}
+
+#elif defined (__ghs__)
+/* Green Hills support for PowerPC */
+
+#include <ppc_ghs.h>
+
+tlsf_decl int tlsf_ffs(unsigned int word)
+{
+	const unsigned int reverse = word & (~word + 1);
+	const int bit = 32 - __CLZ32(reverse);
+	return bit - 1;
+}
+
+tlsf_decl int tlsf_fls(unsigned int word)
+{
+	const int bit = word ? 32 - __CLZ32(word) : 0;
 	return bit - 1;
 }
 
@@ -129,6 +152,27 @@ tlsf_decl int tlsf_fls(unsigned int word)
 	return tlsf_fls_generic(word) - 1;
 }
 
+#endif
+
+/* Possibly 64-bit version of tlsf_fls. */
+#if defined (TLSF_64BIT)
+tlsf_decl int tlsf_fls_sizet(size_t size)
+{
+	int high = (int)(size >> 32);
+	int bits = 0;
+	if (high)
+	{
+		bits = 32 + tlsf_fls(high);
+	}
+	else
+	{
+		bits = tlsf_fls((int)size & 0xffffffff);
+
+	}
+	return bits;
+}
+#else
+#define tlsf_fls_sizet tlsf_fls
 #endif
 
 #undef tlsf_decl
