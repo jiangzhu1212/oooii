@@ -63,11 +63,14 @@
     <ClCompile Include="memory\is_ascii.cpp" />
     <ClCompile Include="memory\memcmp4.cpp" />
     <ClCompile Include="memory\memmem.cpp" />
+    <ClCompile Include="memory\memnset.cpp" />
     <ClCompile Include="memory\memset2.cpp" />
     <ClCompile Include="memory\memset2d.cpp" />
     <ClCompile Include="memory\memset2d2.cpp" />
     <ClCompile Include="memory\memset2d4.cpp" />
     <ClCompile Include="memory\memset4.cpp" />
+    <ClCompile Include="memory\memset8.cpp" />
+    <ClCompile Include="memory\rle_decode.cpp" />
     <ClCompile Include="memory\utfcmp.cpp" />
     <ClCompile Include="opttok.cpp" />
     <ClCompile Include="pch.cpp">

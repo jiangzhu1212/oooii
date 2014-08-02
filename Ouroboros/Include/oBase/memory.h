@@ -51,6 +51,11 @@ inline bool is_binary(const void* _pBuffer, size_t _SizeofBuffer) { return !is_a
 // or fefefe.
 void memset2(void* _pDestination, short _Value, size_t _NumBytes);
 void memset4(void* _pDestination, long _Value, size_t _NumBytes);
+void memset8(void* _pDestination, long long _Value, size_t _NumBytes);
+
+// Sets n bytes from source to destination for the specified copy size number 
+// of bytes. This uses memset and above flavors if _SourceSize is appropriate.
+void memnset(void* oRESTRICT _pDestination, const void* oRESTRICT _pSource, size_t _SourceSize, size_t _CopySize);
 
 // Compares a run of memory to a fixed value. Memory unaligned to the size of 
 // value (sizeof(long)) will compare to the aligned byte portion of value. This
@@ -64,6 +69,10 @@ bool memcmp4(const void* _pMemory, long _Value, size_t _NumBytes);
 // locate a binary substring, like Linux's memmem function.
 void* memmem(void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _SizeofFind);
 inline const void* memmem(const void* _pBuffer, size_t _SizeofBuffer, const void* _pFind, size_t _SizeofFind) { return memmem(const_cast<void*>(_pBuffer), _SizeofBuffer, _pFind, _SizeofFind); }
+
+// Decodes PackBits-style run-length encoding (RLE) for an arbitrarily-sized
+// repeat pattern as specified in size by _ElementSize.
+void rle_decode(void* oRESTRICT _pDestination, size_t _SizeofDestination, size_t _ElementSize, const void* oRESTRICT _pSource);
 
 // _____________________________________________________________________________
 // 2D copies for copying image data, stuff that's easier to conceptualize as 2D 
