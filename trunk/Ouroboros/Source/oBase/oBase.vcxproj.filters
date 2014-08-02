@@ -271,6 +271,15 @@
     <ClCompile Include="sbb_allocator.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
+    <ClCompile Include="memory\rle_decode.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memset8.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
+    <ClCompile Include="memory\memnset.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
