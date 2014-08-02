@@ -76,9 +76,9 @@ void texel_buffer::initialize_array(const texel_buffer* const* sources, uint num
 {
 	deinitialize();
 	info si = sources[0]->get_info();
-	oCHECK_ARG(si.layout == layout::image, "all images in the specified array must be simple types and the same 2D dimensions");
+	oCHECK_ARG(si.mip_layout == mip_layout::none, "all images in the specified array must be simple types and the same 2D dimensions");
 	oCHECK_ARG(si.dimensions.z == 1, "all images in the specified array must be simple types and the same 2D dimensions");
-	si.layout = mips ? layout::tight : layout::image;
+	si.mip_layout = mips ? mip_layout::tight : mip_layout::none;
 	si.array_size = static_cast<int>(num_sources);
 	initialize(si);
 
@@ -99,10 +99,10 @@ void texel_buffer::initialize_3d(const texel_buffer* const* sources, uint num_so
 {
 	deinitialize();
 	info si = sources[0]->get_info();
-	oCHECK_ARG(si.layout == layout::image, "all images in the specified array must be simple types and the same 2D dimensions");
+	oCHECK_ARG(si.mip_layout == mip_layout::none, "all images in the specified array must be simple types and the same 2D dimensions");
 	oCHECK_ARG(si.dimensions.z == 1, "all images in the specified array must be simple types and the same 2D dimensions");
 	oCHECK_ARG(si.array_size == 0, "arrays of 3d surfaces not yet supported");
-	si.layout = mips ? layout::tight : layout::image;
+	si.mip_layout = mips ? mip_layout::tight : mip_layout::none;
 	si.dimensions.z = static_cast<int>(num_sources);
 	si.array_size = 0;
 	initialize(si);
@@ -143,7 +143,7 @@ void texel_buffer::flatten()
 
 	int rp = row_pitch(inf);
 	size_t sz = size();
-	inf.layout = surface::layout::image;
+	inf.mip_layout = mip_layout::none;
 	inf.dimensions = int3(rp / element_size(inf.format), int(sz / rp), 1);
 	inf.array_size = 0;
 }

@@ -35,7 +35,7 @@
 namespace ouro { 
 	namespace tests {
 
-static bool kSaveToDesktop = false;
+static bool kSaveToDesktop = true;
 
 static void compare_checkboards(const int2& dimensions, const surface::format& format, const surface::file_format& file_format, float max_rms)
 {
@@ -44,7 +44,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 	// Create a buffer with a known format
 	surface::info si;
 	si.format = format;
-	si.layout = surface::layout::image;
+	si.mip_layout = surface::mip_layout::none;
 	si.dimensions = int3(dimensions, 1);
 	surface::texel_buffer known(si);
 	size_t knownSize = known.size();
@@ -107,6 +107,9 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 
 void TESTsurface_codec(test_services& _Services)
 {
+	// still a WIP
+	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::dds, 1.0f);
+
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::tga, 1.0f);
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::bmp, 1.0f);
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::png, 1.0f);

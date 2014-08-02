@@ -87,15 +87,15 @@ static surface::texel_buffer load_test_cube(test_services& _Services)
 	return cube_image;
 }
 
-static void test_mipchain(test_services& _Services, const surface::texel_buffer& _Image, surface::filter _Filter, surface::layout _Layout, int _StartIndex)
+static void test_mipchain(test_services& _Services, const surface::texel_buffer& _Image, surface::filter _Filter, surface::mip_layout _Layout, int _StartIndex)
 {
 	auto si = _Image.get_info();
-	si.layout = _Layout;
+	si.mip_layout = _Layout;
 	surface::texel_buffer mipchain(si);
 	mipchain.clear();
 
 	int nSlices = max(si.array_size, si.dimensions.z);
-	int nMips = surface::num_mips(si.layout, si.dimensions);
+	int nMips = surface::num_mips(si.mip_layout, si.dimensions);
 
 	if (si.dimensions.z != 1)
 	{
@@ -132,9 +132,9 @@ static void test_mipchain(test_services& _Services, const surface::texel_buffer&
 
 static void test_mipchain_layouts(test_services& _Services, const surface::texel_buffer& _Image, surface::filter _Filter, int _StartIndex)
 {
-	test_mipchain(_Services, _Image, _Filter, surface::layout::tight, _StartIndex);
-	test_mipchain(_Services, _Image, _Filter, surface::layout::below, _StartIndex+1);
-	test_mipchain(_Services, _Image, _Filter, surface::layout::right, _StartIndex+2);
+	test_mipchain(_Services, _Image, _Filter, surface::mip_layout::tight, _StartIndex);
+	test_mipchain(_Services, _Image, _Filter, surface::mip_layout::below, _StartIndex+1);
+	test_mipchain(_Services, _Image, _Filter, surface::mip_layout::right, _StartIndex+2);
 }
 
 void TESTsurface_generate_mips(test_services& _Services)

@@ -190,7 +190,7 @@ void gpu_texture_test::render()
 surface::texel_buffer surface_load(const path& _Path, bool _Mips, const surface::alpha_option& _Option)
 {
 	scoped_allocation b = filesystem::load(_Path);
-	auto sb = surface::decode(b, b.size(), _Option, _Mips ? surface::layout::tight : surface::layout::image);
+	auto sb = surface::decode(b, b.size(), _Option, _Mips ? surface::mip_layout::tight : surface::mip_layout::none);
 	if (_Mips)
 		sb.generate_mips();
 	return sb;
@@ -200,7 +200,7 @@ surface::texel_buffer make_1D(int _Width, bool _Mips)
 {
 	surface::info si;
 	si.dimensions = int3(_Width, 1, 1);
-	si.layout = _Mips ? surface::layout::tight : surface::layout::image;
+	si.mip_layout = _Mips ? surface::mip_layout::tight : surface::mip_layout::none;
 	si.format = surface::format::b8g8r8a8_unorm;
 	surface::texel_buffer s(si);
 

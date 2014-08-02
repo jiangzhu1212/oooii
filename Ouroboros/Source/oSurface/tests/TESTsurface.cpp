@@ -39,23 +39,23 @@ static void TESTsurface_row_pitch(int _Depth, int _ArraySize)
 
 	uint RowPitches[10] = { 0x800, 0x400, 0x200, 0x100, 0x80, 0x40, 0x20, 0x10, 0x8, 0x4 };
 
-	inf.layout = surface::layout::image;
+	inf.mip_layout = surface::mip_layout::none;
 	oFORI(mipLevel, RowPitches)
 	{
-		oCHECK(surface::row_pitch(inf, 0) == RowPitches[mipLevel], "Test_oSurfaceMipCalcRowPitch(%d, %d) surface::layout::image failed", _Depth, _ArraySize);
+		oCHECK(surface::row_pitch(inf, 0) == RowPitches[mipLevel], "Test_oSurfaceMipCalcRowPitch(%d, %d) surface::mip_layout::none failed", _Depth, _ArraySize);
 		inf.dimensions = surface::dimensions_npot(inf.format, inf.dimensions, 1);
 	}
 	inf.dimensions = int3(512, 512, _Depth);
 
-	inf.layout = surface::layout::tight;
+	inf.mip_layout = surface::mip_layout::tight;
 	oFORI(mipLevel, RowPitches)
 		oCHECK(surface::row_pitch(inf, (int)mipLevel) == RowPitches[mipLevel], "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_TIGHT failed", _Depth, _ArraySize);
 
-	inf.layout = surface::layout::below;
+	inf.mip_layout = surface::mip_layout::below;
 	oFORI(mipLevel, RowPitches)
 		oCHECK(surface::row_pitch(inf, (int)mipLevel) == RowPitches[0], "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_BELOW failed", _Depth, _ArraySize);
 
-	inf.layout = surface::layout::right;
+	inf.mip_layout = surface::mip_layout::right;
 	oFORI(mipLevel, RowPitches)
 		oCHECK(surface::row_pitch(inf, (int)mipLevel) == (RowPitches[0]+RowPitches[1]), "Test_oSurfaceMipCalcRowPitch(%d, %d) oSURFACE_LAYOUT_RIGHT failed", _Depth, _ArraySize);
 }
@@ -70,23 +70,23 @@ static void TESTsurface_depth_pitch(int _Depth, int _ArraySize)
 
 	uint DepthPitches[10] = { 0x100000, 0x40000, 0x10000, 0x4000, 0x1000, 0x400, 0x100, 0x40, 0x10, 0x4 };
 
-	inf.layout = surface::layout::image;
+	inf.mip_layout = surface::mip_layout::none;
 	oFORI(mipLevel, DepthPitches)
 	{
-		oCHECK(surface::depth_pitch(inf, 0) == DepthPitches[mipLevel], "Test_oSurfaceMipCalcDepthPitch() surface::layout::image failed");
+		oCHECK(surface::depth_pitch(inf, 0) == DepthPitches[mipLevel], "Test_oSurfaceMipCalcDepthPitch() surface::mip_layout::none failed");
 		inf.dimensions = surface::dimensions_npot(inf.format, inf.dimensions, 1);
 	}
 	inf.dimensions = int3(512,512,_Depth);
 
-	inf.layout = surface::layout::tight;
+	inf.mip_layout = surface::mip_layout::tight;
 	oFORI(mipLevel, DepthPitches)
 		oCHECK(surface::depth_pitch(inf, (int)mipLevel) == DepthPitches[mipLevel], "Test_oSurfaceMipCalcDepthPitch() oSURFACE_LAYOUT_TIGHT failed");
 
-	inf.layout = surface::layout::below;
+	inf.mip_layout = surface::mip_layout::below;
 	oFORI(mipLevel, DepthPitches)
 		oCHECK(surface::depth_pitch(inf, (int)mipLevel) == DepthPitches[mipLevel] << mipLevel, "surface::depth_pitch() oSURFACE_LAYOUT_BELOW failed");
 
-	inf.layout = surface::layout::right;
+	inf.mip_layout = surface::mip_layout::right;
 	oFORI(mipLevel, DepthPitches)
 		oCHECK(surface::depth_pitch(inf, (int)mipLevel) == (DepthPitches[mipLevel] << mipLevel) + ((DepthPitches[mipLevel] >> 1) << mipLevel), "surface::depth_pitch() oSURFACE_LAYOUT_RIGHT failed");
 }
@@ -104,26 +104,26 @@ static void TESTsurface_slice_pitch(int _ArraySize)
 		surface::info inf1 = inf;
 		inf1.array_size = 1;
 
-		inf.layout = surface::layout::image;
+		inf.mip_layout = surface::mip_layout::none;
 		oCHECK(surface::slice_pitch(inf) == 0x00100000, "surface::slice_pitch() failed");
 		oCHECK(surface::slice_pitch(inf) == surface::depth_pitch(inf), "surface::slice_pitch() failed");
 		
-		inf.layout = surface::layout::tight;
+		inf.mip_layout = surface::mip_layout::tight;
 		oCHECK(surface::slice_pitch(inf) == 0x00155800, "surface::slice_pitch() failed");
 		oCHECK(surface::slice_pitch(inf) == (surface::total_size(inf) / _ArraySize), "surface::slice_pitch()==(surface::total_size()/slices) failed");
 
-		inf.layout = surface::layout::below;
+		inf.mip_layout = surface::mip_layout::below;
 		oCHECK(surface::slice_pitch(inf) == 0x00180000, "surface::slice_pitch() failed");
 		oCHECK(surface::slice_pitch(inf) == (surface::total_size(inf) / _ArraySize), "surface::slice_pitch()==(surface::total_size()/slices) failed");
 
-		inf.layout = surface::layout::right;
+		inf.mip_layout = surface::mip_layout::right;
 		oCHECK(surface::slice_pitch(inf) == 0x00180000, "surface::slice_pitch() failed");
 		oCHECK(surface::slice_pitch(inf) == (surface::total_size(inf) / _ArraySize), "surface::slice_pitch()==(surface::total_size()/slices) failed");
 		return;
 	}
 
 	// This tests whether the slice pitch is the same as the depth pitch multiplied by the depth
-	inf.layout = surface::layout::image;
+	inf.mip_layout = surface::mip_layout::none;
 	for(int depthLevel=0; depthLevel<10; depthLevel++)
 	{
 		inf.dimensions.z = (int)depthLevel + 1;
@@ -132,7 +132,7 @@ static void TESTsurface_slice_pitch(int _ArraySize)
 	}
 
 	// The rest below tests the slice pitches for a number of depth levels, and 3d textures don't support more than one slice
-	inf.layout = surface::layout::tight;
+	inf.mip_layout = surface::mip_layout::tight;
 	uint SlicePitches[15] = { 0x00155800, 0x00255800, 0x00355800, 0x00495800, 0x00595800, 0x006d5800, 0x007d5800, 0x00925800, 0x00a25800, 0x00b65800, 0x00c65800, 0x00db5800, 0x00eb5800, 0x00ff5800, 0x010f5800 };
 	oFORI(depthLevel, SlicePitches)
 	{
@@ -141,7 +141,7 @@ static void TESTsurface_slice_pitch(int _ArraySize)
 		oCHECK(surface::slice_pitch(inf) == surface::total_size(inf), "surface::slice_pitch()==surface::total_size() failed");
 	}
 
-	inf.layout = surface::layout::below;
+	inf.mip_layout = surface::mip_layout::below;
 	uint SlicePitchesVertical[15] = { 0x00180000, 0x00280000, 0x00380000, 0x00500000, 0x00600000, 0x00780000, 0x00880000, 0x00a00000, 0x00b00000, 0x00c80000, 0x00d80000, 0x00f00000, 0x01000000, 0x01180000, 0x01280000 };
 	oFORI(depthLevel, SlicePitchesVertical)
 	{
@@ -150,7 +150,7 @@ static void TESTsurface_slice_pitch(int _ArraySize)
 		oCHECK(surface::slice_pitch(inf) == surface::total_size(inf), "surface::slice_pitch()==surface::total_size() failed");
 	}
 
-	inf.layout = surface::layout::right;
+	inf.mip_layout = surface::mip_layout::right;
 	uint SlicePitchesHorizontal[15] = { 0x00180000, 0x00300000, 0x00480000, 0x00600000, 0x00780000, 0x00900000, 0x00a80000, 0x00c00000, 0x00d80000, 0x00f00000, 0x01080000, 0x01200000, 0x01380000, 0x01500000, 0x01680000 };
 	oFORI(depthLevel, SlicePitchesHorizontal)
 	{
@@ -174,7 +174,7 @@ void TESTsurface()
 	surface::info inf;
 	inf.dimensions = uint3(512,512,511);
 	inf.format = surface::format::r8g8b8a8_unorm;
-	inf.layout = surface::layout::tight;
+	inf.mip_layout = surface::mip_layout::tight;
 	oCHECK(surface::offset(inf, 1)==0x1ff00000, "");
 
 	uint3 MipDimensions[] = 
@@ -197,7 +197,7 @@ void TESTsurface()
 	};
 
 	oFORI(i, MipDimensions)
-		oCHECK(surface::num_mips(surface::layout::tight, MipDimensions[i]) == NumMips[i], "surface::num_mips(.., int3(%d,%d,%d))==%d failed", MipDimensions[i].x, MipDimensions[i].y, MipDimensions[i].z, NumMips[i]);
+		oCHECK(surface::num_mips(surface::mip_layout::tight, MipDimensions[i]) == NumMips[i], "surface::num_mips(.., int3(%d,%d,%d))==%d failed", MipDimensions[i].x, MipDimensions[i].y, MipDimensions[i].z, NumMips[i]);
 }
 
 	} // namespace tests
