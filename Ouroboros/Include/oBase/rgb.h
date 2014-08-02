@@ -154,9 +154,14 @@ inline float srgbtolin(float x)
 	return (x <= 0.04045f) ? (x / 12.42f) : pow((x + 0.055f) / 1.055f, 2.4f);
 }
 
-inline float linsrgb(float x)
+inline float lintosrgb(float x)
 {
 	return (x <= 0.0031308f) ? (x * 12.92f) : (1.055f * pow(x, 1.0f / 2.4f) - 0.055f);
+}
+
+inline float lintosrgbfast(float x)
+{
+	return x < 0.0031308f ? 12.92f * x : 1.13005f * sqrt(abs(x - 0.00228f)) - 0.13448f * x + 0.005719f;
 }
 
 inline rgbf srgbtolin(oIN(rgbf, _sRGBf))
@@ -171,9 +176,9 @@ inline rgbf srgbtolin(oIN(rgbf, _sRGBf))
 inline rgbf lintosrgb(oIN(rgbf, _lRGBf))
 {
 	rgbf c;
-	c.r = linsrgb(_lRGBf.r);
-	c.g = linsrgb(_lRGBf.g);
-	c.b = linsrgb(_lRGBf.b);
+	c.r = lintosrgb(_lRGBf.r);
+	c.g = lintosrgb(_lRGBf.g);
+	c.b = lintosrgb(_lRGBf.b);
 	return c;
 }
 
