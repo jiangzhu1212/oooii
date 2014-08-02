@@ -38,7 +38,7 @@ namespace ouro { namespace surface {
 #define DECLARE_CODEC(ext) \
 	info get_info_##ext(const void* buffer, size_t size); \
 	scoped_allocation encode_##ext(const texel_buffer& b, const alpha_option& option, const compression& compression); \
-	texel_buffer decode_##ext(const void* buffer, size_t size, const alpha_option& option, const layout& layout);
+	texel_buffer decode_##ext(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout);
 
 #define GET_FILE_FORMAT_EXT(ext) if (!_stricmp(extension, "." #ext)) return file_format::##ext;
 #define GET_FILE_FORMAT_HDR(ext) if (get_info_##ext(buffer, size).format != format::unknown) return file_format::##ext;
@@ -122,7 +122,7 @@ scoped_allocation encode(const texel_buffer& b
 	throw std::exception("unknown image encoding");
 }
 
-texel_buffer decode(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
+texel_buffer decode(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
 	switch (get_file_format(buffer, size))
 	{ FOREACH_EXT(DECODE)

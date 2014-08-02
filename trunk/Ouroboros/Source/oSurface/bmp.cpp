@@ -148,7 +148,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 	return p;
 }
 
-texel_buffer decode_bmp(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
+texel_buffer decode_bmp(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
 	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)buffer;
 	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
@@ -157,7 +157,7 @@ texel_buffer decode_bmp(const void* buffer, size_t size, const alpha_option& opt
 	info si = get_info_bmp(buffer, size);
 	oCHECK(si.format != format::unknown, "invalid bmp");
 	info dsi = si;
-	dsi.layout = layout;
+	dsi.mip_layout = layout;
 	const_mapped_subresource src;
 	src.data = bits;
 	src.depth_pitch = bmi->bmiHeader.biSizeImage;

@@ -96,14 +96,14 @@ scoped_allocation encode_tga(const texel_buffer& b
 	return p;
 }
 
-texel_buffer decode_tga(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
+texel_buffer decode_tga(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
 	info si = get_info_tga(buffer, size);
 	oCHECK(si.format != format::unknown, "invalid bmp");
 	const TGAHeader* h = (const TGAHeader*)buffer;
 	info dsi = si;
 	dsi.format = alpha_option_format(si.format, option);
-	dsi.layout = layout;
+	dsi.mip_layout = layout;
 	auto src = get_const_mapped_subresource(si, 0, 0, &h[1]);
 
 	texel_buffer b(dsi);

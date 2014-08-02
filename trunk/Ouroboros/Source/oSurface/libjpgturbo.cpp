@@ -150,7 +150,7 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 
 	info si;
 	si.format = from_jcs(cinfo.jpeg_color_space);
-	si.layout = layout::image;
+	si.mip_layout = mip_layout::none;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
 	return si;
 }
@@ -210,7 +210,7 @@ scoped_allocation encode_jpg(const texel_buffer& b
 	return a;
 }
 
-texel_buffer decode_jpg(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
+texel_buffer decode_jpg(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -226,7 +226,7 @@ texel_buffer decode_jpg(const void* buffer, size_t size, const alpha_option& opt
 
 	info si;
 	si.format = from_jcs(cinfo.out_color_space);
-	si.layout = layout;
+	si.mip_layout = layout;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
 
 	switch (si.format)

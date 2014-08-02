@@ -101,7 +101,7 @@ surface::info get_info(const BITMAPINFOHEADER& _Header)
 	si.dimensions.x = _Header.biWidth;
 	si.dimensions.y = abs(_Header.biHeight); // ignore top v. bottom up here
 	si.dimensions.z = 1;
-	si.layout = surface::layout::image;
+	si.mip_layout = surface::mip_layout::none;
 	si.array_size = 0;
 
 	switch (_Header.biBitCount)

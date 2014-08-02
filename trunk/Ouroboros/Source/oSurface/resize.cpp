@@ -324,7 +324,7 @@ void resize_internal(const info& src_info, const const_mapped_subresource& src, 
 		{
 			info tempInfo = src_info;
 			tempInfo.dimensions.x = dst_info.dimensions.x;
-			tempInfo.layout = surface::layout::tight;
+			tempInfo.mip_layout = mip_layout::tight;
 			std::vector<char> tempImage;
 			tempImage.resize(total_size(tempInfo));
 
@@ -337,7 +337,7 @@ void resize_internal(const info& src_info, const const_mapped_subresource& src, 
 		{
 			info tempInfo = src_info;
 			tempInfo.dimensions.y = dst_info.dimensions.y;
-			tempInfo.layout = surface::layout::tight;
+			tempInfo.mip_layout = mip_layout::tight;
 			std::vector<char> tempImage; // todo: fix internal allocation
 			tempImage.resize(total_size(tempInfo));
 
@@ -351,7 +351,7 @@ void resize_internal(const info& src_info, const const_mapped_subresource& src, 
 
 void resize(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, const filter& f)
 {
-	if (src_info.layout != dst_info.layout || src_info.format != dst_info.format)
+	if (src_info.mip_layout != dst_info.mip_layout || src_info.format != dst_info.format)
 		throw std::invalid_argument("incompatible surfaces");
 
 	if (is_block_compressed(src_info.format))
@@ -386,7 +386,7 @@ void resize(const info& src_info, const const_mapped_subresource& src, const inf
 
 void clip(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, uint2 src_offset)
 {
-	if (src_info.layout != dst_info.layout || src_info.format != dst_info.format)
+	if (src_info.mip_layout != dst_info.mip_layout || src_info.format != dst_info.format)
 		throw std::invalid_argument("incompatible surfaces");
 
 	if (ouro::surface::is_block_compressed(src_info.format))
@@ -405,7 +405,7 @@ void clip(const info& src_info, const const_mapped_subresource& src, const info&
 
 void pad(const info& src_info, const const_mapped_subresource& src, const info& dst_info, const mapped_subresource& dst, uint2 dst_offset)
 {
-	if (src_info.layout != dst_info.layout || src_info.format != dst_info.format)
+	if (src_info.mip_layout != dst_info.mip_layout || src_info.format != dst_info.format)
 		throw std::invalid_argument("incompatible surfaces");
 
 	if (is_block_compressed(src_info.format))

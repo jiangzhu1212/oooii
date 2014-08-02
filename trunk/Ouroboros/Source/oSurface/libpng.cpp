@@ -122,7 +122,7 @@ info get_info_png(const void* buffer, size_t size)
 	
 	surface::info i;
 	i.format = to_format(color_type, depth);
-	i.layout = layout::image;
+	i.mip_layout = mip_layout::none;
 	i.dimensions = int3(w, h, 1);
 	return i;
 }
@@ -235,7 +235,7 @@ scoped_allocation encode_png(const texel_buffer& b
 	return scoped_allocation(ws.data, ws.size, free);
 }
 
-texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& option, const layout& _Layout)
+texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
 	// initialze libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
@@ -270,7 +270,7 @@ texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& opt
 	png_set_bgr(png_ptr);
 
 	info si;
-	si.layout = _Layout;
+	si.mip_layout = layout;
 	si.dimensions = int3(w, h, 1);
 	switch (color_type)
 	{

@@ -49,7 +49,7 @@ void texture2d::initialize(const char* name, device& dev, const surface::texel_b
 {
 	auto si = src.get_info();
 
-	oCHECK(!mips || (mips && si.layout != surface::layout::image), "source buffer does not contain mips for mipped texture");
+	oCHECK(!mips || (mips && si.mip_layout != surface::mip_layout::none), "source buffer does not contain mips for mipped texture");
 
 	initialize(name, dev, si.format, si.dimensions.x, si.dimensions.y, si.array_size, mips);
 

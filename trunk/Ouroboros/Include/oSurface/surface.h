@@ -241,28 +241,29 @@ enum class format : uchar
 	count,
 };
 
-enum class layout : uchar
+enum class mip_layout : uchar
 {
-	// image: no mip chain, so RowSize == RowPitch
-	// tight: mips are right after each other, the naive/initial thing a person
-	//        might do where next-scanline strides are the same as valid data so
-	//        the next-scanline stride also changes with each mip level.
-	// below: Step down when moving from Mip0 to Mip1
-	//        Step right when moving from Mip1 to Mip2
-	//        Step down for all of the other MIPs
-	//        RowPitch is generally the next-scanline stride of Mip0, except
-	//        when there are alignment issues e.g. with Mip0 width of 1,
-	//        or Mip0 width of 4 or less for block compressed formats.:
-	// right: Step right when moving from Mip0 to Mip1
-	//        Step down for all of the other MIPs.
-	//        RowPitch is generZy the next-scanline stride of Mip0 plus the 
-	//        stride of mip1.
-	// Note that for below and right the lowest Mip can be below the bottom
-	// line of Mip1 and Mip0 respectively for alignment reasons and/or block 
-	// compressed formats, see http://intellinuxgraphics.org/VOL_1_graphics_core.pdf
+	// http://www.x.org/docs/intel/VOL_1_graphics_core.pdf
+	// none : no mip chain, so row size == row pitch
+	// tight: mips are right after each other: row size == row pitch and 
+	//        the end of one mip is the start of the next.
+	// below: Step down when moving from mip0 to mip1
+	//        Step right when moving from mip1 to mip2
+	//        Step down for all of the other mips
+	//        row pitch is generally the next-scanline stride of mip0, 
+	//        except for alignment issues e.g. with mip0 width of 1,
+	//        or mip0 width <= 4 for block compressed formats.
+	// right: Step right when moving from mip0 to mip1
+	//        Step down for all of the other mips.
+	//        row pitch is generally the next-scanline stride of mip0 
+	//        plus the stride of mip1.
+	// Note that for below and right the lowest mip can be below the bottom
+	// line of mip1 and mip0 respectively for alignment reasons and/or block 
+	// compressed formats.
+	// None always has mip0, others have all mips down to 1x1.
 	// +---------+ +---------+ +---------+ +---------+----+
 	// |         | |         | |         | |         |    |
-	// |  Image  | |  Tight  | |  Below  | |  Right  |    |
+	// |  none   | |  Tight  | |  Below  | |  Right  |    |
 	// |         | |         | |         | |         +--+-+
 	// |         | |         | |         | |         |  |  
 	// |         | |         | |         | |         +-++  
@@ -275,10 +276,26 @@ enum class layout : uchar
 	//             +++                                  
 	//             ++
 
-	image,
+	none,
 	tight,
 	below,
 	right,
+};
+
+enum class semantic : uchar
+{
+	custom,
+	color,
+	cube,
+	tangent_normal,
+	world_normal,
+	specular,
+	diffuse,
+	height,
+	noise,
+	intensity,
+	color_correction,
+	count,
 };
 
 enum class cube_face : uchar
@@ -309,39 +326,37 @@ struct bit_size
 
 struct info
 {
-	// this thing might need more. Questions I want this to answer:
-	// 1. Am I 1d, 2d, 3d or cube
-	// 2. Am I single or array
-	// 3. Do I have all mips or no mips
-	// 4. What is the subresource layout (hopes of direct-HW mapping or megatexture)
-	// 5. What is the format of pixels
-	// 6. Is the data block-compressed
-	// 7. Is the data sRGB
-	// 8. Is the data a normal or spec map (for toksvig)
-
-	// think about this: layout is tight, horz, vert separately distinguish mips from no mips
-
 	info()
-		: layout(layout::image)
-		, format(format::unknown)
-		, dimensions(0, 0, 0)
+		: dimensions(0, 0, 0)
 		, array_size(0)
+		, format(format::unknown)
+		, semantic(semantic::custom)
+		, mip_layout(mip_layout::none)
 	{}
 
-	inline bool operator==(const info& _That) const
+	inline bool operator==(const info& that) const
 	{
-		return layout == _That.layout
-			&& format == _That.format
-			&& dimensions.x == _That.dimensions.x
-			&& dimensions.y == _That.dimensions.y
-			&& dimensions.z == _That.dimensions.z
-			&& array_size == _That.array_size;
+		return dimensions.x == that.dimensions.x
+				&& dimensions.y == that.dimensions.y
+				&& dimensions.z == that.dimensions.z
+				&& array_size == that.array_size
+				&& format == that.format
+				&& semantic == that.semantic
+				&& mip_layout == that.mip_layout;
 	}
 
-	layout layout;
-	format format;
+	inline bool is_1d() const { return dimensions.y == dimensions.z && dimensions.y == 0; }
+	inline bool is_2d() const { return dimensions.z == 0; }
+	inline bool is_3d() const { return dimensions.x != 0 && dimensions.y != 0 && dimensions.z != 0; }
+	inline bool is_cube() const { return semantic == semantic::cube; }
+	inline bool is_array() const { return array_size != 0; }
+	inline bool mips() const { return mip_layout == mip_layout::none; }
+
 	uint3 dimensions;
 	uint array_size;
+	format format;
+	semantic semantic;
+	mip_layout mip_layout;
 };
 
 struct box
@@ -406,22 +421,22 @@ struct mapped_subresource
 struct const_mapped_subresource
 {
 	const_mapped_subresource() : data(nullptr), row_pitch(0), depth_pitch(0) {}
-	const_mapped_subresource(const mapped_subresource& _That) { operator=(_That); }
-	const_mapped_subresource(const const_mapped_subresource& _That) { operator=(_That); }
+	const_mapped_subresource(const mapped_subresource& that) { operator=(that); }
+	const_mapped_subresource(const const_mapped_subresource& that) { operator=(that); }
 
-	const const_mapped_subresource& operator=(const mapped_subresource& _That)
+	const const_mapped_subresource& operator=(const mapped_subresource& that)
 	{
-		data = _That.data;
-		row_pitch = _That.row_pitch;
-		depth_pitch = _That.depth_pitch;
+		data = that.data;
+		row_pitch = that.row_pitch;
+		depth_pitch = that.depth_pitch;
 		return *this;
 	}
 
-	const const_mapped_subresource& operator=(const const_mapped_subresource& _That)
+	const const_mapped_subresource& operator=(const const_mapped_subresource& that)
 	{
-		data = _That.data;
-		row_pitch = _That.row_pitch;
-		depth_pitch = _That.depth_pitch;
+		data = that.data;
+		row_pitch = that.row_pitch;
+		depth_pitch = that.depth_pitch;
 		return *this;
 	}
 
@@ -507,9 +522,9 @@ format closest_nv12(const format& f);
 // 0 if mips is false
 uint num_mips(bool mips, const uint3& mip0dimensions);
 inline uint num_mips(bool mips, const uint2& mip0dimensions) { return num_mips(mips, uint3(mip0dimensions, 1)); }
-inline uint num_mips(const layout& _layout, const uint3& mip0dimensions) { return num_mips(_layout != layout::image, mip0dimensions); }
-inline uint num_mips(const layout& _layout, const uint2& mip0dimensions) { return num_mips(_layout != layout::image, uint3(mip0dimensions, 1)); }
-inline uint num_mips(const info& inf) { return num_mips(inf.layout, inf.dimensions); }
+inline uint num_mips(const mip_layout& layout, const uint3& mip0dimensions) { return num_mips(layout != mip_layout::none, mip0dimensions); }
+inline uint num_mips(const mip_layout& layout, const uint2& mip0dimensions) { return num_mips(layout != mip_layout::none, uint3(mip0dimensions, 1)); }
+inline uint num_mips(const info& inf) { return num_mips(inf.mip_layout, inf.dimensions); }
 
 // returns width, height, or depth dimension for a specific mip level given mip0's dimension
 // This appropriately pads BC formats and conforms to hardware-expected sizes all the way 
@@ -619,7 +634,7 @@ inline void unpack_subresource(uint subresource, uint num_mips, uint num_slices,
 	uint* out_miplevel, uint* out_arrayslice, uint* out_subsurface) { uint nMips = max(1u, num_mips); uint as = max(1u, num_slices); *out_miplevel = subresource % nMips; *out_arrayslice = (subresource / nMips) % as; *out_subsurface = subresource / (nMips * as); }
 
 // Returns the number of all subresources described by the info.
-inline uint num_subresources(const info& inf) { return max(1u, num_mips(inf.layout, inf.dimensions)) * max(1u, inf.array_size); }
+inline uint num_subresources(const info& inf) { return max(1u, num_mips(inf.mip_layout, inf.dimensions)) * max(1u, inf.array_size); }
 
 // Returns the info for a given subresource.
 subresource_info subresource(const info& inf, uint subresource);

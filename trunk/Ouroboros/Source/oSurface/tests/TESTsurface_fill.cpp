@@ -41,7 +41,7 @@ void core_fill_grid_numbers(surface::texel_buffer* _pBuffer, const int2& _GridDi
 #define SETUP_AND_MAKE() \
 	surface::info si; \
 	si.format = surface::format::b8g8r8a8_unorm; \
-	si.layout = surface::layout::image; \
+	si.mip_layout = surface::mip_layout::none; \
 	si.dimensions = uint3(_Dimensions, 1); \
 	surface::texel_buffer s(si);
 

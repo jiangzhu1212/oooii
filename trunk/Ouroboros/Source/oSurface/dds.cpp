@@ -24,8 +24,6 @@
  **************************************************************************/
 #include <oSurface/codec.h>
 #include <oSurface/convert.h>
-#include <oSurface/convert.h>
-
 #include <dxgi.h>
 
 namespace ouro { namespace surface {
@@ -51,6 +49,7 @@ static const uint DDS_MAGIC = 0x20534444; // "DDS "
 
 #define DDS_SURFACE_FLAGS_TEXTURE 0x00001000 // DDSCAPS_TEXTURE
 #define DDS_SURFACE_FLAGS_MIPMAP  0x00400008 // DDSCAPS_COMPLEX | DDSCAPS_MIPMAP
+#define DDS_SURFACE_FLAGS_COMPLEX 0x00000008 // DDSCAPS_COMPLEX
 #define DDS_SURFACE_FLAGS_CUBEMAP 0x00000008 // DDSCAPS_COMPLEX
 
 #define DDS_CUBEMAP_POSITIVEX 0x00000600 // DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_POSITIVEX
@@ -121,43 +120,59 @@ struct DDS_HEADER_DXT10
 	uint arraySize;
 	uint miscFlags2;
 };
-
-#define ISBITMASK( r,g,b,a) ( ddpf.dwRBitMask == r && ddpf.dwGBitMask == g && ddpf.dwBBitMask == b && ddpf.dwABitMask == a)
-
-const DDS_PIXELFORMAT DDSPF_DXT1 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_DXT2 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_DXT3 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','3'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_DXT4 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','4'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_DXT5 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','5'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_BC4_UNORM = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','4','U'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_BC4_SNORM = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','4','S'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_BC5_UNORM = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','5','U'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_BC5_SNORM = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','5','S'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_R8G8_B8G8 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R','G','B','G'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_G8R8_G8B8 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G','R','G','B'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_YUY2 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('Y','U','Y','2'), 0, 0, 0, 0, 0 };
-const DDS_PIXELFORMAT DDSPF_A8R8G8B8 = { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
-const DDS_PIXELFORMAT DDSPF_X8R8G8B8 = { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
-const DDS_PIXELFORMAT DDSPF_A8B8G8R8 = { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
-const DDS_PIXELFORMAT DDSPF_X8B8G8R8 = { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 };
-const DDS_PIXELFORMAT DDSPF_G16R16 = { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 };
-const DDS_PIXELFORMAT DDSPF_R5G6B5 = { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 };
-const DDS_PIXELFORMAT DDSPF_A1R5G5B5 = { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 };
-const DDS_PIXELFORMAT DDSPF_A4R4G4B4 = { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 };
-const DDS_PIXELFORMAT DDSPF_R8G8B8 = { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
-const DDS_PIXELFORMAT DDSPF_L8 = { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 };
-const DDS_PIXELFORMAT DDSPF_L16 = { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0, 16, 0xffff, 0x0000, 0x0000, 0x0000 };
-const DDS_PIXELFORMAT DDSPF_A8L8 = { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 16, 0x00ff, 0x0000, 0x0000, 0xff00 };
-const DDS_PIXELFORMAT DDSPF_A8 = { sizeof(DDS_PIXELFORMAT), DDS_ALPHA, 0, 8, 0x00, 0x00, 0x00, 0xff };
-
-// D3DFMT_A2R10G10B10/D3DFMT_A2B10G10R10 should be written using DX10 extension to avoid D3DX 10:10:10:2 reversal issue
-// This indicates the DDS_HEADER_DXT10 extension is present (the format is in dxgiFormat)
-const DDS_PIXELFORMAT DDSPF_DX10 = { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 };
-
 #pragma pack(pop)
 
 static_assert(sizeof(DDS_HEADER) == 124, "DDS Header size mismatch");
 static_assert(sizeof(DDS_HEADER_DXT10) == 20, "DDS DX10 Extended Header size mismatch");
+
+#define ISBITMASK( r,g,b,a) ( ddpf.dwRBitMask == r && ddpf.dwGBitMask == g && ddpf.dwBBitMask == b && ddpf.dwABitMask == a)
+
+struct LUT
+{
+	surface::format format;
+	DDS_PIXELFORMAT ddsformat;
+};
+
+static const LUT sFormats[] = 
+{
+	{ format::unknown, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','1','0'), 0, 0, 0, 0, 0 } },
+	{ format::bc1_unorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 } },
+	{ format::unknown, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','2'), 0, 0, 0, 0, 0 } },
+	{ format::bc2_unorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','3'), 0, 0, 0, 0, 0 } },
+	{ format::unknown, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','4'), 0, 0, 0, 0, 0 } },
+	{ format::bc3_unorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('D','X','T','5'), 0, 0, 0, 0, 0 } },
+	{ format::bc4_unorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','4','U'), 0, 0, 0, 0, 0 } },
+	{ format::bc4_snorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','4','S'), 0, 0, 0, 0, 0 } },
+	{ format::bc5_unorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','5','U'), 0, 0, 0, 0, 0 } },
+	{ format::bc5_snorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('B','C','5','S'), 0, 0, 0, 0, 0 } },
+	{ format::r8g8_b8g8_unorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('R','G','B','G'), 0, 0, 0, 0, 0 } },
+	{ format::g8r8_g8b8_unorm, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('G','R','G','B'), 0, 0, 0, 0, 0 } },
+	{ format::yuy2, { sizeof(DDS_PIXELFORMAT), DDS_FOURCC, MAKEFOURCC('Y','U','Y','2'), 0, 0, 0, 0, 0 } },
+	{ format::b8g8r8a8_unorm, { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 } },
+	{ format::b8g8r8x8_unorm, { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 } },
+	{ format::r8g8b8a8_unorm, { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 } },
+	{ format::unknown, { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0x00000000 } },
+	{ format::r16g16_unorm, { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x0000ffff, 0xffff0000, 0x00000000, 0x00000000 } },
+	{ format::b5g6r5_unorm, { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 16, 0x0000f800, 0x000007e0, 0x0000001f, 0x00000000 } },
+	{ format::b5g5r5a1_unorm, { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00007c00, 0x000003e0, 0x0000001f, 0x00008000 } },
+	{ format::b4g4r4a4_unorm, { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 16, 0x00000f00, 0x000000f0, 0x0000000f, 0x0000f000 } },
+	{ format::b8g8r8_unorm, { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 } },
+	{ format::unknown, { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 } },
+	{ format::unknown, { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0, 16, 0xffff, 0x0000, 0x0000, 0x0000 } },
+	{ format::unknown, { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCEA, 0, 16, 0x00ff, 0x0000, 0x0000, 0xff00 } },
+	{ format::unknown, { sizeof(DDS_PIXELFORMAT), DDS_ALPHA, 0, 8, 0x00, 0x00, 0x00, 0xff } },
+};
+
+DDS_PIXELFORMAT GetPixelFormat(const surface::format& f)
+{
+	for (int i = 0; i < oCOUNTOF(sFormats); i++)
+		if (f == sFormats[i].format)
+			return sFormats[i].ddsformat;
+	return sFormats[0].ddsformat;
+}
+
+// D3DFMT_A2R10G10B10/D3DFMT_A2B10G10R10 should be written using DX10 extension to avoid D3DX 10:10:10:2 reversal issue
+// This indicates the DDS_HEADER_DXT10 extension is present (the format is in dxgiFormat)
 
 static DXGI_FORMAT GetDXGIFormat(const DDS_PIXELFORMAT& ddpf)
 {
@@ -260,6 +275,11 @@ static surface::format GetSurfaceFormat(DXGI_FORMAT format)
 	return (surface::format)format;
 }
 
+static DXGI_FORMAT GetDXGIFormat(surface::format f)
+{
+	return (DXGI_FORMAT)f;
+}
+
 bool HasD3D10Header(const DDS_HEADER& header)
 {
 	return (header.ddspf.dwFlags & DDS_FOURCC) && (MAKEFOURCC('D','X','1','0') == header.ddspf.dwFourCC);
@@ -284,7 +304,7 @@ info get_info_dds(const void* buffer, size_t size)
 
 	info si;
 	si.dimensions = int3(h->dwWidth, h->dwHeight, h->dwDepth);
-	si.layout = h->dwMipMapCount == 1 ? layout::image : layout::tight;
+	si.mip_layout = (h->dwFlags & DDS_HEADER_FLAGS_MIPMAP) && h->dwMipMapCount != 1 ? mip_layout::none : mip_layout::tight;
 
 	if (kIsD3D10)
 	{
@@ -368,11 +388,11 @@ info get_info_dds(const void* buffer, size_t size)
 	return si;
 }
 
-static void map_bits(const info& inf, const void* src_dds_buffer, size_t src_dds_size, const_mapped_subresource* subresources, size_t num_subresources)
+static void map_bits(const info& inf, const void* oRESTRICT src_dds_buffer, size_t src_dds_size, const_mapped_subresource* oRESTRICT subresources, size_t num_subresources)
 {
 	const void* end = byte_add(src_dds_buffer, src_dds_size);
-	const int nMips = num_mips(inf.layout != layout::image, inf.dimensions);
-	const int nSlices = inf.array_size;
+	const int nMips = max(1u, num_mips(inf.mip_layout != mip_layout::none, inf.dimensions));
+	const int nSlices = max(1u, inf.array_size);
 
 	size_t index = 0;
 	for (int j = 0; j < nSlices; j++)
@@ -381,19 +401,84 @@ static void map_bits(const info& inf, const void* src_dds_buffer, size_t src_dds
 		{
 			int subresource = calc_subresource(i, j, 0, nMips, nSlices);
 			subresources[subresource] = get_const_mapped_subresource(inf, subresource, 0, src_dds_buffer);
-			oCHECK(byte_add(subresources[subresource].data, subresources[subresource].depth_pitch) < end, "end of file");
+			oCHECK(byte_add(subresources[subresource].data, subresources[subresource].depth_pitch) <= end, "end of file");
 		}
 	}
 }
 
-scoped_allocation encode_dds(const texel_buffer& b, const alpha_option& option, const compression& compression)
+static void map_bits(const info& inf, const void* oRESTRICT src_dds_buffer, size_t src_dds_size, mapped_subresource* oRESTRICT subresources, size_t num_subresources)
 {
-	oTHROW(operation_not_supported, "dds not yet implemented");
+	map_bits(inf, src_dds_buffer, src_dds_size, (const_mapped_subresource*)subresources, num_subresources);
 }
 
-texel_buffer decode_dds(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
+scoped_allocation encode_dds(const texel_buffer& b, const alpha_option& option, const compression& compression)
 {
-	oCHECK(option == alpha_option::preserve, "changing alpha option not supported for dds");
+	//if (1) oTHROW(operation_not_supported, "dds not yet implemented");
+
+	const auto inf = b.get_info();
+	const bool is3d = false; // how to specify? probably .z != 0...
+	const bool isbc = is_block_compressed(inf.format);
+	const bool mips = inf.mip_layout != mip_layout::none;
+	const bool iscube = false; // how to specify?
+
+	const DDS_PIXELFORMAT ddspf = GetPixelFormat(inf.format);
+
+	const size_t bits_size = b.size();
+	const size_t size = bits_size + sizeof(DDS_MAGIC) + sizeof(DDS_HEADER) 
+		+ (iscube || inf.array_size > 1 || ddspf.dwFourCC == MAKEFOURCC('D','X','1','0') ? sizeof(DDS_HEADER_DXT10) : 0);
+
+	scoped_allocation a(default_allocate(size, 0), size, default_deallocate);
+
+	*(uint*)a = DDS_MAGIC;
+	auto h = (DDS_HEADER*)byte_add((void*)a, sizeof(DDS_MAGIC));
+	auto d3d10ext = (DDS_HEADER_DXT10*)&h[1];
+	void* bits = &d3d10ext[1];
+
+	// http://msdn.microsoft.com/en-us/library/windows/desktop/bb943991(v=vs.85).aspx#related_topics
+	uint pitch = 0;
+	if (isbc)
+		pitch = max(1u, ((inf.dimensions.x + 3) / 4)) * element_size(inf.format);
+	else if (inf.format == format::r8g8_b8g8_unorm || inf.format == format::g8r8_g8b8_unorm)
+		pitch = ((inf.dimensions.x +1 ) >> 1) * 4;
+	else 
+		pitch = (inf.dimensions.x * surface::bits(inf.format) + 7 ) / 8;
+	
+	h->dwSize = sizeof(DDS_HEADER);
+	h->dwFlags = DDS_HEADER_FLAGS_TEXTURE | (mips ? DDS_HEADER_FLAGS_MIPMAP : 0) | (isbc ? DDS_HEADER_FLAGS_LINEARSIZE : 0) | (is3d ? DDS_HEADER_FLAGS_VOLUME : 0);
+	h->dwHeight = inf.dimensions.y;
+	h->dwWidth = inf.dimensions.x;
+	h->dwPitchOrLinearSize = isbc ? pitch : 0;
+	h->dwDepth = is3d ? inf.dimensions.z : 0;
+	h->dwMipMapCount = mips ? num_mips(inf) : 0;
+	memset(h->dwReserved1, 0, sizeof(h->dwReserved1));
+	h->ddspf = ddspf;
+	h->dwCaps = DDS_SURFACE_FLAGS_TEXTURE | ((is3d || mips || inf.array_size) ? DDS_SURFACE_FLAGS_COMPLEX : 0) | (mips ? DDS_SURFACE_FLAGS_MIPMAP : 0);
+	h->dwCaps2 = (iscube ? DDS_CUBEMAP_ALLFACES : 0) | (is3d ? DDS_FLAGS_VOLUME : 0);
+	h->dwCaps3 = 0;
+	h->dwCaps4 = 0;
+	h->dwReserved2 = 0;
+	d3d10ext->dxgiFormat = GetDXGIFormat(inf.format);
+	d3d10ext->resourceDimension = is3d ? DDS_RESOURCE_DIMENSION_TEXTURE3D : DDS_RESOURCE_DIMENSION_TEXTURE2D; // how to tell 1D? y==0 && z==0?
+	d3d10ext->miscFlag = iscube ? DDS_RESOURCE_MISC_TEXTURECUBE : 0;
+	d3d10ext->arraySize = is3d ? 1u : max(1u, inf.array_size); // DDS requires this to be non-zero
+	d3d10ext->miscFlags2 = 0;
+	
+	const int nSubresources = num_subresources(inf);
+	mapped_subresource* subresources = (mapped_subresource*)default_allocate(sizeof(mapped_subresource) * nSubresources, 0);
+	finally DeleteInitData([&] { if (subresources) default_deallocate(subresources); });
+	map_bits(inf, bits, bits_size, subresources, nSubresources);
+
+	for (int i = 0; i < nSubresources; i++)
+		b.copy_to(i, subresources[i]);
+
+	return a;
+}
+
+texel_buffer decode_dds(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
+{
+	//if (1) oTHROW(operation_not_supported, "dds not yet implemented");
+
+	//oCHECK(option == alpha_option::preserve, "changing alpha option not supported for dds");
 	info si = get_info_dds(buffer, size);
 	oCHECK(si.format != format::unknown, "invalid dds");
 
@@ -405,7 +490,7 @@ texel_buffer decode_dds(const void* buffer, size_t size, const alpha_option& opt
 
 	auto h = (const DDS_HEADER*)byte_add(buffer, sizeof(DDS_HEADER));
 	const void* bits = byte_add(buffer, sizeof(DDS_MAGIC) + sizeof(DDS_HEADER) + (HasD3D10Header(*h) ? sizeof(DDS_HEADER_DXT10) : 0));
-	map_bits(si, bits, byte_diff(bits, buffer), subresources, nSubresources);
+	map_bits(si, bits, size - byte_diff(bits, buffer), subresources, nSubresources);
 
 	for (int i = 0; i < nSubresources; i++)
 		b.update_subresource(i, subresources[i]);

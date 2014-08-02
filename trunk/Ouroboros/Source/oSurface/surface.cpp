@@ -227,10 +227,10 @@ static const format_info sFormatInfo[] =
   { "y410",                       oFCC('Y410'), kBS_DEC3N,    {format::r10g10b10a2_unorm,format::unknown}, 4, kMinMip, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
   { "y416",                       oFCC('Y416'), kBS_4_16,     {format::b8g8r8a8_unorm,format::unknown}, 4, kMinMip, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
   { "nv12",                       oFCC('NV12'), kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_yuv },
-  { "yuv2",                       oFCC('YUV2'), kBS_4_8,      kSFD_R8_RG8,      4, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
   { "p010",                       oFCC('P010'), {10,10,10,0}, kSFD_R16_RG16,    2, kMinMip,   3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
   { "p016",                       oFCC('P016'), kBS_3_16,     kSFD_R16_RG16,    2, kMinMip,   3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
   { "420_opaque",                 oFCC('420O'), kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
+  { "yuy2",                       oFCC('YUY2'), kBS_4_8,      kSFD_R8_RG8,      4, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
   { "y210",                       oFCC('Y210'), kBS_4_16,     kNoSubformats,    2, kMinMipYUV,3, 1, traits::is_unorm|traits::is_yuv },
   { "y216",                       oFCC('Y216'), kBS_4_16,     kNoSubformats,    2, kMinMipYUV,3, 1, traits::is_unorm|traits::is_yuv },
   { "nv11",                       kUnknownFCC,  kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
@@ -254,9 +254,9 @@ static const format_info sFormatInfo[] =
   { "y8_u8v8_unorm",              oFCC('yv8u'), kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
   { "y8a8_u8v8_unorm",            oFCC('av8u'), kBS_4_8,      kSFD_RG8_RG8,     2, kMinMipYUV,4, 2, traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
   { "ybc4_uvbc5_unorm",           oFCC('yvbu'), kBS_3_8,      kSFD_BC4_BC5,     8, kMinMipYUV,3, 2, traits::is_bc|traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
-  { "yabc5_uvbc5_unorM",          oFCC('avbu'), kBS_4_8,      kSFD_BC5_BC5,    16, kMinMipYUV,4, 2, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
+  { "yabc5_uvbc5_unorm",          oFCC('avbu'), kBS_4_8,      kSFD_BC5_BC5,    16, kMinMipYUV,4, 2, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
 };
-static_assert(oCOUNTOF(sFormatInfo) == (int)format::count, "");
+static_assert(oCOUNTOF(sFormatInfo) == (int)format::count, "array mismatch");
 
 	} // namespace surface
 
@@ -532,17 +532,17 @@ uint row_size(const format& f, uint mipwidth, uint subsurface)
 uint row_pitch(const info& inf, uint miplevel, uint subsurface)
 {
 	oCHECK_INFO(inf)
-	const auto nMips = num_mips(inf.layout, inf.dimensions);
+	const auto nMips = num_mips(inf.mip_layout, inf.dimensions);
 	if (nMips && miplevel >= nMips)
 		throw invalid_argument("invalid miplevel");
 
-	switch (inf.layout)
+	switch (inf.mip_layout)
 	{
-		case layout::image: 
+		case mip_layout::none: 
 			return row_size(inf.format, inf.dimensions, subsurface);
-		case layout::tight: 
+		case mip_layout::tight: 
 			return row_size(inf.format, dimension_npot(inf.format, inf.dimensions.x, miplevel, subsurface), subsurface);
-		case layout::below: 
+		case mip_layout::below: 
 		{
 			const auto mip0RowSize = row_size(inf.format, inf.dimensions.x, subsurface);
 			if (nMips > 2)
@@ -555,7 +555,7 @@ uint row_pitch(const info& inf, uint miplevel, uint subsurface)
 				return mip0RowSize;
 		}
 
-		case layout::right: 
+		case mip_layout::right: 
 		{
 			const auto mip0RowSize = row_size(inf.format, inf.dimensions.x, subsurface);
 			if (nMips > 1)
@@ -597,10 +597,10 @@ uint mip_size(const format& f, const uint2& mipdimensions, uint subsurface)
 
 static int offset_image(const info& inf, uint miplevel, uint subsurface)
 {
-	oASSERT(miplevel == 0, "layout::image doesn't have mip levels");
+	oASSERT(miplevel == 0, "mip_layout::none doesn't have mip levels");
 	uint offset = 0;
 	for (uint i = 0; i < subsurface; i++)
-		offset += byte_align(total_size(inf, i), oDEFAULT_MEMORY_ALIGNMENT);
+		offset += total_size(inf, i);
 	return offset;
 }
 
@@ -676,16 +676,16 @@ static uint offset_right(const info& inf, uint miplevel, uint subsurface)
 uint offset(const info& inf, uint miplevel, uint subsurface)
 {
 	oCHECK_INFO(inf)
-	const auto nMips = num_mips(inf.layout, inf.dimensions);
+	const auto nMips = num_mips(inf.mip_layout, inf.dimensions);
 	if (nMips && miplevel >= nMips) 
 		throw invalid_argument("invalid miplevel");
 
-	switch (inf.layout)
+	switch (inf.mip_layout)
 	{
-		case layout::image: return offset_image(inf, miplevel, subsurface);
-		case layout::tight: return offset_tight(inf, miplevel, subsurface);
-		case layout::below: return offset_below(inf, miplevel, subsurface);
-		case layout::right: return offset_right(inf, miplevel, subsurface);
+		case mip_layout::none: return offset_image(inf, miplevel, subsurface);
+		case mip_layout::tight: return offset_tight(inf, miplevel, subsurface);
+		case mip_layout::below: return offset_below(inf, miplevel, subsurface);
+		case mip_layout::right: return offset_right(inf, miplevel, subsurface);
 		oNODEFAULT;
 	}
 }
@@ -695,16 +695,16 @@ uint slice_pitch(const info& inf, uint subsurface)
 	oCHECK_INFO(inf)
 	uint pitch = 0;
 
-	switch (inf.layout)
+	switch (inf.mip_layout)
 	{
-		case layout::image: case layout::right: case layout::below:
+		case mip_layout::none: case mip_layout::right: case mip_layout::below:
 			return mip_size(inf.format, slice_dimensions(inf, 0), subsurface);
 
-		case layout::tight:
+		case mip_layout::tight:
 		{
 			// Sum the size of all mip levels
 			int3 dimensions = inf.dimensions;
-			int nMips = num_mips(inf.layout, dimensions);
+			int nMips = num_mips(inf.mip_layout, dimensions);
 			while (nMips > 0)
 			{
 				pitch += mip_size(inf.format, dimensions.xy(), subsurface) * dimensions.z;
@@ -734,7 +734,7 @@ uint total_size(const info& inf, uint subsurface)
 			// byte_align is needed here to avoid a memory corruption crash. I'm not 
 			// sure why it is needed, but I think that size is a memory structure 
 			// containing all surface sizes, so they are all expected to be aligned.
-			size += byte_align(total_size(inf, i), oDEFAULT_MEMORY_ALIGNMENT);
+			size += total_size(inf, i);
 		}
 		return size;
 	}
@@ -752,20 +752,20 @@ uint2 slice_dimensions(const info& inf, uint subsurface)
 {
 	oCHECK_INFO(inf)
 	auto mip0dimensions = dimensions_npot(inf.format, inf.dimensions, 0, subsurface);
-	switch (inf.layout)
+	switch (inf.mip_layout)
 	{
-		case layout::image:
+		case mip_layout::none:
 			return uint2(mip0dimensions.x, (mip0dimensions.y * mip0dimensions.z));
 		
-		case layout::tight:
+		case mip_layout::tight:
 		{
 			const auto surfaceSlicePitch = slice_pitch(inf, subsurface);
 			const auto mip0RowPitch = row_pitch(inf, 0, subsurface);
 			return uint2(mip0dimensions.x, (surfaceSlicePitch / mip0RowPitch));
 		}
-		case layout::below: 
+		case mip_layout::below: 
 		{
-			auto nMips = num_mips(inf.layout, mip0dimensions);
+			auto nMips = num_mips(inf.mip_layout, mip0dimensions);
 			auto mip1dimensions = nMips > 1 ? dimensions_npot(inf.format, mip0dimensions, 1, subsurface) : uint3(0);
 			auto mip2dimensions = nMips > 2 ? dimensions_npot(inf.format, mip0dimensions, 2, subsurface) : uint3(0);
 
@@ -779,9 +779,9 @@ uint2 slice_dimensions(const info& inf, uint subsurface)
 			}
 			return uint2(::max(mip0dimensions.x, mip1dimensions.x + mip2dimensions.x), (mip0height + ::max(mip1height, mip2andUpHeight)));
 		}
-		case layout::right: 
+		case mip_layout::right: 
 		{
-			auto nMips = num_mips(inf.layout, mip0dimensions);
+			auto nMips = num_mips(inf.mip_layout, mip0dimensions);
 			auto mip1dimensions = nMips > 1 ? dimensions_npot(inf.format, mip0dimensions, 1, subsurface) : int3(0);
 
 			auto mip0height = mip0dimensions.y * mip0dimensions.z;
@@ -801,7 +801,7 @@ subresource_info subresource(const info& inf, uint subresource)
 {
 	oCHECK_INFO(inf)
 	subresource_info subinf;
-	int nMips = num_mips(inf.layout, inf.dimensions);
+	int nMips = num_mips(inf.mip_layout, inf.dimensions);
 	unpack_subresource(subresource, nMips, inf.array_size, &subinf.mip_level, &subinf.array_slice, &subinf.subsurface);
 	if (inf.array_size && subinf.array_slice >= safe_array_size(inf)) throw invalid_argument("array slice index is out of range");
 	if (subinf.subsurface >= num_subformats(inf.format)) throw invalid_argument("subsurface index is out of range for the specified surface");
@@ -816,7 +816,7 @@ info subsurface(const info& inf, uint subsurface, uint miplevel, uint2* out_byte
 	subinf.dimensions = dimensions_npot(inf.format, inf.dimensions, miplevel, subsurface);
 	subinf.array_size = inf.array_size;
 	subinf.format = subformat(inf.format, subsurface);
-	subinf.layout = inf.layout;
+	subinf.mip_layout = inf.mip_layout;
 	if (out_byte_dimensions)
 	{
 		out_byte_dimensions->x = row_size(inf.format, inf.dimensions);
@@ -928,7 +928,7 @@ color get(const subresource_info& subresource_info, const const_mapped_subresour
 static uint best_fit_mip_level(const info& inf, const uint2& tiledimensions)
 {
 	oCHECK_INFO(inf)
-	if (layout::image == inf.layout)
+	if (mip_layout::none == inf.mip_layout)
 		return 0;
 
 	uint nthMip = 0;
@@ -949,7 +949,7 @@ uint num_slice_tiles(const info& inf, const uint2& tiledimensions)
 {
 	oCHECK_NOT_PLANAR(inf.format);
 
-	if (layout::image == inf.layout)
+	if (mip_layout::none == inf.mip_layout)
 		return num_tiles(inf.dimensions, tiledimensions);
 
 	uint numTiles = 0;
@@ -1008,7 +1008,7 @@ static uint slice_first_tile_id(const info& inf, const uint2& tiledimensions, ui
 static uint tile_id_offset(const info& inf, const uint2& tiledimensions, uint miplevel)
 {
 	oCHECK_NOT_PLANAR(inf.format);
-	if (layout::image == inf.layout)
+	if (mip_layout::none == inf.mip_layout)
 		return 0;
 	uint numTiles = 0;
 	uint nMips = ::min(miplevel, 1u + best_fit_mip_level(inf, tiledimensions));
