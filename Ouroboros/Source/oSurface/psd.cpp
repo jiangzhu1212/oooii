@@ -27,6 +27,8 @@
 #include <oBase/throw.h>
 #include "psd.h"
 
+namespace ouro { namespace surface {
+
 #if 0
 
 class enum PSDLimits
@@ -86,9 +88,12 @@ static const void* get_image_data_section(const void* buffer, size_t size)
   offset += *(const uint*)byte_add(header, offset + sizeof(uint)); // offset to image data
   return offset >= size ? 0 : byte_add(header, offset);
 }
+#endif
 
 info get_info_psd(const void* buffer, size_t size)
 {
+  return info();
+#if 0
   auto h = (const PSDHeader*)buffer;
   if (size < sizeof(PSDHeader) || h->signature != kPSDSignature || h->version != kRequiredVersion 
     || h->num_channels < kMinChannel || h->num_channels > kMaxChannel
@@ -132,13 +137,14 @@ info get_info_psd(const void* buffer, size_t size)
   i.dimensions = uint3(h->width, h->height, 0);
   i.format = h->num_channels == 3 ? b8g8r8_unorm : b8g8r8a8_unorm;
   return i;
+#endif
 }
 
 scoped_allocation encode_psd(const texel_buffer& b, const alpha_option& option, const compression& compression)
 {
   oTHROW(operation_not_supported, "psd encoding not supported");
 }
-
+#if 0
 template<typename T>
 static interleave_channels(void* oRESTRICT dst, const uint2& dst_byte_dimensions, bool dst_has_alpha, const void* oRESTRICT red, const void* oRESTRICT green const void* oRESTRICT blue, const void* oRESTRICT alpha)
 {
@@ -180,9 +186,11 @@ static interleave_channels(void* oRESTRICT dst, const uint2& dst_byte_dimensions
     }
   }
 }
-
-texel_buffer decode_psd(const void* buffer, size_t size, const alpha_option& option, const layout& layout)
+#endif
+texel_buffer decode_psd(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
+  oTHROW(operation_not_supported, "psd decoding not supported");
+#if 0
   info si = get_info_psd(buffer, size);
   oCHECK(si.format != format::unknown, "invalid psd");
   
@@ -227,6 +235,7 @@ texel_buffer decode_psd(const void* buffer, size_t size, const alpha_option& opt
   }
 
   return b;
+#endif
 }
 
-#endif
+}}

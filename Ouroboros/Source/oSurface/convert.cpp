@@ -113,15 +113,16 @@ pixel_convert get_pixel_convert(format srcfmt, format dstfmt)
 }
 
 static void convert_subresource_scanline(int _HorizontalElementCount
-	, int _NthScanline
+	, uint _SrcNthScanline
+	, uint _DstNthScanline
 	, pixel_convert _Convert
 	, int SourceElementSize
 	, int DestinationElementSize
 	, const const_mapped_subresource& src
 	, const mapped_subresource& dst)
 {
-	const uchar* srow = (const uchar*)src.data + (src.row_pitch * _NthScanline);
-	uchar* drow = (uchar*)dst.data + (dst.row_pitch * _NthScanline);
+	const uchar* srow = (const uchar*)src.data + (src.row_pitch * _SrcNthScanline);
+	uchar* drow = (uchar*)dst.data + (dst.row_pitch * _DstNthScanline);
 
 	for (int x = 0; x < _HorizontalElementCount; x++)
 	{
@@ -142,13 +143,13 @@ static void convert_subresource(pixel_convert convert
 	const auto delSize = element_size(dst_format);
 	if (option == copy_option::flip_vertically)
 	{
-		const uint orig_y = i.dimensions.y;
-		for (uint y = orig_y-1; y < orig_y; y--)
-			convert_subresource_scanline(i.dimensions.x, y, convert, selSize, delSize, src, dst);
+		const uint bottom = i.dimensions.y - 1;
+		for (uint y = 0; y < i.dimensions.y; y++)
+			convert_subresource_scanline(i.dimensions.x, y, bottom - y, convert, selSize, delSize, src, dst);
 	}
 	else
 		for (uint y = 0; y < i.dimensions.y; y++)
-			convert_subresource_scanline(i.dimensions.x, y, convert, selSize, delSize, src, dst);
+			convert_subresource_scanline(i.dimensions.x, y, y, convert, selSize, delSize, src, dst);
 }
 
 static void convert_subresource_bc7(const subresource_info& i

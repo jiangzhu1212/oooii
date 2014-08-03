@@ -39,6 +39,7 @@ enum class file_format : uchar
 	dds,
 	jpg,
 	png,
+	psd,
 	tga,
 };
 
