@@ -286,7 +286,6 @@ enum class semantic : uchar
 {
 	custom,
 	color,
-	cube,
 	tangent_normal,
 	world_normal,
 	specular,
@@ -294,8 +293,25 @@ enum class semantic : uchar
 	height,
 	noise,
 	intensity,
-	color_correction,
+
+	custom1d,
+	color_correction1d,
+
+	custom3d,
+	color_correction3d,
+
+	cube,
+
 	count,
+
+	first1d = custom1d,
+	last1d = color_correction1d,
+	first2d = custom,
+	last2d = intensity,
+	first3d = custom3d,
+	last3d = color_correction3d,
+	firstcube = cube,
+	lastcube = cube,
 };
 
 enum class cube_face : uchar
@@ -345,10 +361,10 @@ struct info
 				&& mip_layout == that.mip_layout;
 	}
 
-	inline bool is_1d() const { return dimensions.y == dimensions.z && dimensions.y == 0; }
-	inline bool is_2d() const { return dimensions.z == 0; }
-	inline bool is_3d() const { return dimensions.x != 0 && dimensions.y != 0 && dimensions.z != 0; }
-	inline bool is_cube() const { return semantic == semantic::cube; }
+	inline bool is_1d() const { return semantic >= semantic::first1d && semantic <= semantic::last1d; }
+	inline bool is_2d() const { return semantic >= semantic::first2d && semantic <= semantic::last2d; }
+	inline bool is_3d() const { return semantic >= semantic::first3d && semantic <= semantic::last3d; }
+	inline bool is_cube() const { return semantic >= semantic::firstcube && semantic <= semantic::lastcube; }
 	inline bool is_array() const { return array_size != 0; }
 	inline bool mips() const { return mip_layout == mip_layout::none; }
 
@@ -603,14 +619,13 @@ uint slice_pitch(const info& inf, uint subsurface = 0);
 // Calculates the size for a total buffer of 1d/2d/3d/cube textures by summing 
 // the various mip chains, then multiplying it by the number of slices. 
 // Optionally you can supply a subsurface index to limit the size calculation to 
-// that subsurface only. 3D textures need to have array_size set to 1. All other 
-// texture types need to have dimensions.z set to 1. For more clarity on the 
-// difference between array_size and depth see:
-// http://www.cs.umbc.edu/~olano/s2006c03/ch02.pdf where it is clear that when a 
-// first mip level for a 3d texture is (4,3,5) that the next mip level is 
-// (2,1,2) and the next (1,1,1) whereas array_size set to 5 would mean: 5*(4,3), 
-// 5*(2,1), 5*(1,1).
-uint total_size(const info& inf, uint subsurface = 0);
+// that subsurface only. For more clarity on the difference between array_size 
+// and depth see: http://www.cs.umbc.edu/~olano/s2006c03/ch02.pdf where it is 
+// clear that when a first mip level for a 3d texture is (4,3,5) that the next 
+// mip level is (2,1,2) and the next (1,1,1) whereas array_size set to 5 would 
+// mean: 5*(4,3), 5*(2,1), 5*(1,1).
+uint total_size(const info& inf);
+uint total_size(const info& inf, uint subsurface);
 
 // Calculates the dimensions you would need for an image to fit this surface
 // natively and in its entirety.

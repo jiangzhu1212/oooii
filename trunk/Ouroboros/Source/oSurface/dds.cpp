@@ -187,7 +187,7 @@ scoped_allocation encode_dds(const texel_buffer& b, const alpha_option& option, 
 	oCHECK(inf.mip_layout == mip_layout::none || inf.mip_layout == mip_layout::tight, "right and below mip layouts not supported");
 
 	const bool is3d = false; // how to specify? probably .z != 0...
-	const bool isbc = is_block_compressed(inf.format);
+	const bool isbc = dds_is_block_compressed(to_dds_format(inf.format));
 	const bool mips = inf.mip_layout != mip_layout::none;
 	const bool iscube = false; // how to specify?
 
@@ -205,15 +205,7 @@ scoped_allocation encode_dds(const texel_buffer& b, const alpha_option& option, 
 	auto d3d10ext = (dds_header_dx10*)&h[1];
 	void* bits = kHasDX10 ? (void*)&d3d10ext[1] : (void*)&h[1];
 
-	// http://msdn.microsoft.com/en-us/library/windows/desktop/bb943991(v=vs.85).aspx#related_topics
-	uint pitch = 0;
-	if (isbc)
-		pitch = max(1u, ((inf.dimensions.x + 3) / 4)) * element_size(inf.format);
-	else if (inf.format == format::r8g8_b8g8_unorm || inf.format == format::g8r8_g8b8_unorm)
-		pitch = ((inf.dimensions.x +1 ) >> 1) * 4;
-	else 
-		pitch = (inf.dimensions.x * surface::bits(inf.format) + 7 ) / 8;
-	
+	uint pitch = dds_calc_pitch(to_dds_format(inf.format), inf.dimensions.x);
 	h->dwSize = sizeof(dds_header);
 	h->dwFlags = DDS_HEADER_FLAGS_TEXTURE | (mips ? DDS_HEADER_FLAGS_MIPMAP : 0) | (isbc ? DDS_HEADER_FLAGS_LINEARSIZE : 0) | (is3d ? DDS_HEADER_FLAGS_VOLUME : 0);
 	h->dwHeight = inf.dimensions.y;
