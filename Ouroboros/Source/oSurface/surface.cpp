@@ -38,10 +38,6 @@ namespace ouro {
 
 static inline uint safe_array_size(const info& _Info) { return ::max(1u, _Info.array_size); }
 
-#define oCHECK_INFO(_Info) \
-	if (any(_Info.dimensions < int3(1,1,1))) throw invalid_argument(formatf("invalid dimensions: [%d,%d,%d]", _Info.dimensions.x, _Info.dimensions.y, _Info.dimensions.z)); \
-	if (safe_array_size(_Info) != 1 && _Info.dimensions.z != 1) throw invalid_argument(formatf("array_size or depth has to be 1 [%d,%d]", _Info.array_size, _Info.dimensions.z));
-
 #define oCHECK_DIM(f, _Dim) if (_Dim < min_dimensions(f).x) throw invalid_argument(formatf("invalid dimension: %u", _Dim));
 #define oCHECK_DIM2(f, _Dim) if (any(_Dim < min_dimensions(f))) throw invalid_argument(formatf("invalid dimensions: [%u,%u]", _Dim.x, _Dim.y));
 #define oCHECK_DIM3(f, _Dim) if (any(_Dim.xy < min_dimensions(f))) throw invalid_argument(formatf("invalid dimensions: [%u,%u,%u]", _Dim.x, _Dim.y, _Dim.z));
@@ -440,7 +436,7 @@ uint num_mips(bool mips, const uint3& mip0dimensions)
 		return 0;
 
 	uint nMips = 1;
-	uint3 mip = mip0dimensions;
+	uint3 mip = max(uint3(1), mip0dimensions);
 
 	while (any(mip != 1))
 	{
@@ -454,8 +450,7 @@ uint num_mips(bool mips, const uint3& mip0dimensions)
 uint dimension(const format& f, uint mip0dimension, uint miplevel, uint subsurface)
 {
 	oCHECK_DIM(f, mip0dimension);
-	if (f == format::unknown)
-		throw invalid_argument("Unknown surface format passed to surface::dimension");
+	oCHECK_ARG(f != format::unknown, "Unknown surface format passed to surface::dimension");
 	const uint subsampleBias = subsample_bias(f, subsurface);
 	uint d = ::max(1u, mip0dimension >> (miplevel + subsampleBias));
 	return is_block_compressed(f) ? static_cast<uint>(byte_align(d, 4)) : d;
@@ -464,14 +459,14 @@ uint dimension(const format& f, uint mip0dimension, uint miplevel, uint subsurfa
 uint2 dimensions(const format& f, const uint2& mip0dimensions, uint miplevel, uint subsurface)
 {
 	return uint2(dimension(f, mip0dimensions.x, miplevel, subsurface)
-		, dimension(f, mip0dimensions.y, miplevel, subsurface));
+						, dimension(f, mip0dimensions.y, miplevel, subsurface));
 }
 
 uint3 dimensions(const format& f, const uint3& mip0dimensions, uint miplevel, uint subsurface)
 {
 	return uint3(dimension(f, mip0dimensions.x, miplevel, subsurface)
-		, dimension(f, mip0dimensions.y, miplevel, subsurface)
-		, dimension(format::r32_uint, mip0dimensions.z, miplevel, subsurface)); // no block-compression alignment for depth
+						, dimension(f, mip0dimensions.y, miplevel, subsurface)
+						, dimension(format::r32_uint, mip0dimensions.z, miplevel, subsurface)); // no block-compression alignment for depth
 }
 
 uint dimension_npot(const format& f, uint mip0dimension, uint miplevel, uint subsurface)
@@ -480,11 +475,6 @@ uint dimension_npot(const format& f, uint mip0dimension, uint miplevel, uint sub
 
 	format NthSurfaceFormat = subformat(f, subsurface);
 	const auto MipLevelBias = subsample_bias(f, subsurface);
-	
-	// @tony: This was added while merging oYUVSurface functionality into 
-	// oSurface, so we recognize that the int2 values may not be the same and 
-	// won't be for formats like YUV9, but first get the lion's share of the code
-	// across and revisit this once the main algo is vetted.
 	const auto MinDimension = min_dimensions(f);
 
 	auto d = ::max(1u, mip0dimension >> (miplevel + MipLevelBias));
@@ -498,24 +488,34 @@ uint dimension_npot(const format& f, uint mip0dimension, uint miplevel, uint sub
 
 uint2 dimensions_npot(const format& f, const uint2& mip0dimensions, uint miplevel, uint subsurface)
 {
-	#ifdef _DEBUG
-		const auto MinDimension = min_dimensions(f);
-		oASSERT(MinDimension.x == MinDimension.y, "There is currently no support for aniso min dimensions");
-	#endif
+	oCHECK_DIM2(f, mip0dimensions);
 
-	return uint2(dimension_npot(f, mip0dimensions.x, miplevel, subsurface)
-		, dimension_npot(f, mip0dimensions.y, miplevel, subsurface));
+	format NthSurfaceFormat = subformat(f, subsurface);
+	const auto MipLevelBias = subsample_bias(f, subsurface);
+	const auto MinDimensions = min_dimensions(f);
+
+	uint2 d;
+	d.x = ::max(1u, mip0dimensions.x >> (miplevel + MipLevelBias));
+	d.y = ::max(1u, mip0dimensions.y >> (miplevel + MipLevelBias));
+
+	if (is_block_compressed(NthSurfaceFormat))
+	{
+		d.x = byte_align(d.x, 4);
+		d.y = byte_align(d.y, 4);
+	}
+
+	if (subsurface == 0 && subsample_bias(f, 1) != 0)
+	{
+		d.x = ::max(MinDimensions.x, d.x & ~(MinDimensions.x-1)); // always even down to 2x2
+		d.y = ::max(MinDimensions.y, d.y & ~(MinDimensions.y-1)); // always even down to 2x2
+	}
+	return d;
 }
 
 uint3 dimensions_npot(const format& f, const uint3& mip0dimensions, uint miplevel, uint subsurface)
 {
-	#ifdef _DEBUG
-		const uint2 MinDimension = min_dimensions(f);
-		oASSERT(MinDimension.x == MinDimension.y, "There is currently no support for aniso min dimensions");
-	#endif
-
-	return uint3(dimension_npot(f, mip0dimensions.x, miplevel, subsurface)
-		, dimension_npot(f, mip0dimensions.y, miplevel, subsurface)
+	auto dimxy = dimensions_npot(f, mip0dimensions.xy(), miplevel, subsurface);
+	return uint3(dimxy.x, dimxy.y
 		, dimension_npot(format::r32_uint, mip0dimensions.z, miplevel, subsurface)); // no block-compression alignment for depth
 }
 
@@ -531,7 +531,6 @@ uint row_size(const format& f, uint mipwidth, uint subsurface)
 
 uint row_pitch(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(inf)
 	const auto nMips = num_mips(inf.mip_layout, inf.dimensions);
 	if (nMips && miplevel >= nMips)
 		throw invalid_argument("invalid miplevel");
@@ -570,7 +569,6 @@ uint row_pitch(const info& inf, uint miplevel, uint subsurface)
 
 uint depth_pitch(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(inf)
 	auto mipDimensions = dimensions_npot(inf.format, inf.dimensions, miplevel, 0);
 	return row_pitch(inf, miplevel, subsurface) * num_rows(inf.format, mipDimensions.xy(), subsurface);
 }
@@ -595,9 +593,9 @@ uint mip_size(const format& f, const uint2& mipdimensions, uint subsurface)
 	return row_size(f, mipdimensions, subsurface) * num_rows(f, mipdimensions, subsurface);
 }
 
-static int offset_image(const info& inf, uint miplevel, uint subsurface)
+static int offset_none(const info& inf, uint miplevel, uint subsurface)
 {
-	oASSERT(miplevel == 0, "mip_layout::none doesn't have mip levels");
+	oCHECK(miplevel == 0, "mip_layout::none doesn't have mip levels");
 	uint offset = 0;
 	for (uint i = 0; i < subsurface; i++)
 		offset += total_size(inf, i);
@@ -606,7 +604,6 @@ static int offset_image(const info& inf, uint miplevel, uint subsurface)
 
 static uint offset_tight(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(inf)
 	auto mip0dimensions = inf.dimensions;
 	uint offset = 0;
 	uint mip = 0;
@@ -621,7 +618,6 @@ static uint offset_tight(const info& inf, uint miplevel, uint subsurface)
 
 static int offset_below(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(inf)
 	if (0 == miplevel)
 		return 0;
 
@@ -651,7 +647,6 @@ static int offset_below(const info& inf, uint miplevel, uint subsurface)
 
 static uint offset_right(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(inf)
 	if (0 == miplevel)
 		return 0;
 
@@ -675,14 +670,13 @@ static uint offset_right(const info& inf, uint miplevel, uint subsurface)
 
 uint offset(const info& inf, uint miplevel, uint subsurface)
 {
-	oCHECK_INFO(inf)
 	const auto nMips = num_mips(inf.mip_layout, inf.dimensions);
 	if (nMips && miplevel >= nMips) 
 		throw invalid_argument("invalid miplevel");
 
 	switch (inf.mip_layout)
 	{
-		case mip_layout::none: return offset_image(inf, miplevel, subsurface);
+		case mip_layout::none: return offset_none(inf, miplevel, subsurface);
 		case mip_layout::tight: return offset_tight(inf, miplevel, subsurface);
 		case mip_layout::below: return offset_below(inf, miplevel, subsurface);
 		case mip_layout::right: return offset_right(inf, miplevel, subsurface);
@@ -692,7 +686,6 @@ uint offset(const info& inf, uint miplevel, uint subsurface)
 
 uint slice_pitch(const info& inf, uint subsurface)
 {
-	oCHECK_INFO(inf)
 	uint pitch = 0;
 
 	switch (inf.mip_layout)
@@ -750,7 +743,6 @@ uint2 dimensions(const info& inf, uint subsurface)
 
 uint2 slice_dimensions(const info& inf, uint subsurface)
 {
-	oCHECK_INFO(inf)
 	auto mip0dimensions = dimensions_npot(inf.format, inf.dimensions, 0, subsurface);
 	switch (inf.mip_layout)
 	{
@@ -799,7 +791,6 @@ uint2 slice_dimensions(const info& inf, uint subsurface)
 
 subresource_info subresource(const info& inf, uint subresource)
 {
-	oCHECK_INFO(inf)
 	subresource_info subinf;
 	int nMips = num_mips(inf.mip_layout, inf.dimensions);
 	unpack_subresource(subresource, nMips, inf.array_size, &subinf.mip_level, &subinf.array_slice, &subinf.subsurface);
@@ -927,7 +918,6 @@ color get(const subresource_info& subresource_info, const const_mapped_subresour
 // after the one returned by this function can together fit into one mip level.
 static uint best_fit_mip_level(const info& inf, const uint2& tiledimensions)
 {
-	oCHECK_INFO(inf)
 	if (mip_layout::none == inf.mip_layout)
 		return 0;
 
