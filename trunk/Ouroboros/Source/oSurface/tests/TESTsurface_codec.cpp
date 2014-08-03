@@ -95,7 +95,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 				, surface::alpha_option::force_no_alpha
 				, surface::compression::none);
 			mstring fname;
-			snprintf(fname, "encoded_from_decoded_%s.%s", as_string(file_format), as_string(file_format));
+			snprintf(fname, "encoded_from_decoded_%s.%s", as_string(file_format), as_string(surface::file_format::bmp));
 			filesystem::save(filesystem::desktop_path() / path(fname), encoded, encoded.size());
 		}
 
@@ -108,12 +108,13 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 void TESTsurface_codec(test_services& _Services)
 {
 	// still a WIP
-	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::dds, 1.0f);
-
-	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::tga, 1.0f);
+	//compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::psd, 1.0f);
+	
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::bmp, 1.0f);
-	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::png, 1.0f);
+	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::dds, 1.0f);
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::jpg, 4.0f);
+	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::png, 1.0f);
+	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::tga, 1.0f);
 }
 
 	} // namespace tests

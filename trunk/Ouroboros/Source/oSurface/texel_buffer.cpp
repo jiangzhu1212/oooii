@@ -237,7 +237,7 @@ void texel_buffer::convert_to(uint subresource, const mapped_subresource& dst, c
 		info src_info = get_info();
 		info dst_info = src_info;
 		dst_info.format = dst_format;
-		surface::convert(src_info, slock.mapped, dst_info, (mapped_subresource&)dst);
+		surface::convert(src_info, slock.mapped, dst_info, (mapped_subresource&)dst, option);
 	}
 }
 

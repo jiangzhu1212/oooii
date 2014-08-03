@@ -47,6 +47,7 @@
     <ClInclude Include="..\..\Include\oSurface\surface.h" />
     <ClInclude Include="..\..\Include\oSurface\texel_buffer.h" />
     <ClInclude Include="bmp.h" />
+    <ClInclude Include="dds.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="psd.h" />
     <ClInclude Include="tga.h" />

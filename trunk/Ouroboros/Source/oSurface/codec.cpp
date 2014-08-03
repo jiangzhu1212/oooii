@@ -30,7 +30,7 @@
 namespace ouro { namespace surface {
 
 // add format extension to this list and it will propagate to all the apis below
-#define FOREACH_EXT(macro) macro(bmp) macro(dds) macro(jpg) macro(png) macro(tga)
+#define FOREACH_EXT(macro) macro(bmp) macro(dds) macro(jpg) macro(png) macro(psd) macro(tga)
 
 // _____________________________________________________________________________
 // Boilerplate (don't use directly, they're registered with the functions below)
