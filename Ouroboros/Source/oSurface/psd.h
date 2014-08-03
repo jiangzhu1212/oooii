@@ -29,6 +29,10 @@
 
 #include <stdint.h>
 
+#ifndef PSD_RESTRICT
+#define PSD_RESTRICT __restrict
+#endif
+
 enum psd_constants
 {
   signature = 0x38425053, // '8BPS'
@@ -38,7 +42,7 @@ enum psd_constants
   max_channels = 56,
 };
 
-enum class psd_bpp : ushort
+enum psd_bpp
 {
   k1 = 1,
   k8 = 8,
@@ -87,6 +91,9 @@ struct psd_header
 };
 #pragma pack(pop)
 
+inline uint32_t psd_swap(uint32_t x) { return (x<<24) | ((x<<8) & 0x00ff0000) | ((x>>8) & 0x0000ff00) | (x>>24); }
+inline uint16_t psd_swap(const uint16_t x) { return (x<<8) | (x>>8); }
+
 // To get to the flattened bits first look at the uint32_t right after
 // the header (color mode data section) length. Offset by that value to
 // a uint32_t for the image resources section length. Offset by that 
@@ -94,35 +101,91 @@ struct psd_header
 // by that to get to the red plane, which is width*pixelsize*height then
 // green then blue then alpha then other channels.
 
-inline const psd_header* psd_validate(const void* buffer, size_t size)
+inline bool psd_validate(const void* buffer, size_t size, psd_header* out_header)
 {
-  auto h = (const psd_header*)buffer;
-  if (size < sizeof(psd_header) 
-    || h->signature != psd_constants::signature 
-    || h->version != psd_constants::version
-    || h->num_channels < psd_constants::min_channels 
-    || h->num_channels > psd_constants::max_channels
-    || h->height == 0 || h->height > psd_constants::max_dimension 
-    || h->width == 0 || h->width > psd_constants::max_dimension )
+  if (size < sizeof(psd_header))
+		return false;
+
+	auto hh = (const psd_header*)buffer;
+	out_header->signature = psd_swap(hh->signature);
+	out_header->version = psd_swap(hh->version);
+	out_header->reserved[0] = 0;
+	out_header->reserved[1] = 0;
+	out_header->reserved[2] = 0;
+	out_header->reserved[3] = 0;
+	out_header->reserved[4] = 0;
+	out_header->reserved[5] = 0;
+  out_header->num_channels = psd_swap(hh->num_channels);
+  out_header->height = psd_swap(hh->height);
+  out_header->width = psd_swap(hh->width);
+  out_header->bpp = psd_swap(hh->bpp);
+  out_header->color_mode = psd_swap(hh->color_mode);
+
+  if (out_header->signature != psd_constants::signature 
+    || out_header->version != psd_constants::version
+    || out_header->num_channels < psd_constants::min_channels 
+    || out_header->num_channels > psd_constants::max_channels
+    || out_header->height == 0 || out_header->height > psd_constants::max_dimension 
+    || out_header->width == 0 || out_header->width > psd_constants::max_dimension )
     return nullptr;
     
-  switch (h->bpp)
+  switch (out_header->bpp)
   {
     case psd_bpp::k1: case psd_bpp::k8: case psd_bpp::k16: case psd_bpp::k32: break;
-    default: return nullptr;
+    default: return false;
   }
   
-  switch (h->color_mode)
+  switch (out_header->color_mode)
   {
     case psd_color_mode::rgb:
     case psd_color_mode::bitmap: case psd_color_mode::grayscale: 
     case psd_color_mode::indexed: case psd_color_mode::cmyk:
     case psd_color_mode::multichannel: case psd_color_mode::duotone: 
     case psd_color_mode::lab: break;
-    default: return nullptr;
+    default: return false;
   }
   
-  return h;
+  return true;
+}
+
+// copies the planar-formatted sources to dst as interleaved. To swap rgb <-> bgr
+// pass in the planar source swapped.
+template<typename T>
+void interleave_channels(T* PSD_RESTRICT dst, size_t row_pitch, size_t num_rows, bool dst_has_alpha
+	, const void* PSD_RESTRICT red, const void* PSD_RESTRICT green, const void* PSD_RESTRICT blue, const void* PSD_RESTRICT alpha)
+{
+  const T* PSD_RESTRICT r = (const T*)red;
+  const T* PSD_RESTRICT g = (const T*)green;
+  const T* PSD_RESTRICT b = (const T*)blue;
+  const T* PSD_RESTRICT a = (const T*)alpha;
+  
+  if (dst_has_alpha)
+  {
+    for (size_t y = 0; y < num_rows; y++)
+    {
+      T* row_end = (T*)((uint8_t*)dst + row_pitch);
+      while (dst < row_end)
+      {
+        *dst++ = *r++;
+        *dst++ = *g++;
+        *dst++ = *b++;
+        *dst++ = a ? *a++ : T(-1);
+      }
+    }
+  }
+  else
+  {
+    for (size_t y = 0; y < num_rows; y++)
+    {
+      T* row_end = (T*)((uint8_t*)dst + row_pitch);
+      while (dst < row_end)
+      {
+        *dst++ = *r++;
+        *dst++ = *g++;
+        *dst++ = *b++;
+      }
+    }
+  }
 }
 
 #endif

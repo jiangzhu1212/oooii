@@ -55,7 +55,7 @@ inline double endian_swap_double(const unsigned long long& x) { unsigned long lo
 
 template<typename T> T to_big_endian(const T& x) { return is_little_endian ? endian_swap(x) : x; };
 template<typename T> T from_big_endian(const T& x) { return to_big_endian(x); }
-template<typename T> T to_little_endian(T x) { return is_little_endian ? x : endian_swap(); };
+template<typename T> T to_little_endian(T x) { return is_little_endian ? x : endian_swap(x); };
 template<typename T> T from_little_endian(T x) { return to_little_endian(x); }
 
 inline unsigned int to_big_endian_float(const float& x) { return is_little_endian ? endian_swap_float(x) : *(unsigned int*)&x; };
