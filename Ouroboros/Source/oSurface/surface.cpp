@@ -716,22 +716,22 @@ uint slice_pitch(const info& inf, uint subsurface)
 	return pitch;
 }
 
+uint total_size(const info& inf)
+{
+	uint size = 0;
+	const int nSurfaces = num_subformats(inf.format);
+	for (int i = 0; i < nSurfaces; i++)
+	{
+		// byte_align is needed here to avoid a memory corruption crash. I'm not 
+		// sure why it is needed, but I think that size is a memory structure 
+		// containing all surface sizes, so they are all expected to be aligned.
+		size += total_size(inf, i);
+	}
+	return size;
+}
+
 uint total_size(const info& inf, uint subsurface)
 {
-	if (subsurface < 0)
-	{
-		uint size = 0;
-		const int nSurfaces = num_subformats(inf.format);
-		for (int i = 0; i < nSurfaces; i++)
-		{
-			// byte_align is needed here to avoid a memory corruption crash. I'm not 
-			// sure why it is needed, but I think that size is a memory structure 
-			// containing all surface sizes, so they are all expected to be aligned.
-			size += total_size(inf, i);
-		}
-		return size;
-	}
-	
 	return slice_pitch(inf, subsurface) * safe_array_size(inf);
 }
 
