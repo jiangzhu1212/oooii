@@ -396,17 +396,17 @@ struct subresource_info
 {
 	subresource_info()
 		: dimensions(0, 0, 0)
-		, format(format::unknown)
 		, mip_level(0)
 		, array_slice(0)
 		, subsurface(0)
+		, format(format::unknown)
 	{}
 
 	uint3 dimensions;
-	format format;
 	uint mip_level;
 	uint array_slice;
 	uint subsurface;
+	format format;
 };
 
 struct mapped_subresource
@@ -566,7 +566,7 @@ inline uint num_columns(const format& f, const uint2& mipdimensions, uint subsur
 // 4 rows at a time.
 uint num_rows(const format& f, uint mipheight, uint subsurface = 0);
 inline uint num_rows(const format& f, const uint2& mipdimensions, uint subsurface = 0) { return num_rows(f, mipdimensions.y, subsurface); }
-inline uint num_rows(const format& f, const uint3& mipdimensions, uint subsurface = 0) { return num_rows(f, mipdimensions.y, subsurface) * mipdimensions.z; }
+inline uint num_rows(const format& f, const uint3& mipdimensions, uint subsurface = 0) { return num_rows(f, mipdimensions.y, subsurface) * max(1u, mipdimensions.z); }
 
 // Returns the number of columns (x) and rows (y) in one call. This is different
 // than dimensions, which is pixels. This is in elements, which can be 4x4 pixel 
