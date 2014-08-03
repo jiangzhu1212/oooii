@@ -141,8 +141,11 @@ static void convert_subresource(pixel_convert convert
 	const auto selSize = element_size(i.format);
 	const auto delSize = element_size(dst_format);
 	if (option == copy_option::flip_vertically)
-		for (uint y = i.dimensions.y-1; y >= 0; y--)
+	{
+		const uint orig_y = i.dimensions.y;
+		for (uint y = orig_y-1; y < orig_y; y--)
 			convert_subresource_scanline(i.dimensions.x, y, convert, selSize, delSize, src, dst);
+	}
 	else
 		for (uint y = 0; y < i.dimensions.y; y++)
 			convert_subresource_scanline(i.dimensions.x, y, convert, selSize, delSize, src, dst);
@@ -198,7 +201,7 @@ void convert_subresource(const subresource_info& i
 	#define oCHECK_BC6h(type) oCHECK_ARG(i.format == surface::format::x16b16g16r16_##type, "source must be a8b8g8r8_" #type " for conversion to bc7_" #type);
 	switch (dst_format)
 	{
-	case surface::format::bc7_unorm:
+		case surface::format::bc7_unorm:
 		{
 			oCHECK_BC7(unorm)
 			convert_subresource_bc7(i, src, dst_format, dst, option);

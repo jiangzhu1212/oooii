@@ -26,33 +26,15 @@
 #include <oSurface/convert.h>
 #include <oBase/throw.h>
 
+#include "tga.h"
+
 namespace ouro { namespace surface {
-
-#define TGA_RGB 2
-
-#pragma pack(push,1)
-struct TGAHeader
-{
-	unsigned char id_length;
-	unsigned char paletted_type;
-	unsigned char data_type_field;
-	unsigned short paletted_origin;
-	unsigned short paletted_length;
-	unsigned char paletted_depth;
-	unsigned short x_origin;
-	unsigned short y_origin;
-	unsigned short width;
-	unsigned short height;
-	unsigned char bpp;
-	unsigned char image_descriptor;
-};
-#pragma pack(pop)
 
 info get_info_tga(const void* buffer, size_t size)
 {
-	const TGAHeader* h = (const TGAHeader*)buffer;
+	auto h = (const tga_header*)buffer;
 
-	if (h->id_length || h->paletted_type || h->data_type_field != TGA_RGB 
+	if (h->id_length || h->paletted_type || h->data_type_field != tga_data_type_field::rgb 
 		|| h->paletted_origin || h->paletted_length || h->paletted_depth || h->x_origin || h->y_origin
 		|| h->width < 1 || h->height < 1 || h->image_descriptor
 		|| !(h->bpp == 32 || h->bpp == 24))
@@ -77,18 +59,18 @@ scoped_allocation encode_tga(const texel_buffer& b
 	auto dstinfo = info;
 	dstinfo.format = alpha_option_format(info.format, option);
 
-	TGAHeader h = {0};
-	h.data_type_field = TGA_RGB;
+	tga_header h = {0};
+	h.data_type_field = tga_data_type_field::rgb;
 	h.bpp = (uchar)bits(dstinfo.format);
 	h.width = (ushort)info.dimensions.x;
 	h.height = (ushort)info.dimensions.y;
 
-	const size_t size = sizeof(TGAHeader) + h.width * h.height * (h.bpp/8);
+	const size_t size = sizeof(tga_header) + h.width * h.height * (h.bpp/8);
 
 	scoped_allocation p(malloc(size), size, free);
-	memcpy(p, &h, sizeof(TGAHeader));
+	memcpy(p, &h, sizeof(tga_header));
 	mapped_subresource dst;
-	dst.data = byte_add((void*)p, sizeof(TGAHeader));
+	dst.data = byte_add((void*)p, sizeof(tga_header));
 	dst.row_pitch = element_size(dstinfo.format) * h.width;
 	dst.depth_pitch = dst.row_pitch * h.height;
 
@@ -99,8 +81,8 @@ scoped_allocation encode_tga(const texel_buffer& b
 texel_buffer decode_tga(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
 	info si = get_info_tga(buffer, size);
-	oCHECK(si.format != format::unknown, "invalid bmp");
-	const TGAHeader* h = (const TGAHeader*)buffer;
+	oCHECK(si.format != format::unknown, "invalid tga");
+	const tga_header* h = (const tga_header*)buffer;
 	info dsi = si;
 	dsi.format = alpha_option_format(si.format, option);
 	dsi.mip_layout = layout;

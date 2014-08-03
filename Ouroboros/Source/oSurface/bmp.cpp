@@ -25,55 +25,17 @@
 #include <oSurface/codec.h>
 #include <oSurface/convert.h>
 
+#include "bmp.h"
+
 namespace ouro { namespace surface {
-
-struct RGBQUAD
-{
-	uchar rgbBlue;
-	uchar rgbGreen;
-	uchar rgbRed;
-	uchar rgbReserved;
-};
-
-struct BITMAPINFOHEADER
-{
-	uint biSize;
-	long biWidth;
-	long biHeight;
-	ushort biPlanes;
-	ushort biBitCount;
-	uint biCompression;
-	uint biSizeImage;
-	long biXPelsPerMeter;
-	long biYPelsPerMeter;
-	uint biClrUsed;
-	uint biClrImportant;
-};
-
-#pragma pack(push,2)
-struct BITMAPFILEHEADER
-{
-	ushort bfType;
-	uint bfSize;
-	ushort bfReserved1;
-	ushort bfReserved2;
-	uint bfOffBits;
-};
-#pragma pack(pop)
-
-struct BITMAPINFO
-{
-	BITMAPINFOHEADER bmiHeader;
-	RGBQUAD bmiColors[1];
-};
 
 info get_info_bmp(const void* buffer, size_t size)
 {
-	if (size < 2 || memcmp(buffer, "BM", 2))
+	auto h = (const bmp_header*)buffer;
+	if (size < sizeof(bmp_header) || h->bfType != bmp_signature)
 		return info();
 
-	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)buffer;
-	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
+	auto bmi = (const bmp_info*)&h[1];
 
 	info si;
 	si.format = bmi->bmiHeader.biBitCount == 32 ? format::b8g8r8a8_unorm : format::b8g8r8_unorm;
@@ -92,13 +54,13 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 	const uint AlignedPitch = byte_align(UnalignedPitch, 4);
 	const uint BufferSize = AlignedPitch * info.dimensions.y;
 
-	const uint bfOffBits = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO);
-	const uint bfSize = sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFO) + BufferSize;
+	const uint bfOffBits = sizeof(bmp_header) + sizeof(bmp_info);
+	const uint bfSize = sizeof(bmp_header) + sizeof(bmp_info) + BufferSize;
 
 	scoped_allocation p(malloc(bfSize), bfSize, free);
 
-	BITMAPFILEHEADER* bfh = (BITMAPFILEHEADER*)p;
-	BITMAPINFO* bmi = (BITMAPINFO*)&bfh[1];
+	auto bfh = (bmp_header*)p;
+	auto bmi = (bmp_info*)&bfh[1];
 	void* bits = &bmi[1];
 
 	bfh->bfType = 0x4d42; // 'BM'
@@ -107,7 +69,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 	bfh->bfSize = bfSize;
 	bfh->bfOffBits = bfOffBits;
 	
-	bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmi->bmiHeader.biSize = sizeof(bmp_infoheader);
 	bmi->bmiHeader.biWidth = info.dimensions.x;
 	bmi->bmiHeader.biHeight = info.dimensions.y;
 	bmi->bmiHeader.biPlanes = 1;
@@ -150,8 +112,8 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 
 texel_buffer decode_bmp(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
-	const BITMAPFILEHEADER* bfh = (const BITMAPFILEHEADER*)buffer;
-	const BITMAPINFO* bmi = (const BITMAPINFO*)&bfh[1];
+	const bmp_header* bfh = (const bmp_header*)buffer;
+	const bmp_info* bmi = (const bmp_info*)&bfh[1];
 	const void* bits = &bmi[1];
 
 	info si = get_info_bmp(buffer, size);
