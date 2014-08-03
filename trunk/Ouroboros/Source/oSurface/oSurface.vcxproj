@@ -32,6 +32,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="psd.cpp" />
     <ClCompile Include="resize.cpp" />
     <ClCompile Include="surface.cpp" />
     <ClCompile Include="texel_buffer.cpp" />
@@ -45,7 +46,10 @@
     <ClInclude Include="..\..\Include\oSurface\resize.h" />
     <ClInclude Include="..\..\Include\oSurface\surface.h" />
     <ClInclude Include="..\..\Include\oSurface\texel_buffer.h" />
+    <ClInclude Include="bmp.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="psd.h" />
+    <ClInclude Include="tga.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{EC39F58B-4343-4884-9BAE-5D5A8D101440}</ProjectGuid>
