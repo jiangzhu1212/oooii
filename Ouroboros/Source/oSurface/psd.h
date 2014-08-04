@@ -42,7 +42,7 @@ enum psd_constants
   max_channels = 56,
 };
 
-enum psd_bpp
+enum psd_bits_per_channel
 {
   k1 = 1,
   k8 = 8,
@@ -86,7 +86,7 @@ struct psd_header
   uint16_t num_channels;
   uint32_t height;
   uint32_t width;
-  uint16_t bpp;
+  uint16_t bits_per_channel;
   uint16_t color_mode;
 };
 #pragma pack(pop)
@@ -118,7 +118,7 @@ inline bool psd_validate(const void* buffer, size_t size, psd_header* out_header
   out_header->num_channels = psd_swap(hh->num_channels);
   out_header->height = psd_swap(hh->height);
   out_header->width = psd_swap(hh->width);
-  out_header->bpp = psd_swap(hh->bpp);
+  out_header->bits_per_channel = psd_swap(hh->bits_per_channel);
   out_header->color_mode = psd_swap(hh->color_mode);
 
   if (out_header->signature != psd_constants::signature 
@@ -129,9 +129,9 @@ inline bool psd_validate(const void* buffer, size_t size, psd_header* out_header
     || out_header->width == 0 || out_header->width > psd_constants::max_dimension )
     return nullptr;
     
-  switch (out_header->bpp)
+  switch (out_header->bits_per_channel)
   {
-    case psd_bpp::k1: case psd_bpp::k8: case psd_bpp::k16: case psd_bpp::k32: break;
+    case psd_bits_per_channel::k1: case psd_bits_per_channel::k8: case psd_bits_per_channel::k16: case psd_bits_per_channel::k32: break;
     default: return false;
   }
   
@@ -146,6 +146,18 @@ inline bool psd_validate(const void* buffer, size_t size, psd_header* out_header
   }
   
   return true;
+}
+
+// returns the pointer to the uint16_t compression type header for the 
+// image data section or nullptr if beyond the size of the psd buffer
+inline const void* get_image_data_section(const void* buffer, size_t size)
+{
+	auto b = (const uint8_t*)buffer;
+	size_t offset = sizeof(psd_header); // offset to color mode data length
+	offset += psd_swap(*(const uint32_t*)(b + offset)) + sizeof(uint32_t); // offset to image resources length
+	offset += psd_swap(*(const uint32_t*)(b + offset)) + sizeof(uint32_t); // offset to layer and mask length
+	offset += psd_swap(*(const uint32_t*)(b + offset)) + sizeof(uint32_t); // offset to image data
+	return offset >= size ? 0 : (b + offset);
 }
 
 // copies the planar-formatted sources to dst as interleaved. To swap rgb <-> bgr
