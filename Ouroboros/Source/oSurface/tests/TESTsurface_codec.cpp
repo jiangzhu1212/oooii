@@ -37,6 +37,15 @@ namespace ouro {
 
 static bool kSaveToDesktop = true;
 
+void save_bmp_to_desktop(const surface::texel_buffer& b, const char* _path)
+{
+	auto encoded = surface::encode(b
+		, surface::file_format::bmp
+		, surface::alpha_option::force_no_alpha
+		, surface::compression::none);
+	filesystem::save(filesystem::desktop_path() / path(_path), encoded, encoded.size());
+}
+
 static void compare_checkboards(const int2& dimensions, const surface::format& format, const surface::file_format& file_format, float max_rms)
 {
 	oTRACE("testing codec %s -> %s", as_string(format), as_string(file_format));
@@ -72,7 +81,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 	{
 		mstring fname;
 		snprintf(fname, "encoded_from_known_%s.%s", as_string(file_format), as_string(file_format));
-		filesystem::save(filesystem::desktop_path() / path(fname), encoded, encoded.size());
+		filesystem::save(path(fname), encoded, encoded.size());
 	}
 
 	surface::texel_buffer decoded;
@@ -89,14 +98,9 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 
 		if (kSaveToDesktop)
 		{
-			size_t Size = 0;
-			encoded = surface::encode(decoded
-				, surface::file_format::bmp
-				, surface::alpha_option::force_no_alpha
-				, surface::compression::none);
 			mstring fname;
 			snprintf(fname, "encoded_from_decoded_%s.%s", as_string(file_format), as_string(surface::file_format::bmp));
-			filesystem::save(filesystem::desktop_path() / path(fname), encoded, encoded.size());
+			save_bmp_to_desktop(decoded, fname);
 		}
 
 		float rms = surface::calc_rms(known, decoded);
@@ -105,11 +109,29 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 	}
 }
 
+void compare_load(test_services& services, const char* path, const char* desktop_filename_prefix)
+{
+	auto encoded = services.load_buffer(path);
+	surface::texel_buffer decoded;
+	{
+		scoped_timer("decode");
+		decoded = surface::decode(encoded, encoded.size(), surface::alpha_option::force_alpha);
+	}
+
+	auto ff = surface::get_file_format(path);
+
+	mstring fname;
+	snprintf(fname, "%s_%s.%s", desktop_filename_prefix, as_string(ff), as_string(surface::file_format::bmp));
+	save_bmp_to_desktop(decoded, fname);
+}
+
 void TESTsurface_codec(test_services& _Services)
 {
 	// still a WIP
 	//compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::psd, 1.0f);
-	
+
+	//compare_load(_Services, "Test/Textures/lena_1.psd", "lena_1");
+
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::bmp, 1.0f);
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::dds, 1.0f);
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::jpg, 4.0f);
