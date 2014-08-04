@@ -529,6 +529,9 @@ bool create_directory(const path& _Path)
 
 static bool create_directories_internal(const path& _Path)
 {
+	if (_Path.empty())
+		return false;
+
 	if (!CreateDirectoryA(_Path, nullptr))
 	{
 		HRESULT hr = GetLastError();
