@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oSurface/codec.h>
 #include <oSurface/convert.h>
+#include <oBase/memory.h>
 #include <oBase/throw.h>
 #include "psd.h"
 
@@ -31,12 +32,11 @@ namespace ouro { namespace surface {
 
 static const void* get_image_data_section(const void* buffer, size_t size)
 {
-	auto h = (const psd_header*)buffer;
   uint offset = sizeof(psd_header); // offset to color mode data length
-  offset += *(const uint*)byte_add(h, offset) + sizeof(uint); // offset to image resources length
-  offset += *(const uint*)byte_add(h, offset) + sizeof(uint); // offset to layer and mask length
-  offset += *(const uint*)byte_add(h, offset + sizeof(uint)); // offset to image data
-  return offset >= size ? 0 : byte_add(h, offset);
+  offset += psd_swap(*(const uint*)byte_add(buffer, offset)) + sizeof(uint); // offset to image resources length
+  offset += psd_swap(*(const uint*)byte_add(buffer, offset)) + sizeof(uint); // offset to layer and mask length
+  offset += psd_swap(*(const uint*)byte_add(buffer, offset)) + sizeof(uint); // offset to image data
+  return offset >= size ? 0 : byte_add(buffer, offset);
 }
 
 static format get_format(const psd_header* h)
@@ -55,23 +55,28 @@ static format get_format(const psd_header* h)
   return format::unknown;
 }
 
-info get_info_psd(const void* buffer, size_t size)
+info get_info_psd(const void* buffer, size_t size, psd_header* out_header)
 {
-	psd_header h;
-  if (!psd_validate(buffer, size, &h))
+  if (!psd_validate(buffer, size, out_header))
 		return info();
 
   // only supports rgb or rgba at present
-  if (h.num_channels < 3 || h.num_channels > 4)
+  if (out_header->num_channels < 3 || out_header->num_channels > 4)
     return info();
     
-  if (h.bpp != psd_bpp::k8)
+  if (out_header->bpp != psd_bpp::k8)
     return info();
   
   info i;
-  i.dimensions = uint3(h.width, h.height, 0);
-  i.format = get_format(&h);
+  i.dimensions = uint3(out_header->width, out_header->height, 1);
+  i.format = get_format(out_header);
   return i;
+}
+
+info get_info_psd(const void* buffer, size_t size)
+{
+	psd_header h;
+	return get_info_psd(buffer, size, &h);
 }
 
 scoped_allocation encode_psd(const texel_buffer& b, const alpha_option& option, const compression& compression)
@@ -81,14 +86,16 @@ scoped_allocation encode_psd(const texel_buffer& b, const alpha_option& option, 
 
 texel_buffer decode_psd(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
-  info si = get_info_psd(buffer, size);
+	psd_header h;
+  info si = get_info_psd(buffer, size, &h);
   oCHECK(si.format != format::unknown, "invalid psd");
   
   texel_buffer b(si);
 
-  auto compression = (const psd_compression*)get_image_data_section(buffer, size);
-  const void* bits = &compression[1];
-  switch (*compression)
+	auto bits_header = (const ushort*)get_image_data_section(buffer, size);
+  auto compression = (const psd_compression)psd_swap(*bits_header);
+  const void* bits = &bits_header[1];
+  switch (compression)
   {
     case psd_compression::raw:
     {
@@ -120,8 +127,14 @@ texel_buffer decode_psd(const void* buffer, size_t size, const alpha_option& opt
       
       break;
     }
+
+		case psd_compression::rle:
+		{
+			//rle_decode(void* oRESTRICT _pDestination, size_t _SizeofDestination, size_t _ElementSize, const void* oRESTRICT _pSource);
+			//break;
+		}
     
-    default: oTHROW(operation_not_supported, "unsupported compression type %d in psd decode", *compression);
+    default: oTHROW(operation_not_supported, "unsupported compression type %d in psd decode", (int)compression);
   }
 
   return b;
