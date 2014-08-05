@@ -30,18 +30,20 @@
 namespace ouro { namespace surface {
 
 // add format extension to this list and it will propagate to all the apis below
+// note: tga doesn't have a signature so keep it last since it's the weakest to authenticate
 #define FOREACH_EXT(macro) macro(bmp) macro(dds) macro(jpg) macro(png) macro(psd) macro(tga)
 
 // _____________________________________________________________________________
 // Boilerplate (don't use directly, they're registered with the functions below)
 
 #define DECLARE_CODEC(ext) \
+	bool is_##ext(const void* buffer, size_t size); \
 	info get_info_##ext(const void* buffer, size_t size); \
 	scoped_allocation encode_##ext(const texel_buffer& b, const alpha_option& option, const compression& compression); \
 	texel_buffer decode_##ext(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout);
 
 #define GET_FILE_FORMAT_EXT(ext) if (!_stricmp(extension, "." #ext)) return file_format::##ext;
-#define GET_FILE_FORMAT_HDR(ext) if (get_info_##ext(buffer, size).format != format::unknown) return file_format::##ext;
+#define GET_FILE_FORMAT_HDR(ext) if (is_##ext(buffer, size)) return file_format::##ext;
 #define GET_INFO(ext) case file_format::##ext: return get_info_##ext(buffer, size);
 #define ENCODE(ext) case file_format::##ext: return encode_##ext(b, option, compression);
 #define DECODE(ext) case file_format::##ext: return decode_##ext(buffer, size, option, layout);

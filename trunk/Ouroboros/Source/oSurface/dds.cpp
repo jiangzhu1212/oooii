@@ -53,12 +53,17 @@ dds_pixel_format GetPixelFormat(const surface::format& f)
 	return to_ddspf(to_dds_format(f));
 }
 
+bool is_dds(const void* buffer, size_t size)
+{
+	return size >= (sizeof(uint32_t) + sizeof(dds_header)) && *(const uint32_t*)buffer == dds_signature;
+}
+
 info get_info_dds(const void* buffer, size_t size)
 {
-	if (size < (sizeof(uint32_t) + sizeof(dds_header)) || *(const uint*)buffer != dds_signature)
+	if (!is_dds(buffer, size))
 		return info();
 
-	auto* h = (const dds_header*)byte_add(buffer, sizeof(uint));
+	auto* h = (const dds_header*)byte_add(buffer, sizeof(uint32_t));
   if (h->dwSize != sizeof(dds_header) || h->ddspf.dwSize != sizeof(dds_pixel_format))
 		return info();
 
@@ -243,18 +248,20 @@ scoped_allocation encode_dds(const texel_buffer& b, const alpha_option& option, 
 texel_buffer decode_dds(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
 	//oCHECK(option == alpha_option::preserve, "changing alpha option not supported for dds");
-	info si = get_info_dds(buffer, size);
-	oCHECK(si.format != format::unknown, "invalid dds");
+	info dstinf = get_info_dds(buffer, size);
+	oCHECK(dstinf.format != format::unknown, "invalid dds");
+	texel_buffer b(dstinf);
 
-	texel_buffer b(si);
+	info srcinf(dstinf);
+	srcinf.format = (element_size(dstinf.format) == 4 && !has_alpha(dstinf.format)) ? strip_alphaorx(dstinf.format) : dstinf.format;
 
-	const uint nSubresources = num_subresources(si);
+	const uint nSubresources = num_subresources(dstinf);
 	const_mapped_subresource* subresources = (const_mapped_subresource*)default_allocate(sizeof(const_mapped_subresource) * nSubresources, 0);
 	finally DeleteInitData([&] { if (subresources) default_deallocate(subresources); });
 
 	auto h = (const dds_header*)byte_add(buffer, sizeof(dds_header));
 	const void* bits = byte_add(buffer, sizeof(dds_signature) + sizeof(dds_header) + (has_dx10_header(*h) ? sizeof(dds_header_dx10) : 0));
-	map_bits(si, bits, size - byte_diff(bits, buffer), subresources, nSubresources);
+	map_bits(dstinf, bits, size - byte_diff(bits, buffer), subresources, nSubresources);
 
 	for (uint i = 0; i < nSubresources; i++)
 		b.update_subresource(i, subresources[i]);

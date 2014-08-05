@@ -127,13 +127,18 @@ static format from_jcs(J_COLOR_SPACE _ColorSpace)
 	return format::unknown;
 }
 
-info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
+bool is_jpg(const void* _pBuffer, size_t _BufferSize)
 {
-	static const uchar jpg_sig1[4] = { 0xff, 0xd8, 0xff, 0xe0 };
+	static const uint8_t jpg_sig1[4] = { 0xff, 0xd8, 0xff, 0xe0 };
 	static const char jpg_sig2[5] = "JFIF";
 
-	if (_BufferSize < 11 || memcmp(jpg_sig1, _pBuffer, sizeof(jpg_sig1))
-		|| memcmp(jpg_sig2, ((const char*)_pBuffer) + 6, sizeof(jpg_sig2)))
+	return _BufferSize >= 11 && !memcmp(jpg_sig1, _pBuffer, sizeof(jpg_sig1))
+		&& !memcmp(jpg_sig2, ((const uint8_t*)_pBuffer) + 6, sizeof(jpg_sig2));
+}
+
+info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
+{
+	if (!is_jpg(_pBuffer, _BufferSize))
 		return info();
 
 	jpeg_decompress_struct cinfo;

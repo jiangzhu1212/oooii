@@ -87,10 +87,15 @@ static surface::format to_format(int _Type, int _BitDepth)
 	return surface::format::unknown;
 }
 
+bool is_png(const void* buffer, size_t size)
+{
+	static const uint8_t png_sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+	return size >= 8 && !memcmp(png_sig, buffer, sizeof(png_sig));
+}
+
 info get_info_png(const void* buffer, size_t size)
 {
-	static const uchar png_sig[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-	if (size < 8 || memcmp(png_sig, buffer, sizeof(png_sig)))
+	if (!is_png(buffer, size))
 		return info();
 	
 	// initialze libpng with user functions pointing to _pBuffer

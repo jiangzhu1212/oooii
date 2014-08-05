@@ -30,16 +30,21 @@
 
 namespace ouro { namespace surface {
 
-info get_info_tga(const void* buffer, size_t size)
+bool is_tga(const void* buffer, size_t size)
 {
 	auto h = (const tga_header*)buffer;
+	return !h->id_length && !h->paletted_type && tga_is_valid_dtf(h->data_type_field)
+		&& !h->paletted_origin && !h->paletted_length && !h->paletted_depth
+		&& h->width >= 1 && h->height >= 1 && !h->image_descriptor
+		&& (h->bpp == 32 || h->bpp == 24);
+}
 
-	if (h->id_length || h->paletted_type || h->data_type_field != tga_data_type_field::rgb 
-		|| h->paletted_origin || h->paletted_length || h->paletted_depth || h->x_origin || h->y_origin
-		|| h->width < 1 || h->height < 1 || h->image_descriptor
-		|| !(h->bpp == 32 || h->bpp == 24))
+info get_info_tga(const void* buffer, size_t size)
+{
+	if (!is_tga(buffer, size))
 		return info();
 
+	auto h = (const tga_header*)buffer;
 	info si;
 	si.format = h->bpp == 32 ? format::b8g8r8a8_unorm : format::b8g8r8_unorm;
 	si.dimensions = int3(h->width, h->height, 1);
