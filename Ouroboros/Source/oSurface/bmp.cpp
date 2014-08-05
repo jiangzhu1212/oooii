@@ -29,12 +29,18 @@
 
 namespace ouro { namespace surface {
 
-info get_info_bmp(const void* buffer, size_t size)
+bool is_bmp(const void* buffer, size_t size)
 {
 	auto h = (const bmp_header*)buffer;
-	if (size < sizeof(bmp_header) || h->bfType != bmp_signature)
+	return size >= sizeof(bmp_header) && h->bfType == bmp_signature;
+}
+
+info get_info_bmp(const void* buffer, size_t size)
+{
+	if (!is_bmp(buffer, size))
 		return info();
 
+	auto h = (const bmp_header*)buffer;
 	auto bmi = (const bmp_info*)&h[1];
 
 	info si;

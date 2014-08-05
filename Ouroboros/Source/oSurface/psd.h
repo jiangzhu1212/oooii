@@ -35,11 +35,11 @@
 
 enum psd_constants
 {
-  signature = 0x38425053, // '8BPS'
-  version = 1,
-  max_dimension = 30000,
-  min_channels = 1,
-  max_channels = 56,
+  psd_signature = 0x38425053, // '8BPS'
+  psd_version = 1,
+  psd_max_dimension = 30000,
+  psd_min_channels = 1,
+  psd_max_channels = 56,
 };
 
 enum psd_bits_per_channel
@@ -121,12 +121,12 @@ inline bool psd_validate(const void* buffer, size_t size, psd_header* out_header
   out_header->bits_per_channel = psd_swap(hh->bits_per_channel);
   out_header->color_mode = psd_swap(hh->color_mode);
 
-  if (out_header->signature != psd_constants::signature 
-    || out_header->version != psd_constants::version
-    || out_header->num_channels < psd_constants::min_channels 
-    || out_header->num_channels > psd_constants::max_channels
-    || out_header->height == 0 || out_header->height > psd_constants::max_dimension 
-    || out_header->width == 0 || out_header->width > psd_constants::max_dimension )
+  if (out_header->signature != psd_signature 
+    || out_header->version != psd_version
+    || out_header->num_channels < psd_min_channels 
+    || out_header->num_channels > psd_max_channels
+    || out_header->height == 0 || out_header->height > psd_max_dimension 
+    || out_header->width == 0 || out_header->width > psd_max_dimension )
     return nullptr;
     
   switch (out_header->bits_per_channel)

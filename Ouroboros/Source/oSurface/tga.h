@@ -59,4 +59,23 @@ struct tga_header
 };
 #pragma pack(pop)
 
+inline bool tga_is_valid_dtf(uint8_t dtf)
+{
+	switch (dtf)
+	{
+		case no_image_data:
+		case paletted:
+		case rgb:
+		case black_and_white:
+		case rle_paletted:
+		case rle_rgb:
+		case compressed_black_and_white:
+		case compressed_paletted:
+		case compressed_paletted_quadtree:
+			return true;
+		default: break;
+	}
+	return false;
+}
+
 #endif

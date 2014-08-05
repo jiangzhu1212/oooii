@@ -46,6 +46,14 @@ static format get_format(const psd_header* h)
 	return format::unknown;
 }
 
+bool is_psd(const void* buffer, size_t size)
+{
+	auto h = (const psd_header*)buffer;
+  return size >= sizeof(psd_header)
+		&& psd_signature == psd_swap(h->signature)
+		&& psd_version == psd_swap(h->version);
+}
+
 info get_info_psd(const void* buffer, size_t size, psd_header* out_header)
 {
 	if (!psd_validate(buffer, size, out_header))

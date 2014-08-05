@@ -349,6 +349,32 @@ bool is_yuv(const format& f)
 	return has_trait(f, traits::is_yuv);
 }
 
+format strip_alphaorx(const format& f)
+{
+	switch (f)
+	{
+		case format::r32g32b32a32_typeless: return format::r32g32b32_typeless;
+		case format::r32g32b32a32_float: return format::r32g32b32_float;
+		case format::r32g32b32a32_uint: return format::r32g32b32a32_uint;
+		case format::r32g32b32a32_sint: return format::r32g32b32a32_sint;
+		case format::r8g8b8a8_unorm: return format::r8g8b8_unorm;
+		case format::r8g8b8a8_unorm_srgb: return format::r8g8b8_unorm_srgb;
+		case format::b8g8r8a8_unorm: return format::b8g8r8_unorm;
+		case format::b8g8r8x8_unorm: return format::b8g8r8_unorm;
+		case format::b8g8r8a8_unorm_srgb: return format::b8g8r8_unorm_srgb;
+		case format::b8g8r8x8_unorm_srgb: return format::b8g8r8_unorm_srgb;
+		case format::r8g8b8a8_typeless:
+		case format::r8g8b8a8_uint:
+		case format::r8g8b8a8_snorm:
+		case format::r8g8b8a8_sint:
+		case format::b8g8r8a8_typeless:
+		case format::b8g8r8x8_typeless:
+			oTHROW_INVARG("bgra or bgrx specified, but no comparable 3-component type defined");
+		default: break;
+	}
+	return f;
+}
+
 uint num_channels(const format& f)
 {
 	return finf(f).num_channels;
