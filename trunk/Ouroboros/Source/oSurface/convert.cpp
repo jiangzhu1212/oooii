@@ -72,6 +72,68 @@ static void b8g8r8_unorm_to_b8g8r8a8_unorm(const void* a, void* b)
 	*bb++ = 0xff;
 }
 
+static void b8g8r8_unorm_to_a8b8g8r8_unorm(const void* a, void* b)
+{
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
+	*bb++ = 0xff;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+}
+
+static void b8g8r8_unorm_to_x8b8g8r8_unorm(const void* a, void* b)
+{
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
+	*bb++ = 0xff;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+}
+
+static void a8b8g8r8_unorm_to_b8g8r8_unorm(const void* a, void* b)
+{
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
+	aa++; // alpha
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+}
+
+static void x8b8g8r8_unorm_to_b8g8r8_unorm(const void* a, void* b)
+{
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
+	aa++; // x
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+}
+
+static void a8b8g8r8_unorm_to_b8g8r8a8_unorm(const void* a, void* b)
+{
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
+	uchar al = *aa++;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+	*bb   = al;
+}
+
+static void x8b8g8r8_unorm_to_b8g8r8a8_unorm(const void* a, void* b)
+{
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
+	uchar x = *aa++;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+	*bb++ = *aa++;
+	*bb   = x;
+}
+
 static void swap_red_blue_r8g8b8_unorm(const void* a, void* b)
 {
 	const uchar* aa = (const uchar*)a;
@@ -91,25 +153,65 @@ static void swap_red_blue_r8g8b8a8_unorm(const void* a, void* b)
 	bb[3] = aa[3];
 }
 
+static void x8b8g8r8_unorm_to_bc1_unorm(const void* a, void* b)
+{
+}
+
+static void x8b8g8r8_unorm_to_bc7_unorm(const void* a, void* b)
+{
+}
+
 pixel_convert get_pixel_convert(format srcfmt, format dstfmt)
 {
-	#define IO(s,d) ((uint(s)<<16) | uint(d))
-	uint sel = IO(srcfmt, dstfmt);
+	#define IO_(s,d) ((uint(s)<<16) | uint(d))
+	#define IO(s,d) IO_(format::s, format::d)
+	uint sel = IO_(srcfmt, dstfmt);
 	switch (sel)
 	{
-		case IO(format::r8g8b8a8_unorm, format::r8g8b8_unorm): return r8g8b8a8_unorm_to_r8g8b8_unorm;
-		case IO(format::r8g8b8_unorm, format::r8g8b8a8_unorm): return r8g8b8_unorm_to_r8g8b8a8_unorm;
-		case IO(format::b8g8r8a8_unorm, format::b8g8r8_unorm): return b8g8r8a8_unorm_to_b8g8r8_unorm;
-		case IO(format::b8g8r8a8_unorm, format::r8g8b8_unorm): return swap_red_blue_r8g8b8_unorm;
-		case IO(format::b8g8r8_unorm, format::b8g8r8a8_unorm): return b8g8r8_unorm_to_b8g8r8a8_unorm;
-		case IO(format::b8g8r8_unorm, format::r8g8b8_unorm): 
-		case IO(format::r8g8b8_unorm, format::b8g8r8_unorm): return swap_red_blue_r8g8b8_unorm;
-		case IO(format::b8g8r8a8_unorm, format::r8g8b8a8_unorm): 
-		case IO(format::r8g8b8a8_unorm, format::b8g8r8a8_unorm): return swap_red_blue_r8g8b8a8_unorm;
+		case IO(r8g8b8a8_unorm, r8g8b8_unorm): return r8g8b8a8_unorm_to_r8g8b8_unorm;
+		case IO(r8g8b8_unorm,		r8g8b8a8_unorm): return r8g8b8_unorm_to_r8g8b8a8_unorm;
+		case IO(b8g8r8a8_unorm, b8g8r8_unorm): return b8g8r8a8_unorm_to_b8g8r8_unorm;
+		case IO(b8g8r8a8_unorm, r8g8b8_unorm): return swap_red_blue_r8g8b8_unorm;
+		case IO(b8g8r8_unorm,		b8g8r8a8_unorm): return b8g8r8_unorm_to_b8g8r8a8_unorm;
+		case IO(b8g8r8_unorm,		a8b8g8r8_unorm): return b8g8r8_unorm_to_a8b8g8r8_unorm;
+		case IO(b8g8r8_unorm,		x8b8g8r8_unorm): return b8g8r8_unorm_to_x8b8g8r8_unorm;
+		case IO(a8b8g8r8_unorm,	b8g8r8_unorm): return a8b8g8r8_unorm_to_b8g8r8_unorm;
+		case IO(x8b8g8r8_unorm,	b8g8r8_unorm): return x8b8g8r8_unorm_to_b8g8r8_unorm;
+		case IO(a8b8g8r8_unorm,	b8g8r8a8_unorm): return a8b8g8r8_unorm_to_b8g8r8a8_unorm;
+		case IO(x8b8g8r8_unorm,	b8g8r8a8_unorm): return x8b8g8r8_unorm_to_b8g8r8a8_unorm;
+		case IO(b8g8r8_unorm,		r8g8b8_unorm): 
+		case IO(r8g8b8_unorm,		b8g8r8_unorm): return swap_red_blue_r8g8b8_unorm;
+		case IO(b8g8r8a8_unorm, r8g8b8a8_unorm): 
+		case IO(r8g8b8a8_unorm, b8g8r8a8_unorm): return swap_red_blue_r8g8b8a8_unorm;
+
+		// tag-like noop functions that trigger special conversion routines
+		case IO(x8b8g8r8_unorm, bc1_unorm): return x8b8g8r8_unorm_to_bc1_unorm;
+		case IO(x8b8g8r8_unorm, bc7_unorm): return x8b8g8r8_unorm_to_bc7_unorm;
+
 		default: break;
 	}
 	throw std::invalid_argument(formatf("%s -> %s not supported", as_string(srcfmt), as_string(dstfmt)));
 	#undef IO
+}
+
+static void check_bc_inputs(const subresource_info& i
+	, const const_mapped_subresource& src
+	, const format& dst_format
+	, const mapped_subresource& dst
+	, const copy_option& option, const format& expected_source_format)
+{
+	oCHECK_ARG(is_block_compressed(dst_format), "non-bc format specified to BC compression");
+	oCHECK_ARG(has_alpha(i.format) == has_alpha(dst_format) || dst_format == format::bc7_typeless || dst_format == format::bc7_unorm || dst_format == format::bc7_unorm_srgb, "BC compression alpha support mismatch");
+	oCHECK_ARG(is_unorm(i.format) == is_unorm(dst_format), "BC compression unorm mismatch");
+	oCHECK_ARG(is_srgb(i.format) == is_srgb(dst_format), "BC compression srgb mismatch");
+	oCHECK_ARG((i.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC compression");
+	oCHECK_ARG((i.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC compression");
+	oCHECK(option == copy_option::none, "cannot flip vertically during BC compression");
+	
+	const uint SrcRowPitch = row_size(expected_source_format, i.dimensions.x);
+	const uint BCRowPitch = row_size(dst_format, i.dimensions.x);
+	oCHECK(src.row_pitch == SrcRowPitch, "mip_layout must be 'none' for a BC compression destination buffer");
+	oCHECK(dst.row_pitch == BCRowPitch, "mip_layout must be 'none' for a BC compression destination buffer");
 }
 
 static void convert_subresource_scanline(int _HorizontalElementCount
@@ -139,37 +241,34 @@ static void convert_subresource(pixel_convert convert
 	, const mapped_subresource& dst
 	, const copy_option& option)
 {
-	const auto selSize = element_size(i.format);
-	const auto delSize = element_size(dst_format);
-	if (option == copy_option::flip_vertically)
+	if (convert == x8b8g8r8_unorm_to_bc1_unorm)
 	{
-		const uint bottom = i.dimensions.y - 1;
-		for (uint y = 0; y < i.dimensions.y; y++)
-			convert_subresource_scanline(i.dimensions.x, y, bottom - y, convert, selSize, delSize, src, dst);
+		check_bc_inputs(i, src, dst_format, dst, option, format::x8b8g8r8_unorm);
+		CompressBlocksBC1((const rgba_surface*)src.data, (uchar*)dst.data);
 	}
+
+	if (convert == x8b8g8r8_unorm_to_bc7_unorm)
+	{
+		check_bc_inputs(i, src, dst_format, dst, option, format::x8b8g8r8_unorm);
+		bc7_enc_settings settings;
+		GetProfile_fast(&settings);
+		CompressBlocksBC7((const rgba_surface*)src.data, (uchar*)dst.data, &settings);
+	}
+
 	else
-		for (uint y = 0; y < i.dimensions.y; y++)
-			convert_subresource_scanline(i.dimensions.x, y, y, convert, selSize, delSize, src, dst);
-}
-
-static void convert_subresource_bc7(const subresource_info& i
-	, const const_mapped_subresource& src
-	, format dst_format
-	, const mapped_subresource& dst
-	, const copy_option& option)
-{
-	oCHECK_ARG((i.dimensions.x & 0x3) == 0, "width must be a multiple of 4 for BC7 compression");
-	oCHECK_ARG((i.dimensions.y & 0x3) == 0, "height must be a multiple of 4 for BC7 compression");
-	
-	const uint BCRowPitch = (i.dimensions.x/4) * 8;
-
-	oCHECK(option == copy_option::none, "cannot flip vertically during BC7 compression");
-	oCHECK(src.row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
-	oCHECK(dst.row_pitch == BCRowPitch, "layout must be 'image' for a BC7 compression destination buffer");
-
-	bc7_enc_settings settings;
-	GetProfile_fast(&settings);
-	CompressBlocksBC7((const rgba_surface*)src.data, (uint8_t*)dst.data, &settings);
+	{
+		const auto selSize = element_size(i.format);
+		const auto delSize = element_size(dst_format);
+		if (option == copy_option::flip_vertically)
+		{
+			const uint bottom = i.dimensions.y - 1;
+			for (uint y = 0; y < i.dimensions.y; y++)
+				convert_subresource_scanline(i.dimensions.x, y, bottom - y, convert, selSize, delSize, src, dst);
+		}
+		else
+			for (uint y = 0; y < i.dimensions.y; y++)
+				convert_subresource_scanline(i.dimensions.x, y, y, convert, selSize, delSize, src, dst);
+	}
 }
 
 /*static*/ void convert_subresource_bc6h(const subresource_info& i
@@ -198,21 +297,15 @@ void convert_subresource(const subresource_info& i
 	, const mapped_subresource& dst
 	, const copy_option& option)
 {
-	#define oCHECK_BC7(type) oCHECK_ARG(i.format == surface::format::a8b8g8r8_##type || i.format == surface::format::x8b8g8r8_##type, "source must be a8b8g8r8_" #type " or x8b8g8r8_" #type " for conversion to bc7_" #type);
-	#define oCHECK_BC6h(type) oCHECK_ARG(i.format == surface::format::x16b16g16r16_##type, "source must be a8b8g8r8_" #type " for conversion to bc7_" #type);
 	switch (dst_format)
 	{
+		case surface::format::bc7_unorm_srgb:
 		case surface::format::bc7_unorm:
 		{
-			oCHECK_BC7(unorm)
-			convert_subresource_bc7(i, src, dst_format, dst, option);
-			break;
-		}
-
-		case surface::format::bc7_unorm_srgb:
-		{
-			oCHECK_BC7(unorm_srgb)
-			convert_subresource_bc7(i, src, dst_format, dst, option);
+			check_bc_inputs(i, src, dst_format, dst, option, format::x8b8g8r8_unorm);
+			bc7_enc_settings settings;
+			GetProfile_fast(&settings);
+			CompressBlocksBC7((const rgba_surface*)src.data, (uchar*)dst.data, &settings);
 			break;
 		}
 

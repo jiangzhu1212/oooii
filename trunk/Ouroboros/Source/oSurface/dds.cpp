@@ -158,6 +158,12 @@ info get_info_dds(const void* buffer, size_t size)
 		oCHECK0(bits(si.format));
 	}
 
+	// There's no way to distinguish between a not-array and an array of size 1.
+	// To be consistent with other formats rather than considering every image 
+	// an array of size 1, consider any array of size 1 not an array.
+	if (si.array_size == 1)
+		si.array_size = 0;
+
 	return si;
 }
 
