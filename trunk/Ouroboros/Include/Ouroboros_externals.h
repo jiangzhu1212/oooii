@@ -42,7 +42,7 @@
 	oOUROBOROS_EXTERNAL("smhasher", "R150", "http://code.google.com/p/smhasher/", "http://opensource.org/licenses/mit-license.php", "") \
 	oOUROBOROS_EXTERNAL("snappy", "v1.0.3", "http://code.google.com/p/snappy/", "http://code.google.com/p/snappy/source/browse/trunk/COPYING", "") \
 	oOUROBOROS_EXTERNAL("tbb", "v4.2 update 2", "https://www.threadingbuildingblocks.org/", "https://www.threadingbuildingblocks.org/licensing", "") \
-	oOUROBOROS_EXTERNAL("tlsf", "v2.0", "http://tlsf.baisoku.org/", "http://tlsf.baisoku.org/", "") \
+	oOUROBOROS_EXTERNAL("tlsf", "v3.0", "http://tlsf.baisoku.org/", "http://tlsf.baisoku.org/", "") \
 	oOUROBOROS_EXTERNAL("zlib", "v1.2.5", "http://www.zlib.net/", "https://www.threadingbuildingblocks.org/licensing", "")
 
 #endif

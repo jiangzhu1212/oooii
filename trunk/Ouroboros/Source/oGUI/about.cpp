@@ -135,7 +135,7 @@ about_impl::about_impl(const info& _Info)
 	i.on_event = std::bind(&about_impl::on_event, this, std::placeholders::_1);
 	i.shape.state = window_state::hidden;
 	i.shape.style = window_style::dialog;
-	i.shape.client_size = int2(320, 140);
+	i.shape.client_size = int2(350, 150);
 
 	if (oSTRVALID(_Info.components))
 		i.shape.client_size.y += kComponentHeight;
@@ -159,7 +159,7 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 	const int2 kIconSize(75, 75);
 	const int2 kIconPos(0, 0);
 
-	const int2 kModulePathSize(_CreateEvent.shape.client_size.x - kInset.x * 2, 23);
+	const int2 kModulePathSize(_CreateEvent.shape.client_size.x - kInset.x * 2, 30);
 	const int2 kModulePathPos(kInset.x, kIconPos.y + kIconSize.y);
 	
 	const int2 kModuleInfoSize(220, 40);
@@ -172,7 +172,8 @@ void about_impl::make_controls(const window::create_event& _CreateEvent)
 	const int2 kIssueSitePos(_CreateEvent.shape.client_size.x - kIssueSiteSize.x - kInset.x, kWebsitePos.y);
 
 	const int2 kComponentGroupSize(_CreateEvent.shape.client_size.x - kInset.x * 2, kComponentHeight);
-	const int2 kComponentGroupPos(kInset.x, kIconPos.y + kIconSize.y + 20);
+	//const int2 kComponentGroupPos(kInset.x, kIconPos.y + kIconSize.y + 20);
+	const int2 kComponentGroupPos(kInset.x, kModulePathPos.y + kModulePathSize.y);
 
 	const int2 kComponentListSize(90, kComponentGroupSize.y - 21);
 	const int2 kComponentListPos(kComponentGroupPos.x + 5, kComponentGroupPos.y + 15);
