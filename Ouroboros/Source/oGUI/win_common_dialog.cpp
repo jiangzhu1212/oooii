@@ -81,8 +81,24 @@ static const char* as_string_CD_err(int _CDERRCode)
 static bool open_or_save_path(path& _Path, const char* _DialogTitle, const char* _FilterPairs, HWND _hParent, bool _IsOpenNotSave)
 {
 	path_string StrPath;
-	if (!_Path.empty() && !clean_path(StrPath, _Path, '\\'))
-		oTHROW_INVARG("bad path: %s", _Path.c_str());
+	path_string InitDir;
+
+	const bool kHasFilename = _Path.has_filename();
+
+	// removes trailing separator which confuses win GetOpenFileName
+	if (kHasFilename)
+	{
+		if (!_Path.empty() && !clean_path(StrPath, _Path, '\\'))
+			oTHROW_INVARG("bad path: %s", _Path.c_str());
+	}
+
+	else
+	{
+		path copy(_Path);
+		copy.remove_filename(); // removes trailing separators
+		if (!copy.empty() && !clean_path(InitDir, copy, '\\'))
+			oTHROW_INVARG("bad path: %s", _Path.c_str());
+	}
 
 	std::string filters;
 	char defext[4] = {0};
@@ -118,7 +134,7 @@ static bool open_or_save_path(path& _Path, const char* _DialogTitle, const char*
 	o.nMaxFile = as_type<DWORD>(StrPath.capacity());
 	o.lpstrFileTitle = nullptr;
 	o.nMaxFileTitle = 0;
-	o.lpstrInitialDir = nullptr;
+	o.lpstrInitialDir = InitDir.empty() ? nullptr : InitDir;
 	o.lpstrTitle = _DialogTitle;
 
 	if (_IsOpenNotSave)

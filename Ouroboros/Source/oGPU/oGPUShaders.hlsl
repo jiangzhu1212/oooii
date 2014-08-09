@@ -78,6 +78,7 @@ float4 PSTexture3D(float4 SSposition : SV_Position, float3 texcoord : TEXCOORD) 
 float4 PSTextureCube(float4 SSposition : SV_Position, float3 texcoord : TEXCOORD) : SV_Target { return SimpleCube.Sample(LinearWrap, texcoord); }
 float4 PSTextureCubeArray(float4 SSposition : SV_Position, float4 texcoord : TEXCOORD) : SV_Target { return SimpleCubeArray.Sample(LinearWrap, texcoord); }
 float4 PSVertexColor(float4 SSposition : SV_Position, float4 color : COLOR) : SV_Target { return color; }
+float4 PSTexcoord(float4 SSposition : SV_Position, float2 texcoord : TEXCOORD) : SV_Target { return float4(texcoord, 0, 1); }
 
 // _____________________________________________________________________________
 // Trivial vertex shaders
@@ -169,6 +170,12 @@ oGpuTrivialVertexVectorsInput VSPassThroughVertexVectors(oGpuTrivialVertexVector
 	return In;
 }
 
+void VSFullScreenTri(uint id : SV_VertexID, out float4 out_SSposition : SV_Position, out float2 out_texcoord : TEXCOORD)
+{
+	out_texcoord = float2((id << 1) & 2, id & 2); 
+	out_SSposition = float4(out_texcoord * float2(2, -2) + float2(-1, 1), 0, 1);
+}
+
 // _____________________________________________________________________________
 // Geometry Shaders
 
@@ -206,7 +213,7 @@ static int TESTBufferAppendIndices[20] =
 
 void VSGpuTestBuffer(in uint id : SV_VertexID, out float4 out_SSposition : SV_Position, out int out_index : TESTBUFFERINDEX)
 {
-	out_SSposition = float4(0.0f, 0.0f, 0.0f, 1.0f);
+	out_SSposition = float4(0, 0, 0, 1);
 	out_index = TESTBufferAppendIndices[id];
 }
 

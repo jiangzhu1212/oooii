@@ -33,7 +33,7 @@ void layout_state::initialize(const char* name, gpu::device& dev)
 	for (int i = 0; i < gpu::intrinsic::vertex_layout::count; i++)
 	{
 		gpu::intrinsic::vertex_layout::value input = gpu::intrinsic::vertex_layout::value(i);
-		snprintf(n, "%s %s", name, as_string(input));
+		snprintf(n, "%s vertex_layout::%s", name, as_string(input));
 		layouts[i].initialize(n, dev, gpu::intrinsic::elements(input), gpu::intrinsic::vs_byte_code(input));
 	}
 }

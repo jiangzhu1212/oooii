@@ -44,6 +44,8 @@ namespace ouro { namespace gpu { namespace intrinsic {
 
 namespace vertex_layout
 {	enum value : uchar {
+
+	none,
 	
 	pos,
 	pos_color,
@@ -76,6 +78,12 @@ namespace vertex_shader
 	trivial_pos,
 	trivial_pos_color,
 	trivial_pos_color_instanced,
+
+	// texcoords [0,0] at top left and [1,1] at bottom right. This clips 
+	// to a fullscreen quad but is more efficient because it avoids the 
+	// diagonal seam between two triangles where shaders need to be 
+	// evaluated twice. Set vertex_layout to none to avoid driver noise.
+	fullscreen_tri,
 
 	test_buffer,
 
@@ -122,6 +130,7 @@ namespace pixel_shader
 	magenta,
 	cyan,
 	vertex_color,
+	texcoord,
 
 	// simple texture
 	texture1d,

@@ -41,6 +41,7 @@ typedef unsigned char BYTE;
 #include <VSTrivialPos.h>
 #include <VSTrivialPosColor.h>
 #include <VSTrivialPosColorInstanced.h>
+#include <VSFullscreenTri.h>
 #include <VSGpuTestBuffer.h>
 
 #include <GSVertexNormals.h>
@@ -55,6 +56,7 @@ typedef unsigned char BYTE;
 #include <PSMagenta.h>
 #include <PSCyan.h>
 #include <PSVertexColor.h>
+#include <PSTexcoord.h>
 
 #include <PSTexture1D.h>
 #include <PSTexture1DArray.h>
@@ -89,7 +91,8 @@ mesh::element_array elements(const vertex_layout::value& input)
 	element_array e;
 	switch (input)
 	{
-		default:
+		case vertex_layout::none:
+			break;
 		case vertex_layout::pos:
 			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
 			break;
@@ -105,6 +108,8 @@ mesh::element_array elements(const vertex_layout::value& input)
 			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
 			e[1] = element(semantic::texcoord, 0, format::xyz32_float, 0);
 			break;
+		default:
+			break;
 	}
 
 	return e;
@@ -114,6 +119,7 @@ const void* vs_byte_code(const vertex_layout::value& input)
 {
 	static const vertex_shader::value sVS[] =
 	{
+		vertex_shader::fullscreen_tri,
 		vertex_shader::pass_through_pos,
 		vertex_shader::pass_through_pos_color,
 		vertex_shader::pass_through_pos_uv,
@@ -139,6 +145,7 @@ static const SHADER s_vertex_shader[] =
 	oSH(VSTrivialPos)
 	oSH(VSTrivialPosColor)
 	oSH(VSTrivialPosColorInstanced)
+	oSH(VSFullScreenTri)
 	oSH(VSGpuTestBuffer)
 };
 
@@ -169,6 +176,7 @@ static const SHADER s_pixel_shader[] =
 	oSH(PSMagenta)
 	oSH(PSCyan)
 	oSH(PSVertexColor)
+	oSH(PSTexcoord)
 
 	oSH(PSTexture1D)
 	oSH(PSTexture1DArray)
@@ -199,6 +207,7 @@ const char* as_string(const gpu::intrinsic::vertex_layout::value& input)
 {
 	static const char* sNames[] = 
 	{
+		"none",
 		"pos",
 		"pos_color",
 		"pos_uv",

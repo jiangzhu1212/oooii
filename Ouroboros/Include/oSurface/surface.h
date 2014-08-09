@@ -368,7 +368,7 @@ struct info
 	inline bool is_3d() const { return semantic >= semantic::first3d && semantic <= semantic::last3d; }
 	inline bool is_cube() const { return semantic >= semantic::firstcube && semantic <= semantic::lastcube; }
 	inline bool is_array() const { return array_size != 0; }
-	inline bool mips() const { return mip_layout == mip_layout::none; }
+	inline bool mips() const { return mip_layout != mip_layout::none; }
 
 	uint3 dimensions;
 	uint array_size;

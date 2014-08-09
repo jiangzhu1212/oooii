@@ -56,7 +56,7 @@ public:
 
 	// draws the currently bound vertex layout, vertex buffers and index buffers
 	static void draw(command_list& cl, uint num_indices, uint first_index_index, int per_index_offset, uint num_instances = 1);
-	static void draw_unindexed(command_list& cl, uint num_vertices, uint first_vertex_index, uint num_instances = 1);
+	static void draw_unindexed(command_list& cl, uint num_vertices, uint first_vertex_index = 0, uint num_instances = 1);
 
 private:
 	void* impl;

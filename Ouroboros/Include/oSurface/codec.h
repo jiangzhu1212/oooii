@@ -83,6 +83,10 @@ texel_buffer decode(const void* buffer
 	, const alpha_option& option = alpha_option::preserve
 	, const mip_layout& layout = mip_layout::none);
 
+inline texel_buffer decode(const scoped_allocation& buffer
+	, const alpha_option& option = alpha_option::preserve
+	, const mip_layout& layout = mip_layout::none) { return decode(buffer, buffer.size(), option, layout); }
+
 }}
 
 #endif
