@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // Common boilerplate init for fixed-function state
-
 #ifndef oGfx_core_h
 #define oGfx_core_h
 
@@ -33,7 +32,7 @@
 #include <oGPU/rasterizer_state.h>
 #include <oGPU/sampler_state.h>
 #include <oGfx/layout_state.h>
-#include <oGfx/oGfxShaderRegistry.h>
+#include <oGfx/shader_registries.h>
 
 namespace ouro { namespace gfx {
 
