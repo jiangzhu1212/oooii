@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="core.cpp" />
+    <ClCompile Include="layout_state.cpp" />
     <ClCompile Include="oGfxManipulator.cpp" />
     <ClCompile Include="oGfxPickBuffer.cpp" />
     <ClCompile Include="oGfxShaderRegistry.cpp" />
@@ -31,6 +33,8 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Include\oGfx\core.h" />
+    <ClInclude Include="..\..\Include\oGfx\layout_state.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxDrawConstants.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxHLSL.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h" />

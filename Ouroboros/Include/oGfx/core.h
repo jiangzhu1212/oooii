@@ -22,44 +22,42 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#ifndef oGfxShaderRegistry_h
-#define oGfxShaderRegistry_h
+// Common boilerplate init for fixed-function state
 
-#include <oGfx/shader_registry.h>
-#include <oGfx/oGfxShaders.h>
-#include <oGPU/shader.h>
-#include <oGPU/shaders.h>
+#ifndef oGfx_core_h
+#define oGfx_core_h
+
+#include <oGPU/device.h>
+#include <oGPU/blend_state.h>
+#include <oGPU/depth_stencil_state.h>
+#include <oGPU/rasterizer_state.h>
+#include <oGPU/sampler_state.h>
+#include <oGfx/layout_state.h>
+#include <oGfx/oGfxShaderRegistry.h>
 
 namespace ouro { namespace gfx {
 
-class vs_registry : public shader_registry<gpu::vertex_shader>
+class core
 {
-	typedef shader_registry<gpu::vertex_shader> base_type;
-
 public:
-	typedef base_type::shader_type shader_type;
-	static const gpu::stage::value stage = base_type::stage;
-	
-	~vs_registry() { deinitialize(); }
+	core() {}
+	core(const char* name, bool enable_driver_reporting) { initialize(name, enable_driver_reporting); }
+	~core() { deinitialize(); }
 
-	void initialize(gpu::device& dev);
+	void initialize(const char* name, bool enable_driver_reporting);
+	void deinitialize();
 
-	void set(gpu::command_list& cl, const gpu::intrinsic::vertex_shader::value& shader) const;
-};
+	// fixed-function state managers
+	gpu::device device;
+	gpu::blend_state bs;
+	gpu::depth_stencil_state dss;
+	gpu::rasterizer_state rs;
+	gpu::sampler_state ss;
 
-class ps_registry : public shader_registry<gpu::pixel_shader>
-{
-	typedef shader_registry<gpu::pixel_shader> base_type;
-
-public:
-	typedef base_type::shader_type shader_type;
-	static const gpu::stage::value stage = base_type::stage;
-	
-	~ps_registry() { deinitialize(); }
-
-	void initialize(gpu::device& dev);
-
-	void set(gpu::command_list& cl, const gpu::intrinsic::pixel_shader::value& shader) const;
+	// shader managers
+	gfx::layout_state ls;
+	gfx::vs_registry vs;
+	gfx::ps_registry ps;
 };
 
 }}

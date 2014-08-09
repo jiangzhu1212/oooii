@@ -27,23 +27,6 @@
 
 namespace ouro { namespace gfx {
 
-void layout_state::initialize(gpu::device& dev)
-{
-	deinitialize();
-
-	for (int i = 0; i < gpu::intrinsic::vertex_layout::count; i++)
-	{
-		gpu::intrinsic::vertex_layout::value input = gpu::intrinsic::vertex_layout::value(i);
-		layouts[i].initialize(as_string(input), dev, gpu::intrinsic::elements(input), gpu::intrinsic::vs_byte_code(input));
-	}
-}
-
-void layout_state::deinitialize()
-{
-	for (auto& layout : layouts)
-		layout.deinitialize();
-}
-
 void vs_registry::initialize(gpu::device& dev)
 {
 	static unsigned int kCapacity = 30;
