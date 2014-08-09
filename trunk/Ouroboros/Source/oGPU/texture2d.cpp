@@ -38,7 +38,7 @@ DeviceContext* get_dc(command_list& cl);
 void texture2d::initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint array_size, bool mips)
 {
 	deinitialize();
-	oCHECK_ARG(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
+	oCHECK(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
 	auto t = make_texture_2d(name, get_device(dev), format, width, height, array_size, 0, mips);
 	auto srv = make_srv(t, format, array_size);
 	srv->AddRef();
@@ -49,6 +49,7 @@ void texture2d::initialize(const char* name, device& dev, const surface::texel_b
 {
 	auto si = src.get_info();
 
+	oCHECK(si.is_2d(), "a 2d texel buffer must be specified");
 	oCHECK(!mips || (mips && si.mip_layout != surface::mip_layout::none), "source buffer does not contain mips for mipped texture");
 
 	initialize(name, dev, si.format, si.dimensions.x, si.dimensions.y, si.array_size, mips);

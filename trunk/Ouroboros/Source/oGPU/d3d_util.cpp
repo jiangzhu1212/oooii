@@ -47,6 +47,8 @@ intrusive_ptr<Texture1D> make_texture_1d(const char* name, Device* dev, surface:
 		, width
 		, __max(1, array_size)
 		, mips ? 0 : 1);
+	
+	oCHECK(d.Format != DXGI_FORMAT_UNKNOWN, "invalid 1d format %s", as_string(format));
 
 	intrusive_ptr<Texture1D> t;
 	oV(dev->CreateTexture1D(&d, nullptr, &t));
@@ -70,6 +72,7 @@ intrusive_ptr<Texture2D> make_texture_2d(const char* name, Device* dev, surface:
 		, 0
 		, ((bind_flags & (D3D11_BIND_RENDER_TARGET|D3D11_BIND_DEPTH_STENCIL)) && mips ? D3D11_RESOURCE_MISC_GENERATE_MIPS : 0) | (cube ? D3D11_RESOURCE_MISC_TEXTURECUBE : 0));
 
+	oCHECK(d.Format != DXGI_FORMAT_UNKNOWN, "invalid 2d format %s", as_string(format));
 	intrusive_ptr<Texture2D> t;
 	oV(dev->CreateTexture2D(&d, nullptr, &t));
 	debug_name(t, name);
@@ -84,6 +87,7 @@ intrusive_ptr<Texture3D> make_texture_3d(const char* name, Device* dev, surface:
 		, depth
 		, mips ? 0 : 1);
 
+	oCHECK(d.Format != DXGI_FORMAT_UNKNOWN, "invalid 3d format %s", as_string(format));
 	intrusive_ptr<Texture3D> t;
 	oV(dev->CreateTexture3D(&d, nullptr, &t));
 	debug_name(t, name);
