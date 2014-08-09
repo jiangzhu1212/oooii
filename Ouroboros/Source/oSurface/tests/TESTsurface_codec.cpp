@@ -35,7 +35,7 @@
 namespace ouro { 
 	namespace tests {
 
-static bool kSaveToDesktop = true;
+static bool kSaveToDesktop = false;
 
 void save_bmp_to_desktop(const surface::texel_buffer& b, const char* _path)
 {

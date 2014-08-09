@@ -220,6 +220,8 @@ enum class format : uchar
 	// formats below here are not currently directly loadable to directx.
 	r8g8b8_unorm,
 	r8g8b8_unorm_srgb,
+	r8g8b8x8_unorm,
+	r8g8b8x8_unorm_srgb,
 	b8g8r8_unorm,
 	b8g8r8_unorm_srgb,
 	a8b8g8r8_unorm,
