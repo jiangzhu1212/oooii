@@ -30,6 +30,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="render_window.cpp" />
     <ClCompile Include="shader_registries.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -41,10 +42,10 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxManipulator.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxPickBuffer.h" />
-    <ClInclude Include="..\..\Include\oGfx\oGfxShaderRegistry.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxShaders.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxVertexLayouts.h" />
     <ClInclude Include="..\..\Include\oGfx\oGfxViewConstants.h" />
+    <ClInclude Include="..\..\Include\oGfx\render_window.h" />
     <ClInclude Include="..\..\Include\oGfx\shader_registries.h" />
     <ClInclude Include="..\..\Include\oGfx\shader_registry.h" />
     <ClInclude Include="pch.h" />

@@ -54,6 +54,9 @@ public:
 private:
 	void* context;
 	uint id;
+
+	command_list(const command_list&);
+	const command_list& operator=(const command_list&);
 };
 
 }}
