@@ -36,39 +36,28 @@ static void convert_and_test(test_services& services, const format& target_forma
 {
 	path TestImagePath = "Test/Textures/lena_1.png";
 
-	char fn[64];
-	snprintf(fn, "%s%s.dds", TestImagePath.basename().c_str(), filename_suffix);
-	path ConvertedPath = ouro::filesystem::temp_path() / fn;
-	{
-		filesystem::remove(ConvertedPath);
-
-		auto file = services.load_buffer(TestImagePath);
-		auto source = decode(file, file.size());
+	auto file = services.load_buffer(TestImagePath);
+	auto source = decode(file, file.size());
 	
-		oTRACEA("Converting image to %s (may take a while)...", as_string(target_format));
-		auto converted1 = source.convert(format::x8b8g8r8_unorm);
-		auto converted2 = converted1.convert(target_format);
-		auto converted_encoded = encode(converted2, file_format::dds);
+	oTRACEA("Converting image to %s...", as_string(target_format));
+	auto converted1 = source.convert(has_alpha(target_format) ? format::r8g8b8a8_unorm : format::r8g8b8x8_unorm);
+	auto converted2 = converted1.convert(target_format);
+	auto converted_encoded = encode(converted2, file_format::dds);
+
+	// load the confirmed-good file and compare
+	sstring fname;
+	snprintf(fname, "GoldenImages/oSurface_bccodec%u.dds", nth_test);
+	auto golden_file = services.load_buffer(fname);
 	
-		filesystem::save(ConvertedPath, converted_encoded, converted_encoded.size());
-	}
-
-	// not sure how to decompress it back into something generally readable
-
-	//oTRACEA("Converting image back from %s (may take a while)...", as_string(target_format));
-	//auto file = services.load_buffer(ConvertedPath);
-	//auto compressed = decode(file, file.size());
-	//auto decompressed = compressed.convert(format::b8g8r8a8_unorm);
-	//
-	//services.check(decompressed, nth_test);
+	oCHECK(converted_encoded.size() == golden_file.size(), "size mismatch (%u != %u)", converted_encoded.size(), golden_file.size());
+	oCHECK(!memcmp(converted_encoded, golden_file, golden_file.size()), "bytes mismatch");
 }
 
 void TESTbccodec(test_services& services)
 {
-	//oTHROW(operation_not_supported, "need a dds writer");
 	convert_and_test(services, format::bc1_unorm, "_BC1", 0);
-	convert_and_test(services, format::bc7_unorm, "_BC7", 0);
-	//convert_and_test(services, format::bc6h_sf16, "_BC6HS", 1);
+	convert_and_test(services, format::bc3_unorm, "_BC3", 1);
+	convert_and_test(services, format::bc7_unorm, "_BC7", 2);
 	//convert_and_test(services, format::bc6h_uf16, "_BC6HU", 2);
 }
 
