@@ -42,6 +42,10 @@ void depth_target::initialize(const char* name, device& dev, surface::format for
 void depth_target::internal_initialize(const char* name, void* dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling)
 {
 	deinitialize();
+
+	if (width == 0 || height == 0)
+		return;
+
 	oCHECK_ARG(surface::is_depth(format), "format %s is not a depth format", as_string(format));
 	
 	Device* D3DDevice = (Device*)dev;
