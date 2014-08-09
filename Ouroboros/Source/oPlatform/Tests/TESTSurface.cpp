@@ -34,6 +34,7 @@ using namespace ouro::tests;
 #define oTEST_REGISTER_SURFACE_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oSurface_, _Name), oCONCAT(TEST, _Name))
 
 oTEST_REGISTER_SURFACE_TEST0(surface);
+oTEST_REGISTER_SURFACE_TEST(surface_bccodec);
 oTEST_REGISTER_SURFACE_TEST(surface_codec);
 oTEST_REGISTER_SURFACE_TEST(surface_fill);
 oTEST_REGISTER_SURFACE_TEST(surface_generate_mips);
