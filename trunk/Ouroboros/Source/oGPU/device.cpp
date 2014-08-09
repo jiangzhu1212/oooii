@@ -87,6 +87,7 @@ void device::initialize(const device_init& init)
 
 void device::deinitialize()
 {
+	noop.deinitialize();
 	imm.deinitialize();
 	oSAFE_RELEASEV(dev);
 	supports_deferred = false;

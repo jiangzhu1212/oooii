@@ -36,6 +36,9 @@
     <ClCompile Include="shader_registries.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="render_window.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -62,9 +65,6 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h">
       <Filter>oGfx\Needs Code Review</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxShaderRegistry.h">
-      <Filter>oGfx\Needs Code Review</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxShaders.h">
       <Filter>oGfx\Needs Code Review</Filter>
     </ClInclude>
@@ -81,6 +81,9 @@
       <Filter>oGfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\shader_registries.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\render_window.h">
       <Filter>oGfx</Filter>
     </ClInclude>
   </ItemGroup>

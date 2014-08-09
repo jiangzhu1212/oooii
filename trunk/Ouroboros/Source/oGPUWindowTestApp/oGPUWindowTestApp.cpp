@@ -38,6 +38,7 @@
 // them from the oGfx library.
 #include <oGfx/oGfxShaders.h>
 #include <oGfx/core.h>
+#include <oGfx/render_window.h>
 
 #include <oGPU/all.h>
 #include <oGPU/oGPUUtilMesh.h>
@@ -181,222 +182,101 @@ basic_hotkey_info HotKeys[] =
 	{ input::enter, oWHK_TOGGLE_FULLSCREEN, true, false, false },
 };
 
-class oGPUWindowThread
+class oGPUFirstTriangleRender
 {
 public:
-	oGPUWindowThread();
-	~oGPUWindowThread();
+	oGPUFirstTriangleRender() : core(nullptr), clear(black), ctarget(nullptr), dtarget(nullptr) {}
+	~oGPUFirstTriangleRender() { deinitialize(); }
 
-	// Returns a handle to the window. This should not be ref-counted. Application
-	// logic should ensure the lifetime of this window comes and goes before the
-	// owning/parent application windows since it is pretty much as child thread 
-	// and thus is created after the main thread (app window) and must be joined 
-	// before the app/thread exits.
-	window* Start(const std::shared_ptr<window>& _Parent, 
-		const input::action_hook& _OnAction, const std::function<void()>& _OnThreadExit);
-	void Stop();
+	void initialize(gfx::core& core);
+	void deinitialize();
+	
+	inline void set_draw_target(gpu::primary_target* t, gpu::depth_target* d = nullptr) { ctarget = t; dtarget = d; }
 
-	gpu::device& GetDevice() { return gfxcore.device; }
-	void SetClearColor(const color& c) { ClearColor = c; }
-	color GetClearColor() const { return ClearColor; }
+	inline void set_clear(const color& c) { clear = c; }
+	inline color get_clear() const { return clear; }
 
-	bool IsFullscreenExclusive() const { return WindowColorTarget.is_fullscreen_exclusive(); }
-	void SetFullscreenExclusive(bool fullscreen) { return WindowColorTarget.set_fullscreen_exclusive(fullscreen); }
+	void render();
 
 private:
-	void OnEvent(const window::basic_event& _Event);
-	void Run();
-	void Render();
+	gfx::core* core;
+	gpu::primary_target* ctarget;
+	gpu::depth_target* dtarget;
+	gpu::util_mesh tri;
+	gpu::vertex_shader vs;
+	gpu::pixel_shader ps;
 
-private:
-	std::shared_ptr<window> Parent;
-	gfx::core gfxcore;
-	gpu::command_list cl;
-	gpu::primary_target WindowColorTarget;
-	gpu::depth_target WindowDepthTarget;
-	gpu::util_mesh Mesh;
-
-	gpu::vertex_shader VertexShader;
-	gpu::pixel_shader PixelShader;
-
-	window* pGPUWindow;
-	std::thread Thread;
-	color ClearColor;
-	bool Running;
-
-	std::function<void()> OnThreadExit;
-	input::action_hook OnAction;
+	color clear;
 };
 
-oGPUWindowThread::oGPUWindowThread()
-	: pGPUWindow(nullptr)
-	, Running(true)
-	, ClearColor(black)
+void oGPUFirstTriangleRender::initialize(gfx::core& _core)
 {
-	gfxcore.initialize("gpu window thread", true);
+	core = &_core;
 
-	VertexShader.initialize("VS", gfxcore.device, gpu::intrinsic::byte_code(gpu::intrinsic::vertex_shader::pass_through_pos));
-	PixelShader.initialize("PS", gfxcore.device, gpu::intrinsic::byte_code(gpu::intrinsic::pixel_shader::white));
-	Mesh.initialize_first_triangle(gfxcore.device);
+	vs.initialize("VS", core->device, gpu::intrinsic::byte_code(gpu::intrinsic::vertex_shader::pass_through_pos));
+	ps.initialize("PS", core->device, gpu::intrinsic::byte_code(gpu::intrinsic::pixel_shader::white));
+	tri.initialize_first_triangle(core->device);
 
 	// jist: load the library file knowing all registries where content will go.
 	// there is a registry per shader type. Shaders are registered by entry point 
 	// name.
 	filesystem::load_async(filesystem::dev_path() / "Ouroboros/Source/oGfx/oGfxShaders.hlsl"
-		, std::bind(shader_on_loaded, std::ref(gfxcore.vs), std::ref(gfxcore.ps), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
+		, std::bind(shader_on_loaded, std::ref(core->vs), std::ref(core->ps), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 		, filesystem::load_option::text_read);
-
-
 	//filesystem::join();
 }
 
-oGPUWindowThread::~oGPUWindowThread()
+void oGPUFirstTriangleRender::deinitialize()
 {
-	Stop();
-	OnAction = nullptr;
-	Parent = nullptr;
-	Thread.join();
-	filesystem::join(); // ensure all loading is done
+	ctarget = nullptr;
+	dtarget = nullptr;
+	tri.deinitialize();
+	ps.deinitialize();
+	vs.deinitialize();
 }
 
-window* oGPUWindowThread::Start(const std::shared_ptr<window>& _Parent, const input::action_hook& _OnAction, const std::function<void()>& _OnThreadExit)
+void oGPUFirstTriangleRender::render()
 {
-	Parent = _Parent;
-	OnAction = _OnAction;
-	OnThreadExit = _OnThreadExit;
-	Thread = std::thread(&oGPUWindowThread::Run, this);
-
-	backoff bo;
-	while (!pGPUWindow)
-		bo.pause();
-	return pGPUWindow;
-}
-
-void oGPUWindowThread::Stop()
-{
-	Running = false;
-}
-
-void oGPUWindowThread::OnEvent(const window::basic_event& _Event)
-{
-	switch (_Event.type)
+	if (!ctarget || !*ctarget)
 	{
-		case event_type::sized:
-		{
-			if (any(_Event.as_shape().shape.client_size == int2(0,0)))
-				int i = 0;
-
-			if (WindowColorTarget)
-			{
-				// targets deinit on 0 dimensions, so protect against that
-				int2 NewSize = max(int2(1,1), _Event.as_shape().shape.client_size);
-				WindowColorTarget.resize(NewSize);
-				WindowDepthTarget.resize(NewSize);
-			}
-			break;
-		}
-
-		case event_type::closing:
-			Running = false;
-			break;
-
-	default:
-		break;
-	}
-}
-
-void oGPUWindowThread::Run()
-{
-	core_thread_traits::begin_thread("Window Render Target Thread");
-	{
-		std::shared_ptr<window> GPUWindow;
-
-		// Set up child window as a render target (this allows other client-area 
-		// controls to be drawn by parent since the primary render target consumes 
-		// the entire client area).
-		{
-			window::init i;
-			i.title = "Render Target Window";
-			i.icon = (icon_handle)load_icon(IDI_APPICON);
-			i.on_action = OnAction;
-			i.on_event = std::bind(&oGPUWindowThread::OnEvent, this, std::placeholders::_1);
-			i.shape.client_position = int2(0, 0); // important to think client-relative for this
-			i.shape.client_size = int2(256, 256); // @tony: Try making this 1,1 and see if a resize takes over
-			i.shape.state = window_state::hidden; // don't show the window before it is child-ized
-			i.shape.style = window_style::borderless;
-			i.cursor_state = cursor_state::hand;
-			i.alt_f4_closes = true;
-			GPUWindow = window::make(i);
-			GPUWindow->set_hotkeys(HotKeys);
-			WindowColorTarget.initialize(GPUWindow.get(), GetDevice(), true);
-			uint2 dimensions = WindowColorTarget.dimensions();
-			WindowDepthTarget.initialize("primary depth", GetDevice(), surface::format::d24_unorm_s8_uint, dimensions.x, dimensions.y, 0, false, 0);
-			GPUWindow->parent(Parent);
-			GPUWindow->show(); // now that the window is a child, show it (it will only show when parent shows)
-			pGPUWindow = GPUWindow.get();
-		}
-
-		try
-		{
-			while (Running)
-			{
-				GPUWindow->flush_messages();
-				Render();
-			}
-		}
-
-		catch (std::exception& e)
-		{
-			msgbox(msg_type::info, nullptr, "oGPUWindowTestApp", "ERROR\n%s", e.what());
-		}
-
-		WindowColorTarget.deinitialize();
-		WindowDepthTarget.deinitialize();
-		pGPUWindow = nullptr;
-	}
-	if (OnThreadExit)
-		OnThreadExit();
-	core_thread_traits::end_thread();
-}
-
-void oGPUWindowThread::Render()
-{
-	if (WindowColorTarget)
-	{
-		gpu::command_list& cl = GetDevice().immediate();
-
-		WindowColorTarget.clear(cl, ClearColor);
-		WindowColorTarget.set_draw_target(cl, WindowDepthTarget);
-		
-		gfxcore.bs.set(cl, gpu::blend_state::opaque);
-		gfxcore.dss.set(cl, gpu::depth_stencil_state::none);
-		gfxcore.rs.set(cl, gpu::rasterizer_state::front_face);
-		gfxcore.ss.set(cl, gpu::sampler_state::linear_wrap, gpu::sampler_state::linear_wrap);
-		
-		gfxcore.ls.set(cl, gpu::intrinsic::vertex_layout::pos, mesh::primitive_type::triangles);
-		VertexShader.set(cl);
-		PixelShader.set(cl);
-
-		Mesh.draw(cl);
-		cl;
-		WindowColorTarget.present();
-	}
-
-	else
 		oTRACE("No color target");
+		return;
+	}
+
+	auto& c = *core;
+	auto& ct = *ctarget;
+	auto& cl = c.device.immediate();
+
+	ct.clear(cl, clear);
+	ct.set_draw_target(cl, dtarget);
+		
+	c.bs.set(cl, gpu::blend_state::opaque);
+	c.dss.set(cl, gpu::depth_stencil_state::none);
+	c.rs.set(cl, gpu::rasterizer_state::front_face);
+	c.ss.set(cl, gpu::sampler_state::linear_wrap, gpu::sampler_state::linear_wrap);
+	c.ls.set(cl, gpu::intrinsic::vertex_layout::pos, mesh::primitive_type::triangles);
+	vs.set(cl);
+	ps.set(cl);
+
+	tri.draw(cl);
+	ct.present();
 }
 
 class oGPUWindowTestApp
 {
 public:
 	oGPUWindowTestApp();
+	~oGPUWindowTestApp();
 
 	void Run();
 
 private:
 	std::shared_ptr<window> AppWindow;
 	window* pGPUWindow;
-	oGPUWindowThread GPUWindow;
+
+	gfx::core gfxcore;
+	gfx::render_window gpuwin;
+	oGPUFirstTriangleRender first;
 
 	menu_handle Menus[oWMENU_COUNT];
 	oGPUWindowClearToggle ClearToggle;
@@ -448,11 +328,47 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 		AppWindow->set_status_text(1, "Fullscreen cooperative");
 	}
 
-	// Now set up separate child thread for rendering. This allows UI to be 
-	// detached from potentially slow rendering.
-	pGPUWindow = GPUWindow.Start(AppWindow, std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1), [&] { Running = false; });
-	GPUWindow.SetClearColor(ClearToggle.Color[0]);
+	// Initialize render resources
+	gfxcore.initialize("gpu window thread", true);
+	
+	// jist: load the library file knowing all registries where content will go.
+	// there is a registry per shader type. Shaders are registered by entry point 
+	// name.
+	filesystem::load_async(filesystem::dev_path() / "Ouroboros/Source/oGfx/oGfxShaders.hlsl"
+		, std::bind(shader_on_loaded, std::ref(gfxcore.vs), std::ref(gfxcore.ps), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
+		, filesystem::load_option::text_read);
+
+	//filesystem::join();
+
+	first.initialize(gfxcore);
+
+	// Set up child window so the app can have Win32 GUI and GPU rendering
+	{
+		gfx::render_window_init i("render_window");
+		i.icon = (icon_handle)load_icon(IDI_APPICON);
+		i.hotkeys = HotKeys;
+		i.num_hotkeys = oCOUNTOF(HotKeys);
+		i.color_format = surface::format::r8g8b8a8_unorm;
+		i.depth_format = surface::format::d24_unorm_s8_uint;
+		i.on_action = std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1);
+		i.on_stop = [&] { Running = false; };
+		i.render = std::bind(&oGPUFirstTriangleRender::render, &first);
+		i.parent = AppWindow;
+
+		pGPUWindow = gpuwin.start(gfxcore.device, i);
+	}
+
+	// attach render app to window rendering
+	auto& ct = gpuwin.color_target();
+	auto& dt = gpuwin.depth_target();
+	first.set_draw_target(&ct, &dt);
+	first.set_clear(ClearToggle.Color[0]);
 	AppWindow->show();
+}
+
+oGPUWindowTestApp::~oGPUWindowTestApp()
+{
+	filesystem::join();
 }
 
 void oGPUWindowTestApp::CheckState(window_state::value _State)
@@ -593,8 +509,8 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 		case event_type::timer:
 			if (_Event.as_timer().context == (uintptr_t)&ClearToggle)
 			{
-				if (GPUWindow.GetClearColor() == ClearToggle.Color[0]) GPUWindow.SetClearColor(ClearToggle.Color[1]);
-				else GPUWindow.SetClearColor(ClearToggle.Color[0]);
+				if (first.get_clear() == ClearToggle.Color[0]) first.set_clear(ClearToggle.Color[1]);
+				else first.set_clear(ClearToggle.Color[0]);
 			}
 
 			else
@@ -624,7 +540,7 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 			break;
 		}
 		case event_type::closing:
-			GPUWindow.Stop();
+			gpuwin.stop();
 			break;
 
 		default:
@@ -641,7 +557,7 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 			switch (_Action.device_id)
 			{
 				case oWMI_FILE_EXIT:
-					GPUWindow.Stop();
+					gpuwin.stop();
 					break;
 				case oWMI_VIEW_EXCLUSIVE:
 				{
@@ -695,9 +611,9 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 						const bool checked = oGUIMenuIsChecked(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE);
 						if (checked)
 						{
-							const bool GoFullscreen = !GPUWindow.IsFullscreenExclusive();
-							try { GPUWindow.SetFullscreenExclusive(GoFullscreen); }
-							catch (std::exception& e) { oTRACEA("SetFullscreenExclusive(%s) failed: %s", GoFullscreen ? "true" : "false", e.what()); }
+							const bool GoFullscreen = !gpuwin.is_fullscreen_exclusive();
+							try { gpuwin.set_fullscreen_exclusive(GoFullscreen); }
+							catch (std::exception& e) { oTRACEA("set_fullscreen_exclusive(%s) failed: %s", GoFullscreen ? "true" : "false", e.what()); }
 							AllowUIModeChange = !GoFullscreen;
 						}
 						else

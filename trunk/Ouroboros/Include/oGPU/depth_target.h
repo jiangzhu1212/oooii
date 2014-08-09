@@ -41,6 +41,8 @@ public:
 	depth_target() : ro(nullptr) {}
 	~depth_target() { deinitialize(); }
 
+	operator bool() const { return !!ro; }
+
 	void initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling);
 	void deinitialize();
 
