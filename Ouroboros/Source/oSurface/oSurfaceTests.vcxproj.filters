@@ -24,6 +24,9 @@
     <ClCompile Include="tests\TESTsurface_generate_mips.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TESTsurface_bccodec.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oSurface\tests\oSurfaceTests.h">

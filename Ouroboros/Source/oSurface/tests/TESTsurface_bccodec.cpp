@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oPlatform/oTest.h>
 #include <oSurface/surface.h>
+#include <oSurface/codec.h>
 
 #include "../../test_services.h"
 
@@ -53,7 +54,7 @@ static void convert_and_test(test_services& services, const format& target_forma
 	oCHECK(!memcmp(converted_encoded, golden_file, golden_file.size()), "bytes mismatch");
 }
 
-void TESTbccodec(test_services& services)
+void TESTsurface_bccodec(test_services& services)
 {
 	convert_and_test(services, format::bc1_unorm, "_BC1", 0);
 	convert_and_test(services, format::bc3_unorm, "_BC3", 1);

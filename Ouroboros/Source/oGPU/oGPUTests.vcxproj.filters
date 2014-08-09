@@ -7,9 +7,6 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Tests\TESTGPUBCEncodeDecode.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTGPUWindowInWindow.cpp">
       <Filter>Source</Filter>
     </ClCompile>

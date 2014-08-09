@@ -139,7 +139,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Tests\oGPUTestCommon.cpp" />
-    <ClCompile Include="Tests\TESTGPUBCEncodeDecode.cpp" />
     <ClCompile Include="Tests\TESTGPUBuffer.cpp" />
     <ClCompile Include="Tests\TESTGPUClear.cpp" />
     <ClCompile Include="Tests\TESTGPUDevice.cpp" />

@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="tests\TESTsurface.cpp" />
+    <ClCompile Include="tests\TESTsurface_bccodec.cpp" />
     <ClCompile Include="tests\TESTsurface_codec.cpp" />
     <ClCompile Include="tests\TESTsurface_fill.cpp" />
     <ClCompile Include="tests\TESTsurface_generate_mips.cpp" />
