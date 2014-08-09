@@ -41,6 +41,7 @@ DeviceContext* get_dc(command_list& cl);
 primary_target::primary_target()
 	: swapchain(nullptr)
 	, rw(nullptr)
+	, crw(nullptr)
 	, npresents(0)
 {
 }
@@ -77,6 +78,7 @@ void primary_target::deinitialize()
 {
 	oSAFE_RELEASEV(ro);
 	oSAFE_RELEASEV(rw);
+	oSAFE_RELEASEV(crw);
 	
 	lock_guard<shared_mutex> lock(mutex);
 	
@@ -108,6 +110,12 @@ void primary_target::internal_resize(const uint2& dimensions, device* dev)
 {
 	oCHECK0(swapchain);
 	oCHECK0(rw || dev);
+
+	if (any(dimensions == uint2(0,0)))
+	{
+		deinitialize();
+		return;
+	}
 
 	ushort2 New = dimensions;
 	{
@@ -145,6 +153,7 @@ void primary_target::internal_resize(const uint2& dimensions, device* dev)
 
 		oSAFE_RELEASEV(ro);
 		oSAFE_RELEASEV(rw);
+		oSAFE_RELEASEV(crw);
 
 		intrusive_ptr<DeviceContext> dc;
 		D3DDevice->GetImmediateContext(&dc);
@@ -162,6 +171,17 @@ void primary_target::internal_resize(const uint2& dimensions, device* dev)
 				
 		auto rtv = make_rtv(SwapChainTexture);
 		auto srv = make_srv(SwapChainTexture, DXGI_FORMAT_UNKNOWN, 0);
+
+		D3D11_TEXTURE2D_DESC desc;
+		SwapChainTexture->GetDesc(&desc);
+		if (desc.BindFlags & D3D11_BIND_UNORDERED_ACCESS)
+		{
+			intrusive_ptr<UnorderedAccessView> uav;
+			oV(D3DDevice->CreateUnorderedAccessView(SwapChainTexture, nullptr, &uav));
+
+			uav->AddRef();
+			crw = uav;
+		}
 
 		rtv->AddRef();
 		rw = rtv;

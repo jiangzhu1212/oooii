@@ -57,6 +57,7 @@ public:
 	surface::texel_buffer make_snapshot();
 
 	inline void* get_target() const { return rw; }
+	inline void* get_compute_target() const { return crw; }
 
 	void set_draw_target(command_list& cl, depth_target* depth = nullptr, uint depth_index = 0, const viewport& vp = viewport());
 	inline void set_draw_target(command_list& cl, depth_target& depth, uint depth_index = 0, const viewport& vp = viewport()) { set_draw_target(cl, &depth, depth_index, vp); }
@@ -77,6 +78,7 @@ public:
 private:
 	void* swapchain;
 	void* rw;
+	void* crw;
 	mutable shared_mutex mutex;
 	uint npresents;
 

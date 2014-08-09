@@ -406,7 +406,7 @@ intrusive_ptr<SwapChain> make_swap_chain(IUnknown* dev
 	d.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 	d.SampleDesc.Count = 1;
 	d.SampleDesc.Quality = 0;
-	d.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
+	d.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT/* | DXGI_USAGE_UNORDERED_ACCESS*/; // causes createswapchain to fail... why?
 	d.BufferCount = 3;
 	d.OutputWindow = hwnd;
 	d.Windowed = !fullscreen;
@@ -437,6 +437,7 @@ intrusive_ptr<SwapChain> make_swap_chain(IUnknown* dev
 
 void resize_buffers(SwapChain* sc, const int2& new_size)
 {
+	oCHECK(all(new_size > int2(0,0)), "resize to a 0 dimension is not supported");
 	DXGI_SWAP_CHAIN_DESC d;
 	sc->GetDesc(&d);
 	HRESULT HR = sc->ResizeBuffers(d.BufferCount, new_size.x, new_size.y, d.BufferDesc.Format, d.Flags);

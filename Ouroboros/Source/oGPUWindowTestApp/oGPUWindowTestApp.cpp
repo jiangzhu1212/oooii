@@ -310,10 +310,15 @@ void oGPUWindowThread::OnEvent(const window::basic_event& _Event)
 	{
 		case event_type::sized:
 		{
+			if (any(_Event.as_shape().shape.client_size == int2(0,0)))
+				int i = 0;
+
 			if (WindowColorTarget)
 			{
-				WindowColorTarget.resize(_Event.as_shape().shape.client_size);
-				WindowDepthTarget.resize(_Event.as_shape().shape.client_size);
+				// targets deinit on 0 dimensions, so protect against that
+				int2 NewSize = max(int2(1,1), _Event.as_shape().shape.client_size);
+				WindowColorTarget.resize(NewSize);
+				WindowDepthTarget.resize(NewSize);
 			}
 			break;
 		}
@@ -403,6 +408,9 @@ void oGPUWindowThread::Render()
 		cl;
 		WindowColorTarget.present();
 	}
+
+	else
+		oTRACE("No color target");
 }
 
 class oGPUWindowTestApp

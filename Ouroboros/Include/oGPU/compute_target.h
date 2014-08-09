@@ -22,6 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
+// base class for buffers writable in a compute shader
 #pragma once
 #ifndef oGPU_compute_target_h
 #define oGPU_compute_target_h
