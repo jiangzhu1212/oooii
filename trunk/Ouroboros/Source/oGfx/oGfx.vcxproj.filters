@@ -27,13 +27,13 @@
     <ClCompile Include="oGfxShaders.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="oGfxShaderRegistry.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="layout_state.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="core.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="shader_registries.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -78,6 +78,9 @@
       <Filter>oGfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\layout_state.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\shader_registries.h">
       <Filter>oGfx</Filter>
     </ClInclude>
   </ItemGroup>

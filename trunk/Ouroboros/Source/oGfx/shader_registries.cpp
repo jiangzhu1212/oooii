@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGfx/oGfxShaderRegistry.h>
+#include <oGfx/shader_registries.h>
 #include <oGfx/oGfxShaders.h>
 
 namespace ouro { namespace gfx {
