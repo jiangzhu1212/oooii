@@ -34,10 +34,11 @@ namespace ouro {
 	namespace tests {
 
 		void TESTsurface();
-		void TESTsurface_codec(test_services& _Requirements);
-		void TESTsurface_fill(test_services& _Requirements);
-		void TESTsurface_generate_mips(test_services& _Requirements);
-		void TESTsurface_resize(test_services& _Services);
+		void TESTsurface_bccodec(test_services& services);
+		void TESTsurface_codec(test_services& services);
+		void TESTsurface_fill(test_services& services);
+		void TESTsurface_generate_mips(test_services& services);
+		void TESTsurface_resize(test_services& services);
 
 	} // namespace tests
 } // namespace ouro

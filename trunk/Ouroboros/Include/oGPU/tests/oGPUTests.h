@@ -33,7 +33,6 @@ namespace ouro {
 
 	namespace tests {
 
-		void TESTbccodec(test_services& _Services);
 		void TESTbuffer();
 		void TESTclear(test_services& _Services);
 		void TESTdevice(test_services& _Services);
