@@ -22,46 +22,39 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#ifndef oGfxShaderRegistry_h
-#define oGfxShaderRegistry_h
-
-#include <oGfx/shader_registry.h>
-#include <oGfx/oGfxShaders.h>
-#include <oGPU/shader.h>
-#include <oGPU/shaders.h>
+#include <oGfx/core.h>
 
 namespace ouro { namespace gfx {
 
-class vs_registry : public shader_registry<gpu::vertex_shader>
+void core::initialize(const char* name, bool enable_driver_reporting)
 {
-	typedef shader_registry<gpu::vertex_shader> base_type;
+	gpu::device_init di;
+	di.debug_name = name;
+	di.enable_driver_reporting = enable_driver_reporting;
+	device.initialize(di);
 
-public:
-	typedef base_type::shader_type shader_type;
-	static const gpu::stage::value stage = base_type::stage;
-	
-	~vs_registry() { deinitialize(); }
+	bs.initialize(name, device);
+	dss.initialize(name, device);
+	rs.initialize(name, device);
+	ss.initialize(name, device);
 
-	void initialize(gpu::device& dev);
+	ls.initialize(name, device);
+	vs.initialize(device);
+	ps.initialize(device);
+}
 
-	void set(gpu::command_list& cl, const gpu::intrinsic::vertex_shader::value& shader) const;
-};
-
-class ps_registry : public shader_registry<gpu::pixel_shader>
+void core::deinitialize()
 {
-	typedef shader_registry<gpu::pixel_shader> base_type;
+	ps.deinitialize();
+	vs.deinitialize();
+	ls.deinitialize();
 
-public:
-	typedef base_type::shader_type shader_type;
-	static const gpu::stage::value stage = base_type::stage;
-	
-	~ps_registry() { deinitialize(); }
+	ss.deinitialize();
+	rs.deinitialize();
+	dss.deinitialize();
+	bs.deinitialize();
 
-	void initialize(gpu::device& dev);
-
-	void set(gpu::command_list& cl, const gpu::intrinsic::pixel_shader::value& shader) const;
-};
+	device.deinitialize();
+}
 
 }}
-
-#endif

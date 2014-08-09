@@ -30,25 +30,16 @@
     <ClCompile Include="oGfxShaderRegistry.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="layout_state.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="core.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
       <Filter>Source</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxViewConstants.h">
-      <Filter>oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxDrawConstants.h">
-      <Filter>oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h">
-      <Filter>oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h">
-      <Filter>oGfx</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxHLSL.h">
-      <Filter>oGfx</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxManipulator.h">
       <Filter>oGfx\Needs Code Review</Filter>
@@ -56,16 +47,37 @@
     <ClInclude Include="..\..\Include\oGfx\oGfxPickBuffer.h">
       <Filter>oGfx\Needs Code Review</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxShaders.h">
+    <ClInclude Include="..\..\Include\oGfx\core.h">
       <Filter>oGfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\oGfxDrawConstants.h">
+      <Filter>oGfx\Needs Code Review</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\oGfxHLSL.h">
+      <Filter>oGfx\Needs Code Review</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\oGfxLightConstants.h">
+      <Filter>oGfx\Needs Code Review</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\oGfxMaterialConstants.h">
+      <Filter>oGfx\Needs Code Review</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\oGfxShaderRegistry.h">
-      <Filter>oGfx</Filter>
+      <Filter>oGfx\Needs Code Review</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\oGfxShaders.h">
+      <Filter>oGfx\Needs Code Review</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\oGfxVertexLayouts.h">
+      <Filter>oGfx\Needs Code Review</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\oGfxViewConstants.h">
+      <Filter>oGfx\Needs Code Review</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oGfx\shader_registry.h">
       <Filter>oGfx</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oGfx\oGfxVertexLayouts.h">
+    <ClInclude Include="..\..\Include\oGfx\layout_state.h">
       <Filter>oGfx</Filter>
     </ClInclude>
   </ItemGroup>

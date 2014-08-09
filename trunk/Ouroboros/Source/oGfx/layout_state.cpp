@@ -22,46 +22,26 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#ifndef oGfxShaderRegistry_h
-#define oGfxShaderRegistry_h
-
-#include <oGfx/shader_registry.h>
-#include <oGfx/oGfxShaders.h>
-#include <oGPU/shader.h>
-#include <oGPU/shaders.h>
+#include <oGfx/layout_state.h>
 
 namespace ouro { namespace gfx {
 
-class vs_registry : public shader_registry<gpu::vertex_shader>
+void layout_state::initialize(const char* name, gpu::device& dev)
 {
-	typedef shader_registry<gpu::vertex_shader> base_type;
+	deinitialize();
+	mstring n;
+	for (int i = 0; i < gpu::intrinsic::vertex_layout::count; i++)
+	{
+		gpu::intrinsic::vertex_layout::value input = gpu::intrinsic::vertex_layout::value(i);
+		snprintf(n, "%s %s", name, as_string(input));
+		layouts[i].initialize(n, dev, gpu::intrinsic::elements(input), gpu::intrinsic::vs_byte_code(input));
+	}
+}
 
-public:
-	typedef base_type::shader_type shader_type;
-	static const gpu::stage::value stage = base_type::stage;
-	
-	~vs_registry() { deinitialize(); }
-
-	void initialize(gpu::device& dev);
-
-	void set(gpu::command_list& cl, const gpu::intrinsic::vertex_shader::value& shader) const;
-};
-
-class ps_registry : public shader_registry<gpu::pixel_shader>
+void layout_state::deinitialize()
 {
-	typedef shader_registry<gpu::pixel_shader> base_type;
-
-public:
-	typedef base_type::shader_type shader_type;
-	static const gpu::stage::value stage = base_type::stage;
-	
-	~ps_registry() { deinitialize(); }
-
-	void initialize(gpu::device& dev);
-
-	void set(gpu::command_list& cl, const gpu::intrinsic::pixel_shader::value& shader) const;
-};
+	for (auto& layout : layouts)
+		layout.deinitialize();
+}
 
 }}
-
-#endif
