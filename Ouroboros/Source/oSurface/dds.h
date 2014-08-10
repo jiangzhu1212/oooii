@@ -286,9 +286,6 @@ inline DDS_FORMAT from_ddspf(const dds_pixel_format& ddpf)
 		// sRGB formats are written using the "DX10" extended header
 		switch (ddpf.dwRGBBitCount)
 		{
-			case 24:
-				return DDS_FORMAT_B8G8R8X8_UNORM;
-			
 			case 32:
 				if (ISBITMASK(0x000000ff,0x0000ff00,0x00ff0000,0xff000000)) return DDS_FORMAT_R8G8B8A8_UNORM;
 				if (ISBITMASK(0x00ff0000,0x0000ff00,0x000000ff,0xff000000)) return DDS_FORMAT_B8G8R8A8_UNORM;
@@ -306,14 +303,14 @@ inline DDS_FORMAT from_ddspf(const dds_pixel_format& ddpf)
 				if (ISBITMASK(0xffffffff,0x00000000,0x00000000,0x00000000)) return DDS_FORMAT_R32_FLOAT; // D3DX writes this out as a FourCC of 114 (Only 32-bit color channel format in D3D9 was R32F)
 				break;
 
-		case 16:
-			if (ISBITMASK(0x7c00,0x03e0,0x001f,0x8000)) return DDS_FORMAT_B5G5R5A1_UNORM;
-			if (ISBITMASK(0xf800,0x07e0,0x001f,0x0000)) return DDS_FORMAT_B5G6R5_UNORM;
-			// No DXGI format maps to ISBITMASK(0x7c00,0x03e0,0x001f,0x0000) aka D3DFMT_X1R5G5B5
-			if (ISBITMASK(0x0f00,0x00f0,0x000f,0xf000)) return DDS_FORMAT_B4G4R4A4_UNORM;
-			// No DXGI format maps to ISBITMASK(0x0f00,0x00f0,0x000f,0x0000) aka D3DFMT_X4R4G4B4
-			// No 3:3:2, 3:3:2:8, or paletted DXGI formats aka D3DFMT_A8R3G3B2, D3DFMT_R3G3B2, D3DFMT_P8, D3DFMT_A8P8, etc.
-			break;
+			case 16:
+				if (ISBITMASK(0x7c00,0x03e0,0x001f,0x8000)) return DDS_FORMAT_B5G5R5A1_UNORM;
+				if (ISBITMASK(0xf800,0x07e0,0x001f,0x0000)) return DDS_FORMAT_B5G6R5_UNORM;
+				// No DXGI format maps to ISBITMASK(0x7c00,0x03e0,0x001f,0x0000) aka D3DFMT_X1R5G5B5
+				if (ISBITMASK(0x0f00,0x00f0,0x000f,0xf000)) return DDS_FORMAT_B4G4R4A4_UNORM;
+				// No DXGI format maps to ISBITMASK(0x0f00,0x00f0,0x000f,0x0000) aka D3DFMT_X4R4G4B4
+				// No 3:3:2, 3:3:2:8, or paletted DXGI formats aka D3DFMT_A8R3G3B2, D3DFMT_R3G3B2, D3DFMT_P8, D3DFMT_A8P8, etc.
+				break;
 		}
 	}
 	

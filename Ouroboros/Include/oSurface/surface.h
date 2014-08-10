@@ -476,6 +476,8 @@ static const uint max_num_subsurfaces = 4;
 // _____________________________________________________________________________
 // format introspection
 
+inline bool is_texture(const format& f) { return (int)f <= (int)format::b4g4r4a4_unorm; }
+
 // true if a block-compressed format
 bool is_block_compressed(const format& f);
 

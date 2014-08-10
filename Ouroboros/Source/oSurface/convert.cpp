@@ -53,6 +53,16 @@ static void r8g8b8_unorm_to_r8g8b8a8_unorm(const void* a, void* b)
 	*bb++ = 0xff;
 }
 
+static void r8g8b8_unorm_to_b8g8r8a8_unorm(const void* a, void* b)
+{
+	const uchar* aa = (const uchar*)a;
+	uchar* bb = (uchar*)b;
+	*bb++ = aa[2];
+	*bb++ = aa[1];
+	*bb++ = aa[0];
+	*bb++ = 0xff;
+}
+
 static void b8g8r8a8_unorm_to_b8g8r8_unorm(const void* a, void* b)
 {
 	const uchar* aa = (const uchar*)a;
@@ -200,31 +210,32 @@ pixel_convert get_pixel_convert(format srcfmt, format dstfmt)
 	uint sel = IO_(srcfmt, dstfmt);
 	switch (sel)
 	{
-		case IO(r8g8b8a8_unorm, r8g8b8_unorm): return r8g8b8a8_unorm_to_r8g8b8_unorm;
-		case IO(r8g8b8_unorm,		r8g8b8a8_unorm): return r8g8b8_unorm_to_r8g8b8a8_unorm;
-		case IO(b8g8r8a8_unorm, b8g8r8_unorm): return b8g8r8a8_unorm_to_b8g8r8_unorm;
-		case IO(b8g8r8a8_unorm, r8g8b8_unorm): return swap_red_blue_r8g8b8_unorm;
-		case IO(b8g8r8_unorm,		r8g8b8a8_unorm): return b8g8r8_unorm_to_r8g8b8a8_unorm;
-		case IO(b8g8r8_unorm,		r8g8b8x8_unorm): return b8g8r8_unorm_to_r8g8b8x8_unorm;
-		case IO(b8g8r8_unorm,		b8g8r8a8_unorm): return b8g8r8_unorm_to_b8g8r8a8_unorm;
-		case IO(b8g8r8_unorm,		b8g8r8x8_unorm): return b8g8r8_unorm_to_b8g8r8a8_unorm;
-		case IO(b8g8r8_unorm,		a8b8g8r8_unorm): return b8g8r8_unorm_to_a8b8g8r8_unorm;
-		case IO(b8g8r8_unorm,		x8b8g8r8_unorm): return b8g8r8_unorm_to_x8b8g8r8_unorm;
-		case IO(a8b8g8r8_unorm,	b8g8r8_unorm): return a8b8g8r8_unorm_to_b8g8r8_unorm;
-		case IO(x8b8g8r8_unorm,	b8g8r8_unorm): return x8b8g8r8_unorm_to_b8g8r8_unorm;
-		case IO(a8b8g8r8_unorm,	b8g8r8a8_unorm): return a8b8g8r8_unorm_to_b8g8r8a8_unorm;
-		case IO(x8b8g8r8_unorm,	b8g8r8a8_unorm): return x8b8g8r8_unorm_to_b8g8r8a8_unorm;
-		case IO(b8g8r8_unorm,		r8g8b8_unorm): 
-		case IO(r8g8b8_unorm,		b8g8r8_unorm): return swap_red_blue_r8g8b8_unorm;
-		case IO(b8g8r8a8_unorm, r8g8b8a8_unorm): 
-		case IO(r8g8b8a8_unorm, b8g8r8a8_unorm): return swap_red_blue_r8g8b8a8_unorm;
+		case IO(r8g8b8a8_unorm,			r8g8b8_unorm):		return r8g8b8a8_unorm_to_r8g8b8_unorm;
+		case IO(r8g8b8_unorm,				r8g8b8a8_unorm):	return r8g8b8_unorm_to_r8g8b8a8_unorm;
+		case IO(r8g8b8_unorm,				b8g8r8a8_unorm):	return r8g8b8_unorm_to_b8g8r8a8_unorm;
+		case IO(b8g8r8a8_unorm,			b8g8r8_unorm):		return b8g8r8a8_unorm_to_b8g8r8_unorm;
+		case IO(b8g8r8a8_unorm,			r8g8b8_unorm):		return swap_red_blue_r8g8b8_unorm;
+		case IO(b8g8r8_unorm,				r8g8b8a8_unorm):	return b8g8r8_unorm_to_r8g8b8a8_unorm;
+		case IO(b8g8r8_unorm,				r8g8b8x8_unorm):	return b8g8r8_unorm_to_r8g8b8x8_unorm;
+		case IO(b8g8r8_unorm,				b8g8r8a8_unorm):	return b8g8r8_unorm_to_b8g8r8a8_unorm;
+		case IO(b8g8r8_unorm,				b8g8r8x8_unorm):	return b8g8r8_unorm_to_b8g8r8a8_unorm;
+		case IO(b8g8r8_unorm,				a8b8g8r8_unorm):	return b8g8r8_unorm_to_a8b8g8r8_unorm;
+		case IO(b8g8r8_unorm,				x8b8g8r8_unorm):	return b8g8r8_unorm_to_x8b8g8r8_unorm;
+		case IO(a8b8g8r8_unorm,			b8g8r8_unorm):		return a8b8g8r8_unorm_to_b8g8r8_unorm;
+		case IO(x8b8g8r8_unorm,			b8g8r8_unorm):		return x8b8g8r8_unorm_to_b8g8r8_unorm;
+		case IO(a8b8g8r8_unorm,			b8g8r8a8_unorm):	return a8b8g8r8_unorm_to_b8g8r8a8_unorm;
+		case IO(x8b8g8r8_unorm,			b8g8r8a8_unorm):	return x8b8g8r8_unorm_to_b8g8r8a8_unorm;
+		case IO(b8g8r8_unorm,				r8g8b8_unorm): 
+		case IO(r8g8b8_unorm,				b8g8r8_unorm):		return swap_red_blue_r8g8b8_unorm;
+		case IO(b8g8r8a8_unorm,			r8g8b8a8_unorm): 
+		case IO(r8g8b8a8_unorm,			b8g8r8a8_unorm):	return swap_red_blue_r8g8b8a8_unorm;
 
 		// tag-like noop functions that trigger special conversion routines
-		case IO(r8g8b8x8_unorm, bc1_unorm): return r8g8b8x8_unorm_to_bc1_unorm;
-		case IO(r8g8b8a8_unorm, bc3_unorm): return r8g8b8a8_unorm_to_bc3_unorm;
-		case IO(r16g16b16a16_float, bc7_unorm): return r16g16b16a16_float_to_bc6h_uf16;
-		case IO(r8g8b8x8_unorm, bc7_unorm): return r8g8b8x8_unorm_to_bc7_unorm;
-		case IO(r8g8b8a8_unorm, bc7_unorm): return r8g8b8a8_unorm_to_bc7_unorm;
+		case IO(r8g8b8x8_unorm,			bc1_unorm):				return r8g8b8x8_unorm_to_bc1_unorm;
+		case IO(r8g8b8a8_unorm,			bc3_unorm):				return r8g8b8a8_unorm_to_bc3_unorm;
+		case IO(r16g16b16a16_float, bc7_unorm):				return r16g16b16a16_float_to_bc6h_uf16;
+		case IO(r8g8b8x8_unorm,			bc7_unorm):				return r8g8b8x8_unorm_to_bc7_unorm;
+		case IO(r8g8b8a8_unorm,			bc7_unorm):				return r8g8b8a8_unorm_to_bc7_unorm;
 
 		default: break;
 	}

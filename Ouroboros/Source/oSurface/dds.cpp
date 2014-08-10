@@ -135,7 +135,17 @@ info get_info_dds(const void* buffer, size_t size)
 	{
 		si.format = from_dds_format(from_ddspf(h->ddspf));
 		if (si.format == format::unknown)
-			return info();
+		{
+			if (h->ddspf.dwRGBBitCount == 24)
+			{
+				auto ddpf = h->ddspf;
+				if (ISBITMASK(0x000000ff,0x0000ff00,0x00ff0000,0x00000000)) si.format = format::r8g8b8_unorm;
+				else if (ISBITMASK(0x00ff0000,0x0000ff00,0x000000ff,0x00000000)) si.format = format::b8g8r8_unorm;
+				else return info();
+			}
+			else
+				return info();
+		}
 
 		if (h->dwFlags & DDS_HEADER_FLAGS_VOLUME)
 			resourceType = DDS_RESOURCE_DIMENSION_TEXTURE3D;
@@ -254,20 +264,17 @@ scoped_allocation encode_dds(const texel_buffer& b, const alpha_option& option, 
 texel_buffer decode_dds(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
 {
 	//oCHECK(option == alpha_option::preserve, "changing alpha option not supported for dds");
-	info dstinf = get_info_dds(buffer, size);
-	oCHECK(dstinf.format != format::unknown, "invalid dds");
-	texel_buffer b(dstinf);
+	info inf = get_info_dds(buffer, size);
+	oCHECK(inf.format != format::unknown, "invalid dds");
+	texel_buffer b(inf);
 
-	info srcinf(dstinf);
-	srcinf.format = (element_size(dstinf.format) == 4 && !has_alpha(dstinf.format)) ? strip_alphaorx(dstinf.format) : dstinf.format;
-
-	const uint nSubresources = num_subresources(dstinf);
+	const uint nSubresources = num_subresources(inf);
 	const_mapped_subresource* subresources = (const_mapped_subresource*)default_allocate(sizeof(const_mapped_subresource) * nSubresources, 0);
 	finally DeleteInitData([&] { if (subresources) default_deallocate(subresources); });
 
 	auto h = (const dds_header*)byte_add(buffer, sizeof(dds_header));
 	const void* bits = byte_add(buffer, sizeof(dds_signature) + sizeof(dds_header) + (has_dx10_header(*h) ? sizeof(dds_header_dx10) : 0));
-	map_bits(dstinf, bits, size - byte_diff(bits, buffer), subresources, nSubresources);
+	map_bits(inf, bits, size - byte_diff(bits, buffer), subresources, nSubresources);
 
 	for (uint i = 0; i < nSubresources; i++)
 		b.update_subresource(i, subresources[i]);

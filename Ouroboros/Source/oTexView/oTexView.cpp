@@ -439,17 +439,27 @@ void oGPUWindowTestApp::open_file()
 
 	try
 	{
-		auto decoded = surface::decode(filesystem::load(p));
-		auto converted = decoded.convert(surface::format::b8g8r8a8_unorm);
+		{
+			auto decoded = surface::decode(filesystem::load(p));
+			auto inf = decoded.get_info();
 
-		loaded = std::move(converted);
+			if (is_texture(inf.format))
+				loaded = std::move(decoded);
+			else
+			{
+				auto converted = decoded.convert(surface::format::b8g8r8a8_unorm);
+				loaded = std::move(converted);
+			}
+		}
 		
 		pGPUWindow->dispatch([&]
 		{ 
 			try
 			{
 				sv.set_texels("test", loaded);
+				auto inf = loaded.get_info();
 				AppWindow->set_title("%s - %s", sAppName, p.c_str());
+				AppWindow->client_size(inf.dimensions.xy());
 			}
 
 			catch (std::exception& e)
