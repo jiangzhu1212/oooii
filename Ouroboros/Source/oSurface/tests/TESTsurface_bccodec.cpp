@@ -25,6 +25,7 @@
 #include <oPlatform/oTest.h>
 #include <oSurface/surface.h>
 #include <oSurface/codec.h>
+#include <oCore/filesystem.h>
 
 #include "../../test_services.h"
 
@@ -33,7 +34,7 @@ using namespace ouro::surface;
 namespace ouro {
 	namespace tests {
 
-static void convert_and_test(test_services& services, const format& target_format, const char* filename_suffix, uint nth_test)
+static void convert_and_test(test_services& services, const format& target_format, const char* filename_suffix, uint nth_test, bool save_to_desktop = false)
 {
 	path TestImagePath = "Test/Textures/lena_1.png";
 
@@ -44,6 +45,14 @@ static void convert_and_test(test_services& services, const format& target_forma
 	auto converted1 = source.convert(has_alpha(target_format) ? format::r8g8b8a8_unorm : format::r8g8b8x8_unorm);
 	auto converted2 = converted1.convert(target_format);
 	auto converted_encoded = encode(converted2, file_format::dds);
+
+	if (save_to_desktop)
+	{
+		path filename = TestImagePath.filename();
+		filename.insert_basename_suffix(filename_suffix);
+		filename.replace_extension(".dds");
+		filesystem::save(filesystem::desktop_path() / filename, converted_encoded, converted_encoded.size());
+	}
 
 	// load the confirmed-good file and compare
 	sstring fname;
