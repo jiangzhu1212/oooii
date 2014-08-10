@@ -43,6 +43,12 @@ using namespace windows::gdi;
 
 static const char* sAppName = "oTexView";
 
+// status bar
+enum oWSTATUSBAR
+{
+	oWSTATUSBAR_INFO,
+};
+
 enum oWMENU
 {
 	oWMENU_FILE,
@@ -231,7 +237,8 @@ private:
 	// @tony: this is a bit lame. Everything is currently using the immediate context
 	// which cannot be accessed from multiple threads even with a multi-threaded device.
 	// so assign data to this loaded value and kick something to consume it.
-	surface::texel_buffer loaded;
+	surface::info info_from_file; // might've required conversion
+	surface::texel_buffer displayed;
 
 	menu_handle Menus[oWMENU_COUNT];
 	oGUIMenuEnumRadioListHandler MERL;
@@ -268,10 +275,9 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 		AppWindow = window::make(i);
 		AppWindow->set_hotkeys(HotKeys);
 
-		const int sSections[] = { 120, -1 };
+		const int sSections[] = { 300, -1 };
 		AppWindow->set_num_status_sections(sSections, oCOUNTOF(sSections));
-		AppWindow->set_status_text(0, "F3 for default style");
-		AppWindow->set_status_text(1, "Fullscreen cooperative");
+		AppWindow->set_status_text(oWSTATUSBAR_INFO, "Texture Info");
 	}
 
 	// Initialize render resources
@@ -441,24 +447,28 @@ void oGPUWindowTestApp::open_file()
 	{
 		{
 			auto decoded = surface::decode(filesystem::load(p));
-			auto inf = decoded.get_info();
+			info_from_file = decoded.get_info();
 
-			if (is_texture(inf.format))
-				loaded = std::move(decoded);
+			if (is_texture(info_from_file.format))
+				displayed = std::move(decoded);
 			else
 			{
 				auto converted = decoded.convert(surface::format::b8g8r8a8_unorm);
-				loaded = std::move(converted);
+				displayed = std::move(converted);
 			}
+
 		}
 		
 		pGPUWindow->dispatch([&]
 		{ 
 			try
 			{
-				sv.set_texels("test", loaded);
-				auto inf = loaded.get_info();
+				sv.set_texels("displayed", displayed);
 				AppWindow->set_title("%s - %s", sAppName, p.c_str());
+				AppWindow->set_status_text(oWSTATUSBAR_INFO, "%u x %u %s", info_from_file.dimensions.x, info_from_file.dimensions.y, as_string(info_from_file.format));
+
+				// resize based on actual data
+				auto inf = displayed.get_info();
 				AppWindow->client_size(inf.dimensions.xy());
 			}
 
@@ -467,7 +477,7 @@ void oGPUWindowTestApp::open_file()
 				msgbox(msg_type::info, AppWindow->native_handle(), sAppName, "Opening %s failed:\n%s", p.c_str(), e.what());
 			}
 
-			loaded.deinitialize();
+			displayed.deinitialize();
 		});
 	}
 
