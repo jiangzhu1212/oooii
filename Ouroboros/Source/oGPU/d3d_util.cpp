@@ -58,12 +58,13 @@ intrusive_ptr<Texture1D> make_texture_1d(const char* name, Device* dev, surface:
 
 intrusive_ptr<Texture2D> make_texture_2d(const char* name, Device* dev, surface::format format, uint width, uint height, uint array_size, uint bind_flags, bool mips, bool cube)
 {
+	static uint min_array_size = cube ? 6 : 1;
 	DXGI_FORMAT tf, df, sf;
 	dxgi::get_compatible_formats(dxgi::from_surface_format(format), &tf, &df, &sf);
 	CD3D11_TEXTURE2D_DESC d(tf
 		, width
 		, height
-		, cube ? __min(6, array_size*6) : __max(1, array_size)
+		, __max(min_array_size, array_size*min_array_size)
 		, mips ? 0 : 1
 		, D3D11_BIND_SHADER_RESOURCE | bind_flags
 		, D3D11_USAGE_DEFAULT
