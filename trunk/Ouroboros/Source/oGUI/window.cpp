@@ -343,22 +343,23 @@ private:
 
 	char* new_string(const char* _Format, va_list _Args)
 	{
-		const static size_t kStartLength = 64;
+		const static size_t kStartLength = 1024;
+		const static size_t kStopLength = 128*1024;
 		char* s = nullptr;
+		int len = -1;
+		size_t cap = kStartLength;
+		while (len < 0 && cap < kStopLength)
 		{
 			oScopedHeapLock lock(hHeap);
-			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, kStartLength);
+			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, cap);
+			len = vsnprintf(s, cap, _Format, _Args);
+			if (len >= 0 && len < cap)
+				break;
+			HeapFree(hHeap, HEAP_GENERATE_EXCEPTIONS, s);
+			cap *= 2;
 		}
 
-		int len = vsnprintf(s, kStartLength, _Format, _Args);
-		if (len >= kStartLength)
-		{
-			oScopedHeapLock lock(hHeap);
-			delete_object(s);
-			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, len + 1);
-			vsnprintf(s, len + 1, _Format, _Args);
-		}
-
+		oCHECK(len >= 0, "formatting failed for string \"%s\"", _Format);
 		return s;
 	}
 
