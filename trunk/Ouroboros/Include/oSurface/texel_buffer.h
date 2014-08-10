@@ -109,7 +109,7 @@ public:
 	// copies to a mapped subresource of the same dimension but the specified format
 	void convert_to(uint subresource, const mapped_subresource& dst, const format& dst_format, const copy_option& option = copy_option::none) const;
 
-	// copies into this instance from a source of the same dimension but a a different format
+	// copies into this instance from a source of the same dimension but a different format
 	void convert_from(uint subresource, const const_mapped_subresource& src, const format& src_format, const copy_option& option = copy_option::none);
 
 	// For compatible types such as RGB <-> BGR do conversion in-place
