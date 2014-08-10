@@ -23,6 +23,8 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 // Standard structs and definitions for the bitmap (.bmp) image file format.
+// Note for testing: VS2012 loads even exotic formats like BC7, just drag 
+// the dds into the menu/icon area.
 #ifndef dds_h
 #define dds_h
 
@@ -149,7 +151,15 @@ enum DDS_FORMAT
   DDS_FORMAT_P8                          = 113,
   DDS_FORMAT_A8P8                        = 114,
   DDS_FORMAT_B4G4R4A4_UNORM              = 115,
-  DDS_FORMAT_FORCE_UINT                  = 0xffffffff
+  DDS_FORMAT_FORCE_UINT                  = 0xffffffff,
+
+	// Non-DXGI formats. Any loader will need to convert these for use by D3D.
+	DDS_FORMAT_R8G8B8_TYPELESS             = 255,
+	DDS_FORMAT_R8G8B8_UNORM                = 254,
+	DDS_FORMAT_R8G8B8_UNORM_SRGB           = 253,
+	DDS_FORMAT_B8G8R8_TYPELESS             = 252,
+	DDS_FORMAT_B8G8R8_UNORM                = 251,
+	DDS_FORMAT_B8G8R8_UNORM_SRGB           = 250,
 };
 
 enum DDS_RESOURCE_DIMENSION
@@ -286,13 +296,17 @@ inline DDS_FORMAT from_ddspf(const dds_pixel_format& ddpf)
 		// sRGB formats are written using the "DX10" extended header
 		switch (ddpf.dwRGBBitCount)
 		{
+			case 24:
+				if (ISBITMASK(0x000000ff,0x0000ff00,0x00ff0000,0x00000000)) return DDS_FORMAT_R8G8B8_UNORM;
+				if (ISBITMASK(0x00ff0000,0x0000ff00,0x000000ff,0x00000000)) return DDS_FORMAT_B8G8R8_UNORM;
+				break;
+
 			case 32:
 				if (ISBITMASK(0x000000ff,0x0000ff00,0x00ff0000,0xff000000)) return DDS_FORMAT_R8G8B8A8_UNORM;
 				if (ISBITMASK(0x00ff0000,0x0000ff00,0x000000ff,0xff000000)) return DDS_FORMAT_B8G8R8A8_UNORM;
 				if (ISBITMASK(0x00ff0000,0x0000ff00,0x000000ff,0x00000000)) return DDS_FORMAT_B8G8R8X8_UNORM;
-				// No DXGI format maps to ISBITMASK(0x000000ff,0x0000ff00,0x00ff0000,0x00000000) aka D3DFMT_X8B8G8R8
 				// Many common DDS reader/writers (including D3DX) swap the
-				// the RED/BLUE masks for 10:10:10:2 formats. We assumme
+				// the RED/BLUE masks for 10:10:10:2 formats. We assume
 				// below that the 'backwards' header mask is being used since it is most
 				// likely written by D3DX. The more robust solution is to use the 'DX10'
 				// header extension and specify the DDS_FORMAT_R10G10B10A2_UNORM format directly
