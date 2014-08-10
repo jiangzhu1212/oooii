@@ -83,6 +83,16 @@
 // of decompressing or synthesizing a tile vs. how fine that processing gets 
 // divided amongst threads.
 
+// === BC SUMMARY ===
+// Format  Precision    Bytes/Pixel  Recommended Use
+// BC1     R5G6B5 + A1  0.5          Color w/ 1bit alpha, low-precision normal maps
+// BC2     R5G6B5 + A4  1            ?
+// BC3     R5G6B5 + A8  1            Color w/ full alpha or packed grayscale
+// BC4     R8           0.5          Height/gloss maps, font atlases, any grayscale
+// BC5     R8G8         1            Tangent-space normal maps or packed grayscales
+// BC6     R16G16B16    1            HDR images 
+// BC7     R8G8B8(A8)   1            High-quality color maps (w/ alpha)
+
 #pragma once
 #ifndef oSurface_h
 #define oSurface_h
