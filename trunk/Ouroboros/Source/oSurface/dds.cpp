@@ -31,6 +31,13 @@ namespace ouro { namespace surface {
 
 static surface::format from_dds_format(DDS_FORMAT format)
 {
+	switch (format)
+	{
+		case DDS_FORMAT_R8G8B8_UNORM: return surface::format::r8g8b8_unorm;
+		case DDS_FORMAT_B8G8R8_UNORM: return surface::format::b8g8r8_unorm;
+		default: break;
+	}
+
 	return (surface::format)format;
 }
 
