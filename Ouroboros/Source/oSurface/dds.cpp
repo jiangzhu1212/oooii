@@ -279,7 +279,7 @@ texel_buffer decode_dds(const void* buffer, size_t size, const alpha_option& opt
 	const_mapped_subresource* subresources = (const_mapped_subresource*)default_allocate(sizeof(const_mapped_subresource) * nSubresources, 0);
 	finally DeleteInitData([&] { if (subresources) default_deallocate(subresources); });
 
-	auto h = (const dds_header*)byte_add(buffer, sizeof(dds_header));
+	auto h = (const dds_header*)byte_add(buffer, sizeof(dds_signature));
 	const void* bits = byte_add(buffer, sizeof(dds_signature) + sizeof(dds_header) + (has_dx10_header(*h) ? sizeof(dds_header_dx10) : 0));
 	map_bits(inf, bits, size - byte_diff(bits, buffer), subresources, nSubresources);
 
