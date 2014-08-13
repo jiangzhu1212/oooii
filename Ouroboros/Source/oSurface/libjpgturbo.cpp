@@ -90,15 +90,15 @@ static oooii_jpeg_memory_alloc s_jalloc =
 	o_term
 };
 
-static J_COLOR_SPACE to_jcs(format _Format, int* _NumComponens)
+static J_COLOR_SPACE to_jcs(format _Format, int* _NumComponents)
 {
 	switch (_Format)
 	{
-		case format::r8_unorm: *_NumComponens = 1; return JCS_GRAYSCALE;
-		case format::r8g8b8_unorm: *_NumComponens = 3; return JCS_RGB;
-		case format::b8g8r8_unorm: *_NumComponens = 3; return JCS_EXT_BGR;
-		case format::r8g8b8a8_unorm: *_NumComponens = 4; return JCS_EXT_RGBA;
-		case format::b8g8r8a8_unorm: *_NumComponens = 4; return JCS_EXT_BGRA;
+		case format::r8_unorm: *_NumComponents = 1; return JCS_GRAYSCALE;
+		case format::r8g8b8_unorm: *_NumComponents = 3; return JCS_RGB;
+		case format::b8g8r8_unorm: *_NumComponents = 3; return JCS_EXT_BGR;
+		case format::r8g8b8a8_unorm: *_NumComponents = 4; return JCS_EXT_RGBA;
+		case format::b8g8r8a8_unorm: *_NumComponents = 4; return JCS_EXT_BGRA;
 		default: break;
 	}
 	return JCS_UNKNOWN;
@@ -136,6 +136,15 @@ bool is_jpg(const void* _pBuffer, size_t _BufferSize)
 		&& !memcmp(jpg_sig2, ((const uint8_t*)_pBuffer) + 6, sizeof(jpg_sig2));
 }
 
+format required_input_jpg(const format& stored)
+{
+	if (num_channels(stored) == 4)
+		return format::b8g8r8a8_unorm;
+	else if (num_channels(stored) == 3)
+		return format::b8g8r8_unorm;
+	return format::unknown;
+}
+
 info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 {
 	if (!is_jpg(_pBuffer, _BufferSize))
@@ -160,9 +169,7 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 	return si;
 }
 
-scoped_allocation encode_jpg(const texel_buffer& b
-	, const alpha_option& option
-	, const compression& compression)
+scoped_allocation encode_jpg(const texel_buffer& b, const compression& compression)
 {
 	jpeg_compress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -215,7 +222,7 @@ scoped_allocation encode_jpg(const texel_buffer& b
 	return a;
 }
 
-texel_buffer decode_jpg(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
+texel_buffer decode_jpg(const void* buffer, size_t size, const mip_layout& layout)
 {
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
@@ -233,26 +240,6 @@ texel_buffer decode_jpg(const void* buffer, size_t size, const alpha_option& opt
 	si.format = from_jcs(cinfo.out_color_space);
 	si.mip_layout = layout;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
-
-	switch (si.format)
-	{
-		case format::b8g8r8_unorm:
-		case format::r8g8b8_unorm:
-			si.format = option == alpha_option::force_alpha ? format::b8g8r8a8_unorm : format::b8g8r8_unorm;
-			cinfo.out_color_space = option == alpha_option::force_alpha ? JCS_EXT_BGRA : JCS_EXT_BGR;
-			cinfo.out_color_components = option == alpha_option::force_alpha ? 4 : 3;
-			break;
-		case format::b8g8r8a8_unorm:
-		case format::r8g8b8a8_unorm:
-			si.format = option == alpha_option::force_no_alpha ? format::b8g8r8_unorm : format::b8g8r8a8_unorm;
-			cinfo.out_color_space = option == alpha_option::force_no_alpha ? JCS_EXT_BGR : JCS_EXT_BGRA;
-			cinfo.out_color_components = option == alpha_option::force_no_alpha ? 3 : 4;
-			break;
-		case format::r8_unorm:
-			break;
-		default:
-			throw std::exception("unsupported format");
-	}
 
 	texel_buffer b(si);
 	{

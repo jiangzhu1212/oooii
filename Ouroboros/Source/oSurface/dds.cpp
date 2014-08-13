@@ -19,7 +19,7 @@
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
  * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
+ * OF CONTRACT, TORT OR OTHERWrISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oSurface/codec.h>
@@ -29,24 +29,24 @@
 
 namespace ouro { namespace surface {
 
-static surface::format from_dds_format(DDS_FORMAT format)
+static format from_dds_format(DDS_FORMAT f)
 {
-	switch (format)
+	switch (f)
 	{
-		case DDS_FORMAT_R8G8B8_UNORM: return surface::format::r8g8b8_unorm;
-		case DDS_FORMAT_B8G8R8_UNORM: return surface::format::b8g8r8_unorm;
+		case DDS_FORMAT_R8G8B8_UNORM: return format::r8g8b8_unorm;
+		case DDS_FORMAT_B8G8R8_UNORM: return format::b8g8r8_unorm;
 		default: break;
 	}
 
-	return (surface::format)format;
+	return (format)f;
 }
 
-static DDS_FORMAT to_dds_format(surface::format f)
+static DDS_FORMAT to_dds_format(format f)
 {
 	return (DDS_FORMAT)f;
 }
 
-dds_pixel_format GetPixelFormat(const surface::format& f)
+dds_pixel_format GetPixelFormat(const format& f)
 {
 	static const dds_pixel_format bgr = DDSPF_B8G8R8_UNORM;
 	static const dds_pixel_format rgb = DDSPF_R8G8B8_UNORM;
@@ -63,6 +63,13 @@ dds_pixel_format GetPixelFormat(const surface::format& f)
 bool is_dds(const void* buffer, size_t size)
 {
 	return size >= (sizeof(uint32_t) + sizeof(dds_header)) && *(const uint32_t*)buffer == dds_signature;
+}
+
+format required_input_dds(const format& stored)
+{
+	return (is_texture(stored) || stored == format::r8g8b8_unorm  || stored == format::b8g8r8_unorm) 
+		? stored
+		: format::unknown;
 }
 
 info get_info_dds(const void* buffer, size_t size)
@@ -207,7 +214,7 @@ static void map_bits(const info& inf, const void* oRESTRICT src_dds_buffer, size
 	map_bits(inf, src_dds_buffer, src_dds_size, (const_mapped_subresource*)subresources, num_subresources);
 }
 
-scoped_allocation encode_dds(const texel_buffer& b, const alpha_option& option, const compression& compression)
+scoped_allocation encode_dds(const texel_buffer& b, const compression& compression)
 {
 	//if (1) oTHROW(operation_not_supported, "dds not yet implemented");
 
@@ -268,9 +275,8 @@ scoped_allocation encode_dds(const texel_buffer& b, const alpha_option& option, 
 	return a;
 }
 
-texel_buffer decode_dds(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
+texel_buffer decode_dds(const void* buffer, size_t size, const mip_layout& layout)
 {
-	//oCHECK(option == alpha_option::preserve, "changing alpha option not supported for dds");
 	info inf = get_info_dds(buffer, size);
 	oCHECK(inf.format != format::unknown, "invalid dds");
 	texel_buffer b(inf);

@@ -51,6 +51,9 @@ public:
 
 	operator bool() const { return !!bits; }
 
+	inline semantic get_semantic() const { return inf.semantic; }
+	inline void set_semantic(const semantic& s) { inf.semantic = s; }
+
 	// create a buffer with uninitialized bits
 	void initialize(const info& i, const allocator& a = default_allocator);
 	

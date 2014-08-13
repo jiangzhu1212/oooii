@@ -187,10 +187,16 @@ void gpu_texture_test::render()
 	Mesh.draw(cl);
 }
 
-surface::texel_buffer surface_load(const path& _Path, bool _Mips, const surface::alpha_option& _Option)
+surface::texel_buffer surface_load(const path& _Path, bool _Mips)
 {
 	scoped_allocation b = filesystem::load(_Path);
-	auto sb = surface::decode(b, b.size(), _Option, _Mips ? surface::mip_layout::tight : surface::mip_layout::none);
+	auto sb = surface::decode(b, b.size(), surface::format::unknown, _Mips ? surface::mip_layout::tight : surface::mip_layout::none);
+
+	// force 4-channel format
+	auto src_format = sb.get_info().format;
+	auto with_alpha = surface::add_alpha(src_format);
+	sb = sb.convert(with_alpha);
+
 	if (_Mips)
 		sb.generate_mips();
 	return sb;
@@ -199,6 +205,7 @@ surface::texel_buffer surface_load(const path& _Path, bool _Mips, const surface:
 surface::texel_buffer make_1D(int _Width, bool _Mips)
 {
 	surface::info si;
+	si.semantic = surface::semantic::custom1d;
 	si.dimensions = int3(_Width, 1, 1);
 	si.mip_layout = _Mips ? surface::mip_layout::tight : surface::mip_layout::none;
 	si.format = surface::format::b8g8r8a8_unorm;

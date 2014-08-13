@@ -43,26 +43,38 @@ info get_info_bmp(const void* buffer, size_t size)
 	auto h = (const bmp_header*)buffer;
 	auto bmi = (const bmp_info*)&h[1];
 
+	if (bmi->bmiHeader.biBitCount != 32 && bmi->bmiHeader.biBitCount != 24)
+		return info();
+
 	info si;
 	si.format = bmi->bmiHeader.biBitCount == 32 ? format::b8g8r8a8_unorm : format::b8g8r8_unorm;
 	si.dimensions = int3(bmi->bmiHeader.biWidth, bmi->bmiHeader.biHeight, 1);
 	return si;
 }
 
-scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, const compression& compression)
+format required_input_bmp(const format& stored)
+{
+	if (num_channels(stored) == 4)
+		return format::b8g8r8a8_unorm;
+	else if (num_channels(stored) == 3)
+		return format::b8g8r8_unorm;
+	return format::unknown;
+}
+
+scoped_allocation encode_bmp(const texel_buffer& b, const compression& compression)
 {
 	auto info = b.get_info();
 	oCHECK(info.format == surface::format::b8g8r8a8_unorm || info.format == surface::format::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 	const uint src_byte_count = element_size(info.format);
-	const auto format = alpha_option_format(info.format, option);
 
-	const uint ElementSize = surface::element_size(format);
+	const uint ElementSize = surface::element_size(info.format);
 	const uint UnalignedPitch = ElementSize * info.dimensions.x;
 	const uint AlignedPitch = byte_align(UnalignedPitch, 4);
 	const uint BufferSize = AlignedPitch * info.dimensions.y;
 
 	const uint bfOffBits = sizeof(bmp_header) + sizeof(bmp_infoheader);
 	const uint bfSize = bfOffBits + BufferSize;
+	const bool kIs32Bit = info.format == surface::format::b8g8r8a8_unorm;
 
 	scoped_allocation p(malloc(bfSize), bfSize, free);
 
@@ -80,13 +92,14 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 	bmi->bmiHeader.biWidth = info.dimensions.x;
 	bmi->bmiHeader.biHeight = info.dimensions.y;
 	bmi->bmiHeader.biPlanes = 1;
-	bmi->bmiHeader.biBitCount = format == surface::format::b8g8r8a8_unorm ? 32 : 24;
+	bmi->bmiHeader.biBitCount = kIs32Bit ? 32 : 24;
 	bmi->bmiHeader.biCompression = bmp_compression::rgb;
 	bmi->bmiHeader.biSizeImage = BufferSize;
 	bmi->bmiHeader.biXPelsPerMeter = 0x0ec4;
 	bmi->bmiHeader.biYPelsPerMeter = 0x0ec4;
 	bmi->bmiHeader.biClrUsed = 0;
 	bmi->bmiHeader.biClrImportant = 0;
+
 
 	shared_lock lock(b);
 	
@@ -100,7 +113,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 			*scanline++ = src[0];
 			*scanline++ = src[1];
 			*scanline++ = src[2];
-			if (bmi->bmiHeader.biBitCount == 32)
+			if (kIs32Bit)
 				*scanline++ = src[3];
 			src += src_byte_count;
 		}
@@ -112,7 +125,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const alpha_option& option, 
 	return p;
 }
 
-texel_buffer decode_bmp(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
+texel_buffer decode_bmp(const void* buffer, size_t size, const mip_layout& layout)
 {
 	const bmp_header* bfh = (const bmp_header*)buffer;
 	const bmp_info* bmi = (const bmp_info*)&bfh[1];
@@ -127,10 +140,8 @@ texel_buffer decode_bmp(const void* buffer, size_t size, const alpha_option& opt
 	src.depth_pitch = bmi->bmiHeader.biSizeImage;
 	src.row_pitch = src.depth_pitch / bmi->bmiHeader.biHeight;
 
-	dsi.format = alpha_option_format(si.format, option);
-
 	texel_buffer b(dsi);
-	b.convert_from(0, src, si.format, copy_option::flip_vertically);
+	b.copy_from(0, src, copy_option::flip_vertically);
 	return b;
 }
 

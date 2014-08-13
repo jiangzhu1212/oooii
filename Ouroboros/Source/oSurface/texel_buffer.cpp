@@ -185,7 +185,17 @@ void texel_buffer::update_subresource(uint subresource, const box& _box, const c
 void texel_buffer::map(uint subresource, mapped_subresource* _pMapped, uint2* out_byte_dimensions)
 {
 	mtx.lock();
-	*_pMapped = get_mapped_subresource(inf, subresource, 0, bits, out_byte_dimensions);
+	try
+	{
+		*_pMapped = get_mapped_subresource(inf, subresource, 0, bits, out_byte_dimensions);
+	}
+
+	catch (std::exception&)
+	{
+		auto e = std::current_exception();
+		mtx.unlock();
+		std::rethrow_exception(e);
+	}
 }
 
 void texel_buffer::unmap(uint subresource)

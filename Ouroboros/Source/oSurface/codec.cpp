@@ -38,57 +38,20 @@ namespace ouro { namespace surface {
 
 #define DECLARE_CODEC(ext) \
 	bool is_##ext(const void* buffer, size_t size); \
+	format required_input_##ext(const format& stored); \
 	info get_info_##ext(const void* buffer, size_t size); \
-	scoped_allocation encode_##ext(const texel_buffer& b, const alpha_option& option, const compression& compression); \
-	texel_buffer decode_##ext(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout);
+	scoped_allocation encode_##ext(const texel_buffer& b, const compression& compression); \
+	texel_buffer decode_##ext(const void* buffer, size_t size, const mip_layout& layout);
 
 #define GET_FILE_FORMAT_EXT(ext) if (!_stricmp(extension, "." #ext)) return file_format::##ext;
-#define GET_FILE_FORMAT_HDR(ext) if (is_##ext(buffer, size)) return file_format::##ext;
+#define GET_FILE_FORMAT_HEADER(ext) if (is_##ext(buffer, size)) return file_format::##ext;
+#define GET_REQ_INPUT(ext) case file_format::##ext: return required_input_##ext(stored_format);
 #define GET_INFO(ext) case file_format::##ext: return get_info_##ext(buffer, size);
-#define ENCODE(ext) case file_format::##ext: return encode_##ext(b, option, compression);
-#define DECODE(ext) case file_format::##ext: return decode_##ext(buffer, size, option, layout);
+#define ENCODE(ext) case file_format::##ext: return encode_##ext(*input, compression);
+#define DECODE(ext) case file_format::##ext: decoded = decode_##ext(buffer, size, layout); break;
 #define AS_STRING(ext) case surface::file_format::##ext: return #ext;
 
 FOREACH_EXT(DECLARE_CODEC)
-
-format alpha_option_format(const format& fmt, const alpha_option& option)
-{
-	switch (option)
-	{
-		case alpha_option::force_alpha:
-			switch (fmt)
-			{
-				case format::r8g8b8_unorm: return format::r8g8b8a8_unorm;
-				case format::r8g8b8_unorm_srgb: return format::r8g8b8a8_unorm_srgb;
-				case format::b8g8r8_unorm: return format::b8g8r8a8_unorm;
-				case format::b8g8r8_unorm_srgb: return format::b8g8r8a8_unorm_srgb;
-				case format::x8b8g8r8_unorm: return format::a8b8g8r8_unorm;
-				case format::x8b8g8r8_unorm_srgb: return format::a8b8g8r8_unorm_srgb;
-				case format::b5g6r5_unorm: return format::b5g5r5a1_unorm;
-				default: break;
-			}
-			break;
-
-		case alpha_option::force_no_alpha:
-			switch (fmt)
-			{
-				case format::r8g8b8a8_unorm: return format::r8g8b8_unorm;
-				case format::r8g8b8a8_unorm_srgb: return format::r8g8b8_unorm_srgb;
-				case format::b8g8r8a8_unorm: return format::b8g8r8_unorm;
-				case format::b8g8r8a8_unorm_srgb: return format::b8g8r8_unorm_srgb;
-				case format::a8b8g8r8_unorm: return format::x8b8g8r8_unorm;
-				case format::a8b8g8r8_unorm_srgb: return format::x8b8g8r8_unorm_srgb;
-				case format::b5g5r5a1_unorm: return format::b5g6r5_unorm;
-				default: break;
-			}
-			break;
-
-		default:
-			break;
-	}
-
-	return fmt;
-}
 
 file_format get_file_format(const char* path)
 {
@@ -99,8 +62,19 @@ file_format get_file_format(const char* path)
 
 file_format get_file_format(const void* buffer, size_t size)
 {
-	FOREACH_EXT(GET_FILE_FORMAT_HDR)
+	FOREACH_EXT(GET_FILE_FORMAT_HEADER)
 	return file_format::unknown;
+}
+
+format required_input(const file_format& file_format, const format& stored_format)
+{
+	switch (file_format)
+	{
+		FOREACH_EXT(GET_REQ_INPUT)
+		default: break;
+	}
+
+	return format::unknown;
 }
 
 info get_info(const void* buffer, size_t size)
@@ -114,9 +88,26 @@ info get_info(const void* buffer, size_t size)
 	
 scoped_allocation encode(const texel_buffer& b
 	, const file_format& fmt
-	, const alpha_option& option
+	, const format& desired_format
 	, const compression& compression)
 {
+	auto buffer_format = b.get_info().format;
+	auto dst_format = desired_format;
+	if (dst_format == format::unknown)
+		dst_format = buffer_format;
+
+	dst_format = required_input(fmt, dst_format);
+	oCHECK(dst_format != format::unknown, "%s encoding does not support desired_format %s", as_string(fmt), as_string(desired_format));
+
+	texel_buffer converted;
+	const texel_buffer* input = &b;
+	
+	if (buffer_format != dst_format)
+	{
+		converted = b.convert(dst_format);
+		input = &converted;
+	}
+
 	switch (fmt)
 	{ FOREACH_EXT(ENCODE)
 		default: break;
@@ -124,13 +115,17 @@ scoped_allocation encode(const texel_buffer& b
 	throw std::exception("unknown image encoding");
 }
 
-texel_buffer decode(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
+texel_buffer decode(const void* buffer, size_t size, const format& desired_format, const mip_layout& layout)
 {
+	texel_buffer decoded;
 	switch (get_file_format(buffer, size))
 	{ FOREACH_EXT(DECODE)
-		default: break;
+		default: throw std::exception("unknown image encoding");
 	}
-	throw std::exception("unknown image encoding");
+
+	if (desired_format != format::unknown && desired_format != decoded.get_info().format)
+		return decoded.convert(desired_format);
+	return decoded;
 }
 
 	}

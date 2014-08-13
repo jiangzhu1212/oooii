@@ -312,7 +312,8 @@ enum class semantic : uchar
 	custom3d,
 	color_correction3d,
 
-	cube,
+	customcube,
+	colorcube,
 
 	count,
 
@@ -322,8 +323,8 @@ enum class semantic : uchar
 	last2d = intensity,
 	first3d = custom3d,
 	last3d = color_correction3d,
-	firstcube = cube,
-	lastcube = cube,
+	firstcube = customcube,
+	lastcube = colorcube,
 };
 
 enum class cube_face : uchar
@@ -508,6 +509,11 @@ bool is_planar(const format& f);
 
 // true if in YUV space
 bool is_yuv(const format& f);
+
+// given a 3-component type return the equivalent 4-component type
+// that adds alpha. If there is not an equivalent type this will 
+// throw.
+format add_alpha(const format& f);
 
 // given a 4-component type return the equivalent 3-component type
 // not all types have 3-component types defined at this time in which

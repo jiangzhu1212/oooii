@@ -48,18 +48,18 @@ struct bmp_rgbquad
 	uint8_t rgbReserved;
 };
 
-struct ciexyz
+struct bmp_ciexyz
 {
 	int32_t ciexyzX;
 	int32_t ciexyzY;
 	int32_t ciexyzZ;
 };
 
-struct ciexyztriple
+struct bmp_ciexyztriple
 {
-  ciexyz ciexyzRed;
-  ciexyz ciexyzGreen;
-  ciexyz ciexyzBlue;
+  bmp_ciexyz ciexyzRed;
+  bmp_ciexyz ciexyzGreen;
+  bmp_ciexyz ciexyzBlue;
 };
 
 struct bmp_infoheader
@@ -95,7 +95,7 @@ struct bmp_v4infoheader
 	uint32_t bV4BlueMask;
 	uint32_t bV4AlphaMask;
 	uint32_t bV4CSType;
-	ciexyztriple bV4Endpoints;
+	bmp_ciexyztriple bV4Endpoints;
 	uint32_t bV4GammaRed;
 	uint32_t bV4GammaGreen;
 	uint32_t bV4GammaBlue;
@@ -119,7 +119,7 @@ struct bmp_v5infoheader
 	uint32_t bv5BlueMask;
 	uint32_t bv5AlphaMask;
 	uint32_t bv5CSType;
-	ciexyztriple bv5Endpoints;
+	bmp_ciexyztriple bv5Endpoints;
 	uint32_t bv5GammaRed;
 	uint32_t bv5GammaGreen;
 	uint32_t bv5GammaBlue;

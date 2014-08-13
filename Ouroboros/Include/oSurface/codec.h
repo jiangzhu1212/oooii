@@ -51,16 +51,6 @@ enum class compression : uchar
   high,
 };
 
-enum class alpha_option : uchar
-{
-	preserve,
-	force_alpha,
-	force_no_alpha,
-};
-
-// returns the input format with the specified option applied
-format alpha_option_format(const format& fmt, const alpha_option& option);
-
 // checks the file extension
 file_format get_file_format(const char* path);
 
@@ -72,20 +62,22 @@ file_format get_file_format(const void* buffer, size_t size);
 info get_info(const void* buffer, size_t size);
 
 // returns a buffer ready to be written to disk in the specified format.
+// this may use the specified allocator to convert the texel buffer to 
+// the input format for the codec.
 scoped_allocation encode(const texel_buffer& b
 	, const file_format& fmt
-	, const alpha_option& option = alpha_option::preserve
+	, const format& desired_format = format::unknown
 	, const compression& compression = compression::low);
 
 // Parses the in-memory formatted buffer into a surface.
 texel_buffer decode(const void* buffer
 	, size_t size
-	, const alpha_option& option = alpha_option::preserve
+	, const format& desired_format = format::unknown
 	, const mip_layout& layout = mip_layout::none);
 
 inline texel_buffer decode(const scoped_allocation& buffer
-	, const alpha_option& option = alpha_option::preserve
-	, const mip_layout& layout = mip_layout::none) { return decode(buffer, buffer.size(), option, layout); }
+	, const format& desired_format = format::unknown
+	, const mip_layout& layout = mip_layout::none) { return decode(buffer, buffer.size(), desired_format, layout); }
 
 }}
 

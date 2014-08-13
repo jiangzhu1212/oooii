@@ -34,10 +34,10 @@ namespace ouro {
 
 static const surface::filter kFilter = surface::filter::lanczos2;
 
-static surface::texel_buffer surface_load(test_services& _Services, const path& _Path, surface::alpha_option _Option = surface::alpha_option::preserve)
+static surface::texel_buffer surface_load(test_services& _Services, const path& _Path)
 {
 	scoped_allocation b = _Services.load_buffer(_Path);
-	return surface::decode(b, b.size(), _Option);
+	return surface::decode(b, b.size());
 }
 
 static surface::texel_buffer make_test_1d(int _Width)

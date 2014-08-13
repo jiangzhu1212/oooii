@@ -41,7 +41,7 @@ void save_bmp_to_desktop(const surface::texel_buffer& b, const char* _path)
 {
 	auto encoded = surface::encode(b
 		, surface::file_format::bmp
-		, surface::alpha_option::force_no_alpha
+		, surface::strip_alphaorx(b.get_info().format)
 		, surface::compression::none);
 	filesystem::save(filesystem::desktop_path() / path(_path), encoded, encoded.size());
 }
@@ -69,7 +69,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 		scoped_timer("encode");
 		encoded = surface::encode(known
 			, file_format
-			, surface::alpha_option::force_no_alpha
+			, surface::strip_alphaorx(known.get_info().format)
 			, surface::compression::none);
 	}
 
@@ -87,7 +87,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 	surface::texel_buffer decoded;
 	{
 		scoped_timer("decode");
-		decoded = surface::decode(encoded, encoded.size(), surface::alpha_option::force_alpha);
+		decoded = surface::decode(encoded, encoded.size(), format);
 	}
 
 	{
@@ -115,7 +115,7 @@ void compare_load(test_services& services, const char* path, const char* desktop
 	surface::texel_buffer decoded;
 	{
 		scoped_timer("decode");
-		decoded = surface::decode(encoded, encoded.size(), surface::alpha_option::force_alpha);
+		decoded = surface::decode(encoded, encoded.size(), surface::format::b8g8r8a8_unorm);
 	}
 
 	auto ff = surface::get_file_format(path);
