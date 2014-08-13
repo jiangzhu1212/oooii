@@ -72,13 +72,18 @@ info get_info_psd(const void* buffer, size_t size, psd_header* out_header)
 	return i;
 }
 
+format required_input_psd(const format& f)
+{
+	return format::unknown; // no encode yet supported
+}
+
 info get_info_psd(const void* buffer, size_t size)
 {
 	psd_header h;
 	return get_info_psd(buffer, size, &h);
 }
 
-scoped_allocation encode_psd(const texel_buffer& b, const alpha_option& option, const compression& compression)
+scoped_allocation encode_psd(const texel_buffer& b, const compression& compression)
 {
 	oTHROW(operation_not_supported, "psd encoding not supported");
 }
@@ -124,7 +129,7 @@ void* rle_decode2(void* oRESTRICT _pDestination, size_t _SizeofDestination,
 	return s;
 }
 
-texel_buffer decode_psd(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
+texel_buffer decode_psd(const void* buffer, size_t size, const mip_layout& layout)
 {
 	psd_header h;
 	info si = get_info_psd(buffer, size, &h);

@@ -145,7 +145,7 @@ protected:
 	static const int sSnapshotFrames[2];
 };
 
-surface::texel_buffer surface_load(const path& _Path, bool _Mips, const surface::alpha_option& _Option = surface::alpha_option::force_alpha);
+surface::texel_buffer surface_load(const path& _Path, bool _Mips);
 
 surface::texel_buffer make_1D(int _Width, bool _Mips);
 

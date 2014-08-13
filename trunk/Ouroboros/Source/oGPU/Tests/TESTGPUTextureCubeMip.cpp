@@ -40,16 +40,17 @@ struct gpu_test_texturecubemip : public gpu_texture_test
 	pipeline get_pipeline() override { pipeline p; p.input = gpu::intrinsic::vertex_layout::pos_uvw; p.vs = gpu::intrinsic::vertex_shader::texturecube; p.ps = gpu::intrinsic::pixel_shader::texturecube; return p; } 
 	resource* make_test_texture() override
 	{
-		auto _0 = surface_load(filesystem::data_path() / "Test/Textures/CubePosX.png", false, surface::alpha_option::force_alpha);
-		auto _1 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegX.png", false, surface::alpha_option::force_alpha);
-		auto _2 = surface_load(filesystem::data_path() / "Test/Textures/CubePosY.png", false, surface::alpha_option::force_alpha);
-		auto _3 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegY.png", false, surface::alpha_option::force_alpha);
-		auto _4 = surface_load(filesystem::data_path() / "Test/Textures/CubePosZ.png", false, surface::alpha_option::force_alpha);
-		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", false, surface::alpha_option::force_alpha);
+		auto _0 = surface_load(filesystem::data_path() / "Test/Textures/CubePosX.png", false);
+		auto _1 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegX.png", false);
+		auto _2 = surface_load(filesystem::data_path() / "Test/Textures/CubePosY.png", false);
+		auto _3 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegY.png", false);
+		auto _4 = surface_load(filesystem::data_path() / "Test/Textures/CubePosZ.png", false);
+		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", false);
 
 		const surface::texel_buffer* images[6] = { &_0, &_1, &_2, &_3, &_4, &_5 };
 		surface::texel_buffer image;
 		image.initialize_array(images, true);
+		image.set_semantic(surface::semantic::customcube);
 		t.initialize("Test cube", Device, image, true);
 		return &t;
 	}

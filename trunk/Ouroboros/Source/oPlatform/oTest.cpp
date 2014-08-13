@@ -442,10 +442,10 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	return true;
 }
 
-static void surface_save(const surface::texel_buffer& _Buffer, surface::alpha_option _Option, const path& _Path)
+static void surface_save(const surface::texel_buffer& _Buffer, const surface::format& _Desired, const path& _Path)
 {
 	size_t size = 0;
-	scoped_allocation encoded = encode(_Buffer, surface::get_file_format(_Path), _Option);
+	scoped_allocation encoded = encode(_Buffer, surface::get_file_format(_Path), _Desired);
 	filesystem::save(_Path, encoded, encoded.size(), filesystem::save_option::binary_write);
 }
 bool oTest::TestImage(const surface::texel_buffer& _TestImage
@@ -463,7 +463,7 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage
 
 	surface::info si = _TestImage.get_info();
 
-	const surface::alpha_option ao = surface::has_alpha(si.format) ? surface::alpha_option::force_alpha : surface::alpha_option::force_no_alpha;
+	const surface::format desired = si.format;
 
 	surface::texel_buffer GoldenImage;
 	{
@@ -472,7 +472,7 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage
 		try { b = filesystem::load(_GoldenImagePath); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Load failed: (Golden)...%s", gPath); }
 
-		try { GoldenImage = surface::decode(b, b.size(), ao); }
+		try { GoldenImage = surface::decode(b, b.size(), desired); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::protocol_error, "Corrupt Image: (Golden)...%s", gPath); }
 	}
 
@@ -482,14 +482,14 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage
 	{
 		if (any(si.dimensions != gsi.dimensions))
 		{
-			try { surface_save(_TestImage, ao, _FailedImagePath); }
+			try { surface_save(_TestImage, desired, _FailedImagePath); }
 			catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
 			return oErrorSetLast(std::errc::protocol_error, "Differing dimensions: (Output %dx%d)...%s != (Golden %dx%d)...%s", si.dimensions.x, si.dimensions.y, fPath, gsi.dimensions.x, gsi.dimensions.y, gPath);
 		}
 
 		if (si.format != gsi.format)
 		{
-			try { surface_save(_TestImage, ao, _FailedImagePath); }
+			try { surface_save(_TestImage, desired, _FailedImagePath); }
 			catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
 			return oErrorSetLast(std::errc::protocol_error, "Differing formats: (Golden %s)...%s != (Output %s)...%s", as_string(gsi.format), gPath, as_string(si.format), fPath);
 		}
@@ -513,14 +513,14 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage
 	// Save out test image and diffs if there is a non-similar result.
 	if (RMSError > _MaxRMSError)
 	{
-		try { surface_save(_TestImage, ao, _FailedImagePath); }
+		try { surface_save(_TestImage, desired, _FailedImagePath); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)...%s", fPath); }
 
 		path diffPath(_FailedImagePath);
 		diffPath.replace_extension_with_suffix("_diff.png");
 		const char* dPath = diffPath.c_str() + commonPathLength;
 
-		try { surface_save(diffs, surface::alpha_option::preserve, diffPath); }
+		try { surface_save(diffs, surface::format::unknown, diffPath); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Diff)...%s", dPath); }
 
 		if (_OutputGoldenImage)
@@ -529,7 +529,7 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage
 			goldenPath.replace_extension_with_suffix("_golden.png");
 			const char* gPath = goldenPath.c_str() + commonPathLength;
 
-			try { surface_save(GoldenImage, ao, goldenPath); }
+			try { surface_save(GoldenImage, desired, goldenPath); }
 			catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Golden)...%s", gPath); }
 		}
 
@@ -609,8 +609,7 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage, unsigned int _Nth
 
 	surface::info si = _TestImage.get_info();
 
-	surface::alpha_option ao = surface::has_alpha(si.format) ? surface::alpha_option::force_alpha : surface::alpha_option::force_no_alpha;
-	try { surface_save(_TestImage, ao, FailurePaths.DriverSpecific); }
+	try { surface_save(_TestImage, si.format, FailurePaths.DriverSpecific); }
 	catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Save failed: (Output)%s", FailurePaths.DriverSpecific.c_str()); }
 
 	return oErrorSetLast(std::errc::no_such_file_or_directory, "Not found: (Golden).../%s Test Image saved to %s", Filename, FailurePaths.DriverSpecific.c_str());

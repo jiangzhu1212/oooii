@@ -93,6 +93,15 @@ bool is_png(const void* buffer, size_t size)
 	return size >= 8 && !memcmp(png_sig, buffer, sizeof(png_sig));
 }
 
+format required_input_png(const format& stored)
+{
+	if (num_channels(stored) == 4)
+		return format::r8g8b8a8_unorm;
+	else if (num_channels(stored) == 3)
+		return format::r8g8b8_unorm;
+	return format::unknown;
+}
+
 info get_info_png(const void* buffer, size_t size)
 {
 	if (!is_png(buffer, size))
@@ -119,8 +128,7 @@ info get_info_png(const void* buffer, size_t size)
 	png_set_read_fn(png_ptr, &rs, user_read_data);
 	png_read_info(png_ptr, info_ptr);
 
-	// Read initial information and configure the decoder according
-	// to surface policy (bgr, always unpaletted, alpha_option).
+	// Read initial information and configure the decoder accordingly
 	unsigned int w = 0, h = 0;
 	int depth = 0, color_type = 0;
 	png_get_IHDR(png_ptr, info_ptr, &w, &h, &depth, &color_type, nullptr, nullptr, nullptr);
@@ -132,45 +140,9 @@ info get_info_png(const void* buffer, size_t size)
 	return i;
 }
 
-scoped_allocation encode_png(const texel_buffer& b
-	, const alpha_option& option
-	, const compression& compression)
+scoped_allocation encode_png(const texel_buffer& b, const compression& compression)
 {
-	const texel_buffer* pSource = &b;
-	texel_buffer Converted;
-
 	info si = b.get_info();
-	switch (option)
-	{
-		case alpha_option::force_alpha:
-		{
-			if (si.format == format::r8_unorm)
-				throw std::exception("can't force alpha on r8_unorm");
-
-			if (si.format == format::r8g8b8_unorm || si.format == format::b8g8r8_unorm)
-			{
-				Converted = b.convert(format::r8g8b8a8_unorm);
-				si = Converted.get_info();
-				pSource = &Converted;
-			}
-
-			break;
-		}
-
-		case alpha_option::force_no_alpha:
-		{
-			if (si.format == format::r8g8b8a8_unorm || si.format == format::b8g8r8a8_unorm)
-			{
-				Converted = b.convert(format::r8g8b8_unorm);
-				si = Converted.get_info();
-				pSource = &Converted;
-			}
-			break;
-		}
-
-		default:
-			break;
-	}
 
 	// initialize libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
@@ -229,7 +201,7 @@ scoped_allocation encode_png(const texel_buffer& b
 		std::vector<uchar*> rows;
 		rows.resize(si.dimensions.y);
 		const_mapped_subresource msr;
-		shared_lock lock(pSource);
+		shared_lock lock(b);
 		rows[0] = (uchar*)lock.mapped.data;
 		for (uint y = 1; y < si.dimensions.y; y++)
 			rows[y] = byte_add(rows[y-1], lock.mapped.row_pitch);
@@ -240,7 +212,7 @@ scoped_allocation encode_png(const texel_buffer& b
 	return scoped_allocation(ws.data, ws.size, free);
 }
 
-texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
+texel_buffer decode_png(const void* buffer, size_t size, const mip_layout& layout)
 {
 	// initialze libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
@@ -263,8 +235,7 @@ texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& opt
 	png_set_read_fn(png_ptr, &rs, user_read_data);
 	png_read_info(png_ptr, info_ptr);
 
-	// Read initial information and configure the decoder according
-	// to surface policy (bgr, always unpaletted, alpha_option).
+	// Read initial information and configure the decoder accordingly
 	unsigned int w = 0, h = 0;
 	int depth = 0, color_type = 0;
 	png_get_IHDR(png_ptr, info_ptr, &w, &h, &depth, &color_type, nullptr, nullptr, nullptr);
@@ -290,19 +261,9 @@ texel_buffer decode_png(const void* buffer, size_t size, const alpha_option& opt
 			break;
 		case PNG_COLOR_TYPE_RGB:
 			si.format = format::b8g8r8_unorm;
-			if (option == alpha_option::force_alpha)
-			{
-				si.format = format::b8g8r8a8_unorm;
-				png_set_add_alpha(png_ptr, 0xff, PNG_FILLER_AFTER);
-			}
 			break;
 		case PNG_COLOR_TYPE_RGB_ALPHA:
 			si.format = format::b8g8r8a8_unorm;
-			if (option == alpha_option::force_no_alpha)
-			{
-				si.format = format::b8g8r8_unorm;
-				png_set_strip_alpha(png_ptr);
-			}
 			break;
 		default:
 		case PNG_COLOR_TYPE_GRAY_ALPHA:

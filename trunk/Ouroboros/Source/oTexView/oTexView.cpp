@@ -54,6 +54,7 @@ enum oWMENU
 	oWMENU_FILE,
 	oWMENU_EDIT,
 	oWMENU_VIEW,
+	oWMENU_VIEW_ZOOM,
 	oWMENU_HELP,
 	oWMENU_COUNT,
 	oWMENU_TOPLEVEL,
@@ -71,6 +72,7 @@ static oWMENU_HIER sMenuHier[] =
 	{ oWMENU_TOPLEVEL, oWMENU_FILE, "&File" },
 	{ oWMENU_TOPLEVEL, oWMENU_EDIT, "&Edit" },
 	{ oWMENU_TOPLEVEL, oWMENU_VIEW, "&View" },
+	{ oWMENU_VIEW, oWMENU_VIEW_ZOOM, "&Zoom" },
 	{ oWMENU_TOPLEVEL, oWMENU_HELP, "&Help" },
 };
 static_assert(oCOUNTOF(sMenuHier) == oWMENU_COUNT, "array mismatch");
@@ -78,8 +80,10 @@ static_assert(oCOUNTOF(sMenuHier) == oWMENU_COUNT, "array mismatch");
 enum oWHOTKEY
 {
 	oWHK_FILE_OPEN,
-	oWHK_TOGGLE_UI_MODE,
-	oWHK_DEFAULT_STYLE,
+	oWHK_VIEW_ZOOM_QUARTER,
+	oWHK_VIEW_ZOOM_HALF,
+	oWHK_VIEW_ZOOM_ORIGINAL,
+	oWHK_VIEW_ZOOM_DOUBLE,
 };
 
 enum oWMI // menuitems
@@ -87,13 +91,13 @@ enum oWMI // menuitems
 	oWMI_FILE_OPEN,
 	oWMI_FILE_EXIT,
 
-	oWMI_VIEW_STYLE_FIRST,
-	oWMI_VIEW_STYLE_LAST = oWMI_VIEW_STYLE_FIRST + window_style::count - 1,
-
-	oWMI_VIEW_STATE_FIRST,
-	oWMI_VIEW_STATE_LAST = oWMI_VIEW_STATE_FIRST + window_state::count - 1,
-
-	oWMI_VIEW_EXCLUSIVE,
+	oWMI_VIEW_ZOOM_QUARTER,
+	oWMI_VIEW_ZOOM_HALF,
+	oWMI_VIEW_ZOOM_ORIGINAL,
+	oWMI_VIEW_ZOOM_DOUBLE,
+	
+	oWMI_VIEW_ZOOM_FIRST = oWMI_VIEW_ZOOM_QUARTER,
+	oWMI_VIEW_ZOOM_LAST = oWMI_VIEW_ZOOM_DOUBLE,
 
 	oWMI_HELP_ABOUT,
 };
@@ -102,6 +106,10 @@ basic_hotkey_info HotKeys[] =
 {
 	// reset style
 	{ input::o, oWHK_FILE_OPEN, false, true, false },
+	{ input::_1, oWHK_VIEW_ZOOM_QUARTER, true, false, false },
+	{ input::_2, oWHK_VIEW_ZOOM_HALF, true, false, false },
+	{ input::_3, oWHK_VIEW_ZOOM_ORIGINAL, true, false, false },
+	{ input::_4, oWHK_VIEW_ZOOM_DOUBLE, true, false, false },
 };
 
 class surface_view
@@ -218,11 +226,11 @@ void surface_view::render()
 	ct.present();
 }
 
-class oGPUWindowTestApp
+class oTexViewApp
 {
 public:
-	oGPUWindowTestApp();
-	~oGPUWindowTestApp();
+	oTexViewApp();
+	~oTexViewApp();
 
 	void Run();
 
@@ -244,20 +252,21 @@ private:
 	oGUIMenuEnumRadioListHandler MERL;
 	window_state::value PreFullscreenState;
 	bool Running;
-	bool UIMode;
-	bool AllowUIModeChange;
+	bool zoom_enabled;
 private:
-	void ActionHook(const input::action& _Action);
-	void AppEventHook(const window::basic_event& _Event);
-	bool CreateMenus(const window::create_event& _CreateEvent);
-	void open_file();
+	void on_action(const input::action& a);
+	void on_event(const window::basic_event& e);
+	void on_drop(const window::basic_event& e);
+	void on_zoom(int id);
+	bool CreateMenus(const window::create_event& e);
+	void open_file_dialog();
+	void open_file(const path& p);
 };
 
-oGPUWindowTestApp::oGPUWindowTestApp()
+oTexViewApp::oTexViewApp()
 	: pGPUWindow(nullptr)
 	, Running(true)
-	, UIMode(true)
-	, AllowUIModeChange(true)
+	, zoom_enabled(true)
 	, PreFullscreenState(window_state::hidden)
 {
 	// Set up application window
@@ -265,11 +274,11 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 		window::init i;
 		i.title = sAppName;
 		i.icon = (icon_handle)load_icon(IDI_APPICON);
-		i.on_action = std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1);
-		i.on_event = std::bind(&oGPUWindowTestApp::AppEventHook, this, std::placeholders::_1);
+		i.on_action = std::bind(&oTexViewApp::on_action, this, std::placeholders::_1);
+		i.on_event = std::bind(&oTexViewApp::on_event, this, std::placeholders::_1);
 		i.shape.client_size = int2(256, 256);
 		i.shape.state = window_state::hidden;
-		i.shape.style = window_style::sizable_with_menu_and_statusbar;
+		i.shape.style = window_style::fixed_with_menu_and_statusbar;
 		i.alt_f4_closes = true;
 		i.cursor_state = cursor_state::arrow;
 		AppWindow = window::make(i);
@@ -293,12 +302,13 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 		i.num_hotkeys = oCOUNTOF(HotKeys);
 		i.color_format = surface::format::r8g8b8a8_unorm;
 		i.depth_format = surface::format::d24_unorm_s8_uint;
-		i.on_action = std::bind(&oGPUWindowTestApp::ActionHook, this, std::placeholders::_1);
+		i.on_action = std::bind(&oTexViewApp::on_action, this, std::placeholders::_1);
 		i.on_stop = [&] { Running = false; };
 		i.render = std::bind(&surface_view::render, &sv);
 		i.parent = AppWindow;
 
 		pGPUWindow = gpuwin.start(gfxcore.device, i);
+		pGPUWindow->hook_events(std::bind(&oTexViewApp::on_drop, this, std::placeholders::_1));
 	}
 
 	// attach render app to window rendering
@@ -307,12 +317,12 @@ oGPUWindowTestApp::oGPUWindowTestApp()
 	AppWindow->show();
 }
 
-oGPUWindowTestApp::~oGPUWindowTestApp()
+oTexViewApp::~oTexViewApp()
 {
 	filesystem::join();
 }
 
-bool oGPUWindowTestApp::CreateMenus(const window::create_event& _CreateEvent)
+bool oTexViewApp::CreateMenus(const window::create_event& _CreateEvent)
 {
 	for (auto& m : Menus)
 		m = oGUIMenuCreate();
@@ -332,16 +342,32 @@ bool oGPUWindowTestApp::CreateMenus(const window::create_event& _CreateEvent)
 	// (nothing yet)
 
 	// View menu
-	// (nothing yet)
+
+	const char* sZoomMenu[] = 
+	{
+		"1:4 Quarter\tAlt+1",
+		"1:2 Half\tAlt+2",
+		"1:1 Original\tAlt+3",
+		"2:1 Double\tAlt+4",
+	};
+	static_assert(oCOUNTOF(sZoomMenu) == (oWMI_VIEW_ZOOM_LAST-oWMI_VIEW_ZOOM_FIRST+1), "array mismatch");
+
+	for (int i = oWMI_VIEW_ZOOM_FIRST; i <= oWMI_VIEW_ZOOM_LAST; i++)
+	{
+		oGUIMenuAppendItem(Menus[oWMENU_VIEW_ZOOM], i, sZoomMenu[i - oWMI_VIEW_ZOOM_FIRST]);
+		oGUIMenuEnable(Menus[oWMENU_VIEW_ZOOM], i, false);
+	}
+
+	zoom_enabled = false;
 
 	// Help menu
 	oGUIMenuAppendItem(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "About...");
 	return true;
 }
 
-void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
+void oTexViewApp::on_event(const window::basic_event& e)
 {
-	switch (_Event.type)
+	switch (e.type)
 	{
 		case event_type::activated:
 			oTRACE("event_type::activated");
@@ -354,16 +380,16 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 		case event_type::creating:
 		{
 			oTRACE("event_type::creating");
-			if (!CreateMenus(_Event.as_create()))
+			if (!CreateMenus(e.as_create()))
 				oThrowLastError();
 			break;
 		}
 
 		case event_type::sized:
 		{
-			oTRACE("event_type::sized %s %dx%d", as_string(_Event.as_shape().shape.state), _Event.as_shape().shape.client_size.x, _Event.as_shape().shape.client_size.y);
+			oTRACE("event_type::sized %s %dx%d", as_string(e.as_shape().shape.state), e.as_shape().shape.client_size.x, e.as_shape().shape.client_size.y);
 			if (pGPUWindow)
-				pGPUWindow->client_size(_Event.as_shape().shape.client_size);
+				pGPUWindow->client_size(e.as_shape().shape.client_size);
 			break;
 		}
 
@@ -371,12 +397,52 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 			gpuwin.stop();
 			break;
 
+		case event_type::drop_files:
+			on_drop(e);
+			break;
+
 		default:
 			break;
 	}
 }
 
-void oGPUWindowTestApp::ActionHook(const input::action& _Action)
+void oTexViewApp::on_drop(const window::basic_event& e)
+{
+	if (e.type != event_type::drop_files)
+		return;
+
+	const int n = e.as_drop().num_paths;
+	const path_string* paths = e.as_drop().paths;
+
+	if (n >= 1)
+		open_file(path(paths[0]));
+}
+
+void oTexViewApp::on_zoom(int item)
+{
+	if (!zoom_enabled || item < oWMI_VIEW_ZOOM_FIRST || item > oWMI_VIEW_ZOOM_LAST)
+		return;
+	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_ZOOM], oWMI_VIEW_ZOOM_FIRST, oWMI_VIEW_ZOOM_LAST, item);
+
+	int2 NewSize = info_from_file.dimensions.xy();
+	switch (item)
+	{
+		case oWMI_VIEW_ZOOM_QUARTER: NewSize /= 4; break;
+		case oWMI_VIEW_ZOOM_HALF: NewSize /= 2; break;
+		case oWMI_VIEW_ZOOM_DOUBLE: NewSize *= 2; break;
+		default: break;
+	}
+
+	auto Center = AppWindow->client_position() + (AppWindow->client_size() / 2);
+	auto NewCenter = AppWindow->client_position() + (NewSize / 2);
+	auto diff = NewCenter - Center;
+
+	AppWindow->client_position(AppWindow->client_position() - diff);
+
+	AppWindow->client_size(NewSize);
+}
+
+void oTexViewApp::on_action(const input::action& _Action)
 {
 	switch (_Action.action_type)
 	{
@@ -385,11 +451,18 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 			switch (_Action.device_id)
 			{
 				case oWMI_FILE_OPEN:
-					open_file();
+					open_file_dialog();
 					break;
 
 				case oWMI_FILE_EXIT:
 					gpuwin.stop();
+					break;
+
+				case oWMI_VIEW_ZOOM_QUARTER:
+				case oWMI_VIEW_ZOOM_HALF:
+				case oWMI_VIEW_ZOOM_ORIGINAL:
+				case oWMI_VIEW_ZOOM_DOUBLE:
+					on_zoom(_Action.device_id);
 					break;
 
 				case oWMI_HELP_ABOUT:
@@ -411,7 +484,15 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 			switch (_Action.device_id)
 			{
 				case oWHK_FILE_OPEN:
-					open_file();
+					open_file_dialog();
+					break;
+
+				case oWHK_VIEW_ZOOM_QUARTER:
+				case oWHK_VIEW_ZOOM_HALF:
+				case oWHK_VIEW_ZOOM_ORIGINAL:
+				case oWHK_VIEW_ZOOM_DOUBLE:
+					// @tony: eww... is there a way to make all hotkeys trigger menu events?
+					on_zoom(_Action.device_id - oWHK_VIEW_ZOOM_QUARTER + oWMI_VIEW_ZOOM_QUARTER);
 					break;
 
 				default:
@@ -427,21 +508,13 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 	}
 }
 
-void oGPUWindowTestApp::open_file()
+void oTexViewApp::open_file(const path& p)
 {
-	const char* sSupportedFormats = 
-		"Supported Image Types|*.bmp;*.dds;*.jpg;*.png;*.psd;*.tga" \
-		"|All Files Types|*.*"\
-		"|Bitmap Files|*.bmp" \
-		"|DDS Files|*.dds" \
-		"|JPG/JPEG Files|*.jpg" \
-		"|PNG Files|*.png" \
-		"|Photoshop Files|*.psd" \
-		"|Targa Files|*.tga";
-
-	path p(filesystem::data_path());
-	if (!windows::common_dialog::open_path(p, "Open Texture", sSupportedFormats, (HWND)AppWindow->native_handle()))
+	if (surface::file_format::unknown == surface::get_file_format(p))
+	{
+		msgbox(msg_type::info, AppWindow->native_handle(), sAppName, "Unsupported file type %s", p.c_str());
 		return;
+	}
 
 	try
 	{
@@ -456,10 +529,9 @@ void oGPUWindowTestApp::open_file()
 				auto converted = decoded.convert(surface::format::b8g8r8a8_unorm);
 				displayed = std::move(converted);
 			}
-
 		}
 		
-		pGPUWindow->dispatch([&]
+		pGPUWindow->dispatch([=]
 		{ 
 			try
 			{
@@ -469,7 +541,15 @@ void oGPUWindowTestApp::open_file()
 
 				// resize based on actual data
 				auto inf = displayed.get_info();
-				AppWindow->client_size(inf.dimensions.xy());
+
+				{
+					for (int i = oWMI_VIEW_ZOOM_FIRST; i <= oWMI_VIEW_ZOOM_LAST; i++)
+						oGUIMenuEnable(Menus[oWMENU_VIEW_ZOOM], i);
+					oGUIMenuCheckRadio(Menus[oWMENU_VIEW_ZOOM], oWMI_VIEW_ZOOM_FIRST, oWMI_VIEW_ZOOM_LAST, oWMI_VIEW_ZOOM_ORIGINAL);
+					zoom_enabled = true;
+				}
+
+				AppWindow->dispatch([=] {on_zoom(oWMI_VIEW_ZOOM_ORIGINAL); });
 			}
 
 			catch (std::exception& e)
@@ -487,7 +567,26 @@ void oGPUWindowTestApp::open_file()
 	}
 }
 
-void oGPUWindowTestApp::Run()
+void oTexViewApp::open_file_dialog()
+{
+	const char* sSupportedFormats = 
+		"Supported Image Types|*.bmp;*.dds;*.jpg;*.png;*.psd;*.tga" \
+		"|All Files Types|*.*"\
+		"|Bitmap Files|*.bmp" \
+		"|DDS Files|*.dds" \
+		"|JPG/JPEG Files|*.jpg" \
+		"|PNG Files|*.png" \
+		"|Photoshop Files|*.psd" \
+		"|Targa Files|*.tga";
+
+	path p(filesystem::data_path());
+	if (!windows::common_dialog::open_path(p, "Open Texture", sSupportedFormats, (HWND)AppWindow->native_handle()))
+		return;
+
+	open_file(p);
+}
+
+void oTexViewApp::Run()
 {
 KeepGoing:
 	try
@@ -497,7 +596,7 @@ KeepGoing:
 	}
 	catch (std::exception& e)
 	{
-		msgbox(msg_type::info, nullptr, "oGPUWindowTestApp", "ERROR\n%s", e.what());
+		msgbox(msg_type::info, nullptr, "oTexViewApp", "ERROR\n%s", e.what());
 		goto KeepGoing;
 	}
 }
@@ -506,7 +605,7 @@ int main(int argc, const char* argv[])
 {
 	reporting::set_prompter(prompt_msgbox);
 
-	oGPUWindowTestApp App;
+	oTexViewApp App;
 	App.Run();
 	return 0;
 }

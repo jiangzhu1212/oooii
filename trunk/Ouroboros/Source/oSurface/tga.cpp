@@ -39,6 +39,15 @@ bool is_tga(const void* buffer, size_t size)
 		&& (h->bpp == 32 || h->bpp == 24);
 }
 
+format required_input_tga(const format& stored)
+{
+	if (num_channels(stored) == 4)
+		return format::b8g8r8a8_unorm;
+	else if (num_channels(stored) == 3)
+		return format::b8g8r8_unorm;
+	return format::unknown;
+}
+
 info get_info_tga(const void* buffer, size_t size)
 {
 	if (!is_tga(buffer, size))
@@ -51,9 +60,7 @@ info get_info_tga(const void* buffer, size_t size)
 	return si;
 }
 
-scoped_allocation encode_tga(const texel_buffer& b
-	, const alpha_option& option
-	, const compression& compression)
+scoped_allocation encode_tga(const texel_buffer& b, const compression& compression)
 {
 	oCHECK_ARG(compression == compression::none, "compression not supported");
 
@@ -61,12 +68,9 @@ scoped_allocation encode_tga(const texel_buffer& b
 	oCHECK_ARG(info.format == format::b8g8r8a8_unorm || info.format == format::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 	oCHECK_ARG(info.dimensions.x <= 0xffff && info.dimensions.y <= 0xffff, "dimensions must be <= 65535");
 
-	auto dstinfo = info;
-	dstinfo.format = alpha_option_format(info.format, option);
-
 	tga_header h = {0};
 	h.data_type_field = tga_data_type_field::rgb;
-	h.bpp = (uchar)bits(dstinfo.format);
+	h.bpp = (uchar)bits(info.format);
 	h.width = (ushort)info.dimensions.x;
 	h.height = (ushort)info.dimensions.y;
 
@@ -76,25 +80,24 @@ scoped_allocation encode_tga(const texel_buffer& b
 	memcpy(p, &h, sizeof(tga_header));
 	mapped_subresource dst;
 	dst.data = byte_add((void*)p, sizeof(tga_header));
-	dst.row_pitch = element_size(dstinfo.format) * h.width;
+	dst.row_pitch = element_size(info.format) * h.width;
 	dst.depth_pitch = dst.row_pitch * h.height;
 
-	b.convert_to(0, dst, dstinfo.format, copy_option::flip_vertically);
+	b.copy_to(0, dst, copy_option::flip_vertically);
 	return p;
 }
 
-texel_buffer decode_tga(const void* buffer, size_t size, const alpha_option& option, const mip_layout& layout)
+texel_buffer decode_tga(const void* buffer, size_t size, const mip_layout& layout)
 {
 	info si = get_info_tga(buffer, size);
 	oCHECK(si.format != format::unknown, "invalid tga");
 	const tga_header* h = (const tga_header*)buffer;
 	info dsi = si;
-	dsi.format = alpha_option_format(si.format, option);
 	dsi.mip_layout = layout;
 	auto src = get_const_mapped_subresource(si, 0, 0, &h[1]);
 
 	texel_buffer b(dsi);
-	b.convert_from(0, src, si.format, copy_option::flip_vertically);
+	b.copy_from(0, src, copy_option::flip_vertically);
 	return b;
 }
 

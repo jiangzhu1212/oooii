@@ -38,7 +38,7 @@ DeviceContext* get_dc(command_list& cl);
 void texture3d::initialize(const char* name, device& dev, surface::format format, uint width, uint height, uint depth, bool mips)
 {
 	deinitialize();
-	oCHECK_ARG(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
+	oCHECK(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
 	auto t = make_texture_3d(name, get_device(dev), format, width, height, depth, mips);
 	auto srv = make_srv(t, format, 0);
 	srv->AddRef();
@@ -48,8 +48,8 @@ void texture3d::initialize(const char* name, device& dev, surface::format format
 void texture3d::initialize(const char* name, device& dev, const surface::texel_buffer& src, bool mips)
 {
 	auto si = src.get_info();
-	oCHECK_ARG(si.is_3d(), "a 3d texel buffer must be specified");
-	oCHECK_ARG(!mips || (mips && si.mip_layout != surface::mip_layout::none), "source buffer does not contain mips for mipped texture");
+	oCHECK(si.is_3d(), "a 3d texel buffer must be specified");
+	oCHECK(!mips || (mips && si.mip_layout != surface::mip_layout::none), "source buffer does not contain mips for mipped texture");
 	initialize(name, dev, si.format, si.dimensions.x, si.dimensions.y, si.dimensions.z, mips);
 
 	const int NumMips = surface::num_mips(mips, si.dimensions);

@@ -39,7 +39,7 @@ void texturecube::initialize(const char* name, device& dev, surface::format form
 {
 	deinitialize();
 	
-	oCHECK_ARG(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
+	oCHECK(!surface::is_depth(format), "format %s cannot be a depth format", as_string(format));
 
 	Device* D3DDevice = get_device(dev);
 	DXGI_FORMAT fmt = dxgi::from_surface_format(format);
@@ -53,9 +53,9 @@ void texturecube::initialize(const char* name, device& dev, surface::format form
 void texturecube::initialize(const char* name, device& dev, const surface::texel_buffer& src, bool mips)
 {
 	auto si = src.get_info();
-	oCHECK_ARG(si.is_cube(), "a cubemap texel buffer must be specified");
-	oCHECK_ARG((si.array_size % 6) == 0, "cubemaps require a multiple of 6 for their array_size value (%u specified)", si.array_size);
-	oCHECK_ARG(!mips || (mips && si.mip_layout != surface::mip_layout::none), "source buffer does not contain mips for mipped texture");
+	oCHECK(si.is_cube(), "a cubemap texel buffer must be specified");
+	oCHECK((si.array_size % 6) == 0, "cubemaps require a multiple of 6 for their array_size value (%u specified)", si.array_size);
+	oCHECK(!mips || (mips && si.mip_layout != surface::mip_layout::none), "source buffer does not contain mips for mipped texture");
 
 	initialize(name, dev, si.format, si.dimensions.x, si.dimensions.y, si.array_size, mips);
 

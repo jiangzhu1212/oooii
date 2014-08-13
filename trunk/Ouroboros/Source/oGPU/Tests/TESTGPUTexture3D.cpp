@@ -41,6 +41,7 @@ struct gpu_test_texture3d : public gpu_texture_test
 	resource* make_test_texture() override
 	{
 		surface::info si;
+		si.semantic = surface::semantic::custom3d;
 		si.format = surface::format::b8g8r8a8_unorm;
 		si.dimensions = int3(64,64,64);
 		surface::texel_buffer image(si);
