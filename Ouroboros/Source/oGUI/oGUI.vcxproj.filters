@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h">
-      <Filter>oGUI</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinControlSet.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
@@ -90,11 +87,14 @@
     <ClInclude Include="..\..\Include\oGUI\Windows\win_gdi_draw.h">
       <Filter>oGUI\Windows</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\menu.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oGUI\enum_radio_handler.h">
+      <Filter>oGUI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="oGUIMenu.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="oWinWindowing.cpp">
       <Filter>Source\Windows</Filter>
     </ClCompile>
@@ -163,6 +163,12 @@
     </ClCompile>
     <ClCompile Include="win_gdi_draw.cpp">
       <Filter>Source\Windows</Filter>
+    </ClCompile>
+    <ClCompile Include="enum_radio_handler.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="menu.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

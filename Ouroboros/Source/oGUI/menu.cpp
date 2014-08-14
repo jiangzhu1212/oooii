@@ -22,7 +22,7 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oGUI/oGUIMenu.h>
+#include <oGUI/menu.h>
 #include <oBase/assert.h>
 #include <oCore/windows/win_error.h>
 

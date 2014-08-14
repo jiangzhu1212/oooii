@@ -25,7 +25,8 @@
 
 #include <oBasis/oRTTI.h>
 #include <oGUI/Windows/win_gdi_bitmap.h>
-#include <oGUI/oGUIMenu.h>
+#include <oGUI/menu.h>
+#include <oGUI/enum_radio_handler.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
 #include <oGUI/window.h>

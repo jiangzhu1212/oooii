@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGUI/window.h>
-#include <oGUI/oGUIMenu.h>
+#include <oGUI/menu.h>
 #include <oGUI/Windows/win_as_string.h>
 #include <oGUI/Windows/oWinCursor.h>
 #include <oGUI/Windows/oWinKey.h>
