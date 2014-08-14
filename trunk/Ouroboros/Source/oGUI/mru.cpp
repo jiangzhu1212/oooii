@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oGUI/mru.h>
-#include <oGUI/oGUIMenu.h>
+#include <oGUI/menu.h>
 #include <oCore/windows/win_registry.h>
 
 using namespace ouro::windows;

@@ -33,7 +33,6 @@
 #include <oGUI/oGUI.h>
 #include <oBase/fixed_string.h>
 #include <oBase/throw.h>
-#include <vector>
 
 namespace ouro { namespace gui { namespace menu {
 
@@ -114,66 +113,6 @@ template<typename enumT> void append_enum_items(const enumT& num_enum_values, me
 		append_item(m, first_item + i, as_string((enumT)i));
 	check_radio(m, first_item, last_item, initial_item == -1 ? first_item : first_item + initial_item);
 }
-
-// A utility class to help handle enums that manifest as radio selection groups
-// in menus. Basically this allows a range of IDs to be associated with a 
-// callback.
-class enum_radio_handler
-{
-public:
-	// rebased_item = (inputvalue - first_item), so the first item will
-	// have a rebased value of 0.
-	typedef std::function<void(int rebased_item)> callback_t;
-
-	inline void add(menu_handle m, int first_item, int last_item, const callback_t& callback)
-	{
-		entry_t e;
-		e.handle = m;
-		e.first = first_item;
-		e.last = last_item;
-		e.callback = callback;
-
-		auto it = std::find_if(callbacks.begin(), callbacks.end(), [&](const entry_t& _Entry)
-		{
-			return (e.handle == e.handle)
-				|| (e.first >= e.first && e.first <= e.last) 
-				|| (e.last >= e.first && e.last <= e.last);
-		});
-
-		if (it != callbacks.end())
-			throw std::invalid_argument("The specified menu/range has already been registered or overlaps a previously registered range");
-
-		callbacks.push_back(e);
-	}
-
-	inline void on_action(const input::action& a)
-	{
-		if (a.action_type == input::menu)
-		{
-			auto it = std::find_if(callbacks.begin(), callbacks.end(), [&](const entry_t& e)
-			{
-				return (int)a.device_id >= e.first && (int)a.device_id <= e.last;
-			});
-
-			if (it != callbacks.end())
-			{
-				check_radio(it->handle, it->first, it->last, a.device_id);
-				it->callback(a.device_id - it->first);
-			}
-		}
-	}
-
-private:
-	struct entry_t
-	{
-		menu_handle handle;
-		int first;
-		int last;
-		callback_t callback;
-	};
-
-	std::vector<entry_t> callbacks;
-};
 
 }}}
 

@@ -22,12 +22,13 @@
     <ClInclude Include="..\..\Include\oGUI\about.h" />
     <ClInclude Include="..\..\Include\oGUI\all.h" />
     <ClInclude Include="..\..\Include\oGUI\console.h" />
+    <ClInclude Include="..\..\Include\oGUI\enum_radio_handler.h" />
+    <ClInclude Include="..\..\Include\oGUI\menu.h" />
     <ClInclude Include="..\..\Include\oGUI\mru.h" />
     <ClInclude Include="..\..\Include\oGUI\msgbox.h" />
     <ClInclude Include="..\..\Include\oGUI\msgbox_reporting.h" />
     <ClInclude Include="..\..\Include\oGUI\notification_area.h" />
     <ClInclude Include="..\..\Include\oGUI\oGUI.h" />
-    <ClInclude Include="..\..\Include\oGUI\oGUIMenu.h" />
     <ClInclude Include="..\..\Include\oGUI\progress_bar.h" />
     <ClInclude Include="..\..\Include\oGUI\window.h" />
     <ClInclude Include="..\..\Include\oGUI\Windows\oWinControlSet.h" />
@@ -48,12 +49,13 @@
   <ItemGroup>
     <ClCompile Include="about.cpp" />
     <ClCompile Include="console.cpp" />
+    <ClCompile Include="enum_radio_handler.cpp" />
+    <ClCompile Include="menu.cpp" />
     <ClCompile Include="mru.cpp" />
     <ClCompile Include="msgbox.cpp" />
     <ClCompile Include="msgbox_reporting.cpp" />
     <ClCompile Include="notification_area.cpp" />
     <ClCompile Include="oGUI.cpp" />
-    <ClCompile Include="oGUIMenu.cpp" />
     <ClCompile Include="oWinControlSet.cpp" />
     <ClCompile Include="oWinCursor.cpp" />
     <ClCompile Include="oWinDialog.cpp" />
