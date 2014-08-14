@@ -39,6 +39,7 @@
 #include <oSurface/codec.h>
 
 using namespace ouro;
+using namespace ouro::gui;
 using namespace windows::gdi;
 
 static const char* sAppName = "oTexView";
@@ -249,7 +250,7 @@ private:
 	surface::texel_buffer displayed;
 
 	menu_handle Menus[oWMENU_COUNT];
-	oGUIMenuEnumRadioListHandler MERL;
+	menu::enum_radio_handler EnumRadioHandler;
 	window_state::value PreFullscreenState;
 	bool Running;
 	bool zoom_enabled;
@@ -325,18 +326,18 @@ oTexViewApp::~oTexViewApp()
 bool oTexViewApp::CreateMenus(const window::create_event& _CreateEvent)
 {
 	for (auto& m : Menus)
-		m = oGUIMenuCreate();
+		m = menu::make_menu();
 
 	for (const auto& h : sMenuHier)
 	{
-		oGUIMenuAppendSubmenu(
+		menu::append_submenu(
 			h.Parent == oWMENU_TOPLEVEL ? _CreateEvent.menu : Menus[h.Parent]
 		, Menus[h.Menu], h.Name);
 	}
 
 	// File menu
-	oGUIMenuAppendItem(Menus[oWMENU_FILE], oWMI_FILE_OPEN, "&Open...\tCtrl+O");
-	oGUIMenuAppendItem(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
+	menu::append_item(Menus[oWMENU_FILE], oWMI_FILE_OPEN, "&Open...\tCtrl+O");
+	menu::append_item(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
 
 	// Edit menu
 	// (nothing yet)
@@ -354,14 +355,14 @@ bool oTexViewApp::CreateMenus(const window::create_event& _CreateEvent)
 
 	for (int i = oWMI_VIEW_ZOOM_FIRST; i <= oWMI_VIEW_ZOOM_LAST; i++)
 	{
-		oGUIMenuAppendItem(Menus[oWMENU_VIEW_ZOOM], i, sZoomMenu[i - oWMI_VIEW_ZOOM_FIRST]);
-		oGUIMenuEnable(Menus[oWMENU_VIEW_ZOOM], i, false);
+		menu::append_item(Menus[oWMENU_VIEW_ZOOM], i, sZoomMenu[i - oWMI_VIEW_ZOOM_FIRST]);
+		menu::enable(Menus[oWMENU_VIEW_ZOOM], i, false);
 	}
 
 	zoom_enabled = false;
 
 	// Help menu
-	oGUIMenuAppendItem(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "About...");
+	menu::append_item(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "About...");
 	return true;
 }
 
@@ -422,7 +423,7 @@ void oTexViewApp::on_zoom(int item)
 {
 	if (!zoom_enabled || item < oWMI_VIEW_ZOOM_FIRST || item > oWMI_VIEW_ZOOM_LAST)
 		return;
-	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_ZOOM], oWMI_VIEW_ZOOM_FIRST, oWMI_VIEW_ZOOM_LAST, item);
+	menu::check_radio(Menus[oWMENU_VIEW_ZOOM], oWMI_VIEW_ZOOM_FIRST, oWMI_VIEW_ZOOM_LAST, item);
 
 	int2 NewSize = info_from_file.dimensions.xy();
 	switch (item)
@@ -473,7 +474,7 @@ void oTexViewApp::on_action(const input::action& _Action)
 					break;
 				}
 				default:
-					MERL.OnAction(_Action);
+					EnumRadioHandler.on_action(_Action);
 					break;
 			}
 			break;
@@ -544,8 +545,8 @@ void oTexViewApp::open_file(const path& p)
 
 				{
 					for (int i = oWMI_VIEW_ZOOM_FIRST; i <= oWMI_VIEW_ZOOM_LAST; i++)
-						oGUIMenuEnable(Menus[oWMENU_VIEW_ZOOM], i);
-					oGUIMenuCheckRadio(Menus[oWMENU_VIEW_ZOOM], oWMI_VIEW_ZOOM_FIRST, oWMI_VIEW_ZOOM_LAST, oWMI_VIEW_ZOOM_ORIGINAL);
+						menu::enable(Menus[oWMENU_VIEW_ZOOM], i);
+					menu::check_radio(Menus[oWMENU_VIEW_ZOOM], oWMI_VIEW_ZOOM_FIRST, oWMI_VIEW_ZOOM_LAST, oWMI_VIEW_ZOOM_ORIGINAL);
 					zoom_enabled = true;
 				}
 

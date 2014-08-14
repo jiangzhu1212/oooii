@@ -37,6 +37,7 @@
 #include "../about_ouroboros.h"
 
 using namespace ouro;
+using namespace ouro::gui;
 using namespace ouro::windows::gdi;
 
 enum oWMENU
@@ -118,7 +119,7 @@ private:
 	std::shared_ptr<about> About;
 	menu_handle Menus[oWMENU_COUNT];
 	oWindowTestAppPulseContext PulseContext;
-	oGUIMenuEnumRadioListHandler MERL; 
+	menu::enum_radio_handler RadioHandler; 
 	window_state::value PreFullscreenState;
 	bool Running;
 
@@ -187,30 +188,30 @@ oWindowTestApp::oWindowTestApp()
 void oWindowTestApp::CreateMenu(const window::create_event& _CreateEvent)
 {
 	for (auto& m : Menus)
-		m = oGUIMenuCreate();
+		m = menu::make_menu();
 
 	for (const auto& h : sMenuHier)
 	{
-		oGUIMenuAppendSubmenu(
+		menu::append_submenu(
 			h.Parent == oWMENU_TOPLEVEL ? _CreateEvent.menu : Menus[h.Parent]
 		, Menus[h.Menu], h.Name);
 	}
 
-	oGUIMenuAppendItem(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
+	menu::append_item(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
 
-	oGUIMenuAppendEnumItems(window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.shape.style);
-	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle)
+	menu::append_enum_items(window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.shape.style);
+	RadioHandler.add(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle)
 	{
 		Window->style((window_style::value)_BorderStyle);
 	});
 
-	oGUIMenuAppendEnumItems(window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.shape.state);
-	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State)
+	menu::append_enum_items(window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.shape.state);
+	RadioHandler.add(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State)
 	{
 		Window->show((window_state::value)_State);
 	});
 
-	oGUIMenuAppendItem(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "&About...");
+	menu::append_item(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "&About...");
 }
 
 void oWindowTestApp::CreateControls(const window::create_event& _CreateEvent)
@@ -228,13 +229,13 @@ void oWindowTestApp::CreateControls(const window::create_event& _CreateEvent)
 
 void oWindowTestApp::CheckState(window_state::value _State)
 {
-	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STATE]
+	menu::check_radio(Menus[oWMENU_VIEW_STATE]
 	, oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oWMI_VIEW_STATE_FIRST + _State);
 }
 
 void oWindowTestApp::CheckStyle(window_style::value _Style)
 {
-	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STYLE]
+	menu::check_radio(Menus[oWMENU_VIEW_STYLE]
 	, oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oWMI_VIEW_STYLE_FIRST + _Style);
 }
 
@@ -363,7 +364,7 @@ void oWindowTestApp::ActionHook(const input::action& _Action)
 					break;
 				}
 				default:
-					MERL.OnAction(_Action);
+					RadioHandler.on_action(_Action);
 			}
 			break;
 

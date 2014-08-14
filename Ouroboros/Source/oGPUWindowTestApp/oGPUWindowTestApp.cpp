@@ -44,6 +44,7 @@
 #include <oGPU/oGPUUtilMesh.h>
 
 using namespace ouro;
+using namespace ouro::gui;
 using namespace windows::gdi;
 
 // This function treats shader_source as hlsl and it then iterates on all entry points which are defined to be all functions
@@ -280,7 +281,7 @@ private:
 
 	menu_handle Menus[oWMENU_COUNT];
 	oGPUWindowClearToggle ClearToggle;
-	oGUIMenuEnumRadioListHandler MERL;
+	menu::enum_radio_handler EnumRadioHandler;
 	window_state::value PreFullscreenState;
 	bool Running;
 	bool UIMode;
@@ -373,23 +374,23 @@ oGPUWindowTestApp::~oGPUWindowTestApp()
 
 void oGPUWindowTestApp::CheckState(window_state::value _State)
 {
-	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STATE]
+	menu::check_radio(Menus[oWMENU_VIEW_STATE]
 	, oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, oWMI_VIEW_STATE_FIRST + _State);
 }
 
 void oGPUWindowTestApp::CheckStyle(window_style::value _Style)
 {
-	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STYLE]
+	menu::check_radio(Menus[oWMENU_VIEW_STYLE]
 	, oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, oWMI_VIEW_STYLE_FIRST + _Style);
 }
 
 void oGPUWindowTestApp::EnableStatusBarStyles(bool _Enabled)
 {
 	// Enable styles not allowed for render target windows
-	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + window_style::fixed_with_statusbar, _Enabled);
-	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + window_style::fixed_with_menu_and_statusbar, _Enabled);
-	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + window_style::sizable_with_statusbar, _Enabled);
-	oGUIMenuEnable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + window_style::sizable_with_menu_and_statusbar, _Enabled);
+	menu::enable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + window_style::fixed_with_statusbar, _Enabled);
+	menu::enable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + window_style::fixed_with_menu_and_statusbar, _Enabled);
+	menu::enable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + window_style::sizable_with_statusbar, _Enabled);
+	menu::enable(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST + window_style::sizable_with_menu_and_statusbar, _Enabled);
 }
 
 void oGPUWindowTestApp::SetUIModeInternal(bool _UIMode, const window_shape& _CurrentAppShape, const window_shape& _CurrentGPUShape)
@@ -469,36 +470,36 @@ void oGPUWindowTestApp::ToggleFullscreenCooperative(window* _pWindow)
 bool oGPUWindowTestApp::CreateMenus(const window::create_event& _CreateEvent)
 {
 	for (auto& m : Menus)
-		m = oGUIMenuCreate();
+		m = menu::make_menu();
 
 	for (const auto& h : sMenuHier)
 	{
-		oGUIMenuAppendSubmenu(
+		menu::append_submenu(
 			h.Parent == oWMENU_TOPLEVEL ? _CreateEvent.menu : Menus[h.Parent]
 		, Menus[h.Menu], h.Name);
 	}
 
 	// File menu
-	oGUIMenuAppendItem(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
+	menu::append_item(Menus[oWMENU_FILE], oWMI_FILE_EXIT, "E&xit\tAlt+F4");
 
 	// Edit menu
 	// (nothing yet)
 
 	// View menu
-	oGUIMenuAppendEnumItems(window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.shape.style);
+	menu::append_enum_items(window_style::count, Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, _CreateEvent.shape.style);
 	EnableStatusBarStyles(true);
 
-	MERL.Register(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle) { AppWindow->style((window_style::value)_BorderStyle); });
-	oGUIMenuCheckRadio(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST
+	EnumRadioHandler.add(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST, [=](int _BorderStyle) { AppWindow->style((window_style::value)_BorderStyle); });
+	menu::check_radio(Menus[oWMENU_VIEW_STYLE], oWMI_VIEW_STYLE_FIRST, oWMI_VIEW_STYLE_LAST
 		, oWMI_VIEW_STYLE_FIRST + window_style::sizable_with_menu);
 
-	oGUIMenuAppendEnumItems(window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.shape.state);
-	MERL.Register(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State) { AppWindow->show((window_state::value)_State); });
+	menu::append_enum_items(window_state::count, Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, _CreateEvent.shape.state);
+	EnumRadioHandler.add(Menus[oWMENU_VIEW_STATE], oWMI_VIEW_STATE_FIRST, oWMI_VIEW_STATE_LAST, [=](int _State) { AppWindow->show((window_state::value)_State); });
 
-	oGUIMenuAppendItem(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE, "Fullscreen E&xclusive");
+	menu::append_item(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE, "Fullscreen E&xclusive");
 
 	// Help menu
-	oGUIMenuAppendItem(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "About...");
+	menu::append_item(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "About...");
 	return true;
 }
 
@@ -561,8 +562,8 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 					break;
 				case oWMI_VIEW_EXCLUSIVE:
 				{
-					const bool checked = oGUIMenuIsChecked(Menus[oWMENU_VIEW], _Action.device_id);
-					oGUIMenuCheck(Menus[oWMENU_VIEW], _Action.device_id, !checked);
+					const bool checked = menu::checked(Menus[oWMENU_VIEW], _Action.device_id);
+					menu::check(Menus[oWMENU_VIEW], _Action.device_id, !checked);
 					AppWindow->set_status_text(1, "Fullscreen %s", !checked ? "exclusive" : "cooperative");
 					break;
 				}
@@ -578,7 +579,7 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 					break;
 				}
 				default:
-					MERL.OnAction(_Action);
+					EnumRadioHandler.on_action(_Action);
 					break;
 			}
 			break;
@@ -608,7 +609,7 @@ void oGPUWindowTestApp::ActionHook(const input::action& _Action)
 						ToggleFullscreenCooperative(AppWindow.get());
 					else
 					{
-						const bool checked = oGUIMenuIsChecked(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE);
+						const bool checked = menu::checked(Menus[oWMENU_VIEW], oWMI_VIEW_EXCLUSIVE);
 						if (checked)
 						{
 							const bool GoFullscreen = !gpuwin.is_fullscreen_exclusive();

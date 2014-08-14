@@ -35,6 +35,8 @@
 
 #include "../../test_services.h"
 
+using namespace ouro::gui;
+
 namespace ouro {
 	namespace tests {
 
@@ -160,34 +162,34 @@ void oWindowUITest::ActionHook(const ouro::input::action& _Action)
 
 void oWindowUITest::InitMenu(ouro::menu_handle _hWindowMenu)
 {
-	hFileMenu = oGUIMenuCreate();
-	hEditMenu = oGUIMenuCreate();
-	hViewMenu = oGUIMenuCreate();
-	hStatusBarMenu = oGUIMenuCreate();
-	hHelpMenu = oGUIMenuCreate();
+	hFileMenu = menu::make_menu();
+	hEditMenu = menu::make_menu();
+	hViewMenu = menu::make_menu();
+	hStatusBarMenu = menu::make_menu();
+	hHelpMenu = menu::make_menu();
 
-	oGUIMenuAppendSubmenu(_hWindowMenu, hFileMenu, "&File");
-		oGUIMenuAppendItem(hFileMenu, MENU_FILE_OPEN, "&Open...");
-		oGUIMenuAppendItem(hFileMenu, MENU_FILE_SAVE, "&Save");
-		oGUIMenuAppendItem(hFileMenu, MENU_FILE_SAVEAS, "Save &As...");
-		oGUIMenuAppendSeparator(hFileMenu);
-		oGUIMenuAppendItem(hFileMenu, MENU_FILE_EXIT, "E&xit");
-	oGUIMenuAppendSubmenu(_hWindowMenu, hEditMenu, "&Edit");
-		oGUIMenuAppendItem(hEditMenu, MENU_EDIT_CUT, "Cu&t");
-		oGUIMenuAppendItem(hEditMenu, MENU_EDIT_COPY, "&Copy");
-		oGUIMenuAppendItem(hEditMenu, MENU_EDIT_PASTE, "&Paste");
-		oGUIMenuAppendSeparator(hEditMenu);
-		oGUIMenuAppendItem(hEditMenu, MENU_EDIT_COLOR, "Co&lor");
-		oGUIMenuAppendItem(hEditMenu, MENU_EDIT_FONT, "&Font");
-	oGUIMenuAppendSubmenu(_hWindowMenu, hViewMenu, "&View");
-		oGUIMenuAppendItem(hViewMenu, MENU_VIEW_SOLID, "&Solid\tCtrl+S");
-		oGUIMenuCheck(hViewMenu, MENU_VIEW_SOLID, true);
-		oGUIMenuAppendItem(hViewMenu, MENU_VIEW_WIREFRAME, "&Wireframe\tCtrl+W");
-		oGUIMenuAppendSeparator(hViewMenu);
-		oGUIMenuAppendItem(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, "&Show Statusbar");
-		oGUIMenuCheck(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, true);
-	oGUIMenuAppendSubmenu(_hWindowMenu, hHelpMenu, "&Help");
-		oGUIMenuAppendItem(hHelpMenu, MENU_HELP_ABOUT, "&About...");
+	menu::append_submenu(_hWindowMenu, hFileMenu, "&File");
+		menu::append_item(hFileMenu, MENU_FILE_OPEN, "&Open...");
+		menu::append_item(hFileMenu, MENU_FILE_SAVE, "&Save");
+		menu::append_item(hFileMenu, MENU_FILE_SAVEAS, "Save &As...");
+		menu::append_separator(hFileMenu);
+		menu::append_item(hFileMenu, MENU_FILE_EXIT, "E&xit");
+	menu::append_submenu(_hWindowMenu, hEditMenu, "&Edit");
+		menu::append_item(hEditMenu, MENU_EDIT_CUT, "Cu&t");
+		menu::append_item(hEditMenu, MENU_EDIT_COPY, "&Copy");
+		menu::append_item(hEditMenu, MENU_EDIT_PASTE, "&Paste");
+		menu::append_separator(hEditMenu);
+		menu::append_item(hEditMenu, MENU_EDIT_COLOR, "Co&lor");
+		menu::append_item(hEditMenu, MENU_EDIT_FONT, "&Font");
+	menu::append_submenu(_hWindowMenu, hViewMenu, "&View");
+		menu::append_item(hViewMenu, MENU_VIEW_SOLID, "&Solid\tCtrl+S");
+		menu::check(hViewMenu, MENU_VIEW_SOLID, true);
+		menu::append_item(hViewMenu, MENU_VIEW_WIREFRAME, "&Wireframe\tCtrl+W");
+		menu::append_separator(hViewMenu);
+		menu::append_item(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, "&Show Statusbar");
+		menu::check(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, true);
+	menu::append_submenu(_hWindowMenu, hHelpMenu, "&Help");
+		menu::append_item(hHelpMenu, MENU_HELP_ABOUT, "&About...");
 }
 
 void oWindowUITest::InitVCRControls(HWND _hParent, const int2& _Position)
@@ -464,21 +466,21 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			break;
 		}
 		case MENU_VIEW_SOLID:
-			oGUIMenuCheck(hViewMenu, MENU_VIEW_SOLID, true);
-			oGUIMenuCheck(hViewMenu, MENU_VIEW_WIREFRAME, false);
-			oGUIMenuEnable(hFileMenu, MENU_FILE_EXIT);
+			menu::check(hViewMenu, MENU_VIEW_SOLID, true);
+			menu::check(hViewMenu, MENU_VIEW_WIREFRAME, false);
+			menu::enable(hFileMenu, MENU_FILE_EXIT);
 			Window->set_status_text(1, "Solid");
 			break;
 		case MENU_VIEW_WIREFRAME:
-			oGUIMenuCheck(hViewMenu, MENU_VIEW_SOLID, false);
-			oGUIMenuCheck(hViewMenu, MENU_VIEW_WIREFRAME, true);
-			oGUIMenuEnable(hFileMenu, MENU_FILE_EXIT, false);
+			menu::check(hViewMenu, MENU_VIEW_SOLID, false);
+			menu::check(hViewMenu, MENU_VIEW_WIREFRAME, true);
+			menu::enable(hFileMenu, MENU_FILE_EXIT, false);
 			Window->set_status_text(1, "Wireframe");
 			break;
 		case MENU_VIEW_SHOW_STATUSBAR:
 		{
-			bool NewState = !oGUIMenuIsChecked(hViewMenu, MENU_VIEW_SHOW_STATUSBAR);
-			oGUIMenuCheck(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, NewState);
+			bool NewState = !menu::checked(hViewMenu, MENU_VIEW_SHOW_STATUSBAR);
+			menu::check(hViewMenu, MENU_VIEW_SHOW_STATUSBAR, NewState);
 			ouro::window_style::value s;
 			s = NewState ? ouro::window_style::sizable_with_menu_and_statusbar : ouro::window_style::sizable_with_menu;
 			Window->style(s);
@@ -490,14 +492,14 @@ void oWindowUITest::OnMenuCommand(HWND _hWnd, int _MenuID)
 			break;
 	}
 
-	if (oGUIMenuIsChecked(hViewMenu, MENU_VIEW_SOLID))
+	if (menu::checked(hViewMenu, MENU_VIEW_SOLID))
 		oTRACE("View Solid");
-	else if (oGUIMenuIsChecked(hViewMenu, MENU_VIEW_WIREFRAME))
+	else if (menu::checked(hViewMenu, MENU_VIEW_WIREFRAME))
 		oTRACE("View Wireframe");
 	else
 		oTRACE("View Nothing");
 
-	oTRACE("Exit is %sabled", oGUIMenuIsEnabled(hFileMenu, MENU_FILE_EXIT) ? "en" : "dis");
+	oTRACE("Exit is %sabled", menu::enabled(hFileMenu, MENU_FILE_EXIT) ? "en" : "dis");
 }
 
 void TESTWindowControls(test_services& _Services)

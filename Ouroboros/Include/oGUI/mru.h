@@ -31,8 +31,7 @@
 #include <oGUI/oGUI.h>
 #include <vector>
 
-namespace ouro {
-	namespace gui {
+namespace ouro { namespace gui {
 
 class mru
 {
@@ -90,7 +89,6 @@ private:
 	void get_entries(std::vector<uri_string>& _Entries);
 };
 
-	} // namespace gui
-} // namespace ouro
+}}
 
 #endif

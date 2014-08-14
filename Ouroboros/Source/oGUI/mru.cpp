@@ -28,8 +28,7 @@
 
 using namespace ouro::windows;
 
-namespace ouro {
-	namespace gui {
+namespace ouro { namespace gui {
 
 mru::mru(const info& _Info)
 	: Info(_Info)
@@ -102,14 +101,13 @@ char* mru::get(char* _StrDestination, size_t _SizeofStrDestination, int _ID)
 
 void mru::refresh()
 {
-	oGUIMenuRemoveAllItems(Info.menu);
+	menu::remove_all(Info.menu);
 	uri_string Entry;
 	for (int i = 0; i < NumMRUs; i++)
 	{
 		registry::get(Entry, registry::current_user, Info.registry_key, entry_name(i));
-		oGUIMenuAppendItem(Info.menu, Info.first_id + i, Entry);
+		menu::append_item(Info.menu, Info.first_id + i, Entry);
 	}
 }
 
-	} // namespace gui
-} // namespace ouro
+}}
