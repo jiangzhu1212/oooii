@@ -472,7 +472,7 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage
 		try { b = filesystem::load(_GoldenImagePath); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::io_error, "Load failed: (Golden)...%s", gPath); }
 
-		try { GoldenImage = surface::decode(b, b.size(), desired); }
+		try { GoldenImage = surface::decode(b, desired); }
 		catch (std::exception&) { return oErrorSetLast(std::errc::protocol_error, "Corrupt Image: (Golden)...%s", gPath); }
 	}
 

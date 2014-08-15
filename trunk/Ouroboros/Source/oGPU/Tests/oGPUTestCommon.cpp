@@ -190,7 +190,7 @@ void gpu_texture_test::render()
 surface::texel_buffer surface_load(const path& _Path, bool _Mips)
 {
 	scoped_allocation b = filesystem::load(_Path);
-	auto sb = surface::decode(b, b.size(), surface::format::unknown, _Mips ? surface::mip_layout::tight : surface::mip_layout::none);
+	auto sb = surface::decode(b, surface::format::unknown, _Mips ? surface::mip_layout::tight : surface::mip_layout::none);
 
 	// force 4-channel format
 	auto src_format = sb.get_info().format;

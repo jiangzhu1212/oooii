@@ -214,7 +214,7 @@ static void map_bits(const info& inf, const void* oRESTRICT src_dds_buffer, size
 	map_bits(inf, src_dds_buffer, src_dds_size, (const_mapped_subresource*)subresources, num_subresources);
 }
 
-scoped_allocation encode_dds(const texel_buffer& b, const compression& compression)
+scoped_allocation encode_dds(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
 	//if (1) oTHROW(operation_not_supported, "dds not yet implemented");
 
@@ -233,10 +233,10 @@ scoped_allocation encode_dds(const texel_buffer& b, const compression& compressi
 	const size_t size = bits_size + sizeof(dds_signature) + sizeof(dds_header) 
 		+ (kHasDX10 ? sizeof(dds_header_dx10) : 0);
 
-	scoped_allocation a(default_allocate(size, 0), size, default_deallocate);
+	scoped_allocation alloc(file_alloc.allocate(size, 0), size, file_alloc.deallocate);
 
-	*(uint*)a = dds_signature;
-	auto h = (dds_header*)byte_add((void*)a, sizeof(dds_signature));
+	*(uint*)alloc = dds_signature;
+	auto h = (dds_header*)byte_add((void*)alloc, sizeof(dds_signature));
 	auto d3d10ext = (dds_header_dx10*)&h[1];
 	void* bits = kHasDX10 ? (void*)&d3d10ext[1] : (void*)&h[1];
 
@@ -265,25 +265,25 @@ scoped_allocation encode_dds(const texel_buffer& b, const compression& compressi
 	}
 
 	const int nSubresources = num_subresources(inf);
-	mapped_subresource* subresources = (mapped_subresource*)default_allocate(sizeof(mapped_subresource) * nSubresources, 0);
-	finally DeleteInitData([&] { if (subresources) default_deallocate(subresources); });
+	mapped_subresource* subresources = (mapped_subresource*)temp_alloc.allocate(sizeof(mapped_subresource) * nSubresources, 0);
+	finally DeleteInitData([&] { if (subresources) temp_alloc.deallocate(subresources); });
 	map_bits(inf, bits, bits_size, subresources, nSubresources);
 
 	for (int i = 0; i < nSubresources; i++)
 		b.copy_to(i, subresources[i]);
 
-	return a;
+	return alloc;
 }
 
-texel_buffer decode_dds(const void* buffer, size_t size, const mip_layout& layout)
+texel_buffer decode_dds(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	info inf = get_info_dds(buffer, size);
 	oCHECK(inf.format != format::unknown, "invalid dds");
-	texel_buffer b(inf);
+	texel_buffer b(inf, texel_alloc);
 
 	const uint nSubresources = num_subresources(inf);
-	const_mapped_subresource* subresources = (const_mapped_subresource*)default_allocate(sizeof(const_mapped_subresource) * nSubresources, 0);
-	finally DeleteInitData([&] { if (subresources) default_deallocate(subresources); });
+	const_mapped_subresource* subresources = (const_mapped_subresource*)temp_alloc.allocate(sizeof(const_mapped_subresource) * nSubresources, 0);
+	finally DeleteInitData([&] { if (subresources) temp_alloc.deallocate(subresources); });
 
 	auto h = (const dds_header*)byte_add(buffer, sizeof(dds_signature));
 	const void* bits = byte_add(buffer, sizeof(dds_signature) + sizeof(dds_header) + (has_dx10_header(*h) ? sizeof(dds_header_dx10) : 0));

@@ -66,18 +66,39 @@ info get_info(const void* buffer, size_t size);
 // the input format for the codec.
 scoped_allocation encode(const texel_buffer& b
 	, const file_format& fmt
+	, const allocator& file_alloc = default_allocator
+	, const allocator& temp_alloc = default_allocator
 	, const format& desired_format = format::unknown
 	, const compression& compression = compression::low);
 
-// Parses the in-memory formatted buffer into a surface.
+inline scoped_allocation encode(const texel_buffer& b
+	, const file_format& fmt
+	, const format& desired_format
+	, const compression& compression = compression::low) { return encode(b, fmt, default_allocator, default_allocator, desired_format, compression); }
+
+// Parses the in-memory formatted buffer into a surface. temp_alloc will be used
+// for any conversion or temporary storage, texel_alloc will be used for texel_buffer.
 texel_buffer decode(const void* buffer
 	, size_t size
+	, const allocator& texel_alloc = default_allocator
+	, const allocator& temp_alloc = default_allocator
 	, const format& desired_format = format::unknown
 	, const mip_layout& layout = mip_layout::none);
 
+inline texel_buffer decode(const void* buffer
+	, size_t size
+	, const format& desired_format
+	, const mip_layout& layout = mip_layout::none) { return decode(buffer, size, default_allocator, default_allocator, desired_format, layout); }
+
 inline texel_buffer decode(const scoped_allocation& buffer
+	, const allocator& texel_alloc = default_allocator
+	, const allocator& temp_alloc = default_allocator
 	, const format& desired_format = format::unknown
-	, const mip_layout& layout = mip_layout::none) { return decode(buffer, buffer.size(), desired_format, layout); }
+	, const mip_layout& layout = mip_layout::none) { return decode(buffer, buffer.size(), texel_alloc, temp_alloc, desired_format, layout); }
+
+inline texel_buffer decode(const scoped_allocation& buffer
+	, const format& desired_format
+	, const mip_layout& layout = mip_layout::none) { return decode(buffer, buffer.size(), default_allocator, default_allocator, desired_format, layout); }
 
 }}
 

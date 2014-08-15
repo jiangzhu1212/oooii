@@ -22,58 +22,51 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBase/string.h>
-#include <memory.h>
+#include <oBase/byte.h>
+#include <oBase/macros.h>
+#include <oBase/memory.h>
+#include <oBase/throw.h>
 
 namespace ouro {
 
-const char* next_matching(const char* _pPointingAtOpenBrace, char _CloseBrace)
+const void* rle_decoden(void* oRESTRICT _pDestination, size_t _SizeofDestination, 
+	size_t _ElementStride, size_t _RleElementSize, const void* oRESTRICT _pSource)
 {
-	int open = 1;
-	char open_brace = *_pPointingAtOpenBrace;
-	const char* cur = _pPointingAtOpenBrace + 1;
-	while (*cur && open > 0)
+	int8_t* d = (int8_t*)_pDestination;
+	const int8_t* oRESTRICT end = byte_add(d, _SizeofDestination);
+	int8_t* oRESTRICT s = (int8_t*)_pSource;
+	size_t dstep = _ElementStride - _RleElementSize;
+
+	while (d < end)
 	{
-		if (*cur == _CloseBrace)
-			open--;
-		else if (*cur == open_brace)
-			open++;
-		cur++;
+		int8_t count = *s++;
+		if (count >= 0)
+		{
+			count = 1 + count;
+			while (count--)
+			{
+				size_t bytes = _RleElementSize;
+				while (bytes--)
+					*d++ = *s++;
+				d += dstep;
+			}
+		}
+
+		else
+		{
+			count = 1 - count;
+			while (count--)
+			{
+				for (size_t byte = 0; byte < _RleElementSize; byte++)
+					*d++ = *(s + byte);
+				d += _ElementStride;
+			}
+
+			s += _RleElementSize;
+		}
 	}
 
-	if (open > 0)
-		return nullptr;
-	return cur - 1;
-}
-
-char* next_matching(char* _pPointingAtOpenBrace, char _CloseBrace)
-{
-	return const_cast<char*>(next_matching(static_cast<const char*>(_pPointingAtOpenBrace), _CloseBrace));
-}
-
-const char* next_matching(const char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace)
-{
-	int open = 1;
-	size_t lOpen = strlen(_OpenBrace);
-	size_t lClose = strlen(_CloseBrace);
-	const char* cur = _pPointingAtOpenBrace + lOpen;
-	while (*cur && open > 0)
-	{
-		if (!memcmp(cur, _CloseBrace, lClose))
-			open--;
-		else if (!memcmp(cur, _OpenBrace, lOpen))
-			open++;
-		cur++;
-	}
-
-	if (open > 0)
-		return nullptr;
-	return cur - 1;
-}
-
-char* next_matching(char* _pPointingAtOpenBrace, const char* _OpenBrace, const char* _CloseBrace)
-{
-	return const_cast<char*>(next_matching(static_cast<const char*>(_pPointingAtOpenBrace), _OpenBrace, _CloseBrace));
+	return s;
 }
 
 } // namespace ouro

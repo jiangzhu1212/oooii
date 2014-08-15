@@ -24,17 +24,21 @@
  **************************************************************************/
 #include <oBase/allocate.h>
 #include <oBase/macros.h>
+#include <oBase/assert.h>
 
 namespace ouro {
 
 void* default_allocate(size_t _Size, unsigned int options)
 {
 	allocate_options opt; opt.options = options;
-	return _aligned_malloc(_Size, __max(memory_alignment::align_to_default, 1 << opt.alignment));
+	void* p = _aligned_malloc(_Size, __max(memory_alignment::align_to_default, 1 << opt.alignment));
+	oTRACE("Alloc %p", p);
+	return p;
 }
 
 void default_deallocate(const void* pointer)
 {
+	oTRACE("Free %p", pointer);
 	_aligned_free((void*)pointer);
 }
 

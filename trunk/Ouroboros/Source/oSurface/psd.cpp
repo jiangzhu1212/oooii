@@ -83,59 +83,18 @@ info get_info_psd(const void* buffer, size_t size)
 	return get_info_psd(buffer, size, &h);
 }
 
-scoped_allocation encode_psd(const texel_buffer& b, const compression& compression)
+scoped_allocation encode_psd(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
 	oTHROW(operation_not_supported, "psd encoding not supported");
 }
 
-// returns where _pSource left off
-void* rle_decode2(void* oRESTRICT _pDestination, size_t _SizeofDestination, 
-	size_t _ElementStride, size_t _RleElementSize, const void* oRESTRICT _pSource)
-{
-	int8_t* d = (int8_t*)_pDestination;
-	const int8_t* oRESTRICT end = byte_add(d, _SizeofDestination);
-	int8_t* oRESTRICT s = (int8_t*)_pSource;
-	size_t dstep = _ElementStride - _RleElementSize;
-
-	while (d < end)
-	{
-		int8_t count = *s++;
-		if (count >= 0)
-		{
-			count = 1 + count;
-			while (count--)
-			{
-				size_t bytes = _RleElementSize;
-				while (bytes--)
-					*d++ = *s++;
-				d += dstep;
-			}
-		}
-
-		else
-		{
-			count = 1 - count;
-			while (count--)
-			{
-				for (size_t byte = 0; byte < _RleElementSize; byte)
-					*d++ = *(s + byte);
-				d += _ElementStride;
-			}
-
-			s += _RleElementSize;
-		}
-	}
-
-	return s;
-}
-
-texel_buffer decode_psd(const void* buffer, size_t size, const mip_layout& layout)
+texel_buffer decode_psd(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	psd_header h;
 	info si = get_info_psd(buffer, size, &h);
 	oCHECK(si.format != format::unknown, "invalid psd");
 
-	texel_buffer b(si);
+	texel_buffer b(si, texel_alloc);
 
 	auto bits_header = (const ushort*)get_image_data_section(buffer, size);
 	auto compression = (const psd_compression)psd_swap(*bits_header);
@@ -183,7 +142,7 @@ texel_buffer decode_psd(const void* buffer, size_t size, const mip_layout& layou
 			
 			for (uint16_t i = 0; i < h.num_channels; i++)
 			{
-				bits = rle_decode2(d, size, pixel_bytes, channel_bytes, bits);
+				bits = rle_decoden(d, size, pixel_bytes, channel_bytes, bits);
 				d = byte_add(d, channel_bytes);
 			}
 

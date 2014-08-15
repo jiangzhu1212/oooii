@@ -280,6 +280,9 @@
     <ClCompile Include="memory\memnset.cpp">
       <Filter>Source\memory</Filter>
     </ClCompile>
+    <ClCompile Include="memory\rle_decoden.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">

@@ -74,6 +74,12 @@ inline const void* memmem(const void* _pBuffer, size_t _SizeofBuffer, const void
 // repeat pattern as specified in size by _ElementSize.
 void rle_decode(void* oRESTRICT _pDestination, size_t _SizeofDestination, size_t _ElementSize, const void* oRESTRICT _pSource);
 
+// Similar to rle_decode. The header/count is still one byte, but the count describes
+// numbers of elements of _RleElementSize (for things like multi-byte pixel values).
+// This returns where in _pSource the decode left off.
+const void* rle_decoden(void* oRESTRICT _pDestination, size_t _SizeofDestination, 
+	size_t _ElementStride, size_t _RleElementSize, const void* oRESTRICT _pSource);
+
 // _____________________________________________________________________________
 // 2D copies for copying image data, stuff that's easier to conceptualize as 2D 
 // rather than 1D.

@@ -60,7 +60,7 @@ info get_info_tga(const void* buffer, size_t size)
 	return si;
 }
 
-scoped_allocation encode_tga(const texel_buffer& b, const compression& compression)
+scoped_allocation encode_tga(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
 	oCHECK_ARG(compression == compression::none, "compression not supported");
 
@@ -76,7 +76,7 @@ scoped_allocation encode_tga(const texel_buffer& b, const compression& compressi
 
 	const size_t size = sizeof(tga_header) + h.width * h.height * (h.bpp/8);
 
-	scoped_allocation p(malloc(size), size, free);
+	scoped_allocation p(file_alloc.allocate(size, 0), size, file_alloc.deallocate);
 	memcpy(p, &h, sizeof(tga_header));
 	mapped_subresource dst;
 	dst.data = byte_add((void*)p, sizeof(tga_header));
@@ -87,7 +87,7 @@ scoped_allocation encode_tga(const texel_buffer& b, const compression& compressi
 	return p;
 }
 
-texel_buffer decode_tga(const void* buffer, size_t size, const mip_layout& layout)
+texel_buffer decode_tga(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	info si = get_info_tga(buffer, size);
 	oCHECK(si.format != format::unknown, "invalid tga");
@@ -96,7 +96,7 @@ texel_buffer decode_tga(const void* buffer, size_t size, const mip_layout& layou
 	dsi.mip_layout = layout;
 	auto src = get_const_mapped_subresource(si, 0, 0, &h[1]);
 
-	texel_buffer b(dsi);
+	texel_buffer b(dsi, texel_alloc);
 	b.copy_from(0, src, copy_option::flip_vertically);
 	return b;
 }
