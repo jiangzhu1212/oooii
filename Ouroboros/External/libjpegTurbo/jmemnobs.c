@@ -35,16 +35,16 @@ extern void free JPP((void *ptr));
 GLOBAL(void *)
 jpeg_get_small (j_common_ptr cinfo, size_t sizeofobject)
 {
-	assert(cinfo->alloc); //OOOII must have an allocator
-	return cinfo->alloc->get_small(cinfo, sizeofobject); //OOOII we reroute through our extension allocator
+	assert(cinfo->alloc); // ouroboros: must have an allocator
+	return cinfo->alloc->get_small(cinfo, sizeofobject); // ouroboros: we reroute through our extension allocator
 	//return (void *) malloc(sizeofobject);
 }
 
 GLOBAL(void)
 jpeg_free_small (j_common_ptr cinfo, void * object, size_t sizeofobject)
 {
-	assert(cinfo->alloc); //OOOII must have an allocator
-	cinfo->alloc->free_small(cinfo, object, sizeofobject); //OOOII we reroute through our extension allocator
+	assert(cinfo->alloc); // ouroboros: must have an allocator
+	cinfo->alloc->free_small(cinfo, object, sizeofobject); // ouroboros: we reroute through our extension allocator
 	//free(object);
 }
 
@@ -59,16 +59,16 @@ jpeg_free_small (j_common_ptr cinfo, void * object, size_t sizeofobject)
 GLOBAL(void FAR *)
 jpeg_get_large (j_common_ptr cinfo, size_t sizeofobject)
 {
-	assert(cinfo->alloc); //OOOII must have an allocator
-	return cinfo->alloc->get_large(cinfo, sizeofobject); //OOOII we reroute through our extension allocator
+	assert(cinfo->alloc); // ouroboros: must have an allocator
+	return cinfo->alloc->get_large(cinfo, sizeofobject); // ouroboros: we reroute through our extension allocator
 	//return (void FAR *) malloc(sizeofobject);
 }
 
 GLOBAL(void)
 jpeg_free_large (j_common_ptr cinfo, void FAR * object, size_t sizeofobject)
 {
-	assert(cinfo->alloc); //OOOII must have an allocator
-	cinfo->alloc->free_large(cinfo, object, sizeofobject); //OOOII we reroute through our extension allocator
+	assert(cinfo->alloc); // ouroboros: must have an allocator
+	cinfo->alloc->free_large(cinfo, object, sizeofobject); // ouroboros: we reroute through our extension allocator
 	//free(object);
 }
 
@@ -82,8 +82,8 @@ GLOBAL(size_t)
 jpeg_mem_available (j_common_ptr cinfo, size_t min_bytes_needed,
 		    size_t max_bytes_needed, size_t already_allocated)
 {
-	assert(cinfo->alloc); //OOOII must have an allocator
-	return cinfo->alloc->mem_available(cinfo, min_bytes_needed, max_bytes_needed, already_allocated); //OOOII we reroute through our extension allocator
+	assert(cinfo->alloc); // ouroboros: must have an allocator
+	return cinfo->alloc->mem_available(cinfo, min_bytes_needed, max_bytes_needed, already_allocated); // ouroboros: we reroute through our extension allocator
 	//return max_bytes_needed;
 }
 
@@ -110,20 +110,20 @@ jpeg_open_backing_store (j_common_ptr cinfo, backing_store_ptr info,
 GLOBAL(long)
 jpeg_mem_init (j_common_ptr cinfo)
 {
-	assert(cinfo->alloc); //OOOII must have an allocator
-	return cinfo->alloc->init(cinfo); //OOOII we reroute through our extension allocator
+	assert(cinfo->alloc); // ouroboros: must have an allocator
+	return cinfo->alloc->init(cinfo); // ouroboros: we reroute through our extension allocator
 	//return 0;			/* just set max_memory_to_use to 0 */
 }
 
 GLOBAL(void)
 jpeg_mem_term (j_common_ptr cinfo)
 {
-	assert(cinfo->alloc); //OOOII must have an allocator
-	cinfo->alloc->term(cinfo); //OOOII we reroute through our extension allocator
+	assert(cinfo->alloc); // ouroboros: must have an allocator
+	cinfo->alloc->term(cinfo); // ouroboros: we reroute through our extension allocator
 	/* no work */
 }
 
-/* OOOII here are the default allocators, if we aren't going to use a custom allocator. basically they do what libjpeg did , i.e. just pass through
+/* ouroboros: here are the default allocators, if we aren't going to use a custom allocator. basically they do what libjpeg did , i.e. just pass through
 	code taken from original libjpeg jmemnobs.c
 */
 METHODDEF(void *)
@@ -170,17 +170,17 @@ jpeg_mem_term_default (j_common_ptr cinfo)
 }
 
 /*
- * Fill in the standard alloc methods in a oooii_jpeg_memory_alloc object.
+ * Fill in the standard alloc methods in a ouro_jpeg_memory_alloc object.
  * Typical call is:
  *	struct jpeg_compress_struct cinfo;
- *	struct oooii_jpeg_memory_alloc alloc;
+ *	struct ouro_jpeg_memory_alloc alloc;
  *
- *	cinfo.alloc = oooii_jpeg_std_alloc(&alloc);
+ *	cinfo.alloc = ouro_jpeg_std_alloc(&alloc);
  * If providing your own alloc, you don't need to call this.
  */
 
-GLOBAL(struct oooii_jpeg_memory_alloc *)
-oooii_jpeg_std_alloc (struct oooii_jpeg_memory_alloc * alloc)
+GLOBAL(struct ouro_jpeg_memory_alloc *)
+ouro_jpeg_std_alloc (struct ouro_jpeg_memory_alloc * alloc)
 {
 	alloc->get_small = jpeg_get_small_default;
 	alloc->free_small = jpeg_free_small_default;

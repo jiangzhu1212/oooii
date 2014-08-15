@@ -268,7 +268,7 @@ typedef enum {
 
 #define jpeg_common_fields \
   struct jpeg_error_mgr * err;	/* Error handler module */\
-  struct oooii_jpeg_memory_alloc* alloc; /* memory allocator. This is an oooii extension.*/ \
+  struct ouro_jpeg_memory_alloc* alloc; /* memory allocator. This is an ouroboros extension.*/ \
   struct jpeg_memory_mgr * mem;	/* Memory manager module */\
   struct jpeg_progress_mgr * progress; /* Progress monitor, or NULL if none */\
   void * client_data;		/* Available for use by application */\
@@ -837,7 +837,7 @@ typedef struct jvirt_barray_control * jvirt_barray_ptr;
 	(with the exception of jpeg_std_error which may be called before or after 
 	oooii_jpeg_std_alloc)
 */
-struct oooii_jpeg_memory_alloc {
+struct ouro_jpeg_memory_alloc {
   /* Method pointers */
   JMETHOD(void*, get_small, (j_common_ptr cinfo, size_t sizeofobject));
   JMETHOD(void, free_small, (j_common_ptr cinfo, void * object, size_t sizeofobject));
@@ -996,8 +996,8 @@ EXTERN(struct jpeg_error_mgr *) jpeg_std_error
 
 /*OOOII setup Default allocator. calls malloc/free. IMPORTANT You must set your own allocator up, 
 	or call this before calling any other libjpeg functions*/
-EXTERN(struct oooii_jpeg_memory_alloc *) oooii_jpeg_std_alloc
-	JPP((struct oooii_jpeg_memory_alloc * alloc));
+EXTERN(struct ouro_jpeg_memory_alloc *) oooii_jpeg_std_alloc
+	JPP((struct ouro_jpeg_memory_alloc * alloc));
 
 /* Initialization of JPEG compression objects.
  * jpeg_create_compress() and jpeg_create_decompress() are the exported

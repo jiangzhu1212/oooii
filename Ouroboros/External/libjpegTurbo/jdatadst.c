@@ -133,7 +133,7 @@ empty_mem_output_buffer (j_compress_ptr cinfo)
 
   /* Try to allocate new buffer with double size */
   nextsize = dest->bufsize * 2;
-  nextbuffer = malloc(nextsize);
+  nextbuffer = (*cinfo->alloc->get_large)((j_common_ptr) cinfo, nextsize);
 
   if (nextbuffer == NULL)
     ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 10);
@@ -141,7 +141,7 @@ empty_mem_output_buffer (j_compress_ptr cinfo)
   MEMCOPY(nextbuffer, dest->buffer, dest->bufsize);
 
   if (dest->newbuffer != NULL)
-    free(dest->newbuffer);
+		(*cinfo->alloc->free_large)((j_common_ptr) cinfo, dest->newbuffer, 0);
 
   dest->newbuffer = nextbuffer;
 
@@ -265,8 +265,8 @@ jpeg_mem_dest (j_compress_ptr cinfo,
 
   if (*outbuffer == NULL || *outsize == 0) {
     /* Allocate initial buffer */
-    dest->newbuffer = *outbuffer = malloc(OUTPUT_BUF_SIZE);
-    if (dest->newbuffer == NULL)
+    dest->newbuffer = *outbuffer = (*cinfo->alloc->get_large)((j_common_ptr) cinfo, OUTPUT_BUF_SIZE);
+		if (dest->newbuffer == NULL)
       ERREXIT1(cinfo, JERR_OUT_OF_MEMORY, 10);
     *outsize = OUTPUT_BUF_SIZE;
   }

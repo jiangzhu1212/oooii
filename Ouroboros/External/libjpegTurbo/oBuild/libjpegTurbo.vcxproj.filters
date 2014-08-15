@@ -321,4 +321,9 @@
       <Filter>Source Files\asm32</Filter>
     </YASM>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\jpeglib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
 </Project>
