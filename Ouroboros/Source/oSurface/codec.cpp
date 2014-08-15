@@ -40,15 +40,15 @@ namespace ouro { namespace surface {
 	bool is_##ext(const void* buffer, size_t size); \
 	format required_input_##ext(const format& stored); \
 	info get_info_##ext(const void* buffer, size_t size); \
-	scoped_allocation encode_##ext(const texel_buffer& b, const compression& compression); \
-	texel_buffer decode_##ext(const void* buffer, size_t size, const mip_layout& layout);
+	scoped_allocation encode_##ext(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression); \
+	texel_buffer decode_##ext(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout);
 
 #define GET_FILE_FORMAT_EXT(ext) if (!_stricmp(extension, "." #ext)) return file_format::##ext;
 #define GET_FILE_FORMAT_HEADER(ext) if (is_##ext(buffer, size)) return file_format::##ext;
 #define GET_REQ_INPUT(ext) case file_format::##ext: return required_input_##ext(stored_format);
 #define GET_INFO(ext) case file_format::##ext: return get_info_##ext(buffer, size);
-#define ENCODE(ext) case file_format::##ext: return encode_##ext(*input, compression);
-#define DECODE(ext) case file_format::##ext: decoded = decode_##ext(buffer, size, layout); break;
+#define ENCODE(ext) case file_format::##ext: return encode_##ext(*input, file_alloc, temp_alloc, compression);
+#define DECODE(ext) case file_format::##ext: decoded = decode_##ext(buffer, size, texel_alloc, temp_alloc, layout); break;
 #define AS_STRING(ext) case surface::file_format::##ext: return #ext;
 
 FOREACH_EXT(DECLARE_CODEC)
@@ -88,6 +88,8 @@ info get_info(const void* buffer, size_t size)
 	
 scoped_allocation encode(const texel_buffer& b
 	, const file_format& fmt
+	, const allocator& file_alloc
+	, const allocator& temp_alloc
 	, const format& desired_format
 	, const compression& compression)
 {
@@ -104,7 +106,7 @@ scoped_allocation encode(const texel_buffer& b
 	
 	if (buffer_format != dst_format)
 	{
-		converted = b.convert(dst_format);
+		converted = b.convert(dst_format, temp_alloc);
 		input = &converted;
 	}
 
@@ -115,7 +117,12 @@ scoped_allocation encode(const texel_buffer& b
 	throw std::exception("unknown image encoding");
 }
 
-texel_buffer decode(const void* buffer, size_t size, const format& desired_format, const mip_layout& layout)
+texel_buffer decode(const void* buffer
+	, size_t size
+	, const allocator& texel_alloc
+	, const allocator& temp_alloc
+	, const format& desired_format
+	, const mip_layout& layout)
 {
 	texel_buffer decoded;
 	switch (get_file_format(buffer, size))

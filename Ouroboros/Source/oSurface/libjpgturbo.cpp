@@ -23,11 +23,15 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oSurface/codec.h>
+#include <oBase/allocate.h>
 #include <oBase/finally.h>
 #include <oBase/throw.h>
 #undef JPEG_LIB_VERSION
 #define JPEG_LIB_VERSION 80
 #include <libjpegTurbo/jpeglib.h>
+
+// this is set at the start of encode and/or decode to pass through to memory hooks 
+static oTHREAD_LOCAL const ouro::allocator* tl_alloc;
 
 namespace ouro { namespace surface {
 
@@ -47,22 +51,22 @@ void dont_output_message(j_common_ptr cinfo)
 
 void* o_get_small(j_common_ptr cinfo, size_t sizeofobject)
 {
-	return default_allocate(sizeofobject, 0);
+	return tl_alloc->allocate(sizeofobject, 0);
 }
 
 void o_free_small(j_common_ptr cinfo, void* object, size_t sizeofobject)
 {
-	default_deallocate(object);
+	tl_alloc->deallocate(object);
 }
 
 void* o_get_large(j_common_ptr cinfo, size_t sizeofobject)
 {
-	return malloc(sizeofobject);
+	return tl_alloc->allocate(sizeofobject, 0);
 }
 
 void o_free_large(j_common_ptr cinfo, void FAR* object, size_t sizeofobject)
 {
-	free(object);
+	tl_alloc->deallocate(object);
 }
 
 size_t o_mem_available(j_common_ptr cinfo, size_t min_bytes_needed, size_t max_bytes_needed, size_t already_allocated)
@@ -79,7 +83,7 @@ void o_term(j_common_ptr cinfo)
 {
 }
 
-static oooii_jpeg_memory_alloc s_jalloc =
+static ouro_jpeg_memory_alloc s_jalloc =
 {
 	o_get_small,
 	o_free_small,
@@ -169,8 +173,11 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 	return si;
 }
 
-scoped_allocation encode_jpg(const texel_buffer& b, const compression& compression)
+scoped_allocation encode_jpg(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
+	tl_alloc = &file_alloc;
+	finally reset_alloc([&] { tl_alloc = nullptr; });
+
 	jpeg_compress_struct cinfo;
 	jpeg_error_mgr jerr;
 	cinfo.err = jpeg_std_error(&jerr);
@@ -182,7 +189,7 @@ scoped_allocation encode_jpg(const texel_buffer& b, const compression& compressi
 
 	uchar* pCompressed = nullptr;
 	unsigned long CompressedSize = 0;
-	finally Destroy([&] { jpeg_destroy_compress(&cinfo); if (pCompressed) free(pCompressed); });
+	finally Destroy([&] { jpeg_destroy_compress(&cinfo); if (pCompressed) tl_alloc->deallocate(pCompressed); });
 
 	info si = b.get_info();
 	cinfo.image_width = si.dimensions.x;
@@ -216,14 +223,17 @@ scoped_allocation encode_jpg(const texel_buffer& b, const compression& compressi
 	}
 
 	jpeg_finish_compress(&cinfo);
-	scoped_allocation a(pCompressed, CompressedSize, free);
+	scoped_allocation alloc(pCompressed, CompressedSize, tl_alloc->deallocate);
 	pCompressed = nullptr; // so the finally doesn't kill it
 
-	return a;
+	return alloc;
 }
 
-texel_buffer decode_jpg(const void* buffer, size_t size, const mip_layout& layout)
+texel_buffer decode_jpg(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
+	tl_alloc = &temp_alloc;
+	//finally reset_alloc([&] { tl_alloc = nullptr; });
+
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 	cinfo.err = jpeg_std_error(&jerr);
@@ -241,7 +251,7 @@ texel_buffer decode_jpg(const void* buffer, size_t size, const mip_layout& layou
 	si.mip_layout = layout;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
 
-	texel_buffer b(si);
+	texel_buffer b(si, texel_alloc);
 	{
 		JSAMPROW row[1];
 		lock_guard lock(b);

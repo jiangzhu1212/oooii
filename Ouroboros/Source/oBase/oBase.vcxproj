@@ -71,6 +71,7 @@
     <ClCompile Include="memory\memset4.cpp" />
     <ClCompile Include="memory\memset8.cpp" />
     <ClCompile Include="memory\rle_decode.cpp" />
+    <ClCompile Include="memory\rle_decoden.cpp" />
     <ClCompile Include="memory\utfcmp.cpp" />
     <ClCompile Include="opttok.cpp" />
     <ClCompile Include="pch.cpp">

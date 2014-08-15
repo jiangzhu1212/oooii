@@ -23,13 +23,16 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oSurface/codec.h>
-#include <oSurface/codec.h>
+#include <oBase/allocate.h>
 #include <oBase/byte.h>
 #include <oBase/finally.h>
 #include <oBase/throw.h>
 #include <libpng/png.h>
 #include <zlib/zlib.h>
 #include <vector>
+
+// this is set at the start of encode and/or decode to pass through to memory hooks 
+static oTHREAD_LOCAL const ouro::allocator* tl_alloc;
 
 struct read_state
 {
@@ -54,12 +57,16 @@ static void user_read_data(png_structp png_ptr, png_bytep data, png_size_t lengt
 void user_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
 {
 	write_state& w = *(write_state*)png_get_io_ptr(png_ptr);
-	size_t NewSize = w.size + length;
+	size_t OldSize = w.size;
+	size_t NewSize = OldSize + length;
 
 	if (NewSize > w.capacity)
 	{
 		w.capacity = NewSize + (NewSize / 2);
-		w.data = realloc(w.data, w.capacity);
+		void* old = w.data;
+		w.data = tl_alloc->allocate(w.capacity, 0);
+		memcpy(w.data, old, OldSize);
+		tl_alloc->deallocate(old);
 	}
 
 	memcpy(ouro::byte_add(w.data, w.size), data, length);
@@ -140,8 +147,11 @@ info get_info_png(const void* buffer, size_t size)
 	return i;
 }
 
-scoped_allocation encode_png(const texel_buffer& b, const compression& compression)
+scoped_allocation encode_png(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
+	tl_alloc = &file_alloc;
+	finally reset_alloc([&] { tl_alloc = nullptr; });
+
 	info si = b.get_info();
 
 	// initialize libpng with user functions pointing to _pBuffer
@@ -162,7 +172,7 @@ scoped_allocation encode_png(const texel_buffer& b, const compression& compressi
 	write_state ws;
 	ws.capacity = si.dimensions.y * si.dimensions.x * element_size(si.format);
 	ws.capacity += (ws.capacity / 2);
-	ws.data = malloc(ws.capacity); // use uncompressed size as an estimate to reduce reallocs
+	ws.data = tl_alloc->allocate(ws.capacity, 0); // use uncompressed size as an estimate to reduce reallocs
 	ws.size = 0;
 	png_set_write_fn(png_ptr, &ws, user_write_data, user_flush_data);
 
@@ -209,11 +219,14 @@ scoped_allocation encode_png(const texel_buffer& b, const compression& compressi
 		png_write_end(png_ptr, info_ptr);
 	}
 
-	return scoped_allocation(ws.data, ws.size, free);
+	return scoped_allocation(ws.data, ws.size, tl_alloc->deallocate);
 }
 
-texel_buffer decode_png(const void* buffer, size_t size, const mip_layout& layout)
+texel_buffer decode_png(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
+	tl_alloc = &temp_alloc;
+	finally reset_alloc([&] { tl_alloc = nullptr; });
+
 	// initialze libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
@@ -272,7 +285,7 @@ texel_buffer decode_png(const void* buffer, size_t size, const mip_layout& layou
 
 	// Set up the surface buffer
 	png_read_update_info(png_ptr, info_ptr);
-	texel_buffer b(si);
+	texel_buffer b(si, texel_alloc);
 	{
 		std::vector<uchar*> rows;
 		rows.resize(si.dimensions.y);
