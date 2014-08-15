@@ -49,7 +49,6 @@ oAPI bool oBasisTest_oBuffer(const oBasisTestServices& _Services);
 oAPI bool oBasisTest_oINISerialize();
 oAPI bool oBasisTest_oJSONSerialize();
 oAPI bool oBasisTest_oMath();
-oAPI bool oBasisTest_oOSC();
 oAPI bool oBasisTest_oRTTI();
 oAPI bool oBasisTest_oString();
 oAPI bool oBasisTest_oURI();

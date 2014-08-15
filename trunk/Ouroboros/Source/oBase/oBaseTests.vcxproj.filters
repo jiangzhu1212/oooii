@@ -90,10 +90,19 @@
     <ClCompile Include="tests\TESTsbb.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TESTosc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\test_struct.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\tests\oBaseTests.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="tests\test_struct.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

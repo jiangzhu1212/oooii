@@ -50,7 +50,6 @@
     <ClInclude Include="..\..\Include\oBasis\oManipulator.h" />
     <ClInclude Include="..\..\Include\oBasis\oMath.h" />
     <ClInclude Include="..\..\Include\oBasis\oMIME.h" />
-    <ClInclude Include="..\..\Include\oBasis\oOSC.h" />
     <ClInclude Include="..\..\Include\oBasis\oPlatformFeatures.h" />
     <ClInclude Include="..\..\Include\oBasis\oRefCount.h" />
     <ClInclude Include="..\..\Include\oBasis\oRTTI.h" />
@@ -94,7 +93,6 @@
     <ClCompile Include="oManipulatorTranslation.cpp" />
     <ClCompile Include="oMath.cpp" />
     <ClCompile Include="oMIME.cpp" />
-    <ClCompile Include="oOSC.cpp" />
     <ClCompile Include="oRTTI.cpp" />
     <ClCompile Include="oScopedPartialTimeout.cpp" />
     <ClCompile Include="oStrTok.cpp" />

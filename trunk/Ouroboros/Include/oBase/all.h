@@ -70,6 +70,7 @@
 #include <oBase/murmur3.h>
 #include <oBase/operators.h>
 #include <oBase/opttok.h>
+#include <oBase/osc.h>
 #include <oBase/path.h>
 #include <oBase/path_traits.h>
 #include <oBase/plane.h>

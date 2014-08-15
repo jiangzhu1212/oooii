@@ -57,6 +57,7 @@ namespace ouro {
 		void TESThash_map(test_services& _Services);
 		void TESTini();
 		void TESTjson();
+		void TESTosc();
 		void TESTparallel_for();
 		void TESTpath();
 		void TESTpool();

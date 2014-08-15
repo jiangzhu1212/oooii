@@ -38,6 +38,7 @@
     <ClCompile Include="Tests\TESTini.cpp" />
     <ClCompile Include="Tests\TESTjson.cpp" />
     <ClCompile Include="tests\TESTmath.cpp" />
+    <ClCompile Include="tests\TESTosc.cpp" />
     <ClCompile Include="tests\TESTparallel_for.cpp" />
     <ClCompile Include="Tests\TESTpath.cpp" />
     <ClCompile Include="tests\TESTpool.cpp" />
@@ -46,9 +47,11 @@
     <ClCompile Include="tests\TESTtlsf_allocator.cpp" />
     <ClCompile Include="Tests\TESTuri.cpp" />
     <ClCompile Include="Tests\TESTxml.cpp" />
+    <ClCompile Include="tests\test_struct.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\tests\oBaseTests.h" />
+    <ClInclude Include="tests\test_struct.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{F02DF42C-54F3-4D80-B233-1D310B41917C}</ProjectGuid>
