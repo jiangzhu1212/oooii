@@ -40,8 +40,6 @@ DeviceContext* get_dc(command_list& cl);
 
 primary_target::primary_target()
 	: swapchain(nullptr)
-	, rw(nullptr)
-	, crw(nullptr)
 	, npresents(0)
 {
 }
@@ -49,6 +47,7 @@ primary_target::primary_target()
 void primary_target::initialize(window* win, device& dev, bool enable_os_render)
 {
 	deinitialize();
+	rws.resize(1);
 
 	oCHECK_ARG(!win->render_target(), "The specified window is already associated with a render target and cannot be reassociated.");
 	window_shape s = win->shape();
@@ -76,40 +75,17 @@ void primary_target::initialize(window* win, device& dev, bool enable_os_render)
 
 void primary_target::deinitialize()
 {
-	oSAFE_RELEASEV(ro);
-	oSAFE_RELEASEV(rw);
-	oSAFE_RELEASEV(crw);
+	basic_deinitialize();
 	
 	lock_guard<shared_mutex> lock(mutex);
 	
 	oSAFE_RELEASEV(swapchain);
 }
 
-uint2 primary_target::dimensions() const
-{
-	if (!rw)
-		return uint2(0, 0);
-
-	intrusive_ptr<Resource> r;
-	((View*)rw)->GetResource(&r);
-	D3D_TEXTURE_DESC desc = get_texture_desc(r);
-	return uint2(desc.Width, desc.Height);
-}
-
-surface::texel_buffer primary_target::make_snapshot()
-{
-	if (!ro)
-		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");
-	intrusive_ptr<Texture2D> t;
-	((View*)ro)->GetResource((Resource**)&t);
-
-	return d3d::make_snapshot(t);
-}
-
 void primary_target::internal_resize(const uint2& dimensions, device* dev)
 {
 	oCHECK0(swapchain);
-	oCHECK0(rw || dev);
+	oCHECK0(rws[0] || dev);
 
 	if (any(dimensions == uint2(0,0)))
 	{
@@ -132,15 +108,15 @@ void primary_target::internal_resize(const uint2& dimensions, device* dev)
 	}
 
 	ushort2 Current(0, 0);
-	if (rw)
+	if (rws[0])
 	{
 		intrusive_ptr<Resource> r;
-		((View*)rw)->GetResource(&r);
+		((View*)rws[0])->GetResource(&r);
 		D3D_TEXTURE_DESC d = get_texture_desc(r);
 		Current = uint2(d.Width, d.Height);
 	}
 
-	if (any(Current != New) || !rw)
+	if (any(Current != New) || !rws[0])
 	{
 		mstring TargetName;
 		oTRACEA("%s %s Resize %dx%d -> %dx%d", type_name(typeid(*this).name()), name(TargetName, TargetName.capacity()), Current.x, Current.y, New.x, New.y);
@@ -149,10 +125,10 @@ void primary_target::internal_resize(const uint2& dimensions, device* dev)
 		if (dev)
 			D3DDevice = get_device(*dev);
 		else
-			((View*)rw)->GetDevice(&D3DDevice);
+			((View*)rws[0])->GetDevice(&D3DDevice);
 
 		oSAFE_RELEASEV(ro);
-		oSAFE_RELEASEV(rw);
+		oSAFE_RELEASEV(rws[0]);
 		oSAFE_RELEASEV(crw);
 
 		intrusive_ptr<DeviceContext> dc;
@@ -184,7 +160,7 @@ void primary_target::internal_resize(const uint2& dimensions, device* dev)
 		}
 
 		rtv->AddRef();
-		rw = rtv;
+		rws[0] = rtv;
 
 		srv->AddRef();
 		ro = srv;
@@ -235,19 +211,6 @@ void primary_target::present(uint interval)
 		oTHROW(protocol_error, "no primary render target has been created");
 	dxgi::present((SwapChain*)swapchain, interval);
 	npresents++;
-}
-
-void primary_target::set_draw_target(command_list& cl, depth_target* depth, uint depth_index, const viewport& vp)
-{
-	set_viewports(cl, dimensions(), &vp, 1);
-	get_dc(cl)->OMSetRenderTargets(1, (RenderTargetView* const*)&rw, depth ? (DepthStencilView*)depth->get_target(depth_index) : nullptr);
-}
-
-void primary_target::clear(command_list& cl, const color& c)
-{
-	float fcolor[4];
-	c.decompose(&fcolor[0], &fcolor[1], &fcolor[2], &fcolor[3]);
-	get_dc(cl)->ClearRenderTargetView((RenderTargetView*)rw, fcolor);
 }
 
 }}

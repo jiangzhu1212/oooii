@@ -31,14 +31,11 @@ namespace ouro {
 void* default_allocate(size_t _Size, unsigned int options)
 {
 	allocate_options opt; opt.options = options;
-	void* p = _aligned_malloc(_Size, __max(memory_alignment::align_to_default, 1 << opt.alignment));
-	oTRACE("Alloc %p", p);
-	return p;
+	return _aligned_malloc(_Size, __max(memory_alignment::align_to_default, 1 << opt.alignment));
 }
 
 void default_deallocate(const void* pointer)
 {
-	oTRACE("Free %p", pointer);
 	_aligned_free((void*)pointer);
 }
 

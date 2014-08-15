@@ -38,7 +38,7 @@ class command_list;
 class depth_target : public resource
 {
 public:
-	depth_target() : ro(nullptr) {}
+	depth_target() {}
 	~depth_target() { deinitialize(); }
 
 	operator bool() const { return !!ro; }
@@ -61,7 +61,6 @@ public:
 	void generate_mips(command_list& cl);
 
 private:
-	void* ro;
 	std::vector<void*> rws;
 	
 	void internal_initialize(const char* name, void* dev, surface::format format, uint width, uint height, uint array_size, bool mips, uint supersampling);

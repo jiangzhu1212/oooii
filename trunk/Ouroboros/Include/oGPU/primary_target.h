@@ -27,6 +27,7 @@
 #define oGPU_primary_target_h
 
 #include <oGPU/resource.h>
+#include <oGPU/color_target.h>
 #include <vector>
 
 namespace ouro { 
@@ -40,31 +41,21 @@ class command_list;
 class device;
 class depth_target;
 
-class primary_target : public resource
+class primary_target : public basic_color_target
 {
 public:
 	primary_target();
 	~primary_target() { deinitialize(); }
 
-	operator bool() const { return !!rw; }
-
 	void initialize(window* win, device& dev, bool enable_os_render);
 	void deinitialize();
 
-	uint2 dimensions() const;
+	operator bool() const { return !!ro; }
+
 	inline uint num_presents() const { return npresents; }
 
-	surface::texel_buffer make_snapshot();
-
-	inline void* get_target() const { return rw; }
-	inline void* get_compute_target() const { return crw; }
-
-	void set_draw_target(command_list& cl, depth_target* depth = nullptr, uint depth_index = 0, const viewport& vp = viewport());
-	inline void set_draw_target(command_list& cl, depth_target& depth, uint depth_index = 0, const viewport& vp = viewport()) { set_draw_target(cl, &depth, depth_index, vp); }
-	
-	void clear(command_list& cl, const color& c);
-
-	// these must be called from the same thread as processes windows events
+	// all api below must be called from the same thread as 
+	// processes windows events
 	inline void resize(const uint2& dimensions) { internal_resize(dimensions, nullptr); }
 
 	void* begin_os_frame();
@@ -77,8 +68,6 @@ public:
 
 private:
 	void* swapchain;
-	void* rw;
-	void* crw;
 	mutable shared_mutex mutex;
 	uint npresents;
 
