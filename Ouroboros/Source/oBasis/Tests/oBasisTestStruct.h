@@ -32,11 +32,11 @@
 #include <oBase/date.h>
 #include <oBasis/oPlatformFeatures.h>
 
-struct oBASIS_TEST_STRUCT
+struct test_struct
 {
 	bool blA;
 	char c1;
-	char OOOiiString[64 * 3];
+	char String[64 * 3];
 	bool blB;
 	int int1;
 	long long long1;
@@ -67,7 +67,7 @@ struct oBASIS_TEST_STRUCT
 #define oBASIS_TEST_STRUCT_MEMBERS(_Macro) \
 	_Macro(blA) \
 	_Macro(c1) \
-	_Macro(OOOiiString) \
+	_Macro(String) \
 	_Macro(blB) \
 	_Macro(int1) \
 	_Macro(long1) \
@@ -93,8 +93,9 @@ struct oBASIS_TEST_STRUCT
 	_Macro(b2) \
 	_Macro(time)
 
-oAPI bool operator==(const oBASIS_TEST_STRUCT& x, const oBASIS_TEST_STRUCT& y);
-oAPI void oBasisTestStructInit(oBASIS_TEST_STRUCT* _pTest, const void* _pBuffer1, int _SizeofBuffer1, const void* _pBuffer2, int _SizeofBuffer2);
-inline bool operator!=(const oBASIS_TEST_STRUCT& x, const oBASIS_TEST_STRUCT& y) { return !(x == y); }
+void init_test_struct(test_struct* test, const void* buffer1, int buffer1_size, const void* buffer2, int buffer2_size);
+
+bool operator==(const test_struct& x, const test_struct& y);
+inline bool operator!=(const test_struct& x, const test_struct& y) { return !(x == y); }
 
 #endif

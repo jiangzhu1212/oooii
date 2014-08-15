@@ -29,11 +29,14 @@
 #include "oBasisTestStruct.h"
 #include <vector>
 
-using namespace ouro;
+using namespace ouro::osc;
 
-static const char* GetTypeTags() { return ",Tc3Tih[fff]iTTs2f1sicbsi[iiii]dIfbt"; }
+namespace ouro {
+	namespace tests {
 
-bool oBasisTest_oOSC()
+static const char* type_tags() { return ",Tc3Tih[fff]iTTs2f1sicbsi[iiii]dIfbt"; }
+
+void TESTosc()
 {
 	// Set up test object and a reference object we'll test against after going
 	// through the OSC serialization and deserialization.
@@ -42,44 +45,53 @@ bool oBasisTest_oOSC()
 	char b2[20];
 	memset(b2, 22, sizeof(b2));
 
-	oBASIS_TEST_STRUCT sent, received;
+	test_struct sent, received;
 	memset4(&sent, 0xdeadc0de, sizeof(sent));
 	memset4(&received, 0xdeadc0de, sizeof(received));
-	oBasisTestStructInit(&sent, b1, sizeof(b1), b2, sizeof(b2));
+	init_test_struct(&sent, b1, sizeof(b1), b2, sizeof(b2));
 
 	const char* _MessageName = "/TESTOSC/Run/TEST/sent";
-	if( !((void*)(&sent.c2 + 1) != (void*)(&sent.b1size)) )
-		return oErrorSetLast(std::errc::protocol_error, "Expected padding");
 
-	size_t TestSize = sizeof(oBASIS_TEST_STRUCT);
-	if(TestSize != oOSCCalculateDeserializedStructSize(GetTypeTags()) )
-		return oErrorSetLast(std::errc::protocol_error, "oOSCCalculateDeserializedStructSize failed to compute correct size");
+	oCHECK(((void*)(&sent.c2 + 1) != (void*)(&sent.b1size)), "Expected padding");
 
-	static const size_t kExpectedArgsSize = 220;
+	size_t TestSize = sizeof(test_struct);
+	oCHECK(TestSize == calc_deserialized_struct_size(type_tags()), "calc_deserialized_struct_size failed to compute correct size");
 
-	size_t argsSize = oOSCCalculateArgumentsDataSize(GetTypeTags(), sent);
-	if (argsSize != kExpectedArgsSize)
-		return oErrorSetLast(std::errc::protocol_error, "oOSCCalculateArgumentsDataSize failed to compute correct size");
+	static const size_t kExpectedArgsSize = 216;
 
-	size_t msgSize = oOSCCalculateMessageSize(_MessageName, GetTypeTags(), argsSize);
+	size_t argsSize = calc_args_data_size(type_tags(), sent);
+	oCHECK(argsSize == kExpectedArgsSize, "calc_args_data_size failed to compute correct size");
+
+	size_t msgSize = calc_msg_size(_MessageName, type_tags(), argsSize);
 
 	{
 		std::vector<char> ScopedBuffer(msgSize);
-		size_t SerializedSize = oOSCSerializeStructToMessage(_MessageName, GetTypeTags(), sent, data(ScopedBuffer), size(ScopedBuffer));
-		if (SerializedSize <= 0)
-			return oErrorSetLast(std::errc::protocol_error, "Failed to serialize buffer");
-		if (!oOSCDeserializeMessageToStruct(data(ScopedBuffer), &received))
-			return oErrorSetLast(std::errc::protocol_error, "Deserialization failed");
+		size_t SerializedSize = serialize_struct_to_msg(_MessageName, type_tags(), sent, ScopedBuffer.data(), ScopedBuffer.size());
+		oCHECK(SerializedSize > 0, "Failed to serialize buffer");
+		oCHECK(deserialize_msg_to_struct(data(ScopedBuffer), &received), "Deserialization failed");
 
 		// NOTE: Remember that received has string and blob pointers that point
 		// DIRECTLY into the ScopedBuffer, so either the client code here needs to
 		// copy those values to their own buffers, or received can only remain in
 		// the scope of the ScopedBuffer.
-		if (sent != received)
-			return oErrorSetLast(std::errc::protocol_error, "Sent and received buffers do not match");
+		oCHECK(sent == received, "Sent and received buffers do not match");
+	}
+}
+
+	} // namespace tests
+} // namespace ouro
+
+using namespace ouro;
+using namespace ouro::osc;
+
+bool oBasisTest_oOSC()
+{
+	try { ouro::tests::TESTosc(); }
+	catch (std::system_error& e)
+	{
+		return oErrorSetLast(e.code().value(), e.what());
 	}
 
 	oErrorSetLast(0, "");
 	return true;
 }
-
