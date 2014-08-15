@@ -22,11 +22,10 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
-#include <oBasis/oOSC.h>
+#include <oBase/osc.h>
 #include <oBase/algorithm.h>
 #include <oBase/memory.h>
-#include <oBasis/oError.h>
-#include "oBasisTestStruct.h"
+#include "test_struct.h"
 #include <vector>
 
 using namespace ouro::osc;
@@ -80,18 +79,3 @@ void TESTosc()
 
 	} // namespace tests
 } // namespace ouro
-
-using namespace ouro;
-using namespace ouro::osc;
-
-bool oBasisTest_oOSC()
-{
-	try { ouro::tests::TESTosc(); }
-	catch (std::system_error& e)
-	{
-		return oErrorSetLast(e.code().value(), e.what());
-	}
-
-	oErrorSetLast(0, "");
-	return true;
-}

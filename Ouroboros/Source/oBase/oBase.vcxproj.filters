@@ -283,6 +283,9 @@
     <ClCompile Include="memory\rle_decoden.cpp">
       <Filter>Source\memory</Filter>
     </ClCompile>
+    <ClCompile Include="osc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -606,6 +609,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\enum_iterator.h">
       <Filter>oBase\c++ support</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\osc.h">
+      <Filter>oBase</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
