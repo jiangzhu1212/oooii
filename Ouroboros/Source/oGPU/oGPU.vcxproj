@@ -165,6 +165,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\oGfx\surface_view.cpp" />
     <ClCompile Include="blend_state.cpp" />
     <ClCompile Include="color_target.cpp" />
     <ClCompile Include="command_list.cpp" />
