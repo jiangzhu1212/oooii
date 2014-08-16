@@ -86,6 +86,9 @@
     <ClInclude Include="..\..\Include\oGfx\render_window.h">
       <Filter>oGfx</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oGfx\surface_view.h">
+      <Filter>oGfx</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="oGfxShaders.hlsl">

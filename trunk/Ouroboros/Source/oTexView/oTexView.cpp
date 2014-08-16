@@ -36,6 +36,7 @@
 
 #include <oGfx/core.h>
 #include <oGfx/render_window.h>
+#include <oGfx/surface_view.h>
 #include <oGPU/all.h>
 #include <oSurface/codec.h>
 
@@ -114,119 +115,6 @@ basic_hotkey_info HotKeys[] =
 	{ input::_4, oWHK_VIEW_ZOOM_DOUBLE, true, false, false },
 };
 
-class surface_view
-{
-public:
-	surface_view() : core(nullptr), active(nullptr) {}
-	~surface_view() { deinitialize(); }
-
-	void initialize(gfx::core& core);
-	void deinitialize();
-
-	void set_texels(const char* name, const surface::texel_buffer& b);
-
-	inline void set_draw_target(gpu::primary_target* t) { ctarget = t; }
-
-	void render();
-
-private:
-	gfx::core* core;
-	gpu::resource* active;
-	gpu::texture1d t1d;
-	gpu::texture2d t2d;
-	gpu::texture3d t3d;
-	gpu::texturecube tcube;
-	surface::info inf;
-
-	gpu::primary_target* ctarget;
-	gpu::vertex_shader vs;
-	gpu::pixel_shader ps;
-};
-
-void surface_view::initialize(gfx::core& _core)
-{
-	core = &_core;
-	active = nullptr;
-	vs.initialize("fullscreen_tri", core->device, gpu::intrinsic::byte_code(gpu::intrinsic::vertex_shader::fullscreen_tri));
-	ps.initialize("texture", core->device, gpu::intrinsic::byte_code(gpu::intrinsic::pixel_shader::texture2d));
-}
-
-void surface_view::deinitialize()
-{
-	t1d.deinitialize();
-	t2d.deinitialize();
-	t3d.deinitialize();
-	tcube.deinitialize();
-	ps.deinitialize();
-	vs.deinitialize();
-	active = nullptr;
-	core = nullptr;
-}
-
-void surface_view::set_texels(const char* name, const surface::texel_buffer& b)
-{
-	t1d.deinitialize();
-	t2d.deinitialize();
-	t3d.deinitialize();
-	tcube.deinitialize();
-
-	inf = b.get_info();
-
-	if (inf.is_1d())
-	{
-		t1d.initialize(name, core->device, b, inf.mips());
-		active = &t1d;
-		oTHROW(operation_not_supported, "1d viewing not yet enabled");
-	}
-
-	else if (inf.is_2d())
-	{
-		t2d.initialize(name, core->device, b, inf.mips());
-		active = &t2d;
-	}
-
-	else if (inf.is_3d())
-	{
-		t3d.initialize(name, core->device, b, inf.mips());
-		active = &t3d;
-		oTHROW(operation_not_supported, "3d slice viewing not yet enabled");
-	}
-
-	else if (inf.is_cube())
-	{
-		tcube.initialize(name, core->device, b, inf.mips());
-		active = &tcube;
-		oTHROW(operation_not_supported, "cube slice viewing not yet enabled");
-	}
-}
-
-void surface_view::render()
-{
-	if (!ctarget || !*ctarget)
-		return;
-
-	auto& c = *core;
-	auto& ct = *ctarget;
-	auto& cl = c.device.immediate();
-
-	ct.clear(cl, black);
-	ct.set_draw_target(cl);
-
-	if (active)
-	{
-		c.bs.set(cl, gpu::blend_state::opaque);
-		c.dss.set(cl, gpu::depth_stencil_state::none);
-		c.rs.set(cl, gpu::rasterizer_state::front_face);
-		c.ss.set(cl, gpu::sampler_state::linear_wrap, gpu::sampler_state::linear_wrap);
-		c.ls.set(cl, gpu::intrinsic::vertex_layout::none, mesh::primitive_type::triangles);
-		vs.set(cl);
-		ps.set(cl);
-		active->set(cl, 0);
-		gpu::vertex_buffer::draw_unindexed(cl, 3);
-	}
-
-	ct.present();
-}
 
 class oTexViewApp
 {
@@ -242,7 +130,7 @@ private:
 
 	gfx::core gfxcore;
 	gfx::render_window gpuwin;
-	surface_view sv;
+	gfx::surface_view sv;
 
 	// @tony: this is a bit lame. Everything is currently using the immediate context
 	// which cannot be accessed from multiple threads even with a multi-threaded device.
@@ -306,7 +194,7 @@ oTexViewApp::oTexViewApp()
 		i.depth_format = surface::format::d24_unorm_s8_uint;
 		i.on_action = std::bind(&oTexViewApp::on_action, this, std::placeholders::_1);
 		i.on_stop = [&] { Running = false; };
-		i.render = std::bind(&surface_view::render, &sv);
+		i.render = std::bind(&gfx::surface_view::render, &sv);
 		i.parent = AppWindow;
 
 		pGPUWindow = gpuwin.start(gfxcore.device, i);
