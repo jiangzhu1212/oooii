@@ -32,12 +32,12 @@
 #define OUROBOROS_WEBSITE "http://code.google.com/p/oooii/"
 #define OUROBOROS_SUPPORT "http://code.google.com/p/oooii/issues/list"
 
-#																																								define oOUROBOROS_EXTERNAL(_StrName, _StrVersion, _UrlHome, _UrlLicense, _StrDesc) _StrName "|"
+#define oOUROBOROS_EXTERNAL(_StrName, _StrVersion, _UrlHome, _UrlLicense, _StrDesc) _StrName "|"
 static const char* OUROBOROS_COMPONENTS = oOUROBOROS_EXTERNALS;
-#																																								undef oOUROBOROS_EXTERNAL
-#																																								define oOUROBOROS_EXTERNAL(_StrName, _StrVersion, _UrlHome, _UrlLicense, _StrDesc) "<a href=\"" _UrlHome "\">homepage</a>  <a href=\"" _UrlLicense "\">license</a>\r\n" _StrVersion "\r\n" _StrDesc "|"
+#undef oOUROBOROS_EXTERNAL
+#define oOUROBOROS_EXTERNAL(_StrName, _StrVersion, _UrlHome, _UrlLicense, _StrDesc) "<a href=\"" _UrlHome "\">homepage</a>  <a href=\"" _UrlLicense "\">license</a>\r\n" _StrVersion "\r\n" _StrDesc "|"
 static const char* OUROBOROS_COMPONENT_COMMENTS = oOUROBOROS_EXTERNALS;
-#																																								undef oOUROBOROS_EXTERNAL
+#undef oOUROBOROS_EXTERNAL
 
 #define oDECLARE_ABOUT_INFO(_AboutInfoVariable, _Icon) \
 	ouro::about::info _AboutInfoVariable; \
