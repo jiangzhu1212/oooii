@@ -88,10 +88,6 @@ oBasis            <== Basic algorithms, types and structures that have no
 oBasisTests       <== Unit tests for oBasis.
 oPlatform         <== Interfaces and implementation for platform-specific objects.
 oPlatformTests    <== Unit tets for oPlatform.
-oKinect           <== Platform-level integration/wrapper for the Kinect API along
-                      with platform-specific visualization utils. Since this is 
-                      uncommon specialized hardware, it has been separated from 
-                      oPlatform.
 oConcurrency      <== Implementation of concurrency containers and sync objects
                       for either bring-up, debugging, or building more complex
                       systems.
@@ -104,17 +100,6 @@ deprecated libraries.
 oFramework        <== Cross-platform layer that implements complex concepts 
                       generically using oPlatform interfaces, but is not platform
                       -dependent.
-
-=== Required SDKs ===
-
-The project is by default set to build against the Kinect for Windows SDK v1.7.0,
-but it seems the license does not specify that we can redistribute it, so either
-download and install that SDK or remove the definition for oHAS_KINECT_SDK in 
-oKinect.vcproj. The code is set up such that project dependencies can remain and
-linking to oKinect.lib should be fine/a noop but if any Kinect-specific APIs are
-called outside of the oKinect wrapper class (some util functions) then dealing
-with oHAS_KINECT_SDK will need to be done case-by-case in client code.
-
 
 === Ouroboros Gesture System ===
 
