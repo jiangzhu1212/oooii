@@ -814,7 +814,7 @@ float calc_rms(const info& _SurfaceInfoInput
 	, mapped_subresource& mappedOutput);
 
 // Fills the specified array with the count of pixels at each luminance value.
-// (lum [0,1] mapped to [0,255] or [0,256]).
+// (lum [0,1] mapped to [0,255] or [0,65536]).
 void histogram8(const info& inf, const const_mapped_subresource& mapped, uint _Histogram[256]);
 void histogram16(const info& inf, const const_mapped_subresource& mapped, uint _Histogram[65536]);
 
