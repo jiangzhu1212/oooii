@@ -52,7 +52,7 @@ public:
 	shader_registry() : d(nullptr) {}
 	~shader_registry() { deinitialize(); }
 
-	void* deinitialize()
+	void deinitialize()
 	{
 		if (d)
 		{
@@ -60,10 +60,9 @@ public:
 			r.flush();
 			d = nullptr;
 			r.deinitialize();
-			return s.deinitialize();
+			void* p = s.deinitialize();
+			default_deallocate(p);
 		}
-
-		return nullptr;
 	}
 
 	void make(const char* name, scoped_allocation& bytecode, const path& path, bool force = false)
