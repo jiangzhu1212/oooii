@@ -42,6 +42,7 @@ class surface_view
 {
 public:
 	surface_view() : core(nullptr), active(nullptr), needs_update(0), present(false) {}
+	surface_view(gfx::core& core) { initialize(core); }
 	~surface_view() { deinitialize(); }
 
 	void initialize(gfx::core& core);
