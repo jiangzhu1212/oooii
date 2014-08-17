@@ -28,6 +28,7 @@
 
 #include <oBase/gpu_api.h>
 #include <oBase/vendor.h>
+#include <oBase/version.h>
 #include <oGPU/command_list.h>
 #include <oGPU/shader.h>
 
