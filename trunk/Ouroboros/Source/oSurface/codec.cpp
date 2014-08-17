@@ -102,11 +102,24 @@ scoped_allocation encode(const texel_buffer& b
 	oCHECK(dst_format != format::unknown, "%s encoding does not support desired_format %s", as_string(fmt), as_string(desired_format));
 
 	texel_buffer converted;
+	texel_buffer converted_for_bc_input;
 	const texel_buffer* input = &b;
+
+	if (is_block_compressed(dst_format))
+	{
+		// this is a rule particular to the intel compressor, though other compressors have similar rules
+		// so figure out where this should actually be: really close to the codec, in convert, here. Is 
+		// there a way to allow better inspection of the requirements?
+		buffer_format = has_alpha(dst_format) ? format::r8g8b8a8_unorm : format::r8g8b8x8_unorm;
+
+		converted_for_bc_input = input->convert(buffer_format, temp_alloc);
+		input = &converted_for_bc_input;
+	}
 	
 	if (buffer_format != dst_format)
 	{
-		converted = b.convert(dst_format, temp_alloc);
+		converted = input->convert(dst_format, temp_alloc);
+		converted_for_bc_input = texel_buffer();
 		input = &converted;
 	}
 

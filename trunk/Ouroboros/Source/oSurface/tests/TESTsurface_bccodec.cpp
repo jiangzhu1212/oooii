@@ -42,9 +42,7 @@ static void convert_and_test(test_services& services, const format& target_forma
 	auto source = decode(file, file.size());
 	
 	oTRACEA("Converting image to %s...", as_string(target_format));
-	auto converted1 = source.convert(has_alpha(target_format) ? format::r8g8b8a8_unorm : format::r8g8b8x8_unorm);
-	auto converted2 = converted1.convert(target_format);
-	auto converted_encoded = encode(converted2, file_format::dds);
+	auto converted_encoded = encode(source, file_format::dds, target_format);
 
 	if (save_to_desktop)
 	{
