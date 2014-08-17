@@ -27,6 +27,7 @@
 #define oGPU_color_target_h
 
 #include <oGPU/resource.h>
+#include <oSurface/texel_buffer.h>
 #include <vector>
 
 namespace ouro { 
