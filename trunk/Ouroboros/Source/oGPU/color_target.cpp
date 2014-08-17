@@ -67,14 +67,14 @@ uint basic_color_target::array_size() const
 	return d.ArraySize;
 }
 
-surface::texel_buffer basic_color_target::make_snapshot(uint index)
+surface::texel_buffer basic_color_target::make_snapshot(uint index, const allocator& a)
 {
 	if (!ro)
 		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");
 	intrusive_ptr<Texture2D> t;
 	((View*)ro)->GetResource((Resource**)&t);
 
-	return d3d::make_snapshot(t);
+	return d3d::make_snapshot(t, a);
 }
 
 void basic_color_target::clear(command_list& cl, const color& c, uint index)

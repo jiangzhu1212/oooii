@@ -51,7 +51,11 @@ public:
 	void set_texels(const char* name, const surface::texel_buffer& b);
 
 	inline void set_draw_target(gpu::primary_target* t) { ctarget = t; present = true; }
+	inline void set_draw_target(gpu::primary_target& t) { ctarget = &t; present = true; }
 	inline void set_draw_target(gpu::color_target* t) { ctarget = t; present = false; }
+	inline void set_draw_target(gpu::color_target& t) { ctarget = &t; present = false; }
+
+	inline gpu::basic_color_target* get_draw_target() const { return ctarget; }
 
 	void render();
 
