@@ -37,6 +37,7 @@ static const option sCmdLineOptions[] =
 	{ 'l', "logfile", "path", "Uses specified path for the log file" },
 	{ 'x', "exhaustive", 0, "Run tests in exhaustive mode. Probably should only be run in Release. May take a very long time." },
 	{ 't', "skip-terminate", 0, "Skips check of other processes to terminate" },
+	{ '!', "break-on-alloc", "alloc ordinal", "Break into debugger when the specified allocation occurs" },
 };
 
 void InitEnv()
@@ -107,6 +108,7 @@ struct PARAMETERS
 	bool CaptureCallstackForTestLeaks;
 	bool EnableLeakTracking;
 	bool EnableAutomatedMode;
+	unsigned int BreakOnAlloc;
 	const char* LogFilePath;
 	bool Exhaustive;
 	bool EnableOutputGoldenImages;
@@ -185,6 +187,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	_pParameters->CaptureCallstackForTestLeaks = false;
 	_pParameters->EnableLeakTracking = true;
 	_pParameters->EnableAutomatedMode = false;
+	_pParameters->BreakOnAlloc = 0;
 	_pParameters->LogFilePath = nullptr;
 	_pParameters->Exhaustive = false;
 	_pParameters->EnableOutputGoldenImages = false;
@@ -194,6 +197,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	char ch = opttok(&value, _Argc, _Argv, sCmdLineOptions);
 	while (ch)
 	{
+		int ivalue = atoi(value);
 		switch (ch)
 		{
 			case 'i':
@@ -214,7 +218,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 
 			case 'p': _pParameters->DataPath = value; break;
 			case 's': _pParameters->SpecialMode = value; break;
-			case 'r': _pParameters->RandomSeed = atoi(value) ? atoi(value) : 1;  break; // ensure it's not 0, meaning choose randomly
+			case 'r': _pParameters->RandomSeed = ivalue ? ivalue : 1;  break; // ensure it's not 0, meaning choose randomly
 			case 'b': _pParameters->GoldenBinariesPath = value; break;
 			case 'g': _pParameters->GoldenImagesPath = value; break;
 			case 'o': _pParameters->OutputPath = value; break;
@@ -223,6 +227,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 			case 'c': _pParameters->CaptureCallstackForTestLeaks = true; break;
 			case '_': _pParameters->EnableLeakTracking = false; break;
 			case 'a': _pParameters->EnableAutomatedMode = true; break;
+			case '!': _pParameters->BreakOnAlloc = ivalue; break;
 			case 'l': _pParameters->LogFilePath = value; break;
 			case 'x': _pParameters->Exhaustive = true; break;
 			case 'z': _pParameters->EnableOutputGoldenImages = true; break;
@@ -233,13 +238,15 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 		ch = opttok(&value);
 	}
 
-	// @ooii-tony: Disabled in the OpenSource distro because running the unit 
-	// tests is the only proof of life in the Ouroboros branch
+	// @tony: Disabled in the OpenSource distro because running the unit 
+	// tests is the only proof of life in the Ouroboros branch.
+	// @tony: Not sure what this means anymore... the idea is that it's not
+	// a meaningful first-experience for someone to download Ouroboros and 
+	// have the unit tests noop across the board. To use this day in and day
+	// out the auto-filter is helpful though. So what to set it for?
 	static bool IsOpenSourceDistribution = /*true*/false;
 
-	// oBasis is pretty stable these days, only test if there are changes.
-	// Some libs have less and less changes these days, so in the common case if 
-	// there are no modifications to them, don't build them
+	// Many libs are pretty stable these days, only test if there are changes.
 	if (_pParameters->Filters.empty() && !IsOpenSourceDistribution)
 	{
 		const char* sLibNames[] =
@@ -475,6 +482,12 @@ int main(int argc, const char* argv[])
 
 	PARAMETERS parameters;
 	ParseCommandLine(argc, argv, &parameters);
+
+	// get this in as soon as possible in case anything in the test itself leaks
+
+	if (parameters.BreakOnAlloc)
+		debugger::break_on_alloc(parameters.BreakOnAlloc);
+
 	SetTestManagerDesc(&parameters);
 	DeleteOldLogFiles(parameters.SpecialMode);
 	EnableLogFile(parameters.SpecialMode, parameters.LogFilePath);
