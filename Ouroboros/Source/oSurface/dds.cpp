@@ -67,7 +67,7 @@ bool is_dds(const void* buffer, size_t size)
 
 format required_input_dds(const format& stored)
 {
-	return (is_texture(stored) || stored == format::r8g8b8_unorm  || stored == format::b8g8r8_unorm) 
+	return (is_texture(stored) || stored == format::r8g8b8_unorm || stored == format::b8g8r8_unorm) 
 		? stored
 		: format::unknown;
 }

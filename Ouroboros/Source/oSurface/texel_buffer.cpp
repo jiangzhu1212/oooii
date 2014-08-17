@@ -230,7 +230,7 @@ texel_buffer texel_buffer::convert(const info& dst_info) const
 texel_buffer texel_buffer::convert(const info& dst_info, const allocator& a) const
 {
 	info src_info = get_info();
-	texel_buffer converted(dst_info);
+	texel_buffer converted(dst_info, a);
 	shared_lock slock(this);
 	lock_guard dlock(converted);
 	surface::convert(src_info, slock.mapped, dst_info, dlock.mapped);
