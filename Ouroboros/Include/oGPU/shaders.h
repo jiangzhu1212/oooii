@@ -30,6 +30,7 @@
 #define oGPU_shaders_h
 
 #ifndef oHLSL
+#include <oBase/colors.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <oMesh/mesh.h>
 #endif
