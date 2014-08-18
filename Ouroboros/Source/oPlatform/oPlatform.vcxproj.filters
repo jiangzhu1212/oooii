@@ -19,9 +19,6 @@
     <Filter Include="Source\IO">
       <UniqueIdentifier>{685fc8a1-0c84-4c3c-afa4-45a91c20182b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\Windows Soft Link">
-      <UniqueIdentifier>{4f23875d-6e9f-491f-b4bb-c2e3d3d000b5}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -66,9 +63,6 @@
     <ClInclude Include="..\..\Include\oPlatform\oTest.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="SoftLink\oOpenSSL.h">
-      <Filter>Source\Windows Soft Link</Filter>
-    </ClInclude>
     <ClInclude Include="oIOCP.h">
       <Filter>Source\IO</Filter>
     </ClInclude>
@@ -109,9 +103,6 @@
     </ClCompile>
     <ClCompile Include="oTest.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="SoftLink\oOpenSSL.cpp">
-      <Filter>Source\Windows Soft Link</Filter>
     </ClCompile>
     <ClCompile Include="oIOCP.cpp">
       <Filter>Source\IO</Filter>

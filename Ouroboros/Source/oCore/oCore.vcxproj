@@ -28,6 +28,7 @@
     <ClCompile Include="filesystem_monitor.cpp" />
     <ClCompile Include="module.cpp" />
     <ClCompile Include="mutex.cpp" />
+    <ClCompile Include="openssl.cpp" />
     <ClCompile Include="page_allocator.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -85,6 +86,7 @@
     <ClInclude Include="..\..\Include\oCore\windows\win_util.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_version.h" />
     <ClInclude Include="..\..\Include\oCore\windows\win_winsock.h" />
+    <ClInclude Include="openssl.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

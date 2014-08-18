@@ -102,6 +102,9 @@
     <ClCompile Include="mutex.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="openssl.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oCore\filesystem.h">
@@ -196,6 +199,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\filesystem_util.h">
       <Filter>oCore</Filter>
+    </ClInclude>
+    <ClInclude Include="openssl.h">
+      <Filter>Source</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

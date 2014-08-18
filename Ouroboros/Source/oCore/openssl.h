@@ -23,51 +23,32 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #pragma once
-#ifndef oOPENSSL_h
-#define oOPENSSL_h
+#ifndef oCore_openssl_h
+#define oCore_openssl_h
 
-#include <oCore/windows/win_winsock.h>
-#undef interface
-#undef INTERFACE_DEFINED
-#include <openssl/ssl.h>
+#include <oCore/module.h>
 
-class oOpenSSL
-{
-public:
-	static oOpenSSL& singleton();
+namespace ouro { namespace net { namespace openssl {
 
-	int (*SSL_library_init)(void);
-	void (*SSL_load_error_strings)(void);
-	SSL_CTX * (*SSL_CTX_new)(const SSL_METHOD *meth);
-	SSL_METHOD * (*SSLv23_client_method)(void);
-	SSL * (*SSL_new)(SSL_CTX *ctx);
-	int (*SSL_set_fd)(SSL *s, int fd);
-	long (*SSL_ctrl)(SSL *ssl,int cmd, long larg, void *parg);
-	int (*SSL_shutdown)(SSL *s);
-	void (*SSL_free)(SSL *ssl);
-	void (*SSL_CTX_free)(SSL_CTX *);
-	int (*SSL_write)(SSL *ssl,const void *buf,int num);
-	int (*SSL_get_error)(const SSL *s,int ret_code);
-	int (*SSL_connect)(SSL *ssl);
-	int (*SSL_read)(SSL *ssl,void *buf,int num);
-	int (*SSL_pending)(const SSL *s);
+void ensure_initialized();
 
-private:
-	oOpenSSL();
-	~oOpenSSL();
+// returns an ssl handle that can be passed to close, send, receive
+// This requires a valid blocking/synchronous socket.
+void* open(void* socket);
 
-	ouro::module::id hModule;
-};
+// same as above with a timeout
+void* open(void* socket, unsigned int timeout_ms);
 
-#define interface struct __declspec(novtable)
-interface oSocketEncryptor : oInterface
-{
-	static bool Create(oSocketEncryptor** _ppEncryptor);
+// all opened handles should be closed when finished
+void close(void* ssl);
 
-	virtual bool OpenSSLConnection(SOCKET _hSocket, unsigned int _TimeoutMS) = 0;
-	virtual void CleanupOpenSSL() = 0;
-	virtual int Send(SOCKET _hSocket, const void *_pSource, unsigned int _SizeofSource, unsigned int _TimeoutMS) = 0;
-	virtual int Receive(SOCKET _hSocket, char *_pData, unsigned int  _BufferSize, unsigned int _TimeoutMS) = 0;
-};
+// sends/receives an encrypted message
+// all return how much was sent/received
+size_t send(void* ssl, void* socket, const void* src, size_t src_size);
+size_t send(void* ssl, void* socket, const void* src, size_t src_size, unsigned int timeout_ms);
+size_t receive(void* ssl, void* socket, void* dst, size_t dst_size);
+size_t receive(void* ssl, void* socket, void* dst, size_t dst_size, unsigned int timeout_ms);
+
+}}}
 
 #endif
