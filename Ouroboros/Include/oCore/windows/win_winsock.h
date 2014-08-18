@@ -173,11 +173,14 @@ void send(SOCKET _hSocket, const void* _pSource, size_t _SizeofSource, const soc
 // block on FD_READ events.
 size_t receive(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, std::atomic<int>* _pInOutCanReceive, sockaddr_in* _pSource);
 
-// Returns the number of bytes received. This can throw std::errc::connection_reset 
+// Returns number of bytes read. This can throw std::errc::connection_reset 
 // meaning a valid and error-free closing of the peer socket has occurred and no 
 // further steps should occur.
 size_t receive_nonblocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestination, size_t _SizeofDestination, sockaddr_in* _pSource);
 
+// Returns number of bytes read.
+size_t recvfrom_blocking(SOCKET _hSocket, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, const SOCKADDR_IN& _RecvAddr, unsigned int _recvfromFlags = 0);
+	
 // _OutputBuffer must be at least accept_buffer_size in size.
 async_result accept_async(SOCKET _ListenSocket, SOCKET _AcceptSocket, void* _OutputBuffer, WSAOVERLAPPED* _pOverlapped);
 

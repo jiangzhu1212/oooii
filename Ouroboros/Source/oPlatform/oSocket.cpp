@@ -206,22 +206,6 @@ oAPI void oSocketEnumerateAllAddress( std::function<void(oNetAddr _Addr)> _Enume
 	});
 }
 
-const int SaneMaxTimout = 60000;
-oSocket::size_t oWinsockRecvFromBlocking(SOCKET hSocket, void* _pData, oSocket::size_t _szReceive, unsigned int _Timeout, const SOCKADDR_IN& _RecvAddr, unsigned int _Flags = 0)
-{
-	oSocket::size_t TotalReceived = 0;
-	
-	if (ouro::infinite == _Timeout)
-		_Timeout = SaneMaxTimout; // ouro::infinite doesn't seem to work with setsockopt, so use a sane max
-
-	oWSAVB(setsockopt(hSocket, SOL_SOCKET, SO_RCVTIMEO,(char *)&_Timeout, sizeof(unsigned int)));
-
-	int AddrSize = sizeof(_RecvAddr);
-	TotalReceived = recvfrom(hSocket, (char*)_pData, _szReceive, _Flags, (sockaddr*)const_cast<SOCKADDR_IN*>(&_RecvAddr)/*const_cast for bad windows API*/, &AddrSize);
-	oWSAVB(TotalReceived);
-	return TotalReceived;
-}
-
 struct oSocketImpl
 {
 	//This class handles the ref counting but its the proxy that needs to be deleted. this class may be deleted in response to that,
@@ -575,7 +559,7 @@ oSocket::size_t oSocketImpl::Recv(void* _pBuffer, oSocket::size_t _Size) threads
 
 	if (oSocket::BLOCKING == CurDesc.Style)
 	{
-		return oWinsockRecvFromBlocking(lockedThis->hSocket, _pBuffer, _Size, CurDesc.BlockingSettings.RecvTimeout, lockedThis->DefaultAndRecvAddr);
+		return (oSocket::size_t)winsock::recvfrom_blocking(lockedThis->hSocket, _pBuffer, _Size, CurDesc.BlockingSettings.RecvTimeout, lockedThis->DefaultAndRecvAddr);
 	}
 	else
 	{
@@ -938,199 +922,6 @@ oAPI bool oSocketEncryptedCreate(const char* _DebugName, const oSocket::DESC& _D
 	}
 	else
 		return oErrorSetLast(std::errc::invalid_argument, "Encryped Sockets must have style blocking and protocol TCP");
-}
-
-
-// _____________________________________________________________________________
-// SocketServer
-
-struct SocketServer_Impl : public oSocketServer
-{
-	oDEFINE_REFCOUNT_INTERFACE(RefCount);
-	oDEFINE_TRIVIAL_QUERYINTERFACE(oSocketServer);
-	oDEFINE_CONST_GETDESC_INTERFACE(Desc, threadsafe);
-
-	SocketServer_Impl(const char* _DebugName, const DESC& _Desc, bool* _pSuccess);
-	~SocketServer_Impl();
-	const char* GetDebugName() const threadsafe override;
-	bool WaitForConnection(const oSocket::BLOCKING_SETTINGS& _BlockingSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS) threadsafe override;
-	bool WaitForConnection(const oSocket::ASYNC_SETTINGS& _AsyncSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS) threadsafe override;
-	bool GetHostname(char* _pString, size_t _strLen)  const threadsafe override;
-
-private:
-	ouro::shared_mutex Mutex;
-	oRefCount RefCount;
-	SOCKET hSocket;
-	WSAEVENT hConnectEvent;
-	char DebugName[64];
-	DESC Desc;
-	std::mutex AcceptedSocketsMutex;
-	std::vector<intrusive_ptr<oSocket>> AcceptedSockets;
-};
-
-bool oSocketServerCreate(const char* _DebugName, const oSocketServer::DESC& _Desc, threadsafe oSocketServer** _ppSocketServer)
-{
-	if (!_DebugName || !_ppSocketServer)
-		return oErrorSetLast(std::errc::invalid_argument);
-	bool success = false;
-	oCONSTRUCT(_ppSocketServer, SocketServer_Impl(_DebugName, _Desc, &success));
-	return success;
-}
-
-SocketServer_Impl::SocketServer_Impl(const char* _DebugName, const DESC& _Desc, bool* _pSuccess)
-	: Desc(_Desc)
-	, hConnectEvent(nullptr)
-{
-	*DebugName = 0;
-	if (_DebugName)
-		strlcpy(DebugName, _DebugName);
-
-	*_pSuccess = false;
-
-	oNetAddr Addr;
-	oSocketPortSet(Desc.ListenPort, &Addr);
-	sockaddr_in SAddr;
-	oNetAddrToSockAddr(Addr, &SAddr);
-
-	hSocket = winsock::make(SAddr, winsock::reliable | winsock::exclusive_address, ouro::infinite, Desc.MaxNumConnections);
-	if (INVALID_SOCKET == hSocket)
-		return; // leave last error from inside oWinsockCreate
-
-	if (!Desc.ListenPort)
-		Desc.ListenPort = winsock::get_port(hSocket);
-
-	hConnectEvent = WSACreateEvent();
-	oWSAVB(WSAEventSelect(hSocket, hConnectEvent, FD_ACCEPT));
-	*_pSuccess = true;
-}
-
-SocketServer_Impl::~SocketServer_Impl()
-{
-	winsock::close(hSocket);
-
-	if (hConnectEvent)
-		WSACloseEvent(hConnectEvent);
-}
-
-const char* SocketServer_Impl::GetDebugName() const threadsafe 
-{
-	return thread_cast<const char*>(DebugName); // threadsafe because name never changes
-}
-
-bool SocketServer_Impl::GetHostname(char* _pString, size_t _strLen) const threadsafe 
-{
-	winsock::get_hostname(_pString, _strLen, nullptr, NULL, nullptr, NULL, hSocket);
-	return true;
-}
-
-static bool UNIFIED_WaitForConnection(
-	const char* _ServerDebugName
-	, threadsafe ouro::shared_mutex& _Mutex
-	, threadsafe WSAEVENT _hConnectEvent
-	, unsigned int _TimeoutMS
-	, SOCKET _hServerSocket
-	, oSocket::DESC _Desc
-	, std::function<oSocket*(const char* _DebugName, SOCKET _hTarget, oSocket::DESC SocketDesc, bool* _pSuccess)> _CreateClientSocket
-	, threadsafe std::mutex& _AcceptedSocketsMutex
-	, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets)
-{
-	std::lock_guard<ouro::shared_mutex> lock(thread_cast<ouro::shared_mutex&>(_Mutex));
-	bool success = false;
-
-	oScopedPartialTimeout timeout = oScopedPartialTimeout(&_TimeoutMS);
-	if (winsock::wait(thread_cast<WSAEVENT*>(&_hConnectEvent), _TimeoutMS)) // thread_cast safe because of mutex
-	{
-		sockaddr_in saddr;
-		int size = sizeof(saddr);
-		WSAResetEvent(_hConnectEvent); // be sure to reset otherwise the wait will always return immediately. however we could have more than 1 waiting to be accepted.
-		SOCKET hTarget;
-
-		hTarget = accept(_hServerSocket, (sockaddr*)&saddr, &size);
-		if (INVALID_SOCKET == hTarget)
-			return oErrorSetLast(std::errc::protocol_error, "Invalid socket");
-
-		u_long enabled = 1;
-		if (SOCKET_ERROR == setsockopt(hTarget, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (const char*)&enabled, sizeof(enabled)))
-			return oErrorSetLast(std::errc::permission_denied, "Already have a socket on this port");
-
-		// Fill in the remaining portions of the desc
-		_Desc.Protocol = oSocket::TCP;
-		_Desc.ConnectionTimeoutMS = _TimeoutMS;
-		oSockAddrToNetAddr(saddr, &_Desc.Addr);
-
-		intrusive_ptr<oSocket> newSocket(_CreateClientSocket("", hTarget, _Desc, &success), false);
-		{
-			std::lock_guard<std::mutex> lock(thread_cast<std::mutex&>(_AcceptedSocketsMutex));
-			thread_cast<std::vector<intrusive_ptr<oSocket>>&>(_AcceptedSockets).push_back(newSocket); // safe because of lock above
-		}
-
-		success = true;
-	}
-	else
-	{
-		oErrorSetLast(0); // It's ok if we don't find a connection
-	}
-
-	return success;
-}
-
-template<typename T> static inline bool FindTypedSocket(threadsafe std::mutex& _AcceptedSocketsMutex, threadsafe std::vector<intrusive_ptr<oSocket>>& _AcceptedSockets, T** _ppNewlyConnectedClient)
-{
-	std::lock_guard<std::mutex> lock(thread_cast<std::mutex&>(_AcceptedSocketsMutex));
-	std::vector<intrusive_ptr<oSocket>>& SafeSockets = thread_cast<std::vector<intrusive_ptr<oSocket>>&>(_AcceptedSockets);
-
-	if (!SafeSockets.empty())
-	{
-		for (std::vector<intrusive_ptr<oSocket>>::iterator it = SafeSockets.begin(); it != SafeSockets.end(); ++it)
-		{
-			oSocket* s = *it;
-			if (s->QueryInterface(oGetGUID(_ppNewlyConnectedClient), (void**)_ppNewlyConnectedClient))
-			{
-				SafeSockets.erase(it);
-				return true;
-			}
-		}
-	}
-
-	return false;
-}
-
-bool SocketServer_Impl::WaitForConnection(const oSocket::BLOCKING_SETTINGS& _BlockingSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS) threadsafe
-{
-	if (FindTypedSocket(AcceptedSocketsMutex, AcceptedSockets, _ppNewlyConnectedClient))
-		return true;
-
-	oSocket::DESC Desc;
-	Desc.Style = oSocket::BLOCKING;
-	Desc.BlockingSettings = _BlockingSettings;
-	Desc.ConnectionTimeoutMS = _TimeoutMS;
-	Desc.BlockingSettings.RecvTimeout = _TimeoutMS;
-	Desc.BlockingSettings.SendTimeout = _TimeoutMS;
-
-	bool result = UNIFIED_WaitForConnection(GetDebugName(), Mutex, hConnectEvent, _TimeoutMS, hSocket, Desc, oSocketCreateFromServer, AcceptedSocketsMutex, AcceptedSockets);
-
-	if (result)
-		result = FindTypedSocket(AcceptedSocketsMutex, AcceptedSockets, _ppNewlyConnectedClient);
-
-	return result;
-}
-
-bool SocketServer_Impl::WaitForConnection(const oSocket::ASYNC_SETTINGS& _AsyncSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS) threadsafe
-{
-	if (FindTypedSocket(AcceptedSocketsMutex, AcceptedSockets, _ppNewlyConnectedClient))
-		return true;
-
-	oSocket::DESC Desc;
-	Desc.Style = oSocket::ASYNC;
-	Desc.AsyncSettings = _AsyncSettings;
-	Desc.ConnectionTimeoutMS = _TimeoutMS;
-
-	bool result = UNIFIED_WaitForConnection(GetDebugName(), Mutex, hConnectEvent, _TimeoutMS, hSocket, Desc, oSocketCreateFromServer, AcceptedSocketsMutex, AcceptedSockets);
-
-	if (result)
-		result = FindTypedSocket(AcceptedSocketsMutex, AcceptedSockets, _ppNewlyConnectedClient);
-
-	return result; // NYI
 }
 
 ////////////
@@ -1573,19 +1364,4 @@ void SocketServer2_Impl::IOCPCallback(oIOCPOp* _pSocketOp)
 		oASSERT(false, "Not expecting any other types of callbacks");
 		pIOCP->ReturnOp(_pSocketOp); //just return the op
 	}	
-}
-
-
-bool oSocketRecvWithTimeout(threadsafe oSocket* _pSocket, void* _pData, unsigned int _SizeofData, unsigned int& _TimeoutMS)
-{
-	oSocket::size_t Received = 0;
-	oScopedPartialTimeout ScopedTimeout(&_TimeoutMS);
-	while(Received < _SizeofData && _TimeoutMS)
-	{
-		Received += _pSocket->Recv(byte_add(_pData, Received), _SizeofData - Received);
-		ScopedTimeout.UpdateTimeout();
-	}
-	if (Received != _SizeofData)
-		return oErrorSetLast(std::errc::timed_out, "oSocketRecv timed out");
-	return true;
 }

@@ -57,7 +57,7 @@ oOpenSSL::~oOpenSSL()
 	module::close(hModule);
 }
 
-oDEFINE_PROCESS_SINGLETON_TITLE_CASE("oOpenSSL", oOpenSSL);
+oDEFINE_PROCESS_SINGLETON("oOpenSSL", oOpenSSL);
 
 class oSocketEncryptor_Impl : public oSocketEncryptor
 {
@@ -88,9 +88,9 @@ bool oSocketEncryptor::Create(oSocketEncryptor** _ppEncryptor)
 oSocketEncryptor_Impl::oSocketEncryptor_Impl(bool *_pSuccess)
 {
 	pCtx = NULL;
-	oOpenSSL::Singleton().SSL_library_init();
-	//oOpenSSL::Singleton().SSL_load_error_strings();
-	pCtx = oOpenSSL::Singleton().SSL_CTX_new (oOpenSSL::Singleton().SSLv23_client_method());
+	oOpenSSL::singleton().SSL_library_init();
+	//oOpenSSL::singleton().SSL_load_error_strings();
+	pCtx = oOpenSSL::singleton().SSL_CTX_new (oOpenSSL::singleton().SSLv23_client_method());
 	*_pSuccess = (pCtx != NULL);
 }
 
@@ -104,12 +104,12 @@ bool oSocketEncryptor_Impl::OpenSSLConnection(SOCKET _hSocket, unsigned int _Tim
 	if (!pCtx)
 		return false;
 	
-	pSSL = oOpenSSL::Singleton().SSL_new (pCtx);   
+	pSSL = oOpenSSL::singleton().SSL_new (pCtx);   
 	if(!pSSL)
 		return false;
 
-	oOpenSSL::Singleton().SSL_set_fd (pSSL, (int)_hSocket);
-    oOpenSSL::Singleton().SSL_set_mode(pSSL, SSL_MODE_AUTO_RETRY);
+	oOpenSSL::singleton().SSL_set_fd (pSSL, (int)_hSocket);
+    oOpenSSL::singleton().SSL_set_mode(pSSL, SSL_MODE_AUTO_RETRY);
 
 	int res = 0;
 	fd_set fdwrite;
@@ -149,8 +149,8 @@ bool oSocketEncryptor_Impl::OpenSSLConnection(SOCKET _hSocket, unsigned int _Tim
 				return false;
 			}
 		}
-		res = oOpenSSL::Singleton().SSL_connect(pSSL);
-		switch(oOpenSSL::Singleton().SSL_get_error(pSSL, res))
+		res = oOpenSSL::singleton().SSL_connect(pSSL);
+		switch(oOpenSSL::singleton().SSL_get_error(pSSL, res))
 		{
 		  case SSL_ERROR_NONE:
 			FD_ZERO(&fdwrite);
@@ -175,13 +175,13 @@ void oSocketEncryptor_Impl::CleanupOpenSSL()
 {
 	if(pSSL != NULL)
 	{
-		oOpenSSL::Singleton().SSL_shutdown (pSSL);  /* send SSL/TLS close_notify */
-		oOpenSSL::Singleton().SSL_free (pSSL);
+		oOpenSSL::singleton().SSL_shutdown (pSSL);  /* send SSL/TLS close_notify */
+		oOpenSSL::singleton().SSL_free (pSSL);
 		pSSL = NULL;
 	}
 	if(pCtx != NULL)
 	{
-		oOpenSSL::Singleton().SSL_CTX_free (pCtx);	
+		oOpenSSL::singleton().SSL_CTX_free (pCtx);	
 		pCtx = NULL;
 	}
 }
@@ -231,9 +231,9 @@ int oSocketEncryptor_Impl::Send(SOCKET _hSocket, const void *_pSource, unsigned 
 
 		if(FD_ISSET(_hSocket,&fdwrite) || (bWriteBlockedOnRead && FD_ISSET(_hSocket, &fdread)))
 		{
-			res = oOpenSSL::Singleton().SSL_write(pSSL, _pSource, _SizeofSource);
+			res = oOpenSSL::singleton().SSL_write(pSSL, _pSource, _SizeofSource);
 
-			switch(oOpenSSL::Singleton().SSL_get_error(pSSL,res))
+			switch(oOpenSSL::singleton().SSL_get_error(pSSL,res))
 			{
 			  case SSL_ERROR_NONE:
 				remaining -= res;
@@ -304,9 +304,9 @@ int oSocketEncryptor_Impl::Receive(SOCKET _hSocket, char *_pData, unsigned int _
 				const int buff_len = 1024;
 				char buff[buff_len];
 
-				res = oOpenSSL::Singleton().SSL_read(pSSL, buff, buff_len);
+				res = oOpenSSL::singleton().SSL_read(pSSL, buff, buff_len);
 
-				int ssl_err = oOpenSSL::Singleton().SSL_get_error(pSSL, res);
+				int ssl_err = oOpenSSL::singleton().SSL_get_error(pSSL, res);
 
 				if(ssl_err == SSL_ERROR_NONE)
 				{
@@ -318,7 +318,7 @@ int oSocketEncryptor_Impl::Receive(SOCKET _hSocket, char *_pData, unsigned int _
 					}
 					memcpy(_pData + offset, buff, res);
 					offset += res;
-					if(oOpenSSL::Singleton().SSL_pending(pSSL))
+					if(oOpenSSL::singleton().SSL_pending(pSSL))
 					{
 						continue;
 					}
