@@ -57,6 +57,7 @@
     <ClCompile Include="gpu_api.cpp" />
     <ClCompile Include="gzip.cpp" />
     <ClCompile Include="input.cpp" />
+    <ClCompile Include="ip4.cpp" />
     <ClCompile Include="leak_tracker.cpp" />
     <ClCompile Include="lzma.cpp" />
     <ClCompile Include="memory\dtoull.cpp" />
@@ -197,6 +198,7 @@
     <ClInclude Include="..\..\Include\oBase\input.h" />
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
     <ClInclude Include="..\..\Include\oBase\invalid.h" />
+    <ClInclude Include="..\..\Include\oBase\ip4.h" />
     <ClInclude Include="..\..\Include\oBase\json.h" />
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator.h" />

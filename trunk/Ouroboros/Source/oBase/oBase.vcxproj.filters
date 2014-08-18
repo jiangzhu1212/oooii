@@ -286,6 +286,9 @@
     <ClCompile Include="osc.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="ip4.cpp">
+      <Filter>Source\types</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">
@@ -612,6 +615,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\osc.h">
       <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\ip4.h">
+      <Filter>oBase\types</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

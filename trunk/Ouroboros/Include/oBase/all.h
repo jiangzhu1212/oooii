@@ -60,6 +60,7 @@
 #include <oBase/input.h>
 #include <oBase/intrusive_ptr.h>
 #include <oBase/invalid.h>
+#include <oBase/ip4.h>
 #include <oBase/leak_tracker.h>
 #include <oBase/linear_allocator.h>
 #include <oBase/lock_free_queue.h>
