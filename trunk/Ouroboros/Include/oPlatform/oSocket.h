@@ -249,8 +249,6 @@ interface oSocketServer : oInterface
 	virtual bool WaitForConnection(const oSocket::ASYNC_SETTINGS& _AsyncSettings, threadsafe oSocket** _ppNewlyConnectedClient, unsigned int _TimeoutMS = ouro::infinite) threadsafe = 0;
 };
 
-oAPI bool oSocketServerCreate(const char* _DebugName, const oSocketServer::DESC& _Desc, threadsafe oSocketServer** _ppSocketServer);
-
 // {8809678d-a52e-4d0d-890b-bbaa315acbdd}
 oDEFINE_GUID_I(oSocketServer2, 0x8809678d, 0xa52e, 0x4d0d, 0x89, 0x0b, 0xbb, 0xaa, 0x31, 0x5a, 0xcb, 0xdd);
 interface oSocketServer2 : oInterface
@@ -279,9 +277,5 @@ oAPI bool oSocketServer2Create(const char* _DebugName, const oSocketServer2::DES
 
 // Enumerate the addresses of all cmd
 oAPI void oSocketEnumerateAllAddress(std::function<void(oNetAddr _Addr)> _Enumerator);
-
-// Helper function to call _pSocket->Recv in a loop until _SizeofData has been
-// received (returns true) or until the timeout has been reached (false).
-oAPI bool oSocketRecvWithTimeout(threadsafe oSocket* _pSocket, void* _pData, unsigned int _SizeofData, unsigned int& _TimeoutMS);
 
 #endif

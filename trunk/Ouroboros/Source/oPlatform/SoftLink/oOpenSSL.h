@@ -34,7 +34,7 @@
 class oOpenSSL
 {
 public:
-	static oOpenSSL& Singleton();
+	static oOpenSSL& singleton();
 
 	int (*SSL_library_init)(void);
 	void (*SSL_load_error_strings)(void);

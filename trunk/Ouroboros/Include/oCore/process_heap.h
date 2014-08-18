@@ -135,6 +135,5 @@ oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(ouro::process_heap::std_allocator) { return
 	}
 
 #define oDEFINE_PROCESS_SINGLETON(_StrName, _ClassName) oDEFINE_PROCESS_SINGLETON__(singleton, _StrName, _ClassName)
-#define oDEFINE_PROCESS_SINGLETON_TITLE_CASE(_StrName, _ClassName) oDEFINE_PROCESS_SINGLETON__(Singleton, _StrName, _ClassName)
 
 #endif

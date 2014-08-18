@@ -621,6 +621,21 @@ size_t receive_nonblocking(SOCKET _hSocket, WSAEVENT _hEvent, void* _pDestinatio
 	return bytesReceived;
 }
 
+size_t recvfrom_blocking(SOCKET _hSocket, void* _pDestination, size_t _SizeofDestination, unsigned int _TimeoutMS, const SOCKADDR_IN& _RecvAddr, unsigned int _recvfromFlags)
+{
+	// ouro::infinite doesn't seem to work with setsockopt so use a sane max
+	static const uint32_t kSaneMaxTimoutMS = 60000;
+	if (ouro::infinite == _TimeoutMS)
+		_TimeoutMS = kSaneMaxTimoutMS;
+
+	oWSAVB(setsockopt(_hSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&_TimeoutMS, sizeof(unsigned int)));
+
+	int AddrSize = sizeof(_RecvAddr);
+	size_t TotalReceived = recvfrom(_hSocket, (char*)_pDestination, (int)_SizeofDestination, _recvfromFlags, (sockaddr*)const_cast<SOCKADDR_IN*>(&_RecvAddr), &AddrSize);
+	oWSAVB(TotalReceived);
+	return TotalReceived;
+}
+
 async_result accept_async(SOCKET _ListenSocket, SOCKET _AcceptSocket, void* _OutputBuffer, WSAOVERLAPPED* _pOverlapped)
 {
 	LPFN_ACCEPTEX pAcceptEx = getfn_AcceptEx(_ListenSocket);
