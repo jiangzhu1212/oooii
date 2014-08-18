@@ -31,7 +31,7 @@
 #include <oPlatform/oSocket.h>
 #include <oCore/windows/win_winsock.h>
 #include "oIOCP.h"
-#include "SoftLink/oOpenSSL.h"
+#include "../oCore/openssl.h"
 
 #include <oCore/windows/win_error.h>
 
@@ -302,7 +302,7 @@ private:
 	SOCKET		hSocket;
 	intrusive_ptr<threadsafe oSocketAsyncCallback> InternalCallback;
 
-	intrusive_ptr<oSocketEncryptor> Encryptor;
+	void* hEncryptor;
 
 	ProxyDeleterFn ProxyDeleter;
 
@@ -315,12 +315,16 @@ oSocketImpl::oSocketImpl(const char* _DebugName, SOCKET _hTarget, bool* _pSucces
 	, pIOCP(nullptr)
 	, Disabled(true)
 	, Proxy(nullptr)
+	, hEncryptor(nullptr)
 {
 	*_pSuccess = true;
 }
 
 oSocketImpl::~oSocketImpl()
 {
+	if (hEncryptor)
+		net::openssl::close(hEncryptor);
+
 	winsock::close(hSocket);
 }
 
@@ -418,7 +422,7 @@ bool oSocketImpl::GoAsynchronous(const oSocket::ASYNC_SETTINGS& _Settings) threa
 	if (oSocket::ASYNC == lockedThis->Desc.Style)
 		return oErrorSetLast(std::errc::operation_in_progress, "Socket is already asynchronous");
 
-	if (Encryptor)
+	if (hEncryptor)
 		return oErrorSetLast(std::errc::invalid_argument, "Socket is encrypted, cannot go asynchronous");
 
 	if (!_Settings.Callback)
@@ -600,22 +604,17 @@ bool oSocketImpl::SendEncrypted(const void* _pData, oSocket::size_t _Size) threa
 	if (oSocket::ASYNC == CurDesc.Style)
 		return oErrorSetLast(std::errc::operation_would_block, "Socket is asynchronous");
 
-	int ret = 0;
+	size_t ret = 0;
 	// Lazy init and Open SSL Connection because google's TLS requires that STARTTLS be sent and response received
 	// before an TLS connecion can be established.  This may be different for other servers.
-	if (!Encryptor.c_ptr())
-	{
-		oSocketEncryptor::Create(&lockedThis->Encryptor);
-		// Open SSLconnection
-		if (Encryptor.c_ptr())
-			Encryptor->OpenSSLConnection(hSocket, Desc.BlockingSettings.SendTimeout);
-	}
+	if (!hEncryptor)
+		hEncryptor = net::openssl::open((void*)hSocket, Desc.BlockingSettings.SendTimeout);
 
-	if (Encryptor.c_ptr())
+	if (hEncryptor)
 	{
-		ret = Encryptor->Send(hSocket, _pData, _Size, Desc.BlockingSettings.SendTimeout);
+		ret = net::openssl::send(hEncryptor, (void*)hSocket, _pData, _Size, Desc.BlockingSettings.SendTimeout);
 	}
-	return (_Size == (size_t)ret);
+	return (_Size == ret);
 }
 
 oSocket::size_t oSocketImpl::RecvEncrypted(void* _pBuffer, oSocket::size_t _Size) threadsafe
@@ -624,9 +623,9 @@ oSocket::size_t oSocketImpl::RecvEncrypted(void* _pBuffer, oSocket::size_t _Size
 	if (Disabled)
 		return false;
 
-	if (Encryptor.c_ptr())
+	if (hEncryptor)
 	{
-		return Encryptor->Receive(hSocket, (char *)_pBuffer, _Size, Desc.BlockingSettings.RecvTimeout);
+		return (oSocket::size_t)net::openssl::receive(hEncryptor, (void*)hSocket, _pBuffer, _Size, Desc.BlockingSettings.RecvTimeout);
 	}
 	return 0;
 }
