@@ -75,8 +75,6 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 			, surface::compression::none);
 	}
 
-#if 0
-
 	sstring buf;
 	format_bytes(buf, EncodedSize, 2);
 	oTRACE("encoded %s", buf.c_str());
@@ -111,7 +109,6 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 		if (rms > max_rms)
 			oTHROW(io_error, "encoded/decoded bytes mismatch for %s", as_string(file_format));
 	}
-#endif
 }
 
 void compare_load(test_services& services, const char* path, const char* desktop_filename_prefix)
@@ -134,7 +131,6 @@ void TESTsurface_codec(test_services& _Services)
 {
 	// still a WIP
 	//compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::psd, 1.0f);
-
 	//compare_load(_Services, "Test/Textures/lena_1.psd", "lena_1");
 
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::bmp, 1.0f);
