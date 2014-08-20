@@ -194,7 +194,7 @@ surface::texel_buffer surface_load(const path& _Path, bool _Mips)
 
 	// force 4-channel format
 	auto src_format = sb.get_info().format;
-	auto with_alpha = surface::add_alpha(src_format);
+	auto with_alpha = surface::as_a(src_format);
 	sb = sb.convert(with_alpha);
 
 	if (_Mips)

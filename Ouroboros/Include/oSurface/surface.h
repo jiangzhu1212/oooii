@@ -510,16 +510,20 @@ bool is_planar(const format& f);
 // true if in YUV space
 bool is_yuv(const format& f);
 
-// given a 3-component type return the equivalent 4-component type
-// that adds alpha. If there is not an equivalent type this will 
-// throw.
-format add_alpha(const format& f);
+// returns the base type with the specified extension
+format as_srgb(const format& f);
+format as_depth(const format& f);
+format as_typeless(const format& f);
+format as_unorm(const format& f);
 
-// given a 4-component type return the equivalent 3-component type
-// not all types have 3-component types defined at this time in which
-// case this will throw. If there is not an equivalent 3-component
-// type because it does not make sense, then this returns f.
-format strip_alphaorx(const format& f);
+// adds a 4th component or replaces an alpha type with an x type
+format as_x(const format& f);
+
+// adds a 4th component or replaces an x type with an alpha type
+format as_a(const format& f);
+
+// removes a 4th component
+format as_noax(const format& f);
 
 // returns the number of separate channels used for a pixel
 uint num_channels(const format& f);
