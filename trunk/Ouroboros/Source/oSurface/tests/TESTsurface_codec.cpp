@@ -43,7 +43,7 @@ void save_bmp_to_desktop(const surface::texel_buffer& b, const char* _path)
 		, surface::file_format::bmp
 		, default_allocator
 		, default_allocator
-		, surface::strip_alphaorx(b.get_info().format)
+		, surface::as_noax(b.get_info().format)
 		, surface::compression::none);
 	filesystem::save(filesystem::desktop_path() / path(_path), encoded, encoded.size());
 }
@@ -71,7 +71,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 		scoped_timer("encode");
 		encoded = surface::encode(known
 			, file_format
-			, surface::strip_alphaorx(known.get_info().format)
+			, surface::as_noax(known.get_info().format)
 			, surface::compression::none);
 	}
 

@@ -71,7 +71,6 @@ struct format_info
 	struct bit_size bit_size;
 	struct subformats subformats;
 	ushort element_size : 5; // [0,16] bytes per pixel or block
-	ushort smallest_mip : 3; // [1,4] smallest mip size in both width and height
 	ushort num_channels : 3; // [0,4]
 	ushort num_subformats : 3; // [1,4]
 	short traits;
@@ -117,142 +116,144 @@ static const subformats kSFD_R8_3 = {format::r8_unorm, format::r8_unorm, format:
 static const subformats kSFD_BC4_4 = {format::bc4_unorm, format::bc4_unorm, format::bc4_unorm, format::bc4_unorm};
 static const subformats kSFD_BC4_3 = {format::bc4_unorm, format::bc4_unorm, format::bc4_unorm, format::unknown};
 
+#define FPERM(srgb,depth,typeless,unorm,x,a) { format::srgb, format::depth, format::typeless, format::a8_unorm, format::x, format::a }
+
 static const format_info sFormatInfo[] = 
 {
-  { "unknown",                    kUnknownFCC,  kUnknownBits, kNoSubformats,    0, kMinMip,   0, 0, traits::none },
-  { "r32g32b32a32_typeless",      oFCC('?i4 '), kBS_4_32,     kNoSubformats,  128, kMinMip,   4, 1, traits::has_alpha },
-  { "r32g32b32a32_float",         oFCC('f4  '), kBS_4_32,     kNoSubformats,  128, kMinMip,   4, 1, traits::has_alpha },
-  { "r32g32b32a32_uint",          oFCC('ui4 '), kBS_4_32,     kNoSubformats,  128, kMinMip,   4, 1, traits::has_alpha },
-  { "r32g32b32a32_sint",          oFCC('si4 '), kBS_4_32,     kNoSubformats,  128, kMinMip,   4, 1, traits::has_alpha },
-  { "r32g32b32_typeless",         oFCC('?i3 '), kBS_3_32,     kNoSubformats,   12, kMinMip,   3, 1, traits::has_alpha },
-  { "r32g32b32_float",            oFCC('f3  '), kBS_3_32,     kNoSubformats,   12, kMinMip,   3, 1, traits::none },
-  { "r32g32b32_uint",             oFCC('ui3 '), kBS_3_32,     kNoSubformats,   12, kMinMip,   3, 1, traits::none },
-  { "r32g32b32_sint",             oFCC('si3 '), kBS_3_32,     kNoSubformats,   12, kMinMip,   3, 1, traits::none },
-  { "r16g16b16a16_typeless",      oFCC('?s4 '), kBS_4_16,     kNoSubformats,    8, kMinMip,   4, 1, traits::has_alpha },
-  { "r16g16b16a16_float",         oFCC('h4  '), kBS_4_16,     kNoSubformats,    8, kMinMip,   4, 1, traits::has_alpha },
-  { "r16g16b16a16_unorm",         oFCC('h4u '), kBS_4_16,     kNoSubformats,    8, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha },
-  { "r16g16b16a16_uint",          oFCC('us4 '), kBS_4_16,     kNoSubformats,    8, kMinMip,   4, 1, traits::has_alpha },
-  { "r16g16b16a16_snorm",         oFCC('h4s '), kBS_4_16,     kNoSubformats,    8, kMinMip,   4, 1, traits::has_alpha },
-  { "r16g16b16a16_sint",          oFCC('ss4 '), kBS_4_16,     kNoSubformats,    8, kMinMip,   4, 1, traits::has_alpha },
-  { "r32g32_typeless",            oFCC('?i2 '), kBS_2_32,     kNoSubformats,    8, kMinMip,   2, 1, traits::none },
-  { "r32g32_float",               oFCC('f2  '), kBS_2_32,     kNoSubformats,    8, kMinMip,   2, 1, traits::none },
-  { "r32g32_uint",                oFCC('ui2 '), kBS_2_32,     kNoSubformats,    8, kMinMip,   2, 1, traits::none },
-  { "r32g32_sint",                oFCC('si2 '), kBS_2_32,     kNoSubformats,    8, kMinMip,   2, 1, traits::none },
-  { "r32g8x24_typeless",          kUnknownFCC,  {32,8,0,24},  kNoSubformats,    8, kMinMip,   3, 1, traits::none },
-  { "d32_float_s8x24_uint",       kUnknownFCC,  {32,8,0,24},  kNoSubformats,    8, kMinMip,   3, 1, traits::is_depth },
-  { "r32_float_x8x24_typeless",   kUnknownFCC,  {32,8,0,24},  kNoSubformats,    8, kMinMip,   3, 1, traits::is_depth },
-  { "x32_typeless_g8x24_uint",    kUnknownFCC,  {32,8,0,24},  kNoSubformats,    8, kMinMip,   3, 1, traits::none },
-  { "r10g10b10a2_typeless",       kUnknownFCC,  kBS_DEC3N,    kNoSubformats,    4, kMinMip,   4, 1, traits::has_alpha },
-  { "r10g10b10a2_unorm",          kUnknownFCC,  kBS_DEC3N,    kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha },
-  { "r10g10b10a2_uint",           kUnknownFCC,  kBS_DEC3N,    kNoSubformats,    4, kMinMip,   4, 1, traits::has_alpha },
-  { "r11g11b10_float",            kUnknownFCC,  {11,11,10,0}, kNoSubformats,    4, kMinMip,   3, 1, traits::none },
-  { "r8g8b8a8_typeless",          oFCC('?c4 '), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::has_alpha },
-  { "r8g8b8a8_unorm",             oFCC('c4u '), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha },
-  { "r8g8b8a8_unorm_srgb",        oFCC('c4us'), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::is_srgb|traits::has_alpha },
-  { "r8g8b8a8_uint",              oFCC('uc4 '), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::has_alpha },
-  { "r8g8b8a8_snorm",             oFCC('c4s '), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::has_alpha },
-  { "r8g8b8a8_sint",              oFCC('sc4 '), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::has_alpha },
-  { "r16g16_typeless",            oFCC('?s2 '), kBS_2_16,     kNoSubformats,    4, kMinMip,   2, 1, traits::none },
-  { "r16g16_float",               oFCC('h2  '), kBS_2_16,     kNoSubformats,    4, kMinMip,   2, 1, traits::none },
-  { "r16g16_unorm",               oFCC('h2u '), kBS_2_16,     kNoSubformats,    4, kMinMip,   2, 1, traits::is_unorm },
-  { "r16g16_uint",                oFCC('us2 '), kBS_2_16,     kNoSubformats,    4, kMinMip,   2, 1, traits::none },
-  { "r16g16_snorm",               oFCC('h2s '), kBS_2_16,     kNoSubformats,    4, kMinMip,   2, 1, traits::none },
-  { "r16g16_sint",                oFCC('ss2 '), kBS_2_16,     kNoSubformats,    4, kMinMip,   2, 1, traits::none },
-  { "r32_typeless",               oFCC('?i1 '), kBS_1_32,     kNoSubformats,    4, kMinMip,   1, 1, traits::is_depth },
-  { "d32_float",                  oFCC('f1d '), kBS_1_32,     kNoSubformats,    4, kMinMip,   1, 1, traits::is_depth },
-  { "r32_float",                  oFCC('f1  '), kBS_1_32,     kNoSubformats,    4, kMinMip,   1, 1, traits::none },
-  { "r32_uint",                   oFCC('ui1 '), kBS_1_32,     kNoSubformats,    4, kMinMip,   1, 1, traits::none },
-  { "r32_sint",                   oFCC('si1 '), kBS_1_32,     kNoSubformats,    4, kMinMip,   1, 1, traits::none },
-  { "r24g8_typeless",             kUnknownFCC,  kBS_DS,       kNoSubformats,    4, kMinMip,   2, 1, traits::is_depth },
-  { "d24_unorm_s8_uint",          kUnknownFCC,  kBS_DS,       kNoSubformats,    4, kMinMip,   2, 1, traits::is_unorm|traits::is_depth },
-  { "r24_unorm_x8_typeless",      kUnknownFCC,  kBS_DS,       kNoSubformats,    4, kMinMip,   2, 1, traits::is_unorm|traits::is_depth },
-  { "x24_typeless_g8_uint",       kUnknownFCC,  kBS_DS,       kNoSubformats,    4, kMinMip,   2, 1, traits::is_depth },
-  { "r8g8_typeless",              oFCC('?c2 '), kBS_2_8,      kNoSubformats,    2, kMinMip,   2, 1, traits::none },
-  { "r8g8_unorm",                 oFCC('uc2u'), kBS_2_8,      kNoSubformats,    2, kMinMip,   2, 1, traits::is_unorm },
-  { "r8g8_uint",                  oFCC('ui2 '), kBS_2_8,      kNoSubformats,    2, kMinMip,   2, 1, traits::none },
-  { "r8g8_snorm",                 oFCC('uc2s'), kBS_2_8,      kNoSubformats,    2, kMinMip,   2, 1, traits::none },
-  { "r8g8_sint",                  oFCC('si2 '), kBS_2_8,      kNoSubformats,    2, kMinMip,   2, 1, traits::none },
-  { "r16_typeless",               oFCC('?s1 '), kBS_1_16,     kNoSubformats,    2, kMinMip,   1, 1, traits::is_depth },
-  { "r16_float",                  oFCC('h1  '), kBS_1_16,     kNoSubformats,    2, kMinMip,   1, 1, traits::none },
-  { "d16_unorm",                  oFCC('h1ud'), kBS_1_16,     kNoSubformats,    2, kMinMip,   1, 1, traits::is_unorm|traits::is_depth },
-  { "r16_unorm",                  oFCC('h1u '), kBS_1_16,     kNoSubformats,    2, kMinMip,   1, 1, traits::is_unorm },
-  { "r16_uint",                   oFCC('us1 '), kBS_1_16,     kNoSubformats,    2, kMinMip,   1, 1, traits::none },
-  { "r16_snorm",                  oFCC('h1s '), kBS_1_16,     kNoSubformats,    2, kMinMip,   1, 1, traits::none },
-  { "r16_sint",                   oFCC('ss1 '), kBS_1_16,     kNoSubformats,    2, kMinMip,   1, 1, traits::none },
-  { "r8_typeless",                oFCC('?c1 '), kBS_1_8,      kNoSubformats,    1, kMinMip,   1, 1, traits::none },
-  { "r8_unorm",                   oFCC('uc1u'), kBS_1_8,      kNoSubformats,    1, kMinMip,   1, 1, traits::is_unorm },
-  { "r8_uint",                    oFCC('uc1 '), kBS_1_8,      kNoSubformats,    1, kMinMip,   1, 1, traits::none },
-  { "r8_snorm",                   oFCC('uc1s'), kBS_1_8,      kNoSubformats,    1, kMinMip,   1, 1, traits::none },
-  { "r8_sint",                    oFCC('sc1 '), kBS_1_8,      kNoSubformats,    1, kMinMip,   1, 1, traits::none },
-  { "a8_unorm",                   oFCC('ac1u'), kBS_1_8,      kNoSubformats,    1, kMinMip,   1, 1, traits::is_unorm|traits::has_alpha },
-  { "r1_unorm",                   oFCC('bitu'), {1,0,0,0},    kNoSubformats,    1, kMinMip,   1, 1, traits::is_unorm },
-  { "r9g9b9e5_sharedexp",         kUnknownFCC, {9,9,9,5},     kNoSubformats,    4, kMinMip,   4, 1, traits::none },
-  { "r8g8_b8g8_unorm",            kUnknownFCC, kBS_4_8,       kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm },
-  { "g8r8_g8b8_unorm",            kUnknownFCC, kBS_4_8,       kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm },
-  { "bc1_typeless",               oFCC('BC1?'), kBS_565,      kNoSubformats,    8, kMinMipBC, 3, 1, traits::is_bc },
-  { "bc1_unorm",                  oFCC('BC1u'), kBS_565,      kNoSubformats,    8, kMinMipBC, 3, 1, traits::is_bc|traits::is_unorm },
-  { "bc1_unorm_srgb",             oFCC('BC1s'), kBS_565,      kNoSubformats,    8, kMinMipBC, 3, 1, traits::is_bc|traits::is_unorm|traits::is_srgb },
-  { "bc2_typeless",               oFCC('BC2?'), {5,6,5,4},    kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::has_alpha },
-  { "bc2_unorm",                  oFCC('BC2u'), {5,6,5,4},    kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::is_unorm|traits::has_alpha },
-  { "bc2_unorm_srgb",             oFCC('BC2s'), {5,6,5,4},    kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::is_unorm|traits::is_srgb|traits::has_alpha },
-  { "bc3_typeless",               oFCC('BC3?'), {5,6,5,8},    kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::has_alpha },
-  { "bc3_unorm",                  oFCC('BC3u'), {5,6,5,8},    kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::is_unorm|traits::has_alpha },
-  { "bc3_unorm_srgb",             oFCC('BC3s'), {5,6,5,8},    kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::is_unorm|traits::is_srgb|traits::has_alpha },
-  { "bc4_typeless",               oFCC('BC4?'), kBS_1_8,      kNoSubformats,    8, kMinMipBC, 1, 1, traits::is_bc },
-  { "bc4_unorm",                  oFCC('BC4u'), kBS_1_8,      kNoSubformats,    8, kMinMipBC, 1, 1, traits::is_bc|traits::is_unorm },
-  { "bc4_snorm",                  oFCC('BC4s'), kBS_1_8,      kNoSubformats,    8, kMinMipBC, 1, 1, traits::is_bc },
-  { "bc5_typeless",               oFCC('BC5?'), kBS_2_8,      kNoSubformats,   16, kMinMipBC, 2, 1, traits::is_bc },
-  { "bc5_unorm",                  oFCC('BC5u'), kBS_2_8,      kNoSubformats,   16, kMinMipBC, 2, 1, traits::is_bc|traits::is_unorm },
-  { "bc5_snorm",                  oFCC('BC5s'), kBS_2_8,      kNoSubformats,   16, kMinMipBC, 2, 1, traits::is_bc },
-  { "b5g6r5_unorm",               kUnknownFCC,  kBS_565,      kNoSubformats,    2, kMinMip,   3, 1, traits::is_unorm },
-  { "b5g5r5a1_unorm",             kUnknownFCC,  {5,6,5,1},    kNoSubformats,    2, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha },
-  { "b8g8r8a8_unorm",             oFCC('c4u '), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha },
-  { "b8g8r8x8_unorm",             oFCC('c4u '), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm },
-  { "r10g10b10_xr_bias_a2_unorm", kUnknownFCC,  kBS_DEC3N,    kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm },
-  { "b8g8r8a8_typeless",          kUnknownFCC,  kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::none },
-  { "b8g8r8a8_unorm_srgb",        kUnknownFCC,  kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::is_srgb },
-  { "b8g8r8x8_typeless",          kUnknownFCC,  kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::none },
-  { "b8g8r8x8_unorm_srgb",        kUnknownFCC,  kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::is_srgb },
-  { "bc6h_typeless",              oFCC('BC6?'), kUnknownBits, kNoSubformats,   16, kMinMipBC, 3, 1, traits::is_bc },
-  { "bc6h_uf16",                  oFCC('BC6u'), kUnknownBits, kNoSubformats,   16, kMinMipBC, 3, 1, traits::is_bc },
-  { "bc6h_sf16",                  oFCC('BC6s'), kUnknownBits, kNoSubformats,   16, kMinMipBC, 3, 1, traits::is_bc },
-  { "bc7_typeless",               oFCC('BC7?'), kUnknownBits, kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::has_alpha },
-  { "bc7_unorm",                  oFCC('BC7u'), kUnknownBits, kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::is_unorm|traits::has_alpha },
-  { "bc7_unorm_srgb",             oFCC('BC7s'), kUnknownBits, kNoSubformats,   16, kMinMipBC, 4, 1, traits::is_bc|traits::is_unorm|traits::is_srgb|traits::has_alpha },
-  { "ayuv",                       oFCC('AYUV'), kBS_4_4,      kNoSubformats,   16, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
-  { "y410",                       oFCC('Y410'), kBS_DEC3N,    {format::r10g10b10a2_unorm,format::unknown}, 4, kMinMip, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
-  { "y416",                       oFCC('Y416'), kBS_4_16,     {format::b8g8r8a8_unorm,format::unknown}, 4, kMinMip, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
-  { "nv12",                       oFCC('NV12'), kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_yuv },
-  { "p010",                       oFCC('P010'), {10,10,10,0}, kSFD_R16_RG16,    2, kMinMip,   3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
-  { "p016",                       oFCC('P016'), kBS_3_16,     kSFD_R16_RG16,    2, kMinMip,   3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
-  { "420_opaque",                 oFCC('420O'), kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
-  { "yuy2",                       oFCC('YUY2'), kBS_4_8,      kSFD_R8_RG8,      4, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
-  { "y210",                       oFCC('Y210'), kBS_4_16,     kNoSubformats,    2, kMinMipYUV,3, 1, traits::is_unorm|traits::is_yuv },
-  { "y216",                       oFCC('Y216'), kBS_4_16,     kNoSubformats,    2, kMinMipYUV,3, 1, traits::is_unorm|traits::is_yuv },
-  { "nv11",                       kUnknownFCC,  kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
-  { "ia44",                       oFCC('IA44'), {4,0,0,4},    kNoSubformats,    1, kMinMip,   2, 1, traits::has_alpha|traits::paletted }, // index-alpha
-  { "ai44",                       oFCC('AI44'), {4,0,0,4},    kNoSubformats,    1, kMinMip,   2, 1, traits::has_alpha|traits::paletted }, // alpha-index
-  { "p8",                         oFCC('P8  '), kUnknownBits, kNoSubformats,    1, kMinMip,   1, 1, traits::paletted },
-  { "a8p8",                       oFCC('A8P8'), kUnknownBits, kNoSubformats,    2, kMinMip,   2, 1, traits::has_alpha|traits::paletted },
-  { "b4g4r4a4_unorm",             oFCC('n4u '), kBS_4_4,      kNoSubformats,    2, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha },
-  { "r8g8b8_unorm",               oFCC('c3u '), kBS_3_8,      kNoSubformats,    3, kMinMip,   3, 1, traits::is_unorm },
-  { "r8g8b8_unorm_srgb",          kUnknownFCC,	kBS_3_8,      kNoSubformats,    3, kMinMip,   3, 1, traits::is_unorm|traits::is_srgb },
-	{ "r8g8b8x8_unorm",             kUnknownFCC,	kBS_4_8,      kNoSubformats,		4, kMinMip,   4, 1, traits::is_unorm },
-  { "r8g8b8x8_unorm_srgb",        kUnknownFCC,	kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::is_srgb },
-	{ "b8g8r8_unorm",               kUnknownFCC,	kBS_3_8,      kNoSubformats,    3, kMinMip,   3, 1, traits::is_unorm },
-  { "b8g8r8_unorm_srgb",          kUnknownFCC,	kBS_3_8,      kNoSubformats,    3, kMinMip,   3, 1, traits::is_unorm|traits::is_srgb },
-  { "a8b8g8r8_unorm",             oFCC('abgr'), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::has_alpha },
-  { "a8b8g8r8_unorm_srgb",        kUnknownFCC,	kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::is_srgb|traits::has_alpha },
-  { "x8b8g8r8_unorm",             oFCC('xbgr'), kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm },
-  { "x8b8g8r8_unorm_srgb",        kUnknownFCC,	kBS_4_8,      kNoSubformats,    4, kMinMip,   4, 1, traits::is_unorm|traits::is_srgb },
-  { "y8_u8_v8_unorm",             oFCC('yuv8'), kBS_3_8,      kSFD_R8_3,        1, kMinMipYUV,3, 3, traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1|traits::subsurface2_bias1 },
-  { "y8_a8_u8_v8_unorm",          oFCC('auv8'), kBS_3_8,      kSFD_R8_4,        1, kMinMipYUV,3, 4, traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface2_bias1|traits::subsurface3_bias1 },
-  { "ybc4_ubc4_vbc4_unorm",       oFCC('yuvb'), kBS_4_8,      kSFD_BC4_3,       8, kMinMipYUV,3, 3, traits::is_bc|traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1|traits::subsurface2_bias1 },
-  { "ybc4_abc4_ubc4_vbc4_unorm",  oFCC('auvb'), kBS_4_8,      kSFD_BC4_4,       8, kMinMipYUV,3, 4, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface2_bias1|traits::subsurface3_bias1 },
-  { "y8_u8v8_unorm",              oFCC('yv8u'), kBS_3_8,      kSFD_R8_RG8,      1, kMinMipYUV,3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
-  { "y8a8_u8v8_unorm",            oFCC('av8u'), kBS_4_8,      kSFD_RG8_RG8,     2, kMinMipYUV,4, 2, traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
-  { "ybc4_uvbc5_unorm",           oFCC('yvbu'), kBS_3_8,      kSFD_BC4_BC5,     8, kMinMipYUV,3, 2, traits::is_bc|traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
-  { "yabc5_uvbc5_unorm",          oFCC('avbu'), kBS_4_8,      kSFD_BC5_BC5,    16, kMinMipYUV,4, 2, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
+  { "unknown",                    kUnknownFCC,  kUnknownBits, kNoSubformats,    0, 0, 0, traits::none },
+  { "r32g32b32a32_typeless",      oFCC('?i4 '), kBS_4_32,     kNoSubformats,  128, 4, 1, traits::has_alpha },
+  { "r32g32b32a32_float",         oFCC('f4  '), kBS_4_32,     kNoSubformats,  128, 4, 1, traits::has_alpha },
+  { "r32g32b32a32_uint",          oFCC('ui4 '), kBS_4_32,     kNoSubformats,  128, 4, 1, traits::has_alpha },
+  { "r32g32b32a32_sint",          oFCC('si4 '), kBS_4_32,     kNoSubformats,  128, 4, 1, traits::has_alpha },
+  { "r32g32b32_typeless",         oFCC('?i3 '), kBS_3_32,     kNoSubformats,   12, 3, 1, traits::has_alpha },
+  { "r32g32b32_float",            oFCC('f3  '), kBS_3_32,     kNoSubformats,   12, 3, 1, traits::none },
+  { "r32g32b32_uint",             oFCC('ui3 '), kBS_3_32,     kNoSubformats,   12, 3, 1, traits::none },
+  { "r32g32b32_sint",             oFCC('si3 '), kBS_3_32,     kNoSubformats,   12, 3, 1, traits::none },
+  { "r16g16b16a16_typeless",      oFCC('?s4 '), kBS_4_16,     kNoSubformats,    8, 4, 1, traits::has_alpha },
+  { "r16g16b16a16_float",         oFCC('h4  '), kBS_4_16,     kNoSubformats,    8, 4, 1, traits::has_alpha },
+  { "r16g16b16a16_unorm",         oFCC('h4u '), kBS_4_16,     kNoSubformats,    8, 4, 1, traits::is_unorm|traits::has_alpha },
+  { "r16g16b16a16_uint",          oFCC('us4 '), kBS_4_16,     kNoSubformats,    8, 4, 1, traits::has_alpha },
+  { "r16g16b16a16_snorm",         oFCC('h4s '), kBS_4_16,     kNoSubformats,    8, 4, 1, traits::has_alpha },
+  { "r16g16b16a16_sint",          oFCC('ss4 '), kBS_4_16,     kNoSubformats,    8, 4, 1, traits::has_alpha },
+  { "r32g32_typeless",            oFCC('?i2 '), kBS_2_32,     kNoSubformats,    8, 2, 1, traits::none },
+  { "r32g32_float",               oFCC('f2  '), kBS_2_32,     kNoSubformats,    8, 2, 1, traits::none },
+  { "r32g32_uint",                oFCC('ui2 '), kBS_2_32,     kNoSubformats,    8, 2, 1, traits::none },
+  { "r32g32_sint",                oFCC('si2 '), kBS_2_32,     kNoSubformats,    8, 2, 1, traits::none },
+  { "r32g8x24_typeless",          kUnknownFCC,  {32,8,0,24},  kNoSubformats,    8, 3, 1, traits::none },
+  { "d32_float_s8x24_uint",       kUnknownFCC,  {32,8,0,24},  kNoSubformats,    8, 3, 1, traits::is_depth },
+  { "r32_float_x8x24_typeless",   kUnknownFCC,  {32,8,0,24},  kNoSubformats,    8, 3, 1, traits::is_depth },
+  { "x32_typeless_g8x24_uint",    kUnknownFCC,  {32,8,0,24},  kNoSubformats,    8, 3, 1, traits::none },
+  { "r10g10b10a2_typeless",       kUnknownFCC,  kBS_DEC3N,    kNoSubformats,    4, 4, 1, traits::has_alpha },
+  { "r10g10b10a2_unorm",          kUnknownFCC,  kBS_DEC3N,    kNoSubformats,    4, 4, 1, traits::is_unorm|traits::has_alpha },
+  { "r10g10b10a2_uint",           kUnknownFCC,  kBS_DEC3N,    kNoSubformats,    4, 4, 1, traits::has_alpha },
+  { "r11g11b10_float",            kUnknownFCC,  {11,11,10,0}, kNoSubformats,    4, 3, 1, traits::none },
+  { "r8g8b8a8_typeless",          oFCC('?c4 '), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::has_alpha },
+  { "r8g8b8a8_unorm",             oFCC('c4u '), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::has_alpha },
+  { "r8g8b8a8_unorm_srgb",        oFCC('c4us'), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::is_srgb|traits::has_alpha },
+  { "r8g8b8a8_uint",              oFCC('uc4 '), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::has_alpha },
+  { "r8g8b8a8_snorm",             oFCC('c4s '), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::has_alpha },
+  { "r8g8b8a8_sint",              oFCC('sc4 '), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::has_alpha },
+  { "r16g16_typeless",            oFCC('?s2 '), kBS_2_16,     kNoSubformats,    4, 2, 1, traits::none },
+  { "r16g16_float",               oFCC('h2  '), kBS_2_16,     kNoSubformats,    4, 2, 1, traits::none },
+  { "r16g16_unorm",               oFCC('h2u '), kBS_2_16,     kNoSubformats,    4, 2, 1, traits::is_unorm },
+  { "r16g16_uint",                oFCC('us2 '), kBS_2_16,     kNoSubformats,    4, 2, 1, traits::none },
+  { "r16g16_snorm",               oFCC('h2s '), kBS_2_16,     kNoSubformats,    4, 2, 1, traits::none },
+  { "r16g16_sint",                oFCC('ss2 '), kBS_2_16,     kNoSubformats,    4, 2, 1, traits::none },
+  { "r32_typeless",               oFCC('?i1 '), kBS_1_32,     kNoSubformats,    4, 1, 1, traits::is_depth },
+  { "d32_float",                  oFCC('f1d '), kBS_1_32,     kNoSubformats,    4, 1, 1, traits::is_depth },
+  { "r32_float",                  oFCC('f1  '), kBS_1_32,     kNoSubformats,    4, 1, 1, traits::none },
+  { "r32_uint",                   oFCC('ui1 '), kBS_1_32,     kNoSubformats,    4, 1, 1, traits::none },
+  { "r32_sint",                   oFCC('si1 '), kBS_1_32,     kNoSubformats,    4, 1, 1, traits::none },
+  { "r24g8_typeless",             kUnknownFCC,  kBS_DS,       kNoSubformats,    4, 2, 1, traits::is_depth },
+  { "d24_unorm_s8_uint",          kUnknownFCC,  kBS_DS,       kNoSubformats,    4, 2, 1, traits::is_unorm|traits::is_depth },
+  { "r24_unorm_x8_typeless",      kUnknownFCC,  kBS_DS,       kNoSubformats,    4, 2, 1, traits::is_unorm|traits::is_depth },
+  { "x24_typeless_g8_uint",       kUnknownFCC,  kBS_DS,       kNoSubformats,    4, 2, 1, traits::is_depth },
+  { "r8g8_typeless",              oFCC('?c2 '), kBS_2_8,      kNoSubformats,    2, 2, 1, traits::none },
+  { "r8g8_unorm",                 oFCC('uc2u'), kBS_2_8,      kNoSubformats,    2, 2, 1, traits::is_unorm },
+  { "r8g8_uint",                  oFCC('ui2 '), kBS_2_8,      kNoSubformats,    2, 2, 1, traits::none },
+  { "r8g8_snorm",                 oFCC('uc2s'), kBS_2_8,      kNoSubformats,    2, 2, 1, traits::none },
+  { "r8g8_sint",                  oFCC('si2 '), kBS_2_8,      kNoSubformats,    2, 2, 1, traits::none },
+  { "r16_typeless",               oFCC('?s1 '), kBS_1_16,     kNoSubformats,    2, 1, 1, traits::is_depth },
+  { "r16_float",                  oFCC('h1  '), kBS_1_16,     kNoSubformats,    2, 1, 1, traits::none },
+  { "d16_unorm",                  oFCC('h1ud'), kBS_1_16,     kNoSubformats,    2, 1, 1, traits::is_unorm|traits::is_depth },
+  { "r16_unorm",                  oFCC('h1u '), kBS_1_16,     kNoSubformats,    2, 1, 1, traits::is_unorm },
+  { "r16_uint",                   oFCC('us1 '), kBS_1_16,     kNoSubformats,    2, 1, 1, traits::none },
+  { "r16_snorm",                  oFCC('h1s '), kBS_1_16,     kNoSubformats,    2, 1, 1, traits::none },
+  { "r16_sint",                   oFCC('ss1 '), kBS_1_16,     kNoSubformats,    2, 1, 1, traits::none },
+  { "r8_typeless",                oFCC('?c1 '), kBS_1_8,      kNoSubformats,    1, 1, 1, traits::none },
+  { "r8_unorm",                   oFCC('uc1u'), kBS_1_8,      kNoSubformats,    1, 1, 1, traits::is_unorm },
+  { "r8_uint",                    oFCC('uc1 '), kBS_1_8,      kNoSubformats,    1, 1, 1, traits::none },
+  { "r8_snorm",                   oFCC('uc1s'), kBS_1_8,      kNoSubformats,    1, 1, 1, traits::none },
+  { "r8_sint",                    oFCC('sc1 '), kBS_1_8,      kNoSubformats,    1, 1, 1, traits::none },
+  { "a8_unorm",                   oFCC('ac1u'), kBS_1_8,      kNoSubformats,    1, 1, 1, traits::is_unorm|traits::has_alpha },
+  { "r1_unorm",                   oFCC('bitu'), {1,0,0,0},    kNoSubformats,    1, 1, 1, traits::is_unorm },
+  { "r9g9b9e5_sharedexp",         kUnknownFCC, {9,9,9,5},     kNoSubformats,    4, 4, 1, traits::none },
+  { "r8g8_b8g8_unorm",            kUnknownFCC, kBS_4_8,       kNoSubformats,    4, 4, 1, traits::is_unorm },
+  { "g8r8_g8b8_unorm",            kUnknownFCC, kBS_4_8,       kNoSubformats,    4, 4, 1, traits::is_unorm },
+  { "bc1_typeless",               oFCC('BC1?'), kBS_565,      kNoSubformats,    8, 3, 1, traits::is_bc },
+  { "bc1_unorm",                  oFCC('BC1u'), kBS_565,      kNoSubformats,    8, 3, 1, traits::is_bc|traits::is_unorm },
+  { "bc1_unorm_srgb",             oFCC('BC1s'), kBS_565,      kNoSubformats,    8, 3, 1, traits::is_bc|traits::is_unorm|traits::is_srgb },
+  { "bc2_typeless",               oFCC('BC2?'), {5,6,5,4},    kNoSubformats,   16, 4, 1, traits::is_bc|traits::has_alpha },
+  { "bc2_unorm",                  oFCC('BC2u'), {5,6,5,4},    kNoSubformats,   16, 4, 1, traits::is_bc|traits::is_unorm|traits::has_alpha },
+  { "bc2_unorm_srgb",             oFCC('BC2s'), {5,6,5,4},    kNoSubformats,   16, 4, 1, traits::is_bc|traits::is_unorm|traits::is_srgb|traits::has_alpha },
+  { "bc3_typeless",               oFCC('BC3?'), {5,6,5,8},    kNoSubformats,   16, 4, 1, traits::is_bc|traits::has_alpha },
+  { "bc3_unorm",                  oFCC('BC3u'), {5,6,5,8},    kNoSubformats,   16, 4, 1, traits::is_bc|traits::is_unorm|traits::has_alpha },
+  { "bc3_unorm_srgb",             oFCC('BC3s'), {5,6,5,8},    kNoSubformats,   16, 4, 1, traits::is_bc|traits::is_unorm|traits::is_srgb|traits::has_alpha },
+  { "bc4_typeless",               oFCC('BC4?'), kBS_1_8,      kNoSubformats,    8, 1, 1, traits::is_bc },
+  { "bc4_unorm",                  oFCC('BC4u'), kBS_1_8,      kNoSubformats,    8, 1, 1, traits::is_bc|traits::is_unorm },
+  { "bc4_snorm",                  oFCC('BC4s'), kBS_1_8,      kNoSubformats,    8, 1, 1, traits::is_bc },
+  { "bc5_typeless",               oFCC('BC5?'), kBS_2_8,      kNoSubformats,   16, 2, 1, traits::is_bc },
+  { "bc5_unorm",                  oFCC('BC5u'), kBS_2_8,      kNoSubformats,   16, 2, 1, traits::is_bc|traits::is_unorm },
+  { "bc5_snorm",                  oFCC('BC5s'), kBS_2_8,      kNoSubformats,   16, 2, 1, traits::is_bc },
+  { "b5g6r5_unorm",               kUnknownFCC,  kBS_565,      kNoSubformats,    2, 3, 1, traits::is_unorm },
+  { "b5g5r5a1_unorm",             kUnknownFCC,  {5,6,5,1},    kNoSubformats,    2, 4, 1, traits::is_unorm|traits::has_alpha },
+  { "b8g8r8a8_unorm",             oFCC('c4u '), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::has_alpha },
+  { "b8g8r8x8_unorm",             oFCC('c4u '), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm },
+  { "r10g10b10_xr_bias_a2_unorm", kUnknownFCC,  kBS_DEC3N,    kNoSubformats,    4, 4, 1, traits::is_unorm },
+  { "b8g8r8a8_typeless",          kUnknownFCC,  kBS_4_8,      kNoSubformats,    4, 4, 1, traits::none },
+  { "b8g8r8a8_unorm_srgb",        kUnknownFCC,  kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::is_srgb },
+  { "b8g8r8x8_typeless",          kUnknownFCC,  kBS_4_8,      kNoSubformats,    4, 4, 1, traits::none },
+  { "b8g8r8x8_unorm_srgb",        kUnknownFCC,  kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::is_srgb },
+  { "bc6h_typeless",              oFCC('BC6?'), kUnknownBits, kNoSubformats,   16, 3, 1, traits::is_bc },
+  { "bc6h_uf16",                  oFCC('BC6u'), kUnknownBits, kNoSubformats,   16, 3, 1, traits::is_bc },
+  { "bc6h_sf16",                  oFCC('BC6s'), kUnknownBits, kNoSubformats,   16, 3, 1, traits::is_bc },
+  { "bc7_typeless",               oFCC('BC7?'), kUnknownBits, kNoSubformats,   16, 4, 1, traits::is_bc|traits::has_alpha },
+  { "bc7_unorm",                  oFCC('BC7u'), kUnknownBits, kNoSubformats,   16, 4, 1, traits::is_bc|traits::is_unorm|traits::has_alpha },
+  { "bc7_unorm_srgb",             oFCC('BC7s'), kUnknownBits, kNoSubformats,   16, 4, 1, traits::is_bc|traits::is_unorm|traits::is_srgb|traits::has_alpha },
+  { "ayuv",                       oFCC('AYUV'), kBS_4_4,      kNoSubformats,   16, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+  { "y410",                       oFCC('Y410'), kBS_DEC3N,    {format::r10g10b10a2_unorm,format::unknown}, 4, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+  { "y416",                       oFCC('Y416'), kBS_4_16,     {format::b8g8r8a8_unorm,format::unknown}, 4, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+  { "nv12",                       oFCC('NV12'), kBS_3_8,      kSFD_R8_RG8,      1, 3, 2, traits::is_unorm|traits::is_yuv },
+  { "p010",                       oFCC('P010'), {10,10,10,0}, kSFD_R16_RG16,    2, 3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
+  { "p016",                       oFCC('P016'), kBS_3_16,     kSFD_R16_RG16,    2, 3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
+  { "420_opaque",                 oFCC('420O'), kBS_3_8,      kSFD_R8_RG8,      1, 3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
+  { "yuy2",                       oFCC('YUY2'), kBS_4_8,      kSFD_R8_RG8,      4, 4, 1, traits::is_unorm|traits::has_alpha|traits::is_yuv },
+  { "y210",                       oFCC('Y210'), kBS_4_16,     kNoSubformats,    2, 3, 1, traits::is_unorm|traits::is_yuv },
+  { "y216",                       oFCC('Y216'), kBS_4_16,     kNoSubformats,    2, 3, 1, traits::is_unorm|traits::is_yuv },
+  { "nv11",                       kUnknownFCC,  kBS_3_8,      kSFD_R8_RG8,      1, 3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv },
+  { "ia44",                       oFCC('IA44'), {4,0,0,4},    kNoSubformats,    1, 2, 1, traits::has_alpha|traits::paletted }, // index-alpha
+  { "ai44",                       oFCC('AI44'), {4,0,0,4},    kNoSubformats,    1, 2, 1, traits::has_alpha|traits::paletted }, // alpha-index
+  { "p8",                         oFCC('P8  '), kUnknownBits, kNoSubformats,    1, 1, 1, traits::paletted },
+  { "a8p8",                       oFCC('A8P8'), kUnknownBits, kNoSubformats,    2, 2, 1, traits::has_alpha|traits::paletted },
+  { "b4g4r4a4_unorm",             oFCC('n4u '), kBS_4_4,      kNoSubformats,    2, 4, 1, traits::is_unorm|traits::has_alpha },
+  { "r8g8b8_unorm",               oFCC('c3u '), kBS_3_8,      kNoSubformats,    3, 3, 1, traits::is_unorm },
+  { "r8g8b8_unorm_srgb",          kUnknownFCC,	kBS_3_8,      kNoSubformats,    3, 3, 1, traits::is_unorm|traits::is_srgb },
+	{ "r8g8b8x8_unorm",             kUnknownFCC,	kBS_4_8,      kNoSubformats,		4, 4, 1, traits::is_unorm },
+  { "r8g8b8x8_unorm_srgb",        kUnknownFCC,	kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::is_srgb },
+	{ "b8g8r8_unorm",               kUnknownFCC,	kBS_3_8,      kNoSubformats,    3, 3, 1, traits::is_unorm },
+  { "b8g8r8_unorm_srgb",          kUnknownFCC,	kBS_3_8,      kNoSubformats,    3, 3, 1, traits::is_unorm|traits::is_srgb },
+  { "a8b8g8r8_unorm",             oFCC('abgr'), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::has_alpha },
+  { "a8b8g8r8_unorm_srgb",        kUnknownFCC,	kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::is_srgb|traits::has_alpha },
+  { "x8b8g8r8_unorm",             oFCC('xbgr'), kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm },
+  { "x8b8g8r8_unorm_srgb",        kUnknownFCC,	kBS_4_8,      kNoSubformats,    4, 4, 1, traits::is_unorm|traits::is_srgb },
+  { "y8_u8_v8_unorm",             oFCC('yuv8'), kBS_3_8,      kSFD_R8_3,        1, 3, 3, traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1|traits::subsurface2_bias1 },
+  { "y8_a8_u8_v8_unorm",          oFCC('auv8'), kBS_3_8,      kSFD_R8_4,        1, 3, 4, traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface2_bias1|traits::subsurface3_bias1 },
+  { "ybc4_ubc4_vbc4_unorm",       oFCC('yuvb'), kBS_4_8,      kSFD_BC4_3,       8, 3, 3, traits::is_bc|traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1|traits::subsurface2_bias1 },
+  { "ybc4_abc4_ubc4_vbc4_unorm",  oFCC('auvb'), kBS_4_8,      kSFD_BC4_4,       8, 3, 4, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface2_bias1|traits::subsurface3_bias1 },
+  { "y8_u8v8_unorm",              oFCC('yv8u'), kBS_3_8,      kSFD_R8_RG8,      1, 3, 2, traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
+  { "y8a8_u8v8_unorm",            oFCC('av8u'), kBS_4_8,      kSFD_RG8_RG8,     2, 4, 2, traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
+  { "ybc4_uvbc5_unorm",           oFCC('yvbu'), kBS_3_8,      kSFD_BC4_BC5,     8, 3, 2, traits::is_bc|traits::is_unorm|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
+  { "yabc5_uvbc5_unorm",          oFCC('avbu'), kBS_4_8,      kSFD_BC5_BC5,    16, 4, 2, traits::is_bc|traits::is_unorm|traits::has_alpha|traits::is_planar|traits::is_yuv|traits::subsurface1_bias1 },
 };
 static_assert(oCOUNTOF(sFormatInfo) == (int)format::count, "array mismatch");
 
@@ -306,6 +307,341 @@ oDEFINE_FROM_STRING_ENUM_CLASS(surface::cube_face)
 
 	namespace surface {
 
+format as_srgb(const format& f)
+{
+	switch (f)
+	{
+		case format::r8g8b8a8_typeless:
+		case format::r8g8b8a8_unorm:
+		case format::r8g8b8a8_unorm_srgb:
+		case format::r8g8b8a8_uint:
+		case format::r8g8b8a8_snorm:
+		case format::r8g8b8a8_sint: return format::r8g8b8a8_unorm_srgb;
+		case format::bc1_typeless:
+		case format::bc1_unorm:
+		case format::bc1_unorm_srgb: return format::bc1_unorm_srgb;
+		case format::bc2_typeless:
+		case format::bc2_unorm:
+		case format::bc2_unorm_srgb: return format::bc2_unorm_srgb;
+		case format::bc3_typeless:
+		case format::bc3_unorm:
+		case format::bc3_unorm_srgb: return format::bc3_unorm_srgb;
+		case format::b8g8r8a8_typeless:
+		case format::b8g8r8a8_unorm_srgb: return format::b8g8r8a8_unorm_srgb;
+		case format::b8g8r8x8_typeless:
+		case format::b8g8r8x8_unorm_srgb: return format::b8g8r8x8_unorm_srgb;
+		case format::bc7_typeless:
+		case format::bc7_unorm:
+		case format::bc7_unorm_srgb: return format::bc7_unorm_srgb;
+		case format::r8g8b8_unorm:
+		case format::r8g8b8_unorm_srgb: return format::r8g8b8_unorm_srgb;
+		case format::r8g8b8x8_unorm:
+		case format::r8g8b8x8_unorm_srgb: return format::r8g8b8x8_unorm_srgb;
+		case format::b8g8r8_unorm:
+		case format::b8g8r8_unorm_srgb: return format:: b8g8r8_unorm_srgb;
+		case format::a8b8g8r8_unorm:
+		case format::a8b8g8r8_unorm_srgb: return format::a8b8g8r8_unorm_srgb;
+		case format::x8b8g8r8_unorm:
+		case format::x8b8g8r8_unorm_srgb: return format::x8b8g8r8_unorm_srgb;
+		default: break;
+	}
+	return format::unknown;
+}
+
+format as_depth(const format& f)
+{
+	switch (f)
+	{
+		case format::d32_float_s8x24_uint:
+		case format::r32_float_x8x24_typeless:
+		case format::x32_typeless_g8x24_uint: return format::d32_float_s8x24_uint;
+		case format::r32_typeless:
+		case format::d32_float:
+		case format::r32_float: return format::d32_float;
+		case format::r24g8_typeless:
+		case format::d24_unorm_s8_uint:
+		case format::r24_unorm_x8_typeless:
+		case format::x24_typeless_g8_uint: return format::d24_unorm_s8_uint;
+		case format::r16_typeless:
+		case format::r16_float:
+		case format::d16_unorm:
+		case format::r16_unorm:
+		case format::r16_uint:
+		case format::r16_snorm:
+		case format::r16_sint: return format::d16_unorm;
+		default: break;
+	}
+	return format::unknown;
+}
+
+format as_typeless(const format& f)
+{
+	switch (f)
+	{
+		case format::r32g32b32a32_typeless:
+		case format::r32g32b32a32_float:
+		case format::r32g32b32a32_uint:
+		case format::r32g32b32a32_sint: return format::r32g32b32a32_typeless;
+		case format::r32g32b32_typeless:
+		case format::r32g32b32_float:
+		case format::r32g32b32_uint:
+		case format::r32g32b32_sint: return format::r32g32b32_typeless;
+		case format::r16g16b16a16_typeless:
+		case format::r16g16b16a16_float:
+		case format::r16g16b16a16_unorm:
+		case format::r16g16b16a16_uint:
+		case format::r16g16b16a16_snorm:
+		case format::r16g16b16a16_sint: return format::r16g16b16a16_typeless;
+		case format::r32g32_typeless:
+		case format::r32g32_float:
+		case format::r32g32_uint:
+		case format::r32g32_sint: return format::r32g32_typeless;
+		case format::r32g8x24_typeless: 
+		case format::d32_float_s8x24_uint: return format::r32g8x24_typeless;
+		case format::r32_float_x8x24_typeless:
+		case format::x32_typeless_g8x24_uint: return format::r32_float_x8x24_typeless;
+		case format::r10g10b10a2_typeless:
+		case format::r10g10b10a2_unorm:
+		case format::r10g10b10a2_uint: return format::r10g10b10a2_typeless;
+		case format::r8g8b8a8_typeless:
+		case format::r8g8b8a8_unorm:
+		case format::r8g8b8a8_unorm_srgb:
+		case format::r8g8b8a8_uint:
+		case format::r8g8b8a8_snorm:
+		case format::r8g8b8a8_sint: return format::r8g8b8a8_typeless;
+		case format::r16g16_typeless:
+		case format::r16g16_float:
+		case format::r16g16_unorm:
+		case format::r16g16_uint:
+		case format::r16g16_snorm:
+		case format::r16g16_sint: return format::r16g16_typeless;
+		case format::r32_typeless:
+		case format::d32_float:
+		case format::r32_float:
+		case format::r32_uint:
+		case format::r32_sint: return format::r32_typeless;
+		case format::r24g8_typeless:
+		case format::d24_unorm_s8_uint:
+		case format::r24_unorm_x8_typeless:
+		case format::x24_typeless_g8_uint: return format::r24g8_typeless;
+		case format::r8g8_typeless:
+		case format::r8g8_unorm:
+		case format::r8g8_uint:
+		case format::r8g8_snorm:
+		case format::r8g8_sint: return format::r8g8_typeless;
+		case format::r16_typeless:
+		case format::r16_float:
+		case format::d16_unorm:
+		case format::r16_unorm:
+		case format::r16_uint:
+		case format::r16_snorm:
+		case format::r16_sint: return format::r16_typeless;
+		case format::r8_typeless:
+		case format::r8_unorm:
+		case format::r8_uint:
+		case format::r8_snorm:
+		case format::r8_sint: return format::r8_unorm;
+		case format::bc1_typeless:
+		case format::bc1_unorm:
+		case format::bc1_unorm_srgb: return format::bc1_typeless;
+		case format::bc2_typeless:
+		case format::bc2_unorm:
+		case format::bc2_unorm_srgb: return format::bc2_typeless;
+		case format::bc3_typeless:
+		case format::bc3_unorm:
+		case format::bc3_unorm_srgb: return format::bc3_typeless;
+		case format::bc4_typeless:
+		case format::bc4_unorm:
+		case format::bc4_snorm: return format::bc4_typeless;
+		case format::bc5_typeless:
+		case format::bc5_unorm:
+		case format::bc5_snorm: return format::bc5_typeless;
+		case format::b8g8r8a8_typeless:
+		case format::b8g8r8a8_unorm_srgb: return format::b8g8r8a8_typeless;
+		case format::b8g8r8x8_typeless:
+		case format::b8g8r8x8_unorm_srgb: return format::b8g8r8x8_typeless;
+		case format::bc6h_typeless:
+		case format::bc6h_uf16:
+		case format::bc6h_sf16: return format::bc6h_typeless;
+		case format::bc7_typeless:
+		case format::bc7_unorm:
+		case format::bc7_unorm_srgb: return format::bc7_typeless;
+		default: break;
+	}
+	return format::unknown;
+}
+
+format as_unorm(const format& f)
+{
+	switch (f)
+	{
+		case format::r16g16b16a16_typeless:
+		case format::r16g16b16a16_float:
+		case format::r16g16b16a16_unorm:
+		case format::r16g16b16a16_uint:
+		case format::r16g16b16a16_snorm:
+		case format::r16g16b16a16_sint: return format::r16g16b16a16_unorm;
+		case format::r10g10b10a2_typeless:
+		case format::r10g10b10a2_unorm:
+		case format::r10g10b10a2_uint: return format::r10g10b10a2_unorm;
+		case format::r8g8b8a8_typeless:
+		case format::r8g8b8a8_unorm:
+		case format::r8g8b8a8_unorm_srgb:
+		case format::r8g8b8a8_uint:
+		case format::r8g8b8a8_snorm:
+		case format::r8g8b8a8_sint: return format::r8g8b8a8_unorm;
+		case format::r16g16_typeless:
+		case format::r16g16_float:
+		case format::r16g16_unorm:
+		case format::r16g16_uint:
+		case format::r16g16_snorm:
+		case format::r16g16_sint: return format::r16g16_unorm;
+		case format::r24g8_typeless:
+		case format::d24_unorm_s8_uint:
+		case format::r24_unorm_x8_typeless:
+		case format::x24_typeless_g8_uint: return format::r24_unorm_x8_typeless;
+		case format::r8g8_typeless:
+		case format::r8g8_unorm:
+		case format::r8g8_uint:
+		case format::r8g8_snorm:
+		case format::r8g8_sint: return format::r8g8_unorm;
+		case format::r16_typeless:
+		case format::r16_float:
+		case format::d16_unorm:
+		case format::r16_unorm:
+		case format::r16_uint:
+		case format::r16_snorm:
+		case format::r16_sint: return format::r16_unorm;
+		case format::r8_typeless:
+		case format::r8_unorm:
+		case format::r8_uint:
+		case format::r8_snorm:
+		case format::r8_sint: return format::r8_unorm;
+		case format::bc1_typeless:
+		case format::bc1_unorm:
+		case format::bc1_unorm_srgb: return format::bc1_unorm;
+		case format::bc2_typeless:
+		case format::bc2_unorm:
+		case format::bc2_unorm_srgb: return format::bc2_unorm;
+		case format::bc3_typeless:
+		case format::bc3_unorm:
+		case format::bc3_unorm_srgb: return format::bc3_unorm;
+		case format::bc4_typeless:
+		case format::bc4_unorm:
+		case format::bc4_snorm: return format::bc4_unorm;
+		case format::bc5_typeless:
+		case format::bc5_unorm:
+		case format::bc5_snorm: return format::bc5_unorm;
+		case format::b8g8r8a8_typeless:
+		case format::b8g8r8a8_unorm_srgb: return format::b8g8r8a8_unorm;
+		case format::b8g8r8x8_typeless:
+		case format::b8g8r8x8_unorm_srgb: return format::b8g8r8x8_unorm;
+		case format::bc7_typeless:
+		case format::bc7_unorm:
+		case format::bc7_unorm_srgb: return format::bc7_unorm;
+		case format::b4g4r4a4_unorm: return format::b4g4r4a4_unorm;
+		case format::r8g8b8_unorm:
+		case format::r8g8b8_unorm_srgb: return format::r8g8b8_unorm;
+		case format::r8g8b8x8_unorm:
+		case format::r8g8b8x8_unorm_srgb: return format::r8g8b8x8_unorm;
+		case format::b8g8r8_unorm:
+		case format::b8g8r8_unorm_srgb: return format::b8g8r8_unorm;
+		case format::a8b8g8r8_unorm:
+		case format::a8b8g8r8_unorm_srgb: return format::a8b8g8r8_unorm;
+		case format::x8b8g8r8_unorm:
+		case format::x8b8g8r8_unorm_srgb: return format::x8b8g8r8_unorm;
+		case format::y8_u8_v8_unorm:
+		case format::y8_a8_u8_v8_unorm:
+		case format::ybc4_ubc4_vbc4_unorm:
+		case format::ybc4_abc4_ubc4_vbc4_unorm:
+		case format::y8_u8v8_unorm:
+		case format::y8a8_u8v8_unorm:
+		case format::ybc4_uvbc5_unorm:
+		case format::yabc5_uvbc5_unorm: return f;
+		default: break;
+	}
+	return format::unknown;
+}
+
+format as_x(const format& f)
+{
+	switch (f)
+	{
+		case format::r8g8b8_unorm:
+		case format::r8g8b8a8_unorm:
+		case format::r8g8b8x8_unorm: return format::r8g8b8x8_unorm;
+		case format::r8g8b8_unorm_srgb:
+		case format::r8g8b8a8_unorm_srgb:
+		case format::r8g8b8x8_unorm_srgb: return format::r8g8b8x8_unorm_srgb;
+		case format::b8g8r8_unorm:
+		case format::b8g8r8a8_unorm:
+		case format::b8g8r8x8_unorm: return format::b8g8r8x8_unorm;
+		case format::b8g8r8a8_typeless:
+		case format::b8g8r8x8_typeless: return format::b8g8r8x8_typeless;
+		case format::b8g8r8_unorm_srgb:
+		case format::b8g8r8a8_unorm_srgb:
+		case format::b8g8r8x8_unorm_srgb: return format::b8g8r8x8_unorm_srgb;
+		case format::a8b8g8r8_unorm:
+		case format::x8b8g8r8_unorm: return format::x8b8g8r8_unorm;
+		case format::a8b8g8r8_unorm_srgb:
+		case format::x8b8g8r8_unorm_srgb: return format::x8b8g8r8_unorm_srgb;
+		default: break;
+	}
+	return format::unknown;
+}
+
+format as_a(const format& f)
+{
+	switch (f)
+	{
+		case format::r8g8b8_unorm:
+		case format::r8g8b8a8_unorm:
+		case format::r8g8b8x8_unorm: return format::r8g8b8a8_unorm;
+		case format::r8g8b8_unorm_srgb:
+		case format::r8g8b8a8_unorm_srgb:
+		case format::r8g8b8x8_unorm_srgb: return format::r8g8b8a8_unorm_srgb;
+		case format::b8g8r8_unorm:
+		case format::b8g8r8a8_unorm:
+		case format::b8g8r8x8_unorm: return format::b8g8r8a8_unorm;
+		case format::b8g8r8a8_typeless:
+		case format::b8g8r8x8_typeless: return format::b8g8r8a8_typeless;
+		case format::b8g8r8_unorm_srgb:
+		case format::b8g8r8a8_unorm_srgb:
+		case format::b8g8r8x8_unorm_srgb: return format::b8g8r8a8_unorm_srgb;
+		case format::a8b8g8r8_unorm:
+		case format::x8b8g8r8_unorm: return format::a8b8g8r8_unorm;
+		case format::a8b8g8r8_unorm_srgb:
+		case format::x8b8g8r8_unorm_srgb: return format::a8b8g8r8_unorm_srgb;
+		default: break;
+	}
+	return format::unknown;
+}
+
+format as_noax(const format& f)
+{
+	switch (f)
+	{
+		case format::r8g8b8_unorm:
+		case format::r8g8b8a8_unorm:
+		case format::r8g8b8x8_unorm: return format::r8g8b8_unorm;
+		case format::r8g8b8_unorm_srgb:
+		case format::r8g8b8a8_unorm_srgb:
+		case format::r8g8b8x8_unorm_srgb: return format::r8g8b8_unorm_srgb;
+		case format::a8b8g8r8_unorm:
+		case format::x8b8g8r8_unorm:
+		case format::b8g8r8_unorm:
+		case format::b8g8r8a8_unorm:
+		case format::b8g8r8x8_unorm: return format::b8g8r8_unorm;
+		case format::b8g8r8_unorm_srgb:
+		case format::b8g8r8a8_unorm_srgb:
+		case format::b8g8r8x8_unorm_srgb:;
+		case format::a8b8g8r8_unorm_srgb:
+		case format::x8b8g8r8_unorm_srgb: return format::b8g8r8_unorm_srgb;
+		default: break;
+	}
+	return format::unknown;
+}
+
 static const format_info& finf(const format& f)
 {
 	return sFormatInfo[(int) (f < format::count ? f : format::unknown)];
@@ -351,50 +687,6 @@ bool is_yuv(const format& f)
 	return has_trait(f, traits::is_yuv);
 }
 
-format add_alpha(const format& f)
-{
-	switch (f)
-	{
-		case format::r32g32b32_typeless: return format::r32g32b32a32_typeless;
-		case format::r32g32b32_float: return format::r32g32b32a32_float;
-		case format::r32g32b32a32_uint: return format::r32g32b32a32_uint;
-		case format::r32g32b32a32_sint: return format::r32g32b32a32_sint;
-		case format::r8g8b8_unorm: return format::r8g8b8a8_unorm;
-		case format::r8g8b8_unorm_srgb: return format::r8g8b8a8_unorm_srgb;
-		case format::b8g8r8_unorm: return format::b8g8r8a8_unorm;
-		case format::b8g8r8_unorm_srgb: return format::b8g8r8a8_unorm_srgb;
-		case format::b8g8r8x8_typeless: return format::b8g8r8a8_typeless;
-		default: break;
-	}
-	return f;
-}
-
-format strip_alphaorx(const format& f)
-{
-	switch (f)
-	{
-		case format::r32g32b32a32_typeless: return format::r32g32b32_typeless;
-		case format::r32g32b32a32_float: return format::r32g32b32_float;
-		case format::r32g32b32a32_uint: return format::r32g32b32a32_uint;
-		case format::r32g32b32a32_sint: return format::r32g32b32a32_sint;
-		case format::r8g8b8a8_unorm: return format::r8g8b8_unorm;
-		case format::r8g8b8a8_unorm_srgb: return format::r8g8b8_unorm_srgb;
-		case format::b8g8r8a8_unorm: return format::b8g8r8_unorm;
-		case format::b8g8r8x8_unorm: return format::b8g8r8_unorm;
-		case format::b8g8r8a8_unorm_srgb: return format::b8g8r8_unorm_srgb;
-		case format::b8g8r8x8_unorm_srgb: return format::b8g8r8_unorm_srgb;
-		case format::r8g8b8a8_typeless:
-		case format::r8g8b8a8_uint:
-		case format::r8g8b8a8_snorm:
-		case format::r8g8b8a8_sint:
-		case format::b8g8r8a8_typeless:
-		case format::b8g8r8x8_typeless:
-			oTHROW_INVARG("bgra or bgrx specified, but no comparable 3-component type defined");
-		default: break;
-	}
-	return f;
-}
-
 uint num_channels(const format& f)
 {
 	return finf(f).num_channels;
@@ -421,7 +713,9 @@ uint element_size(const format& f, uint subsurface)
 
 uint2 min_dimensions(const format& f)
 {
-	return finf(f).smallest_mip;
+	if (is_block_compressed(f)) return kMinMipBC;
+	else if (is_yuv(f)) return kMinMipYUV;
+	return kMinMip;
 }
 
 uint bits(const format& f)
