@@ -205,10 +205,13 @@ private:
 
 struct allocator
 {
-	allocator() : allocate(nullptr), deallocate(nullptr) {}
-	allocator(allocate_fn _Allocate, deallocate_fn _Deallocate) : allocate(_Allocate), deallocate(_Deallocate) {}
 	allocate_fn allocate;
 	deallocate_fn deallocate;
+
+	allocator() : allocate(nullptr), deallocate(nullptr) {}
+	allocator(allocate_fn _Allocate, deallocate_fn _Deallocate) : allocate(_Allocate), deallocate(_Deallocate) {}
+	
+	operator bool() const { return allocate && deallocate; }
 
 	scoped_allocation scoped_allocate(size_t num_bytes, unsigned int options = memory_alignment::align_to_default) const { return scoped_allocation(allocate(num_bytes, options), num_bytes, deallocate); }
 

@@ -49,11 +49,6 @@ public:
 	texel_buffer(texel_buffer&& that);
 	texel_buffer& operator=(texel_buffer&& that);
 
-	operator bool() const { return !!bits; }
-
-	inline semantic get_semantic() const { return inf.semantic; }
-	inline void set_semantic(const semantic& s) { inf.semantic = s; }
-
 	// create a buffer with uninitialized bits
 	void initialize(const info& i, const allocator& a = default_allocator);
 	
@@ -71,7 +66,11 @@ public:
 
 	void deinitialize();
 
+	operator bool() const { return !!bits; }
+	inline bool immutable() const { return !!bits && !alloc; }
+
 	inline info get_info() const { return inf; }
+	inline void set_semantic(const semantic& s) { inf.semantic = s; }
 
 	// returns the size of the bit data: all subresources and padding, not including the info
 	inline size_t size() const { return total_size(get_info()); }
@@ -123,8 +122,8 @@ public:
 
 private:
 	void* bits;
-	info inf;
 	allocator alloc;
+	info inf;
 	
 	typedef ouro::shared_mutex mutex_t;
 	typedef ouro::lock_guard<mutex_t> lock_t;
