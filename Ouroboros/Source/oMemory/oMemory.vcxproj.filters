@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="oMemory">
+      <UniqueIdentifier>{c5677553-a5ac-4a90-af6a-2edcef21ffeb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{28ac2ce3-b491-4e94-9b74-f1fc30c45630}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="memset8.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="rle_decode.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="rle_decoden.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="utfcmp.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="dtoull.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="is_ascii.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memcmp4.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memmem.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memnset.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2d.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2d2.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2d4.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memset2d8.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="memset4.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="memduff.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\atof.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\bit.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\byte.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\endian.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\equal.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\memory.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\all.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

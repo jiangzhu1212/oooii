@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBase/osc.h>
 #include <oBase/algorithm.h>
-#include <oBase/memory.h>
+#include <oMemory/memory.h>
 #include "test_struct.h"
 #include <vector>
 

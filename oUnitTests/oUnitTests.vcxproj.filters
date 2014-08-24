@@ -34,6 +34,9 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGPU.cpp">
       <Filter>Source Files\Tests</Filter>
     </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMemory.cpp">
+      <Filter>Source Files\Tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

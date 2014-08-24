@@ -29,6 +29,7 @@
 #include <oBase/backoff.h>
 #include <oCore/windows/win_util.h>
 #include <oGPU/shader.h>
+#include <oMemory/memory.h>
 
 namespace ouro { namespace gpu { namespace d3d {
 

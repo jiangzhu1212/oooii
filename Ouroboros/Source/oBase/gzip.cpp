@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/gzip.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/throw.h>
 #include <oBase/types.h>
 #include <zlib/zlib.h>

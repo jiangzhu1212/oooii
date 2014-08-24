@@ -26,7 +26,7 @@
 // types as well as ouro types.
 
 #include <oBase/stringize.h>
-#include <oBase/atof.h>
+#include <oMemory/atof.h>
 #include <oBase/fourcc.h>
 #include <oBase/guid.h>
 #include <oBase/string.h>

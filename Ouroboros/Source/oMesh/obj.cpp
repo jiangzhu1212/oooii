@@ -25,7 +25,7 @@
 #include <oMesh/obj.h>
 #include <oMesh/mesh.h>
 #include <oBase/algorithm.h>
-#include <oBase/atof.h>
+#include <oMemory/atof.h>
 #include <oBase/finally.h>
 #include <oBase/fixed_string.h>
 #include <oBase/assert.h>

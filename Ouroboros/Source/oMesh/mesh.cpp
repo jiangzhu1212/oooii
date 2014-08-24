@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oMesh/mesh.h>
+#include <oMemory/memory.h>
 #include <oBase/throw.h>
 #include "mesh_template.h"
 

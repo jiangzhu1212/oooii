@@ -24,7 +24,7 @@
  **************************************************************************/
 #include "d3d_compile.h"
 #include "d3d_include.h"
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oCore/windows/win_util.h>
 #include <d3d11.h>
 #include <D3Dcompiler.h>

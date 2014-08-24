@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <oBase/byte.h>
-#include <oBase/memory.h>
+#include <oMemory/byte.h>
+#include <oMemory/memory.h>
 
 namespace ouro {
 

@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCompute/easing.h>
-#include <oBase/equal.h>
+#include <oMemory/equal.h>
 #include <oBase/throw.h>
 
 namespace ouro {

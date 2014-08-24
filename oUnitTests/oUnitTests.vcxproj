@@ -190,6 +190,7 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTCore.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGPU.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGUI.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMemory.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMesh.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp" />
     <ClCompile Include="oooii_icon.cpp" />
@@ -251,6 +252,12 @@
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oHLSL\oHLSL.vcxproj">
       <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oMemory\oMemory.vcxproj">
+      <Project>{995587d3-b1d0-4c01-bb52-a4b84a2dcb27}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oMemory\oMemoryTests.vcxproj">
+      <Project>{e07c7934-d923-4ba1-afbb-38930867ab89}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oMesh\oMesh.vcxproj">
       <Project>{8a76ff30-f5e2-4127-b86e-c5ae324961fb}</Project>

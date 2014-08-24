@@ -46,7 +46,7 @@
 #ifndef oBase_cbtree_h
 #define oBase_cbtree_h
 
-#include <oBase/bit.h>
+#include <oMemory/bit.h>
 
 // returns total number of nodes and number of levels (depth) of the 
 // compact binary tree needed to represent the space. This rounds the

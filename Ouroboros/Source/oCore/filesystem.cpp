@@ -30,6 +30,7 @@
 #include <oBase/date.h>
 #include <oBase/macros.h>
 #include <oBase/string.h>
+#include <oMemory/memory.h>
 
 #include <io.h>
 #include <memory>

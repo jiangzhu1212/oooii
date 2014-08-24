@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/lzma.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/throw.h>
 #include <snappy/snappy.h>
 

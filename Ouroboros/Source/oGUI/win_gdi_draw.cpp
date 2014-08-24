@@ -26,7 +26,7 @@
 #include <oGUI/windows/win_gdi_bitmap.h>
 #include <oGUI/windows/oWinRect.h>
 #include <oCore/windows/win_error.h>
-//#include <oBase/byte.h>
+//#include <oMemory/byte.h>
 
 
 namespace ouro {

@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/concurrent_linear_allocator.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/future.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>

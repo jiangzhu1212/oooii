@@ -26,7 +26,7 @@
 #ifndef oBase_fourcc_h
 #define oBase_fourcc_h
 
-#include <oBase/endian.h>
+#include <oMemory/endian.h>
 #include <oBase/operators.h>
 
 // Prefer using the class fourcc, but here's a macro for those cases where 

@@ -29,6 +29,10 @@
 #include <oBase/throw.h>
 #include <vector>
 
+// @tony: hack: 
+#include <oBase/finally.h>
+#include "../../../Include/oCore/windows/win_crt_leak_tracker.h"
+
 namespace ouro {
 	namespace tests {
 
@@ -62,6 +66,9 @@ void TESTconcurrent_growable_object_pool()
 
 		test_obj* tests[NumBlocks];
 		memset(tests, 0xaa, sizeof(tests));
+
+		ouro::windows::crt_leak_tracker::enable(false);
+		finally reenable([&] { ouro::windows::crt_leak_tracker::enable(true); });
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{

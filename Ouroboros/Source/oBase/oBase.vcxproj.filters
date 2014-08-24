@@ -79,36 +79,6 @@
     <ClCompile Include="string\rstrstr.cpp">
       <Filter>Source\string</Filter>
     </ClCompile>
-    <ClCompile Include="memory\dtoull.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\is_ascii.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memcmp4.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memmem.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memset2.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memset2d.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memset2d2.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memset2d4.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memset4.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\utfcmp.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
     <ClCompile Include="string\json_escape_encode.cpp">
       <Filter>Source\string\encoding</Filter>
     </ClCompile>
@@ -271,26 +241,11 @@
     <ClCompile Include="sbb_allocator.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
-    <ClCompile Include="memory\rle_decode.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memset8.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memnset.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\rle_decoden.cpp">
-      <Filter>Source\memory</Filter>
-    </ClCompile>
     <ClCompile Include="osc.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="ip4.cpp">
       <Filter>Source\types</Filter>
-    </ClCompile>
-    <ClCompile Include="memory\memset2d8.cpp">
-      <Filter>Source\memory</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -363,9 +318,6 @@
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="memory\memduff.h">
-      <Filter>Source\memory</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\string_traits.h">
       <Filter>oBase\string</Filter>
     </ClInclude>
@@ -374,18 +326,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\stringize.h">
       <Filter>oBase\string</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\atof.h">
-      <Filter>oBase\memory</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\endian.h">
-      <Filter>oBase\memory</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\byte.h">
-      <Filter>oBase\memory</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\memory.h">
-      <Filter>oBase\memory</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\vendor.h">
       <Filter>oBase\types</Filter>
@@ -507,9 +447,6 @@
     <ClInclude Include="..\..\Include\oBase\scc.h">
       <Filter>oBase\scc</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\equal.h">
-      <Filter>oBase\memory</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\dec3n.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
@@ -585,9 +522,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h">
       <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\bit.h">
-      <Filter>oBase\memory</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\compiler_config.h">
       <Filter>oBase\c++ support</Filter>

@@ -1,27 +1,8 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef Ouroboros_test_services_h
+#define Ouroboros_test_services_h
+
 // This is an abstraction for the implementations required to run unit tests.
 // Libraries in Ouroboros are broken up into dependencies on each other and on 
 // system resources. For example oBase is dependent on C++11/compiler features 
@@ -31,12 +12,10 @@
 // a different library without other higher-level Ouroboros libraries and expose 
 // an abstract interface for enabling the unit tests - it would be up to client 
 // code to implement these interfaces.
-#pragma once
-#ifndef Ouroboros_test_services_h
-#define Ouroboros_test_services_h
 
 #include <oBase/allocate.h>
 #include <oSurface/image.h>
+#include <chrono>
 #include <cstdarg>
 #include <memory>
 
@@ -51,10 +30,18 @@ public:
 	// Generate a random number. The seed is often configurable from the test
 	// infrastructure so behavior can be reproduced.
 	virtual int rand() = 0;
+
+	// Returns a timer reasonably suited for benchmarking performance in unit 
+	// tests.
+	inline double now() const { return std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); }
 	
 	// Write to the test infrastructure's TTY
 	virtual void vreport(const char* _Format, va_list _Args) = 0;
 	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
+
+	// Abstracts vsnprintf and snprintf (since Visual Studio complains about it)
+	virtual int vsnprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args) = 0;
+	inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...) { va_list a; va_start(a, _Format); int x = vsnprintf(_StrDestination, _SizeofStrDestination, _Format, a); va_end(a); return x; }
 
 	virtual void begin_thread(const char* _Name) = 0;
 	virtual void update_thread() = 0;

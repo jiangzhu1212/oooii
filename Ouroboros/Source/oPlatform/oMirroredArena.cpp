@@ -26,7 +26,7 @@
 #include <oHLSL/oHLSLBit.h>
 #include <oBase/assert.h>
 #include <oBasis/oBuffer.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBasis/oError.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRefCount.h>

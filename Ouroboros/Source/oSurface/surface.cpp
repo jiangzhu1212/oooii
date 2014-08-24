@@ -24,8 +24,8 @@
  **************************************************************************/
 #include <oSurface/surface.h>
 #include <oBase/assert.h>
-#include <oBase/byte.h>
-#include <oBase/memory.h>
+#include <oMemory/byte.h>
+#include <oMemory/memory.h>
 #include <oBase/throw.h>
 #include <oHLSL/oHLSLMath.h>
 #include <atomic>

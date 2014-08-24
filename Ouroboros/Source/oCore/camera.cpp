@@ -28,6 +28,7 @@
 #include <oCore/windows/win_com.h>
 #include <oCore/windows/win_util.h>
 #include <oBase/throw.h>
+#include <oMemory/memory.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

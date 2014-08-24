@@ -24,8 +24,8 @@
  **************************************************************************/
 #include <oBase/osc.h>
 #include <oBase/assert.h>
-#include <oBase/byte.h>
-#include <oBase/endian.h>
+#include <oMemory/byte.h>
+#include <oMemory/endian.h>
 #include <oBase/throw.h>
 
 #define oUNKNOWN_SIZE SIZE_MAX

@@ -152,6 +152,9 @@
     <ProjectReference Include="..\oHLSL\oHLSL.vcxproj">
       <Project>{aae3c7d9-8124-4b5a-856c-4c5bf23cdb09}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oMemory\oMemory.vcxproj">
+      <Project>{995587d3-b1d0-4c01-bb52-a4b84a2dcb27}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\oSurface\oSurface.vcxproj">
       <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>
     </ProjectReference>

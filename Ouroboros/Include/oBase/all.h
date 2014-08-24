@@ -31,9 +31,6 @@
 #include <oBase/algorithm.h>
 #include <oBase/allocate.h>
 #include <oBase/assert.h>
-#include <oBase/atof.h>
-#include <oBase/bit.h>
-#include <oBase/byte.h>
 #include <oBase/color.h>
 #include <oBase/colors.h>
 #include <oBase/compression.h>
@@ -45,9 +42,7 @@
 #include <oBase/date.h>
 #include <oBase/dec3n.h>
 #include <oBase/djb2.h>
-#include <oBase/endian.h>
 #include <oBase/enum_iterator.h>
-#include <oBase/equal.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>
 #include <oBase/fixed_string.h>
@@ -66,7 +61,6 @@
 #include <oBase/lock_free_queue.h>
 #include <oBase/lzma.h>
 #include <oBase/macros.h>
-#include <oBase/memory.h>
 #include <oBase/moving_average.h>
 #include <oBase/murmur3.h>
 #include <oBase/operators.h>

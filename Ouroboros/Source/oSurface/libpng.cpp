@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oSurface/codec.h>
 #include <oBase/allocate.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/finally.h>
 #include <oBase/throw.h>
 #include <libpng/png.h>

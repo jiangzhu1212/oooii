@@ -30,7 +30,7 @@
 #ifndef oBase_dec3n_h
 #define oBase_dec3n_h
 
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <stdexcept>
 

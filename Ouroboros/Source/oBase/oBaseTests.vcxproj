@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\TESTatof.cpp" />
     <ClCompile Include="tests\TESTcompression.cpp" />
     <ClCompile Include="tests\TESTconcurrent_growable_object_pool.cpp" />
     <ClCompile Include="tests\TESTconcurrent_hash_map.cpp" />

@@ -24,8 +24,8 @@
  **************************************************************************/
 #include <oBase/concurrent_hash_map.h>
 #include <oBase/allocate.h>
-#include <oBase/bit.h>
-#include <oBase/byte.h>
+#include <oMemory/bit.h>
+#include <oMemory/byte.h>
 #include <oBase/macros.h>
 #include <atomic>
 

@@ -26,7 +26,7 @@
 // interest in double precision for some tools code.
 
 #include <exception>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oCompute/oComputeUtil.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>

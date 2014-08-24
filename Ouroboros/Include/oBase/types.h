@@ -29,7 +29,7 @@
 #define oBase_types_h
 
 #include <oHLSL/oHLSLTypes.h>
-#include <oBase/equal.h>
+#include <oMemory/equal.h>
 #include <oBase/uint128.h>
 
 typedef unsigned char uchar;

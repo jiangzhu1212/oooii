@@ -43,7 +43,7 @@
 
 #else
 
-#include <oBase/equal.h>
+#include <oMemory/equal.h>
 
 // Wrap in a namespace so that NoStepInto can be used for VS2010+.
 namespace ouro {
