@@ -23,7 +23,6 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/byte.h>
-#include <oBase/macros.h>
 #include <oBase/memory.h>
 
 namespace ouro {
