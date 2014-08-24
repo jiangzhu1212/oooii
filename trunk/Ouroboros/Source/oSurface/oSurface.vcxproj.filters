@@ -42,14 +42,14 @@
     <ClCompile Include="tga.cpp">
       <Filter>Source\codecs</Filter>
     </ClCompile>
-    <ClCompile Include="texel_buffer.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="dds.cpp">
       <Filter>Source\codecs</Filter>
     </ClCompile>
     <ClCompile Include="psd.cpp">
       <Filter>Source\codecs</Filter>
+    </ClCompile>
+    <ClCompile Include="image.cpp">
+      <Filter>oSurface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -74,9 +74,6 @@
     <ClInclude Include="..\..\Include\oSurface\all.h">
       <Filter>oSurface</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oSurface\texel_buffer.h">
-      <Filter>oSurface</Filter>
-    </ClInclude>
     <ClInclude Include="psd.h">
       <Filter>Source\codecs</Filter>
     </ClInclude>
@@ -88,6 +85,9 @@
     </ClInclude>
     <ClInclude Include="dds.h">
       <Filter>Source\codecs</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oSurface\image.h">
+      <Filter>oSurface</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

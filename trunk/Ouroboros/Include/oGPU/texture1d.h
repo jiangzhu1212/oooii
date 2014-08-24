@@ -28,7 +28,7 @@
 
 #include <oGPU/resource.h>
 #include <oSurface/surface.h>
-#include <oSurface/texel_buffer.h>
+#include <oSurface/image.h>
 
 namespace ouro { namespace gpu {
 

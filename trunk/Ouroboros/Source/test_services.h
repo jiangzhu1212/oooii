@@ -36,7 +36,7 @@
 #define Ouroboros_test_services_h
 
 #include <oBase/allocate.h>
-#include <oSurface/texel_buffer.h>
+#include <oSurface/image.h>
 #include <cstdarg>
 #include <memory>
 

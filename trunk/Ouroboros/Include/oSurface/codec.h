@@ -27,7 +27,7 @@
 #ifndef oSurface_codec_h
 #define oSurface_codec_h
 
-#include <oSurface/texel_buffer.h>
+#include <oSurface/image.h>
 #include <oSurface/surface.h>
 
 namespace ouro { namespace surface {
