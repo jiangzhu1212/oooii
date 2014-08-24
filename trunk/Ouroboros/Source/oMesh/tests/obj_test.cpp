@@ -51,9 +51,9 @@ public:
 		i.texcoords = sTexcoords;
 
 		i.mesh_info.local_space_bound = aaboxf(aaboxf::min_max, float3(-0.5), float3(0.5f));
-		i.mesh_info.elements[0] = mesh::element(mesh::semantic::position, 0, mesh::format::xyz32_float, 0);
-		i.mesh_info.elements[1] = mesh::element(mesh::semantic::normal, 0, mesh::format::xyz32_float, 1);
-		i.mesh_info.elements[2] = mesh::element(mesh::semantic::texcoord, 0, mesh::format::xyz32_float, 2);
+		i.mesh_info.elements[0] = mesh::element(surface::semantic::vertex_position, 0, surface::format::r32g32b32_float, 0);
+		i.mesh_info.elements[1] = mesh::element(surface::semantic::vertex_normal, 0, surface::format::r32g32b32_float, 1);
+		i.mesh_info.elements[2] = mesh::element(surface::semantic::vertex_tangent, 0, surface::format::r32g32b32a32_float, 2);
 		i.mesh_info.num_indices = oCOUNTOF(sIndices);
 		i.mesh_info.num_vertices = oCOUNTOF(sPositions);
 		i.mesh_info.primitive_type = mesh::primitive_type::triangles;

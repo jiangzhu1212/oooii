@@ -27,6 +27,9 @@
     <ClCompile Include="platonic_solids.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="model.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -52,6 +55,9 @@
     </ClInclude>
     <ClInclude Include="platonic_solids.h">
       <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMesh\model.h">
+      <Filter>oMesh</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

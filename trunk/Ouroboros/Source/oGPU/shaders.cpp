@@ -94,19 +94,19 @@ mesh::element_array elements(const vertex_layout::value& input)
 		case vertex_layout::none:
 			break;
 		case vertex_layout::pos:
-			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
+			e[0] = element(surface::semantic::vertex_position, 0, surface::format::r32g32b32_float, 0);
 			break;
 		case vertex_layout::pos_color:
-			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
-			e[1] = element(semantic::color, 0, format::bgra8_unorm, 0);
+			e[0] = element(surface::semantic::vertex_position, 0, surface::format::r32g32b32_float, 0);
+			e[1] = element(surface::semantic::vertex_color, 0, surface::format::b8g8r8a8_unorm, 0);
 			break;
 		case vertex_layout::pos_uv:
-			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
-			e[1] = element(semantic::texcoord, 0, format::xy32_float, 0);
+			e[0] = element(surface::semantic::vertex_position, 0, surface::format::r32g32b32_float, 0);
+			e[1] = element(surface::semantic::vertex_texcoord, 0, surface::format::r32g32_float, 0);
 			break;
 		case vertex_layout::pos_uvw:
-			e[0] = element(semantic::position, 0, format::xyz32_float, 0);
-			e[1] = element(semantic::texcoord, 0, format::xyz32_float, 0);
+			e[0] = element(surface::semantic::vertex_position, 0, surface::format::r32g32b32_float, 0);
+			e[1] = element(surface::semantic::vertex_texcoord, 0, surface::format::r32g32b32_float, 0);
 			break;
 		default:
 			break;

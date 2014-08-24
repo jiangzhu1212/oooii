@@ -38,6 +38,8 @@ oDEFINE_WHITESPACE_PARSING();
 
 static const float3 ZERO3(0.0f, 0.0f, 0.0f);
 
+using namespace ouro::surface;
+
 namespace ouro {
 
 bool from_string(mesh::obj::texture_type::value* _pType, const char* _StrSource)
@@ -587,9 +589,9 @@ info mesh_impl::get_info() const
 	i.mesh_info.num_ranges = (uchar)Data.groups.size();
 	i.mesh_info.vertex_scale_shift = 0;
 
-	i.mesh_info.elements[0] = element(semantic::position, 0, format::xyz32_float, 0);
-	i.mesh_info.elements[1] = element(semantic::normal, 0, format::xyz32_float, 0);
-	i.mesh_info.elements[2] = element(semantic::texcoord, 0, format::xyz32_float, 0);
+	i.mesh_info.elements[0] = element(semantic::vertex_position, 0, format::r32g32b32_float, 0);
+	i.mesh_info.elements[1] = element(semantic::vertex_normal, 0, format::r32g32b32_float, 1);
+	i.mesh_info.elements[2] = element(semantic::vertex_tangent, 0, format::r32g32b32a32_float, 2);
 	return i;
 }
 

@@ -296,6 +296,17 @@ enum class mip_layout : uchar
 
 enum class semantic : uchar
 {
+	unknown,
+
+	// geometry semantics
+	vertex_position,
+	vertex_normal,
+	vertex_tangent,
+	vertex_texcoord,
+	vertex_color,
+	index,
+
+	// texture semantics
 	custom,
 	color,
 	tangent_normal,
@@ -325,6 +336,8 @@ enum class semantic : uchar
 	last3d = color_correction3d,
 	firstcube = customcube,
 	lastcube = colorcube,
+	firstvertex = vertex_position,
+	lastvertex = vertex_color,
 };
 
 enum class cube_face : uchar
@@ -379,6 +392,8 @@ struct info
 	inline bool is_3d() const { return semantic >= semantic::first3d && semantic <= semantic::last3d; }
 	inline bool is_cube() const { return semantic >= semantic::firstcube && semantic <= semantic::lastcube; }
 	inline bool is_array() const { return array_size != 0; }
+	inline bool is_vertex() const { return semantic >= semantic::firstvertex && semantic <= semantic::lastvertex; }
+	inline bool is_index() const { return semantic == semantic::index; }
 	inline bool mips() const { return mip_layout != mip_layout::none; }
 
 	uint3 dimensions;
@@ -396,15 +411,16 @@ struct box
 		, front(0), back(1)
 	{}
 
-	box(uint _Left, uint _Right, uint _Top, uint _Bottom, uint _Front = 0, uint _Back = 1)
-		: left(_Left), right(_Right)
-		, top(_Top), bottom(_Bottom)
-		, front(_Front), back(_Back)
+	box(uint _left, uint _right, uint _top, uint _bottom, uint _front = 0, uint _back = 1)
+		: left(_left), right(_right)
+		, top(_top), bottom(_bottom)
+		, front(_front), back(_back)
 	{}
 
 	// Convenience when a box is required, but the data is 1-dimensional.
-	box(uint _Width)
-		: left(0), right(_Width)
+	// such as for vertex and index buffers
+	box(uint _width)
+		: left(0), right(_width)
 		, top(0), bottom(1)
 		, front(0), back(1)
 	{}
@@ -562,7 +578,7 @@ format from_fourcc(const fourcc& fcc);
 format closest_nv12(const format& f);
 
 // _____________________________________________________________________________
-// Mip Level (1 2D plane/slice, a simple image) introspection
+// Dimensions in pixels, blocks and bytes
 
 // returns number of mipmaps generated from the top dimension down to smallest or
 // 0 if mips is false
