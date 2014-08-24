@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oSurface/resize.h>
 #include <oBase/fixed_vector.h>
-#include <oBase/memory.h>
+#include <oMemory/memory.h>
 #include <vector>
 #include <float.h>
 

@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBasis/oMath.h>
 #include <oBase/assert.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 
 using namespace ouro;
 

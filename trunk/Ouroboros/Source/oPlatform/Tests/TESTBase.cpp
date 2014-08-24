@@ -34,7 +34,6 @@ using namespace ouro::tests;
 #define oTEST_REGISTER_BASE_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oBase_, _Name), oCONCAT(TEST, _Name))
 
 oTEST_REGISTER_BASE_TEST0(aaboxf);
-oTEST_REGISTER_BASE_TEST(atof);
 oTEST_REGISTER_BASE_TEST(compression);
 oTEST_REGISTER_BASE_TEST0(concurrent_growable_object_pool);
 oTEST_REGISTER_BASE_TEST(concurrent_hash_map);

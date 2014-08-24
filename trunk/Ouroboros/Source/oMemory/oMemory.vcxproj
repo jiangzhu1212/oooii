@@ -19,242 +19,34 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\External\calfaq\calfaq.cpp" />
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcpy.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcpy.c">
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
-      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
-    </ClCompile>
-    <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
-    <ClCompile Include="aabox.cpp" />
-    <ClCompile Include="allocate.cpp" />
-    <ClCompile Include="color.cpp" />
-    <ClCompile Include="concurrent_growable_pool.cpp" />
-    <ClCompile Include="concurrent_hash_map.cpp" />
-    <ClCompile Include="concurrent_pool.cpp" />
-    <ClCompile Include="concurrent_registry.cpp" />
-    <ClCompile Include="date.cpp" />
-    <ClCompile Include="future.cpp" />
-    <ClCompile Include="gpu_api.cpp" />
-    <ClCompile Include="gzip.cpp" />
-    <ClCompile Include="input.cpp" />
-    <ClCompile Include="ip4.cpp" />
-    <ClCompile Include="leak_tracker.cpp" />
-    <ClCompile Include="lzma.cpp" />
-    <ClCompile Include="memory\dtoull.cpp" />
-    <ClCompile Include="memory\is_ascii.cpp" />
-    <ClCompile Include="memory\memcmp4.cpp" />
-    <ClCompile Include="memory\memmem.cpp" />
-    <ClCompile Include="memory\memnset.cpp" />
-    <ClCompile Include="memory\memset2.cpp" />
-    <ClCompile Include="memory\memset2d.cpp" />
-    <ClCompile Include="memory\memset2d2.cpp" />
-    <ClCompile Include="memory\memset2d4.cpp" />
-    <ClCompile Include="memory\memset2d8.cpp" />
-    <ClCompile Include="memory\memset4.cpp" />
-    <ClCompile Include="memory\memset8.cpp" />
-    <ClCompile Include="memory\rle_decode.cpp" />
-    <ClCompile Include="memory\rle_decoden.cpp" />
-    <ClCompile Include="memory\utfcmp.cpp" />
-    <ClCompile Include="opttok.cpp" />
-    <ClCompile Include="osc.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="plane.cpp" />
-    <ClCompile Include="pool.cpp" />
-    <ClCompile Include="quat.cpp" />
-    <ClCompile Include="rgb.cpp" />
-    <ClCompile Include="sbb.cpp" />
-    <ClCompile Include="sbb_allocator.cpp" />
-    <ClCompile Include="scc.cpp" />
-    <ClCompile Include="scc_svn.cpp" />
-    <ClCompile Include="snappy.cpp" />
-    <ClCompile Include="sphere.cpp" />
-    <ClCompile Include="string\ampersand_decode.cpp" />
-    <ClCompile Include="string\ampersand_encode.cpp" />
-    <ClCompile Include="string\argtok.cpp" />
-    <ClCompile Include="string\clean_path.cpp" />
-    <ClCompile Include="string\clean_whitespace.cpp" />
-    <ClCompile Include="string\cmnroot.cpp" />
-    <ClCompile Include="string\codify_data.cpp" />
-    <ClCompile Include="string\elipsize.cpp" />
-    <ClCompile Include="string\format_bytes.cpp" />
-    <ClCompile Include="string\format_commas.cpp" />
-    <ClCompile Include="string\format_duration.cpp" />
-    <ClCompile Include="string\insert.cpp" />
-    <ClCompile Include="string\json_escape_decode.cpp" />
-    <ClCompile Include="string\json_escape_encode.cpp" />
-    <ClCompile Include="string\matches_wildcard.cpp" />
-    <ClCompile Include="string\mbsltowcs.cpp" />
-    <ClCompile Include="string\next_matching.cpp" />
-    <ClCompile Include="string\ordinal.cpp" />
-    <ClCompile Include="string\percent_decode.cpp" />
-    <ClCompile Include="string\percent_encode.cpp" />
-    <ClCompile Include="string\prev_matching.cpp" />
-    <ClCompile Include="string\relativize_path.cpp" />
-    <ClCompile Include="string\replace.cpp" />
-    <ClCompile Include="string\rstrcspn.cpp" />
-    <ClCompile Include="string\rstrstr.cpp" />
-    <ClCompile Include="string\search_path.cpp" />
-    <ClCompile Include="string\split_path.cpp" />
-    <ClCompile Include="string\strbitmask.cpp" />
-    <ClCompile Include="string\stringize.cpp" />
-    <ClCompile Include="string\stringize_hlsl.cpp" />
-    <ClCompile Include="string\strtok.cpp" />
-    <ClCompile Include="string\to_lower.cpp" />
-    <ClCompile Include="string\to_upper.cpp" />
-    <ClCompile Include="string\trim.cpp" />
-    <ClCompile Include="string\type_name.cpp" />
-    <ClCompile Include="string\wcmnroot.cpp" />
-    <ClCompile Include="string\wcselipsize.cpp" />
-    <ClCompile Include="string\wcsltombs.cpp" />
-    <ClCompile Include="string\wsplit_path.cpp" />
-    <ClCompile Include="string\zero_block_comments.cpp" />
-    <ClCompile Include="string\zero_ifdefs.cpp" />
-    <ClCompile Include="string\zero_line_comments.cpp" />
-    <ClCompile Include="text_document.cpp" />
-    <ClCompile Include="tlsf_allocator.cpp" />
-    <ClCompile Include="type_id.cpp" />
-    <ClCompile Include="uri.cpp" />
-    <ClCompile Include="vendor.cpp" />
-    <ClCompile Include="version.cpp" />
+    <ClCompile Include="dtoull.cpp" />
+    <ClCompile Include="is_ascii.cpp" />
+    <ClCompile Include="memcmp4.cpp" />
+    <ClCompile Include="memmem.cpp" />
+    <ClCompile Include="memnset.cpp" />
+    <ClCompile Include="memset2.cpp" />
+    <ClCompile Include="memset2d.cpp" />
+    <ClCompile Include="memset2d2.cpp" />
+    <ClCompile Include="memset2d4.cpp" />
+    <ClCompile Include="memset2d8.cpp" />
+    <ClCompile Include="memset4.cpp" />
+    <ClCompile Include="memset8.cpp" />
+    <ClCompile Include="rle_decode.cpp" />
+    <ClCompile Include="rle_decoden.cpp" />
+    <ClCompile Include="utfcmp.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\External\calfaq\calfaq.h" />
-    <ClInclude Include="..\..\External\smhasher\MurmurHash3.h" />
-    <ClInclude Include="..\..\Include\oMemory\aabox.h" />
-    <ClInclude Include="..\..\Include\oMemory\algorithm.h" />
     <ClInclude Include="..\..\Include\oMemory\all.h" />
-    <ClInclude Include="..\..\Include\oMemory\allocate.h" />
-    <ClInclude Include="..\..\Include\oMemory\all_libc.h" />
-    <ClInclude Include="..\..\Include\oMemory\assert.h" />
     <ClInclude Include="..\..\Include\oMemory\atof.h" />
-    <ClInclude Include="..\..\Include\oMemory\atomic_type_traits.h" />
-    <ClInclude Include="..\..\Include\oMemory\backoff.h" />
     <ClInclude Include="..\..\Include\oMemory\bit.h" />
     <ClInclude Include="..\..\Include\oMemory\byte.h" />
-    <ClInclude Include="..\..\Include\oMemory\callable.h" />
-    <ClInclude Include="..\..\Include\oMemory\cbtree.h" />
-    <ClInclude Include="..\..\Include\oMemory\color.h" />
-    <ClInclude Include="..\..\Include\oMemory\colors.h" />
-    <ClInclude Include="..\..\Include\oMemory\compiler_config.h" />
-    <ClInclude Include="..\..\Include\oMemory\compression.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrency.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_growable_object_pool.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_growable_pool.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_hash_map.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_linear_allocator.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_object_pool.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_pool.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_queue.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_queue_opt.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_registry.h" />
-    <ClInclude Include="..\..\Include\oMemory\concurrent_stack.h" />
-    <ClInclude Include="..\..\Include\oMemory\container_support.h" />
-    <ClInclude Include="..\..\Include\oMemory\coroutine.h" />
-    <ClInclude Include="..\..\Include\oMemory\countdown_latch.h" />
-    <ClInclude Include="..\..\Include\oMemory\csv.h" />
-    <ClInclude Include="..\..\Include\oMemory\date.h" />
-    <ClInclude Include="..\..\Include\oMemory\dec3n.h" />
-    <ClInclude Include="..\..\Include\oMemory\djb2.h" />
     <ClInclude Include="..\..\Include\oMemory\endian.h" />
-    <ClInclude Include="..\..\Include\oMemory\enum_iterator.h" />
     <ClInclude Include="..\..\Include\oMemory\equal.h" />
-    <ClInclude Include="..\..\Include\oMemory\event.h" />
-    <ClInclude Include="..\..\Include\oMemory\filter_chain.h" />
-    <ClInclude Include="..\..\Include\oMemory\finally.h" />
-    <ClInclude Include="..\..\Include\oMemory\fixed_string.h" />
-    <ClInclude Include="..\..\Include\oMemory\fixed_vector.h" />
-    <ClInclude Include="..\..\Include\oMemory\fnv1a.h" />
-    <ClInclude Include="..\..\Include\oMemory\fourcc.h" />
-    <ClInclude Include="..\..\Include\oMemory\future.h" />
-    <ClInclude Include="..\..\Include\oMemory\gpu_api.h" />
-    <ClInclude Include="..\..\Include\oMemory\guid.h" />
-    <ClInclude Include="..\..\Include\oMemory\gzip.h" />
-    <ClInclude Include="..\..\Include\oMemory\hash_map.h" />
-    <ClInclude Include="..\..\Include\oMemory\ini.h" />
-    <ClInclude Include="..\..\Include\oMemory\input.h" />
-    <ClInclude Include="..\..\Include\oMemory\intrusive_ptr.h" />
-    <ClInclude Include="..\..\Include\oMemory\invalid.h" />
-    <ClInclude Include="..\..\Include\oMemory\ip4.h" />
-    <ClInclude Include="..\..\Include\oMemory\json.h" />
-    <ClInclude Include="..\..\Include\oMemory\leak_tracker.h" />
-    <ClInclude Include="..\..\Include\oMemory\linear_allocator.h" />
-    <ClInclude Include="..\..\Include\oMemory\linear_allocator_base.h" />
-    <ClInclude Include="..\..\Include\oMemory\lock_free_queue.h" />
-    <ClInclude Include="..\..\Include\oMemory\lzma.h" />
-    <ClInclude Include="..\..\Include\oMemory\macros.h" />
     <ClInclude Include="..\..\Include\oMemory\memory.h" />
-    <ClInclude Include="..\..\Include\oMemory\moving_average.h" />
-    <ClInclude Include="..\..\Include\oMemory\murmur3.h" />
-    <ClInclude Include="..\..\Include\oMemory\object_pool.h" />
-    <ClInclude Include="..\..\Include\oMemory\operators.h" />
-    <ClInclude Include="..\..\Include\oMemory\opttok.h" />
-    <ClInclude Include="..\..\Include\oMemory\osc.h" />
-    <ClInclude Include="..\..\Include\oMemory\path.h" />
-    <ClInclude Include="..\..\Include\oMemory\path_traits.h" />
-    <ClInclude Include="..\..\Include\oMemory\plane.h" />
-    <ClInclude Include="..\..\Include\oMemory\pool.h" />
-    <ClInclude Include="..\..\Include\oMemory\quat.h" />
-    <ClInclude Include="..\..\Include\oMemory\resized_type.h" />
-    <ClInclude Include="..\..\Include\oMemory\rgb.h" />
-    <ClInclude Include="..\..\Include\oMemory\sbb.h" />
-    <ClInclude Include="..\..\Include\oMemory\sbb_allocator.h" />
-    <ClInclude Include="..\..\Include\oMemory\scc.h" />
-    <ClInclude Include="..\..\Include\oMemory\snappy.h" />
-    <ClInclude Include="..\..\Include\oMemory\sphere.h" />
-    <ClInclude Include="..\..\Include\oMemory\std_cbegin.h" />
-    <ClInclude Include="..\..\Include\oMemory\std_linear_allocator.h" />
-    <ClInclude Include="..\..\Include\oMemory\std_make_unique.h" />
-    <ClInclude Include="..\..\Include\oMemory\string.h" />
-    <ClInclude Include="..\..\Include\oMemory\stringize.h" />
-    <ClInclude Include="..\..\Include\oMemory\string_traits.h" />
-    <ClInclude Include="..\..\Include\oMemory\tagged_pointer.h" />
-    <ClInclude Include="..\..\Include\oMemory\text_document.h" />
-    <ClInclude Include="..\..\Include\oMemory\threadpool.h" />
-    <ClInclude Include="..\..\Include\oMemory\throw.h" />
-    <ClInclude Include="..\..\Include\oMemory\timer.h" />
-    <ClInclude Include="..\..\Include\oMemory\tlsf_allocator.h" />
-    <ClInclude Include="..\..\Include\oMemory\types.h" />
-    <ClInclude Include="..\..\Include\oMemory\type_id.h" />
-    <ClInclude Include="..\..\Include\oMemory\type_info.h" />
-    <ClInclude Include="..\..\Include\oMemory\udec3.h" />
-    <ClInclude Include="..\..\Include\oMemory\uint128.h" />
-    <ClInclude Include="..\..\Include\oMemory\unordered_map.h" />
-    <ClInclude Include="..\..\Include\oMemory\uri.h" />
-    <ClInclude Include="..\..\Include\oMemory\uri_traits.h" />
-    <ClInclude Include="..\..\Include\oMemory\vendor.h" />
-    <ClInclude Include="..\..\Include\oMemory\version.h" />
-    <ClInclude Include="..\..\Include\oMemory\xml.h" />
-    <ClInclude Include="memory\memduff.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="scc_svn.h" />
+    <ClInclude Include="memduff.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B13F3CBD-B601-4196-BF6F-2EAA8CDFEDC3}</ProjectGuid>
+    <ProjectGuid>{995587D3-B1D0-4C01-BB52-A4B84A2DCB27}</ProjectGuid>
     <RootNamespace>oMemory</RootNamespace>
     <SccProjectName>
     </SccProjectName>
@@ -287,7 +79,6 @@
     <Import Project="..\Build\msvs\Properties\Release32.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
@@ -295,7 +86,6 @@
     <Import Project="..\Build\msvs\Properties\Debug32.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
@@ -303,7 +93,6 @@
     <Import Project="..\Build\msvs\Properties\Release64.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
@@ -311,7 +100,6 @@
     <Import Project="..\Build\msvs\Properties\Debug64.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />

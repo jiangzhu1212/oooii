@@ -28,7 +28,7 @@
 
 #include <oMesh/mesh.h>
 #include <oBase/algorithm.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/color.h>
 #include <oBase/threadpool.h>
 #include <oBase/throw.h>

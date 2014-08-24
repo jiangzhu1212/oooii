@@ -149,6 +149,9 @@
     <ProjectReference Include="..\oGUI\oGUI.vcxproj">
       <Project>{5461da23-f040-4979-a492-e23b26d87163}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oMemory\oMemory.vcxproj">
+      <Project>{995587d3-b1d0-4c01-bb52-a4b84a2dcb27}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="oLauncher.rc" />

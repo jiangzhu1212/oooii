@@ -3,8 +3,8 @@
 #ifndef oBase_memduff_h
 #define oBase_memduff_h
 
-#include <oBase/memory.h>
-#include <oBase/byte.h>
+#include <oMemory/memory.h>
+#include <oMemory/byte.h>
 #include <stdexcept>
 
 namespace ouro { namespace detail {

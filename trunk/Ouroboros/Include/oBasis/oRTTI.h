@@ -28,7 +28,7 @@
 
 #include <oBase/assert.h>
 #include <oBase/aabox.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/color.h>
 #include <oBase/fourcc.h>
 #include <oBase/macros.h>

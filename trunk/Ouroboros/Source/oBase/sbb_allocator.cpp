@@ -25,7 +25,7 @@
 #include <oBase/sbb_allocator.h>
 #include <oBase/sbb.h>
 #include <oBase/assert.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/fixed_string.h>
 #include <oBase/throw.h>
 

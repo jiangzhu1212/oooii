@@ -51,7 +51,7 @@
 
 #include <oCompute/oComputeConstants.h>
 #include <oCompute/oComputeUtil.h>
-#include <oBase/equal.h>
+#include <oMemory/equal.h>
 #include <oBase/types.h>
 
 namespace ouro {

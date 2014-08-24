@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/concurrent_registry.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 
 namespace ouro {
 

@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/assert.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/concurrency.h>
 #include <oBase/finally.h>
 #include <oBase/fixed_string.h>

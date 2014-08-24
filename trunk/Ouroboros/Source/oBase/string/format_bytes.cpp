@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/string.h>
-#include <oBase/equal.h>
+#include <oMemory/equal.h>
 #include <oBase/macros.h>
 
 int ouro::format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long bytes, size_t _NumPrecisionDigits)

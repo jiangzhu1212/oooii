@@ -27,7 +27,7 @@
 #ifndef oBase_color_h
 #define oBase_color_h
 
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/operators.h>
 #include <limits>
 

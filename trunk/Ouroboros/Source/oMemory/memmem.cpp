@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <oBase/memory.h>
+#include <oMemory/memory.h>
 #include <memory.h>
 #include <stdexcept>
 

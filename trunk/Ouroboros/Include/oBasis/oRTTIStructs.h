@@ -26,7 +26,7 @@
 #ifndef oRTTIStructs_h
 #define oRTTIStructs_h
 
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/fixed_string.h>
 
 typedef oRTTI_DATA_COMPOUND<oRTTI_OBJECT>::ATTR oRTTI_ATTR_BASE;

@@ -52,6 +52,11 @@ public:
 		oTRACEA("%s", oErrorGetLastString());
 	}
 
+	int vsnprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args) override
+	{
+		return ouro::vsnprintf(_StrDestination, _SizeofStrDestination, _Format, _Args);
+	}
+
 	void begin_thread(const char* _Name) override
 	{
 		core_thread_traits::begin_thread(_Name);

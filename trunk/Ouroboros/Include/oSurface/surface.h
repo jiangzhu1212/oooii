@@ -97,7 +97,7 @@
 #ifndef oSurface_h
 #define oSurface_h
 
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 #include <oBase/color.h>
 #include <oBase/fourcc.h>
 #include <oBase/macros.h>

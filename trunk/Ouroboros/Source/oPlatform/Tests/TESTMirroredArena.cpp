@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/tlsf_allocator.h>
-#include <oBase/byte.h>
+#include <oMemory/memory.h>
 #include <oCore/page_allocator.h>
 #include <oBasis/oError.h>
 #include <oBase/event.h>

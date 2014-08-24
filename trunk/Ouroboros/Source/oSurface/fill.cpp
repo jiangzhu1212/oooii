@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oSurface/fill.h>
 #include <oBase/fixed_string.h>
-#include <oBase/byte.h>
+#include <oMemory/byte.h>
 
 namespace ouro {
 	namespace surface {
