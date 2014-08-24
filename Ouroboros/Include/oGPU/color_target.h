@@ -55,8 +55,8 @@ public:
 	void* get_target(uint index = 0) const { return rws[index]; }
 	inline void* get_compute_target() const { return crw; }
 
-	surface::texel_buffer make_snapshot(uint index = 0, const allocator& a = default_allocator);
-	inline surface::texel_buffer make_snapshot(const allocator& a) { return make_snapshot(0, a); }
+	surface::image make_snapshot(uint index = 0, const allocator& a = default_allocator);
+	inline surface::image make_snapshot(const allocator& a) { return make_snapshot(0, a); }
 	
 	void clear(command_list& cl, const color& c, uint index = 0);
 

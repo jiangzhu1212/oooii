@@ -35,7 +35,7 @@ namespace ouro {
 	namespace tests {
 
 static void TESTsurface_resize_test_size(test_services& _Services
-	, const surface::texel_buffer& _Buffer
+	, const surface::image& _Buffer
 	, surface::filter _Filter
 	, const int3& _NewSize
 	, int _NthImage)
@@ -43,7 +43,7 @@ static void TESTsurface_resize_test_size(test_services& _Services
 	surface::info srcInfo = _Buffer.get_info();
 	surface::info destInfo = srcInfo;
 	destInfo.dimensions = _NewSize;
-	surface::texel_buffer dst(destInfo);
+	surface::image dst(destInfo);
 	{
 		surface::shared_lock lock(_Buffer);
 		surface::lock_guard lock2(dst);
@@ -56,7 +56,7 @@ static void TESTsurface_resize_test_size(test_services& _Services
 }
 
 static void TESTsurface_resize_test_filter(test_services& _Services
-	, const surface::texel_buffer& _Buffer
+	, const surface::image& _Buffer
 	, surface::filter _Filter
 	, int _NthImage)
 {
@@ -67,7 +67,7 @@ static void TESTsurface_resize_test_filter(test_services& _Services
 void TESTsurface_resize(test_services& _Services)
 {
 	scoped_allocation b = _Services.load_buffer("Test/Textures/lena_1.png");
-	surface::texel_buffer s = surface::decode(b, b.size());
+	surface::image s = surface::decode(b, b.size());
 
 	int NthImage = 0;
 	for (const auto& f : enum_iterator<surface::filter>())

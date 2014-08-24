@@ -40,8 +40,8 @@ namespace ouro { namespace surface {
 	bool is_##ext(const void* buffer, size_t size); \
 	format required_input_##ext(const format& stored); \
 	info get_info_##ext(const void* buffer, size_t size); \
-	scoped_allocation encode_##ext(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression); \
-	texel_buffer decode_##ext(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout);
+	scoped_allocation encode_##ext(const image& img, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression); \
+	image decode_##ext(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout);
 
 #define GET_FILE_FORMAT_EXT(ext) if (!_stricmp(extension, "." #ext)) return file_format::##ext;
 #define GET_FILE_FORMAT_HEADER(ext) if (is_##ext(buffer, size)) return file_format::##ext;
@@ -86,14 +86,14 @@ info get_info(const void* buffer, size_t size)
 	throw std::exception("unknown image encoding");
 }
 	
-scoped_allocation encode(const texel_buffer& b
+scoped_allocation encode(const image& img
 	, const file_format& fmt
 	, const allocator& file_alloc
 	, const allocator& temp_alloc
 	, const format& desired_format
 	, const compression& compression)
 {
-	auto buffer_format = b.get_info().format;
+	auto buffer_format = img.get_info().format;
 	auto dst_format = desired_format;
 	if (dst_format == format::unknown)
 		dst_format = buffer_format;
@@ -101,9 +101,9 @@ scoped_allocation encode(const texel_buffer& b
 	dst_format = required_input(fmt, dst_format);
 	oCHECK(dst_format != format::unknown, "%s encoding does not support desired_format %s", as_string(fmt), as_string(desired_format));
 
-	texel_buffer converted;
-	texel_buffer converted_for_bc_input;
-	const texel_buffer* input = &b;
+	image converted;
+	image converted_for_bc_input;
+	const image* input = &img;
 
 	if (is_block_compressed(dst_format))
 	{
@@ -119,7 +119,7 @@ scoped_allocation encode(const texel_buffer& b
 	if (buffer_format != dst_format)
 	{
 		converted = input->convert(dst_format, temp_alloc);
-		converted_for_bc_input = texel_buffer();
+		converted_for_bc_input = image();
 		input = &converted;
 	}
 
@@ -130,14 +130,14 @@ scoped_allocation encode(const texel_buffer& b
 	throw std::exception("unknown image encoding");
 }
 
-texel_buffer decode(const void* buffer
+image decode(const void* buffer
 	, size_t size
 	, const allocator& texel_alloc
 	, const allocator& temp_alloc
 	, const format& desired_format
 	, const mip_layout& layout)
 {
-	texel_buffer decoded;
+	image decoded;
 	switch (get_file_format(buffer, size))
 	{ FOREACH_EXT(DECODE)
 		default: throw std::exception("unknown image encoding");

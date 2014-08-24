@@ -147,12 +147,12 @@ info get_info_png(const void* buffer, size_t size)
 	return i;
 }
 
-scoped_allocation encode_png(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
+scoped_allocation encode_png(const image& img, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
 	tl_alloc = &file_alloc;
 	finally reset_alloc([&] { tl_alloc = nullptr; });
 
-	info si = b.get_info();
+	info si = img.get_info();
 
 	// initialize libpng with user functions pointing to _pBuffer
 	png_infop info_ptr = nullptr;
@@ -211,7 +211,7 @@ scoped_allocation encode_png(const texel_buffer& b, const allocator& file_alloc,
 		std::vector<uchar*> rows;
 		rows.resize(si.dimensions.y);
 		const_mapped_subresource msr;
-		shared_lock lock(b);
+		shared_lock lock(img);
 		rows[0] = (uchar*)lock.mapped.data;
 		for (uint y = 1; y < si.dimensions.y; y++)
 			rows[y] = byte_add(rows[y-1], lock.mapped.row_pitch);
@@ -222,7 +222,7 @@ scoped_allocation encode_png(const texel_buffer& b, const allocator& file_alloc,
 	return scoped_allocation(ws.data, ws.size, tl_alloc->deallocate);
 }
 
-texel_buffer decode_png(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
+image decode_png(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	tl_alloc = &temp_alloc;
 	finally reset_alloc([&] { tl_alloc = nullptr; });
@@ -285,11 +285,11 @@ texel_buffer decode_png(const void* buffer, size_t size, const allocator& texel_
 
 	// Set up the surface buffer
 	png_read_update_info(png_ptr, info_ptr);
-	texel_buffer b(si, texel_alloc);
+	image img(si, texel_alloc);
 	{
 		std::vector<uchar*> rows;
 		rows.resize(si.dimensions.y);
-		lock_guard lock(b);
+		lock_guard lock(img);
 
 		rows[0] = (uchar*)lock.mapped.data;
 		for (uint y = 1; y < si.dimensions.y; y++)
@@ -297,7 +297,7 @@ texel_buffer decode_png(const void* buffer, size_t size, const allocator& texel_
 
 		png_read_image(png_ptr, rows.data());
 	}
-	return b;
+	return img;
 }
 
 }}

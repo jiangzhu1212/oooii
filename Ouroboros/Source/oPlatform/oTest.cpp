@@ -442,13 +442,13 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 	return true;
 }
 
-static void surface_save(const surface::texel_buffer& _Buffer, const surface::format& _Desired, const path& _Path)
+static void surface_save(const surface::image& _Buffer, const surface::format& _Desired, const path& _Path)
 {
 	size_t size = 0;
 	scoped_allocation encoded = encode(_Buffer, surface::get_file_format(_Path), _Desired);
 	filesystem::save(_Path, encoded, encoded.size(), filesystem::save_option::binary_write);
 }
-bool oTest::TestImage(const surface::texel_buffer& _TestImage
+bool oTest::TestImage(const surface::image& _TestImage
 	, const char* _GoldenImagePath
 	, const char* _FailedImagePath
 	, unsigned int _NthImage
@@ -465,7 +465,7 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage
 
 	const surface::format desired = si.format;
 
-	surface::texel_buffer GoldenImage;
+	surface::image GoldenImage;
 	{
 		size_t bSize = 0;
 		scoped_allocation b;
@@ -507,7 +507,7 @@ bool oTest::TestImage(const surface::texel_buffer& _TestImage
 	}
 
 	// Do the real test
-	surface::texel_buffer diffs;
+	surface::image diffs;
 	float RMSError = surface::calc_rms(_TestImage, GoldenImage, &diffs, _DiffImageMultiplier);
 
 	// Save out test image and diffs if there is a non-similar result.
@@ -573,7 +573,7 @@ static bool oInitialize(const char* _RootPath, const char* _Filename, const adap
 	return true;
 }
 
-bool oTest::TestImage(const surface::texel_buffer& _TestImage, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)
+bool oTest::TestImage(const surface::image& _TestImage, unsigned int _NthImage, int _ColorChannelTolerance, float _MaxRMSError, unsigned int _DiffImageMultiplier)
 {
 	// Check: GoldenDir/CardName/DriverVersion/GoldenImage
 	// Then Check: GoldenDir/CardName/GoldenImage

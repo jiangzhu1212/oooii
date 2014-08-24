@@ -61,9 +61,9 @@ format required_input_bmp(const format& stored)
 	return format::unknown;
 }
 
-scoped_allocation encode_bmp(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
+scoped_allocation encode_bmp(const image& img, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
-	auto info = b.get_info();
+	auto info = img.get_info();
 	oCHECK(info.format == surface::format::b8g8r8a8_unorm || info.format == surface::format::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 	const uint src_byte_count = element_size(info.format);
 
@@ -100,7 +100,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const allocator& file_alloc,
 	bmi->bmiHeader.biClrUsed = 0;
 	bmi->bmiHeader.biClrImportant = 0;
 
-	shared_lock lock(b);
+	shared_lock lock(img);
 	
 	uint Padding = AlignedPitch - UnalignedPitch;
 	for (uint y = 0, y1 = info.dimensions.y-1; y < info.dimensions.y; y++, y1--)
@@ -124,7 +124,7 @@ scoped_allocation encode_bmp(const texel_buffer& b, const allocator& file_alloc,
 	return p;
 }
 
-texel_buffer decode_bmp(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
+image decode_bmp(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	const bmp_header* bfh = (const bmp_header*)buffer;
 	const bmp_info* bmi = (const bmp_info*)&bfh[1];
@@ -139,9 +139,9 @@ texel_buffer decode_bmp(const void* buffer, size_t size, const allocator& texel_
 	src.depth_pitch = bmi->bmiHeader.biSizeImage;
 	src.row_pitch = src.depth_pitch / bmi->bmiHeader.biHeight;
 
-	texel_buffer b(dsi, texel_alloc);
-	b.copy_from(0, src, copy_option::flip_vertically);
-	return b;
+	image img(dsi, texel_alloc);
+	img.copy_from(0, src, copy_option::flip_vertically);
+	return img;
 }
 
 }}

@@ -261,7 +261,7 @@ struct window_impl : window
 	void trigger(const input::action& _Action) override;
 	void post(int _CustomEventCode, uintptr_t _Context) override;
 	void dispatch(const std::function<void()>& _Task) override;
-	future<surface::texel_buffer> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override;
+	future<surface::image> snapshot(int _Frame = ouro::invalid, bool _IncludeBorder = false) const override;
 	void start_timer(uintptr_t _Context, unsigned int _RelativeTimeMS) override;
 	void stop_timer(uintptr_t _Context) override;
 
@@ -822,9 +822,9 @@ static bool oWinWaitUntilOpaque(HWND _hWnd, unsigned int _TimeoutMS)
 	return true;
 }
 
-future<surface::texel_buffer> window_impl::snapshot(int _Frame, bool _IncludeBorder) const
+future<surface::image> window_impl::snapshot(int _Frame, bool _IncludeBorder) const
 {
-	auto PromisedSnap = std::make_shared<ouro::promise<surface::texel_buffer>>();
+	auto PromisedSnap = std::make_shared<ouro::promise<surface::image>>();
 	auto Image = PromisedSnap->get_future();
 
 	const_cast<window_impl*>(this)->dispatch([=]() mutable
@@ -839,7 +839,7 @@ future<surface::texel_buffer> window_impl::snapshot(int _Frame, bool _IncludeBor
 				oCHECK(false, "A non-hidden window timed out waiting to become opaque");
 		}
 
-		surface::texel_buffer snap;
+		surface::image snap;
 		void* buf = nullptr;
 		size_t size = 0;
 		oWinSetFocus(hWnd); // Windows doesn't do well with hidden contents.

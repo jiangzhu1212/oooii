@@ -34,7 +34,7 @@
 
 namespace ouro { 
 
-void core_fill_grid_numbers(surface::texel_buffer* _pBuffer, const int2& _GridDimensions, color _NumberColor);
+void core_fill_grid_numbers(surface::image* _pBuffer, const int2& _GridDimensions, color _NumberColor);
 
 	namespace tests {
 
@@ -43,9 +43,9 @@ void core_fill_grid_numbers(surface::texel_buffer* _pBuffer, const int2& _GridDi
 	si.format = surface::format::b8g8r8a8_unorm; \
 	si.mip_layout = surface::mip_layout::none; \
 	si.dimensions = uint3(_Dimensions, 1); \
-	surface::texel_buffer s(si);
+	surface::image s(si);
 
-surface::texel_buffer make_numbered_grid(
+surface::image make_numbered_grid(
 	const int2& _Dimensions
 	, const int2& _GridDimensions
 	, color _GridColor
@@ -65,7 +65,7 @@ surface::texel_buffer make_numbered_grid(
 	return s;
 }
 
-surface::texel_buffer make_checkerboard(
+surface::image make_checkerboard(
 	const int2& _Dimensions
 	, const int2& _GridDimensions
 	, color _Color0
@@ -78,7 +78,7 @@ surface::texel_buffer make_checkerboard(
 	return s;
 }
 
-surface::texel_buffer make_solid(const int2& _Dimensions, color _Color)
+surface::image make_solid(const int2& _Dimensions, color _Color)
 {
 	SETUP_AND_MAKE();
 	surface::lock_guard lock(s);
@@ -90,7 +90,7 @@ void TESTsurface_fill(test_services& _Services)
 {
 	static const color gradiantColors0[4] = { blue, purple, lime, orange };
 	static const color gradiantColors1[4] = { midnight_blue, dark_slate_blue, green, chocolate };
-	surface::texel_buffer s;
+	surface::image s;
 	s = make_numbered_grid(int2(256,256), int2(64,64), black, black, gradiantColors0);
 	_Services.check(s, 0);
 	s = make_numbered_grid(int2(512,512), int2(32,32), gray, white, gradiantColors1);

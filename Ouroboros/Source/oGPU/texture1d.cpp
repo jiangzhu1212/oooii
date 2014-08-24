@@ -44,7 +44,7 @@ void texture1d::initialize(const char* name, device& dev, surface::format format
 	ro = srv;
 }
 
-void texture1d::initialize(const char* name, device& dev, const surface::texel_buffer& src, bool mips)
+void texture1d::initialize(const char* name, device& dev, const surface::image& src, bool mips)
 {
 	auto si = src.get_info();
 	oCHECK(si.is_1d(), "a 1d texel buffer must be specified");

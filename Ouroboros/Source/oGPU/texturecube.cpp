@@ -50,7 +50,7 @@ void texturecube::initialize(const char* name, device& dev, surface::format form
 	ro = srv;
 }
 
-void texturecube::initialize(const char* name, device& dev, const surface::texel_buffer& src, bool mips)
+void texturecube::initialize(const char* name, device& dev, const surface::image& src, bool mips)
 {
 	auto si = src.get_info();
 	oCHECK(si.is_cube(), "a cubemap texel buffer must be specified");

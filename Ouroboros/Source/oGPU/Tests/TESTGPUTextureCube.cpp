@@ -47,8 +47,8 @@ struct gpu_test_texturecube : public gpu_texture_test
 		auto _4 = surface_load(filesystem::data_path() / "Test/Textures/CubePosZ.png", false);
 		auto _5 = surface_load(filesystem::data_path() / "Test/Textures/CubeNegZ.png", false);
 
-		const surface::texel_buffer* images[6] = { &_0, &_1, &_2, &_3, &_4, &_5 };
-		surface::texel_buffer image;
+		const surface::image* images[6] = { &_0, &_1, &_2, &_3, &_4, &_5 };
+		surface::image image;
 		image.initialize_array(images);
 		image.set_semantic(surface::semantic::customcube);
 		t.initialize("Test cube", Device, image, false);

@@ -214,11 +214,11 @@ static void map_bits(const info& inf, const void* oRESTRICT src_dds_buffer, size
 	map_bits(inf, src_dds_buffer, src_dds_size, (const_mapped_subresource*)subresources, num_subresources);
 }
 
-scoped_allocation encode_dds(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
+scoped_allocation encode_dds(const image& img, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
 	//if (1) oTHROW(operation_not_supported, "dds not yet implemented");
 
-	const auto inf = b.get_info();
+	const auto inf = img.get_info();
 	oCHECK(inf.mip_layout == mip_layout::none || inf.mip_layout == mip_layout::tight, "right and below mip layouts not supported");
 
 	const bool is3d = false; // how to specify? probably .z != 0...
@@ -229,7 +229,7 @@ scoped_allocation encode_dds(const texel_buffer& b, const allocator& file_alloc,
 	const dds_pixel_format ddspf = GetPixelFormat(inf.format);
 	const bool kHasDX10 = iscube || inf.array_size > 1 || ddspf.dwFourCC == MAKEFOURCC('D','X','1','0');
 
-	const size_t bits_size = b.size();
+	const size_t bits_size = img.size();
 	const size_t size = bits_size + sizeof(dds_signature) + sizeof(dds_header) 
 		+ (kHasDX10 ? sizeof(dds_header_dx10) : 0);
 
@@ -270,16 +270,16 @@ scoped_allocation encode_dds(const texel_buffer& b, const allocator& file_alloc,
 	map_bits(inf, bits, bits_size, subresources, nSubresources);
 
 	for (int i = 0; i < nSubresources; i++)
-		b.copy_to(i, subresources[i]);
+		img.copy_to(i, subresources[i]);
 
 	return alloc;
 }
 
-texel_buffer decode_dds(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
+image decode_dds(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	info inf = get_info_dds(buffer, size);
 	oCHECK(inf.format != format::unknown, "invalid dds");
-	texel_buffer b(inf, texel_alloc);
+	image img(inf, texel_alloc);
 
 	const uint nSubresources = num_subresources(inf);
 	const_mapped_subresource* subresources = (const_mapped_subresource*)temp_alloc.allocate(sizeof(const_mapped_subresource) * nSubresources, 0);
@@ -290,9 +290,9 @@ texel_buffer decode_dds(const void* buffer, size_t size, const allocator& texel_
 	map_bits(inf, bits, size - byte_diff(bits, buffer), subresources, nSubresources);
 
 	for (uint i = 0; i < nSubresources; i++)
-		b.update_subresource(i, subresources[i]);
+		img.update_subresource(i, subresources[i]);
 
-	return b;
+	return img;
 }
 
 }}

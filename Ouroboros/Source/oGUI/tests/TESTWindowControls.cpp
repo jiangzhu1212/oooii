@@ -519,7 +519,7 @@ void TESTWindowControls(test_services& _Services)
 
 	} while (ouro::timer::now() < WaitForSettle);
 
-	ouro::future<ouro::surface::texel_buffer> snapshot = test.GetWindow()->snapshot();
+	ouro::future<ouro::surface::image> snapshot = test.GetWindow()->snapshot();
 		
 	do
 	{
@@ -527,7 +527,7 @@ void TESTWindowControls(test_services& _Services)
 		
 	} while ((kInteractiveMode && test.GetRunning()) || !snapshot.is_ready());
 
-	ouro::surface::texel_buffer s = snapshot.get();
+	ouro::surface::image s = snapshot.get();
 	_Services.check(s, 0);
 }
 

@@ -84,7 +84,7 @@ public:
 	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
 	// image should not have a suffix. If _MaxRMSError is negative a default 
 	// should be used. If the surfaces are not similar this throws an exception.
-	virtual void check(const surface::texel_buffer& _Buffer, int _NthTest = 0, float _MaxRMSError = -1.0f) = 0;
+	virtual void check(const surface::image& _Buffer, int _NthTest = 0, float _MaxRMSError = -1.0f) = 0;
 };
 
 } // namespace ouro
