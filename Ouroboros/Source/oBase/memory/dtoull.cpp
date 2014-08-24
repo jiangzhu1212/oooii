@@ -1,28 +1,6 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-#include <memory.h>
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
+#include <stdint.h>
 
 // Visual Studio 2012 Win32 compiler's conversion (c-cast, static_cast) is 
 // bugged, so here's a software version.
@@ -30,50 +8,48 @@ namespace ouro {
 
 /** <citation
 	usage="Implementation" 
-	reason="win32 compiler double -> unsigned long long is not correct, this is"
+	reason="win32 compiler double -> uint64_t is not correct, this is"
 	author="Erik Rufelt"
 	description="http://www.gamedev.net/topic/591975-c-unsigned-__int64-tofrom-double-conversions/page__st__20"
 	license="*** Assumed Public Domain ***"
 	licenseurl="http://www.gamedev.net/topic/591975-c-unsigned-__int64-tofrom-double-conversions/page__st__20"
-	modification="assert -> static assert. uint64 -> unsigned long long"
+	modification="assert -> static assert. uint64 -> uint64_t"
 />*/
 // $(CitedCodeBegin)
-unsigned long long dtoull(double input)
+uint64_t dtoull(double input)
 {
 	static_assert(sizeof(double) == 8, "sizeof(double) == 8");
-	static_assert(sizeof(unsigned long long) == 8, "sizeof(unsigned long long) == 8");
-	static_assert(sizeof(1ULL) == 8, "sizeof(1ull) == 8");
 
 	// Get the bits representing the double
 	double d = input;
-	unsigned long long doubleBits;
-	memcpy(reinterpret_cast<char*>(&doubleBits), reinterpret_cast<char*>(&d), 8);
+	uint64_t doubleBits;
+	memcpy(reinterpret_cast<int8_t*>(&doubleBits), reinterpret_cast<int8_t*>(&d), 8);
 
 	// Check for a negative number
-	unsigned long long signBit = (doubleBits >> 63ULL) & 0x1ULL;
-	if(signBit != 0ULL)
-		return 0ULL;
+	uint64_t signBit = (doubleBits >> uint64_t(63)) & uint64_t(0x1);
+	if(signBit != uint64_t(0))
+		return uint64_t(0);
 
 	// Get the exponent
-	unsigned long long exponent = (doubleBits >> 52ULL) & 0x7ffULL;
+	uint64_t exponent = (doubleBits >> uint64_t(52)) & uint64_t(0x7ff);
 
 	// The number is larger than the largest uint64
-	if(exponent > 1086ULL)
-		return 0ULL;
+	if(exponent > uint64_t(1086))
+		return uint64_t(0);
 
 	// The number is less than 1
-	if(exponent < 1023ULL)
-		return 0ULL;
+	if(exponent < uint64_t(1023))
+		return uint64_t(0);
 
 	// Get the fraction
-	unsigned long long fraction = (doubleBits & 0xfffffffffffffULL) | 0x10000000000000ULL;
+	uint64_t fraction = (doubleBits & uint64_t(0xfffffffffffff)) | uint64_t(0x10000000000000);
 
 	// Calculate and return integer part
-	if(exponent >= 1075ULL)
-		return fraction << (exponent - 1075ULL);
+	if(exponent >= uint64_t(1075))
+		return fraction << (exponent - uint64_t(1075));
 	else
-		return fraction >> (1075ULL - exponent);
+		return fraction >> (uint64_t(1075) - exponent);
 }
 // $(CitedCodeEnd)
 
-} // namespace ouro
+}

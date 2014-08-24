@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -35,55 +35,55 @@
 oDEFINE_WHITESPACE_PARSING();
 namespace ouro {
 
-const char* as_string(const bool& _Value) { return _Value ? "true" : "false"; }
+const char* as_string(const bool& value) { return value ? "true" : "false"; }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const char* const & _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const char* const & value)
 {
-	return strlcpy(_StrDestination, oSAFESTRN(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
+	return strlcpy(_StrDestination, oSAFESTRN(value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const char& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const char& value)
 {
 	if (_SizeofStrDestination < 2) return nullptr;
-	_StrDestination[0] = _Value;
+	_StrDestination[0] = value;
 	_StrDestination[1] = 0;
 	return _StrDestination;
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned char& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned char& value)
 {
 	if (_SizeofStrDestination < 2) return nullptr;
-	_StrDestination[0] = *(signed char*)&_Value;
+	_StrDestination[0] = *(signed char*)&value;
 	_StrDestination[1] = 0;
 	return _StrDestination;
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const bool& _Value) { return strlcpy(_StrDestination, _Value ? "true" : "false", _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const short & _Value) { return 0 == _itoa_s(_Value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned short& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%hu", _Value) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const int& _Value) { return 0 == _itoa_s(_Value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned int& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u", _Value) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const long& _Value) { return 0 == _itoa_s(_Value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u", _Value) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const long long& _Value) { return 0 == _i64toa_s(_Value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long long& _Value) { return 0 == _ui64toa_s(unsigned long long(_Value), _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float& _Value) { if (-1 != snprintf(_StrDestination, _SizeofStrDestination, "%f", _Value)) { trim_right(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double& _Value) { if (-1 != snprintf(_StrDestination, _SizeofStrDestination, "%lf", _Value)) { trim_right(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const std::string& _Value) { return strlcpy(_StrDestination, _Value.c_str(), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const bool& value) { return strlcpy(_StrDestination, value ? "true" : "false", _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const short & value) { return 0 == _itoa_s(value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned short& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%hu", value) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const int& value) { return 0 == _itoa_s(value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned int& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u", value) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const long& value) { return 0 == _itoa_s(value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u", value) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const long long& value) { return 0 == _i64toa_s(value, _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const unsigned long long& value) { return 0 == _ui64toa_s(unsigned long long(value), _StrDestination, _SizeofStrDestination, 10) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float& value) { if (-1 != snprintf(_StrDestination, _SizeofStrDestination, "%f", value)) { trim_right(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double& value) { if (-1 != snprintf(_StrDestination, _SizeofStrDestination, "%lf", value)) { trim_right(_StrDestination, _SizeofStrDestination, _StrDestination, "0"); return _StrDestination; } return nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const std::string& value) { return strlcpy(_StrDestination, value.c_str(), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr; }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const fourcc& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const fourcc& value)
 {
 	if (_SizeofStrDestination < 5) return nullptr;
-	unsigned int fcc = from_big_endian((unsigned int)_Value);
+	unsigned int fcc = from_big_endian((unsigned int)value);
 	memcpy(_StrDestination, &fcc, sizeof(unsigned int));
 	_StrDestination[4] = 0;
 	return _StrDestination;
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const guid& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const guid& value)
 {
 	if (_SizeofStrDestination <= 38) return nullptr;
-	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "{%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X}", _Value.Data1, _Value.Data2, _Value.Data3, _Value.Data4[0], _Value.Data4[1], _Value.Data4[2], _Value.Data4[3], _Value.Data4[4], _Value.Data4[5], _Value.Data4[6], _Value.Data4[7]) ? _StrDestination : nullptr;
+	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "{%08X-%04X-%04x-%02X%02X-%02X%02X%02X%02X%02X%02X}", value.Data1, value.Data2, value.Data3, value.Data4[0], value.Data4[1], value.Data4[2], value.Data4[3], value.Data4[4], value.Data4[5], value.Data4[6], value.Data4[7]) ? _StrDestination : nullptr;
 }
 
 #define oCHK do { if (!_pValue || !_StrSource) return false; } while(false)
@@ -144,4 +144,4 @@ bool from_string_double_array(double* _pValue, size_t _NumValues, const char* _S
 	return true;
 }
 
-} // namespace ouro
+}

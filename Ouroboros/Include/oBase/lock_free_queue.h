@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -145,6 +145,6 @@ typename lock_free_queue<T>::size_type lock_free_queue<T>::size() const
 	return ((Write + NumElements) - Read) % NumElements;
 }
 
-} // namespace ouro
+}
 
 #endif

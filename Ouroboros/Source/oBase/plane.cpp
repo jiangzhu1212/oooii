@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -33,6 +33,6 @@ bool from_string(planef* _pValue, const char* _StrSource)
 	return from_string(pTmp, _StrSource);
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const planef& _Value) { return to_string(_StrDestination, _SizeofStrDestination, (const float4&)_Value); }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const planef& value) { return to_string(_StrDestination, _SizeofStrDestination, (const float4&)value); }
 
-} // namespace ouro
+}

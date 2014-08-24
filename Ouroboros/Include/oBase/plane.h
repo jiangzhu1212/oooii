@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -66,7 +66,7 @@ template<typename T> struct plane : public TVEC4<T>
 
 template<typename T> inline bool equal(const plane<T>& a, const plane<T>& b, unsigned int maxUlps) { return equal(a.x, b.x, maxUlps) && equal(a.y, b.y, maxUlps) && equal(a.z, b.z, maxUlps) && equal(a.w, b.w, maxUlps); }
 
-} // namespace ouro
+}
 
 typedef ouro::plane<float> planef; typedef ouro::plane<double> planed;
 

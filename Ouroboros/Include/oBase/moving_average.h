@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -40,10 +40,10 @@ public:
 
 	// Given the latest sample value, this returns the moving average for all 
 	// values up to the latest specified.
-	T calculate(const T& _Value)
+	T calculate(const T& value)
 	{
 		Count += T(1);
-		CA = CA + ((_Value - CA) / Count);
+		CA = CA + ((value - CA) / Count);
 		return CA;
 	}
 
@@ -52,6 +52,6 @@ private:
 	T Count;
 };
 
-} // namespace ouro
+}
 
 #endif

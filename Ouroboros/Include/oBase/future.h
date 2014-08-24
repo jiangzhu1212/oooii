@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -272,88 +272,88 @@ namespace future_detail {
 			}
 		}
 
-		template<typename T, typename U> void internal_set_value_ref(void* _pValueMemory, const U& _Value)
+		template<typename T, typename U> void internal_set_value_ref(void* _pValueMemory, const U& value)
 		{
 			oFUTURE_CHECK(!is_ready(), promise_already_satisfied);
 			oFUTURE_CHECK(!State.HasValueAtThreadExit, no_implementation);
-			*(T**)_pValueMemory = &const_cast<U&>(_Value);
+			*(T**)_pValueMemory = &const_cast<U&>(value);
 			State.HasValue = true;
 			State.IsReady = true;
 		}
 
-		template<typename T, typename U> void internal_set_value(void* _pValueMemory, const U& _Value)
+		template<typename T, typename U> void internal_set_value(void* _pValueMemory, const U& value)
 		{
 			oFUTURE_CHECK(!is_ready(), promise_already_satisfied);
 			oFUTURE_CHECK(!State.HasValueAtThreadExit, no_implementation);
-			::new(_pValueMemory) T(_Value);
+			::new(_pValueMemory) T(value);
 			State.HasValue = true;
 			State.IsReady = true;
 		}
 
-		template<typename T, typename U> void internal_set_value(void* _pValueMemory, U&& _Value)
+		template<typename T, typename U> void internal_set_value(void* _pValueMemory, U&& value)
 		{
 			oFUTURE_CHECK(!is_ready(), promise_already_satisfied);
 			oFUTURE_CHECK(!State.HasValueAtThreadExit, no_implementation);
-			::new(_pValueMemory) T(std::forward<U>(_Value));
+			::new(_pValueMemory) T(std::forward<U>(value));
 			State.HasValue = true;
 			State.IsReady = true;
 		}
 		
-		template <typename T, typename U> void typed_set_value_ref(void* _pValueMemory, const U& _Value)
+		template <typename T, typename U> void typed_set_value_ref(void* _pValueMemory, const U& value)
 		{
 			if (work_steals())
-				internal_set_value_intrusive_ptr<T>(_pValueMemory, _Value);
+				internal_set_value_intrusive_ptr<T>(_pValueMemory, value);
 			else
 			{
 				std::unique_lock<std::mutex> lock(Mutex);
-				internal_set_value_intrusive_ptr<T>(_pValueMemory, _Value);
+				internal_set_value_intrusive_ptr<T>(_pValueMemory, value);
 				lock.unlock();
 				CV.notify_all();
 			}
 		}
 
-		template <typename T, typename U> void typed_set_value(void* _pValueMemory, const U& _Value)
+		template <typename T, typename U> void typed_set_value(void* _pValueMemory, const U& value)
 		{
 			if (work_steals())
-				internal_set_value<T>(_pValueMemory, _Value);
+				internal_set_value<T>(_pValueMemory, value);
 			else
 			{
 				std::unique_lock<std::mutex> lock(Mutex);
-				internal_set_value<T>(_pValueMemory, _Value);
+				internal_set_value<T>(_pValueMemory, value);
 				lock.unlock();
 				CV.notify_all();
 			}
 		}
 
-		template <typename T, typename U> void typed_set_value(void* _pValueMemory, U&& _Value)
+		template <typename T, typename U> void typed_set_value(void* _pValueMemory, U&& value)
 		{
 			if (work_steals())
-				internal_set_value<T>(_pValueMemory, std::move(_Value));
+				internal_set_value<T>(_pValueMemory, std::move(value));
 			else
 			{
 				std::unique_lock<std::mutex> lock(Mutex);
-				internal_set_value<T>(_pValueMemory, std::move(_Value));
+				internal_set_value<T>(_pValueMemory, std::move(value));
 				lock.unlock();
 				CV.notify_all();
 			}
 		}
 
-		template <typename T, typename U> void set_value_at_thread_exit(void* _pValueMemory, U&& _Value, std::function<void()>&& _NotifyValueSetAndRelease)
+		template <typename T, typename U> void set_value_at_thread_exit(void* _pValueMemory, U&& value, std::function<void()>&& _NotifyValueSetAndRelease)
 		{
 			std::unique_lock<std::mutex> lock(Mutex);
 			oFUTURE_CHECK(work_steals(), not_work_stealing);
 			oFUTURE_CHECK(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
-			::new(_pValueMemory) T(std::forward<U>(_Value));
+			::new(_pValueMemory) T(std::forward<U>(value));
 			reference();
 			notify_value_set_at_thread_exit(lock, std::move(_NotifyValueSetAndRelease));
 		}
 
-		template <typename T, typename U> void set_value_at_thread_exit_ref(void* _pValueMemory, const U& _Value, std::function<void()>&& _NotifyValueSetAndRelease)
+		template <typename T, typename U> void set_value_at_thread_exit_ref(void* _pValueMemory, const U& value, std::function<void()>&& _NotifyValueSetAndRelease)
 		{
 			std::unique_lock<std::mutex> lock(Mutex);
 			oFUTURE_CHECK(work_steals(), not_work_stealing);
 			oFUTURE_CHECK(!is_ready() && !State.HasValueAtThreadExit, promise_already_satisfied);
-			*(T**)_pValueMemory = &const_cast<U&>(_Value);
+			*(T**)_pValueMemory = &const_cast<U&>(value);
 			reference();
 			notify_value_set_at_thread_exit(lock, std::move(_NotifyValueSetAndRelease));
 		}
@@ -384,24 +384,24 @@ namespace future_detail {
 			}
 		}
 
-		template <typename U> void set_value(const U& _Value)
+		template <typename U> void set_value(const U& value)
 		{
-			typed_set_value<T>(&Value, _Value);
+			typed_set_value<T>(&Value, value);
 		}
 
-		template <typename U> void set_value(U&& _Value)
+		template <typename U> void set_value(U&& value)
 		{
-			typed_set_value<T>(&Value, std::move(_Value));
+			typed_set_value<T>(&Value, std::move(value));
 		}
 
-		template <typename U> void set_value_at_thread_exit(const U& _Value)
+		template <typename U> void set_value_at_thread_exit(const U& value)
 		{
 			set_value_at_thread_exit<T>(&Value, Value, std::bind(&commitment<T>::notify_value_set_and_release, this));
 		}
 
-		template <typename U> void set_value_at_thread_exit(U&& _Value)
+		template <typename U> void set_value_at_thread_exit(U&& value)
 		{
-			set_value_at_thread_exit<T>(&Value, std::move(_Value), std::bind(&commitment<T>::notify_value_set_and_release, this));
+			set_value_at_thread_exit<T>(&Value, std::move(value), std::bind(&commitment<T>::notify_value_set_and_release, this));
 		}
 
 	private:
@@ -452,14 +452,14 @@ namespace future_detail {
 			}
 		}
 
-		template <typename U> void set_value(const U& _Value)
+		template <typename U> void set_value(const U& value)
 		{
-			typed_set_value_intrusive_ptr<T>(&Value, _Value);
+			typed_set_value_intrusive_ptr<T>(&Value, value);
 		}
 
-		template <typename U> void set_value_at_thread_exit(const U& _Value)
+		template <typename U> void set_value_at_thread_exit(const U& value)
 		{
-			set_value_at_thread_exit_intrusive_ptr<T>(&Value, _Value, std::bind(&commitment<T&>::notify_value_set_and_release, this));
+			set_value_at_thread_exit_intrusive_ptr<T>(&Value, value, std::bind(&commitment<T&>::notify_value_set_and_release, this));
 		}
 
 	private:
@@ -634,10 +634,10 @@ template<typename T> class promise
 {
 	oPROMISE_COMMON(T);
 public:
-	void set_value(const T& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(_Value); }
-	void set_value(T&& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(std::move(_Value)); }
-	void set_value_at_thread_exit(const T& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(_Value); }
-	void set_value_at_thread_exit(T&& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(std::move(_Value)); }
+	void set_value(const T& value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(value); }
+	void set_value(T&& value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(std::move(value)); }
+	void set_value_at_thread_exit(const T& value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(value); }
+	void set_value_at_thread_exit(T&& value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(std::move(value)); }
 
 };
 
@@ -645,8 +645,8 @@ template <class T> class promise<T&>
 {
 	oPROMISE_COMMON(T&);
 public:
-	void set_value(const T& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(_Value); }
-	void set_value_at_thread_exit(const T& _Value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(_Value); }
+	void set_value(const T& value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value(value); }
+	void set_value_at_thread_exit(const T& value) { oFUTURE_CHECK(Commitment, no_state); Commitment->set_value_at_thread_exit(value); }
 };
 
 template<> class promise<void>
@@ -725,6 +725,6 @@ namespace future_detail {
 	oCALLABLE_PROPAGATE(oASYNC)
 #endif
 
-} // namespace ouro
+}
 
 #endif

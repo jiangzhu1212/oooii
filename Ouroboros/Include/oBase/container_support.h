@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -37,6 +37,6 @@ template<typename T> struct less_i: public std::binary_function<T, T, bool> { bo
 template<typename T> struct same : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x == y; } };
 template<typename T> struct same_i : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x == y; } };
 
-} // namespace ouro
+}
 
 #endif

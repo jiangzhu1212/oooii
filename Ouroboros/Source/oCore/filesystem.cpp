@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -612,8 +612,8 @@ void* map(const path& _Path
 	SYSTEM_INFO si;
 	GetSystemInfo(&si);
 	byte_swizzle64 alignedOffset;
-	alignedOffset.as_unsigned_long_long = byte_align_down(_Offset, si.dwAllocationGranularity);
-	unsigned long long offsetPadding = _Offset - alignedOffset.as_unsigned_long_long;
+	alignedOffset.as_ullong = byte_align_down(_Offset, si.dwAllocationGranularity);
+	unsigned long long offsetPadding = _Offset - alignedOffset.as_ullong;
 	unsigned long long alignedSize = _Size + offsetPadding;
 
 	DWORD fProtect = _MapOption == map_option::binary_read ? PAGE_READONLY : PAGE_READWRITE;
@@ -622,7 +622,7 @@ void* map(const path& _Path
 		oFSTHROWLAST();
 	finally CloseMapped([&] { CloseHandle(hMapped); });
 
-	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.as_unsigned_int[1], alignedOffset.as_unsigned_int[0], as_type<SIZE_T>(alignedSize));
+	void* p = MapViewOfFile(hMapped, fProtect == PAGE_READONLY ? FILE_MAP_READ : FILE_MAP_WRITE, alignedOffset.as_uint[1], alignedOffset.as_uint[0], as_type<SIZE_T>(alignedSize));
 	if (!p)
 		oFSTHROWLAST();
 
@@ -795,7 +795,7 @@ scoped_allocation load(const path& _Path, load_option::value _LoadOption, const 
 
 	if (_LoadOption == load_option::text_read)
 	{
-		utf_type::value type = utfcmp(p, __min(HonestSize, 512));
+		utf_type type = utfcmp(p, __min(HonestSize, 512));
 		switch (type)
 		{
 			case utf_type::utf32be: case utf_type::utf32le: HonestSize += 4; break;

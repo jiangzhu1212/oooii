@@ -1,30 +1,7 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_bit_h
-#define oBase_bit_h
+#ifndef oMemory_bit_h
+#define oMemory_bit_h
 
 #include <stdint.h>
 
@@ -34,14 +11,16 @@
 #endif
 unsigned char _BitScanForward(unsigned long* Index, unsigned long Mask);
 unsigned char _BitScanReverse(unsigned long* Index, unsigned long Mask);
-unsigned int __popcnt(unsigned int uint64_t);
+unsigned short __popcnt16(unsigned short);
+unsigned int __popcnt(unsigned int);
 #pragma intrinsic(_BitScanReverse)
 #pragma intrinsic(_BitScanForward)
+#pragma intrinsic(__popcnt16)
 #pragma intrinsic(__popcnt)
 #ifdef _M_X64
 	unsigned char _BitScanForward64(unsigned long* Index, unsigned __int64 Mask);
 	unsigned char _BitScanReverse64(unsigned long* Index, unsigned __int64 Mask);
-	unsigned __int64 __popcnt64(unsigned __int64 uint64_t);
+	unsigned __int64 __popcnt64(unsigned __int64);
 	#pragma intrinsic(_BitScanReverse64)
 	#pragma intrinsic(_BitScanForward64)
 	#pragma intrinsic(__popcnt64)

@@ -69,6 +69,7 @@
     <ClCompile Include="memory\memset2d.cpp" />
     <ClCompile Include="memory\memset2d2.cpp" />
     <ClCompile Include="memory\memset2d4.cpp" />
+    <ClCompile Include="memory\memset2d8.cpp" />
     <ClCompile Include="memory\memset4.cpp" />
     <ClCompile Include="memory\memset8.cpp" />
     <ClCompile Include="memory\rle_decode.cpp" />

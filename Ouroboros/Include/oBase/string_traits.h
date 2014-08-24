@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -83,6 +83,6 @@ template<> struct string_traits<wchar_t>
 	static int comparei(const char_type* a, const char_type* b) { return _wcsicmp(a, b); }
 };
 
-} // namespace ouro
+}
 
 #endif

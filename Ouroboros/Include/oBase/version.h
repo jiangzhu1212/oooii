@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -78,6 +78,6 @@ template<size_t size> char* to_string2(char (&_StrDestination)[size], const vers
 template<size_t capacity> char* to_string2(fixed_string<char, capacity>& _StrDestination, const version& _Version) { return to_string2(_StrDestination, _StrDestination.capacity(), _Version); }
 bool from_string2(version* _pType, const char* _StrSource);
 
-} // namespace ouro
+}
 
 #endif

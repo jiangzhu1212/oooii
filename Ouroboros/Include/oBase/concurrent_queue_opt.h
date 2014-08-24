@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -248,6 +248,6 @@ typename concurrent_queue_opt<T>::size_type concurrent_queue_opt<T>::size() cons
 	return empty() ? 0 : (Pool.size() - 1);
 }
 
-} // namespace ouro
+}
 
 #endif

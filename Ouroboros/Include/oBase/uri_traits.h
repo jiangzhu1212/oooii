@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -98,6 +98,6 @@ template<> struct uri_traits<wchar_t, unsigned long long, default_posix_path_tra
 	static int compare(const char_type* _URIStringA, const char_type* _URIStringB) { return wcscmp(_URIStringA, _URIStringB); }
 };
 
-} // namespace ouro
+}
 
 #endif

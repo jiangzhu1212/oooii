@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -148,7 +148,7 @@ template<size_t size> int format_duration(char (&_StrDestination)[size], double 
 // Fills the specified buffer with a size in either bytes, KB, MB, GB, or TB 
 // depending on the number of bytes specified. This returns the same result as 
 // snprintf.
-int format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits);
+int format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long bytes, size_t _NumPrecisionDigits);
 
 // For numbers, this inserts commas where they ought to be (every 3 numbers)
 // this returns nullptr on failure, else _StrDestination.
@@ -278,8 +278,8 @@ typedef const char* (*as_string_fn)(const int& _SingleFlag);
 // _StrDestination will be set to _AllZerosValue.
 char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, as_string_fn _AsString);
 template<size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags, const char* _AllZerosValue, as_string_fn _AsString) { return strbitmask(_StrDestination, size, _Flags, _AllZerosValue, _AsString); }
-template<typename T> char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T _Value)) { return strbitmask(_StrDestination, _SizeofStrDestination, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
-template<typename T, size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T _Value)) { return strbitmask(_StrDestination, size, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
+template<typename T> char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T value)) { return strbitmask(_StrDestination, _SizeofStrDestination, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
+template<typename T, size_t size> char* strbitmask(char (&_StrDestination)[size], int _Flags, const char* _AllZerosValue, const char* (*_AsString)(T value)) { return strbitmask(_StrDestination, size, _Flags, _AllZerosValue, (as_string_fn)_AsString); }
 
 // Returns the pointer into _TypeinfoName that represents just the name of the 
 // user type, thus skipping any prefix [enum|class|struct|union]. This does not
@@ -329,8 +329,8 @@ inline char* zero_non_code(char* _StrSourceCode, const macro* _pMacros, char _Re
 size_t codify_data(char* _StrDestination
 									 , size_t _SizeofStrDestination
 									 , const char* _BufferName
-									 , const void* _pBuffer
-									 , size_t _SizeofBuffer
+									 , const void* buf
+									 , size_t buf_size
 									 , size_t _WordSize);
 
 // _____________________________________________________________________________
@@ -479,7 +479,7 @@ template<> struct less_i<const char*> { bool operator()(const char* x, const cha
 template<> struct same<const char*> { int operator()(const char* x, const char* y) const { return !strcmp(x, y); } };
 template<> struct same_i<const char*> { bool operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
 
-} // namespace ouro
+}
 
 // The macros below are an inner-loop optimization with 5+% performance 
 // implications, so please bear with the oddity. Basically this set of API is a 

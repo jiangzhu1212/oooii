@@ -1,27 +1,8 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef oMemory_equal_h
+#define oMemory_equal_h
+
 // Approximate equality for float/double types. This uses absolute bit 
 // differences rather than epsilon or some very small float value because eps
 // usage is not valid across the entire range of floating precision. With this
@@ -35,18 +16,14 @@
 // specify the maximum number of floating-point steps, not absolute (fixed) 
 // value that something should differ by, so it scales across all of float's 
 // range.
-#pragma once
-#ifndef oBase_equal_h
-#define oBase_equal_h
-
 #include <stdexcept>
 
-#define oSTD_DEFAULT_ULPS 5
+#define oDEFAULT_ULPS 5
 
 namespace ouro {
 
 template<typename T> inline bool equal(const T& A, const T& B, unsigned int _MaxUlps) { return A == B; }
-template<typename T> inline bool equal(const T& A, const T& B) { return equal(A, B, oSTD_DEFAULT_ULPS); }
+template<typename T> inline bool equal(const T& A, const T& B) { return equal(A, B, oDEFAULT_ULPS); }
 
 template<> inline bool equal(const float& A, const float& B, unsigned int _MaxUlps)
 {
@@ -114,6 +91,6 @@ template<> inline bool equal(const double& A, const double& B, unsigned int _Max
 	// $(CitedCodeEnd)
 }
 
-} // namespace ouro
+}
 
 #endif

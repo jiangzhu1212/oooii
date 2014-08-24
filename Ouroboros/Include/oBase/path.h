@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -404,9 +404,9 @@ typedef posix_path path;
 typedef posix_wpath wpath;
 
 template<typename charT, typename traitsT>
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const basic_path<charT, traitsT>& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const basic_path<charT, traitsT>& value)
 {
-	try { ((const basic_path<charT, traitsT>::string_type&)_Value).copy_to(_StrDestination, _SizeofStrDestination); }
+	try { ((const basic_path<charT, traitsT>::string_type&)value).copy_to(_StrDestination, _SizeofStrDestination); }
 	catch (std::exception&) { return nullptr; }
 	return _StrDestination;
 }
@@ -427,7 +427,7 @@ template<typename charT, typename traitsT> struct less_i<basic_path<charT, trait
 template<typename charT, typename traitsT> struct same<basic_path<charT, traitsT>> { int operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return !strcmp(x.c_str(), y.c_str()); } };
 template<typename charT, typename traitsT> struct same_i<basic_path<charT, traitsT>> { bool operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return !_stricmp(x.c_str(), y.c_str()); } };
 
-} // namespace ouro
+}
 
 namespace std {
 

@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -184,6 +184,6 @@ static const color microsoft_blue_brush(0xFFA08064);
 static const color tangent_space_normal_blue(0xFF7F7FFF); // Z-Up
 static const color object_space_normal_green(0xFF7FFF7F); // y-Up
 
-} // namespace ouro
+}
 
 #endif

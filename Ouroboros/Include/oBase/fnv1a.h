@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -69,11 +69,11 @@ template<> struct fnv1a_traits<unsigned long long>
 #endif
 
 template<typename T>		
-inline T fnv1a(const void* _pBuffer, size_t _SizeofBuffer, const T& _Seed = fnv1a_traits<T>::seed)
+inline T fnv1a(const void* buf, size_t buf_size, const T& _Seed = fnv1a_traits<T>::seed)
 {
 	fnv1a_traits<T>::value_type h = _Seed;
-	const char* s = static_cast<const char*>(_pBuffer);
-	while (_SizeofBuffer--)
+	const char* s = static_cast<const char*>(buf);
+	while (buf_size--)
 	{
 		h ^= *s++;
 		h *= fnv1a_traits<T>::value;
@@ -145,6 +145,6 @@ inline T fnv1ai(const wchar_t* _String, const T& _Seed = fnv1a_traits<T>::seed)
 template<typename T, typename U>
 T fnv1a_reduced(const U& _Fnv1aHash, int _NumBits) { return static_cast<T>((_Fnv1aHash >> _NumBits) ^ (U(1) << _NumBits)); }
 
-} // namespace ouro
+}
 
 #endif

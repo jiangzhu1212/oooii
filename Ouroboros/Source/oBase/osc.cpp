@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -378,22 +378,22 @@ template<typename T> static void* next_intrinsic(const void* struct_base, void* 
 	return byte_add(dst, sizeof(T));
 }
 
-static void* NextChar(void* dst, const void* _pSource)
+static void* NextChar(void* dst, const void* src)
 {
 	oASSERT_ALIGNED(dst);
-	int cAsInt = *(const char*)_pSource;
+	int cAsInt = *(const char*)src;
 	*(int*)dst = to_big_endian(cAsInt);
 	return byte_add(dst, sizeof(int));
 }
 
-static void* copy_next_buffer(void* dst, size_t dst_size, const void* _pBuffer, size_t _SizeofBuffer)
+static void* copy_next_buffer(void* dst, size_t dst_size, const void* buf, size_t buf_size)
 {
 	oASSERT_ALIGNED(dst);
-	oASSERT(dst_size >= byte_align(_SizeofBuffer, 4), "");
-	oASSERT(_pBuffer, "A valid buffer must be specified");
-	memcpy(dst, _pBuffer, _SizeofBuffer);
+	oASSERT(dst_size >= byte_align(buf_size, 4), "");
+	oASSERT(buf, "A valid buffer must be specified");
+	memcpy(dst, buf, buf_size);
 	// pad with zeros out to 4-byte alignment
-	char* p = (char*)byte_add(dst, _SizeofBuffer);
+	char* p = (char*)byte_add(dst, buf_size);
 	char* pend = byte_align(p, 4);
 	while (p < pend)
 		*p++ = 0;
@@ -434,10 +434,10 @@ static void serializer(int type, const void* field, size_t field_size, const voi
 
 namespace DESERIALIZE {
 
-template<typename T> static void* next_intrinsic(void* struct_base, void* dst, const void* _pSource)
+template<typename T> static void* next_intrinsic(void* struct_base, void* dst, const void* src)
 {
 	void* p = move_to_next_field(struct_base, dst, std::alignment_of<T>::value);
-	*(T*)p = *(const T*)_pSource;
+	*(T*)p = *(const T*)src;
 	return byte_add(p, sizeof(T));
 }
 
@@ -457,12 +457,12 @@ static void* next_fixed_string(void* struct_base, void* dst, const char* _String
 	return byte_add(s, _NumChars * sizeof(char));
 }
 
-static void* next_blob(void* struct_base, void* dst, const void* _pSource, size_t _SizeofSource)
+static void* next_blob(void* struct_base, void* dst, const void* src, size_t _SizeofSource)
 {
 	int* p = (int*)move_to_next_field(struct_base, dst, std::alignment_of<int>::value);
 	*p = (int)_SizeofSource;
 	p = (int*)move_to_next_field(struct_base, byte_add(p, sizeof(int)), std::alignment_of<void*>::value);
-	*(const void**)p = _pSource;
+	*(const void**)p = src;
 	return byte_add(p, sizeof(const void*));
 }
 

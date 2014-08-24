@@ -5,16 +5,22 @@ future.
 
 == LIBRARY HIERARCHY ==
 
-             oHLSL
-           /   ^   \
-oBase     /    |    \
-   ^     /     |     \
+oMemory      oHLSL
+  ^   \    /   ^   \
+oBase  \  /    |    \
+   ^    \/     |     \
    oSurface  oMesh  oCompute
        ^   \   ^
        |    \  |
 		 oCore   oGPU
 			 \    /  ^
 		    oGUI  oGfx
+
+== oMemory ==
+
+Very basic extensions to stdc memory utilities such as memset, memcmp, memcpy.
+This has no dependencies beyond a few compiler-specific keywords.
+
 
 == oBase == 
 

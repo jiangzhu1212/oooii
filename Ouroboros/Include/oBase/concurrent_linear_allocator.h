@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -68,7 +68,7 @@ inline void* concurrent_linear_allocator::allocate(size_t _Size, size_t _Alignme
 	{
 		pAligned = byte_align(pOld, _Alignment);
 		pNew = byte_add(pAligned, _Size);
-		if (pNew > pEnd)
+		if (pNew > end)
 			return nullptr;
 	} while (!pTail.compare_exchange_strong(pOld, pNew));
 	return pAligned;
@@ -79,6 +79,6 @@ inline void concurrent_linear_allocator::reset()
 	pTail.store(pHead);
 }
 
-} // namespace ouro
+}
 
 #endif

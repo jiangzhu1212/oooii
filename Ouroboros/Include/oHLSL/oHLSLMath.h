@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -60,7 +60,7 @@ struct swizzle64
 		double as_double;
 		float as_float[2];
 		int as_int[2];
-		unsigned int as_unsigned_int[2];
+		unsigned int as_uint[2];
 	};
 };
 
@@ -166,8 +166,8 @@ inline int asint(float f)
 	#endif
 }
 
-inline double asdouble(unsigned int lowbits, unsigned int highbits) { oHLSL::swizzle64 s; s.as_unsigned_int[0] = lowbits; s.as_unsigned_int[1] = highbits; return s.as_double; }
-inline double2 asdouble(const uint2& lowbits, const uint2& highbits) { oHLSL::swizzle64 s[2]; s[0].as_unsigned_int[0] = lowbits.x; s[0].as_unsigned_int[1] = highbits.x; s[1].as_unsigned_int[0] = lowbits.y; s[1].as_unsigned_int[1] = highbits.y; return double2(s[0].as_double, s[1].as_double); }
+inline double asdouble(unsigned int lowbits, unsigned int highbits) { oHLSL::swizzle64 s; s.as_uint[0] = lowbits; s.as_uint[1] = highbits; return s.as_double; }
+inline double2 asdouble(const uint2& lowbits, const uint2& highbits) { oHLSL::swizzle64 s[2]; s[0].as_uint[0] = lowbits.x; s[0].as_uint[1] = highbits.x; s[1].as_uint[0] = lowbits.y; s[1].as_uint[1] = highbits.y; return double2(s[0].as_double, s[1].as_double); }
 template<typename T> double asdouble(const T& value) { return *(double*)&value; }
 template<typename T> double2 asdouble(const TVEC2<T>& value) { return double2(asdouble(value.x), asdouble(value.y)); }
 template<typename T> double3 asdouble(const TVEC3<T>& value) { return double3(asdouble(value.x), asdouble(value.y), asdouble(value.z)); }
@@ -187,7 +187,7 @@ template<typename T> int2 asint(const TVEC2<T>& value) { return int2(asint(value
 template<typename T> int3 asint(const TVEC3<T>& value) { return int3(asint(value.x), asint(value.y), asint(value.z)); }
 template<typename T> int4 asint(const TVEC4<T>& value) { return int4(asint(value.x), asint(value.y), asint(value.z), asint(value.w)); }
 
-inline void asuint(double value, unsigned int& a, unsigned int& b) { oHLSL::swizzle64 s; s.as_double = value; a = s.as_unsigned_int[0]; b = s.as_unsigned_int[1]; }
+inline void asuint(double value, unsigned int& a, unsigned int& b) { oHLSL::swizzle64 s; s.as_double = value; a = s.as_uint[0]; b = s.as_uint[1]; }
 template<typename T> uint asuint(const T& value) { return *(uint*)&value; }
 template<typename T> uint2 asuint(const TVEC2<T>& value) { return uint2(asuint(value.x), asuint(value.y)); }
 template<typename T> uint3 asuint(const TVEC3<T>& value) { return uint3(asuint(value.x), asuint(value.y), asuint(value.z)); }

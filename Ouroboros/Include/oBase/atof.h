@@ -1,35 +1,11 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-// A fast, but limited atof implementation that's reportedly
-// 5x faster than the standard atof in simple cases. In 
-// benchmarking we've found ~3.2x on Intel i7 processors.
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_atof_h
-#define oBase_atof_h
+#ifndef oMemory_atof_h
+#define oMemory_atof_h
 
-#include <cmath>
+// A fast, but limited atof implementation that's reportedly 5x faster than the 
+// standard atof in simple cases. In benchmarking we've found ~3.2x on Intel i7 
+// processors.
 
 /** <citation
 	usage="Implementation" 
@@ -41,16 +17,18 @@
 	modification="wchar_t -> char, namespaced for lib consistency, modify input string pointer to point to just after parsed value"
 />*/
 
+#include <cmath>
+
 namespace ouro {
 
 // $(CitedCodeBegin)
-inline bool atof(const char** pwcs, float* val)
+inline bool atof(const char** pp_str, float* val)
 // (C)2009 Marcin Sokalski gumix@ghnet.pl - All rights reserved.
 {
-	const char* wcs = *pwcs;
+	const char* str = *pp_str;
 
 	int hdr=0;
-	while (wcs[hdr]==L' ')
+	while (str[hdr]==L' ')
 		hdr++;
 
 	int cur=hdr;
@@ -58,9 +36,9 @@ inline bool atof(const char** pwcs, float* val)
 	bool negative=false;
 	bool has_sign=false;
 
-	if (wcs[cur]==L'+' || wcs[cur]==L'-')
+	if (str[cur]==L'+' || str[cur]==L'-')
 	{
-		if (wcs[cur]==L'-')
+		if (str[cur]==L'-')
 			negative=true;
 		has_sign=true;
 		cur++;
@@ -78,17 +56,17 @@ inline bool atof(const char** pwcs, float* val)
 	int decexp=0;
 	unsigned long value=0;
 
-	while (wcs[cur]>=L'0' && wcs[cur]<=L'9')
+	while (str[cur]>=L'0' && str[cur]<=L'9')
 	{
 		if (!full)
 		{
-			if (value>=0x19999999 && wcs[cur]-L'0'>5 || value>0x19999999)
+			if (value>=0x19999999 && str[cur]-L'0'>5 || value>0x19999999)
 			{
 				full=true;
 				decexp++;
 			}
 			else
-				value=value*10+wcs[cur]-L'0';
+				value=value*10+str[cur]-L'0';
 		}
 		else
 			decexp++;
@@ -97,21 +75,21 @@ inline bool atof(const char** pwcs, float* val)
 		cur++;
 	}
 
-	if (wcs[cur]==L'.' || wcs[cur]==L',')
+	if (str[cur]==L'.' || str[cur]==L',')
 	{
-		period=wcs[cur];
+		period=str[cur];
 		cur++;
 
-		while (wcs[cur]>=L'0' && wcs[cur]<=L'9')
+		while (str[cur]>=L'0' && str[cur]<=L'9')
 		{
 			if (!full)
 			{
-				if (value>=0x19999999 && wcs[cur]-L'0'>5 || value>0x19999999)
+				if (value>=0x19999999 && str[cur]-L'0'>5 || value>0x19999999)
 					full=true;
 				else
 				{
 					decexp--;
-					value=value*10+wcs[cur]-L'0';
+					value=value*10+str[cur]-L'0';
 				}
 			}
 
@@ -131,24 +109,24 @@ inline bool atof(const char** pwcs, float* val)
 	int exp_digs=0;
 
 	// even if value is 0, we still need to eat exponent chars
-	if (wcs[cur]==L'e' || wcs[cur]==L'E')
+	if (str[cur]==L'e' || str[cur]==L'E')
 	{
-		exp_char=wcs[cur];
+		exp_char=str[cur];
 		cur++;
 
-		if (wcs[cur]==L'+' || wcs[cur]==L'-')
+		if (str[cur]==L'+' || str[cur]==L'-')
 		{
 			has_expsign=true;
-			if (wcs[cur]=='-')
+			if (str[cur]=='-')
 				exp_negative=true;
 			cur++;
 		}
 
-		while (wcs[cur]>=L'0' && wcs[cur]<=L'9')
+		while (str[cur]>=L'0' && str[cur]<=L'9')
 		{
 			if (decexp2>=0x19999999)
 				return false;
-			decexp2=10*decexp2+wcs[cur]-L'0';
+			decexp2=10*decexp2+str[cur]-L'0';
 			exp_digs++;
 			cur++;
 		}
@@ -159,7 +137,7 @@ inline bool atof(const char** pwcs, float* val)
 			decexp+=decexp2;
 	}
 
-	// end of wcs scan, cur contains value's tail
+	// end of str scan, cur contains value's tail
 
 	if (value)
 	{
@@ -248,14 +226,14 @@ inline bool atof(const char** pwcs, float* val)
 		*(unsigned long*)val=value;
 	}
 
-	*pwcs = &wcs[cur];
+	*pp_str = &str[cur];
 	return true;
 }
 
 // $(CitedCodeEnd)
 
-inline bool atof(const char* wcs, float* val) { return atof(&wcs, val); }
+inline bool atof(const char* str, float* val) { return atof(&str, val); }
 
-} // namespace ouro
+}
 
 #endif

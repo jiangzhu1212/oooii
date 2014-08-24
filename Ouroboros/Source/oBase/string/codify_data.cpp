@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -81,12 +81,12 @@ static char* codify_buffer_name(char* _StrDestination, size_t _SizeofStrDestinat
 template<size_t size> inline char* codify_buffer_name(char (&_StrDestination)[size], const char* _Path) { return codify_buffer_name(_StrDestination, size, _Path); }
 
 template<typename T>
-static size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, const char* _BufferName, const T* _pBuffer, size_t _SizeofBuffer)
+static size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, const char* _BufferName, const T* buf, size_t buf_size)
 {
-	const T* words = static_cast<const T*>(_pBuffer);
+	const T* words = static_cast<const T*>(buf);
 	char* str = _StrDestination;
 	char* end = str + _SizeofStrDestination - 1; // -1 for terminator
-	const size_t nWords = _SizeofBuffer / sizeof(T);
+	const size_t nWords = buf_size / sizeof(T);
 
 	str += snprintf(str, _SizeofStrDestination, "const %s sBuffer[] = \n{ // *** AUTO-GENERATED BUFFER, DO NOT EDIT ***", StaticArrayTraits<T>::GetType());
 	for (size_t i = 0; i < nWords; i++)
@@ -103,11 +103,11 @@ static size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, c
 	}
 
 	// handle any remaining bytes
-	const size_t nExtraBytes = _SizeofBuffer % sizeof(T);
+	const size_t nExtraBytes = buf_size % sizeof(T);
 	if (nExtraBytes)
 	{
 		unsigned long long tmp = 0;
-		memcpy(&tmp, &reinterpret_cast<const unsigned char*>(_pBuffer)[sizeof(T) * nWords], nExtraBytes);
+		memcpy(&tmp, &reinterpret_cast<const unsigned char*>(buf)[sizeof(T) * nWords], nExtraBytes);
 		str += snprintf(str, std::distance(str, end), StaticArrayTraits<T>::GetFormat(), static_cast<T>(tmp));
 	}
 
@@ -118,7 +118,7 @@ static size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, c
 	char bufferId[_MAX_PATH];
 	codify_buffer_name(bufferId, _BufferName);
 
-	unsigned long long sz = _SizeofBuffer; // explicitly size this out so printf formatting below can remain the same between 32- and 64-bit
+	unsigned long long sz = buf_size; // explicitly size this out so printf formatting below can remain the same between 32- and 64-bit
 	str += snprintf(str, std::distance(str, end), "void get_%s(const char** ppBufferName, const void** ppBuffer, size_t* pSize) { *ppBufferName = \"%s\"; *ppBuffer = sBuffer; *pSize = %llu; }\n", bufferId, file_base(_BufferName), sz);
 
 	if (str < end)
@@ -127,18 +127,18 @@ static size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, c
 	return std::distance(_StrDestination, str);
 }
 
-size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, const char* _BufferName, const void* _pBuffer, size_t _SizeofBuffer, size_t _WordSize)
+size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, const char* _BufferName, const void* buf, size_t buf_size, size_t _WordSize)
 {
 	switch (_WordSize)
 	{
-		case sizeof(unsigned char): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned char*>(_pBuffer), _SizeofBuffer);
-		case sizeof(unsigned short): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned short*>(_pBuffer), _SizeofBuffer);
-		case sizeof(unsigned int): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned int*>(_pBuffer), _SizeofBuffer);
-		case sizeof(unsigned long long): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned long long*>(_pBuffer), _SizeofBuffer);
+		case sizeof(unsigned char): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned char*>(buf), buf_size);
+		case sizeof(unsigned short): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned short*>(buf), buf_size);
+		case sizeof(unsigned int): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned int*>(buf), buf_size);
+		case sizeof(unsigned long long): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned long long*>(buf), buf_size);
 		default: break;
 	}
 
 	return 0;
 }
 
-} // namespace ouro
+}

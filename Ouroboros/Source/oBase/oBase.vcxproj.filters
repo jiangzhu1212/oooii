@@ -289,6 +289,9 @@
     <ClCompile Include="ip4.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
+    <ClCompile Include="memory\memset2d8.cpp">
+      <Filter>Source\memory</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oBase\algorithm.h">

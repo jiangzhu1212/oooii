@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -26,9 +26,9 @@
 
 namespace ouro {
 
-const char* as_string(const gpu_api::value& _Value)
+const char* as_string(const gpu_api::value& value)
 {
-	switch (_Value)
+	switch (value)
 	{
 		case gpu_api::unknown: return "unknown";
 		case gpu_api::d3d11: return "d3d11";
@@ -41,4 +41,4 @@ const char* as_string(const gpu_api::value& _Value)
 	return "?";
 }
 
-} // namespace ouro
+}

@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -74,7 +74,7 @@ namespace ouro {
 	extern assert_action::value vtracef(const assert_context& _Assertion, const char* _Format, va_list _Args);
 	inline assert_action::value tracef(const assert_context& _Assertion, const char* _Format, ...) { va_list args; va_start(args, _Format); ouro::assert_action::value action = vtracef(_Assertion, _Format, args); va_end(args); return action; }
 
-} // namespace ouro
+}
 
 // _____________________________________________________________________________
 // Main macro wrapper for print callback that ensures a break points to the 

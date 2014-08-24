@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -35,14 +35,14 @@ void MurmurHash3_x64_128(const void* key, const int len, unsigned int seed, void
 
 namespace ouro {
 
-inline uint128 murmur3(const void* _pBuffer, size_t _SizeofBuffer)
+inline uint128 murmur3(const void* buf, size_t buf_size)
 {
-	oASSERT(size_t(int(_SizeofBuffer)) == _SizeofBuffer, "size is capped at signed int");
+	oASSERT(size_t(int(buf_size)) == buf_size, "size is capped at signed int");
 	uint128 h;
-	MurmurHash3_x64_128(_pBuffer, static_cast<int>(_SizeofBuffer), 0, &h);
+	MurmurHash3_x64_128(buf, static_cast<int>(buf_size), 0, &h);
 	return h;
 }
 
-} // namespace ouro
+}
 
 #endif

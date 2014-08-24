@@ -1,6 +1,6 @@
 /**************************************************************************
 * The MIT License                                                        *
-* Copyright (c) 2013 Antony Arciuolo.                                    *
+* Copyright (c) 2014 Antony Arciuolo.                                    *
 * arciuolo@gmail.com                                                     *
 *                                                                        *
 * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -187,4 +187,4 @@ pool::index_type pool::index(void* pointer) const
 	return pointer ? (index_type)index_of(pointer, blocks, stride) : nullidx;
 }
 
-} // namespace ouro
+}

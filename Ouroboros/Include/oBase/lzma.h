@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -32,12 +32,12 @@
 
 namespace ouro {
 
-size_t lzma_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination
-	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+size_t lzma_compress(void* oRESTRICT dst, size_t dst_size
+	, const void* oRESTRICT src, size_t _SizeofSource);
 
-size_t lzma_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination
-	, const void* oRESTRICT _pSource, size_t _SizeofSource);
+size_t lzma_decompress(void* oRESTRICT dst, size_t dst_size
+	, const void* oRESTRICT src, size_t _SizeofSource);
 
-} // namespace ouro
+}
 
 #endif
