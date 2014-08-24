@@ -113,7 +113,7 @@ void util_mesh::initialize_first_triangle(device& dev)
 	mi.num_indices = 3;
 	mi.num_vertices = 3;
 	mi.num_ranges = 1;
-	mi.elements[0] = mesh::element(mesh::semantic::position, 0, mesh::format::xyz32_float, 0);
+	mi.elements[0] = mesh::element(surface::semantic::vertex_position, 0, surface::format::r32g32b32_float, 0);
 	mi.face_type = mesh::face_type::front_ccw;
 	mi.primitive_type = mesh::primitive_type::triangles;
 	mi.vertex_scale_shift = 0;
@@ -140,8 +140,8 @@ void util_mesh::initialize_first_cube(device& dev, bool _UVWs)
 	mesh::primitive::unique_ptr prim(mesh::primitive::make(i));
 
 	mesh::element_array Elements;
-	Elements[0] = mesh::element(mesh::semantic::position, 0, mesh::format::xyz32_float, 0);
-	Elements[1] = mesh::element(mesh::semantic::texcoord, 0, _UVWs ? mesh::format::xyz32_float : mesh::format::xy32_float, 0);
+	Elements[0] = mesh::element(surface::semantic::vertex_position, 0, surface::format::r32g32b32_float, 0);
+	Elements[1] = mesh::element(surface::semantic::vertex_texcoord, 0, _UVWs ? surface::format::r32g32b32_float : surface::format::r32g32_float, 0);
 	
 	initialize("First Cube", dev, Elements, prim.get());
 }

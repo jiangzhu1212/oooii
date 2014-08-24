@@ -30,6 +30,8 @@
 
 #include <oCompute/linear_algebra.h>
 
+using namespace ouro::surface;
+
 namespace ouro { namespace mesh {
 
 static const float kVerySmall = 0.000001f;
@@ -824,15 +826,15 @@ void primitive_impl::finalize(const face_type::value& face_type, int semantics, 
 
 	int el = 0;
 	if (has(semantics, flag_positions))
-		inf.elements[el] = element(semantic::position, 0, format::xyz32_float, 0), el++;
+		inf.elements[el] = element(semantic::vertex_position, 0, format::r32g32b32_float, 0), el++;
 	if (has(semantics, flag_normals))
-		inf.elements[el] = element(semantic::normal, 0, format::xyz32_float, 1), el++;
+		inf.elements[el] = element(semantic::vertex_normal, 0, format::r32g32b32_float, 1), el++;
 	if (has(semantics, flag_tangents))
-		inf.elements[el] = element(semantic::tangent, 0, format::xyzw32_float, 2), el++;
+		inf.elements[el] = element(semantic::vertex_tangent, 0, format::r32g32b32a32_float, 2), el++;
 	if (has(semantics, flag_texcoords))
-		inf.elements[el] = element(semantic::texcoord, 0, format::xy32_float, 3), el++;
+		inf.elements[el] = element(semantic::vertex_texcoord, 0, format::r32g32_float, 3), el++;
 	if (has(semantics, flag_colors))
-		inf.elements[el] = element(semantic::color, 0, format::bgra8_unorm, 4), el++;
+		inf.elements[el] = element(semantic::vertex_color, 0, format::b8g8r8a8_unorm, 4), el++;
 
 	inf.num_indices = num_indices();
 	inf.num_vertices = num_vertices();

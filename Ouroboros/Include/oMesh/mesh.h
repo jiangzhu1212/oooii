@@ -33,6 +33,7 @@
 #include <oBase/macros.h>
 #include <oBase/plane.h>
 #include <oBase/types.h>
+#include <oSurface/surface.h>
 #include <array>
 
 namespace ouro { namespace mesh {
@@ -102,78 +103,42 @@ namespace face_type
 
 };}
 
-namespace semantic
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	unknown,
-	position,
-	normal,
-	tangent,
-	texcoord,
-	color,
-
-	count, 
-
-};}
-
-namespace format
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
-	unknown,
-	xy32_float,
-	xyz32_float,
-	xyzw32_float,
-	xy16_float,
-	xy16_unorm,
-	xy16_snorm,
-	xy16_uint,
-	xy16_sint,
-	xyzw16_float,
-	xyzw16_unorm,
-	xyzw16_snorm,
-	xyzw16_uint,
-	xyzw16_sint,
-	xyz10w2_unorm,
-	xyz10w2_uint,
-	xyzw8_unorm,
-	xyzw8_snorm,
-	xyzw8_uint,
-	xyzw8_sint,
-	bgra8_unorm,
-	bgra8_srgb,
-
-	count,
-
-};}
-
 class element
 {
-public:
-	element() { *(ushort*)this = 0; }
-	element(const semantic::value& _semantic, uint _index, const format::value& _format, uint _slot)
-		: ussemantic(_semantic)
-		, usindex((ushort)_index)
-		, usformat(_format)
-		, usslot((ushort)_slot)
-	{}
+	typedef uchar storage_t;
 
-	inline semantic::value semantic() const { return (semantic::value)ussemantic; }
-	inline void semantic(const semantic::value& s) { ussemantic = s; }
+public:
+	element() { *(uint*)this = 0; }
+	element(const surface::semantic& s, uint _index, const surface::format& f, uint _slot)
+	{
+		semantic(s);
+		index(_index);
+		format(f);
+		slot(_slot);
+	}
+
+	inline surface::semantic semantic() const { return (surface::semantic)semantic_; }
+	inline void semantic(const surface::semantic& s)
+	{
+		if (s > surface::semantic::lastvertex)
+			throw std::invalid_argument("invalid vertex semantic specified");
+		semantic_ = (storage_t)s;
+	}
 	
-	inline uint index() const { return usindex; }
-	inline void index(uint i) { usindex = (ushort)i; }
+	inline uint index() const { return index_; }
+	inline void index(uint i) { index_ = (storage_t)i; }
 	
-	inline format::value format() const { return (format::value)usformat; }
-	inline void format(const format::value& f) { usformat = f; }
+	inline surface::format format() const { return (surface::format)format_; }
+	inline void format(const surface::format& f) { format_ = (storage_t)f; }
 	
-	inline uint slot() const { return usslot; }
-	inline void slot(uint s) { usslot = (ushort)s; }
+	inline uint slot() const { return slot_; }
+	inline void slot(uint s) { slot_ = (storage_t)s; }
 
 private:
-	ushort ussemantic : 4;
-	ushort usindex : 3;
-	ushort usformat : 5;
-	ushort usslot : 4;
+	storage_t semantic_;
+	storage_t index_;
+	storage_t format_;
+	storage_t slot_;
 };
 
 typedef std::array<element, max_num_elements> element_array;
@@ -214,9 +179,6 @@ struct info
 	uchar vertex_scale_shift; // for position as shorts for xyz it'll be (x / SHORT_MAX) * (1 << vertex_scale_shift)
 };
 
-// returns the number of bytes to store one item of the specified format
-uint format_size(const format::value& f);
-
 // returns the number of bytes from a base vertex in the specified element's slot to where the element's data begins
 uint calc_offset(const element_array& elements, uint element_index);
 
@@ -244,8 +206,8 @@ void offset_indices(uint* oRESTRICT dst, uint num_indices, int offset);
 
 // Copies from the src to the dst + dst_byte_offset and does any appropriate format conversion.
 // If no copy can be done the values are set to zero. This returns dst_byte_offset + size of dst_type.
-uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, const format::value& dst_format,
-									 const void* oRESTRICT src, uint src_stride, const format::value& src_format, uint num_vertices);
+uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, const surface::format& dst_format,
+									 const void* oRESTRICT src, uint src_stride, const surface::format& src_format, uint num_vertices);
 
 // Uses copy_element to find a src for each dst and copies it in (or sets to zero).
 void copy_vertices(void* oRESTRICT* oRESTRICT dst, const element_array& dst_elements, const void* oRESTRICT* oRESTRICT src, const element_array& src_elements, uint num_vertices);

@@ -101,88 +101,7 @@ const char* as_string(const mesh::face_type::value& _Value)
 		
 STR_SUPPORT(mesh::face_type::value, mesh::face_type::count);
 
-const char* as_string(const mesh::semantic::value& _Value)
-{
-	switch (_Value)
-	{
-		case mesh::semantic::unknown: return "unknown";
-		case mesh::semantic::position: return "position";
-		case mesh::semantic::normal: return "normal";
-		case mesh::semantic::tangent: return "tangent";
-		case mesh::semantic::texcoord: return "texcoord";
-		case mesh::semantic::color: return "color";
-		default: break;
-	}
-	return "?";
-}
-	
-STR_SUPPORT(mesh::semantic::value, mesh::semantic::count);
-
-const char* as_string(const mesh::format::value& _Value)
-{
-	switch (_Value)
-	{
-		case mesh::format::unknown: return "unknown";
-		case mesh::format::xy32_float: return "xy32_float";
-		case mesh::format::xyz32_float: return "xyz32_float";
-		case mesh::format::xyzw32_float: return "xyzw32_float";
-		case mesh::format::xy16_float: return "xy16_float";
-		case mesh::format::xy16_unorm: return "xy16_unorm";
-		case mesh::format::xy16_snorm: return "xy16_snorm";
-		case mesh::format::xy16_uint: return "xy16_uint";
-		case mesh::format::xy16_sint: return "xy16_sint";
-		case mesh::format::xyzw16_float: return "xyzw16_float";
-		case mesh::format::xyzw16_unorm: return "xyzw16_unorm";
-		case mesh::format::xyzw16_snorm: return "xyzw16_snorm";
-		case mesh::format::xyzw16_uint: return "xyzw16_uint";
-		case mesh::format::xyzw16_sint: return "xyzw16_sint";
-		case mesh::format::xyz10w2_unorm: return "xyz10w2_unorm";
-		case mesh::format::xyz10w2_uint: return "xyz10w2_uint";
-		case mesh::format::xyzw8_unorm: return "xyzw8_unorm";
-		case mesh::format::xyzw8_snorm: return "xyzw8_snorm";
-		case mesh::format::xyzw8_uint: return "xyzw8_uint";
-		case mesh::format::xyzw8_sint: return "xyzw8_sint";
-		case mesh::format::bgra8_unorm: return "bgra8_unorm";
-		case mesh::format::bgra8_srgb: return "bgra8_srgb";
-		default: break;
-	}
-	return "?";
-}
-
-STR_SUPPORT(mesh::format::value, mesh::format::count);
-
 namespace mesh {
-
-uint format_size(const format::value& f)
-{
-	static uchar sSizes[] = 
-	{
-		0,
-		sizeof(float2),
-		sizeof(float3),
-		sizeof(float4),
-		sizeof(half2),
-		sizeof(half2),
-		sizeof(half2),
-		sizeof(ushort2),
-		sizeof(short2),
-		sizeof(half4),
-		sizeof(half4),
-		sizeof(half4),
-		sizeof(ushort4),
-		sizeof(short4),
-		sizeof(udec3),
-		sizeof(udec3),
-		sizeof(uint),
-		sizeof(uint),
-		sizeof(uint),
-		sizeof(int),
-		sizeof(color),
-		sizeof(color),
-	};
-	static_assert(oCOUNTOF(sSizes) == format::count, "array mismatch");
-	return sSizes[f];
-}
 
 uint calc_offset(const element_array& elements, uint element_index)
 {
@@ -190,7 +109,7 @@ uint calc_offset(const element_array& elements, uint element_index)
 	const uint slot = elements[element_index].slot();
 	for (size_t i = 0; i < element_index; i++)
 		if (elements[i].slot() == slot)
-			offset += format_size(elements[i].format());
+			offset += surface::element_size(elements[i].format());
 	return offset;
 }
 
@@ -199,7 +118,7 @@ uint calc_vertex_size(const element_array& elements, uint slot)
 	uint size = 0;
 	for (const element& e : elements)
 		if (e.slot() == slot)
-			size += format_size(e.format());
+			size += surface::element_size(e.format());
 	return size;
 }
 
@@ -486,181 +405,181 @@ static void copy_vertex_element<float4, half4>(float4* oRESTRICT dst, uint dst_p
 //	}
 //}
 
-uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, const format::value& dst_format,
-									 const void* oRESTRICT src, uint src_stride, const format::value& src_format, uint num_vertices)
+uint copy_element(uint dst_byte_offset, void* oRESTRICT dst, uint dst_stride, const surface::format& dst_format,
+									 const void* oRESTRICT src, uint src_stride, const surface::format& src_format, uint num_vertices)
 {
-	const uint DstSize = format_size(dst_format);
-	const uint SrcSize = format_size(src_format);
+	const uint DstSize = surface::element_size(dst_format);
+	const uint SrcSize = surface::element_size(src_format);
 
 	void* oRESTRICT dest = byte_add(dst, dst_byte_offset);
 
 	bool DidCopy = false;
 	switch (dst_format)
 	{
-		#define COPY(DstFmt, SrcFmt, DstType, SrcType) case format::SrcFmt: { copy_vertex_element((DstType*)dest, dst_stride, (const SrcType*)src, src_stride, num_vertices); DidCopy = true; break; }
-		case format::xy32_float:
+		#define COPY(DstFmt, SrcFmt, DstType, SrcType) case surface::format::SrcFmt: { copy_vertex_element((DstType*)dest, dst_stride, (const SrcType*)src, src_stride, num_vertices); DidCopy = true; break; }
+		case surface::format::r32g32_float:
 		{
 			switch (src_format)
 			{
-				COPY(xy32_float, xy32_float, float2, float2)
-				COPY(xy32_float, xyz32_float, float2, float3)
-				COPY(xy32_float, xy16_unorm, float2, ushort2)
-				//COPY(xy32_float, xyzw16_unorm, float2, ushort4)
-				COPY(xy32_float, xyzw16_float, float3, half4)
+				COPY(r32g32_float, r32g32_float, float2, float2)
+				COPY(r32g32_float, r32g32b32_float, float2, float3)
+				COPY(r32g32_float, r16g16_unorm, float2, ushort2)
+				//COPY(r32g32_float, r16g16b16a16_unorm, float2, ushort4)
+				COPY(r32g32_float, r16g16b16a16_float, float3, half4)
 				default: break;
 			}
 			break;
 		}
 
-		case format::xyz32_float:
+		case surface::format::r32g32b32_float:
 		{
 			switch (src_format)
 			{
-				COPY(xyz32_float, xyz32_float, float3, float3)
-				COPY(xyz32_float, xy32_float, float3, float2)
-				COPY(xyz32_float, xyzw32_float, float3, float4)
-				COPY(xyz32_float, xyz10w2_unorm, float3, udec3)
-				//COPY(xyz32_float, xyzw16_unorm, float3, ushort4)
-				COPY(xyz32_float, xyzw16_float, float3, half4)
+				COPY(r32g32b32_float, r32g32b32_float, float3, float3)
+				COPY(r32g32b32_float, r32g32_float, float3, float2)
+				COPY(r32g32b32_float, r32g32b32a32_float, float3, float4)
+				COPY(r32g32b32_float, r10g10b10a2_unorm, float3, udec3)
+				//COPY(r32g32b32_float, r16g16b16a16_unorm, float3, ushort4)
+				COPY(r32g32b32_float, r16g16b16a16_float, float3, half4)
 				default: break;
 			}
 			break;
 		}
 
-		case format::xyzw32_float:
+		case surface::format::r32g32b32a32_float:
 		{
 			switch (src_format)
 			{
-				COPY(xyzw32_float, xyzw32_float, float4, float4)
-				COPY(xyzw32_float, xyzw16_unorm, float4, ushort4)
-				COPY(xyzw32_float, xyzw16_float, float4, half4)
+				COPY(r32g32b32a32_float, r32g32b32a32_float, float4, float4)
+				COPY(r32g32b32a32_float, r16g16b16a16_unorm, float4, ushort4)
+				COPY(r32g32b32a32_float, r16g16b16a16_float, float4, half4)
 				default: break;
 			}
 			break;
 		}
 
-		//case format::xyz10w2_unorm:
+		//case surface::format::r10g10b10a2_unorm:
 		//{
 		//	switch (src_format)
 		//	{
-		//		COPY(xyz10w2_unorm, xyz10w2_unorm, udec3, udec3)
-		//		COPY(xyz10w2_unorm, xyz32_float, udec3, float3)
+		//		COPY(r10g10b10a2_unorm, r10g10b10a2_unorm, udec3, udec3)
+		//		COPY(r10g10b10a2_unorm, r32g32b32_float, udec3, float3)
 		//		default: break;
 		//	}
 		//	break;
 		//}
 
-		case format::xyz10w2_uint:
+		case surface::format::r10g10b10a2_uint:
 		{
 			switch (src_format)
 			{
-				COPY(xyz10w2_uint, xyz10w2_uint, udec3, udec3)
+				COPY(r10g10b10a2_uint, r10g10b10a2_uint, udec3, udec3)
 				default: break;
 			}
 			break;
 		}
 
-		//case format::xy16_unorm:
+		//case surface::format::r16g16_unorm:
 		//{
 		//	switch (src_format)
 		//	{
-		//		COPY(xy16_unorm, xy16_unorm, ushort2, ushort2)
+		//		COPY(r16g16_unorm, r16g16_unorm, ushort2, ushort2)
 		//		default: break;
 		//	}
 		//	break;
 		//}
 
-		case format::xy16_uint:
+		case surface::format::r16g16_uint:
 		{
 			switch (src_format)
 			{
-				COPY(xy16_uint, xy16_uint, ushort2, ushort2)
+				COPY(r16g16_uint, r16g16_uint, ushort2, ushort2)
 				default: break;
 			}
 			break;
 		}
 
-		case format::xy16_float:
+		case surface::format::r16g16_float:
 		{
 			switch (src_format)
 			{
-				COPY(xy16_float, xy16_float, half2, half2)
-				COPY(xy16_float, xy32_float, half2, float2)
-				COPY(xy16_float, xyz32_float, half2, float3)
+				COPY(r16g16_float, r16g16_float, half2, half2)
+				COPY(r16g16_float, r32g32_float, half2, float2)
+				COPY(r16g16_float, r32g32b32_float, half2, float3)
 				default: break;
 			}
 			break;
 		}
 
-		//case format::xyzw16_unorm:
+		//case surface::format::r16g16b16a16_unorm:
 		//{
 		//	switch (src_format)
 		//	{
-		//		COPY(xyzw16_unorm, xyzw16_unorm, ushort4, ushort4)
-		//		COPY(xyzw16_unorm, xyz32_float, ushort4, float3)
-		//		COPY(xyzw16_unorm, xyzw32_float, ushort4, float4)
+		//		COPY(r16g16b16a16_unorm, r16g16b16a16_unorm, ushort4, ushort4)
+		//		COPY(r16g16b16a16_unorm, r32g32b32_float, ushort4, float3)
+		//		COPY(r16g16b16a16_unorm, r32g32b32a32_float, ushort4, float4)
 		//		default: break;
 		//	}
 		//	break;
 		//}
 
-		case format::xyzw16_uint:
+		case surface::format::r16g16b16a16_uint:
 		{
 			switch (src_format)
 			{
-				COPY(xyzw16_uint, xyzw16_uint, ushort4, ushort4)
+				COPY(r16g16b16a16_uint, r16g16b16a16_uint, ushort4, ushort4)
 				default: break;
 			}
 			break;
 		}
 
-		case format::xyzw16_float:
+		case surface::format::r16g16b16a16_float:
 		{
 			switch (src_format)
 			{
-				COPY(xyzw16_float, xyzw16_float, half4, half4)
-				COPY(xyzw16_float, xyz32_float, half4, float3)
-				COPY(xyzw16_float, xyzw32_float, half4, float4)
+				COPY(r16g16b16a16_float, r16g16b16a16_float, half4, half4)
+				COPY(r16g16b16a16_float, r32g32b32_float, half4, float3)
+				COPY(r16g16b16a16_float, r32g32b32a32_float, half4, float4)
 				default: break;
 			}
 			break;
 		}
 
-		case format::xyzw8_unorm:
+		case surface::format::r8g8b8a8_unorm:
 		{
 			switch (src_format)
 			{
-				COPY(xyzw8_unorm, xyzw8_unorm, uint, uint)
+				COPY(r8g8b8a8_unorm, r8g8b8a8_unorm, uint, uint)
 				default: break;
 			}
 			break;
 		}
 
-		case format::xyzw8_uint:
+		case surface::format::r8g8b8a8_uint:
 		{
 			switch (src_format)
 			{
-				COPY(xyzw8_uint, xyzw8_uint, uint, uint)
+				COPY(r8g8b8a8_uint, r8g8b8a8_uint, uint, uint)
 				default: break;
 			}
 			break;
 		}
 
-		case format::bgra8_unorm:
+		case surface::format::b8g8r8a8_unorm:
 		{
 			switch (src_format)
 			{
-				COPY(bgra8_unorm, bgra8_unorm, color, color)
+				COPY(b8g8r8a8_unorm, b8g8r8a8_unorm, color, color)
 				default: break;
 			}
 			break;
 		}
 
-		case format::bgra8_srgb:
+		case surface::format::b8g8r8a8_unorm_srgb:
 		{
 			switch (src_format)
 			{
-				COPY(bgra8_srgb, bgra8_srgb, color, color)
+				COPY(b8g8r8a8_unorm_srgb, b8g8r8a8_unorm_srgb, color, color)
 				default: break;
 			}
 			break;
@@ -682,7 +601,7 @@ void copy_vertices(void* oRESTRICT* oRESTRICT dst, const element_array& dst_elem
 	for (uint di = 0; di < as_uint(dst_elements.size()); di++)
 	{
 		const element& e = dst_elements[di];
-		if (e.semantic() == mesh::semantic::unknown)
+		if (e.semantic() == surface::semantic::unknown)
 			continue;
 
 		const uint dslot = e.slot();
@@ -710,7 +629,7 @@ void copy_vertices(void* oRESTRICT* oRESTRICT dst, const element_array& dst_elem
 		}
 
 		if (!copied)
-			memset2d4(dst[e.slot()], dstride, 0, format_size(e.format()), num_vertices);
+			memset2d4(dst[e.slot()], dstride, 0, surface::element_size(e.format()), num_vertices);
 	}
 }
 

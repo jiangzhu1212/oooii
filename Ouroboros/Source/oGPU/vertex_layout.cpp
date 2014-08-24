@@ -27,6 +27,7 @@
 #include "d3d_debug.h"
 #include "d3d_prim.h"
 #include "d3d_util.h"
+#include "dxgi_util.h"
 #include <string>
 
 using namespace ouro::gpu::d3d;
@@ -36,51 +37,18 @@ namespace ouro { namespace gpu {
 Device* get_device(device& dev);
 DeviceContext* get_dc(command_list& cl);
 
-static const char* from_semantic(const mesh::semantic::value& semantic)
+static const char* from_semantic(const surface::semantic& s)
 {
-	const char* sSemantics[] =
+	switch (s)
 	{
-		nullptr,
-		"POSITION",
-		"NORMAL",
-		"TANGENT",
-		"TEXCOORD",
-		"COLOR",
+		case surface::semantic::vertex_position: return "POSITION";
+		case surface::semantic::vertex_normal: return "NORMAL";
+		case surface::semantic::vertex_tangent: return "TANGENT";
+		case surface::semantic::vertex_texcoord: return "TEXCOORD";
+		case surface::semantic::vertex_color: return "COLOR";
+		default: break;
 	};
-	static_assert(oCOUNTOF(sSemantics) == mesh::semantic::count, "array mismatch");
-
-	return sSemantics[semantic];
-}
-
-static DXGI_FORMAT from_format(const mesh::format::value& format)
-{
-	static const DXGI_FORMAT sFormats[] = 
-	{
-		DXGI_FORMAT_UNKNOWN,
-		DXGI_FORMAT_R32G32_FLOAT,
-		DXGI_FORMAT_R32G32B32_FLOAT,
-		DXGI_FORMAT_R32G32B32A32_FLOAT,
-		DXGI_FORMAT_R16G16_FLOAT,
-		DXGI_FORMAT_R16G16_UNORM,
-		DXGI_FORMAT_R16G16_SNORM,
-		DXGI_FORMAT_R16G16_UINT,
-		DXGI_FORMAT_R16G16_SINT,
-		DXGI_FORMAT_R16G16B16A16_FLOAT,
-		DXGI_FORMAT_R16G16B16A16_UNORM,
-		DXGI_FORMAT_R16G16B16A16_SNORM,
-		DXGI_FORMAT_R16G16B16A16_UINT,
-		DXGI_FORMAT_R16G16B16A16_SINT,
-		DXGI_FORMAT_R10G10B10A2_UNORM,
-		DXGI_FORMAT_R10G10B10A2_UINT,
-		DXGI_FORMAT_R8G8B8A8_UNORM,
-		DXGI_FORMAT_R8G8B8A8_SNORM,
-		DXGI_FORMAT_R8G8B8A8_UINT,
-		DXGI_FORMAT_R8G8B8A8_SINT,
-		DXGI_FORMAT_B8G8R8A8_UNORM,
-		DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-	};
-	static_assert(oCOUNTOF(sFormats) == mesh::format::count, "array mismatch");
-	return sFormats[format];
+	return "?";
 }
 
 static D3D11_INPUT_ELEMENT_DESC from_element(const mesh::element& element)
@@ -88,7 +56,7 @@ static D3D11_INPUT_ELEMENT_DESC from_element(const mesh::element& element)
 	D3D11_INPUT_ELEMENT_DESC d;
 	d.SemanticName = from_semantic(element.semantic());
 	d.SemanticIndex = element.index();
-	d.Format = from_format(element.format());
+	d.Format = dxgi::from_surface_format(element.format());
 	d.InputSlot = element.slot();
 	d.AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 	d.InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
@@ -102,7 +70,7 @@ void vertex_layout::initialize(const char* name, device& dev, const mesh::elemen
 	uint n = 0;
 	for (const mesh::element& e : elements)
 	{
-		if (e.semantic() == mesh::semantic::unknown || e.format() == mesh::format::unknown)
+		if (e.semantic() == surface::semantic::unknown || e.format() == surface::format::unknown)
 			continue;
 		Elements[n++] = from_element(e);
 	}

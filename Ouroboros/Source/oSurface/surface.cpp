@@ -283,10 +283,6 @@ bool from_string(surface::format* _pFormat, const char* _StrSource)
 	return false;
 }
 
-oDEFINE_RESIZED_AS_STRING(surface::format);
-oDEFINE_RESIZED_TO_STRING(surface::format);
-oDEFINE_RESIZED_FROM_STRING(surface::format);
-
 const char* as_string(const surface::cube_face& f)
 {
 	switch (f)
@@ -305,7 +301,41 @@ const char* as_string(const surface::cube_face& f)
 oDEFINE_TO_STRING(surface::cube_face)
 oDEFINE_FROM_STRING_ENUM_CLASS(surface::cube_face)
 
-	namespace surface {
+const char* as_string(const surface::semantic& s)
+{
+	switch (s)
+	{
+		case surface::semantic::unknown: return "unknown";
+		case surface::semantic::vertex_position: return "vertex_position";
+		case surface::semantic::vertex_normal: return "vertex_normal";
+		case surface::semantic::vertex_tangent: return "vertex_tangent";
+		case surface::semantic::vertex_texcoord: return "vertex_texcoord";
+		case surface::semantic::vertex_color: return "vertex_color";
+		case surface::semantic::index: return "index";
+		case surface::semantic::color: return "color";
+		case surface::semantic::tangent_normal: return "tangent_normal";
+		case surface::semantic::world_normal: return "world_normal";
+		case surface::semantic::specular: return "specular";
+		case surface::semantic::diffuse: return "diffuse";
+		case surface::semantic::height: return "height";
+		case surface::semantic::noise: return "noise";
+		case surface::semantic::intensity: return "intensity";
+		case surface::semantic::custom1d: return "custom1d";
+		case surface::semantic::color_correction1d: return "color_correction1d";
+		case surface::semantic::custom3d: return "custom3d";
+		case surface::semantic::color_correction3d: return "color_correction3d";
+		case surface::semantic::customcube: return "customcube";
+		case surface::semantic::colorcube: return "colorcube";
+		case surface::semantic::custom: return "custom";
+		default: break;
+	}
+	return "?";
+}
+
+oDEFINE_TO_STRING(surface::semantic)
+oDEFINE_FROM_STRING_ENUM_CLASS(surface::semantic)
+
+namespace surface {
 
 format as_srgb(const format& f)
 {
