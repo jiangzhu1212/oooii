@@ -79,9 +79,9 @@ void memset2d8(void* dst, size_t row_pitch, int64_t value, size_t set_pitch, siz
 // repeat pattern as specified in size by element_size.
 void rle_decode(void* oRESTRICT dst, size_t dst_size, size_t element_size, const void* oRESTRICT src);
 
-// Similar to rle_decode. The header/count is still one byte, but the count describes
-// numbers of elements of rle_element_size (for things like multi-byte pixel values).
-// This returns where in src the decode left off.
+// Similar to rle_decode. The header/count is still one byte, but the count 
+// describes numbers of elements of rle_element_size (for things like multi-byte 
+// pixel values). This returns where in src the decode left off.
 const void* rle_decoden(void* oRESTRICT dst, size_t dst_size, 
 	size_t element_stride, size_t rle_element_size, const void* oRESTRICT src);
 
@@ -125,9 +125,9 @@ inline void memcpy2d(void* oRESTRICT dst, size_t dst_pitch,
 	}
 }
 
-// Just like ouro::memcpy2d, but copies from the last source scanline to the first,
-// thus flipping the image vertically for systems whose coordinate system is 
-// flipped V from the destination coordinate system.
+// Just like ouro::memcpy2d, but copies from the last source scanline to the 
+// first, thus flipping the image vertically for systems whose coordinate system 
+// is flipped V from the destination coordinate system.
 inline void memcpy2dvflip(void* oRESTRICT dst, size_t dst_pitch, 
 	const void* oRESTRICT src, size_t src_pitch, size_t src_row_size, size_t num_rows)
 {
