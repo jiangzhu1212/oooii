@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -91,7 +91,7 @@ public:
 	unsigned long long DataLS; // least significant 8 bytes
 };
 
-} // namespace ouro
+}
 
 // Leave it consistent with other basic types
 using ouro::uint128;

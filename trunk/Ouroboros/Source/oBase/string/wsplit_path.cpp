@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of wchar_tge, to any person obtaining  *
@@ -100,4 +100,4 @@ size_t wsplit_path(const wchar_t* _Path
 	return len;
 }
 
-} // namespace ouro
+}

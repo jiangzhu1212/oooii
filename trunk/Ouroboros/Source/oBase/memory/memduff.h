@@ -1,70 +1,48 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
 #ifndef oBase_memduff_h
 #define oBase_memduff_h
 
-#include <oBase/assert.h>
+#include <oBase/memory.h>
+#include <oBase/byte.h>
+#include <stdexcept>
 
-namespace ouro {
-	namespace detail {
+namespace ouro { namespace detail {
 
 // const void* version
 template<typename T> void init_duffs_device_pointers_const(
-	const void* _pMemory
-	, size_t _NumBytes
-	, const char** _ppPrefix
-	, size_t* _pNumPrefixBytes
-	, const T** _ppBody
-	, const char** _ppPostfix
-	, size_t* _pNumPostfixBytes)
+	const void* oRESTRICT mem
+	, size_t bytes
+	, const int8_t* oRESTRICT* oRESTRICT pp_prefix
+	, size_t* oRESTRICT p_prefix_bytes
+	, const T* oRESTRICT* oRESTRICT pp_body
+	, const int8_t* oRESTRICT* oRESTRICT pp_postfix
+	, size_t* oRESTRICT p_postfix_bytes)
 {
-	*_ppPrefix = (char*)_pMemory;
-	*_ppBody = (T*)ouro::byte_align(_pMemory, sizeof(T));
-	*_pNumPrefixBytes = ouro::byte_diff(*_ppPrefix, _pMemory);
-	const T* pEnd = ouro::byte_add(*_ppBody, _NumBytes - *_pNumPrefixBytes);
-	*_ppPostfix = (char*)ouro::byte_align_down(pEnd, sizeof(T));
-	*_pNumPostfixBytes = ouro::byte_diff(pEnd, *_ppPostfix);
+	*pp_prefix = (int8_t*)mem;
+	*pp_body = (T*)byte_align(mem, sizeof(T));
+	*p_prefix_bytes = byte_diff(*pp_prefix, mem);
+	const T* end = byte_add(*pp_body, bytes - *p_prefix_bytes);
+	*pp_postfix = (int8_t*)byte_align_down(end, sizeof(T));
+	*p_postfix_bytes = byte_diff(end, *pp_postfix);
 
-	oASSERT(ouro::byte_add(_pMemory, _NumBytes) == pEnd, "");
-	oASSERT(ouro::byte_add(_pMemory, _NumBytes) == ouro::byte_add(*_ppPostfix, *_pNumPostfixBytes), "");
+	if (byte_add(mem, bytes) != end) throw std::invalid_argument("end miscalculation");
+	if (byte_add(mem, bytes) != byte_add(*pp_postfix, *p_postfix_bytes)) throw std::invalid_argument("postfix miscalculation");
 }
+
 // (non-const) void* version
 template<typename T> void init_duffs_device_pointers(
-	void* _pMemory
-	, size_t _NumBytes
-	, char** _ppPrefix
-	, size_t* _pNumPrefixBytes
-	, T** _ppBody
-	, char** _ppPostfix
-	, size_t* _pNumPostfixBytes)
+	void* oRESTRICT mem
+	, size_t bytes
+	, int8_t* oRESTRICT* oRESTRICT pp_prefix
+	, size_t* oRESTRICT p_prefix_bytes
+	, T* oRESTRICT* oRESTRICT pp_body
+	, int8_t* oRESTRICT* oRESTRICT pp_postfix
+	, size_t* oRESTRICT p_postfix_bytes)
 {
-	init_duffs_device_pointers_const(_pMemory, _NumBytes, (const char**)_ppPrefix, _pNumPrefixBytes, (const T**)_ppBody, (const char**)_ppPostfix, _pNumPostfixBytes);
+	init_duffs_device_pointers_const(mem, bytes, (const int8_t**)pp_prefix, p_prefix_bytes, (const T**)pp_body, (const int8_t**)pp_postfix, p_postfix_bytes);
 }
 
-	} // namespace detail
-} // namespace ouro
+}}
 
 #endif

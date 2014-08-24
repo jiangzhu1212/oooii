@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -116,9 +116,9 @@ public:
 	void resize(const size_type& _NewSize)
 	{
 		hash_map h(_NewSize);
-		enumerate([&](const hash_type& _HashKey, value_type& _Value)->bool
+		enumerate([&](const hash_type& _HashKey, value_type& value)->bool
 		{
-			h.add(_HashKey, std::move(_Value));
+			h.add(_HashKey, std::move(value));
 			return true;
 		});
 		swap(h);
@@ -126,7 +126,7 @@ public:
 
 	bool exists(const hash_type& _Key) const { return find_existing(_Key) != invalid_index; }
 
-	bool add(const hash_type& _Key, const value_type& _Value, bool _AllowResize = true)
+	bool add(const hash_type& _Key, const value_type& value, bool _AllowResize = true)
 	{
 		if (_AllowResize && occupancy() >= 75)
 			resize(size() * 2);
@@ -134,12 +134,12 @@ public:
 		if (i == invalid_index || Keys[i] || Size >= (Capacity-1)) // full or exists
 			return false;
 		Keys[i] = _Key;
-		Values[i] = _Value;
+		Values[i] = value;
 		Size++;
 		return true;
 	}
 
-	bool add(const hash_type& _Key, value_type&& _Value, bool _AllowResize = true)
+	bool add(const hash_type& _Key, value_type&& value, bool _AllowResize = true)
 	{
 		if (_AllowResize && occupancy() >= 75)
 			resize(size() * 2);
@@ -147,28 +147,28 @@ public:
 		if (i == invalid_index || Keys[i] || Size >= (Capacity-1)) // full or exists
 			return false;
 		Keys[i] = _Key;
-		Values[i] = std::move(_Value);
+		Values[i] = std::move(value);
 		Size++;
 		return true;
 	}
 
-	void add_or_set(const hash_type& _Key, const value_type& _Value, bool _AllowResize = true)
+	void add_or_set(const hash_type& _Key, const value_type& value, bool _AllowResize = true)
 	{
 		if (_AllowResize && occupancy() >= 75)
 			resize(size() * 2);
 		size_type i = find_existing_or_new(_Key);
 		Keys[i] = _Key;
-		Values[i] = _Value;
+		Values[i] = value;
 		Size++;
 	}
 
-	void add_or_set(const hash_type& _Key, value_type&& _Value, bool _AllowResize = true)
+	void add_or_set(const hash_type& _Key, value_type&& value, bool _AllowResize = true)
 	{
 		if (_AllowResize && occupancy() >= 75)
 			resize(size() * 2);
 		size_type i = find_existing_or_new(_Key);
 		Keys[i] = _Key;
-		Values[i] = std::move(_Value);
+		Values[i] = std::move(value);
 		Size++;
 	}
 
@@ -234,21 +234,21 @@ public:
 		return Removed;
 	}
 
-	bool set(const hash_type& _Key, const value_type& _Value)
+	bool set(const hash_type& _Key, const value_type& value)
 	{
 		size_type i = find_existing(_Key);
 		if (i == invalid_index)
 			return false;
-		Values[i] = _Value;
+		Values[i] = value;
 		return true;
 	}
 
-	bool set(const hash_type& _Key, value_type&& _Value)
+	bool set(const hash_type& _Key, value_type&& value)
 	{
 		size_type i = find_existing(_Key);
 		if (i == invalid_index)
 			return false;
-		Values[i] = std::move(_Value);
+		Values[i] = std::move(value);
 		return true;
 	}
 
@@ -294,14 +294,14 @@ public:
 		return true;
 	}
 
-	void enumerate_const(const std::function<bool(const hash_type& _HashKey, const value_type& _Value)>& _Enumerator) const
+	void enumerate_const(const std::function<bool(const hash_type& _HashKey, const value_type& value)>& _Enumerator) const
 	{
 		for (size_type i = 0; i < Capacity; i++)
 			if (Keys[i] && !_Enumerator(Keys[i], Values[i]))
 				return;
 	}
 
-	void enumerate(const std::function<bool(const hash_type& _HashKey, value_type& _Value)>& _Enumerator) const
+	void enumerate(const std::function<bool(const hash_type& _HashKey, value_type& value)>& _Enumerator) const
 	{
 		for (size_type i = 0; i < Capacity; i++)
 			if (Keys[i] && !_Enumerator(Keys[i], Values[i]))
@@ -395,6 +395,6 @@ private:
 	size_type Capacity;
 };
 
-} // namespace ouro
+}
 
 #endif

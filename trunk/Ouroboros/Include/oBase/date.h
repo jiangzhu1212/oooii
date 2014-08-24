@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -240,7 +240,7 @@ size_t strftime(char (&_StrDestination)[size]
 	return strftime(_StrDestination, size, _Format, _Date, _Conversion);
 }
 
-} // namespace ouro
+}
 
 namespace std {
 

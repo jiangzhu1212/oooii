@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -477,9 +477,9 @@ typedef basic_uri<char, uri_traits<char, unsigned long long, default_posix_path_
 typedef basic_uri<wchar_t, uri_traits<wchar_t, unsigned long long, default_posix_path_traits<wchar_t>>> wuri;
 
 template<typename charT, typename TraitsT>
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const basic_uri<charT, TraitsT>& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const basic_uri<charT, TraitsT>& value)
 {
-	try { ((const basic_uri<charT, TraitsT>::string_type&)_Value).copy_to(_StrDestination, _SizeofStrDestination); }
+	try { ((const basic_uri<charT, TraitsT>::string_type&)value).copy_to(_StrDestination, _SizeofStrDestination); }
 	catch (std::exception&) { return nullptr; }
 	return _StrDestination;
 }
@@ -492,7 +492,7 @@ bool from_string(basic_uri<charT, TraitsT>* _pValue, const char* _StrSource)
 	return true;
 }
 
-} // namespace ouro
+}
 
 namespace std {
 

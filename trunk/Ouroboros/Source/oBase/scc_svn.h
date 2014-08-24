@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -58,6 +58,6 @@ private:
 std::shared_ptr<scc> make_scc_svn(const scc_spawn& _Spawn, unsigned int _TimeoutMS);
 
 	} // namespace detail
-} // namespace ouro
+}
 
 #endif

@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -60,7 +60,7 @@ template<typename T> struct quat
 	inline quat<T> operator*(T _Scalar) const { return quat<T>(x * _Scalar, y * _Scalar, z * _Scalar, w * _Scalar); }
 };
 
-} // namespace ouro
+}
 
 typedef ouro::quat<float> quatf; typedef ouro::quat<double> quatd;
 

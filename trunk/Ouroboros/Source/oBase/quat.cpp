@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -37,7 +37,7 @@ bool from_string(quatd* _pValue, const char* _StrSource)
 	return from_string_double_array((double*)_pValue, 4, _StrSource);
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const quatf& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.x, _Value.y, _Value.z, _Value.w) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const quatd& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.x, _Value.y, _Value.z, _Value.w) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const quatf& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", value.x, value.y, value.z, value.w) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const quatd& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", value.x, value.y, value.z, value.w) ? _StrDestination : nullptr; }
 
-} // namespace ouro
+}

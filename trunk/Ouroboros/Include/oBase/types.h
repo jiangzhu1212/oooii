@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -124,6 +124,6 @@ template<> inline bool equal(const TVEC4<double>& a, const TVEC4<double>& b, uns
 template<> inline bool equal(const TMAT3<double>& a, const TMAT3<double>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps); }
 template<> inline bool equal(const TMAT4<double>& a, const TMAT4<double>& b, unsigned int maxUlps) { return equal(a.Column0, b.Column0, maxUlps) && equal(a.Column1, b.Column1, maxUlps) && equal(a.Column2, b.Column2, maxUlps) && equal(a.Column3, b.Column3, maxUlps); }
 
-} // namespace ouro
+}
 
 #endif

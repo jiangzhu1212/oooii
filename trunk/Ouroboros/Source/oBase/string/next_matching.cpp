@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -76,4 +76,4 @@ char* next_matching(char* _pPointingAtOpenBrace, const char* _OpenBrace, const c
 	return const_cast<char*>(next_matching(static_cast<const char*>(_pPointingAtOpenBrace), _OpenBrace, _CloseBrace));
 }
 
-} // namespace ouro
+}

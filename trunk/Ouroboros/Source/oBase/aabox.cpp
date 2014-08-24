@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -54,8 +54,8 @@ bool from_string(rectf* _pValue, const char* _StrSource)
 	return true;
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const aaboxf& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f %f %f", _Value.Min.x, _Value.Min.y, _Value.Min.z, _Value.Max.x, _Value.Max.y, _Value.Max.z) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rect& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u %u %u", _Value.Min.x, _Value.Min.y, _Value.Max.x, _Value.Max.y) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rectf& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.Min.x, _Value.Min.y, _Value.Max.x, _Value.Max.y) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const aaboxf& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f %f %f", value.Min.x, value.Min.y, value.Min.z, value.Max.x, value.Max.y, value.Max.z) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rect& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u %u %u", value.Min.x, value.Min.y, value.Max.x, value.Max.y) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rectf& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", value.Min.x, value.Min.y, value.Max.x, value.Max.y) ? _StrDestination : nullptr; }
 
-} // namespace ouro
+}

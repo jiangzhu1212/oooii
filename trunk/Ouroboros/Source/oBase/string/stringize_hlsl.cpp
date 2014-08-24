@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -82,29 +82,29 @@ bool from_string(uint2* _pValue, const char* _StrSource) { CHK_MV_U(); return 2 
 bool from_string(uint3* _pValue, const char* _StrSource) { CHK_MV_U(); return 3 == sscanf_s(_StrSource, "%u %u %u", &_pValue->x, &_pValue->y, &_pValue->z); }
 bool from_string(uint4* _pValue, const char* _StrSource) { CHK_MV(); return 4 == sscanf_s(_StrSource, "%u %u %u %u", &_pValue->x, &_pValue->y, &_pValue->z, &_pValue->w); }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float2& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f", _Value.x, _Value.y) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float3& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f", _Value.x, _Value.y, _Value.z) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float4& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.x, _Value.y, _Value.z, _Value.w) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double2& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f", _Value.x, _Value.y) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double3& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f", _Value.x, _Value.y, _Value.z) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double4& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", _Value.x, _Value.y, _Value.z, _Value.w) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const int2& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%d %d", _Value.x, _Value.y) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const int3& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%d %d %d", _Value.x, _Value.y, _Value.z) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const int4& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%d %d %d %d", _Value.x, _Value.y, _Value.z, _Value.w) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const uint2& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u", _Value.x, _Value.y) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const uint3& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u %u", _Value.x, _Value.y, _Value.z) ? _StrDestination : nullptr; }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const uint4& _Value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u %u %u", _Value.x, _Value.y, _Value.z, _Value.w) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float2& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f", value.x, value.y) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float3& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f", value.x, value.y, value.z) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float4& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", value.x, value.y, value.z, value.w) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double2& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f", value.x, value.y) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double3& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f", value.x, value.y, value.z) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double4& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f", value.x, value.y, value.z, value.w) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const int2& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%d %d", value.x, value.y) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const int3& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%d %d %d", value.x, value.y, value.z) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const int4& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%d %d %d %d", value.x, value.y, value.z, value.w) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const uint2& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u", value.x, value.y) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const uint3& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u %u", value.x, value.y, value.z) ? _StrDestination : nullptr; }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const uint4& value) { return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%u %u %u %u", value.x, value.y, value.z, value.w) ? _StrDestination : nullptr; }
 
-template<typename T> char* to_stringT(char* _StrDestination, size_t _SizeofStrDestination, const TMAT4<T>& _Value)
+template<typename T> char* to_stringT(char* _StrDestination, size_t _SizeofStrDestination, const TMAT4<T>& value)
 {
 	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f"
-		, _Value.Column0.x, _Value.Column1.x, _Value.Column2.x, _Value.Column3.x
-		, _Value.Column0.y, _Value.Column1.y, _Value.Column2.y, _Value.Column3.y
-		, _Value.Column0.z, _Value.Column1.z, _Value.Column2.z, _Value.Column3.z
-		, _Value.Column0.w, _Value.Column1.w, _Value.Column2.w, _Value.Column3.w) ? _StrDestination : nullptr;
+		, value.Column0.x, value.Column1.x, value.Column2.x, value.Column3.x
+		, value.Column0.y, value.Column1.y, value.Column2.y, value.Column3.y
+		, value.Column0.z, value.Column1.z, value.Column2.z, value.Column3.z
+		, value.Column0.w, value.Column1.w, value.Column2.w, value.Column3.w) ? _StrDestination : nullptr;
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float4x4& _Value) { return to_stringT(_StrDestination, _SizeofStrDestination, _Value); }
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double4x4& _Value) { return to_stringT(_StrDestination, _SizeofStrDestination, _Value); }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const float4x4& value) { return to_stringT(_StrDestination, _SizeofStrDestination, value); }
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const double4x4& value) { return to_stringT(_StrDestination, _SizeofStrDestination, value); }
 
-} // namespace ouro
+}

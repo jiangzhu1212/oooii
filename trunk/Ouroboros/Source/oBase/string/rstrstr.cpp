@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -47,4 +47,4 @@ char* rstrstr(char* _String, const char* _Substring)
 	return const_cast<char*>(rstrstr(static_cast<const char*>(_String), _Substring));
 }
 
-} // namespace ouro
+}

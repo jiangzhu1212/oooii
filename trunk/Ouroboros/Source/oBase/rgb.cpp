@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -44,13 +44,13 @@ bool from_string(rgbf* _pValue, const char* _StrSource)
 	return true;
 }
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rgbf& _Value) 
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const rgbf& value) 
 {
-	if (!to_string(_StrDestination, _SizeofStrDestination, (color)_Value))
-		if (!to_string(_StrDestination, _SizeofStrDestination, (const float3&)_Value))
+	if (!to_string(_StrDestination, _SizeofStrDestination, (color)value))
+		if (!to_string(_StrDestination, _SizeofStrDestination, (const float3&)value))
 			return nullptr;
 
 	return _StrDestination;
 }
 
-} // namespace ouro
+}

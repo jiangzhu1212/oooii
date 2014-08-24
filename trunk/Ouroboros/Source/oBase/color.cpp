@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -204,12 +204,12 @@ bool from_string(color* _pColor, const char* _String)
 
 	} // namespace detail
 
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const color& _Value)
+char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const color& value)
 {
-	const char* c = as_string(_Value);
+	const char* c = as_string(value);
 	if (c) return strlcpy(_StrDestination, c, _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
 	int r,g,b,a;
-	_Value.decompose(&r, &g, &b, &a);
+	value.decompose(&r, &g, &b, &a);
 	return -1 != snprintf(_StrDestination, _SizeofStrDestination, "%d %d %d %d", r, g, b, a) ? _StrDestination : nullptr;
 }
 
@@ -253,4 +253,4 @@ const char* as_string(const color& _Color)
 	return nullptr;
 }
 
-} // namespace ouro
+}

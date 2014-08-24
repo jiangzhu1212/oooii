@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -60,7 +60,7 @@ inline void* linear_allocator::allocate(size_t _Size, size_t _Alignment)
 { 
 	void* p = byte_align(pTail, _Alignment);
 	void* pNewTail = byte_add(p, _Size);
-	if (pNewTail <= pEnd)
+	if (pNewTail <= end)
 	{
 		pTail = pNewTail;
 		return p;
@@ -73,6 +73,6 @@ inline void linear_allocator::reset()
 	pTail = pHead;
 }
 
-} // namespace ouro
+}
 
 #endif

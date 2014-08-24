@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -49,4 +49,4 @@ void end_strtok(char** _Context)
 	if (_Context && *_Context) delete [] *_Context;
 }
 
-} // namespace ouro
+}

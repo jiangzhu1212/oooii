@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -26,7 +26,7 @@
 #include <oBase/equal.h>
 #include <oBase/macros.h>
 
-int ouro::format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits)
+int ouro::format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long bytes, size_t _NumPrecisionDigits)
 {
 	char fmt[16];
 	int result = snprintf(fmt, "%%.0%uf %%s%%s", _NumPrecisionDigits);
@@ -34,8 +34,8 @@ int ouro::format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsi
 	const char* Type = "";
 	double Amount = 0.0;
 
-	#define ELIF(_Label) else if (_NumBytes > oCONCAT(o, _Label)(1)) { Type = #_Label; Amount = _NumBytes / static_cast<double>(oCONCAT(o, _Label)(1)); }
-		if (_NumBytes < oKB(1)) { Type = "byte"; Amount = static_cast<double>(_NumBytes); }
+	#define ELIF(_Label) else if (bytes > oCONCAT(o, _Label)(1)) { Type = #_Label; Amount = bytes / static_cast<double>(oCONCAT(o, _Label)(1)); }
+		if (bytes < oKB(1)) { Type = "byte"; Amount = static_cast<double>(bytes); }
 		ELIF(TB) ELIF(GB) ELIF(MB) ELIF(KB)
 	#undef ELIF
 

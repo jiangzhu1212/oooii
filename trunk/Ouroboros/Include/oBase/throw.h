@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -52,7 +52,7 @@ inline std::string formatf(const char* _Format, ...)
 	return s;
 }
 
-} // namespace ouro
+}
 
 #define oTHROW(_SystemError, _Message, ...) do { throw std::system_error(std::make_error_code(std::errc::_SystemError), ::ouro::formatf(_Message, ## __VA_ARGS__)); } while(false)
 #define oTHROW0(_SystemError) do { std::error_code ec = std::make_error_code(std::errc::_SystemError); throw std::system_error(ec, ec.message()); } while(false)

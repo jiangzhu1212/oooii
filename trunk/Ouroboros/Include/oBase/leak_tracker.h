@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -180,6 +180,6 @@ private:
 	size_t num_outstanding_allocations(bool _CurrentContextOnly);
 };
 
-} // namespace ouro
+}
 
 #endif

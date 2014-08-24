@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -287,6 +287,6 @@ json::node json::make_next_node(char*& _JSON, node _Parent, node _Previous, bool
 	return (*_JSON != 0) ? node(newNode) : 0;
 }
 
-} // namespace ouro
+}
 
 #endif

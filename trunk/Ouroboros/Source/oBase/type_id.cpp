@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -64,4 +64,4 @@ const char* as_string(const type::value& _TypeID)
 oDEFINE_TO_STRING(type::value);
 oDEFINE_FROM_STRING(type::value, type::count);
 
-} // namespace ouro
+}

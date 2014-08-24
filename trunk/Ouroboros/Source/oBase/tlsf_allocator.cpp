@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -192,4 +192,4 @@ void tlsf_allocator::walk_heap(const std::function<void(void* ptr, size_t bytes,
 		o_tlsf_walk_heap(heap, tlsf_walker, (void*)&enumerator);
 }
 
-} // namespace ouro
+}

@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -69,6 +69,6 @@ template<size_t size> char* optdoc(char* _StrDestination, size_t _SizeofStrDesti
 template<size_t capacity> char* optdoc(char (&_StrDestination)[capacity], const char* _AppName, const option* _pOptions, size_t _NumOptions, const char* _LooseParameters = "") { return optdoc(_StrDestination, capacity, _AppName, _pOptions, _NumOptions, _LooseParameters); }
 template<size_t capacity, size_t size> char* optdoc(char (&_StrDestination)[capacity], const char* _AppName, const option (&_pOptions)[size], const char* _LooseParameters = "") { return optdoc(_StrDestination, capacity, _AppName, _pOptions, size, _LooseParameters); }
 
-} // namespace ouro
+}
 
 #endif

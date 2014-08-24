@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -110,6 +110,6 @@ template<typename T> struct is_type_id
 	static const bool value = std::is_arithmetic<T>::value || std::is_void<T>::value || is_linear_algebra<T>::value;
 };
 
-} // namespace ouro
+}
 
 #endif

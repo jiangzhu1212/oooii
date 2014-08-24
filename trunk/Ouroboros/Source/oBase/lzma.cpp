@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -77,23 +77,23 @@ static const char* as_string_lzma_error(int _Error)
 	return "Unrecognized LZMA error code";
 }
 
-size_t lzma_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
+size_t lzma_compress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT src, size_t _SizeofSource)
 {
 	size_t CompressedSize = 0;
-	if (_pDestination)
+	if (dst)
 	{
 		const size_t EstSize = lzma_compress(nullptr, 0, nullptr, _SizeofSource);
-		if (_pDestination && _SizeofDestination < EstSize)
+		if (dst && dst_size < EstSize)
 			oTHROW0(no_buffer_space);
 
-		((HDR*)_pDestination)->UncompressedSize = _SizeofSource;
-		CompressedSize = _SizeofDestination;
+		((HDR*)dst)->UncompressedSize = _SizeofSource;
+		CompressedSize = dst_size;
 		size_t outPropsSize = LZMA_PROPS_SIZE;
 		unsigned char outProps[LZMA_PROPS_SIZE];
 		int LZMAError = LzmaCompress(
-			static_cast<unsigned char*>(byte_add(_pDestination, sizeof(HDR)))
+			static_cast<unsigned char*>(byte_add(dst, sizeof(HDR)))
 			, &CompressedSize
-			, static_cast<const unsigned char*>(_pSource)
+			, static_cast<const unsigned char*>(src)
 			, _SizeofSource
 			, outProps
 			, &outPropsSize
@@ -115,18 +115,18 @@ size_t lzma_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination, c
 	return CompressedSize;
 }
 
-size_t lzma_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
+size_t lzma_decompress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT src, size_t _SizeofSource)
 {
-	size_t UncompressedSize = ((const HDR*)_pSource)->UncompressedSize;
-		if (_pDestination && _SizeofDestination < UncompressedSize)
+	size_t UncompressedSize = ((const HDR*)src)->UncompressedSize;
+		if (dst && dst_size < UncompressedSize)
 			oTHROW0(no_buffer_space);
 
-	size_t destLen = _SizeofDestination;
+	size_t destLen = dst_size;
 	size_t srcLen = _SizeofSource;
 	int LZMAError = LzmaUncompress(
-		static_cast<unsigned char*>(_pDestination)
+		static_cast<unsigned char*>(dst)
 		, &destLen
-		, static_cast<const unsigned char*>(byte_add(_pSource, sizeof(HDR)))
+		, static_cast<const unsigned char*>(byte_add(src, sizeof(HDR)))
 		, &srcLen
 		, LZMADEFAULT_Props
 		, LZMA_PROPS_SIZE);
@@ -137,4 +137,4 @@ size_t lzma_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination,
 	return UncompressedSize;
 }
 
-} // namespace ouro
+}

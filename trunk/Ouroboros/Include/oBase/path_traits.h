@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -150,6 +150,6 @@ struct default_posix_path_traits : path_traits<charT, true, true> {};
 template<typename charT>
 struct default_windows_path_traits : path_traits<charT, false, true> {};
 
-} // namespace ouro
+}
 
 #endif

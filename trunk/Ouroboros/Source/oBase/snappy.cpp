@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -29,27 +29,27 @@
 
 namespace ouro {
 
-size_t snappy_compress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
+size_t snappy_compress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT src, size_t _SizeofSource)
 {
 	size_t CompressedSize = snappy::MaxCompressedLength(_SizeofSource);
-	if (_pDestination)
+	if (dst)
 	{
-		if (_pDestination && _SizeofDestination < CompressedSize)
+		if (dst && dst_size < CompressedSize)
 			oTHROW0(no_buffer_space);
-		snappy::RawCompress(static_cast<const char*>(_pSource), _SizeofSource, static_cast<char*>(_pDestination), &CompressedSize);
+		snappy::RawCompress(static_cast<const char*>(src), _SizeofSource, static_cast<char*>(dst), &CompressedSize);
 	}
 	return CompressedSize;
 }
 
-size_t snappy_decompress(void* oRESTRICT _pDestination, size_t _SizeofDestination, const void* oRESTRICT _pSource, size_t _SizeofSource)
+size_t snappy_decompress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT src, size_t _SizeofSource)
 {
 	size_t UncompressedSize = 0;
-	snappy::GetUncompressedLength(static_cast<const char*>(_pSource), _SizeofSource, &UncompressedSize);
-		if (_pDestination && _SizeofDestination < UncompressedSize)
+	snappy::GetUncompressedLength(static_cast<const char*>(src), _SizeofSource, &UncompressedSize);
+		if (dst && dst_size < UncompressedSize)
 			oTHROW0(no_buffer_space);
-	if (_pDestination && !snappy::RawUncompress(static_cast<const char*>(_pSource), _SizeofSource, static_cast<char*>(_pDestination)))
+	if (dst && !snappy::RawUncompress(static_cast<const char*>(src), _SizeofSource, static_cast<char*>(dst)))
 		oTHROW0(protocol_error);
 	return UncompressedSize;
 }
 
-} // namespace ouro
+}

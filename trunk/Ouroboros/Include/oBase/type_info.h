@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -161,8 +161,8 @@ template<typename T> struct type_info
 		#pragma warning(default:4345)
 	}
 
-	// calls this type's copy constructor copying from _pSource to _pInstance
-	static void copy_construct(void* _pInstance, const void* _pSource) { return _pSource ? ::new (_pInstance) T(*static_cast<T*>(const_cast<void*>(_pSource))) : default_construct(_pInstance); }
+	// calls this type's copy constructor copying from src to _pInstance
+	static void copy_construct(void* _pInstance, const void* src) { return src ? ::new (_pInstance) T(*static_cast<T*>(const_cast<void*>(src))) : default_construct(_pInstance); }
 
 	// calls this type's destructor
 	static void destroy(void* _pInstance) { static_cast<T*>(_pInstance)->~T(); }
@@ -203,6 +203,6 @@ template<typename T> struct type_info
 		((is_linear_algebra<T>::value&0x1u)<<31u);
 };
 
-} // namespace ouro
+}
 
 #endif

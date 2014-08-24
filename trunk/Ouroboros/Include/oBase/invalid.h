@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -51,14 +51,14 @@ public:
 	template<typename T> bool operator!=(const T& _That) const { return !(*this == _That); }
 };
 
-template<typename T> bool operator==(const T _Value, const invalid_t& _Invalid) { return _Invalid == _Value; }
-template<typename T> bool operator!=(const T _Value, const invalid_t& _Invalid) { return _Invalid != _Value; }
+template<typename T> bool operator==(const T value, const invalid_t& _Invalid) { return _Invalid == value; }
+template<typename T> bool operator!=(const T value, const invalid_t& _Invalid) { return _Invalid != value; }
 
 	} // namespace detail
 
 static const detail::invalid_t invalid;
 static const detail::invalid_t infinite;
 
-} // namespace ouro
+}
 
 #endif

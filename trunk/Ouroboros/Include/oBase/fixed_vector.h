@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -71,9 +71,9 @@ public:
 		Size = _NewSize;
 	}
 	
-	void assign(size_type _N, const value_type& _Value) { resize(_N, _Value); }
+	void assign(size_type _N, const value_type& value) { resize(_N, value); }
 	
-	void fill(const value_type& _Value) { std::fill(begin(), end(), _Value); }
+	void fill(const value_type& value) { std::fill(begin(), end(), value); }
 
 	reference at(size_type _Index) { return Array.at(_Index); }
 	const_reference at(size_type _Index) const { return Array.at(_Index); }
@@ -115,16 +115,16 @@ public:
 	size_type size() const oNOEXCEPT { return Size; }
 	size_type capacity() const oNOEXCEPT { return Array.max_size(); }
 
-	void push_back(const value_type& _Value)
+	void push_back(const value_type& value)
 	{
 		check(Size + 1);
-		Array[Size++] = _Value;
+		Array[Size++] = value;
 	}
 
-	void push_back(value_type&& _Value)
+	void push_back(value_type&& value)
 	{
 		check(Size + 1);
-		Array[Size++] = std::move(_Value);
+		Array[Size++] = std::move(value);
 	}
 
 	void pop_back()
@@ -133,24 +133,24 @@ public:
 			Array[--Size].~value_type();
 	}
 
-	iterator insert(const_iterator _Position, const value_type& _Value)
+	iterator insert(const_iterator _Position, const value_type& value)
 	{
 		make_insertion_room(_Position, 1);
-		*_Position = _Value;
+		*_Position = value;
 		return _Position;
 	}
 
-	iterator insert(const_iterator _Position, value_type&& _Value)
+	iterator insert(const_iterator _Position, value_type&& value)
 	{
 		make_insertion_room(_Position, 1);
-		*_Position = std::move(_Value);
+		*_Position = std::move(value);
 		return _Position;
 	}
 
-	iterator insert(const_iterator _Position, size_type _N, const value_type& _Value)
+	iterator insert(const_iterator _Position, size_type _N, const value_type& value)
 	{
 		make_insertion_room(_Position, _N);
-		std::fill(_Position, _Position + _N, _Value);
+		std::fill(_Position, _Position + _N, value);
 		return _Position;
 	}
 
@@ -229,6 +229,6 @@ template <typename T, size_t N> char* to_string(char* _StrDestination, size_t _S
 template <typename T, size_t sourceN, size_t destinationN> char* to_string(char (&_StrDestination)[destinationN], const ouro::fixed_vector<T, sourceN>& _Array) { return detail::to_string_container(_StrDestination, Ndst, _Array); }
 template <typename T, size_t N> bool from_string(ouro::fixed_vector<T, N>* _pValue, const char* _StrSource) { return detail::from_string_container(_pValue, _StrSource); }
 
-} // namespace ouro
+}
 
 #endif

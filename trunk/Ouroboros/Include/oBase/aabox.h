@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -131,7 +131,7 @@ int contains(const aabox<T, TVec>& _Box, const TVec& _Point)
 typedef ouro::aabox<int, TVEC2<int>> rect;
 typedef ouro::aabox<float, TVEC2<float>> rectf; typedef ouro::aabox<double, TVEC2<double>> rectd;
 
-} // namespace ouro
+}
 
 typedef ouro::aabox<float, TVEC3<float>> aaboxf; typedef ouro::aabox<double, TVEC3<double>> aaboxd;
 // Axis-aligned boxes/rects are always axis-aligned. An axis-aligned box that 

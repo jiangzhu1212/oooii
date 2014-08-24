@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -90,7 +90,7 @@ private:
 	std::allocator<T> FallbackAllocator;
 };
 
-} // namespace ouro
+}
 
 oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(ouro::std_linear_allocator)
 oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(ouro::std_linear_allocator) { return a.pAllocator == b.pAllocator; }

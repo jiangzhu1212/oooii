@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -102,12 +102,12 @@ template<class T, size_t N> size_t size(const T (&x)[N]) { return sizeT; }
 // one was found.
 
 template<typename T, typename ContainerT>
-size_t push_back_unique(ContainerT& _Container, const T& _Value)
+size_t push_back_unique(ContainerT& _Container, const T& value)
 {
 	size_t index = _Container.size();
-	typename ContainerT::iterator it = ouro::find(_Container, _Value);
+	typename ContainerT::iterator it = ouro::find(_Container, value);
 	if (it == std::end(_Container))
-		_Container.push_back(_Value);
+		_Container.push_back(value);
 	else
 		index = std::distance(std::begin(_Container), it);
 	return index;
@@ -333,9 +333,9 @@ void for_each_value(Container& _Container, const Callable& _Callable) { std::for
 
 // Simplify the erase remove idiom
 template <typename Container>
-void erase_remove(Container& _Container, typename Container::value_type _Value)
+void erase_remove(Container& _Container, typename Container::value_type value)
 {
-	_Container.erase(std::remove(std::begin(_Container), std::end(_Container), _Value), std::end(_Container));
+	_Container.erase(std::remove(std::begin(_Container), std::end(_Container), value), std::end(_Container));
 }
 
 template <typename Container, typename Predicate>
@@ -440,6 +440,6 @@ OutputIterator transform(InputIterator _First, InputIterator _Last, OutputIterat
 	return _Result;
 }
 
-} // namespace ouro
+}
 
 #endif

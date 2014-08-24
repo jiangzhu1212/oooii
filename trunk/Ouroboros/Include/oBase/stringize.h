@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -35,7 +35,7 @@
 #include <oBase/string.h>
 #include <vector>
 
-#define oDEFINE_TO_STRING(_T) char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const _T& _Value) { return detail::to_string(_StrDestination, _SizeofStrDestination, _Value); }
+#define oDEFINE_TO_STRING(_T) char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const _T& value) { return detail::to_string(_StrDestination, _SizeofStrDestination, value); }
 #define oDEFINE_FROM_STRING(_T, _NumTs) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string<_T, _NumTs>(_pValue, _StrSource); }
 #define oDEFINE_FROM_STRING_ENUM_CLASS(_T) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string_enum<_T>(_pValue, _StrSource); }
 #define oDEFINE_FROM_STRING2(_T, _NumTs, _InvalidValue) bool from_string(_T* _pValue, const char* _StrSource) { return detail::from_string<_T, _NumTs>(_pValue, _StrSource, _InvalidValue); }
@@ -63,11 +63,11 @@ namespace ouro {
 
 // Returns a const string representation of the specified value. This is most
 // useful for enums when the object's value never changes.
-template<typename T> const char* as_string(const T& _Value);
+template<typename T> const char* as_string(const T& value);
 
 // Returns _StrDestination, or nullptr if there is a failure.
-template<typename T> char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const T& _Value);
-template<typename T, size_t size> char* to_string(char (&_StrDestination)[size], const T& _Value) { return to_string<T>(_StrDestination, size, _Value); }
+template<typename T> char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const T& value);
+template<typename T, size_t size> char* to_string(char (&_StrDestination)[size], const T& value) { return to_string<T>(_StrDestination, size, value); }
 
 // Fills the specified address with the source string interpretted as that type.
 // Returns true if _pValue is valid, or false if _pValue should not be used.
@@ -80,7 +80,7 @@ template<size_t size> bool from_string(char (&_StrDestination)[size], const char
 namespace detail {
 
 	// A default implementation that copies the as_string to the destination
-	template<typename T> char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const T& _Value) { return strlcpy(_StrDestination, as_string(_Value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr; }
+	template<typename T> char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const T& value) { return strlcpy(_StrDestination, as_string(value), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr; }
 
 	// A default implementation that assumes the enum is by-index and iterates  
 	// each into as_string to compare against.
@@ -164,6 +164,6 @@ template <typename T, typename AllocatorT> bool from_string(std::vector<T, Alloc
 bool from_string_float_array(float* _pValue, size_t _NumValues, const char* _StrSource);
 bool from_string_double_array(double* _pValue, size_t _NumValues, const char* _StrSource);
 
-} // namespace ouro
+}
 
 #endif

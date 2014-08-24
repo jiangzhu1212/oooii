@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -372,6 +372,6 @@ void record_state(const ouro::input::action& _Action, const ouro::input::key* _p
 template<size_t NumKeys, size_t NumKeyStates> void record_state(const ouro::input::action& _Action, const ouro::input::key (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { record_state(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
 
 	} // namespace input
-} // namespace ouro
+}
 
 #endif

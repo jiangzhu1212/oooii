@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -166,7 +166,7 @@ namespace ouro {
 	typedef lwstring uri_wstring;
 
 	TSTR int format_duration(STRT& _StrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(_StrDestination, Capacity, _TimeInSeconds, _Abbreviated, _IncludeMS); }
-	TSTR int format_bytes(STRT& _StrDestination, unsigned long long _NumBytes, size_t _NumPrecisionDigits) { return format_bytes(_StrDestination, _StrDestination.capacity(), _NumBytes, _NumPrecisionDigits); }
+	TSTR int format_bytes(STRT& _StrDestination, unsigned long long bytes, size_t _NumPrecisionDigits) { return format_bytes(_StrDestination, _StrDestination.capacity(), bytes, _NumPrecisionDigits); }
 	TSTR char* format_commas(STRT& _StrDestination, int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
 	TSTR char* format_commas(STRT& _StrDestination, unsigned int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
 
@@ -182,9 +182,9 @@ namespace ouro {
 	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace) { return replace(_StrResult, _StrResult.capacity(), _StrSource, _StrFind, _StrReplace); }
 	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT _StrSource, char _ChrFind, char _ChrReplace) { return replace(_StrResult, _StrResult.capacity(), _StrSource, _ChrFind, _ChrReplace); }
 
-	TSTR char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const STRT& _Value)
+	TSTR char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const STRT& value)
 	{
-		try { _Value.copy_to(_StrDestination, _SizeofStrDestination); }
+		try { value.copy_to(_StrDestination, _SizeofStrDestination); }
 		catch (std::exception&) { return nullptr; }
 		return _StrDestination;
 	}
@@ -196,7 +196,7 @@ namespace ouro {
 		return true;
 	}
 
-	template<TSTR_PARAMS, typename T> char* to_string(STRT& _StrDestination, const T& _Value) { return to_string(_StrDestination.c_str(), _StrDestination.capacity(), _Value); }
+	template<TSTR_PARAMS, typename T> char* to_string(STRT& _StrDestination, const T& value) { return to_string(_StrDestination.c_str(), _StrDestination.capacity(), value); }
 
 	TSTR void to_lower(STRT& _String) { to_lower<STRT::char_type>(_String.c_str()); }
 	TSTR void to_upper(STRT& _String) { to_upper<STRT::char_type>(_String.c_str()); }
@@ -231,7 +231,7 @@ namespace ouro {
 	template<typename charT, size_t Capacity, typename DateT> 
 	size_t strftime(STRT& _StrDestination, const char* _Format, const DateT& _Date, date_conversion::value _Conversion = date_conversion::none) { return ouro::strftime(_StrDestination, _StrDestination.capacity(), _Format, _Date, _Conversion); }
 
-} // namespace ouro
+}
 
 TSTR int snprintf(ouro::STRT& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); int l = ouro::vsnprintf(_StrDestination, _Format, args); va_end(args); return l; }
 TSTR size_t strlcat(ouro::STRT& _StrDestination, const char* _StrSource) { return strlcat(_StrDestination, _StrSource, _StrDestination.capacity()); }

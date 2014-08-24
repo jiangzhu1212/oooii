@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -46,4 +46,4 @@ size_t rstrcspn(char* _BufferStart, char* _String1, const char* _String2)
 	return rstrcspn(static_cast<const char*>(_BufferStart), static_cast<const char*>(_String1), _String2);
 }
 
-} // namespace ouro
+}

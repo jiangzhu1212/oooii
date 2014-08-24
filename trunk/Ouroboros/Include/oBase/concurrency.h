@@ -1,6 +1,6 @@
 /**************************************************************************
  * The MIT License                                                        *
- * Copyright (c) 2013 Antony Arciuolo.                                    *
+ * Copyright (c) 2014 Antony Arciuolo.                                    *
  * arciuolo@gmail.com                                                     *
  *                                                                        *
  * Permission is hereby granted, free of charge, to any person obtaining  *
@@ -89,6 +89,6 @@ inline void serial_for(size_t _Begin, size_t _End, const std::function<void(size
 // Runs a task when the calling thread exits.
 void at_thread_exit(const std::function<void()>& _Task);
 
-} // namespace ouro
+}
 
 #endif
