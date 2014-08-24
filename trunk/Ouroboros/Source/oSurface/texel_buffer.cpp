@@ -30,7 +30,7 @@
 
 namespace ouro { namespace surface {
 
-texel_buffer::texel_buffer(texel_buffer&& that) 
+image::image(image&& that) 
 	: bits(that.bits)
 	, inf(that.inf)
 	, alloc(that.alloc)
@@ -40,7 +40,7 @@ texel_buffer::texel_buffer(texel_buffer&& that)
 	that.alloc = allocator();
 }
 
-texel_buffer& texel_buffer::operator=(texel_buffer&& that)
+image& image::operator=(image&& that)
 {
 	if (this != &that)
 	{
@@ -56,7 +56,7 @@ texel_buffer& texel_buffer::operator=(texel_buffer&& that)
 	return *this;
 }
 
-void texel_buffer::initialize(const info& i, const allocator& a)
+void image::initialize(const info& i, const allocator& a)
 {
 	deinitialize();
 	inf = i;
@@ -64,7 +64,7 @@ void texel_buffer::initialize(const info& i, const allocator& a)
 	bits = alloc.allocate(size(), 0);
 }
 
-void texel_buffer::initialize(const info& i, const void* data, const allocator& a)
+void image::initialize(const info& i, const void* data, const allocator& a)
 {
 	deinitialize();
 	inf = i;
@@ -72,7 +72,7 @@ void texel_buffer::initialize(const info& i, const void* data, const allocator& 
 	bits = (void*)data;
 }
 
-void texel_buffer::initialize_array(const texel_buffer* const* sources, uint num_sources, bool mips)
+void image::initialize_array(const image* const* sources, uint num_sources, bool mips)
 {
 	deinitialize();
 	info si = sources[0]->get_info();
@@ -95,7 +95,7 @@ void texel_buffer::initialize_array(const texel_buffer* const* sources, uint num
 		generate_mips();
 }
 
-void texel_buffer::initialize_3d(const texel_buffer* const* sources, uint num_sources, bool mips)
+void image::initialize_3d(const image* const* sources, uint num_sources, bool mips)
 {
 	deinitialize();
 	info si = sources[0]->get_info();
@@ -122,7 +122,7 @@ void texel_buffer::initialize_3d(const texel_buffer* const* sources, uint num_so
 		generate_mips();
 }
 
-void texel_buffer::deinitialize()
+void image::deinitialize()
 {
 	if (bits && alloc.deallocate)
 		alloc.deallocate(bits);
@@ -130,13 +130,13 @@ void texel_buffer::deinitialize()
 	alloc = allocator();
 }
 
-void texel_buffer::clear()
+void image::clear()
 {
 	lock_t lock(mtx);
 	memset(bits, 0, size());
 }
 
-void texel_buffer::flatten()
+void image::flatten()
 {
 	if (is_block_compressed(inf.format))
 		oTHROW(not_supported, "block compressed formats not handled yet");
@@ -148,7 +148,7 @@ void texel_buffer::flatten()
 	inf.array_size = 0;
 }
 
-void texel_buffer::update_subresource(uint subresource, const const_mapped_subresource& src, const copy_option& option)
+void image::update_subresource(uint subresource, const const_mapped_subresource& src, const copy_option& option)
 {
 	uint2 bd;
 	mapped_subresource dst = get_mapped_subresource(inf, subresource, 0, bits, &bd);
@@ -156,7 +156,7 @@ void texel_buffer::update_subresource(uint subresource, const const_mapped_subre
 	memcpy2d(dst.data, dst.row_pitch, src.data, src.row_pitch, bd.x, bd.y, option == copy_option::flip_vertically);
 }
 
-void texel_buffer::update_subresource(uint subresource, const box& _box, const const_mapped_subresource& src, const copy_option& option)
+void image::update_subresource(uint subresource, const box& _box, const const_mapped_subresource& src, const copy_option& option)
 {
 	if (is_block_compressed(inf.format) || inf.format == format::r1_unorm)
 		throw std::invalid_argument("block compressed and bit formats not supported");
@@ -182,7 +182,7 @@ void texel_buffer::update_subresource(uint subresource, const box& _box, const c
 	}
 }
 
-void texel_buffer::map(uint subresource, mapped_subresource* _pMapped, uint2* out_byte_dimensions)
+void image::map(uint subresource, mapped_subresource* _pMapped, uint2* out_byte_dimensions)
 {
 	mtx.lock();
 	try
@@ -198,23 +198,23 @@ void texel_buffer::map(uint subresource, mapped_subresource* _pMapped, uint2* ou
 	}
 }
 
-void texel_buffer::unmap(uint subresource)
+void image::unmap(uint subresource)
 {
 	mtx.unlock();
 }
 
-void texel_buffer::map_const(uint subresource, const_mapped_subresource* _pMapped, uint2* out_byte_dimensions) const
+void image::map_const(uint subresource, const_mapped_subresource* _pMapped, uint2* out_byte_dimensions) const
 {
 	lock_shared();
 	*_pMapped = get_const_mapped_subresource(inf, subresource, 0, bits, out_byte_dimensions);
 }
 
-void texel_buffer::unmap_const(uint subresource) const
+void image::unmap_const(uint subresource) const
 {
 	unlock_shared();
 }
 
-void texel_buffer::copy_to(uint subresource, const mapped_subresource& dst, const copy_option& option) const
+void image::copy_to(uint subresource, const mapped_subresource& dst, const copy_option& option) const
 {
 	uint2 bd;
 	const_mapped_subresource src = get_const_mapped_subresource(inf, subresource, 0, bits, &bd);
@@ -222,22 +222,22 @@ void texel_buffer::copy_to(uint subresource, const mapped_subresource& dst, cons
 	memcpy2d(dst.data, dst.row_pitch, src.data, src.row_pitch, bd.x, bd.y, option == copy_option::flip_vertically);
 }
 
-texel_buffer texel_buffer::convert(const info& dst_info) const
+image image::convert(const info& dst_info) const
 {
 	return convert(dst_info, alloc);
 }
 
-texel_buffer texel_buffer::convert(const info& dst_info, const allocator& a) const
+image image::convert(const info& dst_info, const allocator& a) const
 {
 	info src_info = get_info();
-	texel_buffer converted(dst_info, a);
+	image converted(dst_info, a);
 	shared_lock slock(this);
 	lock_guard dlock(converted);
 	surface::convert(src_info, slock.mapped, dst_info, dlock.mapped);
 	return converted;
 }
 
-void texel_buffer::convert_to(uint subresource, const mapped_subresource& dst, const format& dst_format, const copy_option& option) const
+void image::convert_to(uint subresource, const mapped_subresource& dst, const format& dst_format, const copy_option& option) const
 {
 	if (inf.format == dst_format)
 		copy_to(subresource, dst, option);
@@ -251,7 +251,7 @@ void texel_buffer::convert_to(uint subresource, const mapped_subresource& dst, c
 	}
 }
 
-void texel_buffer::convert_from(uint subresource, const const_mapped_subresource& src, const format& src_format, const copy_option& option)
+void image::convert_from(uint subresource, const const_mapped_subresource& src, const format& src_format, const copy_option& option)
 {
 	if (inf.format == src_format)
 		copy_from(subresource, src, option);
@@ -265,14 +265,14 @@ void texel_buffer::convert_from(uint subresource, const const_mapped_subresource
 	}
 }
 
-void texel_buffer::convert_in_place(const format& fmt)
+void image::convert_in_place(const format& fmt)
 {
 	lock_guard lock(this);
 	convert_swizzle(inf, fmt, lock.mapped);
 	inf.format = fmt;
 }
 
-void texel_buffer::generate_mips(const filter& f)
+void image::generate_mips(const filter& f)
 {
 	lock_t lock(mtx);
 
@@ -300,12 +300,12 @@ void texel_buffer::generate_mips(const filter& f)
 	}
 }
 
-float calc_rms(const texel_buffer& b1, const texel_buffer& b2)
+float calc_rms(const image& b1, const image& b2)
 {
 	return calc_rms(b1, b2, nullptr);
 }
 
-float calc_rms(const texel_buffer& b1, const texel_buffer& b2, texel_buffer* out_diffs, int diff_scale, const allocator& a)
+float calc_rms(const image& b1, const image& b2, image* out_diffs, int diff_scale, const allocator& a)
 {
 	info si1 = b1.get_info();
 	info si2 = b2.get_info();

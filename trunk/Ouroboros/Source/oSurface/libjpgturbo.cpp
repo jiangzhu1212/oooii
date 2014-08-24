@@ -173,7 +173,7 @@ info get_info_jpg(const void* _pBuffer, size_t _BufferSize)
 	return si;
 }
 
-scoped_allocation encode_jpg(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
+scoped_allocation encode_jpg(const image& img, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
 	tl_alloc = &file_alloc;
 	finally reset_alloc([&] { tl_alloc = nullptr; });
@@ -191,7 +191,7 @@ scoped_allocation encode_jpg(const texel_buffer& b, const allocator& file_alloc,
 	unsigned long CompressedSize = 0;
 	finally Destroy([&] { jpeg_destroy_compress(&cinfo); if (pCompressed) tl_alloc->deallocate(pCompressed); });
 
-	info si = b.get_info();
+	info si = img.get_info();
 	cinfo.image_width = si.dimensions.x;
 	cinfo.image_height = si.dimensions.y;
 	cinfo.in_color_space = to_jcs(si.format, &cinfo.input_components);
@@ -214,7 +214,7 @@ scoped_allocation encode_jpg(const texel_buffer& b, const allocator& file_alloc,
 
 	{
 		JSAMPROW row[1];
-		shared_lock lock(b);
+		shared_lock lock(img);
 		while (cinfo.next_scanline < cinfo.image_height)
 		{
 			row[0] = (JSAMPLE*)byte_add(lock.mapped.data, cinfo.next_scanline * lock.mapped.row_pitch);
@@ -229,7 +229,7 @@ scoped_allocation encode_jpg(const texel_buffer& b, const allocator& file_alloc,
 	return alloc;
 }
 
-texel_buffer decode_jpg(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
+image decode_jpg(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	tl_alloc = &temp_alloc;
 	//finally reset_alloc([&] { tl_alloc = nullptr; });
@@ -251,10 +251,10 @@ texel_buffer decode_jpg(const void* buffer, size_t size, const allocator& texel_
 	si.mip_layout = layout;
 	si.dimensions = int3(cinfo.image_width, cinfo.image_height, 1);
 
-	texel_buffer b(si, texel_alloc);
+	image img(si, texel_alloc);
 	{
 		JSAMPROW row[1];
-		lock_guard lock(b);
+		lock_guard lock(img);
 		jpeg_start_decompress(&cinfo);
 
 		while (cinfo.output_scanline < cinfo.output_height)
@@ -265,7 +265,7 @@ texel_buffer decode_jpg(const void* buffer, size_t size, const allocator& texel_
 	}
 
 	jpeg_finish_decompress(&cinfo);
-	return b;
+	return img;
 }
 
 }}

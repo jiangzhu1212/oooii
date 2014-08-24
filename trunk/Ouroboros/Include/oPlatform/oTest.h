@@ -160,7 +160,7 @@ struct oTest : oProcessSingleton<oTest>
 	// policies for image comparisons. If so, _ColorChannelTolerance, 
 	// _MaxRMSError, and _DiffImageMultiplier can be overridden, else the default
 	// values specified here will be replaced with values from oTestManager::DESC.
-	bool TestImage(const ouro::surface::texel_buffer& _TestImage
+	bool TestImage(const ouro::surface::image& _TestImage
 		, const char* _GoldenImagePath
 		, const char* _FailedImagePath
 		, unsigned int _NthImage
@@ -169,7 +169,7 @@ struct oTest : oProcessSingleton<oTest>
 		, unsigned int _DiffImageMultiplier
 		, bool _OutputGoldenImage);
 
-	bool TestImage(const ouro::surface::texel_buffer& _Buffer
+	bool TestImage(const ouro::surface::image& _Buffer
 		, unsigned int _NthImage = 0
 		, int _ColorChannelTolerance = oDEFAULT
 		, float _MaxRMSError = -1.0f

@@ -391,7 +391,7 @@ void oSystemProperties::Show(int _First, int _Last, bool _Show)
 		oWinControlSetVisible(ControlSet[i], _Show);
 }
 
-static void OverwriteVariableColors(ouro::surface::texel_buffer& _Buffer)
+static void OverwriteVariableColors(ouro::surface::image& _Buffer)
 {
 	static const int2 VarCoords[] = { int2(25,125), int2(26,125), int2(30,125), int2(31,125), int2(32,125), int2(83,125), int2(84,125), int2(135,125), int2(136,125), int2(137,125), int2(173,125), int2(174,125), int2(175,125), };
 
@@ -416,10 +416,10 @@ void TESTSysDialog(test_services& _Services)
 
 	if (!kInteractiveMode)
 	{
-		ouro::future<ouro::surface::texel_buffer> snapshot = test.GetWindow()->snapshot();
+		ouro::future<ouro::surface::image> snapshot = test.GetWindow()->snapshot();
 		test.GetWindow()->flush_messages();
 
-		ouro::surface::texel_buffer s = snapshot.get();
+		ouro::surface::image s = snapshot.get();
 		_Services.check(s, 0);
 
 		for (int i = 0; i < 5; i++)

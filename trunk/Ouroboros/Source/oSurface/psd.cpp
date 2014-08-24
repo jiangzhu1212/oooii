@@ -83,18 +83,18 @@ info get_info_psd(const void* buffer, size_t size)
 	return get_info_psd(buffer, size, &h);
 }
 
-scoped_allocation encode_psd(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
+scoped_allocation encode_psd(const image& img, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
 	oTHROW(operation_not_supported, "psd encoding not supported");
 }
 
-texel_buffer decode_psd(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
+image decode_psd(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	psd_header h;
 	info si = get_info_psd(buffer, size, &h);
 	oCHECK(si.format != format::unknown, "invalid psd");
 
-	texel_buffer b(si, texel_alloc);
+	image img(si, texel_alloc);
 
 	auto bits_header = (const ushort*)get_image_data_section(buffer, size);
 	auto compression = (const psd_compression)psd_swap(*bits_header);
@@ -104,8 +104,8 @@ texel_buffer decode_psd(const void* buffer, size_t size, const allocator& texel_
 		
 	mapped_subresource mapped;
 	uint2 byte_dimensions;
-	b.map(0, &mapped, &byte_dimensions);
-	finally UnmapBuffer([&] { b.unmap(0); });
+	img.map(0, &mapped, &byte_dimensions);
+	finally UnmapBuffer([&] { img.unmap(0); });
 
 	switch (compression)
 	{
@@ -152,7 +152,7 @@ texel_buffer decode_psd(const void* buffer, size_t size, const allocator& texel_
 		default: oTHROW(operation_not_supported, "unsupported compression type %d in psd decode", (int)compression);
 	}
 
-	return b;
+	return img;
 }
 
 }}

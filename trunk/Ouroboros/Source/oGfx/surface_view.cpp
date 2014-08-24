@@ -47,38 +47,38 @@ void surface_view::deinitialize()
 	core = nullptr;
 }
 
-void surface_view::set_texels(const char* name, const surface::texel_buffer& b)
+void surface_view::set_texels(const char* name, const surface::image& img)
 {
 	t1d.deinitialize();
 	t2d.deinitialize();
 	t3d.deinitialize();
 	tcube.deinitialize();
 
-	inf = b.get_info();
+	inf = img.get_info();
 
 	if (inf.is_1d())
 	{
-		t1d.initialize(name, core->device, b, inf.mips());
+		t1d.initialize(name, core->device, img, inf.mips());
 		active = &t1d;
 		oTHROW(operation_not_supported, "1d viewing not yet enabled");
 	}
 
 	else if (inf.is_2d())
 	{
-		t2d.initialize(name, core->device, b, inf.mips());
+		t2d.initialize(name, core->device, img, inf.mips());
 		active = &t2d;
 	}
 
 	else if (inf.is_3d())
 	{
-		t3d.initialize(name, core->device, b, inf.mips());
+		t3d.initialize(name, core->device, img, inf.mips());
 		active = &t3d;
 		oTHROW(operation_not_supported, "3d slice viewing not yet enabled");
 	}
 
 	else if (inf.is_cube())
 	{
-		tcube.initialize(name, core->device, b, inf.mips());
+		tcube.initialize(name, core->device, img, inf.mips());
 		active = &tcube;
 		oTHROW(operation_not_supported, "cube slice viewing not yet enabled");
 	}

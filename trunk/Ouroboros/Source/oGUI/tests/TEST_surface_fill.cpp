@@ -32,7 +32,7 @@ using namespace ouro::windows::gdi;
 namespace ouro
 {
 
-void core_fill_grid_numbers(surface::texel_buffer* _pBuffer, const int2& _GridDimensions, color _NumberColor)
+void core_fill_grid_numbers(surface::image* _pBuffer, const int2& _GridDimensions, color _NumberColor)
 {
 	surface::info si = _pBuffer->get_info();
 

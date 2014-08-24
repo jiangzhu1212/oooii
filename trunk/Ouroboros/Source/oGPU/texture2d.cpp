@@ -45,7 +45,7 @@ void texture2d::initialize(const char* name, device& dev, surface::format format
 	ro = srv;
 }
 
-void texture2d::initialize(const char* name, device& dev, const surface::texel_buffer& src, bool mips)
+void texture2d::initialize(const char* name, device& dev, const surface::image& src, bool mips)
 {
 	auto si = src.get_info();
 

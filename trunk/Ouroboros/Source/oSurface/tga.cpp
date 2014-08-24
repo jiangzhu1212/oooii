@@ -60,11 +60,11 @@ info get_info_tga(const void* buffer, size_t size)
 	return si;
 }
 
-scoped_allocation encode_tga(const texel_buffer& b, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
+scoped_allocation encode_tga(const image& img, const allocator& file_alloc, const allocator& temp_alloc, const compression& compression)
 {
 	oCHECK_ARG(compression == compression::none, "compression not supported");
 
-	auto info = b.get_info();
+	auto info = img.get_info();
 	oCHECK_ARG(info.format == format::b8g8r8a8_unorm || info.format == format::b8g8r8_unorm, "source must be b8g8r8a8_unorm or b8g8r8_unorm");
 	oCHECK_ARG(info.dimensions.x <= 0xffff && info.dimensions.y <= 0xffff, "dimensions must be <= 65535");
 
@@ -83,11 +83,11 @@ scoped_allocation encode_tga(const texel_buffer& b, const allocator& file_alloc,
 	dst.row_pitch = element_size(info.format) * h.width;
 	dst.depth_pitch = dst.row_pitch * h.height;
 
-	b.copy_to(0, dst, copy_option::flip_vertically);
+	img.copy_to(0, dst, copy_option::flip_vertically);
 	return p;
 }
 
-texel_buffer decode_tga(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
+image decode_tga(const void* buffer, size_t size, const allocator& texel_alloc, const allocator& temp_alloc, const mip_layout& layout)
 {
 	info si = get_info_tga(buffer, size);
 	oCHECK(si.format != format::unknown, "invalid tga");
@@ -96,9 +96,9 @@ texel_buffer decode_tga(const void* buffer, size_t size, const allocator& texel_
 	dsi.mip_layout = layout;
 	auto src = get_const_mapped_subresource(si, 0, 0, &h[1]);
 
-	texel_buffer b(dsi, texel_alloc);
-	b.copy_from(0, src, copy_option::flip_vertically);
-	return b;
+	image img(dsi, texel_alloc);
+	img.copy_from(0, src, copy_option::flip_vertically);
+	return img;
 }
 
 }}

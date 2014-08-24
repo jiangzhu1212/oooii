@@ -88,7 +88,7 @@ void gpu_test::check_snapshot(test_services& _Services)
 {
 	if (SnapshotFrames.end() != find(SnapshotFrames, FrameID))
 	{
-		surface::texel_buffer snap = PrimaryColorTarget.make_snapshot();
+		surface::image snap = PrimaryColorTarget.make_snapshot();
 		_Services.check(snap, NthSnapshot);
 		NthSnapshot++;
 	}
@@ -187,7 +187,7 @@ void gpu_texture_test::render()
 	Mesh.draw(cl);
 }
 
-surface::texel_buffer surface_load(const path& _Path, bool _Mips)
+surface::image surface_load(const path& _Path, bool _Mips)
 {
 	scoped_allocation b = filesystem::load(_Path);
 	auto sb = surface::decode(b, surface::format::unknown, _Mips ? surface::mip_layout::tight : surface::mip_layout::none);
@@ -202,14 +202,14 @@ surface::texel_buffer surface_load(const path& _Path, bool _Mips)
 	return sb;
 }
 
-surface::texel_buffer make_1D(int _Width, bool _Mips)
+surface::image make_1D(int _Width, bool _Mips)
 {
 	surface::info si;
 	si.semantic = surface::semantic::custom1d;
 	si.dimensions = int3(_Width, 1, 1);
 	si.mip_layout = _Mips ? surface::mip_layout::tight : surface::mip_layout::none;
 	si.format = surface::format::b8g8r8a8_unorm;
-	surface::texel_buffer s(si);
+	surface::image s(si);
 
 	{
 		surface::lock_guard lock(s);

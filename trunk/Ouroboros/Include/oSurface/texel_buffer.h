@@ -26,8 +26,8 @@
 // surface can support. This is basically a CPU-side version of similar GPU 
 // buffers in D3D and OGL.
 #pragma once
-#ifndef oSurface_texel_buffer_h
-#define oSurface_texel_buffer_h
+#ifndef oSurface_image_h
+#define oSurface_image_h
 
 #include <oBase/allocate.h>
 #include <oCore/mutex.h>
@@ -37,17 +37,17 @@
 
 namespace ouro { namespace surface {
 	
-class texel_buffer
+class image
 {
 public:
-	texel_buffer() : bits(nullptr) {}
-	texel_buffer(const info& i, const allocator& a = default_allocator) { initialize(i, a); }
-	texel_buffer(const info& i, const void* data, const allocator& a = noop_allocator) { initialize(i, data, a); }
+	image() : bits(nullptr) {}
+	image(const info& i, const allocator& a = default_allocator) { initialize(i, a); }
+	image(const info& i, const void* data, const allocator& a = noop_allocator) { initialize(i, data, a); }
 
-	~texel_buffer() { deinitialize(); }
+	~image() { deinitialize(); }
 
-	texel_buffer(texel_buffer&& that);
-	texel_buffer& operator=(texel_buffer&& that);
+	image(image&& that);
+	image& operator=(image&& that);
 
 	// create a buffer with uninitialized bits
 	void initialize(const info& i, const allocator& a = default_allocator);
@@ -57,12 +57,12 @@ public:
 	void initialize(const info& i, const void* data, const allocator& a = noop_allocator);
 
 	// create an array buffer out of several subbuffers of the same format
-	void initialize_array(const texel_buffer* const* sources, uint num_sources, bool mips = false);
-	template<size_t N> void initialize_array(const texel_buffer* const (&sources)[N], bool mips = false) { initialize_array(sources, N, mips); }
+	void initialize_array(const image* const* sources, uint num_sources, bool mips = false);
+	template<size_t N> void initialize_array(const image* const (&sources)[N], bool mips = false) { initialize_array(sources, N, mips); }
 
 	// creates a 3d surface out of several subbuffers of the same format
-	void initialize_3d(const texel_buffer* const* texel_sources, uint num_sources, bool mips = false);
-	template<size_t N> void initialize_3d(const texel_buffer* const (&sources)[N], bool mips = false) { initialize_3d(sources, N, mips); }
+	void initialize_3d(const image* const* texel_sources, uint num_sources, bool mips = false);
+	template<size_t N> void initialize_3d(const image* const (&sources)[N], bool mips = false) { initialize_3d(sources, N, mips); }
 
 	void deinitialize();
 
@@ -98,15 +98,15 @@ public:
 	// copies from a subresource in this instance to a mapped destination of the same format and dimensions 
 	void copy_to(uint subresource, const mapped_subresource& dst, const copy_option& option = copy_option::none) const;
 	inline void copy_from(uint subresource, const const_mapped_subresource& src, const copy_option& option = copy_option::none) { update_subresource(subresource, src, option); }
-	inline void copy_from(uint subresource, const texel_buffer& src, uint src_subresource, const copy_option& option = copy_option::none);
+	inline void copy_from(uint subresource, const image& src, uint src_subresource, const copy_option& option = copy_option::none);
 
 	// initializes a resized and reformatted copy of this buffer allocated from the same or a user-specified allocator
-	texel_buffer convert(const info& dst_info) const;
-	texel_buffer convert(const info& dst_info, const allocator& a) const;
+	image convert(const info& dst_info) const;
+	image convert(const info& dst_info, const allocator& a) const;
 
 	// initializes a reformatted copy of this buffer allocated from the same or a user-specified allocator
-	inline texel_buffer convert(const format& dst_format) const { info si = get_info(); si.format = dst_format; return convert(si); }
-	inline texel_buffer convert(const format& dst_format, const allocator& a) const { info si = get_info(); si.format = dst_format; return convert(si, a); }
+	inline image convert(const format& dst_format) const { info si = get_info(); si.format = dst_format; return convert(si); }
+	inline image convert(const format& dst_format, const allocator& a) const { info si = get_info(); si.format = dst_format; return convert(si, a); }
 
 	// copies to a mapped subresource of the same dimension but the specified format
 	void convert_to(uint subresource, const mapped_subresource& dst, const format& dst_format, const copy_option& option = copy_option::none) const;
@@ -133,19 +133,19 @@ private:
 	inline void lock_shared() const { mtx.lock_shared(); }
 	inline void unlock_shared() const { mtx.unlock_shared(); }
 
-	texel_buffer(const texel_buffer&);
-	const texel_buffer& operator=(const texel_buffer&);
+	image(const image&);
+	const image& operator=(const image&);
 };
 
 class lock_guard
 {
 public:
-	lock_guard(texel_buffer& b, uint subresource = 0)
+	lock_guard(image& b, uint subresource = 0)
 		: buf(&b)
 		, subresource(subresource)
 	{ buf->map(subresource, &mapped, &byte_dimensions); }
 
-	lock_guard(texel_buffer* b, uint subresource = 0)
+	lock_guard(image* b, uint subresource = 0)
 		: buf(b)
 		, subresource(subresource)
 	{ buf->map(subresource, &mapped, &byte_dimensions); }
@@ -156,7 +156,7 @@ public:
 	uint2 byte_dimensions;
 
 private:
-	texel_buffer* buf;
+	image* buf;
 	uint subresource;
 
 	lock_guard(const lock_guard&);
@@ -166,22 +166,22 @@ private:
 class shared_lock
 {
 public:
-	shared_lock(texel_buffer& b, uint subresource = 0)
+	shared_lock(image& b, uint subresource = 0)
 		: buf(&b)
 		, subresource(subresource)
 	{ buf->map_const(subresource, &mapped, &byte_dimensions); }
 
-	shared_lock(texel_buffer* b, uint subresource = 0)
+	shared_lock(image* b, uint subresource = 0)
 		: buf(b)
 		, subresource(subresource)
 	{ buf->map_const(subresource, &mapped, &byte_dimensions); }
 
-	shared_lock(const texel_buffer* b, uint subresource = 0)
+	shared_lock(const image* b, uint subresource = 0)
 		: buf(b)
 		, subresource(subresource)
 	{ buf->map_const(subresource, &mapped, &byte_dimensions); }
 
-	shared_lock(const texel_buffer& b, uint subresource = 0)
+	shared_lock(const image& b, uint subresource = 0)
 		: buf(&b)
 		, subresource(subresource)
 	{ buf->map_const(subresource, &mapped, &byte_dimensions); }
@@ -193,13 +193,13 @@ public:
 
 private:
 	uint subresource;
-	const texel_buffer* buf;
+	const image* buf;
 
 	shared_lock(const shared_lock&);
 	const shared_lock& operator=(const shared_lock&);
 };
 
-inline void texel_buffer::copy_from(uint subresource, const texel_buffer& src, uint src_subresource, const copy_option& option)
+inline void image::copy_from(uint subresource, const image& src, uint src_subresource, const copy_option& option)
 {
 	shared_lock locked(src, src_subresource);
 	copy_from(subresource, locked.mapped, option);
@@ -209,8 +209,8 @@ inline void texel_buffer::copy_from(uint subresource, const texel_buffer& src, u
 // the formats or sizes are different, this throws an exception. If out_diffs
 // is passed in, it will be initialized using the specified allocator. The rms
 // grayscale color will be multiplied by diff_scale.
-float calc_rms(const texel_buffer& b1, const texel_buffer& b2);
-float calc_rms(const texel_buffer& b1, const texel_buffer& b2, texel_buffer* out_diffs, int diff_scale = 1, const allocator& a = default_allocator);
+float calc_rms(const image& b1, const image& b2);
+float calc_rms(const image& b1, const image& b2, image* out_diffs, int diff_scale = 1, const allocator& a = default_allocator);
 
 }}
 

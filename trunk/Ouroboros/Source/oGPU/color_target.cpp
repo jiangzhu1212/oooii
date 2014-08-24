@@ -67,7 +67,7 @@ uint basic_color_target::array_size() const
 	return d.ArraySize;
 }
 
-surface::texel_buffer basic_color_target::make_snapshot(uint index, const allocator& a)
+surface::image basic_color_target::make_snapshot(uint index, const allocator& a)
 {
 	if (!ro)
 		oTHROW(resource_unavailable_try_again, "The render target is minimized or not available for snapshot.");

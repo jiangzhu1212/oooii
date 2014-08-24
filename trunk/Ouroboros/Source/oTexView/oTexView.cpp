@@ -136,7 +136,7 @@ private:
 	// which cannot be accessed from multiple threads even with a multi-threaded device.
 	// so assign data to this loaded value and kick something to consume it.
 	surface::info info_from_file; // might've required conversion
-	surface::texel_buffer displayed;
+	surface::image displayed;
 
 	menu_handle Menus[oWMENU_COUNT];
 	menu::enum_radio_handler EnumRadioHandler;

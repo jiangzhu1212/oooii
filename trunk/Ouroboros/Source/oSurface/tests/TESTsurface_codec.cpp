@@ -37,13 +37,13 @@ namespace ouro {
 
 static bool kSaveToDesktop = false;
 
-void save_bmp_to_desktop(const surface::texel_buffer& b, const char* _path)
+void save_bmp_to_desktop(const surface::image& img, const char* _path)
 {
-	auto encoded = surface::encode(b
+	auto encoded = surface::encode(img
 		, surface::file_format::bmp
 		, default_allocator
 		, default_allocator
-		, surface::as_noax(b.get_info().format)
+		, surface::as_noax(img.get_info().format)
 		, surface::compression::none);
 	filesystem::save(filesystem::desktop_path() / path(_path), encoded, encoded.size());
 }
@@ -57,7 +57,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 	si.format = format;
 	si.mip_layout = surface::mip_layout::none;
 	si.dimensions = int3(dimensions, 1);
-	surface::texel_buffer known(si);
+	surface::image known(si);
 	size_t knownSize = known.size();
 	{
 		surface::lock_guard lock(known);
@@ -86,7 +86,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 		filesystem::save(path(fname), encoded, encoded.size());
 	}
 
-	surface::texel_buffer decoded;
+	surface::image decoded;
 	{
 		scoped_timer("decode");
 		decoded = surface::decode(encoded, encoded.size(), format);
@@ -114,7 +114,7 @@ static void compare_checkboards(const int2& dimensions, const surface::format& f
 void compare_load(test_services& services, const char* path, const char* desktop_filename_prefix)
 {
 	auto encoded = services.load_buffer(path);
-	surface::texel_buffer decoded;
+	surface::image decoded;
 	{
 		scoped_timer("decode");
 		decoded = surface::decode(encoded, encoded.size(), surface::format::b8g8r8a8_unorm);

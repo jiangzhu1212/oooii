@@ -105,7 +105,7 @@ public:
 
 	void reset_cpu_utilization() override { PSM.reset(); }
 	
-	void check(const surface::texel_buffer& _Buffer, int _NthTest = 0, float _MaxRMSError = -1.0f)
+	void check(const surface::image& _Buffer, int _NthTest = 0, float _MaxRMSError = -1.0f)
 	{
 		extern oTest* g_Test;
 		if (!g_Test->TestImage(_Buffer, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))

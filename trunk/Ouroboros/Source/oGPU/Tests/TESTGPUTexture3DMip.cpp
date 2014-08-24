@@ -45,7 +45,7 @@ struct gpu_test_texture3dmip : public gpu_texture_test
 		si.mip_layout = surface::mip_layout::tight;
 		si.format = surface::format::b8g8r8a8_unorm;
 		si.dimensions = int3(64,64,64);
-		surface::texel_buffer image(si);
+		surface::image image(si);
 		{
 			surface::lock_guard lock(image);
 			surface::fill_color_cube((color*)lock.mapped.data, lock.mapped.row_pitch, lock.mapped.depth_pitch, si.dimensions);

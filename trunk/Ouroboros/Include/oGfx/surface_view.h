@@ -48,7 +48,7 @@ public:
 	void initialize(gfx::core& core);
 	void deinitialize();
 
-	void set_texels(const char* name, const surface::texel_buffer& b);
+	void set_texels(const char* name, const surface::image& img);
 
 	inline void set_draw_target(gpu::primary_target* t) { ctarget = t; present = true; }
 	inline void set_draw_target(gpu::primary_target& t) { ctarget = &t; present = true; }
