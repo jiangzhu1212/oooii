@@ -348,11 +348,11 @@ char* ampersand_decode(char* dst, size_t dst_size, const char* src);
 template<size_t size> char* ampersand_decode(char (&dst)[size], const char* src) { return ampersand_decode(dst, size, src); }
 
 // encode a string with JSON-compliant escape encoding.
-char* json_escape_encode(char* dst, size_t dst_size, const char* _Source);
+char* json_escape_encode(char* dst, size_t dst_size, const char* src);
 template<size_t size> char* json_escape_encode(char (&dst)[size], const char* src) { return json_escape_encode(dst, size, src); }
 
 // decode a string encoded with JSON-compliant escape encoding.
-char* json_escape_decode(char* dst, size_t dst_size, const char* _Source);
+char* json_escape_decode(char* dst, size_t dst_size, const char* src);
 template<size_t size> char* json_escape_decode(char (&dst)[size], const char* src) { return json_escape_decode(dst, size, src); }
 
 // _____________________________________________________________________________
