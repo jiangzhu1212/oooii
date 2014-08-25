@@ -435,9 +435,7 @@ char* search_path(char (&dst)[size]
 	, const char* relative_path
 	, const char* dot_path
 	, const std::function<bool(const char* path)>& path_exists)
-{
-	return search_path(dst, size, search_paths, relative_path, dot_path, path_exists);
-}
+{ return search_path(dst, size, search_paths, relative_path, dot_path, path_exists); }
 
 // Parses a single string of typical command line parameters into an argv-style
 // array of strings. This uses the specified allocator, or malloc if nullptr is 
