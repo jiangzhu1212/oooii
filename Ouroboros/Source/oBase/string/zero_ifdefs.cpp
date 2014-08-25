@@ -1,27 +1,5 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <memory.h>
 #include <regex>
 #include <string>
@@ -47,9 +25,9 @@ struct ifdef_block
 
 	enum type type;
 	const char* expression_start; // what comes after one of the opening TYPES. NULL for ELSE and ENDIF
-	const char* expression_end;
+	const char* expressionend;
 	const char* block_start; // The data within the block
-	const char* block_end;
+	const char* blockend;
 };
 
 // Matches #ifdef SYM, #ifndef SYM, #else, #endif
@@ -61,11 +39,11 @@ struct ifdef_block
 // Match6: endif
 static regex reIfdef("#[ \\t]*(if(n?)def)[ \\t]+([a-zA-Z0-9_]+)|#[ \\t]*(else(if)?)|#[ \\t]*(endif)", regex_constants::optimize); // ok static (duplication won't affect correctness)
 
-static enum ifdef_block::type get_type(const cmatch& _Matches)
+static enum ifdef_block::type get_type(const cmatch& matches)
 {
-	const char* Opener = _Matches[1].first;
-	const char* Else = _Matches[4].first;
-	const char* Endif = _Matches[6].first;
+	const char* Opener = matches[1].first;
+	const char* Else = matches[4].first;
+	const char* Endif = matches[6].first;
 
 	if (!memcmp(Opener, "ifdef", 5)) return ifdef_block::ifdef;
 	else if (!memcmp(Opener, "ifndef", 6)) return ifdef_block::ifndef;
@@ -76,22 +54,22 @@ static enum ifdef_block::type get_type(const cmatch& _Matches)
 	return ifdef_block::unknown;
 }
 
-static void next_matching_ifdef(ifdef_block* _pBlocks, size_t _MaxNumBlocks, size_t *_pNumValidBlocks, const char* _StrSourceCodeBegin, const char* _StrSourceCodeEnd)
+static void next_matching_ifdef(ifdef_block* p_blocks, size_t max_num_blocks, size_t* out_num_valid_blocks, const char* src_begin, const char* src_end)
 {
-	ifdef_block* pLastBlock = 0; // used to late-populate block_end
+	ifdef_block* pLastBlock = 0; // used to late-populate blockend
 	ifdef_block* pCurBlock = 0;
 	size_t blockIndex = 0;
 	int open = 0;
 
-	const char* cur = _StrSourceCodeBegin;
+	const char* cur = src_begin;
 
 	cmatch matches;
 	while (regex_search(cur, matches, reIfdef))
 	{
-		if (_StrSourceCodeEnd && matches[0].first >= _StrSourceCodeEnd)
+		if (src_end && matches[0].first >= src_end)
 			break;
 
-		if (blockIndex >= _MaxNumBlocks-1)
+		if (blockIndex >= max_num_blocks-1)
 			oTHROW(no_buffer_space, "block buffer too small");
 
 		enum ifdef_block::type type = get_type(matches);
@@ -111,7 +89,7 @@ static void next_matching_ifdef(ifdef_block* _pBlocks, size_t _MaxNumBlocks, siz
 		// add new blocks on first and at-level-1 openness
 		if (open == 1)
 		{
-			pCurBlock = &_pBlocks[blockIndex++];
+			pCurBlock = &p_blocks[blockIndex++];
 			memset(pCurBlock, 0, sizeof(ifdef_block));
 			pCurBlock->type = type;
 
@@ -122,7 +100,7 @@ static void next_matching_ifdef(ifdef_block* _pBlocks, size_t _MaxNumBlocks, siz
 				case ifdef_block::ifdef:
 				case ifdef_block::ifndef:
 					pCurBlock->expression_start = matches[3].first;
-					pCurBlock->expression_end = matches[3].second;
+					pCurBlock->expressionend = matches[3].second;
 					pCurBlock->block_start = matches[0].second;
 					break;
 
@@ -133,7 +111,7 @@ static void next_matching_ifdef(ifdef_block* _pBlocks, size_t _MaxNumBlocks, siz
 				case ifdef_block::else_:
 				case ifdef_block::endif:
 					pCurBlock->block_start = matches[0].second;
-					pLastBlock->block_end = matches[0].first;
+					pLastBlock->blockend = matches[0].first;
 					break;
 
 				oASSUME(0);
@@ -147,7 +125,7 @@ static void next_matching_ifdef(ifdef_block* _pBlocks, size_t _MaxNumBlocks, siz
 			if (!open)
 			{
 				pCurBlock->block_start = matches[0].second;
-				pCurBlock->block_end = matches[0].second;
+				pCurBlock->blockend = matches[0].second;
 				break;
 			}
 		}
@@ -159,18 +137,18 @@ static void next_matching_ifdef(ifdef_block* _pBlocks, size_t _MaxNumBlocks, siz
 			pLastBlock = pCurBlock;
 	}
 
-	if (_pNumValidBlocks)
-		*_pNumValidBlocks = blockIndex;
+	if (out_num_valid_blocks)
+		*out_num_valid_blocks = blockIndex;
 }
 
 typedef unordered_map<string, string> macros_t;
 
 // An internal version that works on an already-hash macros container
-static char* zero_ifdefs_internal(const macros_t& _Macros, char* _StrSourceCodeBegin, char* _StrSourceCodeEnd, char _Replacement)
+static char* zero_ifdefs_internal(const macros_t& macros, char* src_begin, char* src_end, char replacement)
 {
 	size_t numBlocks = 0;
 	ifdef_block blocks[32];
-	next_matching_ifdef(blocks, oCOUNTOF(blocks), &numBlocks, _StrSourceCodeBegin, _StrSourceCodeEnd);
+	next_matching_ifdef(blocks, oCOUNTOF(blocks), &numBlocks, src_begin, src_end);
 	
 	if (numBlocks)
 	{
@@ -180,10 +158,10 @@ static char* zero_ifdefs_internal(const macros_t& _Macros, char* _StrSourceCodeB
 			switch (pCurBlock->type)
 			{
 				case ifdef_block::ifdef:
-					zeroBlock = _Macros.end() == _Macros.find(string(pCurBlock->expression_start, pCurBlock->expression_end));
+					zeroBlock = macros.end() == macros.find(string(pCurBlock->expression_start, pCurBlock->expressionend));
 					break;
 				case ifdef_block::ifndef:
-					zeroBlock = _Macros.end() != _Macros.find(string(pCurBlock->expression_start, pCurBlock->expression_end));
+					zeroBlock = macros.end() != macros.find(string(pCurBlock->expression_start, pCurBlock->expressionend));
 					break;
 
 				case ifdef_block::else_:
@@ -198,36 +176,36 @@ static char* zero_ifdefs_internal(const macros_t& _Macros, char* _StrSourceCodeB
 
 			if (zeroBlock)
 			{
-				for (const char* cur = pCurBlock->block_start; cur < pCurBlock->block_end; cur++)
-					*const_cast<char*>(cur) = _Replacement;
+				for (const char* cur = pCurBlock->block_start; cur < pCurBlock->blockend; cur++)
+					*const_cast<char*>(cur) = replacement;
 			}
 
 			else
 			{
 				// If we're not going to zero this block, then recurse into it looking for
 				// other blocks to zero
-				zero_ifdefs_internal(_Macros, const_cast<char*>(pCurBlock->block_start), const_cast<char*>(pCurBlock->block_end), _Replacement);
+				zero_ifdefs_internal(macros, const_cast<char*>(pCurBlock->block_start), const_cast<char*>(pCurBlock->blockend), replacement);
 			}
 		}
 	}
 
-	return _StrSourceCodeBegin;
+	return src_begin;
 }
 
-static void hash_macros(macros_t& _OutMacros, const macro* _pMacros)
+static void hash_macros(macros_t& out_macros, const macro* macros)
 {
-	while (_pMacros && _pMacros->symbol && _pMacros->value)
+	while (macros && macros->symbol && macros->value)
 	{
-		_OutMacros[_pMacros->symbol] = _pMacros->value;
-		_pMacros++;
+		out_macros[macros->symbol] = macros->value;
+		macros++;
 	}
 }
 
-char* zero_ifdefs(char* _StrSourceCode, const macro* _pMacros, char _Replacement)
+char* zero_ifdefs(char* str, const macro* macros, char replacement)
 {
-	macros_t macros;
-	hash_macros(macros, _pMacros);
-	return zero_ifdefs_internal(macros, _StrSourceCode, nullptr, _Replacement);
+	macros_t internal_macros;
+	hash_macros(internal_macros, macros);
+	return zero_ifdefs_internal(internal_macros, str, nullptr, replacement);
 }
 
 }

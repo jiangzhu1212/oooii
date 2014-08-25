@@ -1,45 +1,23 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <string.h>
 #include <malloc.h>
 
 namespace ouro {
 
-char* insert(char* _StrSource, size_t _SizeofStrSource, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)
+char* insert(char* src, size_t src_size, char* insertion_point, size_t replacement_length, const char* insertion)
 {
-	size_t insertionLength = strlen(_Insertion);
-	size_t afterInsertionLength = strlen(_InsertionPoint) - _ReplacementLength;
-	size_t newLen = static_cast<size_t>(_InsertionPoint - _StrSource) + afterInsertionLength;
-	if (newLen >= _SizeofStrSource)
+	size_t insertionLength = strlen(insertion);
+	size_t afterInsertionLength = strlen(insertion_point) - replacement_length;
+	size_t newLen = static_cast<size_t>(insertion_point - src) + afterInsertionLength;
+	if (newLen >= src_size)
 		return nullptr;
 	// to avoid the overwrite of a direct memcpy, copy the remainder
 	// of the string out of the way and then copy it back in.
 	char* tmp = (char*)alloca(afterInsertionLength);
-	memcpy(tmp, _InsertionPoint + _ReplacementLength, afterInsertionLength);
-	memcpy(_InsertionPoint, _Insertion, insertionLength);
-	char* p = _InsertionPoint + insertionLength;
+	memcpy(tmp, insertion_point + replacement_length, afterInsertionLength);
+	memcpy(insertion_point, insertion, insertionLength);
+	char* p = insertion_point + insertionLength;
 	memcpy(p, tmp, afterInsertionLength);
 	p[afterInsertionLength] = '\0';
 	return p;

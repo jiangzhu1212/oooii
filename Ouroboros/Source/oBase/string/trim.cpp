@@ -1,47 +1,25 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <oBase/string.h>
 #include <memory.h>
 
 namespace ouro {
 
-char* trim_left(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim)
+char* trim_left(char* trimmed, size_t trimmed_size, const char* src, const char* to_trim)
 {
-	_StrSource += strspn(_StrSource, _ToTrim);
-	strlcpy(_Trimmed, _StrSource, _SizeofTrimmed);
-	return _Trimmed;
+	src += strspn(src, to_trim);
+	strlcpy(trimmed, src, trimmed_size);
+	return trimmed;
 }
 
-char* trim_right(char* _Trimmed, size_t _SizeofTrimmed, const char* _StrSource, const char* _ToTrim)
+char* trim_right(char* trimmed, size_t trimmed_size, const char* src, const char* to_trim)
 {
-	const char* end = &_StrSource[strlen(_StrSource)-1];
-	while (strchr(_ToTrim, *end) && end > _StrSource)
+	const char* end = &src[strlen(src)-1];
+	while (strchr(to_trim, *end) && end > src)
 		end--;
 
-	strncpy_s(_Trimmed, _SizeofTrimmed, _StrSource, end+1-_StrSource);
-	return _Trimmed;
+	strncpy_s(trimmed, trimmed_size, src, end+1-src);
+	return trimmed;
 }
 
 }

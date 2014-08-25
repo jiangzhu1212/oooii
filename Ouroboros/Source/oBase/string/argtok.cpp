@@ -1,27 +1,5 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <oBase/string.h>
 
 #ifndef PATH_MAX
@@ -30,7 +8,7 @@
 
 namespace ouro {
 
-const char** argtok(void* (*_Allocate)(size_t), const char* _AppPath, const char* _CommandLine, int* _pNumArgs)
+const char** argtok(void* (*allocate)(size_t), const char* app_path, const char* command_line, int* out_num_args)
 {
 	/** <citation
 		usage="Implementation" 
@@ -56,24 +34,24 @@ const char** argtok(void* (*_Allocate)(size_t), const char* _AppPath, const char
 
 	size_t path_size = 0;
 
-	len = (size_t)strlen(_CommandLine);
-	if (_AppPath) // @oooii
+	len = (size_t)strlen(command_line);
+	if (app_path) // @oooii
 	{
-		path_size = strlen(_AppPath) + 1;
+		path_size = strlen(app_path) + 1;
 		len += path_size;
 	}
 
 	i = ((len+2)/2)*sizeof(void*) + sizeof(void*);
 
-	if (_AppPath) // @oooii
+	if (app_path) // @oooii
 		i += sizeof(void*);
 	
-	if (!_Allocate)
-		_Allocate = malloc;
+	if (!allocate)
+		allocate = malloc;
 
 	size_t full_size = i + len + 2;
 
-	argv = (char**)_Allocate(full_size);
+	argv = (char**)allocate(full_size);
 	memset(argv, 0, full_size);
 
 	_argv = (char*)(((unsigned char*)argv)+i);
@@ -87,15 +65,15 @@ const char** argtok(void* (*_Allocate)(size_t), const char* _AppPath, const char
 	j = 0;
 
 	// optionally insert exe path so this is exactly like argc/argv
-	if (_AppPath)
+	if (app_path)
 	{
-		clean_path(argv[argc], path_size, _AppPath, '\\');
+		clean_path(argv[argc], path_size, app_path, '\\');
 		j = (size_t)strlen(argv[argc])+1;
 		argc++;
 		argv[argc] = _argv+j;
 	}
 
-	while( (a = _CommandLine[i]) != 0 ) {
+	while( (a = command_line[i]) != 0 ) {
 		if(in_QM) {
 			if(a == '\"') {
 				in_QM = false;
@@ -142,7 +120,7 @@ const char** argtok(void* (*_Allocate)(size_t), const char* _AppPath, const char
 	_argv[j] = '\0';
 	argv[argc] = nullptr;
 
-	*_pNumArgs = argc;
+	*out_num_args = argc;
 	return (const char**)argv;
 }
 
