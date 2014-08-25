@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBasestr_h
-#define oBasestr_h
+#ifndef oBase_String_h
+#define oBase_String_h
 
 // String manipulation functions that really should be in the C/C++ standard.
 
