@@ -5,14 +5,14 @@
 
 namespace ouro {
 
-static void json_escape_decode_unicode(char* dst, size_t dst_size, const char* _Source)
+static void json_escape_decode_unicode(char* dst, size_t dst_size, const char* src)
 {
 	unsigned int UnicodeValue = 0;
-	// Expects 4 digits from _Source and turns it into UTF-8
+	// Expects 4 digits from src and turns it into UTF-8
 	for (int i = 0; i < 4; i++)
 	{
 		UnicodeValue <<= 4;
-		char Digit = *_Source++;
+		char Digit = *src++;
 		if (Digit >= '0' && Digit <= '9') UnicodeValue |= Digit - '0';
 		else if (Digit >= 'a' && Digit <= 'f') UnicodeValue |= Digit - 'a' + 10;
 		else if (Digit >= 'A' && Digit <= 'F') UnicodeValue |= Digit - 'A' + 10;
@@ -24,19 +24,19 @@ static void json_escape_decode_unicode(char* dst, size_t dst_size, const char* _
 		sncatf(dst, dst_size, "%c", (unsigned char)UnicodeValue);
 }
 
-char* json_escape_decode(char* dst, size_t dst_size, const char* _Source)
+char* json_escape_decode(char* dst, size_t dst_size, const char* src)
 {
 	if (-1 == snprintf(dst, dst_size, ""))
 		return nullptr;
 
-	if (*_Source++ != '\"')
+	if (*src++ != '\"')
 		return nullptr;
 
-	while (*_Source)
+	while (*src)
 	{
-		if (*_Source == '\\')
+		if (*src == '\\')
 		{
-			switch (*++_Source)
+			switch (*++src)
 			{
 				case '\\': sncatf(dst, dst_size, "\\"); break;
 				case '\"': sncatf(dst, dst_size, "\""); break;
@@ -45,14 +45,14 @@ char* json_escape_decode(char* dst, size_t dst_size, const char* _Source)
 				case 'n': sncatf(dst, dst_size, "\n"); break;
 				case 'r': sncatf(dst, dst_size, "\r"); break;
 				case 't': sncatf(dst, dst_size, "\t"); break;
-				case 'u': json_escape_decode_unicode(dst, dst_size, ++_Source); _Source += 3; break;
+				case 'u': json_escape_decode_unicode(dst, dst_size, ++src); src += 3; break;
 				default: return false;
 			}
 		}
-		else if (*_Source != '\"')
-			sncatf(dst, dst_size, "%c", *_Source);
+		else if (*src != '\"')
+			sncatf(dst, dst_size, "%c", *src);
 
-		_Source++;
+		src++;
 	}
 	return dst;
 }
