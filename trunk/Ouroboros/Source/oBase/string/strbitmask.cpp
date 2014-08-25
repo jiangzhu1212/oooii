@@ -1,50 +1,28 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <oBase/string.h>
 
 namespace ouro {
 
-char* strbitmask(char* _StrDestination, size_t _SizeofStrDestination, int _Flags, const char* _AllZerosValue, as_string_fn _AsString)
+char* strbitmask(char* dst, size_t dst_size, int flags, const char* all_zeros_value, asstr_fn as_string)
 {
-	if (_Flags)
+	if (flags)
 	{
-		*_StrDestination = 0;
+		*dst = 0;
 		unsigned int Mask = 0x80000000;
 		while (Mask)
 		{
-			int v = _Flags & Mask;
+			int v = flags & Mask;
 			if (v)
-				sncatf(_StrDestination, _SizeofStrDestination, "%s%s", *_StrDestination == 0 ? "" : "|", _AsString(v));
+				sncatf(dst, dst_size, "%s%s", *dst == 0 ? "" : "|", as_string(v));
 			Mask >>= 1;
 		}
 	}
 
-	else if (strlcpy(_StrDestination, _AllZerosValue, _SizeofStrDestination) >= _SizeofStrDestination)
+	else if (strlcpy(dst, all_zeros_value, dst_size) >= dst_size)
 		return nullptr;
 	
-	return _StrDestination;
+	return dst;
 }
 
 }

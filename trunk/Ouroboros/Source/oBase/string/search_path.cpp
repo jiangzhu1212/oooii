@@ -1,41 +1,19 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <obase/string.h>
 #include <functional>
 
 namespace ouro {
 
-char* search_path(char* _StrDestination
-	, size_t _SizeofStrDestination
-	, const char* _SearchPaths
-	, const char* _RelativePath
-	, const char* _DotPath
-	, const std::function<bool(const char* _Path)>& _PathExists)
+char* search_path(char* dst
+	, size_t dst_size
+	, const char* search_paths
+	, const char* relative_path
+	, const char* dot_path
+	, const std::function<bool(const char* _Path)>& path_exists)
 {
-	if (!_StrDestination || !_SearchPaths) return nullptr;
-	const char* cur = _SearchPaths;
+	if (!dst || !search_paths) return nullptr;
+	const char* cur = search_paths;
 
 	while (*cur)
 	{
@@ -46,41 +24,41 @@ char* search_path(char* _StrDestination
 			continue;
 		}
 
-		char* dst = _StrDestination;
-		char* end = dst + _SizeofStrDestination - 1;
-		if (*cur == '.' && _DotPath && *_DotPath)
+		char* d = dst;
+		char* end = d + dst_size - 1;
+		if (*cur == '.' && dot_path && *dot_path)
 		{
-			size_t len = strlcpy(_StrDestination, _DotPath, _SizeofStrDestination);
-			if (len >= _SizeofStrDestination)
+			size_t len = strlcpy(dst, dot_path, dst_size);
+			if (len >= dst_size)
 				return nullptr;
-			if (_StrDestination[len-1] != '/' && _StrDestination[len-1] != '\\')
+			if (dst[len-1] != '/' && dst[len-1] != '\\')
 			{
-				if ((len+1) >= _SizeofStrDestination)
+				if ((len+1) >= dst_size)
 					return nullptr;
-				_StrDestination[len-1] = '/';
-				_StrDestination[len++] = '\0';
+				dst[len-1] = '/';
+				dst[len++] = '\0';
 			}
 				
-			dst = _StrDestination + len;
+			d = dst + len;
 		}
 
-		while (dst < end && *cur && *cur != ';')
-			*dst++ = *cur++;
-		while (isspace(*(--dst))); // empty
-		if (*dst == '/' || *dst == '\\')
-			*(++dst) = '/';
-		assert(dst < end);
-		*(++dst) = 0;
-		if (strlcat(_StrDestination, _RelativePath, _SizeofStrDestination) >= _SizeofStrDestination)
+		while (d < end && *cur && *cur != ';')
+			*d++ = *cur++;
+		while (isspace(*(--d))); // empty
+		if (*d == '/' || *d == '\\')
+			*(++d) = '/';
+		assert(d < end);
+		*(++d) = 0;
+		if (strlcat(dst, relative_path, dst_size) >= dst_size)
 			return nullptr;
-		if (_PathExists(_StrDestination))
-			return _StrDestination;
+		if (path_exists(dst))
+			return dst;
 		if (*cur == 0)
 			break;
 		cur++;
 	}
 
-	*_StrDestination = 0;
+	*dst = 0;
 	return nullptr;
 }
 

@@ -1,35 +1,13 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <oBase/string.h>
 #include <oMemory/equal.h>
 #include <oBase/macros.h>
 
-int ouro::format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsigned long long bytes, size_t _NumPrecisionDigits)
+int ouro::format_bytes(char* dst, size_t dst_size, uint64_t bytes, size_t num_precision_digits)
 {
 	char fmt[16];
-	int result = snprintf(fmt, "%%.0%uf %%s%%s", _NumPrecisionDigits);
+	int result = snprintf(fmt, "%%.0%uf %%s%%s", num_precision_digits);
 
 	const char* Type = "";
 	double Amount = 0.0;
@@ -40,5 +18,5 @@ int ouro::format_bytes(char* _StrDestination, size_t _SizeofStrDestination, unsi
 	#undef ELIF
 
 	const char* Plural = ouro::equal(Amount, 1.0) ? "" : "s";
-	return snprintf(_StrDestination, _SizeofStrDestination, fmt, Amount, Type, Plural);
+	return snprintf(dst, dst_size, fmt, Amount, Type, Plural);
 }

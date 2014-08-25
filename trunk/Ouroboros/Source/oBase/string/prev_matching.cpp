@@ -1,41 +1,18 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 #include <oBase/string.h>
 #include <memory.h>
 
 namespace ouro {
 
-const char* prev_matching(const char* _BufferStart, const char* _pPointingAtCloseBrace, char _OpenBrace)
+const char* prev_matching(const char* buffer_start, const char* p_close_brace, char open_brace)
 {
 	int close = 1;
-	char close_brace = *_pPointingAtCloseBrace;
-	const char* cur = _pPointingAtCloseBrace - 1;
-	while (cur >= _BufferStart && close > 0)
+	char close_brace = *p_close_brace;
+	const char* cur = p_close_brace - 1;
+	while (cur >= buffer_start && close > 0)
 	{
-		if (*cur == _OpenBrace)
+		if (*cur == open_brace)
 			close--;
 		else if (*cur == close_brace)
 			close++;
@@ -47,22 +24,22 @@ const char* prev_matching(const char* _BufferStart, const char* _pPointingAtClos
 	return cur + 1;
 }
 
-char* prev_matching(char* _BufferStart, char* _pPointingAtCloseBrace, char _OpenBrace)
+char* prev_matching(char* buffer_start, char* p_close_brace, char open_brace)
 {
-	return const_cast<char*>(prev_matching(static_cast<const char*>(_BufferStart), static_cast<const char*>(_pPointingAtCloseBrace), _OpenBrace));
+	return const_cast<char*>(prev_matching(static_cast<const char*>(buffer_start), static_cast<const char*>(p_close_brace), open_brace));
 }
 
-const char* prev_matching(const char* _BufferStart, const char* _pPointingAtCloseBrace, const char* _OpenBrace, const char* _CloseBrace)
+const char* prev_matching(const char* buffer_start, const char* p_close_brace, const char* open_brace, const char* close_brace)
 {
 	int close = 1;
-	size_t lOpen = strlen(_OpenBrace);
-	size_t lClose = strlen(_CloseBrace);
-	const char* cur = _pPointingAtCloseBrace;
-	while (cur >= _BufferStart && close > 0)
+	size_t lOpen = strlen(open_brace);
+	size_t lClose = strlen(close_brace);
+	const char* cur = p_close_brace;
+	while (cur >= buffer_start && close > 0)
 	{
-		if (!memcmp(cur, _CloseBrace, lClose))
+		if (!memcmp(cur, close_brace, lClose))
 			close++;
-		else if (!memcmp(cur, _OpenBrace, lOpen))
+		else if (!memcmp(cur, open_brace, lOpen))
 			close--;
 		cur--;
 	}
@@ -72,9 +49,9 @@ const char* prev_matching(const char* _BufferStart, const char* _pPointingAtClos
 	return cur + 1;
 }
 
-char* prev_matching(char* _BufferStart, char* _pPointingAtCloseBrace, const char* _OpenBrace, const char* _CloseBrace)
+char* prev_matching(char* buffer_start, char* p_close_brace, const char* open_brace, const char* close_brace)
 {
-	return const_cast<char*>(prev_matching(static_cast<const char*>(_BufferStart), static_cast<const char*>(_pPointingAtCloseBrace), _OpenBrace, _CloseBrace));
+	return const_cast<char*>(prev_matching(static_cast<const char*>(buffer_start), static_cast<const char*>(p_close_brace), open_brace, close_brace));
 }
 
 }

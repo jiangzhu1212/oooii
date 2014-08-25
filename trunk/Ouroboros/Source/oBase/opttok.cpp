@@ -1,27 +1,5 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <oBase/opttok.h>
 #include <oBase/compiler_config.h>
 #include <oBase/string.h>
@@ -31,58 +9,58 @@ namespace ouro {
 static inline bool isopt(const char* arg) { return *arg == '-'; }
 static inline bool islongopt(const char* arg) { return *arg == '-' && *(arg+1) == '-'; }
 
-char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option* _pOptions, size_t _NumOptions)
+char opttok(const char** out_value, int argc, const char* argv[], const option* options, size_t num_options)
 {
-	oTHREAD_LOCAL static const char** local_argv = 0;
-	oTHREAD_LOCAL static int local_argc = 0;
-	oTHREAD_LOCAL static const option* local_options = 0;
-	oTHREAD_LOCAL static size_t num_options = 0;
+	oTHREAD_LOCAL static const char**s_local_argv = 0;
+	oTHREAD_LOCAL static int s_local_argc = 0;
+	oTHREAD_LOCAL static const option* s_local_options = 0;
+	oTHREAD_LOCAL static size_t s_num_options = 0;
 
 	oTHREAD_LOCAL static int i = 0;
 
-	*_ppValue = "";
+	*out_value = "";
 
-	if (_Argv)
+	if (argv)
 	{
-		local_argv = _Argv;
-		local_argc = _Argc;
-		local_options = _pOptions;
-		num_options = _NumOptions;
+		s_local_argv = argv;
+		s_local_argc = argc;
+		s_local_options = options;
+		s_num_options = num_options;
 		i = 1; // skip exe name
 	}
 
-	else if (i >= local_argc)
+	else if (i >= s_local_argc)
 		return 0;
 
-	const char* currarg = local_argv[i];
-	const char* nextarg = local_argv[i+1];
+	const char* currarg = s_local_argv[i];
+	const char* nextarg = s_local_argv[i+1];
 
 	if (!currarg)
 		return 0;
 
-	const option* oend = local_options + num_options;
+	const option* oend = s_local_options + s_num_options;
 
 	if (islongopt(currarg))
 	{
 		currarg += 2;
-		for (const option* o = local_options; o < oend; o++)
+		for (const option* o = s_local_options; o < oend; o++)
 		{
 			if (!strcmp(o->fullname, currarg))
 			{
 				if (o->argname)
 				{
-					if (i == _Argc-1 || isopt(nextarg))
+					if (i == argc-1 || isopt(nextarg))
 					{
 						i++;
-						*_ppValue = (const char*)i;
+						*out_value = (const char*)i;
 						return ':';
 					}
 
-					*_ppValue = nextarg;
+					*out_value = nextarg;
 				}
 
 				else
-					*_ppValue = currarg;
+					*out_value = currarg;
 
 				i++;
 				if (o->argname)
@@ -95,14 +73,14 @@ char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option*
 		}
 
 		i++; // skip unrecognized opt
-		*_ppValue = currarg;
+		*out_value = currarg;
 		return '?';
 	}
 
-	else if (isopt(local_argv[i]))
+	else if (isopt(s_local_argv[i]))
 	{
 		currarg++;
-		for (const option* o = local_options; o < oend; o++)
+		for (const option* o = s_local_options; o < oend; o++)
 		{
 			if (*currarg == o->abbrev)
 			{
@@ -110,26 +88,26 @@ char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option*
 				{
 					if (*(currarg+1) == ' ' || *(currarg+1) == 0)
 					{
-						if (i == _Argc-1 || isopt(nextarg))
+						if (i == argc-1 || isopt(nextarg))
 						{
 							i++;
 							return ':';
 						}
 
-						*_ppValue = nextarg;
+						*out_value = nextarg;
 						i += 2;
 					}
 
 					else
 					{
-						*_ppValue = currarg + 1;
+						*out_value = currarg + 1;
 						i++;
 					}
 				}
 
 				else
 				{
-					*_ppValue = currarg;
+					*out_value = currarg;
 					i++;
 				}
 
@@ -138,15 +116,15 @@ char opttok(const char** _ppValue, int _Argc, const char* _Argv[], const option*
 		}
 
 		i++; // skip unrecognized opt
-		*_ppValue = currarg;
+		*out_value = currarg;
 		return '?';
 	}
 
-	*_ppValue = local_argv[i++]; // skip to next arg
+	*out_value = s_local_argv[i++]; // skip to next arg
 	return ' ';
 }
 
-char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const option* _pOptions, size_t _NumOptions, const char* _LooseParameters)
+char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _AppName, const option* options, size_t num_options, const char* _LooseParameters)
 {
 	ellipsize(_StrDestination, _SizeofStrDestination);
 	char* dst = _StrDestination;
@@ -157,8 +135,8 @@ char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _A
 	dst += w;
 	_SizeofStrDestination -= w;
 
-	const option* oend = _pOptions + _NumOptions;
-	for (const option* o = _pOptions; o < oend; o++)
+	const option* oend = options + num_options;
+	for (const option* o = options; o < oend; o++)
 	{
 		w = snprintf(dst, _SizeofStrDestination, "-%c%s%s ", o->abbrev, o->argname ? " " : "", o->argname ? o->argname : "");
 		if (w == -1) return _StrDestination;
@@ -180,7 +158,7 @@ char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _A
 
 	size_t maxLenFullname = 0;
 	size_t maxLenArgname = 0;
-	for (const option* o = _pOptions; o < oend && _SizeofStrDestination > 0; o++)
+	for (const option* o = options; o < oend && _SizeofStrDestination > 0; o++)
 	{
 		maxLenFullname = __max(maxLenFullname, strlen(o->fullname ? o->fullname : ""));
 		maxLenArgname = __max(maxLenArgname, strlen(o->argname ? o->argname : ""));
@@ -189,7 +167,7 @@ char* optdoc(char* _StrDestination, size_t _SizeofStrDestination, const char* _A
 	static const size_t MaxLen = 80;
 	const size_t descStartCol = 3 + 1 + maxLenFullname + 5 + maxLenArgname + 4;
 
-	for (const option* o = _pOptions; o < oend && _SizeofStrDestination > 0; o++)
+	for (const option* o = options; o < oend && _SizeofStrDestination > 0; o++)
 	{
 		char fullname[64];
 		*fullname = '\0';

@@ -1,37 +1,15 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <oBase/macros.h>
 #include <oBase/string.h>
 
-int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...);
+int snprintf(char* dst, size_t dst_size, const char* fmt, ...);
 
 using namespace std;
 
 namespace ouro {
 
-errno_t replace(char* oRESTRICT _StrResult, size_t _SizeofStrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace);
+errno_t replace(char* oRESTRICT result, size_t result_size, const char* oRESTRICT src, const char* find, const char* replace);
 
 template<typename T> struct StaticArrayTraits {};
 template<> struct StaticArrayTraits<unsigned char>
@@ -52,17 +30,17 @@ template<> struct StaticArrayTraits<unsigned int>
 	static inline const char* GetFormat() { return "0x%08x,"; }
 	static inline const char* GetType() { return "unsigned int"; }
 };
-template<> struct StaticArrayTraits<unsigned long long>
+template<> struct StaticArrayTraits<uint64_t>
 {
 	static const size_t WORDS_PER_LINE = 10;
 	static inline const char* GetFormat() { return "0x%016llx,"; }
-	static inline const char* GetType() { return "unsigned long long"; }
+	static inline const char* GetType() { return "uint64_t"; }
 };
 
-static const char* file_base(const char* _Path)
+static const char* file_base(const char* path)
 {
-	const char* p = _Path + strlen(_Path) - 1;
-	while (p >= _Path)
+	const char* p = path + strlen(path) - 1;
+	while (p >= path)
 	{
 		if (*p == '/' || *p == '\\')
 			return p + 1;
@@ -71,24 +49,24 @@ static const char* file_base(const char* _Path)
 	return nullptr;
 }
 
-static char* codify_buffer_name(char* _StrDestination, size_t _SizeofStrDestination, const char* _Path)
+static char* codify_buffer_name(char* dst, size_t dst_size, const char* path)
 {
-	if (replace(_StrDestination, _SizeofStrDestination, file_base(_Path), ".", "_"))
+	if (replace(dst, dst_size, file_base(path), ".", "_"))
 		return nullptr;
-	return _StrDestination;
+	return dst;
 }
 
-template<size_t size> inline char* codify_buffer_name(char (&_StrDestination)[size], const char* _Path) { return codify_buffer_name(_StrDestination, size, _Path); }
+template<size_t size> inline char* codify_buffer_name(char (&dst)[size], const char* path) { return codify_buffer_name(dst, size, path); }
 
 template<typename T>
-static size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, const char* _BufferName, const T* buf, size_t buf_size)
+static size_t codify_data(char* dst, size_t dst_size, const char* buffer_name, const T* buf, size_t buf_size)
 {
 	const T* words = static_cast<const T*>(buf);
-	char* str = _StrDestination;
-	char* end = str + _SizeofStrDestination - 1; // -1 for terminator
+	char* str = dst;
+	char* end = str + dst_size - 1; // -1 for terminator
 	const size_t nWords = buf_size / sizeof(T);
 
-	str += snprintf(str, _SizeofStrDestination, "const %s sBuffer[] = \n{ // *** AUTO-GENERATED BUFFER, DO NOT EDIT ***", StaticArrayTraits<T>::GetType());
+	str += snprintf(str, dst_size, "const %s sBuffer[] = \n{ // *** AUTO-GENERATED BUFFER, DO NOT EDIT ***", StaticArrayTraits<T>::GetType());
 	for (size_t i = 0; i < nWords; i++)
 	{
 		size_t numberOfElementsLeft = std::distance(str, end);
@@ -106,7 +84,7 @@ static size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, c
 	const size_t nExtraBytes = buf_size % sizeof(T);
 	if (nExtraBytes)
 	{
-		unsigned long long tmp = 0;
+		uint64_t tmp = 0;
 		memcpy(&tmp, &reinterpret_cast<const unsigned char*>(buf)[sizeof(T) * nWords], nExtraBytes);
 		str += snprintf(str, std::distance(str, end), StaticArrayTraits<T>::GetFormat(), static_cast<T>(tmp));
 	}
@@ -116,25 +94,25 @@ static size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, c
 	// add accessor function
 
 	char bufferId[_MAX_PATH];
-	codify_buffer_name(bufferId, _BufferName);
+	codify_buffer_name(bufferId, buffer_name);
 
-	unsigned long long sz = buf_size; // explicitly size this out so printf formatting below can remain the same between 32- and 64-bit
-	str += snprintf(str, std::distance(str, end), "void get_%s(const char** ppBufferName, const void** ppBuffer, size_t* pSize) { *ppBufferName = \"%s\"; *ppBuffer = sBuffer; *pSize = %llu; }\n", bufferId, file_base(_BufferName), sz);
+	uint64_t sz = buf_size; // explicitly size this out so printf formatting below can remain the same between 32- and 64-bit
+	str += snprintf(str, std::distance(str, end), "void get_%s(const char** ppBufferName, const void** ppBuffer, size_t* pSize) { *ppBufferName = \"%s\"; *ppBuffer = sBuffer; *pSize = %llu; }\n", bufferId, file_base(buffer_name), sz);
 
 	if (str < end)
 		*str++ = 0;
 
-	return std::distance(_StrDestination, str);
+	return std::distance(dst, str);
 }
 
-size_t codify_data(char* _StrDestination, size_t _SizeofStrDestination, const char* _BufferName, const void* buf, size_t buf_size, size_t _WordSize)
+size_t codify_data(char* dst, size_t dst_size, const char* buffer_name, const void* buf, size_t buf_size, size_t word_size)
 {
-	switch (_WordSize)
+	switch (word_size)
 	{
-		case sizeof(unsigned char): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned char*>(buf), buf_size);
-		case sizeof(unsigned short): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned short*>(buf), buf_size);
-		case sizeof(unsigned int): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned int*>(buf), buf_size);
-		case sizeof(unsigned long long): return codify_data(_StrDestination, _SizeofStrDestination, _BufferName, static_cast<const unsigned long long*>(buf), buf_size);
+		case sizeof(unsigned char): return codify_data(dst, dst_size, buffer_name, static_cast<const unsigned char*>(buf), buf_size);
+		case sizeof(unsigned short): return codify_data(dst, dst_size, buffer_name, static_cast<const unsigned short*>(buf), buf_size);
+		case sizeof(unsigned int): return codify_data(dst, dst_size, buffer_name, static_cast<const unsigned int*>(buf), buf_size);
+		case sizeof(uint64_t): return codify_data(dst, dst_size, buffer_name, static_cast<const uint64_t*>(buf), buf_size);
 		default: break;
 	}
 

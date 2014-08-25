@@ -1,27 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 namespace ouro {
 
@@ -34,26 +11,26 @@ static inline bool isunc(const char* s) { return issep(s[0]) && issep(s[1]); }
 
 // back up write head to last dir
 #define BACK_UP() do \
-{	while (w != _StrDestination && issep(*(w-1))) w--; \
-	while (w != _StrDestination && !issep(*(w-1))) w--; \
-	if (w == _StrDestination && issep(*w)) w++; \
+{	while (w != dst && issep(*(w-1))) w--; \
+	while (w != dst && !issep(*(w-1))) w--; \
+	if (w == dst && issep(*w)) w++; \
 } while(false)
 
-char* clean_path(char* _StrDestination, size_t _SizeofStrDestination, const char* _SourcePath, char _FileSeparator, bool _ZeroBuffer)
+char* clean_path(char* dst, size_t dst_size, const char* src_path, char separator, bool zero_buffer)
 {
-	if (!_StrDestination || !_SourcePath)
+	if (!dst || !src_path)
 		return nullptr;
 
-	char* w = _StrDestination;
-	char* wend = w + _SizeofStrDestination;
+	char* w = dst;
+	char* wend = w + dst_size;
 	char* wendm1 = wend - 1; // save room for nul
 	*wendm1 = 0; // be safe
-	const char* r = _SourcePath;
+	const char* r = src_path;
 
 	// preserve UNC
 	if (isunc(r))
 	{
-		if (_SizeofStrDestination <= 2)
+		if (dst_size <= 2)
 			return nullptr;
 		*w++ = *r++;
 		*w++ = *r++;
@@ -64,20 +41,20 @@ char* clean_path(char* _StrDestination, size_t _SizeofStrDestination, const char
 	{
 		if (isdotdir(r))
 		{
-			if (_SizeofStrDestination <= 2)
+			if (dst_size <= 2)
 				return nullptr;
 			*w++ = *r++;
 			*w++ = *r++;
-			_SizeofStrDestination -= 2;
+			dst_size -= 2;
 		}
 		else if (isdotdotdir(r))
 		{
-			if (_SizeofStrDestination <= 3)
+			if (dst_size <= 3)
 				return nullptr;
 			*w++ = *r++;
 			*w++ = *r++;
 			*w++ = *r++;
-			_SizeofStrDestination -= 3;
+			dst_size -= 3;
 		}
 		else
 			break;
@@ -106,7 +83,7 @@ char* clean_path(char* _StrDestination, size_t _SizeofStrDestination, const char
 
 		else if (issep(*r))
 		{
-			*w++ = _FileSeparator;
+			*w++ = separator;
 			do { r++; } while (*r && issep(*r));
 		}
 
@@ -115,10 +92,10 @@ char* clean_path(char* _StrDestination, size_t _SizeofStrDestination, const char
 	}
 
 	*w = 0;
-	if (_ZeroBuffer)
+	if (zero_buffer)
 		while (w < wend)
 			*w++ = 0;
-	return _StrDestination;
+	return dst;
 }
 
 }

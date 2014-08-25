@@ -1,100 +1,78 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of wchar_tge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #include <string.h>
 
 namespace ouro {
 
 static bool is_sep(wchar_t c, bool _Posix) { return c == L'/' || (!_Posix && c == L'\\'); }
-static bool is_unc(const wchar_t* _Path, bool _Posix) { return _Path && is_sep(_Path[0], _Posix) && is_sep(_Path[1], _Posix) && !is_sep(_Path[2], _Posix) && _Path[0] == _Path[1]; }
-static bool has_vol(const wchar_t* _Path, bool _Posix) { return !_Posix && _Path && _Path[0] && _Path[1] == L':';  }
+static bool is_unc(const wchar_t* path, bool _Posix) { return path && is_sep(path[0], _Posix) && is_sep(path[1], _Posix) && !is_sep(path[2], _Posix) && path[0] == path[1]; }
+static bool has_vol(const wchar_t* path, bool _Posix) { return !_Posix && path && path[0] && path[1] == L':';  }
 
-static const wchar_t* find_parent_end(const wchar_t* _Path, bool _Posix, const wchar_t* _Basename, bool _UNC)
+static const wchar_t* find_parentend(const wchar_t* path, bool _Posix, const wchar_t* _Basename, bool _UNC)
 {
 	const wchar_t* end = _Basename;
-	while (end >= _Path && is_sep(*end, _Posix)) end--;
-	if (!_UNC && end > (_Path+1)) end--;
-	while (end > (_Path+1) && is_sep(*end, _Posix) && is_sep(*(end-1), _Posix)) end--;
+	while (end >= path && is_sep(*end, _Posix)) end--;
+	if (!_UNC && end > (path+1)) end--;
+	while (end > (path+1) && is_sep(*end, _Posix) && is_sep(*(end-1), _Posix)) end--;
 	return end;
 }
 
-size_t wsplit_path(const wchar_t* _Path
+size_t wsplit_path(const wchar_t* path
 	, bool _Posix
-	, const wchar_t** _ppRoot
-	, const wchar_t** _ppPath
-	, const wchar_t** _ppParentPathEnd
-	, const wchar_t** _ppBasename
-	, const wchar_t** _ppExt)
+	, const wchar_t** out_root
+	, const wchar_t** out_path
+	, const wchar_t** out_parent_path_end
+	, const wchar_t** out_basename
+	, const wchar_t** out_ext)
 {
-	*_ppRoot = *_ppPath = *_ppParentPathEnd = *_ppBasename = *_ppExt = nullptr;
-	const size_t len = wcslen(_Path);
-	const bool unc = is_unc(_Path, _Posix);
-	const wchar_t* NonUNCPath = _Path;
+	*out_root = *out_path = *out_parent_path_end = *out_basename = *out_ext = nullptr;
+	const size_t len = wcslen(path);
+	const bool unc = is_unc(path, _Posix);
+	const wchar_t* NonUNCPath = path;
 	if (unc)
 	{
-		*_ppRoot = _Path;
-		NonUNCPath = _Path + 2;
+		*out_root = path;
+		NonUNCPath = path + 2;
 	}
 
-	else if (has_vol(_Path, _Posix))
-		*_ppRoot = _Path;
+	else if (has_vol(path, _Posix))
+		*out_root = path;
 
-	const wchar_t* cur = _Path + len - 1;
+	const wchar_t* cur = path + len - 1;
 	while (cur >= NonUNCPath)
 	{
 		if (is_sep(*cur, _Posix))
 		{
 			// *(cur+1) fails with foo/ because it's a valid null basename
-			// cur != _Path fails with "/" because there is no parent
-			if (!*_ppBasename)
+			// cur != path fails with "/" because there is no parent
+			if (!*out_basename)
 			{
 				if (is_sep(NonUNCPath[0], _Posix) && !NonUNCPath[1])
-					*_ppBasename = NonUNCPath;
+					*out_basename = NonUNCPath;
 				else
-					*_ppBasename = cur + 1;
-				if (*_ppExt)
+					*out_basename = cur + 1;
+				if (*out_ext)
 				{
-					*_ppParentPathEnd = find_parent_end(_Path, _Posix, *_ppBasename, unc);
+					*out_parent_path_end = find_parentend(path, _Posix, *out_basename, unc);
 					return len;
 				}
 			}
 		}
 
-		else if (*cur == L'.' && !*_ppExt)
-			*_ppExt = cur;
+		else if (*cur == L'.' && !*out_ext)
+			*out_ext = cur;
 
 		cur--;
 	}
 
-	if (*_ppExt && !*_ppBasename && (!(*_ppExt)[1] || (*_ppExt)[1] == L'.')) // "." or ".."
-		*_ppExt = nullptr;
+	if (*out_ext && !*out_basename && (!(*out_ext)[1] || (*out_ext)[1] == L'.')) // "." or ".."
+		*out_ext = nullptr;
 
-	if (*_ppBasename)
+	if (*out_basename)
 	{
-		*_ppParentPathEnd = find_parent_end(_Path, _Posix, *_ppBasename, unc);
-		if (!**_ppBasename)
-			*_ppBasename = nullptr;
+		*out_parent_path_end = find_parentend(path, _Posix, *out_basename, unc);
+		if (!**out_basename)
+			*out_basename = nullptr;
 	}
 
 	return len;
