@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 #include <memory.h>
-#include <stdint.h>
+#include <cstdint>
 
 // Visual Studio 2012 Win32 compiler's conversion (c-cast, static_cast) is 
 // bugged, so here's a software version.

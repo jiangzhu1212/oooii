@@ -7,7 +7,7 @@
 // generic way, such as AOS to SOA, 2D copies, full 32-bit memset, etc.
 
 #include <memory.h>
-#include <stdint.h>
+#include <cstdint>
 
 #ifndef oRESTRICT
 #ifdef _MSC_VER

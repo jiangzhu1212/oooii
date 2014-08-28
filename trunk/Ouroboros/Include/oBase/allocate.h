@@ -1,114 +1,103 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-// A generic interface to allocating memory that can be passed around to 
-// other systems.
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
 #ifndef oBase_allocate_h
 #define oBase_allocate_h
 
+// A generic interface for allocating memory.
+
 #include <utility>
+#include <cstdint>
 
 namespace ouro {
 
-/* enum class */ namespace memory_alignment
-{	enum value {
+// _____________________________________________________________________________
+// Definitions of standard memory configuration options
 
-	align_to_default,
-	align_to_2,
-	align_to_4,
-	align_to_8,
-	align_to_16,
-	align_to_32,
-	align_to_64,
-	align_to_128,
-	align_to_256,
-	align_to_512,
-	align_to_1024,
-	align_to_2048,
-	align_to_4096,
+enum class memory_alignment
+{
+	align_default,
+	align2,
+	align4,
+	align8,
+	align16,
+	align32,
+	align64,
+	align128,
+	align256,
+	align512,
+	align1k,
+	align2k,
+	align4k,
+	align8k,
+	align16k,
+	align32k,
+	align64k,
 
 	count,
-	default_alignment = align_to_16,
-	align_to_cache_line = align_to_64,
+	cacheline = align64,
+	default_alignment = align16,
+};
 
-};}
-
-/* enum class */ namespace memory_type
-{	enum value {
-
-	default_memory,
-	io_read_write,
+enum class memory_type
+{
+	cpu,
 	cpu_writecombine,
 	cpu_gpu_coherent,
+	cpu_physical,
+	cpu_physical_uncached,
 	gpu_writecombine,
 	gpu_readonly,
 	gpu_on_chip,
-	physical,
+	io_read_write,
 
 	count,
 
-};}
-
-/* enum class */ namespace subsystem
-{	enum value {
-
-	ai,
-	app,
-	bookkeeping,
-	cpu,
-	input,
-	io,
-	graphics,
-	physics,
-	sound,
-	ui,
-
-	count,
-
-};}
+};
 
 union allocate_options
 {
 	allocate_options() : options(0) {}
-	operator unsigned int() const { return options; }
+	allocate_options(uint32_t o) : options(o) {}
+	allocate_options(const memory_alignment& a) : options((uint32_t)a) {}
+	operator uint32_t() const { return options; }
 
-	unsigned int options;
+	uint32_t options;
 	struct
 	{
-		unsigned int alignment : 4; // memory_alignment::value, basically a shift to a power of two for alignment
-		unsigned int type : 4; // the type of memory being required. More to come on this...
-		unsigned int subsystem : 4; // subsystem::value
-		unsigned int usage : 6; // subsystem-specific (thus often user-defined)
-		unsigned int extra : 14; // passed through: can be used for user-data
-	
-		unsigned int get_alignment() const { return static_cast<memory_alignment::value>(alignment ? memory_alignment::default_alignment : 1 << alignment); }
+		uint32_t alignment : 6; // memory_alignment
+		uint32_t type : 4;
+		uint32_t category : 22; // passed through: can be used for user-markup
+		
 	};
+
+	size_t get_alignment() const { return static_cast<size_t>(size_t(1) << (alignment ? alignment : (size_t)memory_alignment::default_alignment)); }
 };
 
-struct allocate_stats
+// _____________________________________________________________________________
+// Standard ways of tracking and reporting memory
+
+struct allocation_stats
 {
-	allocate_stats()
+	allocation_stats()
+		: label("unlabeled")
+		, size(0)
+		, options(0)
+		, ordinal(0)
+		, frame(0)
+		, pad(0)
+	{}
+
+	const char* label;
+	size_t size;
+	allocate_options options;
+	uint32_t ordinal;
+	uint32_t frame;
+	uint32_t pad;
+};
+
+struct allocator_stats
+{
+	allocator_stats()
 		: allocated_bytes(0)
 		, allocated_bytes_peak(0)
 		, capacity_bytes(0)
@@ -129,7 +118,11 @@ struct allocate_stats
 	size_t num_free_blocks;
 };
 
-typedef void* (*allocate_fn)(size_t num_bytes, unsigned int options);
+// _____________________________________________________________________________
+// Allocator definitions: c-stype functions, RAII pointer wrapper and a simple 
+// allocator interface that can easily be passed around and retained by objects.
+
+typedef void* (*allocate_fn)(size_t num_bytes, const allocate_options& options, const char* label);
 typedef void (*deallocate_fn)(const void* pointer);
 typedef void (*deallocate_nonconst_fn)(void* pointer);
 
@@ -209,20 +202,20 @@ struct allocator
 	deallocate_fn deallocate;
 
 	allocator() : allocate(nullptr), deallocate(nullptr) {}
-	allocator(allocate_fn _Allocate, deallocate_fn _Deallocate) : allocate(_Allocate), deallocate(_Deallocate) {}
+	allocator(allocate_fn alloc, deallocate_fn dealloc) : allocate(alloc), deallocate(dealloc) {}
 	
 	operator bool() const { return allocate && deallocate; }
 
-	scoped_allocation scoped_allocate(size_t num_bytes, unsigned int options = memory_alignment::align_to_default) const { return scoped_allocation(allocate(num_bytes, options), num_bytes, deallocate); }
+	scoped_allocation scoped_allocate(size_t num_bytes, const allocate_options& options = allocate_options(), const char* label = "") const { return scoped_allocation(allocate(num_bytes, options, label), num_bytes, deallocate); }
 
 	template<typename T>
-	T* construct(unsigned int options = memory_alignment::align_to_default) { void* p = allocate(sizeof(T), options); return (T*)new (p) T(); }
+	T* construct(uint32_t options = memory_alignment::align_default) { void* p = allocate(sizeof(T), options); return (T*)new (p) T(); }
 	
 	template<typename T>
-	T* construct_array(size_t _Capacity, unsigned int options = memory_alignment::align_to_default)
+	T* construct_array(size_t capacity, const allocate_options& options = allocate_options(), const char* label = "")
 	{
-		T* p = (T*)allocate(sizeof(T) * _Capacity, options);
-		for (size_t i = 0; i < _Capacity; i++)
+		T* p = (T*)allocate(sizeof(T) * capacity, options, label);
+		for (size_t i = 0; i < capacity; i++)
 			new (p + i) T();
 		return p;
 	}
@@ -234,10 +227,13 @@ struct allocator
 	void destroy_array(T* p, size_t _Capacity) { if (p) { for (size_t i = 0; i < _Capacity; i++) p[i].~T(); deallocate(p); } }
 };
 
-void* default_allocate(size_t num_bytes, unsigned int options);
+// _____________________________________________________________________________
+// Default implementations
+
+void* default_allocate(size_t num_bytes, const allocate_options& options, const char* label = "");
 void default_deallocate(const void* pointer);
 
-void* noop_allocate(size_t num_bytes, unsigned int options);
+void* noop_allocate(size_t num_bytes, const allocate_options& options, const char* label = "");
 void noop_deallocate(const void* pointer);
 
 extern allocator default_allocator;

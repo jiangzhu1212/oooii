@@ -44,7 +44,7 @@ struct Node
 
 static void test_intrusive_basics()
 {
-	Node* values = (Node*)default_allocate(sizeof(Node) * 5, memory_alignment::align_to_8);
+	Node* values = (Node*)default_allocate(sizeof(Node) * 5, memory_alignment::align8);
 	finally dealloc([&] { default_deallocate(values); });
 	concurrent_stack<Node> s;
 	oCHECK(s.empty(), "Stack should be empty (init)");
@@ -90,7 +90,7 @@ static void test_intrusive_basics()
 
 static void test_intrusive_concurrency()
 {
-	Node* nodes = (Node*)default_allocate(sizeof(Node) * 40, memory_alignment::align_to_8);
+	Node* nodes = (Node*)default_allocate(sizeof(Node) * 40, memory_alignment::align8);
 	finally dealloc([&] { default_deallocate(nodes); });
 
 	memset(nodes, 0xaa, sizeof(nodes));

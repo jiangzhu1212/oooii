@@ -59,7 +59,7 @@ size_t sbb_allocator::initialize(void* arena, size_t bytes, void* bookkeeping)
 		heap_size = bytes;
 
 		heap = sbb_create(arena, heap_size, default_alignment, heap);
-		stats = allocate_stats();
+		stats = allocator_stats();
 		stats.capacity_bytes = heap_size - sbb_overhead(heap);
 	}
 
@@ -105,15 +105,15 @@ sbb_allocator& sbb_allocator::operator=(sbb_allocator&& that)
 	{
 		heap = that.heap; that.heap = nullptr;
 		heap_size = that.heap_size; that.heap_size = 0;
-		stats = that.stats; that.stats = allocate_stats();
+		stats = that.stats; that.stats = allocator_stats();
 	}
 
 	return *this;
 }
 
-allocate_stats sbb_allocator::get_stats() const
+allocator_stats sbb_allocator::get_stats() const
 {
-	allocate_stats s = stats;
+	allocator_stats s = stats;
 	walk_stats ws;
 	sbb_walk_heap(heap, find_largest_free_block, &ws);
 	s.largest_free_block_bytes = ws.largest_free_block_bytes;
@@ -190,7 +190,7 @@ void sbb_allocator::reset()
 	if (!heap || !heap_size)
 		throw std::runtime_error("allocator not valid");
 	heap = sbb_create(sbb_arena(heap), heap_size, default_alignment, heap);
-	stats = allocate_stats();
+	stats = allocator_stats();
 	stats.capacity_bytes = heap_size - sbb_overhead(heap);
 }
 

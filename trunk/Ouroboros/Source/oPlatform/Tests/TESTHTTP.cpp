@@ -31,7 +31,7 @@
 
 #define TEST_FILE "PLATFORM_oHTTP.png"
 
-void* new_allocate(size_t _Size, unsigned int _Options)
+void* new_allocate(size_t _Size, const ouro::allocate_options& _Options = ouro::allocate_options(), const char* _Label = "")
 {
 	oASSERT(_Options == 0, "alignment not supported");
 	return new char[_Size];
@@ -56,7 +56,7 @@ struct PLATFORM_oHTTP : public oTest
 			{
 				const char *indexHtmlPage = "<html><head><title>Received Post</title></head><body><p>Image compare successful</p></body></html>";
 				int size = (int)strlen(indexHtmlPage) + 1;
-				_pResponse->Content.pData = new_allocate(size, 0);
+				_pResponse->Content.pData = new_allocate(size);
 
 				strlcpy((char *)_pResponse->Content.pData, indexHtmlPage, size);
 				_pResponse->StatusLine.StatusCode = oHTTP_OK;

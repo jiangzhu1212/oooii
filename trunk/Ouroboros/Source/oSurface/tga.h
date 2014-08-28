@@ -26,7 +26,7 @@
 #ifndef tga_h
 #define tga_h
 
-#include <stdint.h>
+#include <cstdint>
 
 enum tga_data_type_field
 {

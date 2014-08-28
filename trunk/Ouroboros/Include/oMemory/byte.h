@@ -8,7 +8,7 @@
 // buffer as bytes and as its type without a lot of casting.
 
 #include <stddef.h>
-#include <stdint.h>
+#include <cstdint>
 
 namespace ouro {
 

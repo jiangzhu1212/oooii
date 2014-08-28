@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 #include <stdexcept>
-#include <stdint.h>
+#include <cstdint>
 
 namespace ouro {
 

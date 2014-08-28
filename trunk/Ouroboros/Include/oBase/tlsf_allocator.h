@@ -56,7 +56,7 @@ public:
 
 	inline const void* arena() const { return heap; }
 	inline size_t arena_size() const { return heap_size; }
-	allocate_stats get_stats() const;
+	allocator_stats get_stats() const;
 	void* allocate(size_t bytes, size_t align = default_alignment);
 	void* reallocate(void* ptr, size_t bytes);
 	void deallocate(void* ptr);
@@ -72,7 +72,7 @@ private:
 
 	void* heap;
 	size_t heap_size;
-	allocate_stats stats;
+	allocator_stats stats;
 };
 
 }

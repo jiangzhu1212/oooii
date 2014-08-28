@@ -233,7 +233,7 @@ scoped_allocation encode_dds(const image& img, const allocator& file_alloc, cons
 	const size_t size = bits_size + sizeof(dds_signature) + sizeof(dds_header) 
 		+ (kHasDX10 ? sizeof(dds_header_dx10) : 0);
 
-	scoped_allocation alloc(file_alloc.allocate(size, 0), size, file_alloc.deallocate);
+	scoped_allocation alloc(file_alloc.allocate(size, memory_alignment::default_alignment, "encoded dds"), size, file_alloc.deallocate);
 
 	*(uint*)alloc = dds_signature;
 	auto h = (dds_header*)byte_add((void*)alloc, sizeof(dds_signature));
@@ -265,7 +265,7 @@ scoped_allocation encode_dds(const image& img, const allocator& file_alloc, cons
 	}
 
 	const int nSubresources = num_subresources(inf);
-	mapped_subresource* subresources = (mapped_subresource*)temp_alloc.allocate(sizeof(mapped_subresource) * nSubresources, 0);
+	mapped_subresource* subresources = (mapped_subresource*)temp_alloc.allocate(sizeof(mapped_subresource) * nSubresources, memory_alignment::default_alignment, "encode dds tmep");
 	finally DeleteInitData([&] { if (subresources) temp_alloc.deallocate(subresources); });
 	map_bits(inf, bits, bits_size, subresources, nSubresources);
 
@@ -282,7 +282,7 @@ image decode_dds(const void* buffer, size_t size, const allocator& texel_alloc, 
 	image img(inf, texel_alloc);
 
 	const uint nSubresources = num_subresources(inf);
-	const_mapped_subresource* subresources = (const_mapped_subresource*)temp_alloc.allocate(sizeof(const_mapped_subresource) * nSubresources, 0);
+	const_mapped_subresource* subresources = (const_mapped_subresource*)temp_alloc.allocate(sizeof(const_mapped_subresource) * nSubresources, memory_alignment::default_alignment, "decode dds temp");
 	finally DeleteInitData([&] { if (subresources) temp_alloc.deallocate(subresources); });
 
 	auto h = (const dds_header*)byte_add(buffer, sizeof(dds_signature));

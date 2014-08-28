@@ -100,15 +100,15 @@ tlsf_allocator& tlsf_allocator::operator=(tlsf_allocator&& that)
 		oASSERT(!heap, "how to clean up a maybe-has-allocs heap?");
 		heap = that.heap; that.heap = nullptr;
 		heap_size = that.heap_size; that.heap_size = 0;
-		stats = that.stats; that.stats = allocate_stats();
+		stats = that.stats; that.stats = allocator_stats();
 	}
 
 	return *this;
 }
 
-allocate_stats tlsf_allocator::get_stats() const
+allocator_stats tlsf_allocator::get_stats() const
 {
-	allocate_stats s = stats;
+	allocator_stats s = stats;
 	walk_stats ws;
 	o_tlsf_walk_heap(heap, find_largest_free_block, &ws);
 	s.largest_free_block_bytes = ws.largest_free_block_bytes;
@@ -175,7 +175,7 @@ void tlsf_allocator::reset()
 	if (!heap || !heap_size)
 		throw std::runtime_error("allocator not valid");
 	heap = tlsf_create_with_pool(heap, heap_size);
-	stats = allocate_stats();
+	stats = allocator_stats();
 	stats.capacity_bytes = heap_size - tlsf_size();
 }
 

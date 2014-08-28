@@ -48,7 +48,7 @@ void TESTtlsf_allocator(test_services& _Services)
 		// On machines with less memory, it's not a good idea to use all of it
 		// because the system would need to page out everything it has to allocate
 		// that much memory, which makes the test take many minutes to run.
-		size_t ArenaSize = __min(_Services.total_physical_memory() / 2, oMB(4500));
+		size_t ArenaSize = __min(size_t(_Services.total_physical_memory() * 0.15f), oMB(4500));
 		EnoughPhysRamForFullTest = (ArenaSize > oGB(4));
 	#else
 		const size_t ArenaSize = oMB(500);

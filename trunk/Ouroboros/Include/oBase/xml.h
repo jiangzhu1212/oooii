@@ -1,27 +1,8 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef oBase_xml_h
+#define oBase_xml_h
+
 // Parses a string as an XML document by replacing certain delimiters inline 
 // with null terminators and caching indices into the buffers where values
 // begin for very fast access to contents.
@@ -34,12 +15,7 @@
 // todo: add support for text fragments: multiple node values interspersed with
 // child nodes. I guess add a new handle "text" and have a first/next text.
 
-#pragma once
-#ifndef oBase_xml_h
-#define oBase_xml_h
-
 #include <oBase/fixed_string.h>
-#include <oBase/macros.h>
 #include <oBase/stringize.h>
 #include <oBase/text_document.h>
 #include <cstring>
@@ -57,8 +33,8 @@ public:
 	typedef unsigned int index_type;
 	typedef char char_type;
 
-	oDECLARE_HANDLE(node);
-	oDECLARE_HANDLE(attr);
+	typedef struct node__ {}* node;
+	typedef struct attr__ {}* attr;
 
 	class visitor
 	{

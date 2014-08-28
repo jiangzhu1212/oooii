@@ -26,7 +26,7 @@
 #ifndef bmp_h
 #define bmp_h
 
-#include <stdint.h>
+#include <cstdint>
 
 static const uint16_t bmp_signature = 0x4d42; // 'BM'
 
