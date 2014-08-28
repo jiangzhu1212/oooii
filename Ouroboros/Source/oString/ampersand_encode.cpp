@@ -2,7 +2,7 @@
 
 #include <oCompiler.h>
 #include <oBase/assert.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 
 namespace ouro {
 

@@ -1,6 +1,6 @@
 // $(header)
 #include <oBase/concurrency.h>
-#include <oBase/opttok.h>
+#include <oString/opttok.h>
 #include <oBase/scc.h>
 #include <oCore/reporting.h>
 #include <oCore/system.h>

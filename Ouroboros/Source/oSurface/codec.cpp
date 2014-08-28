@@ -25,7 +25,7 @@
 #include <oSurface/codec.h>
 #include <oSurface/convert.h>
 #include <oMemory/memory.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 
 namespace ouro { namespace surface {
 

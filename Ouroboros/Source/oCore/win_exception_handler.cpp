@@ -29,7 +29,7 @@
 #include <oCore/process.h>
 #include <oCore/process_heap.h>
 #include <oCore/system.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 
 #include <new.h>
 #include <signal.h>

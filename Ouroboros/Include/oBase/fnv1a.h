@@ -28,7 +28,7 @@
 #define oBase_fnv1a_h
 
 #include <oBase/uint128.h>
-#include <oBase/string.h> // to_lower
+#include <oString/string.h> // to_lower
 
 namespace ouro {
 

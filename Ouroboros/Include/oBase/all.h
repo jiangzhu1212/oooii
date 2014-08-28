@@ -64,7 +64,7 @@
 #include <oBase/moving_average.h>
 #include <oBase/murmur3.h>
 #include <oBase/operators.h>
-#include <oBase/opttok.h>
+#include <oString/opttok.h>
 #include <oBase/osc.h>
 #include <oBase/path.h>
 #include <oBase/path_traits.h>
@@ -76,8 +76,8 @@
 #include <oBase/sphere.h>
 #include <oBase/snappy.h>
 #include <oBase/std_linear_allocator.h>
-#include <oBase/string.h>
-#include <oBase/string_traits.h>
+#include <oString/string.h>
+#include <oString/string_traits.h>
 #include <oBase/tagged_pointer.h>
 #include <oBase/text_document.h>
 #include <oBase/throw.h>

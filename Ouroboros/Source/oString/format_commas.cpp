@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 #include <stdlib.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 
 namespace ouro {
 

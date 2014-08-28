@@ -169,6 +169,9 @@
     <ProjectReference Include="..\oMesh\oMesh.vcxproj">
       <Project>{8a76ff30-f5e2-4127-b86e-c5ae324961fb}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oString\oString.vcxproj">
+      <Project>{45860521-7dc9-456b-9813-ac6a10569fab}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\oSurface\oSurface.vcxproj">
       <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>
     </ProjectReference>

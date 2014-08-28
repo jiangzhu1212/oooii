@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oPlatform/oEMail.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 
 using namespace ouro;
 

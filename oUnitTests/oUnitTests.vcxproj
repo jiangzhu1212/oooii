@@ -271,6 +271,9 @@
     <ProjectReference Include="..\Ouroboros\Source\oPlatform\oPlatformTests.vcxproj">
       <Project>{86158613-24c5-4b25-a043-88dd2ead644c}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oString\oString.vcxproj">
+      <Project>{45860521-7dc9-456b-9813-ac6a10569fab}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oSurface\oSurface.vcxproj">
       <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>
     </ProjectReference>

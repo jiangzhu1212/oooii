@@ -1,6 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <obase/string.h>
+#include <oString/string.h>
+#include <cassert>
 #include <functional>
 
 namespace ouro {

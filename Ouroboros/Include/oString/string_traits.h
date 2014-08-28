@@ -5,7 +5,7 @@
 
 // For when std::char_traits does not provide the desired API.
 
-#include <oBase/string.h>
+#include <oString/string.h>
 
 namespace ouro {
 

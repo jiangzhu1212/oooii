@@ -18,6 +18,84 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Include\oString\all.h" />
+    <ClInclude Include="..\..\Include\oString\opttok.h" />
+    <ClInclude Include="..\..\Include\oString\string.h" />
+    <ClInclude Include="..\..\Include\oString\string_codec.h" />
+    <ClInclude Include="..\..\Include\oString\string_fast_scan.h" />
+    <ClInclude Include="..\..\Include\oString\string_path.h" />
+    <ClInclude Include="..\..\Include\oString\string_platform.h" />
+    <ClInclude Include="..\..\Include\oString\string_source.h" />
+    <ClInclude Include="..\..\Include\oString\string_traits.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcpy.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcpy.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="ampersand_decode.cpp" />
+    <ClCompile Include="ampersand_encode.cpp" />
+    <ClCompile Include="argtok.cpp" />
+    <ClCompile Include="clean_path.cpp" />
+    <ClCompile Include="clean_whitespace.cpp" />
+    <ClCompile Include="cmnroot.cpp" />
+    <ClCompile Include="codify_data.cpp" />
+    <ClCompile Include="elipsize.cpp" />
+    <ClCompile Include="format_bytes.cpp" />
+    <ClCompile Include="format_commas.cpp" />
+    <ClCompile Include="format_duration.cpp" />
+    <ClCompile Include="insert.cpp" />
+    <ClCompile Include="json_escape_decode.cpp" />
+    <ClCompile Include="json_escape_encode.cpp" />
+    <ClCompile Include="matches_wildcard.cpp" />
+    <ClCompile Include="mbsltowcs.cpp" />
+    <ClCompile Include="next_matching.cpp" />
+    <ClCompile Include="opttok.cpp" />
+    <ClCompile Include="ordinal.cpp" />
+    <ClCompile Include="percent_decode.cpp" />
+    <ClCompile Include="percent_encode.cpp" />
+    <ClCompile Include="prev_matching.cpp" />
+    <ClCompile Include="relativize_path.cpp" />
+    <ClCompile Include="replace.cpp" />
+    <ClCompile Include="rstrcspn.cpp" />
+    <ClCompile Include="rstrstr.cpp" />
+    <ClCompile Include="search_path.cpp" />
+    <ClCompile Include="split_path.cpp" />
+    <ClCompile Include="strbitmask.cpp" />
+    <ClCompile Include="strtok.cpp" />
+    <ClCompile Include="to_lower.cpp" />
+    <ClCompile Include="to_upper.cpp" />
+    <ClCompile Include="trim.cpp" />
+    <ClCompile Include="type_name.cpp" />
+    <ClCompile Include="wcmnroot.cpp" />
+    <ClCompile Include="wcselipsize.cpp" />
+    <ClCompile Include="wcsltombs.cpp" />
+    <ClCompile Include="wsplit_path.cpp" />
+    <ClCompile Include="zero_block_comments.cpp" />
+    <ClCompile Include="zero_ifdefs.cpp" />
+    <ClCompile Include="zero_line_comments.cpp" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{45860521-7DC9-456B-9813-AC6A10569FAB}</ProjectGuid>
     <RootNamespace>oString</RootNamespace>

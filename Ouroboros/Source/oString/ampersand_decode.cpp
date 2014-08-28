@@ -2,6 +2,7 @@
 
 #include <oCompiler.h>
 #include <oBase/macros.h>
+#include <cstring>
 
 namespace ouro {
 

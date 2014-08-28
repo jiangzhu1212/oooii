@@ -25,7 +25,7 @@
 #include <oBasis/oStrTok.h>
 #include <oBase/assert.h>
 #include <oMemory/byte.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 #include <cctype>
 #include <cerrno>
 #include <iterator>
