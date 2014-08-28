@@ -28,10 +28,10 @@
 #ifndef oBase_fixed_string_h
 #define oBase_fixed_string_h
 
-#include <oBase/opttok.h>
-#include <oBase/string.h>
-#include <oBase/string_codec.h>
-#include <oBase/string_traits.h>
+#include <oString/opttok.h>
+#include <oString/string.h>
+#include <oString/string_codec.h>
+#include <oString/string_traits.h>
 #include <oBase/date.h>
 #include <cstring>
 #include <cwchar>

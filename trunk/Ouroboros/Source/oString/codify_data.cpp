@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 #include <oBase/macros.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 
 int snprintf(char* dst, size_t dst_size, const char* fmt, ...);
 

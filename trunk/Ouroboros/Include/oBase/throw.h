@@ -28,7 +28,7 @@
 #ifndef oBase_throw_h
 #define oBase_throw_h
 
-#include <oBase/string.h>
+#include <oString/string.h>
 #include <system_error>
 
 namespace ouro {

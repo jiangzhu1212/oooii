@@ -30,7 +30,7 @@
 #include <oBase/assert.h>
 #include <oBase/fixed_string.h>
 #include <oBase/fnv1a.h>
-#include <oBase/string_path.h>
+#include <oString/string_path.h>
 #include <oBase/throw.h>
 
 namespace ouro {

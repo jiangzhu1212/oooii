@@ -7,7 +7,7 @@
 
 #include <oCompiler.h>
 #include <oBase/container_support.h>
-#include <oBase/string_platform.h>
+#include <oString/string_platform.h>
 #include <cstdint>
 #include <ctype.h>
 

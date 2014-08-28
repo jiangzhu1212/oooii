@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
-      <Filter>Source\string\strlcpy</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcpy.c">
-      <Filter>Source\string\strlcpy</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcpy.c">
-      <Filter>Source\string\strlcpy</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
-      <Filter>Source\string\strlcpy</Filter>
-    </ClCompile>
     <ClCompile Include="text_document.cpp">
       <Filter>Source\text</Filter>
     </ClCompile>
@@ -28,113 +16,11 @@
     <ClCompile Include="version.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="string\strbitmask.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\trim.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\type_name.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\wcselipsize.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\wcsltombs.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\clean_path.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\clean_whitespace.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\elipsize.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\format_bytes.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\format_commas.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\format_duration.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\insert.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\mbsltowcs.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\ordinal.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\relativize_path.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\replace.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\rstrstr.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\json_escape_encode.cpp">
-      <Filter>Source\string\encoding</Filter>
-    </ClCompile>
-    <ClCompile Include="string\percent_decode.cpp">
-      <Filter>Source\string\encoding</Filter>
-    </ClCompile>
-    <ClCompile Include="string\percent_encode.cpp">
-      <Filter>Source\string\encoding</Filter>
-    </ClCompile>
-    <ClCompile Include="string\ampersand_decode.cpp">
-      <Filter>Source\string\encoding</Filter>
-    </ClCompile>
-    <ClCompile Include="string\ampersand_encode.cpp">
-      <Filter>Source\string\encoding</Filter>
-    </ClCompile>
-    <ClCompile Include="string\json_escape_decode.cpp">
-      <Filter>Source\string\encoding</Filter>
-    </ClCompile>
-    <ClCompile Include="string\strtok.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\stringize.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
     <ClCompile Include="vendor.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="string\wsplit_path.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\split_path.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\next_matching.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\zero_line_comments.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\zero_block_comments.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\zero_ifdefs.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\codify_data.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="string\stringize_hlsl.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\matches_wildcard.cpp">
-      <Filter>Source\string</Filter>
     </ClCompile>
     <ClCompile Include="date.cpp">
       <Filter>Source\types</Filter>
@@ -145,20 +31,8 @@
     <ClCompile Include="..\..\External\calfaq\calfaq.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="string\search_path.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\cmnroot.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\wcmnroot.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
     <ClCompile Include="uri.cpp">
       <Filter>Source\types</Filter>
-    </ClCompile>
-    <ClCompile Include="string\argtok.cpp">
-      <Filter>Source\string</Filter>
     </ClCompile>
     <ClCompile Include="tlsf_allocator.cpp">
       <Filter>Source\allocator</Filter>
@@ -168,9 +42,6 @@
     </ClCompile>
     <ClCompile Include="leak_tracker.cpp">
       <Filter>Source\memory</Filter>
-    </ClCompile>
-    <ClCompile Include="opttok.cpp">
-      <Filter>Source\string</Filter>
     </ClCompile>
     <ClCompile Include="input.cpp">
       <Filter>Source</Filter>
@@ -202,20 +73,8 @@
     <ClCompile Include="rgb.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="string\to_lower.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\to_upper.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
     <ClCompile Include="allocate.cpp">
       <Filter>Source\allocator</Filter>
-    </ClCompile>
-    <ClCompile Include="string\prev_matching.cpp">
-      <Filter>Source\string</Filter>
-    </ClCompile>
-    <ClCompile Include="string\rstrcspn.cpp">
-      <Filter>Source\string</Filter>
     </ClCompile>
     <ClCompile Include="concurrent_pool.cpp">
       <Filter>Source\allocator</Filter>
@@ -246,6 +105,12 @@
     </ClCompile>
     <ClCompile Include="ip4.cpp">
       <Filter>Source\types</Filter>
+    </ClCompile>
+    <ClCompile Include="stringize.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="stringize_hlsl.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -318,15 +183,6 @@
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\string_traits.h">
-      <Filter>oBase\string</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\string.h">
-      <Filter>oBase\string</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\stringize.h">
-      <Filter>oBase\string</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\vendor.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
@@ -383,12 +239,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\path_traits.h">
       <Filter>oBase\traits</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\leak_tracker.h">
-      <Filter>oBase\memory</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\opttok.h">
-      <Filter>oBase\string</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\input.h">
       <Filter>oBase</Filter>
@@ -553,20 +403,11 @@
     <ClInclude Include="..\..\Include\oBase\ip4.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\string_platform.h">
-      <Filter>oBase\string</Filter>
+    <ClInclude Include="..\..\Include\oBase\stringize.h">
+      <Filter>oBase</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\string_codec.h">
-      <Filter>oBase\string</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\string_path.h">
-      <Filter>oBase\string</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\string_source.h">
-      <Filter>oBase\string</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\string_fast_scan.h">
-      <Filter>oBase\string</Filter>
+    <ClInclude Include="..\..\Include\oBase\leak_tracker.h">
+      <Filter>oBase</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -575,15 +416,6 @@
     </Filter>
     <Filter Include="oBase">
       <UniqueIdentifier>{d637e98e-1add-49e9-95e0-bd1b71955a2e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\string">
-      <UniqueIdentifier>{74ccdd39-7420-4a6f-b4ed-3ddbaf0c707e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\string\strlcpy">
-      <UniqueIdentifier>{5b273b6d-f324-41e0-b8c8-cdf5a2ccd533}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\string\encoding">
-      <UniqueIdentifier>{64ebc3e4-476b-40f8-be6c-c986a61913cd}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source\scc">
       <UniqueIdentifier>{faf8a815-382c-4877-ac89-9124ec38fd94}</UniqueIdentifier>
@@ -611,12 +443,6 @@
     </Filter>
     <Filter Include="oBase\types">
       <UniqueIdentifier>{50ae8ce8-bcf2-4d43-b130-18d954a2237d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="oBase\string">
-      <UniqueIdentifier>{c61ed5aa-1491-430d-93e3-5c788c5b6ab2}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="oBase\memory">
-      <UniqueIdentifier>{531d9ca9-e272-4b70-9390-6852f1d9c924}</UniqueIdentifier>
     </Filter>
     <Filter Include="oBase\allocator">
       <UniqueIdentifier>{9190ebc5-6f1d-4b15-b235-6b392510c3bc}</UniqueIdentifier>

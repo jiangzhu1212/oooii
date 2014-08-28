@@ -32,7 +32,7 @@
 #define oBase_stringize_h
 
 #include <oBase/enum_iterator.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 #include <vector>
 
 #define oDEFINE_TO_STRING(_T) char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const _T& value) { return detail::to_string(_StrDestination, _SizeofStrDestination, value); }

@@ -192,6 +192,9 @@
     <ProjectReference Include="..\oPlatform\oPlatform.vcxproj">
       <Project>{8eb33511-eed5-48ac-99f9-efa2a34bb2dd}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oString\oString.vcxproj">
+      <Project>{45860521-7dc9-456b-9813-ac6a10569fab}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\oSurface\oSurface.vcxproj">
       <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>
     </ProjectReference>

@@ -29,7 +29,7 @@
 #include <oCore/windows/win_iocp.h>
 #include <oBase/date.h>
 #include <oBase/macros.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 #include <oMemory/memory.h>
 
 #include <io.h>

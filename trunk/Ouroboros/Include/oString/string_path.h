@@ -7,6 +7,7 @@
 
 #include <oCompiler.h>
 #include <oBase/macros.h>
+#include <functional>
 
 namespace ouro {
 

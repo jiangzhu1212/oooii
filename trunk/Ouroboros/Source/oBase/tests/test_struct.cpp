@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include "test_struct.h"
-#include <oBase/string.h>
+#include <oString/string.h>
 #include <time.h>
 
 void init_test_struct(test_struct* t, const void* buffer1, int buffer1_size, const void* buffer2, int buffer2_size)

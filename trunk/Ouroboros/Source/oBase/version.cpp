@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/version.h>
-#include <oBase/string.h>
+#include <oString/string.h>
 
 #define CHK(x) do { _pType->x = static_cast<unsigned short>(x); if (_pType->x != x) return false; } while(false)
 

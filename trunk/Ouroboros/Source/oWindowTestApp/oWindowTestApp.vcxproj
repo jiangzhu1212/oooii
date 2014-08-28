@@ -155,6 +155,9 @@
     <ProjectReference Include="..\oMemory\oMemory.vcxproj">
       <Project>{995587d3-b1d0-4c01-bb52-a4b84a2dcb27}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oString\oString.vcxproj">
+      <Project>{45860521-7dc9-456b-9813-ac6a10569fab}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\oSurface\oSurface.vcxproj">
       <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>
     </ProjectReference>

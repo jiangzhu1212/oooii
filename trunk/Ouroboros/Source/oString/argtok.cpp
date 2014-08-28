@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <oBase/string_path.h>
+#include <oString/string_path.h>
 
 #ifndef PATH_MAX
 	#define PATH_MAX 512
