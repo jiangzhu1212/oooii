@@ -28,7 +28,7 @@
 #ifndef oBase_tagged_pointer_h
 #define oBase_tagged_pointer_h
 
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <atomic>
 #include <exception>
 

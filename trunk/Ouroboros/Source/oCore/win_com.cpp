@@ -25,7 +25,7 @@
 #include <oCore/windows/win_com.h>
 #include <oCore/windows/win_error.h>
 #include <oCore/process_heap.h>
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <ObjBase.h>

@@ -1,11 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <oBase/macros.h>
+#include <oCompiler.h>
 #include <oBase/string.h>
 
 namespace ouro {
 
-static void json_escape_decode_unicode(char* dst, size_t dst_size, const char* src)
+static void json_escape_decode_unicode(char* oRESTRICT dst, size_t dst_size, const char* oRESTRICT src)
 {
 	unsigned int UnicodeValue = 0;
 	// Expects 4 digits from src and turns it into UTF-8
@@ -24,7 +24,7 @@ static void json_escape_decode_unicode(char* dst, size_t dst_size, const char* s
 		sncatf(dst, dst_size, "%c", (unsigned char)UnicodeValue);
 }
 
-char* json_escape_decode(char* dst, size_t dst_size, const char* src)
+char* json_escape_decode(char* oRESTRICT dst, size_t dst_size, const char* oRESTRICT src)
 {
 	if (-1 == snprintf(dst, dst_size, ""))
 		return nullptr;

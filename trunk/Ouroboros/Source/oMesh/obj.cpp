@@ -31,6 +31,7 @@
 #include <oBase/assert.h>
 #include <oBase/macros.h>
 #include <oBase/std_linear_allocator.h>
+#include <oBase/string_fast_scan.h>
 #include <oBase/timer.h>
 #include <oBase/unordered_map.h>
 

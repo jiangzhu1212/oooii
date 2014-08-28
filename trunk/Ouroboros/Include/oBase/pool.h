@@ -27,7 +27,7 @@
 #ifndef oBase_pool_h
 #define oBase_pool_h
 
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 
 namespace ouro
 {

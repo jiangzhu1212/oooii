@@ -27,7 +27,7 @@
 #ifndef oBase_concurrent_stack_h
 #define oBase_concurrent_stack_h
 
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <atomic>
 #include <stdexcept>
 

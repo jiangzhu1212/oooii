@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <oBase/macros.h>
+#include <oCompiler.h>
 #include <oBase/throw.h>
 
 namespace ouro {

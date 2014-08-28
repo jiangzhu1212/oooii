@@ -105,7 +105,7 @@ static size_t codify_data(char* dst, size_t dst_size, const char* buffer_name, c
 	return std::distance(dst, str);
 }
 
-size_t codify_data(char* dst, size_t dst_size, const char* buffer_name, const void* buf, size_t buf_size, size_t word_size)
+size_t codify_data(char* oRESTRICT dst, size_t dst_size, const char* oRESTRICT buffer_name, const void* oRESTRICT buf, size_t buf_size, size_t word_size)
 {
 	switch (word_size)
 	{

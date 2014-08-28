@@ -8,14 +8,7 @@
 
 #include <memory.h>
 #include <cstdint>
-
-#ifndef oRESTRICT
-#ifdef _MSC_VER
-	#define oRESTRICT __restrict
-#else
-	#error unsupported compiler
-#endif
-#endif
+#include <oCompiler.h> // oRESTRICT
 
 namespace ouro {
 

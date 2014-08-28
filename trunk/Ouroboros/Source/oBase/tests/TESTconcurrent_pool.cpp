@@ -25,6 +25,7 @@
 #include <oBase/concurrent_pool.h>
 #include <oBase/concurrent_object_pool.h>
 #include <oBase/concurrency.h>
+#include <oBase/macros.h>
 #include <oBase/throw.h>
 #include <vector>
 

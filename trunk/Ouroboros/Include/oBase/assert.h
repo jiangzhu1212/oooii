@@ -30,7 +30,7 @@
 #ifndef oBase_assert_h
 #define oBase_assert_h
 
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <cstdarg>
 #include <cstdlib>
 

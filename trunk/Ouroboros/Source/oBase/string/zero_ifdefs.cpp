@@ -3,6 +3,8 @@
 #include <memory.h>
 #include <regex>
 #include <string>
+#include <oBase/macros.h>
+#include <oBase/string_source.h>
 #include <oBase/throw.h>
 #include <unordered_map>
 

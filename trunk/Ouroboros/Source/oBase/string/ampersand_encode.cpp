@@ -1,12 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
+#include <oCompiler.h>
 #include <oBase/assert.h>
-#include <oBase/macros.h>
 #include <oBase/string.h>
 
 namespace ouro {
 
-char* ampersand_encode(char* dst, size_t dst_size, const char* src)
+char* ampersand_encode(char* oRESTRICT dst, size_t dst_size, const char* oRESTRICT src)
 {
 	*dst = 0;
 	char* d = dst;

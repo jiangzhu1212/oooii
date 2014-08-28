@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/backoff.h>
+#include <oBase/string_source.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
 #include <oGUI/Windows/win_gdi_bitmap.h>

@@ -23,6 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/pool.h>
+#include <oBase/macros.h>
 #include <oBase/object_pool.h>
 #include <oBase/throw.h>
 #include <vector>

@@ -28,7 +28,7 @@
 #define oBase_linear_allocator_base_h
 
 #include <oMemory/byte.h>
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 
 namespace ouro {
 

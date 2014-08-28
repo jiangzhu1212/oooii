@@ -5,6 +5,7 @@
 #include <oBase/fourcc.h>
 #include <oBase/guid.h>
 #include <oBase/string.h>
+#include <oBase/string_fast_scan.h>
 #include <oBase/date.h>
 
 oDEFINE_WHITESPACE_PARSING();

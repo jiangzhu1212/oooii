@@ -26,6 +26,7 @@
 #include <oBase/assert.h>
 #include <oBase/macros.h>
 #include <oBase/stringize.h>
+#include <oBase/string_path.h>
 #include <oBase/throw.h>
 
 namespace ouro {

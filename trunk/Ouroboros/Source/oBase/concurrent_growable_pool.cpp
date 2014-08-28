@@ -25,7 +25,7 @@
 #include <oBase/concurrent_growable_pool.h>
 #include <oBase/allocate.h>
 #include <oMemory/byte.h>
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <oBase/macros.h>
 #include <stdexcept>
 

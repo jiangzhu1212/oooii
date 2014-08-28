@@ -30,6 +30,7 @@
 
 #include <oBase/opttok.h>
 #include <oBase/string.h>
+#include <oBase/string_codec.h>
 #include <oBase/string_traits.h>
 #include <oBase/date.h>
 #include <cstring>
