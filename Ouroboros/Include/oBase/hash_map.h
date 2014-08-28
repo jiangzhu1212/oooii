@@ -381,8 +381,8 @@ private:
 
 	void allocate(const size_type& _Capacity)
 	{
-		Keys = Allocator.construct_array<hash_type>(_Capacity, memory_alignment::align_to_default);
-		Values = Allocator.construct_array<value_type>(_Capacity, memory_alignment::align_to_default);
+		Keys = Allocator.construct_array<hash_type>(_Capacity, memory_alignment::align_default);
+		Values = Allocator.construct_array<value_type>(_Capacity, memory_alignment::align_default);
 		Capacity = _Capacity;
 		Size = 0;
 		memset(Keys, 0, sizeof(hash_type) * Capacity);

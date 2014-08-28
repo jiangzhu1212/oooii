@@ -6,7 +6,7 @@
 // Utilities helpful when dealing with little v. big endian data serialization.
 
 #include <stddef.h>
-#include <stdint.h>
+#include <cstdint>
 #include <type_traits>
 
 namespace ouro { namespace detail { static const uint16_t endian_signature = 1; }

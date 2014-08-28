@@ -28,10 +28,9 @@
 
 namespace ouro {
 
-void* default_allocate(size_t _Size, unsigned int options)
+void* default_allocate(size_t size, const allocate_options& options, const char* label)
 {
-	allocate_options opt; opt.options = options;
-	return _aligned_malloc(_Size, __max(memory_alignment::align_to_default, 1 << opt.alignment));
+	return _aligned_malloc(size, options.get_alignment());
 }
 
 void default_deallocate(const void* pointer)
@@ -39,7 +38,7 @@ void default_deallocate(const void* pointer)
 	_aligned_free((void*)pointer);
 }
 
-void* noop_allocate(size_t _Size, unsigned int _Options)
+void* noop_allocate(size_t size, const allocate_options& options, const char* label)
 {
 	return nullptr;
 }
@@ -51,62 +50,48 @@ void noop_deallocate(const void* pointer)
 allocator default_allocator(default_allocate, default_deallocate);
 allocator noop_allocator(noop_allocate, noop_deallocate);
 	
-const char* as_string(const memory_alignment::value& alignment)
+const char* as_string(const memory_alignment& alignment)
 {
 	static const char* names[] = 
 	{
-		"align_to_1",
-		"align_to_2",
-		"align_to_4",
-		"align_to_8",
-		"align_to_16 (default)",
-		"align_to_32",
-		"align_to_64 (cacheline)",
-		"align_to_128",
-		"align_to_256",
-		"align_to_512",
-		"align_to_1024",
-		"align_to_2048",
-		"align_to_4096",
+		"align16 (default)",
+		"align2",
+		"align4",
+		"align8",
+		"align16 (default)",
+		"align32",
+		"align64 (cacheline)",
+		"align128",
+		"align256",
+		"align512",
+		"align1k",
+		"align2k",
+		"align4k",
+		"align8k",
+		"align16k",
+		"align32k",
+		"align64k",
 	};
-	static_assert(oCOUNTOF(names) == memory_alignment::count, "array mismatch");
-	return names[alignment];
+	static_assert(oCOUNTOF(names) == (uint32_t)memory_alignment::count, "array mismatch");
+	return names[(uint32_t)alignment];
 }
 
-const char* as_string(const memory_type::value& type)
+const char* as_string(const memory_type& type)
 {
 	static const char* names[] = 
 	{
-		"default_memory",
-		"io_read_write",
+		"cpu",
 		"cpu_writecombine",
 		"cpu_gpu_coherent",
+		"cpu_physical",
+		"cpu_physical_uncached",
 		"gpu_writecombine",
 		"gpu_readonly",
 		"gpu_on_chip",
-		"physical",
+		"io_read_write",
 	};
-	static_assert(oCOUNTOF(names) == memory_type::count, "array mismatch");
-	return names[type];
-}
-
-const char* as_string(const subsystem::value& subsystem)
-{
-	static const char* names[] = 
-	{
-		"ai",
-		"app",
-		"bookkeeping",
-		"cpu",
-		"input",
-		"io",
-		"graphics",
-		"physics",
-		"sound",
-		"ui",
-	};
-	static_assert(oCOUNTOF(names) == subsystem::count, "array mismatch");
-	return names[subsystem];
+	static_assert(oCOUNTOF(names) == (uint32_t)memory_type::count, "array mismatch");
+	return names[(uint32_t)type];
 }
 
 }

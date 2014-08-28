@@ -193,7 +193,7 @@ void ParseCommandLine(int _Argc, const char* _Argv[], PARAMETERS* _pParameters)
 	_pParameters->EnableOutputGoldenImages = false;
 	_pParameters->TerminateOtherProcesses = true;
 
-	const char* value = 0;
+	const char* value = nullptr;
 	char ch = opttok(&value, _Argc, _Argv, sCmdLineOptions);
 	while (ch)
 	{

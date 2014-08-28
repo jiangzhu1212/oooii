@@ -28,7 +28,7 @@
 #ifndef dds_h
 #define dds_h
 
-#include <stdint.h>
+#include <cstdint>
 
 static const uint32_t dds_signature = 0x20534444; // "DDS "
 

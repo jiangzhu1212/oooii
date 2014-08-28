@@ -51,7 +51,7 @@ void dont_output_message(j_common_ptr cinfo)
 
 void* o_get_small(j_common_ptr cinfo, size_t sizeofobject)
 {
-	return tl_alloc->allocate(sizeofobject, 0);
+	return tl_alloc->allocate(sizeofobject, memory_alignment::default_alignment, "libjpegturbo");
 }
 
 void o_free_small(j_common_ptr cinfo, void* object, size_t sizeofobject)
@@ -61,7 +61,7 @@ void o_free_small(j_common_ptr cinfo, void* object, size_t sizeofobject)
 
 void* o_get_large(j_common_ptr cinfo, size_t sizeofobject)
 {
-	return tl_alloc->allocate(sizeofobject, 0);
+	return tl_alloc->allocate(sizeofobject, memory_alignment::default_alignment, "libjpegturbo");
 }
 
 void o_free_large(j_common_ptr cinfo, void FAR* object, size_t sizeofobject)

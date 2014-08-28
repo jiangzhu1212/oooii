@@ -76,7 +76,7 @@ scoped_allocation encode_bmp(const image& img, const allocator& file_alloc, cons
 	const uint bfSize = bfOffBits + BufferSize;
 	const bool kIs32Bit = info.format == surface::format::b8g8r8a8_unorm;
 
-	scoped_allocation p(file_alloc.allocate(bfSize, 0), bfSize, file_alloc.deallocate);
+	scoped_allocation p(file_alloc.allocate(bfSize, memory_alignment::default_alignment, "encoded bmp"), bfSize, file_alloc.deallocate);
 
 	auto bfh = (bmp_header*)p;
 	auto bmi = (bmp_info*)&bfh[1];

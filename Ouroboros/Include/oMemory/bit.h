@@ -3,7 +3,7 @@
 #ifndef oMemory_bit_h
 #define oMemory_bit_h
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifdef _MSC_VER
 #ifdef __cplusplus

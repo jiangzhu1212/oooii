@@ -27,7 +27,7 @@
 #ifndef psd_h
 #define psd_h
 
-#include <stdint.h>
+#include <cstdint>
 
 #ifndef PSD_RESTRICT
 #define PSD_RESTRICT __restrict
