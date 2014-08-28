@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/assert.h>
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <oBase/fixed_string.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>

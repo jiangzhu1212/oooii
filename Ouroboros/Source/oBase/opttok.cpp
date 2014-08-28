@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 #include <oBase/opttok.h>
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <oBase/string.h>
 
 namespace ouro {

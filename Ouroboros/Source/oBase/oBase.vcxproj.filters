@@ -523,9 +523,6 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\compiler_config.h">
-      <Filter>oBase\c++ support</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_registry.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
@@ -555,6 +552,21 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\ip4.h">
       <Filter>oBase\types</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\string_platform.h">
+      <Filter>oBase\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\string_codec.h">
+      <Filter>oBase\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\string_path.h">
+      <Filter>oBase\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\string_source.h">
+      <Filter>oBase\string</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\string_fast_scan.h">
+      <Filter>oBase\string</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <oBase/macros.h>
+#include <oCompiler.h>
 #include <oBase/string.h>
 #include <oBase/throw.h>
 
@@ -8,7 +8,7 @@
 
 namespace ouro {
 
-char* json_escape_encode(char* dst, size_t dst_size, const char* src)
+char* json_escape_encode(char* oRESTRICT dst, size_t dst_size, const char* oRESTRICT src)
 {
 	sncatf(dst, dst_size, "\"");
 	while (*src)

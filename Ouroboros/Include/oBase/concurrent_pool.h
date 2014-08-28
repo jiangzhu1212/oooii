@@ -28,7 +28,7 @@
 #ifndef oBase_concurrent_pool_h
 #define oBase_concurrent_pool_h
 
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <atomic>
 
 namespace ouro {

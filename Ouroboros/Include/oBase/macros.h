@@ -27,7 +27,7 @@
 #ifndef oBase_macros_h
 #define oBase_macros_h
 
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <cstddef>
 
 // _____________________________________________________________________________
@@ -56,16 +56,6 @@
 #define oMB(n) (oKB(n) * 1024LL)
 #define oGB(n) (oMB(n) * 1024LL)
 #define oTB(n) (oGB(n) * 1024LL)
-
-#define oNEWLINE "\r\n"
-#define oWHITESPACE " \t\v\f" oNEWLINE
-
-#define oWNEWLINE L"\r\n"
-#define oWWHITESPACE L" \t\v\f" oWNEWLINE
-
-#define oDIGIT "0123456789"
-#define oDIGIT_UNSIGNED oDIGIT "+"
-#define oDIGIT_SIGNED oDIGIT "+-"
 
 // _____________________________________________________________________________
 // Runtime macros

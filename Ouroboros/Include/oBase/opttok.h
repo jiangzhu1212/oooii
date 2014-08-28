@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_opttok_h
-#define oBase_opttok_h
+#ifndef oString_opttok_h
+#define oString_opttok_h
 
 // Provide a simple, clean way of handling command line parameters.
 

@@ -1,11 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <oBase/macros.h>
+#include <oCompiler.h>
 #include <oBase/throw.h>
 
 namespace ouro {
 
-char* percent_to_lower(char* dst, size_t dst_size, const char* src)
+char* percent_to_lower(char* oRESTRICT dst, size_t dst_size, const char* oRESTRICT src)
 {
 	char* d = dst;
 	char* end = d + dst_size - 1;
@@ -27,7 +27,7 @@ char* percent_to_lower(char* dst, size_t dst_size, const char* src)
 	return dst;
 }
 
-char* percent_decode(char* dst, size_t dst_size, const char* src)
+char* percent_decode(char* oRESTRICT dst, size_t dst_size, const char* oRESTRICT src)
 {
 	char* d = dst;
 	char* end = d + dst_size - 1;

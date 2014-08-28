@@ -24,6 +24,7 @@
  **************************************************************************/
 #include <oBase/lzma.h>
 #include <oMemory/byte.h>
+#include <oBase/macros.h>
 #include <oBase/throw.h>
 #include <Lzma/C/LzmaLib.h>
 

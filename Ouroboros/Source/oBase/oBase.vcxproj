@@ -142,7 +142,6 @@
     <ClInclude Include="..\..\Include\oBase\cbtree.h" />
     <ClInclude Include="..\..\Include\oBase\color.h" />
     <ClInclude Include="..\..\Include\oBase\colors.h" />
-    <ClInclude Include="..\..\Include\oBase\compiler_config.h" />
     <ClInclude Include="..\..\Include\oBase\compression.h" />
     <ClInclude Include="..\..\Include\oBase\concurrency.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_object_pool.h" />
@@ -210,6 +209,11 @@
     <ClInclude Include="..\..\Include\oBase\std_make_unique.h" />
     <ClInclude Include="..\..\Include\oBase\string.h" />
     <ClInclude Include="..\..\Include\oBase\stringize.h" />
+    <ClInclude Include="..\..\Include\oBase\string_codec.h" />
+    <ClInclude Include="..\..\Include\oBase\string_fast_scan.h" />
+    <ClInclude Include="..\..\Include\oBase\string_path.h" />
+    <ClInclude Include="..\..\Include\oBase\string_platform.h" />
+    <ClInclude Include="..\..\Include\oBase\string_source.h" />
     <ClInclude Include="..\..\Include\oBase\string_traits.h" />
     <ClInclude Include="..\..\Include\oBase\tagged_pointer.h" />
     <ClInclude Include="..\..\Include\oBase\text_document.h" />

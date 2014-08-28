@@ -28,7 +28,7 @@
 #ifndef oBase_compression_h
 #define oBase_compression_h
 
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 
 namespace ouro {
 

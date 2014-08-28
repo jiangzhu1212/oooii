@@ -26,7 +26,7 @@
 #pragma once
 #ifndef oBase_std_cbegin_h
 #define oBase_std_cbegin_h
-#include <oBase/compiler_config.h>
+#include <oCompiler.h>
 #include <iterator>
 #include <array>
 

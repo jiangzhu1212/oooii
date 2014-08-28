@@ -4,7 +4,7 @@
 
 namespace ouro {
 
-char* zero_line_comments(char* str, const char* comment_prefix, char replacement)
+char* zero_line_comments(char* oRESTRICT str, const char* oRESTRICT comment_prefix, char replacement)
 {
 	if (str)
 	{

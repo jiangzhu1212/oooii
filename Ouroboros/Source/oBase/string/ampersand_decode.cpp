@@ -1,10 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
+#include <oCompiler.h>
 #include <oBase/macros.h>
 
 namespace ouro {
 
-char* ampersand_decode(char* dst, size_t dst_size, const char* src)
+char* ampersand_decode(char* oRESTRICT dst, size_t dst_size, const char* oRESTRICT src)
 {
 	if (!dst || !dst_size)
 		return nullptr;
