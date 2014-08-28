@@ -39,7 +39,7 @@ struct option
 // ':' if there was a missing optionvalue (error condition)
 char opttok(const char** out_value, int argc, const char* argv[], const option* options, size_t num_options);
 inline char opttok(const char** argv) { return opttok(argv, 0, nullptr, nullptr, 0); }
-template<size_t size> char opttok(const char** out_value, int argc, const char* argv[], const option (&options)[size]) { return opttok(argv, argc, argv, options, size); }
+template<size_t size> char opttok(const char** out_value, int argc, const char* argv[], const option (&options)[size]) { return opttok(out_value, argc, argv, options, size); }
 
 // Prints documentation for the specified options to the specified buffer.
 char* optdoc(char* dst, size_t dst_size, const char* app_name, const option* options, size_t s_num_options, const char* loose_parameters = "");
