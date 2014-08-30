@@ -346,7 +346,7 @@ void oSystemProperties::ActionHook(const ouro::input::action& _Action)
 {
 	switch (_Action.action_type)
 	{
-		case ouro::input::control_activated:
+		case ouro::input::action_type::control_activated:
 		{
 			switch (_Action.device_id)
 			{
@@ -361,21 +361,21 @@ void oSystemProperties::ActionHook(const ouro::input::action& _Action)
 			break;
 		}
 
-		case ouro::input::control_selection_changing:
+		case ouro::input::action_type::control_selection_changing:
 		{
 			int index = oWinControlGetSelectedSubItem((HWND)_Action.window);
 			Show(index, false);
 			break;
 		}
 
-		case ouro::input::control_selection_changed:
+		case ouro::input::action_type::control_selection_changed:
 		{
 			int index = oWinControlGetSelectedSubItem((HWND)_Action.window);
 			Show(index, true);
 			break;
 		}
 
-		case ouro::input::hotkey:
+		case ouro::input::action_type::hotkey:
 		{
 			if (_Action.device_id == ID_RELOAD_UI)
 				oCHECK0(Reload((HWND)Window->native_handle(), Window->client_size()));

@@ -45,7 +45,7 @@ const char* as_string(const gpu::sampler_state::value& _Value)
 	}
 	return "?";
 }
-oDEFINE_TO_FROM_STRING(gpu::sampler_state::value, gpu::sampler_state::count);
+oDEFINE_TO_FROM_STRING(gpu::sampler_state::value);
 
 namespace gpu {
 

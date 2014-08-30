@@ -369,7 +369,7 @@ void about_impl::on_action(const ouro::input::action& _Action)
 {
 	switch (_Action.action_type)
 	{
-		case input::control_activated:
+		case input::action_type::control_activated:
 			switch (_Action.device_id)
 			{
 				case AB_OK:

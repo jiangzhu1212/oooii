@@ -137,21 +137,21 @@ void oWindowUITest::ActionHook(const ouro::input::action& _Action)
 {
 	switch (_Action.action_type)
 	{
-		case ouro::input::menu:
-		case ouro::input::hotkey:
+		case ouro::input::action_type::menu:
+		case ouro::input::action_type::hotkey:
 			OnMenuCommand((HWND)_Action.window, _Action.device_id);
 			// pass through
-		case ouro::input::control_activated:
+		case ouro::input::action_type::control_activated:
 		{
 			ouro::lstring text;
 			oWinControlGetText(text, (HWND)_Action.window);
 			oTRACE("Action %s \"%s\" code=%d", ouro::as_string(oWinControlGetType((HWND)_Action.window)), text.c_str(), _Action.action_code);
 			break;
 		}
-		case ouro::input::key_down:
-		case ouro::input::key_up:
+		case ouro::input::action_type::key_down:
+		case ouro::input::action_type::key_up:
 			break;
-		case ouro::input::pointer_move:
+		case ouro::input::action_type::pointer_move:
 			if (kInteractiveMode)
 				Window->set_status_text(0, "Cursor: %dx%d", (int)_Action.position().x, (int)_Action.position().y);
 			break;

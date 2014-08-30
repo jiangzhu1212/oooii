@@ -44,7 +44,7 @@ static bool has(const initT& i, primitive::semantic_flag flag) { return has(i.se
 template<typename initT>
 static bool supports(const initT& i, uint semantics) { return !!(i.semantics & semantics); }
 
-static float normal_sign(const face_type::value& type)
+static float normal_sign(const face_type& type)
 {
 	// this lib was brought up as CCW so invert some values for CW systems
 
@@ -58,7 +58,7 @@ static float normal_sign(const face_type::value& type)
 	return 0.0f;
 }
 
-static face_type::value opposite_face_type(const face_type::value& type)
+static face_type opposite_face_type(const face_type& type)
 {
 	switch (type)
 	{
@@ -192,7 +192,7 @@ private:
 	void flip_winding_order_to_end(uint base_index_index) { flip_winding_order(base_index_index, indices.data(), num_indices()); }
 
 	// handles common tasks like assigning color, calculating derived values like normals, tangents, etc.
-	void finalize(const face_type::value& face_type, int semantics, const color& c);
+	void finalize(const face_type& face_type, int semantics, const color& c);
 	template<typename initT> void finalize(const initT& i) { finalize(i.face_type, i.semantics, i.color); }
 
 	// appends positions and texcoords
@@ -205,10 +205,10 @@ private:
 	void append_frustum_outline_indices();
 
 	// appends the indices for a circle. Tessellation is zig-zagged, not a tri-fan
-	void append_circle_indices(uint base_index_index, uint base_vertex_index, uint facet, const face_type::value& face_type);
+	void append_circle_indices(uint base_index_index, uint base_vertex_index, uint facet, const face_type& face_type);
 
 	// appends the indices for a washer (2D torus). Tessellation is zig-zagged, not a tri-fan
-	void append_washer_indices(uint base_index_index, uint base_vertex_index, uint facet, const face_type::value& face_type);
+	void append_washer_indices(uint base_index_index, uint base_vertex_index, uint facet, const face_type& face_type);
 
 	// appends the positions for a circle to inout_positions, not to this
 	void append_circle_positions(std::vector<float3>& inout_positions, float radius, uint facet, float z_value);
@@ -217,7 +217,7 @@ private:
 	void append_circle_texcoords(std::vector<float2>& inout_texcoords, uint facet, float radius);
 
 	// appends Z up normals to match positions count
-	void append_circle_normals(uint base_vertex_index, const face_type::value& face_type);
+	void append_circle_normals(uint base_vertex_index, const face_type& face_type);
 
 	// uses the above circle appends for a full circle
 	void append_circle(const circle_init& i, uint base_index_index, uint base_vertex_index, bool clear_primitive, float z_value);
@@ -227,7 +227,7 @@ private:
 	void append_washer(const washer_init& i, uint base_index_index, uint base_vertex_index, bool clear_primitive, float z_value);
 
 	// appends the indices for a cylinder that indexes two circle vertices as created by append_circle_positions
-	void append_cylinder_indices(uint facet, uint base_vertex_index, const face_type::value& face_type);
+	void append_cylinder_indices(uint facet, uint base_vertex_index, const face_type& face_type);
 
 	// assumes wrap sample mode, this finds triangles that straddle the seam where texcoords close to 1.0 interpolate back to 0.0
 	// and thus have a backwards-mapped stripe/seam.
@@ -793,7 +793,7 @@ void primitive_impl::cull(const planef& plane)
 	prune();
 }
 
-void primitive_impl::finalize(const face_type::value& face_type, int semantics, const color& c)
+void primitive_impl::finalize(const face_type& face_type, int semantics, const color& c)
 {
 	if (face_type != face_type::outline)
 	{
@@ -1009,7 +1009,7 @@ void primitive_impl::append_frustum_outline_indices()
 	memcpy(&indices[index], kIndices, sizeof(kIndices));
 }
 
-void primitive_impl::append_circle_indices(uint base_index_index, uint base_vertex_index, uint facet, const face_type::value& face_type)
+void primitive_impl::append_circle_indices(uint base_index_index, uint base_vertex_index, uint facet, const face_type& face_type)
 {
 	if (face_type == face_type::outline)
 	{
@@ -1059,7 +1059,7 @@ void primitive_impl::append_circle_indices(uint base_index_index, uint base_vert
 	}
 }
 
-void primitive_impl::append_washer_indices(uint base_index_index, uint base_vertex_index, uint facet, const face_type::value& face_type)
+void primitive_impl::append_washer_indices(uint base_index_index, uint base_vertex_index, uint facet, const face_type& face_type)
 {
 	if (face_type == face_type::outline)
 	{
@@ -1149,7 +1149,7 @@ void primitive_impl::append_circle_texcoords(std::vector<float2>& inout_texcoord
 	}
 }
 
-void primitive_impl::append_circle_normals(uint base_vertex_index, const face_type::value& face_type)
+void primitive_impl::append_circle_normals(uint base_vertex_index, const face_type& face_type)
 {
 	normals.resize(positions.size());
 	const float3 N = float3(0.0f, 0.0f, 1.0f) * normal_sign(face_type);
@@ -1234,7 +1234,7 @@ void primitive_impl::append_washer(const washer_init& i, uint base_index_index, 
 	}
 }
 
-void primitive_impl::append_cylinder_indices(uint facet, uint base_vertex_index, const face_type::value& face_type)
+void primitive_impl::append_cylinder_indices(uint facet, uint base_vertex_index, const face_type& face_type)
 {
 	const uint numEvens = (facet + 1) / 2;
 	const uint oddsStartI = facet - 1 - (facet & 0x1);

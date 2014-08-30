@@ -54,7 +54,7 @@ public:
 	struct rectangle_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint divide;
 		color color;
 		float width;
@@ -66,7 +66,7 @@ public:
 	struct box_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint divide;
 		color color;
 		aaboxf bound;
@@ -76,7 +76,7 @@ public:
 	struct frustum_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint divide;
 		color color;
 		oFrustumf bound;
@@ -85,7 +85,7 @@ public:
 	struct circle_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint facet;
 		color color;
 		float radius;
@@ -94,7 +94,7 @@ public:
 	struct washer_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint facet;
 		color color;
 		float inner_radius;
@@ -108,7 +108,7 @@ public:
 		// texture coord v goes from 0 at Z=+1 to 1 at Z=-1, or if hemisphere, 0 at Z=+1 and 1 at Z=0
 
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint divide; // vale of 6 takes ~3 sec on an overclocked i7 920. 7 Takes ~11 sec.
 		color color;
 		float radius;
@@ -119,7 +119,7 @@ public:
 	struct cylinder_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint divide;
 		uint facet;
 		uint outline_vertical_skip; // # vertical lines to skip when generating an outline. 1 means skip every other line, etc.
@@ -133,7 +133,7 @@ public:
 	struct cone_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint divide;
 		uint facet;
 		uint outline_vertical_skip; // # vertical lines to skip when generating an outline. 1 means skip every other line, etc.
@@ -146,7 +146,7 @@ public:
 	struct torus_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint divide;
 		uint facet;
 		color color;
@@ -157,7 +157,7 @@ public:
 	struct teardrop_init
 	{
 		int semantics; // semantic_flags
-		face_type::value face_type;
+		face_type face_type;
 		uint divide;
 		uint facet;
 		color color;

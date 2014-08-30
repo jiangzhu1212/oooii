@@ -343,10 +343,10 @@ void oWindowTestApp::ActionHook(const input::action& _Action)
 {
 	switch (_Action.action_type)
 	{
-		case input::unknown:
+	case input::action_type::unknown:
 			oTRACE("input::unknown");
 			break;
-		case input::menu:
+		case input::action_type::menu:
 			switch (_Action.device_id)
 			{
 				case oWMI_FILE_EXIT:
@@ -369,7 +369,7 @@ void oWindowTestApp::ActionHook(const input::action& _Action)
 			}
 			break;
 
-		case input::control_activated:
+		case input::action_type::control_activated:
 			switch (_Action.device_id)
 			{
 				case oWCTL_EASY_BUTTON:
@@ -387,16 +387,16 @@ void oWindowTestApp::ActionHook(const input::action& _Action)
 					break;
 			}
 			break;
-		case input::control_deactivated:
+		case input::action_type::control_deactivated:
 			oTRACE("input::control_deactivated");
 			break;
-		case input::control_selection_changing:
+		case input::action_type::control_selection_changing:
 			oTRACE("input::control_selection_changing");
 			break;
-		case input::control_selection_changed:
+		case input::action_type::control_selection_changed:
 			oTRACE("input::control_selection_changed");
 			break;
-		case input::hotkey:
+		case input::action_type::hotkey:
 			switch (_Action.device_id)
 			{
 				case oWHK_DEFAULT_STYLE:
@@ -423,22 +423,22 @@ void oWindowTestApp::ActionHook(const input::action& _Action)
 			}
 			
 			break;
-		case input::key_down:
+		case input::action_type::key_down:
 			oTRACE("input::key_down %s", as_string(_Action.key));
 			break;
-		case input::key_up:
+		case input::action_type::key_up:
 			oTRACE("input::key_up %s", as_string(_Action.key));
 			break;
-		case input::pointer_move:
+		case input::action_type::pointer_move:
 			//oTRACE("input::pointer_move");
 			break;
-		case input::skeleton_update:
+		case input::action_type::skeleton_update:
 			oTRACE("input::skeleton");
 			break;
-		case input::skeleton_acquired:
+		case input::action_type::skeleton_acquired:
 			oTRACE("input::skeleton_acquired");
 			break;
-		case input::skeleton_lost:
+		case input::action_type::skeleton_lost:
 			oTRACE("input::skeleton_lost");
 			break;
 		oNODEFAULT;

@@ -40,7 +40,7 @@ public:
 	void initialize(const char* name, gpu::device& dev);
 	void deinitialize();
 
-	inline void set(gpu::command_list& cl, const gpu::intrinsic::vertex_layout::value& input, const mesh::primitive_type::value& prim_type) const { layouts[input].set(cl, prim_type); }
+	inline void set(gpu::command_list& cl, const gpu::intrinsic::vertex_layout::value& input, const mesh::primitive_type& prim_type) const { layouts[input].set(cl, prim_type); }
 
 private:
 	std::array<gpu::vertex_layout, gpu::intrinsic::vertex_layout::count> layouts;

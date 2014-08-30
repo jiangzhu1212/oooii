@@ -493,8 +493,8 @@ void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 {
 	switch (_Action.action_type)
 	{
-		case input::key_down:
-		case input::key_up:
+		case input::action_type::key_down:
+		case input::action_type::key_up:
 		{
 			lock_shared_t lock(oThreadsafe(Mutex));
 			if (InputSet)
@@ -503,7 +503,7 @@ void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 				for (int i = 0; i < as_int(pInputSet->Inputs.size()); i++)
 				{
 					bool InputDown = false;
-					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action_type == input::key_down, &InputDown))
+					if (pInputSet->Inputs[i].OnKey(_Action.key, _Action.action_type == input::action_type::key_down, &InputDown))
 					{
 						// this is not really safe. It is only safe if OnAction is only ever 
 						// called from one thread for one instance, which tends to be the
@@ -514,7 +514,7 @@ void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 						thread_cast<oInputHistory&>(InputHistory).Add(_Action.timestamp_ms, i, InputDown);
 
 						input::action a(_Action);
-						a.action_type = input::control_activated;
+						a.action_type = input::action_type::control_activated;
 						a.action_code = i; // at least trigger this input
 						
 						// Check to see if it gets overridden by a sequence
@@ -527,7 +527,7 @@ void oInputMapperImpl::OnAction(const input::action& _Action) threadsafe
 							}
 						}
 
-						oTRACE("Input %d %s", a.action_code, (_Action.action_type == input::key_down) ? "down" : "up");
+						oTRACE("Input %d %s", a.action_code, (_Action.action_type == input::action_type::key_down) ? "down" : "up");
 						Hooks.Call(a);
 					}
 				}

@@ -54,9 +54,9 @@ struct oAIR_KEY
 	// from the camera.
 
 	oAIR_KEY()
-		: Origin(ouro::input::invalid_bone)
-		, Trigger(ouro::input::hand_right)
-		, Key(ouro::input::none)
+		: Origin(ouro::input::skeleton_bone::invalid_bone)
+		, Trigger(ouro::input::skeleton_bone::hand_right)
+		, Key(ouro::input::key::none)
 	{}
 
 	aaboxf Bounds;

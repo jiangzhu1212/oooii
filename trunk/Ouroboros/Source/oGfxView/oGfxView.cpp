@@ -376,7 +376,7 @@ void oGfxViewApp::ActionHook(const input::action& _Action)
 {
 	switch (_Action.action_type)
 	{
-		case input::menu:
+		case input::action_type::menu:
 		{
 			switch (_Action.device_id)
 			{
@@ -404,7 +404,7 @@ void oGfxViewApp::ActionHook(const input::action& _Action)
 			break;
 		}
 
-		case input::hotkey:
+		case input::action_type::hotkey:
 		{
 			switch (_Action.device_id)
 			{

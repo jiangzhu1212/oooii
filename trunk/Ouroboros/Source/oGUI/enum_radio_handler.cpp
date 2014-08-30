@@ -51,7 +51,7 @@ void enum_radio_handler::add(menu_handle m, int first_item, int last_item, const
 
 void enum_radio_handler::on_action(const input::action& a)
 {
-	if (a.action_type == input::menu)
+	if (a.action_type == input::action_type::menu)
 	{
 		auto it = std::find_if(callbacks.begin(), callbacks.end(), [&](const entry_t& e)
 		{

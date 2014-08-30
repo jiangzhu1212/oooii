@@ -32,42 +32,42 @@ const char* as_string(const input::type& _Type)
 {
 	switch (_Type)
 	{
-		case input::unknown: return "unknown";
-		case input::keyboard: return "keyboard";
-		case input::mouse: return "mouse";
-		case input::joystick: return "joystick";
-		case input::control: return "control";
-		case input::skeleton: return "skeleton";
-		case input::voice: return "voice";
-		case input::touch: return "touch";
+		case input::type::unknown: return "unknown";
+		case input::type::keyboard: return "keyboard";
+		case input::type::mouse: return "mouse";
+		case input::type::joystick: return "joystick";
+		case input::type::control: return "control";
+		case input::type::skeleton: return "skeleton";
+		case input::type::voice: return "voice";
+		case input::type::touch: return "touch";
 		default: break;
 	}
 	return "?";
 }
 
 oDEFINE_TO_STRING(input::type);
-oDEFINE_FROM_STRING(input::type, input::type_count);
+oDEFINE_FROM_STRING(input::type);
 
 const char* as_string(const input::status& _Status)
 {
 	switch (_Status)
 	{
-		case input::ready: return "ready";
-		case input::initializing: return "initializing";
-		case input::not_connected: return "not_connected";
-		case input::is_clone: return "is_clone";
-		case input::not_supported: return "not_supported";
-		case input::insufficient_bandwidth: return "insufficient_bandwidth";
-		case input::low_power: return "low_power";
-		case input::not_powered: return "not_powered";
-		case input::not_ready: return "not_ready";
+		case input::status::ready: return "ready";
+		case input::status::initializing: return "initializing";
+		case input::status::not_connected: return "not_connected";
+		case input::status::is_clone: return "is_clone";
+		case input::status::not_supported: return "not_supported";
+		case input::status::insufficient_bandwidth: return "insufficient_bandwidth";
+		case input::status::low_power: return "low_power";
+		case input::status::not_powered: return "not_powered";
+		case input::status::not_ready: return "not_ready";
 		default: break;
 	}
 	return "?";
 }
 	
 oDEFINE_TO_STRING(input::status);
-oDEFINE_FROM_STRING(input::status, input::status_count);
+oDEFINE_FROM_STRING(input::status);
 
 const char* as_string(const input::key& _Key)
 {
@@ -251,83 +251,65 @@ const char* as_string(const input::key& _Key)
 }
 
 oDEFINE_TO_STRING(input::key);
-oDEFINE_FROM_STRING(input::key, input::key_count);
-
-typedef resized_type<input::key, unsigned short> resized_key_t;
-const char* as_string(const resized_key_t& _Key)
-{
-	return as_string((input::key)_Key);
-}
-
-oDEFINE_TO_STRING(resized_key_t);
-oDEFINE_FROM_STRING(resized_key_t, input::key_count);
+oDEFINE_FROM_STRING(input::key);
 
 const char* as_string(const input::skeleton_bone& _Bone)
 {
 	switch (_Bone)
 	{
-		case input::hip_center: return "hip_center";
-		case input::spine: return "spine";
-		case input::shoulder_center: return "shoulder_center";
-		case input::head: return "head";
-		case input::shoulder_left: return "shoulder_left";
-		case input::elbow_left: return "elbow_left";
-		case input::wrist_left: return "wrist_left";
-		case input::hand_left: return "hand_left";
-		case input::shoulder_right: return "shoulder_right";
-		case input::elbow_right: return "elbow_right";
-		case input::wrist_right: return "wrist_right";
-		case input::hand_right: return "hand_right";
-		case input::hip_left: return "hip_left";
-		case input::knee_left: return "knee_left";
-		case input::ankle_left: return "ankle_left";
-		case input::foot_left: return "foot_left";
-		case input::hip_right: return "hip_right";
-		case input::knee_right: return "knee_right";
-		case input::ankle_right: return "ankle_right";
-		case input::foot_right: return "foot_right";
-		case input::invalid_bone: return "invalid_bone";
+		case input::skeleton_bone::hip_center: return "hip_center";
+		case input::skeleton_bone::spine: return "spine";
+		case input::skeleton_bone::shoulder_center: return "shoulder_center";
+		case input::skeleton_bone::head: return "head";
+		case input::skeleton_bone::shoulder_left: return "shoulder_left";
+		case input::skeleton_bone::elbow_left: return "elbow_left";
+		case input::skeleton_bone::wrist_left: return "wrist_left";
+		case input::skeleton_bone::hand_left: return "hand_left";
+		case input::skeleton_bone::shoulder_right: return "shoulder_right";
+		case input::skeleton_bone::elbow_right: return "elbow_right";
+		case input::skeleton_bone::wrist_right: return "wrist_right";
+		case input::skeleton_bone::hand_right: return "hand_right";
+		case input::skeleton_bone::hip_left: return "hip_left";
+		case input::skeleton_bone::knee_left: return "knee_left";
+		case input::skeleton_bone::ankle_left: return "ankle_left";
+		case input::skeleton_bone::foot_left: return "foot_left";
+		case input::skeleton_bone::hip_right: return "hip_right";
+		case input::skeleton_bone::knee_right: return "knee_right";
+		case input::skeleton_bone::ankle_right: return "ankle_right";
+		case input::skeleton_bone::foot_right: return "foot_right";
+		case input::skeleton_bone::invalid_bone: return "invalid_bone";
 		default: break;
 	}
 	return "?";
 }
 
 oDEFINE_TO_STRING(input::skeleton_bone);
-oDEFINE_FROM_STRING2(input::skeleton_bone, input::bone_count, input::invalid_bone);
+oDEFINE_FROM_STRING(input::skeleton_bone);
 
 const char* as_string(const input::action_type& _ActionType)
 {
 	switch (_ActionType)
 	{
-		case input::unknown: return "unknown";
-		case input::menu: return "menu";
-		case input::control_activated: return "control_activated";
-		case input::control_deactivated: return "control_deactivated";
-		case input::control_selection_changing: return "control_selection_changing";
-		case input::control_selection_changed: return "control_selection_changed";
-		case input::hotkey: return "hotkey";
-		case input::key_down: return "key_down";
-		case input::key_up: return "key_up";
-		case input::pointer_move: return "pointer_move";
-		case input::skeleton_update: return "skeleton_update";
-		case input::skeleton_acquired: return "skeleton_acquired";
-		case input::skeleton_lost: return "skeleton_lost";
+		case input::action_type::unknown: return "unknown";
+		case input::action_type::menu: return "menu";
+		case input::action_type::control_activated: return "control_activated";
+		case input::action_type::control_deactivated: return "control_deactivated";
+		case input::action_type::control_selection_changing: return "control_selection_changing";
+		case input::action_type::control_selection_changed: return "control_selection_changed";
+		case input::action_type::hotkey: return "hotkey";
+		case input::action_type::key_down: return "key_down";
+		case input::action_type::key_up: return "key_up";
+		case input::action_type::pointer_move: return "pointer_move";
+		case input::action_type::skeleton_update: return "skeleton_update";
+		case input::action_type::skeleton_acquired: return "skeleton_acquired";
+		case input::action_type::skeleton_lost: return "skeleton_lost";
 		default: break;
 	}
 	return "?";
 }
 
 oDEFINE_TO_STRING(input::action_type);
-oDEFINE_FROM_STRING(input::action_type, input::action_type_count);
-
-typedef resized_type<input::action_type, char> resized_action_type_t;
-const char* as_string(const resized_action_type_t& _Key)
-{
-	return as_string((input::action_type)_Key);
-}
-
-oDEFINE_TO_STRING(resized_action_type_t);
-oDEFINE_FROM_STRING(resized_action_type_t, input::action_type_count);
+oDEFINE_FROM_STRING(input::action_type);
 
 namespace input {
 
@@ -338,19 +320,19 @@ void record_state(const ouro::input::action& _Action, const ouro::input::key* _p
 	bool KeyDown = false;
 	switch (_Action.action_type)
 	{
-		case ouro::input::key_down:
+		case ouro::input::action_type::key_down:
 		{
 			KeyDown = true;
 			break;
 		}
 
-		case ouro::input::key_up:
+		case ouro::input::action_type::key_up:
 		{
 			KeyDown = false;
 			break;
 		}
 
-		case ouro::input::pointer_move:
+		case ouro::input::action_type::pointer_move:
 			*_pPointerPosition = _Action.position().xyz();
 			return;
 

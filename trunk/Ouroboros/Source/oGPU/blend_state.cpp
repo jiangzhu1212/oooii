@@ -48,7 +48,7 @@ const char* as_string(const gpu::blend_state::value& state)
 	}
 	return "?";
 }
-oDEFINE_TO_FROM_STRING(gpu::blend_state::value, gpu::blend_state::count);
+oDEFINE_TO_FROM_STRING(gpu::blend_state::value);
 
 namespace gpu {
 

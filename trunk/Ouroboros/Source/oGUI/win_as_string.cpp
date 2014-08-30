@@ -671,13 +671,13 @@ char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWIN
 			RID_DEVICE_INFO RIDDI;
 			Size = sizeof(RIDDI);
 			GetRawInputDeviceInfo((HANDLE)_lParam, RIDI_DEVICEINFO, &RIDDI, &Size);
-			ouro::input::type InpType = ouro::input::unknown;
+			ouro::input::type InpType = ouro::input::type::unknown;
 			switch (RIDDI.dwType)
 			{
-				case RIM_TYPEKEYBOARD: InpType = ouro::input::keyboard; break;
-				case RIM_TYPEMOUSE: InpType = ouro::input::mouse; break;
+				case RIM_TYPEKEYBOARD: InpType = ouro::input::type::keyboard; break;
+				case RIM_TYPEMOUSE: InpType = ouro::input::type::mouse; break;
 				default:
-				case RIM_TYPEHID: InpType = ouro::input::unknown; break;
+				case RIM_TYPEHID: InpType = ouro::input::type::unknown; break;
 			}
 
 			sstring StrType;

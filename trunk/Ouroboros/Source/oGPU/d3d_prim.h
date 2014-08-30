@@ -32,8 +32,8 @@ enum D3D_PRIMITIVE_TOPOLOGY;
 
 namespace ouro { namespace gpu { namespace d3d {
 
-D3D_PRIMITIVE_TOPOLOGY from_primitive_type(const mesh::primitive_type::value& type);
-mesh::primitive_type::value to_primitive_type(D3D_PRIMITIVE_TOPOLOGY type);
+D3D_PRIMITIVE_TOPOLOGY from_primitive_type(const mesh::primitive_type& type);
+mesh::primitive_type to_primitive_type(D3D_PRIMITIVE_TOPOLOGY type);
 
 // Returns the number of elements as described the specified topology given
 // the number of primitives. An element can refer to indices or vertices, but

@@ -49,7 +49,7 @@ const char* as_string(const gpu::stage::value& _Value)
 }
 
 oDEFINE_TO_STRING(gpu::stage::value)
-oDEFINE_FROM_STRING(gpu::stage::value, gpu::stage::count)
+oDEFINE_FROM_STRING(gpu::stage::value)
 	
 namespace gpu {
 
