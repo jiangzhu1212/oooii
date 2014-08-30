@@ -299,7 +299,7 @@ const char* as_string(const surface::cube_face& f)
 }
 
 oDEFINE_TO_STRING(surface::cube_face)
-oDEFINE_FROM_STRING_ENUM_CLASS(surface::cube_face)
+oDEFINE_FROM_STRING(surface::cube_face)
 
 const char* as_string(const surface::semantic& s)
 {
@@ -333,7 +333,7 @@ const char* as_string(const surface::semantic& s)
 }
 
 oDEFINE_TO_STRING(surface::semantic)
-oDEFINE_FROM_STRING_ENUM_CLASS(surface::semantic)
+oDEFINE_FROM_STRING(surface::semantic)
 
 namespace surface {
 

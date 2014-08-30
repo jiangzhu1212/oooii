@@ -422,7 +422,7 @@ DWORD oWinKeyFromKey(ouro::input::key _Key)
 
 		0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	};
-	static_assert(oCOUNTOF(sVKCodes) == ouro::input::key_count, "array mismatch");
+	static_assert(oCOUNTOF(sVKCodes) == ouro::input::key::count, "array mismatch");
 	return sVKCodes[_Key];
 }
 
@@ -455,11 +455,11 @@ bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 	bool handled = true;
 
 	#define GETPOS _pAction->position(float4(oWinGetMousePosition(_lParam, 0), 0.0f));
-	#define ISKEYUP _pAction->action_type = ouro::input::key_up
+	#define ISKEYUP _pAction->action_type = ouro::input::action_type::key_up
 
-	_pAction->action_type = ouro::input::key_down;
+	_pAction->action_type = ouro::input::action_type::key_down;
 	_pAction->device_id = 0;
-	_pAction->key = ouro::input::none;
+	_pAction->key = ouro::input::key::none;
 	_pAction->position(0.0f);
 	_pAction->window = _hWnd;
 	_pAction->timestamp_ms = _TimestampMS;
@@ -467,23 +467,23 @@ bool oWinKeyDispatchMessage(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPar
 
 	switch (_uMsg)
 	{
-		case WM_LBUTTONUP: ISKEYUP; case WM_LBUTTONDOWN: GETPOS; _pAction->key = ouro::input::mouse_left; break;
-		case WM_RBUTTONUP: ISKEYUP; case WM_RBUTTONDOWN: GETPOS; _pAction->key = ouro::input::mouse_right; break;
-		case WM_MBUTTONUP: ISKEYUP; case WM_MBUTTONDOWN: GETPOS; _pAction->key = ouro::input::mouse_middle; break;
+		case WM_LBUTTONUP: ISKEYUP; case WM_LBUTTONDOWN: GETPOS; _pAction->key = ouro::input::key::mouse_left; break;
+		case WM_RBUTTONUP: ISKEYUP; case WM_RBUTTONDOWN: GETPOS; _pAction->key = ouro::input::key::mouse_right; break;
+		case WM_MBUTTONUP: ISKEYUP; case WM_MBUTTONDOWN: GETPOS; _pAction->key = ouro::input::key::mouse_middle; break;
 		case WM_XBUTTONUP: ISKEYUP; case WM_XBUTTONDOWN: GETPOS; _pAction->key = GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? ouro::input::mouse_side1 : ouro::input::mouse_side2; break;
 
-		case WM_LBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input::mouse_left_double; break;
-		case WM_RBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input::mouse_right_double; break;
-		case WM_MBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input::mouse_middle_double; break;
-		case WM_XBUTTONDBLCLK: GETPOS; _pAction->key = GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? ouro::input::mouse_side1_double : ouro::input::mouse_side2_double; break;
+		case WM_LBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input::key::mouse_left_double; break;
+		case WM_RBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input::key::mouse_right_double; break;
+		case WM_MBUTTONDBLCLK: GETPOS; _pAction->key = ouro::input::key::mouse_middle_double; break;
+		case WM_XBUTTONDBLCLK: GETPOS; _pAction->key = GET_XBUTTON_WPARAM(_wParam) == XBUTTON1 ? ouro::input::key::mouse_side1_double : ouro::input::key::mouse_side2_double; break;
 
 		case WM_KEYUP: ISKEYUP; case WM_KEYDOWN: _pAction->key = oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)); break;
 
 		// Pass ALT buttons through to regular key handling
 		case WM_SYSKEYUP: ISKEYUP; case WM_SYSKEYDOWN: { switch (_wParam) { case VK_LMENU: case VK_MENU: case VK_RMENU: _pAction->key = oWinKeyToKey((DWORD)oWinKeyTranslate(_wParam, _pState)); break; default: handled = false; break; } break; }
 
-		case WM_MOUSEMOVE: _pAction->action_type = ouro::input::pointer_move; _pAction->key = oWinKeyMouseMoveGetTopPriorityKey(_wParam); GETPOS; break;
-		case WM_MOUSEWHEEL: _pAction->action_type = ouro::input::pointer_move; _pAction->key = oWinKeyMouseMoveGetTopPriorityKey(_wParam); _pAction->position(float4(oWinGetMousePosition(_lParam, _wParam), 0.0f)); break;
+		case WM_MOUSEMOVE: _pAction->action_type = ouro::input::action_type::pointer_move; _pAction->key = oWinKeyMouseMoveGetTopPriorityKey(_wParam); GETPOS; break;
+		case WM_MOUSEWHEEL: _pAction->action_type = ouro::input::action_type::pointer_move; _pAction->key = oWinKeyMouseMoveGetTopPriorityKey(_wParam); _pAction->position(float4(oWinGetMousePosition(_lParam, _wParam), 0.0f)); break;
 
 		default: handled = false; break;
 	}
@@ -579,7 +579,7 @@ void oWinKeySend(HWND _hWnd, ouro::input::key _Key, bool _IsDown, const int2& _M
 	
 	switch (ouro::input::get_type(_Key))
 	{
-		case ouro::input::keyboard:
+		case ouro::input::type::keyboard:
 		{
 			Input.type = INPUT_KEYBOARD;
 			Input.ki.wVk = (WORD)oWinKeyFromKey(_Key);
@@ -590,7 +590,7 @@ void oWinKeySend(HWND _hWnd, ouro::input::key _Key, bool _IsDown, const int2& _M
 			break;
 		}
 
-		case ouro::input::mouse:
+		case ouro::input::type::mouse:
 		{
 			WINDOWPLACEMENT wp;	
 			GetWindowPlacement(_hWnd, &wp);	

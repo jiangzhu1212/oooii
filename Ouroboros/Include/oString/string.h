@@ -138,8 +138,8 @@ inline char* trim(char* trimmed, size_t trimmed_size, const char* src, const cha
 template<size_t size> char* trim(char (&trimmed)[size], const char* src, const char* to_trim = oWHITESPACE) { return trim(trimmed, size, src, to_trim); }
 
 // Replaces any run of whitespace with a single ' ' character. Returns dst
-char* clean_whitespace(char* dst, size_t dst_size, const char* src, char replacement = ' ', const char* _ToPrune = oWHITESPACE);
-template<size_t size> char* clean_whitespace(char (&dst)[size], const char* src, char replacement = ' ', const char* _ToPrune = oWHITESPACE) { return clean_whitespace(dst, dst_size, src, replacement, _ToPrune); }
+char* clean_whitespace(char* dst, size_t dst_size, const char* src, char replacement = ' ', const char* to_prune = oWHITESPACE);
+template<size_t size> char* clean_whitespace(char (&dst)[size], const char* src, char replacement = ' ', const char* to_prune = oWHITESPACE) { return clean_whitespace(dst, dst_size, src, replacement, to_prune); }
 
 // _____________________________________________________________________________
 // Search
@@ -167,8 +167,8 @@ errno_t replace(char* oRESTRICT result, size_t result_size, const char* oRESTRIC
 template<size_t size> errno_t replace(char (&result)[size], const char* oRESTRICT src, const char* oRESTRICT find, const char* oRESTRICT replace) { return replace(result, size, src, find, replace); }
 
 // char version of above
-errno_t replace(char* oRESTRICT result, size_t result_size, const char* oRESTRICT src, char _ChrFind, char replace);
-template<size_t size> errno_t replace(char (&result)[size], const char* oRESTRICT src, char _ChrFind, char replace) { return replace(result, size, src, _ChrFind, replace); }
+errno_t replace(char* oRESTRICT result, size_t result_size, const char* oRESTRICT src, char chr_find, char replace);
+template<size_t size> errno_t replace(char (&result)[size], const char* oRESTRICT src, char chr_find, char replace) { return replace(result, size, src, chr_find, replace); }
 
 // first param must be pointing into a string at the open brace. From there this 
 // will find the brace at the same level of recursion - internal pairs are 

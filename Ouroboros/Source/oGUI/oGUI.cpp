@@ -49,7 +49,7 @@ const char* as_string(const alignment::value& _Alignment)
 }
 
 oDEFINE_TO_STRING(alignment::value);
-oDEFINE_FROM_STRING(alignment::value, alignment::count);
+oDEFINE_FROM_STRING(alignment::value);
 
 const char* as_string(const window_state::value& _State)
 {
@@ -67,7 +67,7 @@ const char* as_string(const window_state::value& _State)
 }
 
 oDEFINE_TO_STRING(window_state::value);
-oDEFINE_FROM_STRING(window_state::value, window_state::count);
+oDEFINE_FROM_STRING(window_state::value);
 
 const char* as_string(const window_style::value& _Style)
 {
@@ -90,7 +90,7 @@ const char* as_string(const window_style::value& _Style)
 }
 
 oDEFINE_TO_STRING(window_style::value);
-oDEFINE_FROM_STRING(window_style::value, window_style::count);
+oDEFINE_FROM_STRING(window_style::value);
 
 const char* as_string(const window_sort_order::value& _SortOrder)
 {
@@ -105,7 +105,7 @@ const char* as_string(const window_sort_order::value& _SortOrder)
 }
 
 oDEFINE_TO_STRING(window_sort_order::value);
-oDEFINE_FROM_STRING(window_sort_order::value, window_sort_order::count);
+oDEFINE_FROM_STRING(window_sort_order::value);
 
 const char* as_string(const cursor_state::value& _CursorState)
 {
@@ -125,7 +125,7 @@ const char* as_string(const cursor_state::value& _CursorState)
 }
 
 oDEFINE_TO_STRING(cursor_state::value);
-oDEFINE_FROM_STRING(cursor_state::value, cursor_state::count);
+oDEFINE_FROM_STRING(cursor_state::value);
 
 const char* as_string(const control_type::value& _Control)
 {
@@ -160,7 +160,7 @@ const char* as_string(const control_type::value& _Control)
 }
 
 oDEFINE_TO_STRING(control_type::value);
-oDEFINE_FROM_STRING(control_type::value, control_type::count);
+oDEFINE_FROM_STRING(control_type::value);
 
 const char* as_string(const event_type::value& _Event)
 {
@@ -190,7 +190,7 @@ const char* as_string(const event_type::value& _Event)
 }
 
 oDEFINE_TO_STRING(event_type::value);
-oDEFINE_FROM_STRING(event_type::value, event_type::count);
+oDEFINE_FROM_STRING(event_type::value);
 
 rect resolve_rect(const rect& _Parent, const rect& _UnadjustedChild, alignment::value _Alignment, bool _Clip)
 {

@@ -44,7 +44,7 @@ public:
 	~vertex_layout() { deinitialize(); }
 	void initialize(const char* name, device& dev, const mesh::element_array& elements, const void* vs_bytecode);
 	void deinitialize();
-	void set(command_list& cl, const mesh::primitive_type::value& prim_type) const;
+	void set(command_list& cl, const mesh::primitive_type& prim_type) const;
 	void* get() const { return layout; }
 private:
 	void* layout;

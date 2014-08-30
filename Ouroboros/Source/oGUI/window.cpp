@@ -57,7 +57,7 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 	{
 		case WM_COMMAND:
 		{
-			_pAction->device_type = input::control;
+			_pAction->device_type = input::type::control;
 			_pAction->device_id = LOWORD(_wParam);
 			_pAction->window = (window_handle)_hWnd;
 			_pAction->key = input::none;
@@ -65,13 +65,13 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 
 			if (!_lParam)
 			{
-				_pAction->action_type = (HIWORD(_wParam) == 1) ? input::hotkey : input::menu;
+				_pAction->action_type = (HIWORD(_wParam) == 1) ? input::action_type::hotkey : input::action_type::menu;
 				_pAction->action_code = invalid;
 			}
 			else
 			{
 				_pAction->window = (window_handle)_lParam;
-				_pAction->action_type = input::control_activated;
+				_pAction->action_type = input::action_type::control_activated;
 				_pAction->action_code = HIWORD(_wParam);
 			}
 
@@ -83,15 +83,15 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 			if (_lParam != 0)
 			{
 				_pAction->window = (window_handle)(_lParam);
-				_pAction->device_type = input::control;
+				_pAction->device_type = input::type::control;
 				_pAction->device_id = invalid;
-				_pAction->key = input::none;
+				_pAction->key = input::key::none;
 				_pAction->position(0.0f);
 				_pAction->action_code = as_int(_wParam);
 				switch (LOWORD(_wParam))
 				{
-					case TB_ENDTRACK: _pAction->action_type = input::control_deactivated; break;
-					default: _pAction->action_type = input::control_activated; break;
+					case TB_ENDTRACK: _pAction->action_type = input::action_type::control_deactivated; break;
+					default: _pAction->action_type = input::action_type::control_activated; break;
 				}
 				break;
 			}
@@ -105,7 +105,7 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 			LRESULT lResult = FALSE;
 			const NMHDR& nmhdr = *(const NMHDR*)_lParam;
 			*_pAction = input::action();
-			_pAction->device_type = input::control;
+			_pAction->device_type = input::type::control;
 			_pAction->device_id = as_int(nmhdr.idFrom);
 			_pAction->window = nmhdr.hwndFrom;
 			_pAction->position(0.0f);
@@ -118,8 +118,8 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 				{
 					switch (_pAction->action_code)
 					{
-						case TCN_SELCHANGING: _pAction->action_type = input::control_selection_changing; break;
-						case TCN_SELCHANGE: _pAction->action_type = input::control_selection_changed; break;
+						case TCN_SELCHANGING: _pAction->action_type = input::action_type::control_selection_changing; break;
+						case TCN_SELCHANGE: _pAction->action_type = input::action_type::control_selection_changed; break;
 						default: break;
 					}
 
@@ -130,7 +130,7 @@ bool control_to_action(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lParam, i
 				{
 					switch (_pAction->action_code)
 					{
-						case BN_CLICKED: _pAction->action_type = input::control_activated; break;
+						case BN_CLICKED: _pAction->action_type = input::action_type::control_activated; break;
 						default: break;
 					}
 
@@ -1086,13 +1086,13 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 
 			if (Action.key == CheckKey)
 			{
-				if (Action.action_type == input::key_down)
+				if (Action.action_type == input::action_type::key_down)
 				{
 					CursorClientPosAtMouseDown = oWinCursorGetPosition(_hWnd);
 					::SetCapture(_hWnd);
 				}
 
-				else if (Action.action_type == input::key_up)
+				else if (Action.action_type == input::action_type::key_up)
 				{
 					ReleaseCapture();
 					CursorClientPosAtMouseDown = int2(oDEFAULT, oDEFAULT);
@@ -1174,34 +1174,34 @@ bool window_impl::handle_input(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _l
 
 		case oWM_SKELETON:
 		{
-			input::action a(_hWnd, Timestamp, LOWORD(_wParam), input::skeleton, input::skeleton_update, input::none, invalid);
+			input::action a(_hWnd, Timestamp, LOWORD(_wParam), input::type::skeleton, input::action_type::skeleton_update, input::none, invalid);
 			a.skeleton = (void*)_lParam;
 			ActionHooks.Visit(a);
 			return 0;
 		}
 
 		case oWM_USER_CAPTURED:
-			ActionHooks.Visit(input::action(_hWnd, Timestamp, static_cast<unsigned int>(_wParam), input::skeleton, input::skeleton_acquired));
+			ActionHooks.Visit(input::action(_hWnd, Timestamp, static_cast<unsigned int>(_wParam), input::type::skeleton, input::action_type::skeleton_acquired));
 			return 0;
 
 		case oWM_USER_LOST:
-			ActionHooks.Visit(input::action(_hWnd, Timestamp, static_cast<unsigned int>(_wParam), input::skeleton, input::skeleton_lost));
+			ActionHooks.Visit(input::action(_hWnd, Timestamp, static_cast<unsigned int>(_wParam), input::type::skeleton, input::action_type::skeleton_lost));
 			return 0;
 
 		#ifdef oWINDOWS_HAS_REGISTERTOUCHWINDOW
 			case WM_TOUCH:
 			{
-				TOUCHINPUT inputs[input::touch_last - input::touch_first];
+				TOUCHINPUT inputs[(int)input::key::touch_last - (int)input::key::touch_first];
 				const UINT nTouches = __min(LOWORD(_wParam), oCOUNTOF(inputs));
 				if (nTouches)
 				{
 					if (GetTouchInputInfo((HTOUCHINPUT)_lParam, nTouches, inputs, sizeof(TOUCHINPUT)))
 					{
-						input::action a(_hWnd, Timestamp, 0, input::touch, input::key_down);
+						input::action a(_hWnd, Timestamp, 0, input::type::touch, input::action_type::key_down);
 						for (UINT i = 0; i < nTouches; i++)
 						{
 							a.device_id = i;
-							a.key = (input::key)(input::touch1 + i);
+							a.key = (input::key)((int)input::key::touch1 + i);
 							a.position(float4(inputs[i].x / 100.0f, inputs[i].y / 100.0f, 0.0f, 0.0f));
 							ActionHooks.Visit(a);
 						}

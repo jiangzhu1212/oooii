@@ -45,7 +45,7 @@ const char* as_string(const gpu::rasterizer_state::value& _Value)
 	}
 	return "?";
 }
-oDEFINE_TO_FROM_STRING(gpu::rasterizer_state::value, gpu::rasterizer_state::count);
+oDEFINE_TO_FROM_STRING(gpu::rasterizer_state::value);
 
 namespace gpu {
 

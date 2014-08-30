@@ -1,32 +1,10 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-// support for iterating enum classes with range based for under the 
-// assumption the enum starts at 0 and has a member called count
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
 #ifndef oBase_enum_iterator_h
 #define oBase_enum_iterator_h
+
+// support for iterating enum classes with range based for under the 
+// assumption the enum starts at 0 and has a member called count
 
 #include <type_traits>
 
@@ -55,7 +33,17 @@ namespace std {
 
 template<typename E> typename ouro::enum_iterator<E>::iterator begin(ouro::enum_iterator<E>) { return typename ouro::enum_iterator<E>::iterator((int)0); }
 template<typename E> typename ouro::enum_iterator<E>::iterator end(ouro::enum_iterator<E>) { return typename ouro::enum_iterator<E>::iterator((int)E::count); }
+template<typename E> struct less_enum { bool operator()(const E& a, const E& b) const { return (std::underlying_type<E>::type)a < (std::underlying_type<E>::type)b; } };
+template<typename E> struct greater_enum { bool operator()(const E& a, const E& b) const { return (std::underlying_type<E>::type)a > (std::underlying_type<E>::type)b; } };
 
 }
+
+namespace ouro {
+
+template<typename E> bool in_range_incl(const E& a, const E& start, const E& end) { return !std::less_enum<E>()(a,start) && !std::greater_enum<E>()(a,end); }
+
+}
+
+#define oCHECK_COUNTS_MATCH(_enum, _array) static_assert((size_t)_enum::count == oCOUNTOF(_array), "array mismatch");
 
 #endif

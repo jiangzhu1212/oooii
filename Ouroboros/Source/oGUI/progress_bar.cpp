@@ -206,7 +206,7 @@ void progress_bar_impl::on_event(const window::basic_event& _Event)
 
 void progress_bar_impl::on_action(const ouro::input::action& _Action)
 {
-	if (_Action.action_type == input::control_activated && _Action.device_id == PB_BUTTON && OnStop)
+	if (_Action.action_type == input::action_type::control_activated && _Action.device_id == PB_BUTTON && OnStop)
 	{
 		stopped(true);
 		OnStop();

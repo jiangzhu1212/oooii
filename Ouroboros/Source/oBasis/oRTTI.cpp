@@ -132,7 +132,7 @@ oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_uri_string, ouro_uri_strin
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_path, ouro_path, -1)
 oRTTI_ATOM_DEFAULT_DESCRIPTION(oRTTI_CAPS_ARRAY, ouro_uri, ouro_uri, -1)
 static ouro_input_key init_input_key() { return ouro::input::none; }
-static ouro_input_skeleton_bone init_skeleton_bone() { return ouro::input::invalid_bone; }
+static ouro_input_skeleton_bone init_skeleton_bone() { return ouro::input::skeleton_bone::invalid_bone; }
 oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, ouro_input_key, ouro_input_key, 4, init_input_key())
 	oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, ouro_input_skeleton_bone, ouro_input_skeleton_bone, 4, init_skeleton_bone())
 

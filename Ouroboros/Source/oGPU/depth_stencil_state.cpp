@@ -42,7 +42,7 @@ const char* as_string(const gpu::depth_stencil_state::value& _Value)
 	}
 	return "?";
 }
-oDEFINE_TO_FROM_STRING(gpu::depth_stencil_state::value, gpu::depth_stencil_state::count);
+oDEFINE_TO_FROM_STRING(gpu::depth_stencil_state::value);
 
 namespace gpu {
 

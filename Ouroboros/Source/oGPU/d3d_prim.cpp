@@ -29,14 +29,14 @@ using namespace ouro::gpu::d3d;
 
 namespace ouro { namespace gpu { namespace d3d {
 
-D3D_PRIMITIVE_TOPOLOGY from_primitive_type(const mesh::primitive_type::value& type)
+D3D_PRIMITIVE_TOPOLOGY from_primitive_type(const mesh::primitive_type& type)
 {
 	return D3D_PRIMITIVE_TOPOLOGY(type);
 }
 
-mesh::primitive_type::value to_primitive_type(D3D_PRIMITIVE_TOPOLOGY type)
+mesh::primitive_type to_primitive_type(D3D_PRIMITIVE_TOPOLOGY type)
 {
-	return mesh::primitive_type::value(type);
+	return mesh::primitive_type(type);
 }
 
 uint num_elements(D3D_PRIMITIVE_TOPOLOGY topology, uint num_primitives)

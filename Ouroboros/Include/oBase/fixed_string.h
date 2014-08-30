@@ -1,29 +1,4 @@
-/**************************************************************************
- * The MIT License                                                        *
- * Copyright (c) 2014 Antony Arciuolo.                                    *
- * arciuolo@gmail.com                                                     *
- *                                                                        *
- * Permission is hereby granted, free of charge, to any person obtaining  *
- * a copy of this software and associated documentation files (the        *
- * "Software"), to deal in the Software without restriction, including    *
- * without limitation the rights to use, copy, modify, merge, publish,    *
- * distribute, sublicense, and/or sell copies of the Software, and to     *
- * permit persons to whom the Software is furnished to do so, subject to  *
- * the following conditions:                                              *
- *                                                                        *
- * The above copyright notice and this permission notice shall be         *
- * included in all copies or substantial portions of the Software.        *
- *                                                                        *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
- * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
- * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
- * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
- **************************************************************************/
-// Encapsulate a nul-terminated c array of chars when std::string is too much
-// overhead (small string opt is 16 bytes).
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
 #ifndef oBase_fixed_string_h
 #define oBase_fixed_string_h
@@ -62,8 +37,8 @@ namespace ouro {
 		typedef const char_type(&const_array_ref)[Capacity];
 
 		fixed_string() { *s = 0; }
-		fixed_string(const string_piece_type& _StringPiece) { assign(_StringPiece.first, _StringPiece.second); }
-		fixed_string(const char_type* _Start, const char_type* _End) { assign(_Start, _End); }
+		fixed_string(const string_piece_type& str) { assign(str.first, str.second); }
+		fixed_string(const char_type* start, const char_type* end) { assign(start, end); }
 		fixed_string(const char_type* _String) { traits::copy(s, _String, Capacity); }
 
 		template<typename _CharU> fixed_string(const _CharU* _String) { operator=(_String); }
@@ -87,41 +62,41 @@ namespace ouro {
 		size_type length() const { return size(); }
 		/* constexpr */ size_type capacity() const { return Capacity; }
 
-		fixed_string& assign(const char_type* _Start, const char_type* _End)
+		fixed_string& assign(const char_type* start, const char_type* end)
 		{
-			ptrdiff_t size = std::distance(_Start, _End);
+			ptrdiff_t size = std::distance(start, end);
 			if (size >= Capacity)
 				oFIXED_STRING_THROW_LEN_ERR();
-			traits::copy(s, _Start, Capacity);
+			traits::copy(s, start, Capacity);
 			s[size] = 0;
 			return *this;
 		}
 
 		fixed_string& append(const char_type* _String) { if (traits::cat(s, _String, Capacity) > Capacity) oFIXED_STRING_THROW_LEN_ERR(); return *this; }
 
-		fixed_string& append(const char_type* _Start, const char_type* _End)
+		fixed_string& append(const char_type* start, const char_type* end)
 		{
 			size_type size = length();
-			char_type* start = s + size;
-			size += std::distance(_Start, _End);
+			char_type* st = s + size;
+			size += std::distance(start, end);
 			if (size >= Capacity)
 				oFIXED_STRING_THROW_LEN_ERR();
-			traits::copy(start, _Start, Capacity);
+			traits::copy(st, start, Capacity);
 			s[size] = 0;
 			return *this;
 		}
 
-		fixed_string& append(const string_piece_type& _StringPiece) { return append(_StringPiece.first, _StringPiece.second); }
+		fixed_string& append(const string_piece_type& str) { return append(str.first, str.second); }
 
 		fixed_string& append(char_type _Char) { char_type str[2] = { _Char, '\0'}; return append(str); }
 
 		fixed_string& operator+=(const char_type* _String) { return append(_String); }
-		fixed_string& operator+=(const string_piece_type& _StringPiece) { return append(_StringPiece); }
+		fixed_string& operator+=(const string_piece_type& str) { return append(str); }
 		fixed_string& operator+=(char_type _Char) { return append(_Char); }
 
-		void copy_to(charT* _StrDestination, size_t _SizeofStrDestination) const
+		void copy_to(charT* dst, size_t dst_size) const
 		{
-			if (traits::copy(_StrDestination, s, _SizeofStrDestination) > _SizeofStrDestination)
+			if (traits::copy(dst, s, dst_size) > dst_size)
 				oFIXED_STRING_THROW_LEN_ERR();
 		}
 
@@ -166,81 +141,80 @@ namespace ouro {
 	typedef lwstring path_wstring;
 	typedef lwstring uri_wstring;
 
-	TSTR int format_duration(STRT& _StrDestination, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(_StrDestination, Capacity, _TimeInSeconds, _Abbreviated, _IncludeMS); }
-	TSTR int format_bytes(STRT& _StrDestination, unsigned long long bytes, size_t _NumPrecisionDigits) { return format_bytes(_StrDestination, _StrDestination.capacity(), bytes, _NumPrecisionDigits); }
-	TSTR char* format_commas(STRT& _StrDestination, int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
-	TSTR char* format_commas(STRT& _StrDestination, unsigned int _Number) { return format_commas(_StrDestination, _StrDestination.capacity(), _Number); }
+	TSTR int format_duration(STRT& dst, double _TimeInSeconds, bool _Abbreviated = false, bool _IncludeMS = true) { return format_duration(dst, Capacity, _TimeInSeconds, _Abbreviated, _IncludeMS); }
+	TSTR int format_bytes(STRT& dst, unsigned long long bytes, size_t _NumPrecisionDigits) { return format_bytes(dst, dst.capacity(), bytes, _NumPrecisionDigits); }
+	TSTR char* format_commas(STRT& dst, int _Number) { return format_commas(dst, dst.capacity(), _Number); }
+	TSTR char* format_commas(STRT& dst, unsigned int _Number) { return format_commas(dst, dst.capacity(), _Number); }
 
-	template<size_t capacity> char* ellipsize(fixed_string<char, capacity>& _StrDestination) { return ellipsize(_StrDestination.c_str(), _StrDestination.capacity()); }
-	template<size_t capacity> wchar_t* ellipsize(fixed_string<wchar_t, capacity>& _StrDestination) { return wcsellipsize(_StrDestination.c_str(), _StrDestination.capacity()); }
+	template<size_t capacity> char* ellipsize(fixed_string<char, capacity>& dst) { return ellipsize(dst.c_str(), dst.capacity()); }
+	template<size_t capacity> wchar_t* ellipsize(fixed_string<wchar_t, capacity>& dst) { return wcsellipsize(dst.c_str(), dst.capacity()); }
 
-	TSTR char* trim_left(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_left(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
-	TSTR char* trim_right(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim_right(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
-	TSTR char* trim(STRT& _Trimmed, const char* _StrSource, const char* _ToTrim = oWHITESPACE) { return trim(_Trimmed, _Trimmed.capacity(), _StrSource, _ToTrim); }
-	TSTR char* clean_whitespace(STRT& _StrDestination, const char* _StrSource, char _Replacement = ' ', const char* _ToPrune = oWHITESPACE) { return clean_whitespace(_StrDestination, _StrDestination.capacity(), _StrSource, _Replacement, _ToPrune); }
+	TSTR char* trim_left(STRT& trimmed, const char* src, const char* to_trim = oWHITESPACE) { return trim_left(trimmed, trimmed.capacity(), src, to_trim); }
+	TSTR char* trim_right(STRT& trimmed, const char* src, const char* to_trim = oWHITESPACE) { return trim_right(trimmed, trimmed.capacity(), src, to_trim); }
+	TSTR char* trim(STRT& trimmed, const char* src, const char* to_trim = oWHITESPACE) { return trim(trimmed, trimmed.capacity(), src, to_trim); }
+	TSTR char* clean_whitespace(STRT& dst, const char* src, char replacement = ' ', const char* to_prune = oWHITESPACE) { return clean_whitespace(dst, dst.capacity(), src, replacement, to_prune); }
 
-	TSTR char* insert(STRT& _StrSource, char* _InsertionPoint, size_t _ReplacementLength, const char* _Insertion)  { return insert(_StrSource, _StrSource.capacity(), _InsertionPoint, _ReplacementLength, _Insertion); }
-	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT _StrSource, const char* _StrFind, const char* _StrReplace) { return replace(_StrResult, _StrResult.capacity(), _StrSource, _StrFind, _StrReplace); }
-	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT _StrSource, char _ChrFind, char _ChrReplace) { return replace(_StrResult, _StrResult.capacity(), _StrSource, _ChrFind, _ChrReplace); }
+	TSTR char* insert(STRT& src, char* ins_point, size_t replacement_length, const char* ins)  { return insert(src, src.capacity(), ins_point, replacement_length, ins); }
+	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT src, const char* _StrFind, const char* _StrReplace) { return replace(_StrResult, _StrResult.capacity(), src, _StrFind, _StrReplace); }
+	TSTR errno_t replace(STRT& _StrResult, const char* oRESTRICT src, char chr_find, char chr_replace) { return replace(_StrResult, _StrResult.capacity(), src, chr_find, chr_replace); }
 
-	TSTR char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const STRT& value)
+	TSTR char* to_string(char* dst, size_t dst_size, const STRT& value)
 	{
-		try { value.copy_to(_StrDestination, _SizeofStrDestination); }
+		try { value.copy_to(dst, dst_size); }
 		catch (std::exception&) { return nullptr; }
-		return _StrDestination;
+		return dst;
 	}
 
-	TSTR bool from_string(STRT* _pValue, const char* _StrSource)
+	TSTR bool from_string(STRT* _pValue, const char* src)
 	{
-		try { *_pValue = _StrSource; }
+		try { *_pValue = src; }
 		catch (std::exception&) { return false; }
 		return true;
 	}
 
-	template<TSTR_PARAMS, typename T> char* to_string(STRT& _StrDestination, const T& value) { return to_string(_StrDestination.c_str(), _StrDestination.capacity(), value); }
+	template<TSTR_PARAMS, typename T> char* to_string(STRT& dst, const T& value) { return to_string(dst.c_str(), dst.capacity(), value); }
 
 	TSTR void to_lower(STRT& _String) { to_lower<STRT::char_type>(_String.c_str()); }
 	TSTR void to_upper(STRT& _String) { to_upper<STRT::char_type>(_String.c_str()); }
 	
-	TSTR int vsncatf(STRT& _StrDestination, const char* _Format, va_list _Args) { return vsncatf(_StrDestination, _StrDestination.capacity(), _Format, _Args); }
-	TSTR int sncatf(STRT& _StrDestination, const char* _Format, ...)
+	TSTR int vsncatf(STRT& dst, const char* fmt, va_list args) { return vsncatf(dst, dst.capacity(), fmt, args); }
+	TSTR int sncatf(STRT& dst, const char* fmt, ...)
 	{
-		va_list args; va_start(args, _Format);
-		int l = vsncatf(_StrDestination, _Format, args);
+		va_list args; va_start(args, fmt);
+		int l = vsncatf(dst, fmt, args);
 		va_end(args);
 		return l;
 	}
 
-	TSTR char* percent_encode(STRT& _StrDestination, const char* _StrSource, const char* _StrReservedChars = oRESERVED_URI_CHARS) { return percent_encode(_StrDestination, _StrDestination.capacity(), _StrSource, _StrReservedChars); }
-	TSTR char* percent_decode(STRT& _StrDestination, const char* _StrSource) { return percent_decode(_StrDestination, _StrDestination.capacity(), _StrSource); }
-	TSTR char* percent_to_lower(STRT& _StrDestination, const char* _StrSource) { return percent_to_lower(_StrDestination, _StrDestination.capacity(), _StrSource); }
-	TSTR char* ampersand_encode(STRT& _StrDestination, const char* _StrSource) { return ampersand_encode(_StrDestination, _StrDestination.capacity(), _StrSource); }
-	TSTR char* ampersand_decode(STRT& _StrDestination, const char* _StrSource) { return ampersand_decode(_StrDestination, _StrDestination.capacity(), _StrSource); }
-	TSTR char* json_escape_encode(STRT& _StrDestination, const char* _StrSource) { return json_escape_encode(_StrDestination, _StrDestination.capacity(), _StrSource); }
-	TSTR char* json_escape_decode(STRT& _StrDestination, const char* _StrSource) { return json_escape_decode(_StrDestination, _StrDestination.capacity(), _StrSource); }
+	TSTR char* percent_encode(STRT& dst, const char* src, const char* _StrReservedChars = oRESERVED_URI_CHARS) { return percent_encode(dst, dst.capacity(), src, _StrReservedChars); }
+	TSTR char* percent_decode(STRT& dst, const char* src) { return percent_decode(dst, dst.capacity(), src); }
+	TSTR char* percent_to_lower(STRT& dst, const char* src) { return percent_to_lower(dst, dst.capacity(), src); }
+	TSTR char* ampersand_encode(STRT& dst, const char* src) { return ampersand_encode(dst, dst.capacity(), src); }
+	TSTR char* ampersand_decode(STRT& dst, const char* src) { return ampersand_decode(dst, dst.capacity(), src); }
+	TSTR char* json_escape_encode(STRT& dst, const char* src) { return json_escape_encode(dst, dst.capacity(), src); }
+	TSTR char* json_escape_decode(STRT& dst, const char* src) { return json_escape_decode(dst, dst.capacity(), src); }
 
-	TSTR char* clean_path(STRT& _StrDestination, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return clean_path(_StrDestination, _StrDestination.capacity(), _SourcePath, _FileSeparator, _ZeroBuffer); }
-	TSTR char* relativize_path(STRT& _StrDestination, const char* _BasePath, const char* _FullPath) { return relativize_path(_StrDestination, _StrDestination.capacity(), _BasePath, _FullPath); }
+	TSTR char* clean_path(STRT& dst, const char* _SourcePath, char _FileSeparator = '/', bool _ZeroBuffer = false) { return clean_path(dst, dst.capacity(), _SourcePath, _FileSeparator, _ZeroBuffer); }
+	TSTR char* relativize_path(STRT& dst, const char* _BasePath, const char* _FullPath) { return relativize_path(dst, dst.capacity(), _BasePath, _FullPath); }
 
-	TSTR int vsnprintf(STRT& _StrDestination, const char* _Format, va_list _Args) { return vsnprintf(_StrDestination, Capacity, _Format, _Args); }
-	TSTR char* strncpy(STRT& _StrDestination, const char* _StrSource, size_t _NumChars) { return strncpy(_StrDestination, _StrDestination.capacity(), _StrSource, _NumChars); }
-	TSTR char* wcsncpy(STRT& _StrDestination, const wchar_t* _StrSource, size_t _NumChars) { return wcsncpy(_StrDestination, _StrDestination.capacity(), _StrSource, _NumChars); }
+	TSTR int vsnprintf(STRT& dst, const char* fmt, va_list args) { return vsnprintf(dst, Capacity, fmt, args); }
+	TSTR char* strncpy(STRT& dst, const char* src, size_t num_chars) { return strncpy(dst, dst.capacity(), src, num_chars); }
+	TSTR char* wcsncpy(STRT& dst, const wchar_t* src, size_t num_chars) { return wcsncpy(dst, dst.capacity(), src, num_chars); }
 
-	TSTR char* optdoc(STRT& _StrDestination, const char* _AppName, const option* _pOptions, size_t _NumOptions, const char* _LooseParameters = "") { return optdoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions, _NumOptions, _LooseParameters); }
-	template<typename charT, size_t Capacity, size_t size> char* optdoc(STRT& _StrDestination, const char* _AppName, const option (&_pOptions)[size], const char* _LooseParameters = "") { return optdoc(_StrDestination, _StrDestination.capacity(), _AppName, _pOptions, size, _LooseParameters); }
+	TSTR char* optdoc(STRT& dst, const char* app_name, const option* options, size_t num_options, const char* _LooseParameters = "") { return optdoc(dst, dst.capacity(), app_name, options, num_options, _LooseParameters); }
+	template<typename charT, size_t Capacity, size_t size> char* optdoc(STRT& dst, const char* app_name, const option (&options)[size], const char* _LooseParameters = "") { return optdoc(dst, dst.capacity(), app_name, options, size, _LooseParameters); }
 
 	template<typename charT, size_t Capacity, typename DateT> 
-	size_t strftime(STRT& _StrDestination, const char* _Format, const DateT& _Date, date_conversion::value _Conversion = date_conversion::none) { return ouro::strftime(_StrDestination, _StrDestination.capacity(), _Format, _Date, _Conversion); }
-
+	size_t strftime(STRT& dst, const char* fmt, const DateT& _Date, date_conversion::value _Conversion = date_conversion::none) { return ouro::strftime(dst, dst.capacity(), fmt, _Date, _Conversion); }
 }
 
-TSTR int snprintf(ouro::STRT& _StrDestination, const char* _Format, ...) { va_list args; va_start(args, _Format); int l = ouro::vsnprintf(_StrDestination, _Format, args); va_end(args); return l; }
-TSTR size_t strlcat(ouro::STRT& _StrDestination, const char* _StrSource) { return strlcat(_StrDestination, _StrSource, _StrDestination.capacity()); }
-TSTR size_t strlcpy(ouro::STRT& _StrDestination, const char* _StrSource) { return strlcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
-TSTR size_t wcslcat(ouro::STRT& _StrDestination, const wchar_t* _StrSource) { return wcslcat(_StrDestination, _StrSource, _StrDestination.capacity()); }
-TSTR size_t wcslcpy(ouro::STRT& _StrDestination, const wchar_t* _StrSource) { return wcslcpy(_StrDestination, _StrSource, _StrDestination.capacity()); }
-TSTR size_t mbsltowsc(ouro::STRT& _StrDestination, const char* _StrSource) { return mbsltowsc(_StrDestination, _StrSource, _StrDestination.capacity()); }
-TSTR size_t wcsltombs(ouro::STRT& _StrDestination, const wchar_t* _StrSource) { return wcsltombs(_StrDestination, _StrSource, _StrDestination.capacity()); }
+TSTR int snprintf(ouro::STRT& dst, const char* fmt, ...) { va_list args; va_start(args, fmt); int l = ouro::vsnprintf(dst, fmt, args); va_end(args); return l; }
+TSTR size_t strlcat(ouro::STRT& dst, const char* src) { return strlcat(dst, src, dst.capacity()); }
+TSTR size_t strlcpy(ouro::STRT& dst, const char* src) { return strlcpy(dst, src, dst.capacity()); }
+TSTR size_t wcslcat(ouro::STRT& dst, const wchar_t* src) { return wcslcat(dst, src, dst.capacity()); }
+TSTR size_t wcslcpy(ouro::STRT& dst, const wchar_t* src) { return wcslcpy(dst, src, dst.capacity()); }
+TSTR size_t mbsltowsc(ouro::STRT& dst, const char* src) { return mbsltowsc(dst, src, dst.capacity()); }
+TSTR size_t wcsltombs(ouro::STRT& dst, const wchar_t* src) { return wcsltombs(dst, src, dst.capacity()); }
 
 #undef STRT
 #undef TSTR

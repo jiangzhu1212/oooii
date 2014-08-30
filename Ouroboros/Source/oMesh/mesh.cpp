@@ -27,13 +27,11 @@
 #include <oBase/throw.h>
 #include "mesh_template.h"
 
-#define STR_SUPPORT(_T, _NumTs) \
-	oDEFINE_TO_STRING(_T) \
-	oDEFINE_FROM_STRING(_T, _NumTs)
+#define STR_SUPPORT(_T) oDEFINE_TO_STRING(_T) oDEFINE_FROM_STRING(_T)
 
 namespace ouro {
 
-const char* as_string(const mesh::primitive_type::value& _Value)
+const char* as_string(const mesh::primitive_type& _Value)
 {
 	switch (_Value)
 	{
@@ -85,9 +83,9 @@ const char* as_string(const mesh::primitive_type::value& _Value)
 	return "?";
 }
 
-STR_SUPPORT(mesh::primitive_type::value, mesh::primitive_type::count);
+STR_SUPPORT(mesh::primitive_type);
 
-const char* as_string(const mesh::face_type::value& _Value)
+const char* as_string(const mesh::face_type& _Value)
 {
 	switch (_Value)
 	{
@@ -100,7 +98,7 @@ const char* as_string(const mesh::face_type::value& _Value)
 	return "?";
 }
 		
-STR_SUPPORT(mesh::face_type::value, mesh::face_type::count);
+STR_SUPPORT(mesh::face_type);
 
 namespace mesh {
 
@@ -123,7 +121,7 @@ uint calc_vertex_size(const element_array& elements, uint slot)
 	return size;
 }
 
-uint num_primitives(const primitive_type::value& type, uint num_indices, uint num_vertices)
+uint num_primitives(const primitive_type& type, uint num_indices, uint num_vertices)
 {
 	uint n = num_indices;
 	switch (type)

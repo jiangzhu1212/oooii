@@ -85,7 +85,7 @@ void vertex_layout::deinitialize()
 	layout = nullptr;
 }
 
-void vertex_layout::set(command_list& cl, const mesh::primitive_type::value& prim_type) const
+void vertex_layout::set(command_list& cl, const mesh::primitive_type& prim_type) const
 {
 	DeviceContext* dc = get_dc(cl);
 	dc->IASetPrimitiveTopology( from_primitive_type(prim_type) );

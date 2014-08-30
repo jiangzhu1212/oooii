@@ -28,15 +28,13 @@
 
 #include <oBase/invalid.h>
 #include <oBase/macros.h>
-#include <oBase/resized_type.h>
+#include <oBase/enum_iterator.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <array>
 
-namespace ouro {
+namespace ouro { namespace input {
 
-	namespace input {
-
-enum type
+enum class type : unsigned char
 {
 	unknown,
 	keyboard,
@@ -47,10 +45,10 @@ enum type
 	voice,
 	touch,
 
-	type_count,
+	count,
 };
 
-enum status
+enum class status
 {
 	ready,
 	initializing,
@@ -62,10 +60,10 @@ enum status
 	not_powered,
 	not_ready,
 
-	status_count,
+	count,
 };
 
-enum key
+enum key : unsigned short
 {
 	none,
 
@@ -167,10 +165,10 @@ enum key
 	touch_first = touch1, touch2, touch3, touch4, touch5, touch6, touch7, touch8, touch9, touch10,
 	touch_last = touch10,
 
-	key_count,
+	count,
 };
 
-enum skeleton_bone
+enum class skeleton_bone
 {	
 	hip_center,
 	spine,
@@ -193,13 +191,13 @@ enum skeleton_bone
 	ankle_right,
 	foot_right,
 	
-	bone_count,
-	invalid_bone = bone_count,
+	count,
+	invalid_bone = count,
 };
 
-enum action_type
+enum class action_type : unsigned char
 {
-	unhandled,
+	unknown,
 	
 	// GUI elements
 	menu,
@@ -219,7 +217,7 @@ enum action_type
 	skeleton_acquired,
 	skeleton_lost,
 
-	action_type_count,
+	count,
 };
 
 struct tracking_clipping
@@ -249,7 +247,7 @@ struct tracking_skeleton
 
 	unsigned int source_id;
 	tracking_clipping clipping;
-	std::array<float4, bone_count> positions;
+	std::array<float4, (size_t)skeleton_bone::count> positions;
 };
 
 struct action
@@ -262,8 +260,8 @@ struct action
 		: window(nullptr)
 		, timestamp_ms(0)
 		, device_id(invalid)
-		, device_type(unknown)
-		, action_type(unhandled)
+		, device_type(type::unknown)
+		, action_type(action_type::unknown)
 		, key(none)
 		, action_code(invalid)
 		, position_x(0.0f)
@@ -309,13 +307,13 @@ struct action
 	unsigned int device_id;
 
 	// Describes the device generating this action.
-	resized_type<type, char> device_type;
+	type device_type;
 
 	// Describes the type of action generated.
-	resized_type<action_type, char> action_type;
+	action_type action_type;
 	
 	// Any binary (up/down) key such as from a joystick, keyboard or mouse.
-	resized_type<key, unsigned short> key;
+	key key;
 
 	// An additional action value for certain types of controls.
 	unsigned int action_code;
@@ -346,9 +344,9 @@ typedef std::function<void(const action& _Action)> action_hook;
 
 inline type get_type(const key& _Key)
 {
-	#define IF_IS(_DeviceType) do { if (_Key >= _DeviceType##_first && _Key <= _DeviceType##_last) return _DeviceType; } while(false)
+	#define IF_IS(_DeviceType) do { if (ouro::in_range_incl(_Key, key::_DeviceType##_first, key::_DeviceType##_last)) return type::_DeviceType; } while(false)
 	IF_IS(keyboard); IF_IS(mouse); IF_IS(joystick); IF_IS(touch);
-	return unknown;
+	return type::unknown;
 	#undef IF_IS
 }
 

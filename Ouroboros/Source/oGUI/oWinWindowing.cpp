@@ -151,7 +151,7 @@ template<typename charT, size_t capacity> char* oWinPnPEnumeratorToSetupClass(fi
 
 input::type oWinGetDeviceTypeFromClass(const char* _Class)
 {
-	static const char* DeviceClass[input::type_count] = 
+	static const char* DeviceClass[input::type::count] = 
 	{
 		"Unknown",
 		"Keyboard",
@@ -162,11 +162,11 @@ input::type oWinGetDeviceTypeFromClass(const char* _Class)
 		"Voice",
 		"Touch", // not sure what this is called generically
 	};
-	static_assert(oCOUNTOF(DeviceClass) == input::type_count, "array mismatch");
+	oCHECK_COUNTS_MATCH(input::type, DeviceClass);
 	for (int i = 0; i < oCOUNTOF(DeviceClass); i++)
 		if (!strcmp(DeviceClass[i], _Class))
 			return (input::type)i;
-	return input::unknown;
+	return input::type::unknown;
 }
 
 static void oWinSetupGetString(mstring& _StrDestination, HDEVINFO _hDevInfo, SP_DEVINFO_DATA* _pSPDID, const DEVPROPKEY* _pPropKey)
@@ -230,7 +230,7 @@ static void oWinSetupGetStringList(mstring* _StrDestination, size_t& _NumStrings
 struct oWINDOWS_HID_DESC
 {
 	oWINDOWS_HID_DESC()
-		: Type(input::unknown)
+		: Type(input::type::unknown)
 		, DevInst(0)
 	{}
 
@@ -343,7 +343,7 @@ struct oWIN_DEVICE_CHANGE_CONTEXT
 
 	std::vector<RAWINPUTDEVICELIST> RawInputs;
 	std::vector<mstring> RawInputInstanceNames;
-	std::array<unsigned int, input::status_count> LastChangeTimestamp;
+	std::array<unsigned int, (size_t)input::status::count> LastChangeTimestamp;
 };
 
 // Register the specified window to receive WM_INPUT_DEVICE_CHANGE events. This
@@ -364,8 +364,8 @@ static void oWinRegisterDeviceChangeEvents(HWND _hWnd)
 	{
 		switch(_HIDDesc.Type)
 		{
-			case input::keyboard: case input::mouse: case input::unknown: break;
-			default: SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(_HIDDesc.Type, input::ready), (LPARAM)_HIDDesc.DeviceInstancePath.c_str());
+			case input::type::keyboard: case input::type::mouse: case input::type::unknown: break;
+			default: SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(_HIDDesc.Type, input::status::ready), (LPARAM)_HIDDesc.DeviceInstancePath.c_str());
 		}
 	});
 }
@@ -395,18 +395,18 @@ static input::type oWinGetTypeFromRIM(DWORD _dwRIMType)
 {
 	switch (_dwRIMType)
 	{
-		case RIM_TYPEKEYBOARD: return input::keyboard;
-		case RIM_TYPEMOUSE: return input::mouse;
+		case RIM_TYPEKEYBOARD: return input::type::keyboard;
+		case RIM_TYPEMOUSE: return input::type::mouse;
 		default: break;
 	}
-	return input::unknown;
+	return input::type::unknown;
 }
 
 static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam, HDEVICECHANGE _hDeviceChance)
 {
 	oWIN_DEVICE_CHANGE_CONTEXT* ctx = (oWIN_DEVICE_CHANGE_CONTEXT*)_hDeviceChance;
-	input::type Type = input::unknown;
-	input::status Status = _wParam == GIDC_ARRIVAL ? input::ready : input::not_ready;
+	input::type Type = input::type::unknown;
+	input::status Status = _wParam == GIDC_ARRIVAL ? input::status::ready : input::status::not_ready;
 	mstring InstanceName;
 
 	switch (_wParam)
@@ -457,10 +457,10 @@ static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam
 		oNODEFAULT;
 	}
 
-	const unsigned int Timestamp = (unsigned int)GetMessageTime();;
-	if (ctx->LastChangeTimestamp[Type] != Timestamp)
+	const unsigned int Timestamp = (unsigned int)GetMessageTime();
+	if (ctx->LastChangeTimestamp[(int)Type] != Timestamp)
 	{
-		ctx->LastChangeTimestamp[Type] = Timestamp;
+		ctx->LastChangeTimestamp[(int)Type] = Timestamp;
 		SendMessage(_hWnd, oWM_INPUT_DEVICE_CHANGE, MAKEWPARAM(Type, Status), (LPARAM)InstanceName.c_str());
 	}
 

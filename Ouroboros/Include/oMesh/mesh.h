@@ -41,9 +41,8 @@ namespace ouro { namespace mesh {
 static const uint max_num_slots = 8;
 static const uint max_num_elements = 16;
 
-namespace primitive_type
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
+enum class primitive_type : uchar
+{
 	unknown,
 	points,
 	lines,
@@ -88,20 +87,17 @@ namespace primitive_type
 	patches32,
 	
 	count,
+};
 
-};}
-
-namespace face_type
-{ oDECLARE_SMALL_ENUM(value, uchar) {
-
+enum face_type : uchar
+{
 	unknown,
 	front_ccw,
 	front_cw,
 	outline,
 
 	count,
-
-};}
+};
 
 class element
 {
@@ -173,8 +169,8 @@ struct info
 	element_array elements;
 	uint num_indices;
 	uint num_vertices;
-	primitive_type::value primitive_type;
-	face_type::value face_type;
+	primitive_type primitive_type;
+	face_type face_type;
 	uchar num_ranges;
 	uchar vertex_scale_shift; // for position as shorts for xyz it'll be (x / SHORT_MAX) * (1 << vertex_scale_shift)
 };
@@ -185,7 +181,7 @@ uint calc_offset(const element_array& elements, uint element_index);
 // return the size of the entire vertex for the specified slot
 uint calc_vertex_size(const element_array& elements, uint slot);
 
-uint num_primitives(const primitive_type::value& type, uint num_indices, uint num_vertices);
+uint num_primitives(const primitive_type& type, uint num_indices, uint num_vertices);
 inline uint num_primitives(const info& i) { return num_primitives(i.primitive_type, i.num_indices, i.num_vertices); }
 
 inline bool has_16bit_indices(uint num_vertices) { return num_vertices <= 65535; }

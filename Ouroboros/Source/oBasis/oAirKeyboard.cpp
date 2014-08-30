@@ -171,7 +171,7 @@ void oAirKeyboardImpl::SetKeySet(threadsafe oAirKeySet* _pKeySet) threadsafe
 		const auto& Keys = thread_cast<oAirKeySetImpl*>(static_cast<threadsafe oAirKeySetImpl*>(KeySet.c_ptr()))->Keys;
 		auto& Actions = oThreadsafe(this)->KeyAction;
 		Actions.resize(Keys.size());
-		fill(Actions, ouro::input::key_up);
+		fill(Actions, ouro::input::action_type::key_up);
 	}
 }
 
@@ -230,7 +230,7 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::input::tracking_skeleton& _Ske
 	ouro::input::tracking_skeleton& OldSkeleton = it->second;
 
 	ouro::input::action a;
-	a.device_type = ouro::input::skeleton;
+	a.device_type = ouro::input::type::skeleton;
 	a.device_id = _Skeleton.source_id;
 	a.timestamp_ms = _TimestampMS;
 	
@@ -240,15 +240,15 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::input::tracking_skeleton& _Ske
 		const auto& Key = Keys[k];
 		a.key = Key.Key;
 		aaboxf NewBounds(Key.Bounds), OldBounds(Key.Bounds);
-		if (Key.Origin != ouro::input::invalid_bone)
+		if (Key.Origin != ouro::input::skeleton_bone::invalid_bone)
 		{
-			ouro::translate(NewBounds, _Skeleton.positions[Key.Origin].xyz());
-			ouro::translate(OldBounds, OldSkeleton.positions[Key.Origin].xyz());
+			ouro::translate(NewBounds, _Skeleton.positions[(int)Key.Origin].xyz());
+			ouro::translate(OldBounds, OldSkeleton.positions[(int)Key.Origin].xyz());
 		}
 
 		for (int i = 0; i < oCOUNTOF(_Skeleton.positions); i++)
 		{
-			if (Key.Trigger == i)
+			if (Key.Trigger == (ouro::input::skeleton_bone)i)
 			{
 				const float4& New = _Skeleton.positions[i];
 				const float4& Old = OldSkeleton.positions[i];
@@ -260,7 +260,7 @@ void oAirKeyboardImpl::UpdateInternal(const ouro::input::tracking_skeleton& _Ske
 
 					if (NewInside != OldInside)
 					{
-						a.action_type = KeyAction[k] = NewInside ? ouro::input::key_down : ouro::input::key_up; 
+						a.action_type = KeyAction[k] = NewInside ? ouro::input::action_type::key_down : ouro::input::action_type::key_up; 
 						a.action_code = i;
 						a.position(New);
 						TriggerInternal(a);
