@@ -49,7 +49,7 @@
       <Filter>Source\codecs</Filter>
     </ClCompile>
     <ClCompile Include="image.cpp">
-      <Filter>oSurface</Filter>
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
