@@ -10,14 +10,17 @@
 #ifndef oBase_concurrent_hash_map
 #define oBase_concurrent_hash_map
 
+#include <oBase/allocate.h>
+#include <cstdint>
+
 namespace ouro {
 
 class concurrent_hash_map
 {
 public:
-	typedef unsigned long long key_type;
-	typedef unsigned int value_type;
-	typedef unsigned int size_type;
+	typedef uint64_t key_type;
+	typedef uint32_t value_type;
+	typedef uint32_t size_type;
 
 	static const key_type nullkey = key_type(-1);
 	static const value_type nullidx = value_type(-1);
@@ -35,7 +38,7 @@ public:
 	concurrent_hash_map(void* memory, size_type capacity);
 
 	// ctor creates as a valid hash map using internally allocated memory
-	concurrent_hash_map(size_type capacity);
+	concurrent_hash_map(size_type capacity, const char* alloc_label = "concurrent_hash_map", const allocator& alloc = default_allocator);
 
 	// dtor
 	~concurrent_hash_map();
@@ -48,11 +51,11 @@ public:
 	// calculate the size only. Note: This calculates size for optimal 
 	// performance which is twice the number of entries asked for rounded 
 	// up to the next power of two.
-	size_type initialize(void* memory, size_type capacity);
+	size_type initialize(void* memory, size_type capacity, const allocator& alloc = noop_allocator);
 
 	// initialize the hash map with internally allocated memory that will 
 	// be freed on deinitialization.
-	size_type initialize(size_type capacity);
+	size_type initialize(size_type capacity, const char* alloc_label = "concurrent_hash_map", const allocator& alloc = default_allocator);
 
 	// invalidates the hash map. returns the memory passed in initialize 
 	// or nullptr if internally allocated memory was used.
@@ -78,8 +81,8 @@ public:
 	// occupancy. Returns the number reclaimed.
 	size_type reclaim();
 
-	// walks through valid entries and inserts them into the specified hash 
-	// map up until the specified number of inserts was done.
+	// moves entries from this map to that for the specified number of moves
+	// so this can be done over multiple steps.
 	size_type migrate(concurrent_hash_map& that, size_type max_moves = size_type(-1));
 
 	
@@ -92,6 +95,7 @@ public:
 	// returns the prior value. nullidx implies this was a first add.
 	// Set to nullidx to "clear" an entry. It will affect all api 
 	// correctly and only degrade performances until reclaim() is called.
+	// if the hash is full, this will throw.
 	value_type set(const key_type& key, const value_type& value);
 
 	// flags the key as no longer in use
@@ -103,10 +107,10 @@ public:
 	value_type get(const key_type& key) const;
 
 private:
-	unsigned int modulo_mask;
-	bool owns_memory;
+	uint32_t modulo_mask;
 	void* keys;
 	void* values;
+	allocator alloc;
 
 	concurrent_hash_map(const concurrent_hash_map&);
 	const concurrent_hash_map& operator=(const concurrent_hash_map&);
