@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBase/input.h>
 #include <oBase/assert.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 
 namespace ouro {
 

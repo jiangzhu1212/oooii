@@ -29,7 +29,7 @@
 #include <oBase/algorithm.h>
 #include <oBase/fnv1a.h>
 #include <oBase/path.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 #include <oBase/uri_traits.h>
 #include <regex>
 

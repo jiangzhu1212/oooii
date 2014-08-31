@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oSurface/convert.h>
 #include <oBase/assert.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 #include <oBase/throw.h>
 #include <oHLSL/oHLSLMath.h>
 

@@ -4,7 +4,7 @@
 // types as well as ouro types.
 
 #include <oHLSL/oHLSLMath.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 
 namespace ouro {
 

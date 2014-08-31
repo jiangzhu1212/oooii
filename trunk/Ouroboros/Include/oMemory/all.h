@@ -4,7 +4,6 @@
 #define oMemory_all_h
 // Convenience "all headers" header for precompiled header files. Do NOT use 
 // this to be lazy when including headers in .cpp files. Be explicit.
-#include <oMemory/atof.h>
 #include <oMemory/bit.h>
 #include <oMemory/byte.h>
 #include <oMemory/endian.h>

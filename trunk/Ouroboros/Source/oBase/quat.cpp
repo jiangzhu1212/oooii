@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oBase/quat.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 
 namespace ouro {
 

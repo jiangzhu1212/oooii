@@ -20,8 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oString\all.h" />
+    <ClInclude Include="..\..\Include\oString\atof.h" />
     <ClInclude Include="..\..\Include\oString\opttok.h" />
     <ClInclude Include="..\..\Include\oString\string.h" />
+    <ClInclude Include="..\..\Include\oString\stringize.h" />
     <ClInclude Include="..\..\Include\oString\string_codec.h" />
     <ClInclude Include="..\..\Include\oString\string_fast_scan.h" />
     <ClInclude Include="..\..\Include\oString\string_path.h" />
@@ -83,6 +85,7 @@
     <ClCompile Include="search_path.cpp" />
     <ClCompile Include="split_path.cpp" />
     <ClCompile Include="strbitmask.cpp" />
+    <ClCompile Include="stringize.cpp" />
     <ClCompile Include="strtok.cpp" />
     <ClCompile Include="to_lower.cpp" />
     <ClCompile Include="to_upper.cpp" />

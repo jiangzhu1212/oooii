@@ -59,9 +59,6 @@
     <ClInclude Include="memduff.h">
       <Filter>Source</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oMemory\atof.h">
-      <Filter>oMemory</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oMemory\bit.h">
       <Filter>oMemory</Filter>
     </ClInclude>

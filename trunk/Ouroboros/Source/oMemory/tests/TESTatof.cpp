@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <oMemory/atof.h>
+#include <oString/atof.h>
 #include <oMemory/equal.h>
 #include <array>
 #include <vector>
