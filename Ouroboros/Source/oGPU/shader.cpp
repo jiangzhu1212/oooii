@@ -48,8 +48,8 @@ const char* as_string(const gpu::stage::value& _Value)
 	return "?";
 }
 
-oDEFINE_TO_STRING(gpu::stage::value)
-oDEFINE_FROM_STRING(gpu::stage::value)
+oDEFINE_ENUM_TO_STRING(gpu::stage::value)
+oDEFINE_ENUM_FROM_STRING(gpu::stage::value)
 	
 namespace gpu {
 

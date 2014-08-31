@@ -27,7 +27,7 @@
 #include <oBase/throw.h>
 #include "mesh_template.h"
 
-#define STR_SUPPORT(_T) oDEFINE_TO_STRING(_T) oDEFINE_FROM_STRING(_T)
+#define STR_SUPPORT(_T) oDEFINE_ENUM_TO_STRING(_T) oDEFINE_ENUM_FROM_STRING(_T)
 
 namespace ouro {
 

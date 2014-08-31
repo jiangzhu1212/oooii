@@ -61,7 +61,7 @@ const char* as_string(const type::value& _TypeID)
 	}
 }
 
-oDEFINE_TO_STRING(type::value);
-oDEFINE_FROM_STRING(type::value);
+oDEFINE_ENUM_TO_STRING(type::value);
+oDEFINE_ENUM_FROM_STRING(type::value);
 
 }
