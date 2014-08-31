@@ -16,8 +16,8 @@ char* ampersand_encode(char* oRESTRICT dst, size_t dst_size, const char* oRESTRI
 	oASSERT(src < dst || src >= (dst + dst_size), "Overlapping buffers not allowed");
 
 	const char* xml_reserved_chars = "<>&'\"";
-	struct SYM { const char* res; unsigned short len; char c; };
-	static SYM reserved[] = { { "&lt;", 4, '<' }, { "&gt;", 4, '>' }, { "&amp;", 5, '&' }, { "&apos;", 6, '\'' }, { "&quot;", 6, '\"' }, };
+	struct SYM { const char* res; unsigned char len; };
+	static SYM reserved[] = { { "&lt;", 4 }, { "&gt;", 4 }, { "&amp;", 5 }, { "&apos;", 6 }, { "&quot;", 6 }, };
 
 	const char* s = src;
 	while (*s)

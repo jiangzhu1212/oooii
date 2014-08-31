@@ -33,6 +33,7 @@
 #define oBase_date_h
 
 #include <oBase/uint128.h>
+#include <oBase/fixed_string.h>
 #include <chrono>
 #include <climits>
 #include <string>
@@ -238,6 +239,12 @@ size_t strftime(char (&_StrDestination)[size]
 	, date_conversion::value _Conversion = date_conversion::none)
 {
 	return strftime(_StrDestination, size, _Format, _Date, _Conversion);
+}
+
+template<typename charT, size_t Capacity, typename DateT> 
+size_t strftime(fixed_string<charT, Capacity>& dst, const char* fmt, const DateT& _Date, date_conversion::value _Conversion = date_conversion::none)
+{
+	return ouro::strftime(dst, dst.capacity(), fmt, _Date, _Conversion);
 }
 
 }
