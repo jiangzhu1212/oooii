@@ -12,18 +12,15 @@ namespace ouro {
 
 concurrent_hash_map::concurrent_hash_map()
 	: modulo_mask(0)
-	, owns_memory(false)
 	, keys(nullptr)
 	, values(nullptr)
 {}
 
 concurrent_hash_map::concurrent_hash_map(concurrent_hash_map&& _That)
 	: modulo_mask(_That.modulo_mask)
-	, owns_memory(_That.owns_memory)
 	, keys(_That.keys)
 	, values(_That.values)
 {
-	_That.owns_memory = false;
 	_That.deinitialize();
 }
 
@@ -33,9 +30,9 @@ concurrent_hash_map::concurrent_hash_map(void* memory, size_type capacity)
 		throw std::invalid_argument("concurrent_hash_map initialize failed");
 }
 
-concurrent_hash_map::concurrent_hash_map(size_type capacity)
+concurrent_hash_map::concurrent_hash_map(size_type capacity, const char* alloc_label, const allocator& alloc_)
 {
-	if (!initialize(capacity))
+	if (!initialize(capacity, alloc_label, alloc_))
 		throw std::invalid_argument("concurrent_hash_map initialize failed");
 }
 
@@ -51,14 +48,13 @@ concurrent_hash_map& concurrent_hash_map::operator=(concurrent_hash_map&& _That)
 		deinitialize();
 
 		oMOVE0(modulo_mask);
-		oMOVE0(owns_memory);
 		oMOVE0(keys);
 		oMOVE0(values);
 	}
 	return *this;
 }
 
-concurrent_hash_map::size_type concurrent_hash_map::initialize(void* memory, size_type capacity)
+concurrent_hash_map::size_type concurrent_hash_map::initialize(void* memory, size_type capacity, const allocator& alloc)
 {
 	const size_type n = __max(8, nextpow2(capacity * 2));
 	const size_type key_bytes = n * sizeof(std::atomic<key_type>);
@@ -71,26 +67,27 @@ concurrent_hash_map::size_type concurrent_hash_map::initialize(void* memory, siz
 		values = byte_add(memory, key_bytes);
 		memset(keys, 0xff/*nullkey*/, key_bytes);
 		memset(values, nullidx, value_bytes);
+		this->alloc = alloc;
 	}
 	return req;
 }
 
-concurrent_hash_map::size_type concurrent_hash_map::initialize(size_type capacity)
+concurrent_hash_map::size_type concurrent_hash_map::initialize(size_type capacity, const char* alloc_label, const allocator& alloc)
 {
 	size_type req = initialize(nullptr, capacity);
-	return initialize(default_allocate(req, 0), capacity);
+	return initialize(alloc.allocate(req, 0, alloc_label), capacity, alloc);
 }
 
 void* concurrent_hash_map::deinitialize()
 {
 	void* p = keys;
-	if (owns_memory)
+	if (alloc)
 	{
-		default_deallocate(p);
+		alloc.deallocate(p);
 		p = nullptr;
 	}
 	modulo_mask = 0;
-	owns_memory = false;
+	alloc = default_allocator;
 	keys = nullptr;
 	values = nullptr;
 	return p;
@@ -109,7 +106,7 @@ concurrent_hash_map::size_type concurrent_hash_map::size() const
 {
 	DECLARE_KV
 	size_type n = 0;
-	for (unsigned int i = 0; i <= modulo_mask; i++)
+	for (uint32_t i = 0; i <= modulo_mask; i++)
 		if (keys[i].load(std::memory_order_relaxed) != nullkey && 
 			values[i].load(std::memory_order_relaxed) != nullidx)
 			n++;
@@ -120,7 +117,7 @@ concurrent_hash_map::size_type concurrent_hash_map::reclaim()
 {
 	DECLARE_KV
 	size_type n = 0;
-	unsigned int i = 0;
+	uint32_t i = 0;
 	while (i <= modulo_mask)
 	{
 		if (values[i] == nullidx && keys[i] != nullkey)
@@ -128,7 +125,7 @@ concurrent_hash_map::size_type concurrent_hash_map::reclaim()
 			keys[i] = nullkey;
 			n++;
 
-			unsigned int ii = (i + 1) & modulo_mask;
+			uint32_t ii = (i + 1) & modulo_mask;
 			while (keys[ii] != nullkey)
 			{
 				if (values[ii] == nullidx)
@@ -161,12 +158,13 @@ concurrent_hash_map::size_type concurrent_hash_map::migrate(concurrent_hash_map&
 {
 	DECLARE_KV
 	size_type n = 0;
-	unsigned int i = 0;
+	uint32_t i = 0;
 	while (i <= modulo_mask)
 	{
 		if (values[i] != nullidx && keys[i] != nullkey)
 		{
 			that.set(keys[i], values[i]);
+			remove(keys[i]);
 			if (++n >= max_moves)
 				break;
 		}
@@ -182,8 +180,11 @@ concurrent_hash_map::value_type concurrent_hash_map::set(const key_type& key, co
 	if (key == nullkey)
 		throw std::invalid_argument("key must be non-zero");
 	DECLARE_KV
-	for (key_type k = key;; k++)
+	for (key_type k = key, j = 0;; k++, j++)
 	{
+		if (j > modulo_mask)
+			throw std::length_error("concurrent_hash_map full");
+
 		k &= modulo_mask;
 		std::atomic<key_type>& stored = keys[k];
 		key_type probed = stored.load(std::memory_order_relaxed);
@@ -202,6 +203,8 @@ concurrent_hash_map::value_type concurrent_hash_map::set(const key_type& key, co
 	
 concurrent_hash_map::value_type concurrent_hash_map::get(const key_type& key) const
 {
+	if (key == nullkey)
+		throw std::invalid_argument("key must be non-zero");
 	DECLARE_KV
 	for (key_type k = key;; k++)
 	{
