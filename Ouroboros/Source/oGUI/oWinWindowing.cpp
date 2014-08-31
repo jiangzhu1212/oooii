@@ -28,7 +28,7 @@
 #include <oGUI/Windows/oWinRect.h>
 #include <oGUI/Windows/oWinStatusBar.h>
 #include <oBase/timer.h>
-#include <oMemory/atof.h>
+#include <oString/atof.h>
 
 #undef interface
 #include <oCore/windows/win_error.h>

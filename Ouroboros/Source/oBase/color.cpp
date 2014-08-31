@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <oBase/color.h>
 #include <oBase/colors.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 
 namespace ouro {
 	namespace detail {

@@ -16,7 +16,7 @@
 // child nodes. I guess add a new handle "text" and have a first/next text.
 
 #include <oBase/fixed_string.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 #include <oBase/text_document.h>
 #include <cstring>
 #include <vector>

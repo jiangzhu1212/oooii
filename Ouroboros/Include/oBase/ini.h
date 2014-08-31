@@ -9,7 +9,7 @@
 
 #include <oBase/text_document.h>
 #include <oBase/macros.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 #include <cstring>
 #include <vector>
 

@@ -4,6 +4,7 @@
 #define oBase_all_h
 // Convenience "all headers" header for precompiled header files. Do NOT use 
 // this to be lazy when including headers in .cpp files. Be explicit.
+#include <oString/atof.h>
 #include <oString/opttok.h>
 #include <oString/string.h>
 #include <oString/string_codec.h>
@@ -12,4 +13,5 @@
 #include <oString/string_platform.h>
 #include <oString/string_source.h>
 #include <oString/string_traits.h>
+#include <oString/stringize.h>
 #endif

@@ -37,7 +37,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oMemory\all.h" />
-    <ClInclude Include="..\..\Include\oMemory\atof.h" />
     <ClInclude Include="..\..\Include\oMemory\bit.h" />
     <ClInclude Include="..\..\Include\oMemory\byte.h" />
     <ClInclude Include="..\..\Include\oMemory\endian.h" />

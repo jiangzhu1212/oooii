@@ -28,7 +28,7 @@
 
 #include <oBase/fixed_string.h>
 #include <oBase/path_traits.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 #include <oBase/throw.h>
 #include <functional>
 

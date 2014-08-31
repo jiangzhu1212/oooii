@@ -30,7 +30,7 @@
 #define oBase_fixed_vector_h
 
 #include <oCompiler.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 #include <array>
 #include <stdexcept>
 

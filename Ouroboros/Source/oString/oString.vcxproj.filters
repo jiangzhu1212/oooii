@@ -42,6 +42,12 @@
     <ClInclude Include="..\..\Include\oString\all.h">
       <Filter>oString</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oString\stringize.h">
+      <Filter>oString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\atof.h">
+      <Filter>oString</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ordinal.cpp">
@@ -178,6 +184,9 @@
     </ClCompile>
     <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\wcslcat.c">
       <Filter>Source\strlcpy</Filter>
+    </ClCompile>
+    <ClCompile Include="stringize.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

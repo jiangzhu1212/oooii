@@ -25,7 +25,7 @@
 #include "scc_svn.h"
 #include <oBase/assert.h>
 #include <oBase/macros.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 #include <oString/string_path.h>
 #include <oBase/throw.h>
 

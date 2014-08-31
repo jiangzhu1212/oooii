@@ -5,10 +5,11 @@ future.
 
 == LIBRARY HIERARCHY ==
 
-oMemory      oHLSL
-  ^   \    /   ^   \
-oBase  \  /    |    \
-   ^    \/     |     \
+oMemory oString
+     \   /
+     oBase   oHLSL
+       ^       ^  \
+       |       |   \
    oSurface  oMesh  oCompute
        ^   \   ^
        |    \  |
@@ -20,6 +21,13 @@ oBase  \  /    |    \
 
 Very basic extensions to stdc memory utilities such as memset, memcmp, memcpy.
 This has no dependencies beyond a few compiler-specific keywords.
+
+
+== oString ==
+
+Basic string handling functions plus higher-level string objects and policies 
+to make string parsing uniform and additionally several useful text file format
+readers.
 
 
 == oBase == 

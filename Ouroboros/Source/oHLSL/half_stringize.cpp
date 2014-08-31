@@ -24,7 +24,7 @@
  **************************************************************************/
 #include <half.h>
 #include <oString/string.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 
 namespace ouro {
 

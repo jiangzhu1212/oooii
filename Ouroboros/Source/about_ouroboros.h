@@ -26,7 +26,7 @@
 #ifndef about_ouroboros_h
 #define about_ouroboros_h
 
-#include <Ouroboros_externals.h>
+#include <oExternals.h>
 #include <oGUI/about.h>
 
 #define OUROBOROS_WEBSITE "http://code.google.com/p/oooii/"

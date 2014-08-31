@@ -23,7 +23,7 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
  **************************************************************************/
 #include <oCore/cpu.h>
-#include <oBase/stringize.h>
+#include <oString/stringize.h>
 
 #include "../../test_services.h"
 
