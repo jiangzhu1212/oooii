@@ -45,8 +45,8 @@ const char* as_string(const input::type& _Type)
 	return "?";
 }
 
-oDEFINE_TO_STRING(input::type);
-oDEFINE_FROM_STRING(input::type);
+oDEFINE_ENUM_TO_STRING(input::type);
+oDEFINE_ENUM_FROM_STRING(input::type);
 
 const char* as_string(const input::status& _Status)
 {
@@ -66,8 +66,8 @@ const char* as_string(const input::status& _Status)
 	return "?";
 }
 	
-oDEFINE_TO_STRING(input::status);
-oDEFINE_FROM_STRING(input::status);
+oDEFINE_ENUM_TO_STRING(input::status);
+oDEFINE_ENUM_FROM_STRING(input::status);
 
 const char* as_string(const input::key& _Key)
 {
@@ -250,8 +250,8 @@ const char* as_string(const input::key& _Key)
 	return "?";
 }
 
-oDEFINE_TO_STRING(input::key);
-oDEFINE_FROM_STRING(input::key);
+oDEFINE_ENUM_TO_STRING(input::key);
+oDEFINE_ENUM_FROM_STRING(input::key);
 
 const char* as_string(const input::skeleton_bone& _Bone)
 {
@@ -283,8 +283,8 @@ const char* as_string(const input::skeleton_bone& _Bone)
 	return "?";
 }
 
-oDEFINE_TO_STRING(input::skeleton_bone);
-oDEFINE_FROM_STRING(input::skeleton_bone);
+oDEFINE_ENUM_TO_STRING(input::skeleton_bone);
+oDEFINE_ENUM_FROM_STRING(input::skeleton_bone);
 
 const char* as_string(const input::action_type& _ActionType)
 {
@@ -308,8 +308,8 @@ const char* as_string(const input::action_type& _ActionType)
 	return "?";
 }
 
-oDEFINE_TO_STRING(input::action_type);
-oDEFINE_FROM_STRING(input::action_type);
+oDEFINE_ENUM_TO_STRING(input::action_type);
+oDEFINE_ENUM_FROM_STRING(input::action_type);
 
 namespace input {
 
