@@ -27,6 +27,7 @@
 #ifndef oCore_system_h
 #define oCore_system_h
 
+#include <oBase/date.h>
 #include <functional>
 
 namespace ouro {

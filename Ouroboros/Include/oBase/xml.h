@@ -443,9 +443,8 @@ private:
 		template<typename charT>
 		inline void ampersand_decode(charT* s)
 		{
-			static const charT* code[] = { "lt;", "gt;", "amp;", "apos;", "quot;" };
-			static const unsigned int codelen[] = { 3, 3, 4, 5, 5 };
-			static const charT decode[] = { '<', '>', '&', '\'', '\"' };
+			static const struct { const char* code; unsigned char len; char c; } reserved[] = { { "lt;", 3, '<' }, { "gt;", 3, '>' }, { "amp;", 4, '&' }, {"apos;", 5, '\'' }, { "quot;", 5, '\"' }, };
+
 			s = strchr(s, '&'); // find encoding marker
 			if (s)
 			{
@@ -454,12 +453,12 @@ private:
 				{
 					if (*s == '&' && ++s) // process a full symbol at a time
 					{
-						for (size_t i = 0; i < oCOUNTOF(code); i++)
+						for (const auto& sym : reserved)
 						{
-							if (!memcmp(code[i], s, codelen[i])) // if this is an encoding, decode
+							if (!memcmp(sym.code, s, sym.len)) // if this is an encoding, decode
 							{
-								*w++ = decode[i];
-								s += codelen[i];
+								*w++ = sym.c;
+								s += sym.len;
 								break;
 							}
 						}

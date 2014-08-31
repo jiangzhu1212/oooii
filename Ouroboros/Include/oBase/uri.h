@@ -30,6 +30,7 @@
 #include <oBase/fnv1a.h>
 #include <oBase/path.h>
 #include <oString/stringize.h>
+#include <oString/string_codec.h>
 #include <oBase/uri_traits.h>
 #include <regex>
 
