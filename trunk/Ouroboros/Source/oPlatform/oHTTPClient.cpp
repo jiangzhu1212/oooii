@@ -58,7 +58,7 @@ bool oHTTPClient_Impl::StartRequest(oHTTP_METHOD _Method, const char* _pRelative
 		return oErrorSetLast(std::errc::timed_out);
 
 	xxlstring requestPath;
-	percent_encode(requestPath, _pRelativePath, " ");
+	percent_encode(requestPath, requestPath.capacity(), _pRelativePath, " ");
 	TheRequest.Reset(_Method, requestPath, oHTTP_1_1);
 	if (_ppRequest)
 		*_ppRequest = &TheRequest;

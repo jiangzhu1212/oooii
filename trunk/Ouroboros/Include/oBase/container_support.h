@@ -14,6 +14,15 @@ template<typename T> struct less_i: public std::binary_function<T, T, bool> { bo
 template<typename T> struct same : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x == y; } };
 template<typename T> struct same_i : public std::binary_function<T, T, bool> { bool operator()(const T& x, const T& y) const { return x == y; } };
 
+// _____________________________________________________________________________
+// standard container support
+
+template<> struct less<const char*> { int operator()(const char* x, const char* y) const { return strcmp(x, y) < 0; } };
+template<> struct less_i<const char*> { bool operator()(const char* x, const char* y) const { return _stricmp(x, y) < 0; } };
+
+template<> struct same<const char*> { int operator()(const char* x, const char* y) const { return !strcmp(x, y); } };
+template<> struct same_i<const char*> { bool operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
+
 }
 
 #endif

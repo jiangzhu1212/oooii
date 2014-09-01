@@ -7,6 +7,8 @@
 #include <oBase/backoff.h>
 #include <atomic>
 
+#include <oBase/container_support.h>
+
 namespace ouro {
 
 	const char* as_string(const filesystem::file_event::value& _Event)
