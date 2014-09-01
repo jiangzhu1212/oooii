@@ -84,9 +84,9 @@ oOPT ParseOptions(int argc, const char* argv[])
 int ShowHelp(const char* argv0)
 {
 	path path = argv0;
-	lstring doc;
+	char doc[1024];
 	optdoc(doc, path.filename().c_str(), sOptions);
-	printf("%s\n", doc.c_str());
+	printf("%s\n", doc);
 	return 0;
 }
 
