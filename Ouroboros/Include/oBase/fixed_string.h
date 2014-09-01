@@ -167,14 +167,6 @@ namespace ouro {
 	TSTR int vsncatf(STRT& dst, const char* fmt, va_list args) { return vsncatf(dst, dst.capacity(), fmt, args); }
 	TSTR int sncatf(STRT& dst, const char* fmt, ...) { va_list args; va_start(args, fmt); int l = vsncatf(dst, fmt, args); va_end(args); return l; }
 
-	TSTR char* percent_encode(STRT& dst, const char* src, const char* _StrReservedChars = oRESERVED_URI_CHARS) { return percent_encode(dst, dst.capacity(), src, _StrReservedChars); }
-	TSTR char* percent_decode(STRT& dst, const char* src) { return percent_decode(dst, dst.capacity(), src); }
-	TSTR char* percent_to_lower(STRT& dst, const char* src) { return percent_to_lower(dst, dst.capacity(), src); }
-	TSTR char* ampersand_encode(STRT& dst, const char* src) { return ampersand_encode(dst, dst.capacity(), src); }
-	TSTR char* ampersand_decode(STRT& dst, const char* src) { return ampersand_decode(dst, dst.capacity(), src); }
-	TSTR char* json_escape_encode(STRT& dst, const char* src) { return json_escape_encode(dst, dst.capacity(), src); }
-	TSTR char* json_escape_decode(STRT& dst, const char* src) { return json_escape_decode(dst, dst.capacity(), src); }
-
 	TSTR char* clean_path(STRT& dst, const char* src_path, char separator = '/', bool zero_buffer = false) { return clean_path(dst, dst.capacity(), src_path, separator, zero_buffer); }
 	TSTR char* relativize_path(STRT& dst, const char* base_path, const char* full_path) { return relativize_path(dst, dst.capacity(), base_path, full_path); }
 
