@@ -16,17 +16,17 @@
 
 namespace ouro {
 
-/*enum class*/ namespace text_document_errc { enum value { generic_parse_error, unclosed_scope, unclosed_comment }; };
+enum class text_document_errc { generic_parse_error, unclosed_scope, unclosed_comment };
 
 const std::error_category& text_document_category();
 
-/*constexpr*/ inline std::error_code make_error_code(text_document_errc::value _Errc) { return std::error_code(static_cast<int>(_Errc), text_document_category()); }
-/*constexpr*/ inline std::error_condition make_error_condition(text_document_errc::value _Errc) { return std::error_condition(static_cast<int>(_Errc), text_document_category()); }
+/*constexpr*/ inline std::error_code make_error_code(text_document_errc err_code) { return std::error_code(static_cast<int>(err_code), text_document_category()); }
+/*constexpr*/ inline std::error_condition make_error_condition(text_document_errc err_code) { return std::error_condition(static_cast<int>(err_code), text_document_category()); }
 
 class text_document_error : public std::logic_error
 {
 public:
-	text_document_error(text_document_errc::value _Errc) : logic_error(text_document_category().message(_Errc)) {}
+	text_document_error(text_document_errc err_code) : logic_error(text_document_category().message(static_cast<int>(err_code))) {}
 };
 
 typedef std::function<void(char* _pData)> text_document_deleter_t;

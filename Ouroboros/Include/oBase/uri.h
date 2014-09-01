@@ -301,7 +301,7 @@ public:
 
 	string_type scheme() const { return string_type(convert(Scheme)); }
 	string_type authority() const { return string_type(convert(Authority)); }
-	string_type path_string() const { string_type s(convert(Path)); percent_decode(s, s); return s; }
+	string_type path_string() const { string_type s(convert(Path)); percent_decode(s, s.capacity(), s); return s; }
 	string_type path_encoded() const { return string_type(convert(Path)); }
 	path_type path() const { return path_type(path_string()); }
 	string_type query() const { return string_type(convert(Query)); }
@@ -445,7 +445,7 @@ private:
 		// If the whole path isn't made lower-case for case-insensitive purposes, 
 		// the percent values at least should be made lower-case (i.e. this should 
 		// be true: &7A == &7a)
-		percent_to_lower(URI, URI);
+		percent_to_lower(URI, URI.capacity(), URI);
 
 		Hash = fnv1a<hash_type>(URI);
 	}

@@ -8,7 +8,7 @@
 #include <oBase/enum_iterator.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <array>
-
+#include <functional>
 namespace ouro { namespace input {
 
 enum class type : unsigned char

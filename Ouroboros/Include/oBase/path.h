@@ -396,14 +396,6 @@ bool from_string(basic_path<charT, traitsT>* _pValue, const char* _StrSource)
 	return true;
 }
 
-// _____________________________________________________________________________
-// standard container support
-
-template<typename charT, typename traitsT> struct less<basic_path<charT, traitsT>> { int operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return strcmp(x.c_str(), y.c_str()) < 0; } };
-template<typename charT, typename traitsT> struct less_i<basic_path<charT, traitsT>> { bool operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return _stricmp(x.c_str(), y.c_str()) < 0; } };
-template<typename charT, typename traitsT> struct same<basic_path<charT, traitsT>> { int operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return !strcmp(x.c_str(), y.c_str()); } };
-template<typename charT, typename traitsT> struct same_i<basic_path<charT, traitsT>> { bool operator()(const basic_path<charT, traitsT>& x, const basic_path<charT, traitsT>& y) const { return !_stricmp(x.c_str(), y.c_str()); } };
-
 }
 
 namespace std {

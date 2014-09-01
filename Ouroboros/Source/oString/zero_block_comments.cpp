@@ -1,7 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-#include <memory.h>
 #include <oString/string.h>
+#include <memory.h>
+#include <algorithm>
 
 namespace ouro {
 
@@ -25,7 +26,7 @@ char* zero_block_comments(char* str, const char* open_brace, const char* close_b
 		// preserve newlines since they might be used to report line numbers in compile errors
 		while (cur < close)
 		{
-			size_t offset = __min(strcspn(cur, oNEWLINE), static_cast<size_t>(close-cur));
+			size_t offset = std::min(strcspn(cur, oNEWLINE), static_cast<size_t>(close-cur));
 			memset(cur, replacement, offset);
 			cur += offset;
 			cur += strspn(cur, oNEWLINE);

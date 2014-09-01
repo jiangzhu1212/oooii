@@ -1,8 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 #include <oCompiler.h>
-#include <oBase/assert.h>
 #include <oString/string.h>
+#include <iterator>
 
 namespace ouro {
 
@@ -12,8 +12,6 @@ char* ampersand_encode(char* oRESTRICT dst, size_t dst_size, const char* oRESTRI
 	char* d = dst;
 	char* end = d + dst_size - 1;
 	*(end-1) = 0; // don't allow read outside the buffer even in failure cases
-
-	oASSERT(src < dst || src >= (dst + dst_size), "Overlapping buffers not allowed");
 
 	const char* xml_reserved_chars = "<>&'\"";
 	struct SYM { const char* res; unsigned char len; };

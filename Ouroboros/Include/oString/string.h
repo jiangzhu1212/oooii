@@ -6,7 +6,6 @@
 // String manipulation functions that really should be in the C/C++ standard.
 
 #include <oCompiler.h>
-#include <oBase/container_support.h>
 #include <oString/string_platform.h>
 #include <cstdint>
 #include <ctype.h>
@@ -214,15 +213,6 @@ char* strbitmask(char* dst, size_t dst_size, int flags, const char* all_zeros_va
 template<size_t size> char* strbitmask(char (&dst)[size], int flags, const char* all_zeros_value, asstr_fn as_string) { return strbitmask(dst, size, flags, all_zeros_value, as_string); }
 template<typename T> char* strbitmask(char* dst, size_t dst_size, int flags, const char* all_zeros_value, const char* (*as_string)(T value)) { return strbitmask(dst, dst_size, flags, all_zeros_value, (asstr_fn)as_string); }
 template<typename T, size_t size> char* strbitmask(char (&dst)[size], int flags, const char* all_zeros_value, const char* (*as_string)(T value)) { return strbitmask(dst, size, flags, all_zeros_value, (asstr_fn)as_string); }
-
-// _____________________________________________________________________________
-// standard container support
-
-template<> struct less<const char*> { int operator()(const char* x, const char* y) const { return strcmp(x, y) < 0; } };
-template<> struct less_i<const char*> { bool operator()(const char* x, const char* y) const { return _stricmp(x, y) < 0; } };
-
-template<> struct same<const char*> { int operator()(const char* x, const char* y) const { return !strcmp(x, y); } };
-template<> struct same_i<const char*> { bool operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
 
 }
 
