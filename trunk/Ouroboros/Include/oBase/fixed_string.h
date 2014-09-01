@@ -3,7 +3,6 @@
 #ifndef oString_fixed_string_h
 #define oString_fixed_string_h
 
-#include <oString/opttok.h>
 #include <oString/string_traits.h>
 #include <cstring>
 #include <cwchar>
@@ -182,9 +181,6 @@ namespace ouro {
 	TSTR int vsnprintf(STRT& dst, const char* fmt, va_list args) { return vsnprintf(dst, Capacity, fmt, args); }
 	TSTR char* strncpy(STRT& dst, const char* src, size_t num_chars) { return strncpy(dst, dst.capacity(), src, num_chars); }
 	TSTR char* wcsncpy(STRT& dst, const wchar_t* src, size_t num_chars) { return wcsncpy(dst, dst.capacity(), src, num_chars); }
-
-	TSTR char* optdoc(STRT& dst, const char* app_name, const option* options, size_t num_options, const char* loose_parameters = "") { return optdoc(dst, dst.capacity(), app_name, options, num_options, loose_parameters); }
-	template<typename charT, size_t Capacity, size_t size> char* optdoc(STRT& dst, const char* app_name, const option (&options)[size], const char* loose_parameters = "") { return optdoc(dst, dst.capacity(), app_name, options, size, loose_parameters); }
 }
 
 TSTR int snprintf(ouro::STRT& dst, const char* fmt, ...) { va_list args; va_start(args, fmt); int l = ouro::vsnprintf(dst, fmt, args); va_end(args); return l; }
