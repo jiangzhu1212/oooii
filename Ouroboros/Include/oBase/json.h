@@ -25,10 +25,19 @@ public:
 	oDECLARE_HANDLE(node);
 
 	json() : Size(0) {}
-	json(const char* _URI, char* _pData, const text_document_deleter_t& _Delete, size_t _EstNumNodes = 100)
+	json(const char* _URI, char* _pData, deallocate_fn _Delete, size_t _EstNumNodes = 100)
 		: Buffer(_URI, _pData, _Delete)
 	{
-		Size = sizeof(*this) + strlen(Buffer.pData) + 1;
+		Size = sizeof(*this) + strlen(Buffer.data) + 1;
+		Nodes.reserve(_EstNumNodes);
+		index_buffer();
+		Size += Nodes.capacity() * sizeof(index_type) * 7;
+	}
+
+	json(const char* _URI, const char* _pData, const allocator& alloc, size_t _EstNumNodes = 100)
+		: Buffer(_URI, _pData, alloc, "json doc")
+	{
+		Size = sizeof(*this) + strlen(Buffer.data) + 1;
 		Nodes.reserve(_EstNumNodes);
 		index_buffer();
 		Size += Nodes.capacity() * sizeof(index_type) * 7;
@@ -47,15 +56,15 @@ public:
 	}
 
 	inline operator bool() const { return (bool)Buffer; }
-	inline const char* name() const { return Buffer.URI; }
+	inline const char* name() const { return Buffer.uri; }
 	inline size_t size() const { return Size; }
 
 	// Node API
 	inline node root() const { return node(1); } 
 	inline node first_child(node _ParentNode) const { return node(Node(_ParentNode).Down); }
 	inline node next_sibling(node _PriorSibling) const { return node(Node(_PriorSibling).Next); }
-	inline const char* node_name(node _Node) const { return Buffer.pData + Node(_Node).Name; }
-	inline const char* node_value(node _Node) const { return Buffer.pData + Node(_Node).Value; }
+	inline const char* node_name(node _Node) const { return Buffer.data + Node(_Node).Name; }
+	inline const char* node_value(node _Node) const { return Buffer.data + Node(_Node).Value; }
 	json_node_type::type node_type(node _Node) const { return Node(_Node).Type; }
 	json_value_type::type value_type(node _Node) const { return Node(_Node).ValueType; }
 
@@ -129,9 +138,9 @@ void json::index_buffer()
 	Nodes.push_back(NODE()); // use up slot 0 so it can be used as a null handle
 	Nodes.push_back(NODE()); // add root node
 
-	char* start = Buffer.pData + strcspn(Buffer.pData, "{[");
+	char* start = Buffer.data + strcspn(Buffer.data, "{[");
 	bool isArray = *start++ == '[';
-	*Buffer.pData = 0; // make the first char nul so 0 offsets are the empty string
+	*Buffer.data = 0; // make the first char nul so 0 offsets are the empty string
 
 	int OpenTagCount = 0, CloseTagCount = 0; // these should be equal by the end
 	make_next_node(start, root(), 0, isArray, OpenTagCount, CloseTagCount); // start recursing
@@ -166,7 +175,7 @@ json::node json::make_next_node(char*& _JSON, node _Parent, node _Previous, bool
 		{
 			// Set name without the quotes, so zero terminate on the end quote
 			_JSON += strcspn(_JSON, "\"");
-			n.Name = static_cast<index_type>(std::distance(Buffer.pData, ++_JSON));
+			n.Name = static_cast<index_type>(std::distance(Buffer.data, ++_JSON));
 			if (!detail::skip_string(_JSON))
 				return 0;
 			*_JSON++ = 0;
@@ -176,7 +185,7 @@ json::node json::make_next_node(char*& _JSON, node _Parent, node _Previous, bool
 		}
 
 		// Set value
-		n.Value = static_cast<index_type>(std::distance(Buffer.pData, _JSON));
+		n.Value = static_cast<index_type>(std::distance(Buffer.data, _JSON));
 
 		// Push new node
 		Nodes.push_back(n);

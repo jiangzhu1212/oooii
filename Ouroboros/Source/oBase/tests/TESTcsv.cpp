@@ -35,7 +35,7 @@ static const char* sTestCSV =
 
 void TESTcsv()
 {
-	std::shared_ptr<csv> CSV = std::make_shared<csv>("Test CSV", (char*)sTestCSV, nullptr, 400);
+	std::shared_ptr<csv> CSV = std::make_shared<csv>("Test CSV", sTestCSV, default_allocator, 400);
 	oCHECK(23 == CSV->rows(), "Wrong row count");
 	oCHECK(32 == CSV->cols(), "Wrong column count");
 

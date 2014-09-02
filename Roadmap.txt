@@ -5,8 +5,10 @@ future.
 
 == LIBRARY HIERARCHY ==
 
-oMemory oString
-     \   /
+    oMemory
+       ^
+    oString
+       ^
      oBase   oHLSL
        ^       ^  \
        |       |   \

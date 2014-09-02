@@ -54,10 +54,20 @@ public:
 	};
 
 	xml() : Size(0) {}
-	xml(const char_type* _URI, char_type* _pData, const text_document_deleter_t& _Delete, size_t _EstNumNodes = 100, size_t _EstNumAttrs = 500)
+	xml(const char_type* _URI, char_type* _pData, deallocate_fn _Delete, size_t _EstNumNodes = 100, size_t _EstNumAttrs = 500)
 		: Buffer(_URI, _pData, _Delete)
 	{
-		Size = sizeof(*this) + strlen(Buffer.pData) + 1;
+		Size = sizeof(*this) + strlen(Buffer.data) + 1;
+		Nodes.reserve(_EstNumNodes);
+		Attrs.reserve(_EstNumAttrs);
+		index_buffer();
+		Size += Nodes.capacity() * sizeof(index_type) + Attrs.capacity() * sizeof(index_type);
+	}
+
+	xml(const char_type* _URI, const char_type* _pData, const allocator& alloc, size_t _EstNumNodes = 100, size_t _EstNumAttrs = 500)
+		: Buffer(_URI, _pData, alloc, "xml doc")
+	{
+		Size = sizeof(*this) + strlen(Buffer.data) + 1;
 		Nodes.reserve(_EstNumNodes);
 		Attrs.reserve(_EstNumAttrs);
 		index_buffer();
@@ -78,7 +88,7 @@ public:
 	}
 
 	inline operator bool() const { return (bool)Buffer; }
-	inline const char_type* name() const { return Buffer.URI; }
+	inline const char_type* name() const { return Buffer.uri; }
 	inline size_t size() const { return Size; }
 
 	// Node API
@@ -86,14 +96,14 @@ public:
 	inline node parent(node _Node) const { return node(Node(_Node).Up);  }
 	inline node first_child(node _ParentNode) const { return node(Node(_ParentNode).Down); }
 	inline node next_sibling(node _PriorSibling) const { return node(Node(_PriorSibling).Next); }
-	inline const char_type* node_name(node _Node) const { return Buffer.pData + Node(_Node).Name; }
-	inline const char_type* node_value(node _Node) const { return Buffer.pData + Node(_Node).Value; }
+	inline const char_type* node_name(node _Node) const { return Buffer.data + Node(_Node).Name; }
+	inline const char_type* node_value(node _Node) const { return Buffer.data + Node(_Node).Value; }
 	
 	// Attribute API
 	inline attr first_attr(node _Node) const { return attr(Node(_Node).Attr); }
 	inline attr next_attr(attr _Attr) const { return Attr(_Attr).Name ? attr(_Attr + 1) : 0; }
-	inline const char_type* attr_name(attr _Attr) const { return Buffer.pData + Attr(_Attr).Name; }
-	inline const char_type* attr_value(attr _Attr) const { return Buffer.pData + Attr(_Attr).Value; }
+	inline const char_type* attr_name(attr _Attr) const { return Buffer.data + Attr(_Attr).Name; }
+	inline const char_type* attr_value(attr _Attr) const { return Buffer.data + Attr(_Attr).Value; }
 	
 	// Convenience functions that use the above API
 	inline node first_child(node _ParentNode, const char_type* _Name) const
@@ -473,17 +483,17 @@ private:
 
 void xml::index_buffer()
 {
-	char_type* start = Buffer.pData + strcspn(Buffer.pData, "<"); // find first opening tag
+	char_type* start = Buffer.data + strcspn(Buffer.data, "<"); // find first opening tag
 	// offsets of 0 must point to the empty string, so assign first byte as empty
 	// string... but ensure we've moved past where it's important to have that
 	// char_type be meaningful.
-	if (start == Buffer.pData) detail::skip_reserved_nodes(start);
+	if (start == Buffer.data) detail::skip_reserved_nodes(start);
 	Attrs.push_back(ATTR()); // init 0 to 0 offset from start
 	Nodes.push_back(NODE()); // init 0 to point to 0 offset from start
 	Nodes.push_back(NODE()); // init 1 to be the root - the parent of the first node
 	int OpenTagCount = 0, CloseTagCount = 0; // these should be equal by the end
 	make_next_node_children(start, root(), OpenTagCount, CloseTagCount); // start recursing
-	*Buffer.pData = 0; // make the first char_type nul so 0 offsets are the empty string
+	*Buffer.data = 0; // make the first char_type nul so 0 offsets are the empty string
 	if (OpenTagCount != CloseTagCount) throw text_document_error(text_document_errc::unclosed_scope); // if not equal, something went wrong
 }
 
@@ -559,15 +569,15 @@ xml::node xml::make_next_node(char_type*& _XML, node _Parent, node _Previous, in
 	NODE n;
 	n.Up = (index_type)_Parent;
 	if (_Parent || *_XML == '<') detail::skip_reserved_nodes(_XML); // base-case where the first char_type of file is '<' and that got nulled for the 0 offset empty value
-	n.Name = static_cast<index_type>(std::distance(Buffer.pData, ++_XML));
+	n.Name = static_cast<index_type>(std::distance(Buffer.data, ++_XML));
 	_XML += strcspn(_XML, " /\t\r\n>");
 	bool veryEarlyOut = *_XML == '/';
 	bool process = *_XML != '>' && !veryEarlyOut;
 	*_XML++ = 0;
-	if (process) make_node_attrs(Buffer.pData, _XML, n);
+	if (process) make_node_attrs(Buffer.data, _XML, n);
 	if (!veryEarlyOut)
 	{
-		if (*_XML != '/' && *_XML != '<') n.Value = static_cast<index_type>(std::distance(Buffer.pData, _XML++)), _XML += strcspn(_XML, "<");
+		if (*_XML != '/' && *_XML != '<') n.Value = static_cast<index_type>(std::distance(Buffer.data, _XML++)), _XML += strcspn(_XML, "<");
 		if (*(_XML+1) == '/') *_XML++ = 0;
 		else n.Value = 0;
 	}
@@ -576,7 +586,7 @@ xml::node xml::make_next_node(char_type*& _XML, node _Parent, node _Previous, in
 	if (_Previous) Node(_Previous).Next = newNode;
 	else if (_Parent) Node(_Parent).Down = newNode; // only assign down for first child - all other siblings don't reassign their parent's down.
 	Nodes.push_back(n);
-	detail::ampersand_decode(Buffer.pData + n.Name), detail::ampersand_decode(Buffer.pData + n.Value);
+	detail::ampersand_decode(Buffer.data + n.Name), detail::ampersand_decode(Buffer.data + n.Value);
 	if (!veryEarlyOut && *_XML != '/') // recurse on children nodes
 	{
 		node p = node(newNode);
