@@ -5,7 +5,7 @@
 #ifndef oBase_lock_free_queue_h
 #define oBase_lock_free_queue_h
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oBase/concurrency.h>
 #include <atomic>
 #include <memory>

@@ -7,7 +7,7 @@
 // surface can support. This is basically a CPU-side version of similar GPU 
 // buffers in D3D and OGL.
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oCore/mutex.h>
 #include <oSurface/surface.h>
 #include <oSurface/resize.h>

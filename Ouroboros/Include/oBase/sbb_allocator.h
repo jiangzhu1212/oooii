@@ -1,10 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Allocator implementation using the segregated binary buddy algorithm.
 #pragma once
 #ifndef oBase_sbb_allocator_h
 #define oBase_sbb_allocator_h
 
-#include <oBase/allocate.h>
+// Allocator implementation using the segregated binary buddy algorithm.
+
+#include <oMemory/allocate.h>
 #include <functional>
 
 namespace ouro {
@@ -12,10 +13,6 @@ namespace ouro {
 class sbb_allocator
 {
 public:
-	static const size_t default_alignment = 16;
-
-	typedef 
-
 	sbb_allocator() : heap(nullptr), heap_size(0) {}
 	sbb_allocator(void* arena, size_t bytes, void* bookkeeping) { initialize(arena, bytes, bookkeeping); }
 	~sbb_allocator() { deinitialize(); }
@@ -34,7 +31,7 @@ public:
 	const void* arena() const;
 	inline size_t arena_size() const;
 	allocator_stats get_stats() const;
-	void* allocate(size_t bytes, size_t align = default_alignment);
+	void* allocate(size_t bytes, const char* label = "?", const allocate_options& options = allocate_options());
 	void* reallocate(void* ptr, size_t bytes);
 	void deallocate(void* ptr);
 	size_t size(void* ptr) const;

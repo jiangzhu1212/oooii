@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oBase/macros.h>
 #include <oBase/assert.h>
 
@@ -69,6 +69,10 @@ const char* as_string(const memory_type& type)
 	};
 	static_assert(oCOUNTOF(names) == (uint32_t)memory_type::count, "array mismatch");
 	return names[(uint32_t)type];
+}
+
+void default_allocate_track(uint64_t allocation_id, const allocation_stats& stats)
+{
 }
 
 }

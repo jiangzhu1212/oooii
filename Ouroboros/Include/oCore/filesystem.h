@@ -4,7 +4,7 @@
 #ifndef oCore_filesystem_h
 #define oCore_filesystem_h
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oBase/path.h>
 #include <functional>
 #include <cstdio>

@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/concurrent_hash_map.h>
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oMemory/bit.h>
 #include <oMemory/byte.h>
 #include <oBase/macros.h>

@@ -5,13 +5,24 @@
 
 // A generic interface for allocating memory.
 
-#include <utility>
 #include <cstdint>
+#include <utility>
 
 namespace ouro {
 
 // _____________________________________________________________________________
 // Definitions of standard memory configuration options
+
+enum class memory_operation
+{
+	none,
+	allocate,
+	reallocate,
+	deallocate,
+	relocate,
+	
+	count, 
+};
 
 enum class memory_alignment
 {
@@ -67,10 +78,9 @@ union allocate_options
 		uint32_t alignment : 6; // memory_alignment
 		uint32_t type : 4;
 		uint32_t category : 22; // passed through: can be used for user-markup
-		
 	};
 
-	size_t get_alignment() const { return static_cast<size_t>(size_t(1) << (alignment ? alignment : (size_t)memory_alignment::default_alignment)); }
+	size_t get_alignment() const { return static_cast<size_t>(size_t(1) << (alignment ? alignment : (size_t)memory_alignment::align16)); }
 };
 
 // _____________________________________________________________________________
@@ -79,20 +89,22 @@ union allocate_options
 struct allocation_stats
 {
 	allocation_stats()
-		: label("unlabeled")
+		: pointer(nullptr)
+		, label("unlabeled")
 		, size(0)
 		, options(0)
 		, ordinal(0)
 		, frame(0)
-		, pad(0)
+		, operation(memory_operation::none)
 	{}
 
+	void* pointer;
 	const char* label;
 	size_t size;
 	allocate_options options;
 	uint32_t ordinal;
 	uint32_t frame;
-	uint32_t pad;
+	memory_operation operation;
 };
 
 struct allocator_stats
@@ -125,6 +137,7 @@ struct allocator_stats
 typedef void* (*allocate_fn)(size_t num_bytes, const allocate_options& options, const char* label);
 typedef void (*deallocate_fn)(const void* pointer);
 typedef void (*deallocate_nonconst_fn)(void* pointer);
+typedef void (*allocate_track_fn)(uint64_t allocator_id, const allocation_stats& stats);
 
 class scoped_allocation
 {
@@ -232,6 +245,7 @@ struct allocator
 
 void* default_allocate(size_t num_bytes, const allocate_options& options, const char* label = "");
 void default_deallocate(const void* pointer);
+void default_allocate_track(uint64_t allocation_id, const allocation_stats& stats);
 
 void* noop_allocate(size_t num_bytes, const allocate_options& options, const char* label = "");
 void noop_deallocate(const void* pointer);

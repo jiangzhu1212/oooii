@@ -53,7 +53,7 @@ scoped_allocation encode_tga(const image& img, const allocator& file_alloc, cons
 
 	const size_t size = sizeof(tga_header) + h.width * h.height * (h.bpp/8);
 
-	scoped_allocation p(file_alloc.allocate(size, memory_alignment::default_alignment, "encoded tga"), size, file_alloc.deallocate);
+	scoped_allocation p(file_alloc.allocate(size, memory_alignment::align_default, "encoded tga"), size, file_alloc.deallocate);
 	memcpy(p, &h, sizeof(tga_header));
 	mapped_subresource dst;
 	dst.data = byte_add((void*)p, sizeof(tga_header));

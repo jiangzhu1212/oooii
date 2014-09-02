@@ -8,7 +8,7 @@
 #ifndef oBase_hash_map_h
 #define oBase_hash_map_h
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <functional>
 #include <memory.h>
 #include <stdlib.h>

@@ -6,7 +6,7 @@
 #ifndef oGfx_shader_registry_h
 #define oGfx_shader_registry_h
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oBase/concurrent_registry.h>
 #include <oBase/object_pool.h>
 #include <oGPU/shader.h>

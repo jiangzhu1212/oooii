@@ -5,7 +5,7 @@
 #ifndef oBase_concurrent_registry_h
 #define oBase_concurrent_registry_h
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oBase/concurrent_hash_map.h>
 #include <oBase/concurrent_object_pool.h>
 #include <oBase/concurrent_stack.h>
