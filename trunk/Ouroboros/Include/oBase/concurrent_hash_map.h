@@ -10,7 +10,7 @@
 #ifndef oBase_concurrent_hash_map
 #define oBase_concurrent_hash_map
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <cstdint>
 
 namespace ouro {

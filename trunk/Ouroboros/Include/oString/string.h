@@ -74,6 +74,7 @@ template<size_t size> int format_duration(char (&dst)[size], double seconds, boo
 // depending on the number of bytes specified. This returns the same result as 
 // snprintf.
 int format_bytes(char* dst, size_t dst_size, uint64_t bytes, size_t num_precision_digits);
+template<size_t size> int format_bytes(char (&dst)[size], uint64_t bytes, size_t num_precision_digits) { return format_bytes(dst, size, bytes, num_precision_digits); }
 
 // For numbers, this inserts commas where they ought to be (every 3 numbers)
 // this returns nullptr on failure, else dst.

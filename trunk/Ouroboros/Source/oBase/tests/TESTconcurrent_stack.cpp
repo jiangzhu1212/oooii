@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/assert.h>
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oBase/concurrent_object_pool.h>
 #include <oBase/concurrent_stack.h>
 #include <oBase/concurrency.h>

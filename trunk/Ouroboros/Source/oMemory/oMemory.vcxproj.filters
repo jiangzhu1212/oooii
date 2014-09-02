@@ -54,6 +54,9 @@
     <ClCompile Include="memset4.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="allocate.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="memduff.h">
@@ -75,6 +78,9 @@
       <Filter>oMemory</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oMemory\all.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\allocate.h">
       <Filter>oMemory</Filter>
     </ClInclude>
   </ItemGroup>

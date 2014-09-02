@@ -22,7 +22,6 @@
     <ClCompile Include="..\..\External\calfaq\calfaq.cpp" />
     <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="aabox.cpp" />
-    <ClCompile Include="allocate.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="concurrent_growable_pool.cpp" />
     <ClCompile Include="concurrent_hash_map.cpp" />
@@ -68,7 +67,6 @@
     <ClInclude Include="..\..\Include\oBase\aabox.h" />
     <ClInclude Include="..\..\Include\oBase\algorithm.h" />
     <ClInclude Include="..\..\Include\oBase\all.h" />
-    <ClInclude Include="..\..\Include\oBase\allocate.h" />
     <ClInclude Include="..\..\Include\oBase\all_libc.h" />
     <ClInclude Include="..\..\Include\oBase\assert.h" />
     <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h" />

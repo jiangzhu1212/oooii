@@ -2,6 +2,7 @@
 #include <oBase/sbb.h>
 #include <oBase/throw.h>
 #include <oBase/assert.h>
+#include <oBase/cbtree.h>
 
 #define SBB_FATAL(msg) oTHROW_INVARG(msg)
 #define SBB_MAX(x,y) ((x) > (y) ? (x) : (y))
@@ -88,7 +89,7 @@ sbb_t sbb_create(void* arena, size_t arena_bytes, size_t min_block_size, void* b
 	for (; page < page_end; page++)
 		*page = sbb_page_t(-1);
 
-	return sbb;
+	return (sbb_t)sbb;
 }
 
 void sbb_destroy(sbb_t sbb)

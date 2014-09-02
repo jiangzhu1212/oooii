@@ -2,9 +2,11 @@
 #include <oBase/tlsf_allocator.h>
 #include <oBase/assert.h>
 #include <oMemory/byte.h>
-#include <oBase/fixed_string.h>
-#include <oBase/throw.h>
+#include <oString/string.h>
 #include <tlsf.h>
+
+#define USE_ALLOCATOR_STATS 1
+#define USE_ALLOCATION_STATS 1
 
 namespace ouro {
 
@@ -32,7 +34,8 @@ static void find_largest_free_block(void* ptr, size_t bytes, int used, void* use
 
 void tlsf_allocator::initialize(void* arena, size_t bytes)
 {
-	oCHECK(byte_aligned(arena, default_alignment), "tlsf arena must be 16-byte aligned");
+	if (!byte_aligned(arena, 16))
+		throw std::invalid_argument("tlsf arena must be 16-byte aligned");
 	heap = arena;
 	heap_size = bytes;
 	reset();
@@ -42,19 +45,23 @@ static void trace_leaks(void* ptr, size_t bytes, int used, void* user)
 {
 	if (used)
 	{
-		sstring mem;
+		char mem[64];
 		format_bytes(mem, bytes, 2);
-		oTRACE("tlsf leak: 0x%p %s", ptr, mem.c_str());
+		oTRACE("tlsf leak: 0x%p %s", ptr, mem);
 	}
 }
 
 void* tlsf_allocator::deinitialize()
 {
-	if (stats.num_allocations)
-	{
-		o_tlsf_walk_heap(heap, trace_leaks, nullptr);
-		throw std::runtime_error(formatf("allocator destroyed with %u outstanding allocations", stats.num_allocations));
-	}
+	#if USE_ALLOCATOR_STATS
+		if (stats.num_allocations)
+		{
+			o_tlsf_walk_heap(heap, trace_leaks, nullptr);
+			char str[96];
+			snprintf(str, "allocator destroyed with %u outstanding allocations", stats.num_allocations);
+			throw std::runtime_error(str);
+		}
+	#endif
 
 	if (!valid())
 		throw std::runtime_error("tlsf heap is corrupt");
@@ -93,17 +100,33 @@ allocator_stats tlsf_allocator::get_stats() const
 	return s;
 }
 
-void* tlsf_allocator::allocate(size_t bytes, size_t align)
+void* tlsf_allocator::allocate(size_t bytes, const char* label, const allocate_options& options)
 {
-	void* p = tlsf_memalign(heap, align, max(bytes, size_t(1)));
+	bytes = max(bytes, size_t(1));
+	size_t align = options.get_alignment();
+	void* p = align == 16 ? tlsf_malloc(heap, bytes) : tlsf_memalign(heap, align, bytes);
 	if (p)
 	{
 		size_t block_size = tlsf_block_size(p);
-		stats.num_allocations++;
-		stats.num_allocations_peak = max(stats.num_allocations_peak, stats.num_allocations);
-		stats.allocated_bytes += block_size;
-		stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
+		#if USE_ALLOCATOR_STATS
+			stats.num_allocations++;
+			stats.num_allocations_peak = max(stats.num_allocations_peak, stats.num_allocations);
+			stats.allocated_bytes += block_size;
+			stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
+		#endif
 	}
+
+	#if USE_ALLOCATION_STATS
+		allocation_stats s;
+		s.pointer = p;
+		s.label = label;
+		s.size = bytes;
+		s.options = options;
+		s.ordinal = 0;
+		s.frame = 0;
+		s.operation = memory_operation::allocate;
+		default_allocate_track(0, s);
+	#endif
 
 	return p;
 }
@@ -115,9 +138,24 @@ void* tlsf_allocator::reallocate(void* ptr, size_t bytes)
 	if (p)
 	{
 		size_t diff = tlsf_block_size(p) - block_size;
-		stats.allocated_bytes += diff;
-		stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
+		#if USE_ALLOCATOR_STATS
+			stats.allocated_bytes += diff;
+			stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
+		#endif
 	}
+
+	#if USE_ALLOCATION_STATS
+		allocation_stats s;
+		s.pointer = p;
+		s.label = nullptr;
+		s.size = bytes;
+		s.options = allocate_options();
+		s.ordinal = 0;
+		s.frame = 0;
+		s.operation = memory_operation::reallocate;
+		default_allocate_track(0, s);
+	#endif
+
 	return p;
 }
 
@@ -127,9 +165,24 @@ void tlsf_allocator::deallocate(void* ptr)
 	{
 		const size_t block_size = tlsf_block_size(ptr);
 		tlsf_free(heap, ptr);
-		stats.num_allocations--;
-		stats.allocated_bytes -= block_size;
+
+		#if USE_ALLOCATOR_STATS
+			stats.num_allocations--;
+			stats.allocated_bytes -= block_size;
+		#endif
 	}
+
+	#if USE_ALLOCATION_STATS
+		allocation_stats s;
+		s.pointer = ptr;
+		s.label = nullptr;
+		s.size = 0;
+		s.options = allocate_options();
+		s.ordinal = 0;
+		s.frame = 0;
+		s.operation = memory_operation::deallocate;
+		default_allocate_track(0, s);
+	#endif
 }
 
 size_t tlsf_allocator::size(void* ptr) const 
@@ -152,8 +205,11 @@ void tlsf_allocator::reset()
 	if (!heap || !heap_size)
 		throw std::runtime_error("allocator not valid");
 	heap = tlsf_create_with_pool(heap, heap_size);
-	stats = allocator_stats();
-	stats.capacity_bytes = heap_size - tlsf_size();
+
+	#if USE_ALLOCATOR_STATS
+		stats = allocator_stats();
+		stats.capacity_bytes = heap_size - tlsf_size();
+	#endif
 }
 
 static void tlsf_walker(void* ptr, size_t bytes, int used, void* user)

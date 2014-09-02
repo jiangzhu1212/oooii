@@ -1,4 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef sbb_h
+#define sbb_h
+
+#include <cstddef>
+
 // Segregated Binary-Buddy memory allocator.
 // This is an implementation of a binary-buddy memory allocator that keeps 
 // its bookkeeping separate from the heap itself so that write-combined 
@@ -7,13 +13,7 @@
 // than a linked-list freelist node. O(log n) allocation/free time.
 // Per-sbb overhead: 32-bit: 24-bytes + pages; 64-bit: 32-bytes + pages.
 
-#pragma once
-#ifndef sbb_h
-#define sbb_h
-
-#include <oBase/cbtree.h>
-
-typedef void* sbb_t;
+typedef struct sbb__ {}* sbb_t;
 
 // returns the bytes required to maintain bookkeeping for the allocator
 size_t sbb_bookkeeping_size(size_t arena_bytes, size_t min_block_size);

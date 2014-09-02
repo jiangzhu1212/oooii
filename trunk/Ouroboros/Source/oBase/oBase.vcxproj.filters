@@ -73,9 +73,6 @@
     <ClCompile Include="rgb.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="allocate.cpp">
-      <Filter>Source\allocator</Filter>
-    </ClCompile>
     <ClCompile Include="concurrent_pool.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
@@ -341,9 +338,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\coroutine.h">
       <Filter>oBase\concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\allocate.h">
-      <Filter>oBase\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\pool.h">
       <Filter>oBase\allocator</Filter>

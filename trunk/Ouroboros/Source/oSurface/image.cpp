@@ -38,7 +38,7 @@ void image::initialize(const info& i, const allocator& a)
 	deinitialize();
 	inf = i;
 	alloc = a;
-	bits = alloc.allocate(size(), memory_alignment::default_alignment, "image");
+	bits = alloc.allocate(size(), memory_alignment::align_default, "image");
 }
 
 void image::initialize(const info& i, const void* data, const allocator& a)

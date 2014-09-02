@@ -3,7 +3,7 @@
 #ifndef oGPU_shader_h
 #define oGPU_shader_h
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oBase/gpu_api.h>
 #include <oGPU/vertex_layout.h>
 

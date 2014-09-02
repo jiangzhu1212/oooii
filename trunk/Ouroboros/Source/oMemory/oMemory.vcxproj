@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="allocate.cpp" />
     <ClCompile Include="dtoull.cpp" />
     <ClCompile Include="is_ascii.cpp" />
     <ClCompile Include="memcmp4.cpp" />
@@ -37,6 +38,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oMemory\all.h" />
+    <ClInclude Include="..\..\Include\oMemory\allocate.h" />
     <ClInclude Include="..\..\Include\oMemory\bit.h" />
     <ClInclude Include="..\..\Include\oMemory\byte.h" />
     <ClInclude Include="..\..\Include\oMemory\endian.h" />

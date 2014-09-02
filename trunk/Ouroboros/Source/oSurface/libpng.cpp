@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oSurface/codec.h>
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oMemory/byte.h>
 #include <oBase/finally.h>
 #include <oBase/throw.h>
@@ -41,7 +41,7 @@ void user_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
 	{
 		w.capacity = NewSize + (NewSize / 2);
 		void* old = w.data;
-		w.data = tl_alloc->allocate(w.capacity, ouro::memory_alignment::default_alignment, "libpng");
+		w.data = tl_alloc->allocate(w.capacity, ouro::memory_alignment::align_default, "libpng");
 		memcpy(w.data, old, OldSize);
 		tl_alloc->deallocate(old);
 	}
@@ -149,7 +149,7 @@ scoped_allocation encode_png(const image& img, const allocator& file_alloc, cons
 	write_state ws;
 	ws.capacity = si.dimensions.y * si.dimensions.x * element_size(si.format);
 	ws.capacity += (ws.capacity / 2);
-	ws.data = tl_alloc->allocate(ws.capacity, memory_alignment::default_alignment, "libpng"); // use uncompressed size as an estimate to reduce reallocs
+	ws.data = tl_alloc->allocate(ws.capacity, memory_alignment::align_default, "libpng"); // use uncompressed size as an estimate to reduce reallocs
 	ws.size = 0;
 	png_set_write_fn(png_ptr, &ws, user_write_data, user_flush_data);
 

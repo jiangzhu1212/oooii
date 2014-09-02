@@ -61,7 +61,7 @@ void model::initialize(const model_info& i, const char** material_names, const a
 		+ material_names_size;
 
 	// allocate
-	data = (uchar*)a.allocate(total_bytes, memory_alignment::default_alignment, "model data");
+	data = (uchar*)a.allocate(total_bytes, memory_alignment::align_default, "model data");
 	oASSERT(data, "failed alloc");
 
 	// setup offsets into data

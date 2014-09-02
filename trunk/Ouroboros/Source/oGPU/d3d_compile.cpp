@@ -249,7 +249,7 @@ scoped_allocation compile_shader(const char* _CommandLineOptions, const path& _S
 		oTHROW(io_error, "shader compilation error:\n%s", Errs);
 	}
 
-	void* buffer = _Allocator.allocate(Code->GetBufferSize(), memory_alignment::default_alignment, "compile_shader");
+	void* buffer = _Allocator.allocate(Code->GetBufferSize(), memory_alignment::align_default, "compile_shader");
 	memcpy(buffer, Code->GetBufferPointer(), Code->GetBufferSize());
 
 	return scoped_allocation(buffer, Code->GetBufferSize(), _Allocator.deallocate);

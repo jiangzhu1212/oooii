@@ -13,7 +13,7 @@
 // an abstract interface for enabling the unit tests - it would be up to client 
 // code to implement these interfaces.
 
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oSurface/image.h>
 #include <chrono>
 #include <cstdarg>

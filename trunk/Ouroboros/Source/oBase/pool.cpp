@@ -23,7 +23,7 @@
 * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
 **************************************************************************/
 #include <oBase/pool.h>
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oMemory/bit.h>
 #include <oMemory/byte.h>
 #include <oBase/macros.h>

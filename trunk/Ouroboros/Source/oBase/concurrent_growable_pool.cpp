@@ -23,7 +23,7 @@
 * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
 **************************************************************************/
 #include <oBase/concurrent_growable_pool.h>
-#include <oBase/allocate.h>
+#include <oMemory/allocate.h>
 #include <oMemory/byte.h>
 #include <oCompiler.h>
 #include <oBase/macros.h>
