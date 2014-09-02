@@ -67,7 +67,7 @@ static const char* sTestINI_RN = {
 static void TESTini(const char* _pData)
 {
 	static const char* ININame = "Test INI";
-	std::shared_ptr<ini> INI = std::make_shared<ini>(ININame, (char*)_pData, nullptr, 100);
+	std::shared_ptr<ini> INI = std::make_shared<ini>(ININame, _pData, default_allocator, 100);
 
 	bool AtLeastOneExecuted = false;
 	int i = 0;

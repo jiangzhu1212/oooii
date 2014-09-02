@@ -27,10 +27,19 @@ public:
 	oDECLARE_HANDLE(key);
 
 	ini() : Size(0) {}
-	ini(const char* _URI, char* _pData, const text_document_deleter_t& _Delete, size_t _EstNumSections = 10, size_t _EstNumKeys = 100)
+	ini(const char* _URI, char* _pData, deallocate_fn _Delete, size_t _EstNumSections = 10, size_t _EstNumKeys = 100)
 		: Buffer(_URI, _pData, _Delete)
 	{
-		Size = sizeof(*this) + strlen(Buffer.pData) + 1;
+		Size = sizeof(*this) + strlen(Buffer.data) + 1;
+		Entries.reserve(_EstNumSections + _EstNumKeys);
+		index_buffer();
+		Size += Entries.capacity() * sizeof(index_type);
+	}
+
+	ini(const char* _URI, const char* _pData, const allocator& alloc, size_t _EstNumSections = 10, size_t _EstNumKeys = 100)
+		: Buffer(_URI, _pData, alloc, "ini doc")
+	{
+		Size = sizeof(*this) + strlen(Buffer.data) + 1;
 		Entries.reserve(_EstNumSections + _EstNumKeys);
 		index_buffer();
 		Size += Entries.capacity() * sizeof(index_type);
@@ -49,15 +58,15 @@ public:
 	}
 
 	inline operator bool() const { return (bool)Buffer; }
-	inline const char* name() const { return Buffer.URI; }
+	inline const char* name() const { return Buffer.uri; }
 	inline size_t size() const { return Size;  }
-	inline const char* section_name(section _Section) const { return Buffer.pData + Entry(_Section).Name; }
+	inline const char* section_name(section _Section) const { return Buffer.data + Entry(_Section).Name; }
 	inline section first_section() const { return Entries.size() > 1 ? section(1) : 0; }
 	inline section next_section(section _Prior) const { return section(Entry(_Prior).Next); }
 	inline key first_key(section _Section) const { return key(Entry(_Section).Value); }
 	inline key next_key(key _Prior) const { return key(Entry(_Prior).Next); }
-	inline const char* name(key _Key) const { return Buffer.pData + Entry(_Key).Name; }
-	inline const char* value(key _Key) const { return Buffer.pData + Entry(_Key).Value; }
+	inline const char* name(key _Key) const { return Buffer.data + Entry(_Key).Name; }
+	inline const char* value(key _Key) const { return Buffer.data + Entry(_Key).Value; }
 
 	inline section find_section(const char* _Name) const
 	{
@@ -113,7 +122,7 @@ private:
 
 void ini::index_buffer()
 {
-	char* c = Buffer.pData;
+	char* c = Buffer.data;
 	index_type lastSectionIndex = 0;
 	ENTRY s, k;
 	bool link = false;
@@ -130,7 +139,7 @@ void ini::index_buffer()
 			case ';': // comment, move to end of line
 				c += strcspn(c, oNEWLINE), c++;
 				// If a comment is at the end of the file, we need to check to see if there is any file left to read
-				while (--c >= Buffer.pData && strchr(oWHITESPACE, *c)); // trim right whitespace
+				while (--c >= Buffer.data && strchr(oWHITESPACE, *c)); // trim right whitespace
 				if (!*(++c)) break; // if there is no more, just exit
 				*c = 0;
 				c += 1 + strcspn(c, oNEWLINE); // move to end of line
@@ -139,7 +148,7 @@ void ini::index_buffer()
 					c++; // advance again
 				break;
 			case '[': // start of section, record it
-				s.Name = static_cast<index_type>(std::distance(Buffer.pData, c+1));
+				s.Name = static_cast<index_type>(std::distance(Buffer.data, c+1));
 				if (lastSectionIndex) Entries[lastSectionIndex].Next = static_cast<index_type>(Entries.size());
 				lastSectionIndex = static_cast<index_type>(Entries.size());
 				Entries.push_back(s);
@@ -149,19 +158,19 @@ void ini::index_buffer()
 			default:
 				if (Entries.size() <= 1) throw new text_document_error(text_document_errc::generic_parse_error);
 				k.Next = 0;
-				k.Name = static_cast<index_type>(std::distance(Buffer.pData, c));
+				k.Name = static_cast<index_type>(std::distance(Buffer.data, c));
 				c += strcspn(c, "=" oWHITESPACE); // move to end of key
 				bool atSep = *c == '=';
 				*c++ = 0;
 				if (!atSep) c += strcspn(c, "=") + 1; // if we moved to whitespace, continue beyond it
 				c += strspn(c, oWHITESPACE); // move past whitespace
-				k.Value = static_cast<index_type>(std::distance(Buffer.pData, c));
+				k.Value = static_cast<index_type>(std::distance(Buffer.data, c));
 				c += strcspn(c, oNEWLINE ";"); // move to end of line or a comment
 				if (link) Entries.back().Next = static_cast<index_type>(Entries.size());
 				link = true;
 				if (!Entries[lastSectionIndex].Value) Entries[lastSectionIndex].Value = static_cast<index_type>(Entries.size());
 				Entries.push_back(k);
-				while (--c >= Buffer.pData && strchr(oWHITESPACE, *c)); // trim right whitespace
+				while (--c >= Buffer.data && strchr(oWHITESPACE, *c)); // trim right whitespace
 				if (!*(++c)) break; // if there is no more, just exit
 				*c = 0;
 				c += 1 + strcspn(c, oNEWLINE); // move to end of line
@@ -171,7 +180,7 @@ void ini::index_buffer()
 				break;
 		}
 	}
-	*Buffer.pData = '\0'; // have all empty name/values point to 0 offset and now that offset will be the empty string
+	*Buffer.data = '\0'; // have all empty name/values point to 0 offset and now that offset will be the empty string
 }
 
 }

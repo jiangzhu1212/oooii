@@ -58,7 +58,7 @@ public:
 
 void TESTxml()
 {
-	std::shared_ptr<xml> XML = std::make_shared<xml>("Test XML", (char*)sTestXML, nullptr, 200);
+	std::shared_ptr<xml> XML = std::make_shared<xml>("Test XML", sTestXML, default_allocator, 200);
 
 	xml::node hCatalog = XML->first_child(XML->root(), "CATALOG");
 	oCHECK(hCatalog, "Cannot find CATALOG node");
@@ -123,7 +123,7 @@ void TESTxml()
 	oCHECK(!strcmp(val, "boolattr3"), "boolattr3 2 failed");
 
 	// Test compacted XML
- 	XML = std::make_shared<xml>("Test CompactXML", (char*)sCompactTestXML, nullptr, 200);
+ 	XML = std::make_shared<xml>("Test CompactXML", sCompactTestXML, default_allocator, 200);
 
 	xml::node HeadNode = XML->first_child(XML->first_child(XML->root()), "head");
 	oCHECK(!_stricmp(XML->node_name(HeadNode), "head"), "Failed to get head node");

@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_text_document_h
-#define oBase_text_document_h
+#ifndef oString_text_document_h
+#define oString_text_document_h
 
 // A text document is basically a text file format considered solely as a string 
 // without any file I/O. This head includes a common base on which to build such 
@@ -10,8 +10,8 @@
 // that a nul-terminated string that is compliant with the text document's 
 // format can be parsed inline into an indexable state.
 
-#include <functional>
 #include <system_error>
+#include <oMemory/allocate.h>
 #include <oBase/fixed_string.h>
 
 namespace ouro {
@@ -26,79 +26,84 @@ const std::error_category& text_document_category();
 class text_document_error : public std::logic_error
 {
 public:
-	text_document_error(text_document_errc err_code) : logic_error(text_document_category().message(static_cast<int>(err_code))) {}
+	text_document_error(text_document_errc err_code) 
+		: logic_error(text_document_category().message(static_cast<int>(err_code))) {}
 };
-
-typedef std::function<void(char* _pData)> text_document_deleter_t;
 
 	namespace detail {
 		class text_buffer
 		{
-			// A buffer assumed to be a nul-terminated string that has a uri source
-			// name as well as a way to delete the allocated string. If no deleter is
-			// specified, then this allocates its own memory and copies the source.
+			// A buffer assumed to be a nul-terminated string with a uri label
+			// and a deallocate function for the string buffer.
 		
 			text_buffer(const text_buffer&);
 			const text_buffer& operator=(const text_buffer&);
 		
 		public:
-			text_buffer()
-				: pData(nullptr)
+			text_buffer() : data(nullptr), deallocate(nullptr) {}
+
+			text_buffer(const char* _uri, char* _data, const deallocate_fn& _deallocate)
+				: data(_data)
+				, deallocate(_deallocate)
+				, uri(_uri)
 			{}
 
-			text_buffer(const char* _URI, char* _pData, const text_document_deleter_t& _Delete)
-				: URI(_URI)
-				, pData(_pData)
-				, Delete(_Delete)
+			text_buffer(const char* _uri, const char* data_src, const allocator& alloc, const char* label)
+				: data(nullptr)
+				, deallocate(alloc.deallocate)
+				, uri(_uri)
 			{
-				if (!Delete)
-				{
-					size_t size = strlen(_pData) + 1;
-					pData = new char[size];
-					strlcpy(pData, _pData, size);
-				}
+				size_t size = strlen(data_src) + 1;
+				data = (char*)alloc.allocate(size, allocate_options(), label);
+				strlcpy(data, data_src, size);
 			}
 
-			~text_buffer() { delete_buffer(); }
-
-			text_buffer(text_buffer&& _That) { operator=(std::move(_That)); }
-			text_buffer& operator=(text_buffer&& _That)
+			~text_buffer()
 			{
-				if (this != &_That)
+				delete_buffer();
+			}
+
+			text_buffer(text_buffer&& that)
+			{ 
+				data = that.data; data = nullptr;
+				deallocate = that.deallocate; that.deallocate = nullptr;
+				uri = std::move(that.uri); uri.clear();
+			}
+			
+			text_buffer& operator=(text_buffer&& that)
+			{
+				if (this != &that)
 				{
 					delete_buffer();
-					pData = std::move(_That.pData);
-					_That.pData = nullptr;
-					Delete = std::move(_That.Delete);
-					URI = std::move(_That.URI);
+					data = std::move(that.data); that.data = nullptr;
+					deallocate = std::move(that.deallocate);
+					uri = std::move(that.uri);
 				}
 				return *this;
 			}
 
-			operator bool() const { return !!pData; }
+			operator bool() const { return !!data; }
 
-			char* pData;
-			text_document_deleter_t Delete;
-			uri_string URI;
+			char* data;
+			deallocate_fn deallocate;
+			uri_string uri;
 
 		private:
 			void delete_buffer()
 			{
-				if (pData)
+				if (data)
 				{
-					if (Delete)
+					if (deallocate)
 					{
-						Delete(pData);
-						Delete = nullptr;
+						deallocate(data);
+						deallocate = nullptr;
 					}
-					else
-						delete [] pData;
 
-					pData = nullptr;
+					data = nullptr;
 				}
 			}
 		};
-	} // namespace detail
+	}
 }
 
 #endif

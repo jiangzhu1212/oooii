@@ -43,7 +43,7 @@ static void TESTjson_node(const json& _JSON, int _RootNode, int _Node, const cha
 
 void TESTjson()
 {
-	json JSON("Test JSON", (char*)sJSONTestReferenceResult, nullptr);
+	json JSON("Test JSON", sJSONTestReferenceResult, default_allocator);
 
 	// Test common API 
 	oCHECK0(JSON.size() >= strlen(sJSONTestReferenceResult));
