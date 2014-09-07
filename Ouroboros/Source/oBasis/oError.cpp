@@ -30,7 +30,7 @@ const char* oErrorAsString(errno_t _Error)
 		case std::errc::no_child_process: return "no_child_process";
 		case std::errc::no_message_available: return "no_message_available";
 		case std::errc::connection_aborted: return "connection_aborted";
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 
@@ -57,7 +57,7 @@ const char* oErrorGetDefaultString(errno_t _Error)
 		case std::errc::no_child_process: return "no child processes";
 		case std::errc::no_message_available: return "no message available";
 		case std::errc::connection_aborted: return "connection aborted";
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 

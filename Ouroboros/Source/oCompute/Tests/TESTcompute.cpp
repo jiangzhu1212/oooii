@@ -62,7 +62,7 @@ static void test_hemisphere_vectors()
 	Hemisphere3Gen[1] = normalize(mul(Rot, Hemisphere3Gen[0]));
 	Hemisphere3Gen[2] = normalize(mul(Rot, Hemisphere3Gen[1]));
 
-	oFORI(i, oHEMISPHERE3)
+	for (auto i = 0; i < 3; i++)
 		oCHECK(equal_eps(Hemisphere3Gen[i], oHEMISPHERE3[i]), "Hemisphere vector %d wrong", i);
 }
 
@@ -158,9 +158,9 @@ static void test_hsv()
 {
 	static const float HSV_EPS = 0.001f;
 
-	oFORI(i, kHSVTests)
+	int i = 0;
+	for (const auto& c : kHSVTests)
 	{
-		const HSV_TEST& c = kHSVTests[i];
 		const float3 kRGB(c.R, c.G, c.B);
 		const float3 kHSV(c.H, c.Shsv, c.V);
 
@@ -179,6 +179,7 @@ static void test_hsv()
 				, kRGB.x, kRGB.y, kRGB.z
 				, kHSV.x, kHSV.y, kHSV.z
 				, testHSV.x, testHSV.y, testHSV.z);
+		i++;
 	}
 }
 

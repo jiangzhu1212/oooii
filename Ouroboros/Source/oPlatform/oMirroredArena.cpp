@@ -185,7 +185,7 @@ namespace detail {
 			lock_t lock(thread_cast<shared_mutex&>(Mutex));
 			
 			threadsafe ARENA* pFreeArena = 0;
-			oFORI(i, RegisteredArenas)
+			for (auto i = 0; i < oCOUNTOF(RegisteredArenas); i++)
 			{
 				if (!RegisteredArenas[i].pBase)
 					pFreeArena = &RegisteredArenas[i];
@@ -212,7 +212,7 @@ namespace detail {
 		void UnregisterArena(void* _pBase) threadsafe
 		{
 			lock_t lock(thread_cast<shared_mutex&>(Mutex));
-			oFORI(i, RegisteredArenas)
+			for (auto i = 0; i < oCOUNTOF(RegisteredArenas); i++)
 				if (_pBase == RegisteredArenas[i].pBase)
 					RegisteredArenas[i].pBase = 0;
 		}
@@ -220,7 +220,7 @@ namespace detail {
 		size_t GetArenaSize(void* _pUserPointer) const
 		{
 			void* pBase = GetBasePointer(_pUserPointer);
-			oFORI(i, RegisteredArenas)
+			for (auto i = 0; i < oCOUNTOF(RegisteredArenas); i++)
 				if (pBase == RegisteredArenas[i].pBase)
 					return RegisteredArenas[i].Size;
 			return 0;
@@ -658,7 +658,7 @@ bool oMirroredArena_Impl::RetrieveChanges(void* _pChangeBuffer, size_t _SizeofCh
 				*_pSizeRetrieved = 0;
 			return false;
 
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 
@@ -751,7 +751,7 @@ static size_t CalculateSizeInRange(const void* _pAddress, size_t _Size, const vo
 		case 1: return static_cast<size_t>(_PageSize - byte_diff(_pAddress, _pPage));
 		case 2: return static_cast<size_t>(_Size - byte_diff(_pPage, _pAddress));
 		case 3: return _Size;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 
@@ -793,6 +793,6 @@ bool oMirroredArena_Impl::IsInChanges(const void* _pAddress, size_t _Size, const
 			return sizeLeft == 0;
 		}
 
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }

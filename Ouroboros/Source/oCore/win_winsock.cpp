@@ -60,26 +60,26 @@ static const WSA_ERR sWSAErrors[] =
 
 const char* as_string_WSAerr(int _WSAError)
 {
-	oFORI(i, sWSAErrors)
-		if (_WSAError == sWSAErrors[i].hresult)
-			return sWSAErrors[i].errstr;
+	for (const auto& err : sWSAErrors)
+		if (_WSAError == err.hresult)
+			return err.errstr;
 	return "?";
 }
 
 const char* get_desc(int _WSAError)
 {
-	oFORI(i, sWSAErrors)
-		if (_WSAError == sWSAErrors[i].hresult && sWSAErrors[i].errdesc)
-			return sWSAErrors[i].errdesc;
+	for (const auto& err : sWSAErrors)
+		if (_WSAError == err.hresult && err.errdesc)
+			return err.errdesc;
 	
 	return "See http://msdn.microsoft.com/en-us/library/ms740668(v=vs.85).aspx for more information.";
 }
 
 std::errc::errc get_errc(int _WSAError)
 {
-	oFORI(i, sWSAErrors)
-		if (_WSAError == sWSAErrors[i].hresult)
-			return sWSAErrors[i].err;
+	for (const auto& err : sWSAErrors)
+		if (_WSAError == err.hresult)
+			return err.err;
 	return std::errc::state_not_recoverable;
 }
 

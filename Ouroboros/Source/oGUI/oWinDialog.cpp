@@ -17,7 +17,7 @@ static WORD oDlgGetClass(oWINDOWS_DIALOG_ITEM_TYPE _Type)
 		case oDLG_LISTBOX: return 0x0083;
 		case oDLG_SCROLLBAR: return 0x0084;
 		case oDLG_COMBOBOX: return 0x0085;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 

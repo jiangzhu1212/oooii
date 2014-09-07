@@ -126,22 +126,22 @@ bool Test_Frustum()
 	planef planes[6];
 	float4x4 P = make_orthographic_lh(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
 	oExtractFrustumPlanes(planes, P, false);
-	oFORI(i, EXPECTED_PLANES_LH)
+	for (auto i = 0; i < 6; i++)
 		oTESTB(equal(EXPECTED_PLANES_LH[i], planes[i], MAX_ULPS), "orthographic LH %s plane comparison failed", names[i]);
 
 	P = make_orthographic_rh(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
 	oExtractFrustumPlanes(planes, P, false);
-	oFORI(i, EXPECTED_PLANES_RH)
+	for (auto i = 0; i < 6; i++)
 		oTESTB(equal(EXPECTED_PLANES_RH[i], planes[i], MAX_ULPS), "orthographic RH %s plane comparison failed", names[i]);
 
 	P = make_perspective_lh(radians(90.0f), 1.0f, 0.1f, 100.0f);
 	oExtractFrustumPlanes(planes, P, true);
-	oFORI(i, EXPECTED_PERSPECTIVE_PLANES_LH)
+	for (auto i = 0; i < 6; i++)
 		oTESTB(equal(EXPECTED_PERSPECTIVE_PLANES_LH[i], planes[i], MAX_ULPS), "perspective LH %s plane comparison failed", names[i]);
 
 	P = make_perspective_rh(radians(90.0f), 1.0f, 0.1f, 100.0f);
 	oExtractFrustumPlanes(planes, P, true);
-	oFORI(i, EXPECTED_PERSPECTIVE_PLANES_RH)
+	for (auto i = 0; i < 6; i++)
 		oTESTB(equal(EXPECTED_PERSPECTIVE_PLANES_RH[i], planes[i], MAX_ULPS), "perspective RH %s plane comparison failed", names[i]);
 
 	oErrorSetLast(0, "");
@@ -183,7 +183,7 @@ bool Test_FrustumCalcCorners()
 	oFrustumf f(P);
 	float3 corners[8];
 	oTESTB(oExtractFrustumCorners(f, corners), "oExtractFrustumCorners failed (f)");
-	oFORI(i, EXPECTED_ORTHO_LH)
+	for (auto i = 0; i < 8; i++)
 		oTESTB(equal(EXPECTED_ORTHO_LH[i], corners[i], MAX_ULPS), "corner %s mismatch", as_string((oFRUSTUM_CORNER)i));
 
 	P = make_perspective_lh(radians(90.0f), 1.0f, 0.1f, 100.0f);
@@ -196,7 +196,7 @@ bool Test_FrustumCalcCorners()
 	float farWidth = distance(corners[oFRUSTUM_RIGHT_TOP_FAR], corners[oFRUSTUM_LEFT_TOP_FAR]);
 	oTESTB(equal(0.2f, nearWidth, MAX_ULPS), "width of near plane incorrect");
 	oTESTB(equal(200.0f, farWidth, MAX_ULPS), "width of far plane incorrect");
-	oFORI(i, EXPECTED_VP_PROJ_LH)
+	for (auto i = 0; i < 8; i++)
 		oTESTB(equal(EXPECTED_VP_PROJ_LH[i], corners[i], MAX_ULPS), "corner %s mismatch", as_string((oFRUSTUM_CORNER)i));
 
 	// Verify world pos extraction math.  This is used in deferred rendering.
@@ -239,7 +239,7 @@ bool Test_MatrixMath()
 {
 	const int MAX_ULPS = 1800;
 	float3 TestVec = normalize(float3(-54, 884, 32145));
-	float3 TargetVecs [] =
+	float3 TargetVecs[] =
 	{
 		TestVec, // Identity
 		-TestVec, // Flip
@@ -247,12 +247,13 @@ bool Test_MatrixMath()
 		normalize(float3(-242, 1234, 3)) // Other
 	};
 
-	oFORI(i, TargetVecs)
+	int i = 0;
+	for (const auto& t : TargetVecs)
 	{
-		auto Target = TargetVecs[i];
-		float4x4 Rotation = make_rotation(TestVec, Target);
+		float4x4 Rotation = make_rotation(TestVec, t);
 		float3 RotatedVec = mul(Rotation, TestVec);
-		oTESTB(equal(RotatedVec, Target, MAX_ULPS), "make_rotation failed with #%d (%f %f %f)", i, Target.x, Target.y, Target.z);
+		oTESTB(equal(RotatedVec, t, MAX_ULPS), "make_rotation failed with #%d (%f %f %f)", i, t.x, t.y, t.z);
+		i++;
 	}
 	
 	return true;

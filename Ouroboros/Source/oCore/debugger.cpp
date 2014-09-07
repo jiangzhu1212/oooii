@@ -332,11 +332,17 @@ symbol_info translate(symbol _Symbol)
 
 static bool is_std_bind_impl_detail(const char* _Symbol)
 {
-	static const char* stdbindstrs[] = { "std::tr1::_Pmf", "std::tr1::_Callable_", "std::tr1::_Bind", "std::tr1::_Impl", "std::tr1::_Function", };
-	static size_t stdbindlens[] = { 14, 20, 15, 15, 19, };
-	static_assert(oCOUNTOF(stdbindstrs) == oCOUNTOF(stdbindlens), "");
-	oFORI(i, stdbindstrs)
-		if (!memcmp(_Symbol, stdbindstrs[i], stdbindlens[i]))
+	static struct { const char* bind_str; size_t len; } s_bindstrs[] = 
+	{
+		{ "std::tr1::_Pmf", 14 },
+		{ "std::tr1::_Callable_", 20 },
+		{ "std::tr1::_Bind", 15 },
+		{ "std::tr1::_Impl", 15 },
+		{ "std::tr1::_Function", 19 },
+	};
+
+	for (const auto& s : s_bindstrs)
+		if (!memcmp(_Symbol, s.bind_str, s.len))
 			return true;
 	return false;
 }

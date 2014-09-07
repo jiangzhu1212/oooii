@@ -343,7 +343,7 @@ void resize(const info& src_info, const const_mapped_subresource& src, const inf
 			case 2: resize_internal<Filter<filter_##filter_type>,2>(src_info, src, dst_info, dst); break; \
 			case 3: resize_internal<Filter<filter_##filter_type>,3>(src_info, src, dst_info, dst); break; \
 			case 4: resize_internal<Filter<filter_##filter_type>,4>(src_info, src, dst_info, dst); break; \
-			oNODEFAULT; \
+			default: oASSUME(0); \
 		} \
 		break; \
 	}

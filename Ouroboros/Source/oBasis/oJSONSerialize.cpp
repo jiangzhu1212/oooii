@@ -113,10 +113,8 @@ bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const json& _JSO
 	{
 		xxlstring ErrorString;
 		snprintf(ErrorString, "Error parsing the following type(s):");
-		oFORI(i, FromStringFailed)
-		{
-			sncatf(ErrorString, " '%s'", FromStringFailed[i].c_str());
-		}
+		for (const auto& s : FromStringFailed)
+			sncatf(ErrorString, " '%s'", s.c_str());
 		oTRACE("%s", ErrorString.c_str());
 		return oErrorSetLast(std::errc::protocol_error, "%s", ErrorString);
 	}

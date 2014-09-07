@@ -217,7 +217,7 @@ oGfxManipulatorImpl::oGfxManipulatorImpl(const char* _Name, const oGfxManipulato
 
 		}
 		break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	// This ensures nothing is picked

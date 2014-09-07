@@ -274,7 +274,7 @@ info get_info(const path& _Path)
 		bool Required;
 	};
 
-	MAPPING m[] = 
+	MAPPING s_mapping[] = 
 	{
 		{ "CompanyName", &i.company, true },
 		{ "FileDescription", &i.description, true },
@@ -286,19 +286,19 @@ info get_info(const path& _Path)
 		{ "SpecialBuild", &i.special_message, false },
 	};
 
-	oFORI(j, m)
+	for (const auto& m : s_mapping)
 	{
 		mstring Key;
-		snprintf(Key, "\\StringFileInfo\\%04x%04x\\%s", pLCP[0].wLanguage, pLCP[0].wCodePage, m[j].Key);
+		snprintf(Key, "\\StringFileInfo\\%04x%04x\\%s", pLCP[0].wLanguage, pLCP[0].wCodePage, m.Key);
 		mwstring WKey(Key);
 		wchar_t* pVal = nullptr;
 		UINT ValLen = 0;
-		*m[j].Dest = "";
+		*m.Dest = "";
 		// VerQueryValueA version seems bugged... it returns one char short of the
 		// proper size.
-		if (!VerQueryValueW(pData, WKey, (LPVOID*)&pVal, &ValLen) && m[j].Required)
+		if (!VerQueryValueW(pData, WKey, (LPVOID*)&pVal, &ValLen) && m.Required)
 			throw windows::error();
-		*m[j].Dest = pVal;
+		*m.Dest = pVal;
 	}
 
 	return i;

@@ -181,7 +181,7 @@ static bool oTestNotifyOfAntiVirus(bool _PromptUser)
 	};
 
 	process::id AVPID;
-	oFORI(i, sAntiVirusProcesses)
+	for (auto i = 0; i < oCOUNTOF(sAntiVirusProcesses); i++)
 	{
 		AVPID = process::get_id(sAntiVirusProcesses[i]);
 		if (AVPID)
@@ -1371,7 +1371,7 @@ bool oTestManager_Impl::BuildPath(path& _FullPath, const path& _RelativePath, oT
 		case oTest::TEMP: _FullPath = Desc.TempPath; break;
 		case oTest::INPUT: _FullPath = Desc.InputPath; break;
 		case oTest::OUTPUT: _FullPath = Desc.OutputPath; break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	_FullPath /= _RelativePath;

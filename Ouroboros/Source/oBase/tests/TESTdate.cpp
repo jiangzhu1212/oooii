@@ -100,7 +100,7 @@ static void expected_fail(const DateT1& _Destination, const DateT2& _Source)
 
 static void test_date_julian()
 {
-	oFORI(i, sNTPTests)
+	for (auto i = 0; i < oCOUNTOF(sNTPTests); i++)
 	{
 		const oNTPDATE_TEST& T = sNTPTests[i];
 		long long JDN = julian_day_number(T.Date);
@@ -112,7 +112,7 @@ static void test_date_julian()
 
 static void test_date_unix_time()
 {
-	oFORI(i, sNTPTests)
+	for (auto i = 0; i < oCOUNTOF(sNTPTests); i++)
 	{
 		const oNTPDATE_TEST& T = sNTPTests[i];
 		if (T.Date >= unix_time_epoch_start && T.Date <= unix_time_epoch_end_signed32)
@@ -141,7 +141,7 @@ static void test_date_unix_time()
 
 static void test_date_file_time()
 {
-	oFORI(i, sNTPTests)
+	for (auto i = 0; i < oCOUNTOF(sNTPTests); i++)
 	{
 		const oNTPDATE_TEST& T = sNTPTests[i];
 		if (T.Date >= file_time_epoch_start)
@@ -182,7 +182,7 @@ static void test_ntp_timestamp(const oNTPDATE_TEST& _Test, int _ExpectedMillisec
 
 static void test_date_ntp(test_services& _Services)
 {
-	oFORI(i, sNTPTests)
+	for (auto i = 0; i < oCOUNTOF(sNTPTests); i++)
 	{
 		const oNTPDATE_TEST& T = sNTPTests[i];
 		date d = T.Date;

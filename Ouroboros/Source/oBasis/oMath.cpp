@@ -19,7 +19,7 @@ const char* as_string(const oFRUSTUM_CORNER& _Corner)
 		case oFRUSTUM_RIGHT_TOP_FAR: return "oFRUSTUM_RIGHT_TOP_FAR";
 		case oFRUSTUM_RIGHT_BOTTOM_NEAR: return "oFRUSTUM_RIGHT_BOTTOM_NEAR";
 		case oFRUSTUM_RIGHT_BOTTOM_FAR: return "oFRUSTUM_RIGHT_BOTTOM_FAR";
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 

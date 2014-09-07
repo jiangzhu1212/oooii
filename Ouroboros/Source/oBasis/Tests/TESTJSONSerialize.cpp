@@ -143,7 +143,7 @@ bool oBasisTest_oJSONSerialize()
 	oTESTB0(oJSONWriteCompound(JSONWriteTestResult.c_str(), JSONWriteTestResult.capacity(), &sJSONTestCompound, oRTTI_OF(oJSONTestCompound)));
 	oTESTB(0 == strcmp(JSONWriteTestResult.c_str(), sJSONTestCompoundReferenceResult), "oJSONWriteCompound result doesn't match the expected one");
 
-	json JSON("Test JSON", (char*)sJSONTestCompoundReferenceResult, nullptr);
+	json JSON("Test JSON", sJSONTestCompoundReferenceResult);
 
 	oJSONTestCompound JSONReadTestResult;
 	oTESTB0(oJSONReadCompound(&JSONReadTestResult, oRTTI_OF(oJSONTestCompound), JSON, JSON.root(), true));
@@ -157,7 +157,7 @@ bool oBasisTest_oJSONSerialize()
 	oJSONWriteContainer(PendingTasksJSON.c_str(), PendingTasksJSON.capacity(), &JSONWriteContainerTest, sizeof(JSONWriteContainerTest), oRTTI_OF(std_vector_oJSONTestContainer));
 	oTESTB(0 == strcmp(PendingTasksJSON.c_str(), oJSONTestContainerReferenceResult), "oJSONReadCompound result doesn't match the expected one");
 
-	JSON = std::move(json("2nd Test JSON", (char*)oJSONTestContainerReferenceResult, nullptr));
+	JSON = std::move(json("2nd Test JSON", oJSONTestContainerReferenceResult));
 	
 	std::vector<oJSONTestContainer> JSONReadContainerTestResult;
 	oTESTB0(oJSONReadContainer(&JSONReadContainerTestResult, sizeof(JSONReadContainerTestResult), oRTTI_OF(std_vector_oJSONTestContainer), JSON, JSON.root(), true));

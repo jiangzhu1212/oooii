@@ -279,7 +279,7 @@ const char* shader_profile(D3D_FEATURE_LEVEL level, const stage::value& stage)
 		case D3D_FEATURE_LEVEL_10_0: profiles = sDX10Profiles; break;
 		case D3D_FEATURE_LEVEL_10_1: profiles = sDX10_1Profiles; break;
 		case D3D_FEATURE_LEVEL_11_0: profiles = sDX11Profiles; break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	const char* profile = profiles[stage];

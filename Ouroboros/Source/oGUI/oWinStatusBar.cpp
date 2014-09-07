@@ -83,7 +83,7 @@ static int oWinStatusBarGetStyle(ouro::border_style::value _Style)
 		case ouro::border_style::sunken: return 0;
 		case ouro::border_style::flat: return SBT_NOBORDERS;
 		case ouro::border_style::raised: return SBT_POPOUT;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 

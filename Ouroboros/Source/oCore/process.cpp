@@ -104,7 +104,7 @@ public:
 			case focused: StartInfo.wShowWindow = SW_SHOWNORMAL; break;
 			case minimized: StartInfo.wShowWindow = SW_SHOWMINNOACTIVE; break;
 			case minimized_focused: StartInfo.wShowWindow = SW_SHOWMINIMIZED; break;
-			oNODEFAULT;
+			default: oASSUME(0);
 		}
 
 		if (_Info.stdout_buffer_size)

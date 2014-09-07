@@ -188,13 +188,13 @@ bool Test_oURIIsSameDocument()
 
 bool Test_oURIResolve()
 {
-	oFORI(i, sReferenceResolutionExamples)
+	for (auto i = 0; i < oCOUNTOF(sReferenceResolutionExamples); i++)
 	{
 		uri_string Result;
 		oURIResolve(Result, sReferenceResolutionBaseURI, sReferenceResolutionExamples[i].first);
 		oTESTB(_stricmp(Result.c_str(), sReferenceResolutionExamples[i].second.c_str())==0, "Unexpected result oURIResolve returned '%s', expected '%s'", Result.c_str(), sReferenceResolutionExamples[i].second.c_str());
 	}
-	oFORI(i, sReferenceResolutionExamples2)
+	for (auto i = 0; i < oCOUNTOF(sReferenceResolutionExamples2); i++)
 	{
 		uri_string Result;
 		oURIResolve(Result, sReferenceResolutionBaseURI2, sReferenceResolutionExamples2[i].first);
@@ -206,7 +206,7 @@ bool Test_oURIResolve()
 
 bool Test_oURIRelativize()
 {
-	oFORI(i, sReferenceMakeRelativeExamples)
+	for (auto i = 0; i < oCOUNTOF(sReferenceMakeRelativeExamples); i++)
 	{
 		uri_string Result;
 		oURIRelativize(Result, sReferenceMakeRelativeBaseURI, sReferenceMakeRelativeExamples[i].first);
@@ -221,7 +221,7 @@ bool oBasisTest_oURI()
 	return oErrorSetLast(std::errc::permission_denied, "oURI test is deprecated and tool slow in debug");
 #else
 	oURIParts parts;
-	oFORI(i, sTestUris)
+	for (auto i = 0; i < oCOUNTOF(sTestUris); i++)
 	{
 		if (!oURIDecompose(sTestUris[i], &parts))
 			return oErrorSetLast(std::errc::protocol_error, "decompose failed: %s", sTestUris[i]);

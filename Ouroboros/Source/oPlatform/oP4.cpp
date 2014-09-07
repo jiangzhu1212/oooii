@@ -94,7 +94,7 @@ static bool oP4IsExecutionError(const char* _P4ResponseString)
 		"- file(s) not in client view.",
 	};
 
-	oFORI(i, sErrStrings)
+	for (auto i = 0; i < oCOUNTOF(sErrStrings); i++)
 		if (strstr(_P4ResponseString, sErrStrings[i]))
 			return true;
 	return false;

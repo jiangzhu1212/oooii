@@ -34,7 +34,7 @@ void TESTparallel_for()
 	int mTestArrayB[mArraySize];
 
 	// Test single parameter
-	oFORI(i, mTestArrayA)
+	for (auto i = 0; i < oCOUNTOF(mTestArrayA); i++)
 		test_a(i, mTestArrayA);
 
 	parallel_for(0, mArraySize, std::bind(test_a, std::placeholders::_1, mTestArrayB));
@@ -42,7 +42,7 @@ void TESTparallel_for()
 		"ouro::parallel_for single param failed to compute singlethreaded result");
 
 	// Test two parameters
-	oFORI(i, mTestArrayA)
+	for (auto i = 0; i < oCOUNTOF(mTestArrayA); i++)
 		test_ab(i, mTestArrayA, 2);
 
 	parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
@@ -50,7 +50,7 @@ void TESTparallel_for()
 		, "ouro::parallel_for failed to compute singlethreaded result");
 
 	// Test three parameters
-	oFORI(i, mTestArrayA)
+	for (auto i = 0; i < oCOUNTOF(mTestArrayA); i++)
 		test_abc(i, mTestArrayA, 2, 7);
 
 	parallel_for(0, mArraySize, std::bind(test_abc, std::placeholders::_1, &mTestArrayB[0], 2, 7));

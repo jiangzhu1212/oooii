@@ -36,7 +36,7 @@ public:
 		Size += Entries.capacity() * sizeof(index_type);
 	}
 
-	ini(const char* _URI, const char* _pData, const allocator& alloc, size_t _EstNumSections = 10, size_t _EstNumKeys = 100)
+	ini(const char* _URI, const char* _pData, const allocator& alloc = default_allocator, size_t _EstNumSections = 10, size_t _EstNumKeys = 100)
 		: Buffer(_URI, _pData, alloc, "ini doc")
 	{
 		Size = sizeof(*this) + strlen(Buffer.data) + 1;
