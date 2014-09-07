@@ -107,59 +107,59 @@ public:
 	inline const char_type* attr_value(attr a) const { return Buffer.data + Attr(a).value; }
 	
 	// Convenience functions that use the above API
-	inline node first_child(node parent_node, const char_type* _Name) const
+	inline node first_child(node parent_node, const char_type* _node_name) const
 	{
 		node n = first_child(parent_node);
-		while (n && _stricmp(node_name(n), _Name))
+		while (n && _stricmp(node_name(n), _node_name))
 			n = next_sibling(n);
 		return n;
 	}
 
-	inline node next_sibling(node _hPriorSibling, const char_type* _Name) const
+	inline node next_sibling(node prior_sibling, const char_type* _node_name) const
 	{
-		node n = next_sibling(_hPriorSibling);
-		while (n && _stricmp(node_name(n), _Name))
+		node n = next_sibling(prior_sibling);
+		while (n && _stricmp(node_name(n), _node_name))
 			n = next_sibling(n);
 		return n;
 	}
 
-	inline attr find_attr(node _node, const char_type* _AttrName) const
+	inline attr find_attr(node n, const char_type* _attr_name) const
 	{
-		for (attr a = first_attr(_node); a; a = next_attr(a))
-			if (!_stricmp(attr_name(a), _AttrName))
+		for (attr a = first_attr(n); a; a = next_attr(a))
+			if (!_stricmp(attr_name(a), _attr_name))
 				return a;
 		return attr(0);
 	}
 
-	inline const char_type* find_attr_value(node _node, const char_type* _AttrName) const
+	inline const char_type* find_attr_value(node n, const char_type* _attr_name) const
 	{
-		attr a = find_attr(_node, _AttrName);
+		attr a = find_attr(n, _attr_name);
 		return a ? attr_value(a) : nullptr;
 	}
 	
-	template<typename T> bool attr_value(attr _Attr, T* _pValue) const
+	template<typename T> bool attr_value(attr a, T* out_value) const
 	{
-		return from_string(_pValue, attr_value(_Attr));
+		return from_string(out_value, attr_value(a));
 	}
 	
 	template<typename charT, size_t capacity> 
-	bool attr_value(attr _Attr, fixed_string<charT, capacity>& _pValue) const
+	bool attr_value(attr a, fixed_string<charT, capacity>& out_value) const
 	{
-		_pValue = attr_value(_Attr);
+		out_value = attr_value(a);
 		return true;
 	}
 
-	template<typename T> bool find_attr_value(node _Node, const char_type* _AttrName, T* _pValue) const
+	template<typename T> bool find_attr_value(node n, const char_type* _attr_name, T* out_value) const
 	{
-		attr a = find_attr(_Node, _AttrName);
-		return a ? from_string(_pValue, attr_value(a)) : false;
+		attr a = find_attr(n, _attr_name);
+		return a ? from_string(out_value, attr_value(a)) : false;
 	}
 
 	template<typename charT, size_t capacity>
-	bool find_attr_value(node _Node, const char_type* _AttrName, fixed_string<charT, capacity>& _pValue) const
+	bool find_attr_value(node n, const char_type* _attr_name, fixed_string<charT, capacity>& out_value) const
 	{
-		attr a = find_attr(_Node, _AttrName);
-		if (a) _pValue = attr_value(a);
+		attr a = find_attr(n, _attr_name);
+		if (a) out_value = attr_value(a);
 		return !!a;
 	}
 
@@ -171,34 +171,34 @@ public:
 	}
 
 	// Helper function to be called from inside visitor functions
-	static const char_type* find_attr_value(const visitor::attr_type* _pAttributes, size_t _NumAttributes, const char_type* _AttrName)
+	static const char_type* find_attr_value(const visitor::attr_type* attrs, size_t num_attrs, const char_type* _attr_name)
 	{
-		for (size_t i = 0; i < _NumAttributes; i++)
-			if (!_stricmp(_pAttributes[i].first, _AttrName))
-				return _pAttributes[i].second;
+		for (size_t i = 0; i < num_attrs; i++)
+			if (!_stricmp(attrs[i].first, _attr_name))
+				return attrs[i].second;
 		return nullptr;
 	}
 
 	// Helper function to be called from inside visitor functions
 	template<typename T>
-	static bool find_attr_value(const visitor::attr_type* _pAttributes, size_t _NumAttributes, const char_type* _AttrName, T* _pValue)
+	static bool find_attr_value(const visitor::attr_type* attrs, size_t num_attrs, const char_type* _attr_name, T* out_value)
 	{
-		const char_type* v = find_attr_value(_pAttributes, _NumAttributes, _AttrName);
-		return v ? from_string(_pValue, v) : false;
+		const char_type* v = find_attr_value(attrs, num_attrs, _attr_name);
+		return v ? from_string(out_value, v) : false;
 	}
 
 	template<typename charT, size_t capacity>
-	static bool find_attr_value(const visitor::attr_type* _pAttributes, size_t _NumAttributes, const char_type* _AttrName, fixed_string<charT, capacity>& _pValue)
+	static bool find_attr_value(const visitor::attr_type* attrs, size_t num_attrs, const char_type* _attr_name, fixed_string<charT, capacity>& out_value)
 	{
-		const char_type* v = find_attr_value(_pAttributes, _NumAttributes, _AttrName);
-		if (v) _pValue = v;
+		const char_type* v = find_attr_value(attrs, num_attrs, _attr_name);
+		if (v) out_value = v;
 		return !!v;
 	}
 
 	// It is common that ids for nodes are unique to the file, so find the 
 	// specified string in the id or name attribute of the first node in depth-
 	// first order.
-	inline node find_id(const char_type* _ID) const { return find_id(root(), _ID); }
+	inline node find_id(const char_type* id) const { return find_id(root(), id); }
 
 	// xref
 	// This is like xpointer, but not as robust or verbose. If an xref does not 
@@ -209,7 +209,7 @@ public:
 	// and each section can either be the value of an id or name attr (id is looked
 	// for first, then if not there then name is looked for) or it can be a 1-based
 	// index of the sibling nodes.
-	inline char_type* make_xref(char_type* _StrDestination, size_t _SizeofStrDestination, node _Node) const
+	inline char_type* make_xref(char_type* dst, size_t dst_size, node _Node) const
 	{
 		std::vector<node> path;
 		path.reserve(16);
@@ -224,18 +224,18 @@ public:
 
 		if (path.empty())
 		{
-			if (_SizeofStrDestination < 2) return nullptr;
-			_StrDestination[0] = '/';
-			_StrDestination[1] = '\0';
-			return _StrDestination;
+			if (dst_size < 2) return nullptr;
+			dst[0] = '/';
+			dst[1] = '\0';
+			return dst;
 		}
 		else
-			*_StrDestination = '\0';
+			*dst = '\0';
 
 		for (std::vector<node>::const_reverse_iterator it = path.rbegin(); it != path.rend(); ++it)
 		{
-			size_t len = strlcat(_StrDestination, "/", _SizeofStrDestination);
-			if (len >= _SizeofStrDestination) return nullptr;
+			size_t len = strlcat(dst, "/", dst_size);
+			if (len >= dst_size) return nullptr;
 			
 			const char_type* id = get_id(*it);
 			char_type buf[10];
@@ -246,18 +246,18 @@ public:
 				id = buf;
 			}
 
-			len = strlcat(_StrDestination, id, _SizeofStrDestination);
-			if (len >= _SizeofStrDestination) return nullptr;
+			len = strlcat(dst, id, dst_size);
+			if (len >= dst_size) return nullptr;
 		}
 
-		return _StrDestination;
+		return dst;
 	}
 
 	template<size_t size>
-	char_type* make_xref(char_type (&_StrDestination)[size], node _Node) const { return make_xref(_StrDestination, size, _Node); }
+	char_type* make_xref(char_type (&dst)[size], node n) const { return make_xref(dst, size, n); }
 
 	template<typename charT, size_t capacity> 
-	char_type* make_xref(fixed_string<charT, capacity>& _StrDestination, node _Node) const { return make_xref(_StrDestination, _StrDestination.capacity(), _Node); }
+	char_type* make_xref(fixed_string<charT, capacity>& dst, node n) const { return make_xref(dst, dst.capacity(), n); }
 
 	node find_xref(const char_type* _XRef) const
 	{
