@@ -244,7 +244,7 @@ static bool svn_from_string(ntp_date* _pDate, const char* _String)
 	timezone = (timezone / 100) * 60 * 60;
 
 	*_pDate = date_cast<ntp_date>(d);
-	_pDate->DataMS -= timezone;
+	_pDate->hi -= timezone;
 	return true;
 }
 

@@ -147,8 +147,8 @@ template<> ntp_date date_cast<ntp_date>(const date& _Date)
 	if (!date_cast(_Date, &Era, &Timestamp))
 		oDATE_OUT_OF_RANGE(ntp_date);
 	ntp_date d;
-	d.DataMS = (static_cast<unsigned long long>(*(unsigned int*)&Era) << 32) | Timestamp;
-	d.DataLS = _Date.millisecond * (ULLONG_MAX / 1000ull);
+	d.hi = (static_cast<unsigned long long>(*(unsigned int*)&Era) << 32) | Timestamp;
+	d.lo = _Date.millisecond * (ULLONG_MAX / 1000ull);
 	return d;
 }
 
@@ -180,11 +180,11 @@ template<> file_time_t date_cast<file_time_t>(const date& _Date)
 
 template<> ntp_timestamp date_cast<ntp_timestamp>(const ntp_date& _Date)
 {
-	unsigned int Era = _Date.DataMS >> 32;
+	unsigned int Era = _Date.hi >> 32;
 	if (Era != 0)
 		oDATE_OUT_OF_RANGE(ntp_timestamp);
-	const unsigned int LS = static_cast<unsigned int>(_Date.DataLS * (UINT_MAX / (double)ULLONG_MAX));
-	return (_Date.DataMS << 32) | LS;
+	const unsigned int LS = static_cast<unsigned int>(_Date.lo * (UINT_MAX / (double)ULLONG_MAX));
+	return (_Date.hi << 32) | LS;
 }
 
 template<> ntp_date date_cast<ntp_date>(const ntp_date& _Date)
@@ -212,7 +212,7 @@ template<> file_time_t date_cast<file_time_t>(const ntp_date& _Date)
 	if (s.count() < 0)
 		oDATE_OUT_OF_RANGE(file_time_t);
 	file_time whole = duration_cast<file_time>(s);
-	file_time fractional(file_time_ratio::den * (_Date.DataLS / ULLONG_MAX));
+	file_time fractional(file_time_ratio::den * (_Date.lo / ULLONG_MAX));
 	return file_time_t((whole + fractional).count());
 }
 
@@ -223,7 +223,7 @@ template<> date date_cast<date>(const ntp_date& _Date)
 	date d;
 	oDateCalcFromJulianDayNumber(JDN, &d);
 	oDateCalcHMS(s, &d);
-	d.millisecond = static_cast<int>(1000 * (_Date.DataLS / ULLONG_MAX));
+	d.millisecond = static_cast<int>(1000 * (_Date.lo / ULLONG_MAX));
 	return d;
 }
 
@@ -245,9 +245,9 @@ template<> ntp_timestamp date_cast<ntp_timestamp>(const ntp_timestamp& _Date)
 template<> ntp_date date_cast<ntp_date>(const ntp_timestamp& _Date)
 {
 	ntp_date d;
-	d.DataMS = static_cast<unsigned int>(_Date >> 32ull);
+	d.hi = static_cast<unsigned int>(_Date >> 32ull);
 	fractional_second32 fractional32(_Date & ~0u);
-	d.DataLS = fractional32.count() * (ULLONG_MAX / UINT_MAX);
+	d.lo = fractional32.count() * (ULLONG_MAX / UINT_MAX);
 	return d;
 }
 
@@ -289,9 +289,9 @@ template<> ntp_timestamp date_cast<ntp_timestamp>(const ntp_time& _Date)
 template<> ntp_date date_cast<ntp_date>(const ntp_time& _Date)
 {
 	ntp_date d;
-	d.DataMS = _Date >> 16;
+	d.hi = _Date >> 16;
 	fractional_second16 fractional16(_Date & 0xffff);
-	d.DataLS = fractional16.count() * (ULLONG_MAX / USHRT_MAX);
+	d.lo = fractional16.count() * (ULLONG_MAX / USHRT_MAX);
 	return d;
 }
 
@@ -334,8 +334,8 @@ template<> ntp_timestamp date_cast<ntp_timestamp>(const time_t& _Date)
 template<> ntp_date date_cast<ntp_date>(const time_t& _Date)
 {
 	ntp_date d;
-	d.DataMS = _Date + kSecondsFrom1900To1970;
-	d.DataLS = 0;
+	d.hi = _Date + kSecondsFrom1900To1970;
+	d.lo = 0;
 	return d;
 }
 
@@ -376,8 +376,8 @@ template<> ntp_date date_cast<ntp_date>(const file_time_t& _Date)
 {
 	long long usec = (long long)_Date / 10;
 	ntp_date d;
-	d.DataMS = (usec / std::micro::den) - kSecondsFrom1601To1900;
-	d.DataLS = file_time((long long)_Date % file_time::period::den).count() * (ULLONG_MAX / file_time_ratio::den);
+	d.hi = (usec / std::micro::den) - kSecondsFrom1601To1900;
+	d.lo = file_time((long long)_Date % file_time::period::den).count() * (ULLONG_MAX / file_time_ratio::den);
 	return d;
 }
 
@@ -440,10 +440,10 @@ size_t strftime(char* _StrDestination, size_t _SizeofStrDestination, const char*
 	int TimezoneOffsetSeconds = timezone_offset();
 
 	if (_Conversion == date_conversion::to_local)
-		DateCopy.DataMS += TimezoneOffsetSeconds;
+		DateCopy.hi += TimezoneOffsetSeconds;
 
 	date d = date_cast<date>(DateCopy); // clean up any overrun values
-	attoseconds fractional(static_cast<long long>(_Date.DataLS >> 1ull));
+	attoseconds fractional(static_cast<long long>(_Date.lo >> 1ull));
 
 	*_StrDestination = 0;
 	char* w = _StrDestination;

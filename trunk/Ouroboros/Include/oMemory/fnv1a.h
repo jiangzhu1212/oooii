@@ -4,8 +4,9 @@
 #ifndef oBase_fnv1a_h
 #define oBase_fnv1a_h
 
-#include <oBase/uint128.h>
-#include <oString/string.h> // to_lower
+#include <oMemory/uint128.h>
+#include <cstdint>
+#include <ctype.h>
 
 namespace ouro {
 
@@ -33,22 +34,22 @@ template<> struct fnv1a_traits<unsigned long>
 template<> struct fnv1a_traits<unsigned long long>
 {
 	typedef unsigned long long value_type;
-	static const unsigned long long seed = 14695981039346656037ull;
-	static const unsigned long long value = 1099511628211ull;
+	static const uint64_t seed = 14695981039346656037ull;
+	static const uint64_t value = 1099511628211ull;
 };
 
 #ifdef oHAS_CONSTEXPR
-	template<> struct fnv1a_traits<uint128>
+	template<> struct fnv1a_traits<uint128_t>
 	{
-		static constexpr uint128 seed = { 0x6c62272e07bb0142ull, 0x62b821756295c592ull }; // 144066263297769815596495629667062367629
-		static constexpr uint128 value = { 0x0000000001000000ull, 0x000000000000013bull }; // 309485009821345068724781371
+		static constexpr uint128_t seed = { 0x6c62272e07bb0142ull, 0x62b821756295c592ull }; // 144066263297769815596495629667062367629
+		static constexpr uint128_t value = { 0x0000000001000000ull, 0x000000000000013bull }; // 309485009821345068724781371
 	};
 #endif
 
 template<typename T>		
-inline T fnv1a(const void* buf, size_t buf_size, const T& _Seed = fnv1a_traits<T>::seed)
+inline T fnv1a(const void* buf, size_t buf_size, const T& seed = fnv1a_traits<T>::seed)
 {
-	fnv1a_traits<T>::value_type h = _Seed;
+	fnv1a_traits<T>::value_type h = seed;
 	const char* s = static_cast<const char*>(buf);
 	while (buf_size--)
 	{
@@ -59,25 +60,25 @@ inline T fnv1a(const void* buf, size_t buf_size, const T& _Seed = fnv1a_traits<T
 }
 
 template<typename T>		
-inline T fnv1a(const char* _String, const T& _Seed = fnv1a_traits<T>::seed)
+inline T fnv1a(const char* str, const T& seed = fnv1a_traits<T>::seed)
 {
-	fnv1a_traits<T>::value_type h = _Seed;
-	while (*_String)
+	fnv1a_traits<T>::value_type h = seed;
+	while (*str)
 	{
-		h ^= *_String++;
+		h ^= *str++;
 		h *= fnv1a_traits<T>::value;
 	}
 	return h;
 }
 
 template<typename T>		
-inline T fnv1ai(const char* _String, const T& _Seed = fnv1a_traits<T>::seed)
+inline T fnv1ai(const char* str, const T& seed = fnv1a_traits<T>::seed)
 {
-	fnv1a_traits<T>::value_type h = _Seed;
-	while (*_String)
+	fnv1a_traits<T>::value_type h = seed;
+	while (*str)
 	{
-		char c = *_String++;
-		h ^= to_lower(c);
+		char c = *str++;
+		h ^= tolower(c);
 		h *= fnv1a_traits<T>::value;
 	}
 	return h;
@@ -86,13 +87,13 @@ inline T fnv1ai(const char* _String, const T& _Seed = fnv1a_traits<T>::seed)
 namespace detail { union wchar_bytes { wchar_t wc; char c[2]; }; }
 
 template<typename T>		
-inline T fnv1a(const wchar_t* _String, const T& _Seed = fnv1a_traits<T>::seed)
+inline T fnv1a(const wchar_t* str, const T& seed = fnv1a_traits<T>::seed)
 {
-	fnv1a_traits<T>::value_type h = _Seed;
-	while (*_String)
+	fnv1a_traits<T>::value_type h = seed;
+	while (*str)
 	{
 		detail::wchar_bytes ch;
-		ch.wc = *_String++;
+		ch.wc = *str++;
 		h ^= ch.c[0];
 		h *= fnv1a_traits<T>::value;
 		h ^= ch.c[1];
@@ -102,13 +103,22 @@ inline T fnv1a(const wchar_t* _String, const T& _Seed = fnv1a_traits<T>::seed)
 }
 
 template<typename T>		
-inline T fnv1ai(const wchar_t* _String, const T& _Seed = fnv1a_traits<T>::seed)
+inline T fnv1ai(const wchar_t* str, const T& seed = fnv1a_traits<T>::seed)
 {
-	fnv1a_traits<T>::value_type h = _Seed;
-	while (*_String)
+	fnv1a_traits<T>::value_type h = seed;
+	while (*str)
 	{
 		detail::wchar_bytes ch;
-		ch.wc = to_lower(*_String++);
+
+#ifdef _MSC_VER
+		wchar_t s[2] = { *str, 0 };
+		_wcslwr_s(s);
+		ch.wc = s[0];
+		str++;
+#else
+#error unsupported platform: tolower(wchar_t)
+#endif
+
 		h ^= ch.c[0];
 		h *= fnv1a_traits<T>::value;
 		h ^= ch.c[1];
@@ -120,7 +130,7 @@ inline T fnv1ai(const wchar_t* _String, const T& _Seed = fnv1a_traits<T>::seed)
 // npot bitcount hashes: http://www.isthe.com/chongo/tech/comp/fnv/
 // (use next-higher type and xor reduce)
 template<typename T, typename U>
-T fnv1a_reduced(const U& _Fnv1aHash, int _NumBits) { return static_cast<T>((_Fnv1aHash >> _NumBits) ^ (U(1) << _NumBits)); }
+T fnv1a_reduced(const U& fnv1a_hash, int num_bits) { return static_cast<T>((fnv1a_hash >> num_bits) ^ (U(1) << num_bits)); }
 
 }
 

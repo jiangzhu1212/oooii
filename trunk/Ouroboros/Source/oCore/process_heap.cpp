@@ -5,7 +5,7 @@
 #include <oCore/process.h>
 #include <oCore/system.h>
 #include <oBase/guid.h>
-#include <oBase/fnv1a.h>
+#include <oMemory/fnv1a.h>
 #include <oCore/windows/win_util.h>
 #include <mutex>
 #include <thread>

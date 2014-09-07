@@ -2,6 +2,7 @@
 #include <oBasis/oURI.h>
 #include <oBase/assert.h>
 #include <oBasis/oError.h>
+#include <oMemory/murmur3.h>
 #include <cerrno>
 #include <cstdlib>
 #include <regex>

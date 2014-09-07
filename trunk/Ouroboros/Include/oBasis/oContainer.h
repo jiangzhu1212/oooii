@@ -5,7 +5,7 @@
 #define oContainer_h
 
 #include <xstddef> // for unary_function, binary_function, etc.
-#include <oBase/murmur3.h>
+#include <oMemory/murmur3.h>
 #include <oBasis/oInterface.h>
 
 // _____________________________________________________________________________
@@ -142,7 +142,7 @@ namespace std {
 	{
 		size_t operator()(const oGUID& _GUID) const
 		{
-			uint128 Hash = ouro::murmur3(&_GUID, sizeof(oGUID));
+			uint128_t Hash = ouro::murmur3(&_GUID, sizeof(oGUID));
 			return *(size_t*)&Hash;
 		}
 	};

@@ -11,7 +11,7 @@
 
 #include <oBase/type_id.h>
 #include <oBase/types.h>
-#include <oBase/fnv1a.h>
+#include <oMemory/fnv1a.h>
 #include <type_traits>
 
 namespace ouro {

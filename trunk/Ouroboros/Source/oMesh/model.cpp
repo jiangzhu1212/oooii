@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oMesh/model.h>
 #include <oMesh/mesh.h>
-#include <oBase/fnv1a.h>
+#include <oMemory/fnv1a.h>
 
 namespace ouro { namespace mesh {
 

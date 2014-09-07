@@ -54,6 +54,9 @@
     <ClCompile Include="memset4.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="MurmurHash3.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="allocate.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -79,6 +82,21 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oMemory\all.h">
       <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\murmur3.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\uint128.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\djb2.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\fnv1a.h">
+      <Filter>oMemory</Filter>
+    </ClInclude>
+    <ClInclude Include="MurmurHash3.h">
+      <Filter>Source</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oMemory\allocate.h">
       <Filter>oMemory</Filter>

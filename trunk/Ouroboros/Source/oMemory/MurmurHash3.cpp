@@ -1,3 +1,6 @@
+// https://code.google.com/p/smhasher/
+// R150.
+
 //-----------------------------------------------------------------------------
 // MurmurHash3 was written by Austin Appleby, and is placed in the public
 // domain. The author hereby disclaims copyright to this source code.
@@ -332,3 +335,20 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
 }
 
 //-----------------------------------------------------------------------------
+
+// wrapper stuff
+#include <oMemory/uint128.h>
+#include <stdexcept>
+
+namespace ouro {
+
+uint128_t murmur3(const void* buf, size_t buf_size)
+{
+	if (size_t(int(buf_size)) != buf_size)
+		throw std::range_error("murmur3 size is capped at signed int");
+	uint128_t h;
+	MurmurHash3_x64_128(buf, static_cast<int>(buf_size), 0, &h);
+	return h;
+}
+
+}

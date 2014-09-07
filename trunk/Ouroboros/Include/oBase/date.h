@@ -9,8 +9,9 @@
 #ifndef oBase_date_h
 #define oBase_date_h
 
-#include <oBase/uint128.h>
 #include <oBase/fixed_string.h>
+#include <oBase/operators.h>
+#include <oMemory/uint128.h>
 #include <chrono>
 #include <climits>
 #include <string>
@@ -153,10 +154,10 @@ double modified_julian_date(const date& _Date);
 weekday::value day_of_week(const date& _Date);
 
 // Returns the component of an ntp_date according to NTPv4.
-inline long long get_ntp_date(const ntp_date& _Date) { return *(long long*)&_Date.DataMS; }
-inline int get_ntp_era(const ntp_date& _Date) { unsigned int i = _Date.DataMS >> 32; return *(int*)&i; }
-inline unsigned int get_ntp_timestamp(const ntp_date& _Date) { return _Date.DataMS & ~0u; }
-inline double get_ntp_fractional_seconds(const ntp_date& _Date) { return _Date.DataLS / (double)ULLONG_MAX; }
+inline long long get_ntp_date(const ntp_date& _Date) { return *(long long*)&_Date.hi; }
+inline int get_ntp_era(const ntp_date& _Date) { unsigned int i = _Date.hi >> 32; return *(int*)&i; }
+inline unsigned int get_ntp_timestamp(const ntp_date& _Date) { return _Date.hi & ~0u; }
+inline double get_ntp_fractional_seconds(const ntp_date& _Date) { return _Date.lo / (double)ULLONG_MAX; }
 inline long long get_ntp_seconds(const ntp_date& _Date) { long long Era = get_ntp_era(_Date); return (Era << 32) + get_ntp_timestamp(_Date); }
 inline unsigned int get_ntp_timestamp(const ntp_timestamp& _Timestamp) { return _Timestamp >> 32; }
 inline double get_ntp_fractional_seconds(const ntp_timestamp& _Timestamp) { return (_Timestamp & ~0u) / (double)std::numeric_limits<unsigned int>::max(); }

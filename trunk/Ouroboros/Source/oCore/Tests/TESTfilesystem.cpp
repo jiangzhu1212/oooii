@@ -6,7 +6,7 @@
 #include <oBase/event.h>
 #include <oBase/finally.h>
 #include <oBase/guid.h>
-#include <oBase/murmur3.h>
+#include <oMemory/murmur3.h>
 #include <oBase/timer.h>
 
 #include "../../test_services.h"

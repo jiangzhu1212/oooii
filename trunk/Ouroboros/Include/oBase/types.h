@@ -7,7 +7,7 @@
 
 #include <oHLSL/oHLSLTypes.h>
 #include <oMemory/equal.h>
-#include <oBase/uint128.h>
+#include <oMemory/uint128.h>
 
 typedef unsigned char uchar;
 typedef unsigned short ushort;

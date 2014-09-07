@@ -6,7 +6,7 @@
 
 #include <oBase/assert.h>
 #include <oBase/fixed_string.h>
-#include <oBase/fnv1a.h>
+#include <oMemory/fnv1a.h>
 #include <oString/string_path.h>
 #include <oBase/throw.h>
 
