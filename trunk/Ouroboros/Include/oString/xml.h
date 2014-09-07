@@ -209,13 +209,13 @@ public:
 	// and each section can either be the value of an id or name attr (id is looked
 	// for first, then if not there then name is looked for) or it can be a 1-based
 	// index of the sibling nodes.
-	inline char_type* make_xref(char_type* dst, size_t dst_size, node _Node) const
+	inline char_type* make_xref(char_type* dst, size_t dst_size, node n) const
 	{
 		std::vector<node> path;
 		path.reserve(16);
 		
-		path.push_back(_Node);
-		node p = parent(_Node);
+		path.push_back(n);
+		node p = parent(n);
 		while (p != root()) // while not the root or invalid
 		{
 			path.push_back(p);
@@ -259,15 +259,15 @@ public:
 	template<typename charT, size_t capacity> 
 	char_type* make_xref(fixed_string<charT, capacity>& dst, node n) const { return make_xref(dst, dst.capacity(), n); }
 
-	node find_xref(const char_type* _XRef) const
+	node find_xref(const char_type* xref) const
 	{
-		if (!_XRef || !_XRef[0]) return node(0);
-		if (_XRef[0] == '/')
+		if (!xref || !xref[0]) return node(0);
+		if (xref[0] == '/')
 		{
-			if (_XRef[1] == '\0') return root();
-			return find_xref(first_child(root()), _XRef+1);
+			if (xref[1] == '\0') return root();
+			return find_xref(first_child(root()), xref+1);
 		}
-		return find_id(root(), _XRef);
+		return find_id(root(), xref);
 	}
 
 private:
@@ -301,9 +301,9 @@ private:
 	// Parsing functions
 	static inline ATTR make_attr(char_type* xml_start, char_type*& xml_current, bool& at_end);
 	inline void index_buffer();
-	inline void make_node_attrs(char_type* xml_start, char_type*& _XML, NODE& _Node);
-	inline node make_next_node(char_type*& _XML, node _Parent, node _Previous, int& open_tag_count, int& close_tag_count);
-	inline void make_next_node_children(char_type*& _XML, node _Parent, int& open_tag_count, int& close_tag_count);
+	inline void make_node_attrs(char_type* xml_start, char_type*& _xml, NODE& _Node);
+	inline node make_next_node(char_type*& _xml, node parent_node, node previous, int& open_tag_count, int& close_tag_count);
+	inline void make_next_node_children(char_type*& _xml, node parent_node, int& open_tag_count, int& close_tag_count);
 
 	inline bool visit(node _Node, int _SiblingIndex, std::vector<visitor::attr_type>& _Attrs, visitor& visitor) const
 	{
@@ -389,36 +389,36 @@ private:
 		else 
 			tmp = _XRef;
 
-		node n = _Node;
+		node nd = _Node;
 		int Index = -1;
 		if (from_string(&Index, tmp))
 		{ // by index
 			int i = 1;
-			while (n)
+			while (nd)
 			{
 				if (Index == i)
 					break;
 				i++;
-				n = next_sibling(n);
+				nd = next_sibling(nd);
 			}
 		}
 
 		else
 		{ // by name
-			while (n)
+			while (nd)
 			{
-				const char_type* id = get_id(n);
+				const char_type* id = get_id(nd);
 				if (id && !_stricmp(id, tmp))
 					break;
-				n = next_sibling(n);
+				nd = next_sibling(nd);
 			}
 		}
 
-		if (n)
+		if (nd)
 		{
 			if (slash)
-				return find_xref(first_child(n), slash+1);
-			return n;
+				return find_xref(first_child(nd), slash+1);
+			return nd;
 		}
 		return node(0);
 	}
@@ -426,27 +426,27 @@ private:
 
 	namespace detail
 	{
-		// _XML must be pointing at a '<' char_type. This will leave _XML point at a '<'
+		// _xml must be pointing at a '<' char_type. This will leave _xml point at a '<'
 		// to a non-reserved node.
 		template<typename charT>
-		inline void skip_reserved_nodes(charT*& _XML)
+		inline void skip_reserved_nodes(charT*& _xml)
 		{
 			bool skipping = false;
 			do
 			{
 				skipping = false;
-				if (*(_XML+1) == '!') // skip comment
+				if (*(_xml+1) == '!') // skip comment
 				{
 					skipping = true;
-					_XML = strstr(_XML+4, "-->");
-					if (!_XML) throw new text_document_error(text_document_errc::unclosed_scope);
-					_XML += strcspn(_XML, "<");
+					_xml = strstr(_xml+4, "-->");
+					if (!_xml) throw new text_document_error(text_document_errc::unclosed_scope);
+					_xml += strcspn(_xml, "<");
 				}
-				if (*(_XML+1) == '?') // skip meta tag
+				if (*(_xml+1) == '?') // skip meta tag
 				{
 					skipping = true;
-					_XML += strcspn(_XML+2, ">");
-					_XML += strcspn(_XML, "<");
+					_xml += strcspn(_xml+2, ">");
+					_xml += strcspn(_xml, "<");
 				}
 			} while (skipping);
 		}
@@ -533,70 +533,70 @@ xml::ATTR xml::make_attr(xml::char_type* xml_start, xml::char_type*& xml_current
 	return a;
 }
 
-void xml::make_node_attrs(char_type* xml_start, char_type*& _XML, NODE& _Node)
+void xml::make_node_attrs(char_type* xml_start, char_type*& _xml, NODE& _Node)
 {
 	_Node.Attr = static_cast<index_type>(Attrs.size());
 	bool AtEnd = false;
-	while (*_XML != '>' && *_XML != '/' && !AtEnd)
+	while (*_xml != '>' && *_xml != '/' && !AtEnd)
 	{
-		ATTR a = make_attr(xml_start, _XML, AtEnd);
+		ATTR a = make_attr(xml_start, _xml, AtEnd);
 		if (a.name)
 			Attrs.push_back(a);
 	}
-	if (*_XML == '>') _XML++;
+	if (*_xml == '>') _xml++;
 	(_Node.Attr == Attrs.size()) ? _Node.Attr = 0 : Attrs.push_back(ATTR()); // either null the list if no elements added, or push a null terminator
 }
 
-void xml::make_next_node_children(char_type*& _XML, node _Parent, int& open_tag_count, int& close_tag_count)
+void xml::make_next_node_children(char_type*& _xml, node parent_node, int& open_tag_count, int& close_tag_count)
 {
 	node prev = 0;
-	while (*_XML != 0 && *(_XML+1) != '/' && *(_XML+1) != 0) // Check for end of the buffer as well
+	while (*_xml != 0 && *(_xml+1) != '/' && *(_xml+1) != 0) // Check for end of the buffer as well
 	{
-		if (*(_XML+1) == '!') detail::skip_reserved_nodes(_XML);
-		else prev = make_next_node(_XML, _Parent, prev, open_tag_count, close_tag_count);
+		if (*(_xml+1) == '!') detail::skip_reserved_nodes(_xml);
+		else prev = make_next_node(_xml, parent_node, prev, open_tag_count, close_tag_count);
 	}
-	if (*(_XML+1) == '/') // Validate this is an end tag
+	if (*(_xml+1) == '/') // Validate this is an end tag
 		close_tag_count++;
-	if (_XML[0] && _XML[1] && _XML[2])
+	if (_xml[0] && _xml[1] && _xml[2])
 	{
-		_XML += strcspn(_XML+2, ">") + 1;
-		_XML += strcspn(_XML, "<");
+		_xml += strcspn(_xml+2, ">") + 1;
+		_xml += strcspn(_xml, "<");
 	}
 }
 
-xml::node xml::make_next_node(char_type*& _XML, node _Parent, node _Previous, int& open_tag_count, int& close_tag_count)
+xml::node xml::make_next_node(char_type*& _xml, node parent_node, node previous, int& open_tag_count, int& close_tag_count)
 {
 	open_tag_count++;
 	NODE n;
-	n.up = (index_type)_Parent;
-	if (_Parent || *_XML == '<') detail::skip_reserved_nodes(_XML); // base-case where the first char_type of file is '<' and that got nulled for the 0 offset empty value
-	n.name = static_cast<index_type>(std::distance(Buffer.data, ++_XML));
-	_XML += strcspn(_XML, " /\t\r\n>");
-	bool veryEarlyOut = *_XML == '/';
-	bool process = *_XML != '>' && !veryEarlyOut;
-	*_XML++ = 0;
-	if (process) make_node_attrs(Buffer.data, _XML, n);
+	n.up = (index_type)parent_node;
+	if (parent_node || *_xml == '<') detail::skip_reserved_nodes(_xml); // base-case where the first char_type of file is '<' and that got nulled for the 0 offset empty value
+	n.name = static_cast<index_type>(std::distance(Buffer.data, ++_xml));
+	_xml += strcspn(_xml, " /\t\r\n>");
+	bool veryEarlyOut = *_xml == '/';
+	bool process = *_xml != '>' && !veryEarlyOut;
+	*_xml++ = 0;
+	if (process) make_node_attrs(Buffer.data, _xml, n);
 	if (!veryEarlyOut)
 	{
-		if (*_XML != '/' && *_XML != '<') n.value = static_cast<index_type>(std::distance(Buffer.data, _XML++)), _XML += strcspn(_XML, "<");
-		if (*(_XML+1) == '/') *_XML++ = 0;
+		if (*_xml != '/' && *_xml != '<') n.value = static_cast<index_type>(std::distance(Buffer.data, _xml++)), _xml += strcspn(_xml, "<");
+		if (*(_xml+1) == '/') *_xml++ = 0;
 		else n.value = 0;
 	}
 	else n.value = 0;
 	index_type newNode = static_cast<index_type>(Nodes.size());
-	if (_Previous) Node(_Previous).next = newNode;
-	else if (_Parent) Node(_Parent).down = newNode; // only assign down for first child - all other siblings don't reassign their parent's down.
+	if (previous) Node(previous).next = newNode;
+	else if (parent_node) Node(parent_node).down = newNode; // only assign down for first child - all other siblings don't reassign their parent's down.
 	Nodes.push_back(n);
 	detail::ampersand_decode(Buffer.data + n.name), detail::ampersand_decode(Buffer.data + n.value);
-	if (!veryEarlyOut && *_XML != '/') // recurse on children nodes
+	if (!veryEarlyOut && *_xml != '/') // recurse on children nodes
 	{
 		node p = node(newNode);
-		make_next_node_children(_XML, p, open_tag_count, close_tag_count);
+		make_next_node_children(_xml, p, open_tag_count, close_tag_count);
 	}
 	else 
 	{
 		close_tag_count++;
-		_XML += strcspn(_XML, "<");
+		_xml += strcspn(_xml, "<");
 	}
 	return node(newNode);
 }
