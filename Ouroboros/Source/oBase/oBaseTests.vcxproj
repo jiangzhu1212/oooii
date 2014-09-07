@@ -28,24 +28,18 @@
     <ClCompile Include="tests\TESTconcurrent_stack.cpp" />
     <ClCompile Include="tests\TESTcoroutine.cpp" />
     <ClCompile Include="tests\TESTcountdown_latch.cpp" />
-    <ClCompile Include="Tests\TESTcsv.cpp" />
     <ClCompile Include="tests\TESTdate.cpp" />
     <ClCompile Include="tests\TESTfilter_chain.cpp" />
     <ClCompile Include="Tests\TESTfourcc.cpp" />
     <ClCompile Include="tests\TESTfuture.cpp" />
     <ClCompile Include="tests\TESThash_map.cpp" />
-    <ClCompile Include="Tests\TESTini.cpp" />
-    <ClCompile Include="Tests\TESTjson.cpp" />
     <ClCompile Include="tests\TESTmath.cpp" />
     <ClCompile Include="tests\TESTosc.cpp" />
     <ClCompile Include="tests\TESTparallel_for.cpp" />
     <ClCompile Include="Tests\TESTpath.cpp" />
     <ClCompile Include="tests\TESTpool.cpp" />
-    <ClCompile Include="tests\TESTsbb.cpp" />
     <ClCompile Include="tests\TESTthreadpool.cpp" />
-    <ClCompile Include="tests\TESTtlsf_allocator.cpp" />
     <ClCompile Include="Tests\TESTuri.cpp" />
-    <ClCompile Include="Tests\TESTxml.cpp" />
     <ClCompile Include="tests\test_struct.cpp" />
   </ItemGroup>
   <ItemGroup>

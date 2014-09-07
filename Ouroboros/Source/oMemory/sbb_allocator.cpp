@@ -1,6 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/sbb_allocator.h>
-#include <oBase/sbb.h>
+#include <oMemory/sbb_allocator.h>
+#include <oMemory/bit.h>
+#include <oMemory/sbb.h>
 
 #define USE_ALLOCATOR_STATS 1
 #define USE_ALLOCATION_STATS 1
@@ -18,7 +19,7 @@ static void find_largest_free_block(void* ptr, size_t bytes, int used, void* use
 	if (!used)
 	{
 		walk_stats* stats = (walk_stats*)user;
-		stats->largest_free_block_bytes = max(stats->largest_free_block_bytes, bytes);
+		stats->largest_free_block_bytes = std::max(stats->largest_free_block_bytes, bytes);
 		stats->num_free_blocks++;
 	}
 }
@@ -101,7 +102,7 @@ size_t sbb_allocator::arena_size() const
 
 void* sbb_allocator::allocate(size_t bytes, const char* label, const allocate_options& options)
 {
-	bytes = max(bytes, size_t(1));
+	bytes = std::max(bytes, size_t(1));
 	size_t align = options.get_alignment();
 	void* p = align == 16 ? sbb_malloc((sbb_t)heap, bytes) : sbb_memalign((sbb_t)heap, align, bytes);
 	if (p)
@@ -110,9 +111,9 @@ void* sbb_allocator::allocate(size_t bytes, const char* label, const allocate_op
 
 		#if USE_ALLOCATOR_STATS
 			stats.num_allocations++;
-			stats.num_allocations_peak = max(stats.num_allocations_peak, stats.num_allocations);
+			stats.num_allocations_peak = std::max(stats.num_allocations_peak, stats.num_allocations);
 			stats.allocated_bytes += block_size;
-			stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
+			stats.allocated_bytes_peak = std::max(stats.allocated_bytes_peak, stats.allocated_bytes);
 		#endif
 	}
 
@@ -141,7 +142,7 @@ void* sbb_allocator::reallocate(void* ptr, size_t bytes)
 
 		#if USE_ALLOCATOR_STATS
 			stats.allocated_bytes += diff;
-			stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
+			stats.allocated_bytes_peak = std::max(stats.allocated_bytes_peak, stats.allocated_bytes);
 		#endif
 	}
 

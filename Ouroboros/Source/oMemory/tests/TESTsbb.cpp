@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/sbb.h>
+#include <oMemory/sbb.h>
 #include <oBase/finally.h>
 #include <oBase/throw.h>
 #include <stdlib.h>

@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/tlsf_allocator.h>
+#include <oMemory/tlsf_allocator.h>
 #include <oMemory/byte.h>
-#include <tlsf.h>
+#include "tlsf.h"
 
 #define USE_ALLOCATOR_STATS 1
 #define USE_ALLOCATION_STATS 1
@@ -25,7 +25,7 @@ static void find_largest_free_block(void* ptr, size_t bytes, int used, void* use
 	if (!used)
 	{
 		walk_stats* stats = (walk_stats*)user;
-		stats->largest_free_block_bytes = max(stats->largest_free_block_bytes, bytes);
+		stats->largest_free_block_bytes = std::max(stats->largest_free_block_bytes, bytes);
 		stats->num_free_blocks++;
 	}
 }
@@ -85,7 +85,7 @@ allocator_stats tlsf_allocator::get_stats() const
 
 void* tlsf_allocator::allocate(size_t bytes, const char* label, const allocate_options& options)
 {
-	bytes = max(bytes, size_t(1));
+	bytes = std::max(bytes, size_t(1));
 	size_t align = options.get_alignment();
 	void* p = align == 16 ? tlsf_malloc(heap, bytes) : tlsf_memalign(heap, align, bytes);
 	if (p)
@@ -93,9 +93,9 @@ void* tlsf_allocator::allocate(size_t bytes, const char* label, const allocate_o
 		size_t block_size = tlsf_block_size(p);
 		#if USE_ALLOCATOR_STATS
 			stats.num_allocations++;
-			stats.num_allocations_peak = max(stats.num_allocations_peak, stats.num_allocations);
+			stats.num_allocations_peak = std::max(stats.num_allocations_peak, stats.num_allocations);
 			stats.allocated_bytes += block_size;
-			stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
+			stats.allocated_bytes_peak = std::max(stats.allocated_bytes_peak, stats.allocated_bytes);
 		#endif
 	}
 
@@ -123,7 +123,7 @@ void* tlsf_allocator::reallocate(void* ptr, size_t bytes)
 		size_t diff = tlsf_block_size(p) - block_size;
 		#if USE_ALLOCATOR_STATS
 			stats.allocated_bytes += diff;
-			stats.allocated_bytes_peak = max(stats.allocated_bytes_peak, stats.allocated_bytes);
+			stats.allocated_bytes_peak = std::max(stats.allocated_bytes_peak, stats.allocated_bytes);
 		#endif
 	}
 

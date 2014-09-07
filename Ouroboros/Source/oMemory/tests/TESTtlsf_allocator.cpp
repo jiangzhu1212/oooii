@@ -1,12 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/assert.h>
 #include <oCompiler.h>
-#include <oString/fixed_string.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
-#include <oBase/tlsf_allocator.h>
 #include <oHLSL/oHLSLMath.h>
+#include <oMemory/tlsf_allocator.h>
+#include <oString/fixed_string.h>
 #include <vector>
 
 #include "../../test_services.h"
@@ -14,7 +14,7 @@
 namespace ouro {
 	namespace tests {
 
-void TESTtlsf_allocator(test_services& _Services)
+void TESTtlsf_allocator(test_services& services)
 {
 	bool EnoughPhysRamForFullTest = true;
 
@@ -25,7 +25,7 @@ void TESTtlsf_allocator(test_services& _Services)
 		// On machines with less memory, it's not a good idea to use all of it
 		// because the system would need to page out everything it has to allocate
 		// that much memory, which makes the test take many minutes to run.
-		size_t ArenaSize = __min(size_t(_Services.total_physical_memory() * 0.15f), oMB(4500));
+		size_t ArenaSize = __min(size_t(services.total_physical_memory() * 0.15f), oMB(4500));
 		EnoughPhysRamForFullTest = (ArenaSize > oGB(4));
 	#else
 		const size_t ArenaSize = oMB(500);
@@ -123,7 +123,7 @@ void TESTtlsf_allocator(test_services& _Services)
 	format_bytes(MINsize, smallestAlloc, 2);
 	format_bytes(MAXsize, largestAlloc, 2);
 	
-	_Services.report("%sRAMused: %s, minsize:%s, maxsize:%s"
+	services.report("%sRAMused: %s, minsize:%s, maxsize:%s"
 		, EnoughPhysRamForFullTest ? "" : "WARNING: system memory not enough to run full test quickly. "
 		, RAMused.c_str(), MINsize.c_str(), MAXsize.c_str());
 }

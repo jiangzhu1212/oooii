@@ -330,7 +330,7 @@ private:
 			oScopedHeapLock lock(hHeap);
 			s = (char*)HeapAlloc(hHeap, HEAP_GENERATE_EXCEPTIONS, cap);
 			len = vsnprintf(s, cap, _Format, _Args);
-			if (len >= 0 && len < cap)
+			if (len >= 0 && size_t(len) < cap)
 				break;
 			HeapFree(hHeap, HEAP_GENERATE_EXCEPTIONS, s);
 			cap *= 2;

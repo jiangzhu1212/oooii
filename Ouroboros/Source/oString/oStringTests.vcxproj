@@ -19,16 +19,17 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oMemory\tests\oMemoryTests.h" />
+    <ClCompile Include="tests\TESTcsv.cpp" />
+    <ClCompile Include="tests\TESTini.cpp" />
+    <ClCompile Include="tests\TESTjson.cpp" />
+    <ClCompile Include="tests\TESTxml.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tests\TESTatof.cpp" />
-    <ClCompile Include="tests\TESTsbb.cpp" />
-    <ClCompile Include="tests\TESTtlsf_allocator.cpp" />
+    <ClInclude Include="..\..\Include\oString\tests\oStringTests.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{E07C7934-D923-4BA1-AFBB-38930867AB89}</ProjectGuid>
-    <RootNamespace>oMemoryTests
+    <ProjectGuid>{1E4005D5-1431-4ED0-B0B4-63D61134189D}</ProjectGuid>
+    <RootNamespace>oStringTests
     </RootNamespace>
     <SccProjectName>
     </SccProjectName>

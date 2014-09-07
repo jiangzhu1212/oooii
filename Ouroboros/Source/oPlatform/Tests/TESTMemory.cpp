@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/tests/oBaseTests.h>
+#include <oMemory/tests/oMemoryTests.h>
 #include "oTestIntegration.h"
 
 using namespace ouro::tests;
@@ -11,4 +11,6 @@ using namespace ouro::tests;
 #define oTEST_REGISTER_MEMORY_TEST_BUGGED(_Name) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oMemory_, _Name), oCONCAT(TEST, _Name))
 
 oTEST_REGISTER_MEMORY_TEST(atof);
+oTEST_REGISTER_MEMORY_TEST(sbb);
+oTEST_REGISTER_MEMORY_TEST(tlsf_allocator);
 
