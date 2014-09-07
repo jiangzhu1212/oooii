@@ -159,9 +159,6 @@
     <ClInclude Include="..\..\Include\oBase\moving_average.h">
       <Filter>oBase</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\resized_type.h">
-      <Filter>oBase\types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\linear_allocator.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>

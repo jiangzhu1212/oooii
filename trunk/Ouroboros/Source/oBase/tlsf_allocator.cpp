@@ -1,8 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/tlsf_allocator.h>
-#include <oBase/assert.h>
 #include <oMemory/byte.h>
-#include <oString/string.h>
 #include <tlsf.h>
 
 #define USE_ALLOCATOR_STATS 1
@@ -35,36 +33,21 @@ static void find_largest_free_block(void* ptr, size_t bytes, int used, void* use
 void tlsf_allocator::initialize(void* arena, size_t bytes)
 {
 	if (!byte_aligned(arena, 16))
-		throw std::invalid_argument("tlsf arena must be 16-byte aligned");
+		throw allocate_error(allocate_errc::alignment);
 	heap = arena;
 	heap_size = bytes;
 	reset();
-}
-
-static void trace_leaks(void* ptr, size_t bytes, int used, void* user)
-{
-	if (used)
-	{
-		char mem[64];
-		format_bytes(mem, bytes, 2);
-		oTRACE("tlsf leak: 0x%p %s", ptr, mem);
-	}
 }
 
 void* tlsf_allocator::deinitialize()
 {
 	#if USE_ALLOCATOR_STATS
 		if (stats.num_allocations)
-		{
-			o_tlsf_walk_heap(heap, trace_leaks, nullptr);
-			char str[96];
-			snprintf(str, "allocator destroyed with %u outstanding allocations", stats.num_allocations);
-			throw std::runtime_error(str);
-		}
+			throw allocate_error(allocate_errc::outstanding_allocations);
 	#endif
 
 	if (!valid())
-		throw std::runtime_error("tlsf heap is corrupt");
+		throw allocate_error(allocate_errc::corrupt);
 
 	void* arena = heap;
 	tlsf_destroy(heap);
@@ -81,7 +64,7 @@ tlsf_allocator& tlsf_allocator::operator=(tlsf_allocator&& that)
 {
 	if (this != &that)
 	{
-		oASSERT(!heap, "how to clean up a maybe-has-allocs heap?");
+		deinitialize();
 		heap = that.heap; that.heap = nullptr;
 		heap_size = that.heap_size; that.heap_size = 0;
 		stats = that.stats; that.stats = allocator_stats();
@@ -203,7 +186,7 @@ bool tlsf_allocator::valid() const
 void tlsf_allocator::reset()
 {
 	if (!heap || !heap_size)
-		throw std::runtime_error("allocator not valid");
+		throw allocate_error(allocate_errc::corrupt);
 	heap = tlsf_create_with_pool(heap, heap_size);
 
 	#if USE_ALLOCATOR_STATS

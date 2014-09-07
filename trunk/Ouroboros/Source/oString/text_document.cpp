@@ -10,9 +10,9 @@ namespace ouro
 		{
 		public:
 			const char* name() const override { return "text_document"; }
-			std::string message(int _ErrCode) const override
+			std::string message(int errcode) const override
 			{
-				switch (_ErrCode)
+				switch (errcode)
 				{
 					case text_document_errc::generic_parse_error: return "generic_parse_error: an unspecified parsing error occurred";
 					case text_document_errc::unclosed_scope: return "unclosed_scope: an open brace/tag was not matched by a closing brace/tag";
@@ -29,5 +29,4 @@ namespace ouro
 		static text_document_detail::text_document_category_impl sSingleton;
 		return sSingleton;
 	}
-
 }
