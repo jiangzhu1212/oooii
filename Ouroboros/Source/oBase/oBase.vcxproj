@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\External\calfaq\calfaq.cpp" />
-    <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp" />
     <ClCompile Include="aabox.cpp" />
     <ClCompile Include="color.cpp" />
     <ClCompile Include="concurrent_growable_pool.cpp" />
@@ -63,7 +62,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\External\calfaq\calfaq.h" />
-    <ClInclude Include="..\..\External\smhasher\MurmurHash3.h" />
     <ClInclude Include="..\..\Include\oBase\aabox.h" />
     <ClInclude Include="..\..\Include\oBase\algorithm.h" />
     <ClInclude Include="..\..\Include\oBase\all.h" />
@@ -93,14 +91,12 @@
     <ClInclude Include="..\..\Include\oBase\csv.h" />
     <ClInclude Include="..\..\Include\oBase\date.h" />
     <ClInclude Include="..\..\Include\oBase\dec3n.h" />
-    <ClInclude Include="..\..\Include\oBase\djb2.h" />
     <ClInclude Include="..\..\Include\oBase\enum_iterator.h" />
     <ClInclude Include="..\..\Include\oBase\event.h" />
     <ClInclude Include="..\..\Include\oBase\filter_chain.h" />
     <ClInclude Include="..\..\Include\oBase\finally.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_string.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
-    <ClInclude Include="..\..\Include\oBase\fnv1a.h" />
     <ClInclude Include="..\..\Include\oBase\fourcc.h" />
     <ClInclude Include="..\..\Include\oBase\future.h" />
     <ClInclude Include="..\..\Include\oBase\gpu_api.h" />
@@ -120,7 +116,6 @@
     <ClInclude Include="..\..\Include\oBase\lzma.h" />
     <ClInclude Include="..\..\Include\oBase\macros.h" />
     <ClInclude Include="..\..\Include\oBase\moving_average.h" />
-    <ClInclude Include="..\..\Include\oBase\murmur3.h" />
     <ClInclude Include="..\..\Include\oBase\object_pool.h" />
     <ClInclude Include="..\..\Include\oBase\operators.h" />
     <ClInclude Include="..\..\Include\oBase\osc.h" />

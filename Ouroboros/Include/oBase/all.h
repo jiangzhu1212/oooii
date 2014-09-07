@@ -18,13 +18,11 @@
 #include <oBase/countdown_latch.h>
 #include <oBase/date.h>
 #include <oBase/dec3n.h>
-#include <oBase/djb2.h>
 #include <oBase/enum_iterator.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>
 #include <oBase/fixed_string.h>
 #include <oBase/fixed_vector.h>
-#include <oBase/fnv1a.h>
 #include <oBase/fourcc.h>
 #include <oBase/guid.h>
 #include <oBase/gzip.h>
@@ -39,7 +37,6 @@
 #include <oBase/lzma.h>
 #include <oBase/macros.h>
 #include <oBase/moving_average.h>
-#include <oBase/murmur3.h>
 #include <oBase/operators.h>
 #include <oString/opttok.h>
 #include <oBase/osc.h>
@@ -65,7 +62,6 @@
 #include <oBase/type_info.h>
 #include <oBase/types.h>
 #include <oBase/udec3.h>
-#include <oBase/uint128.h>
 #include <oBase/unordered_map.h>
 #include <oBase/uri.h>
 #include <oBase/xml.h>

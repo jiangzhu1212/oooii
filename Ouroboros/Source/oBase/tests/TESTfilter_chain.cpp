@@ -1,5 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/filter_chain.h>
+#include <oBase/macros.h>
 #include <oBase/throw.h>
 
 using namespace ouro;
@@ -37,7 +38,7 @@ void TESTfilter_chain()
 
 	char err[1024];
 	filter_chain FilterChain(filters, err);
-	oFORI(i, symbols)
+	for (auto i = 0; i < oCOUNTOF(symbols); i++)
 		if (FilterChain.passes(symbols[i]) != expected[i])
 			oTHROW(protocol_error, "Failed filter on %d%s symbol", i, ordinal(i));
 }

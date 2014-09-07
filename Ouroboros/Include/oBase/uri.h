@@ -4,7 +4,7 @@
 #define oBase_uri_h
 
 #include <oBase/algorithm.h>
-#include <oBase/fnv1a.h>
+#include <oMemory/fnv1a.h>
 #include <oBase/path.h>
 #include <oString/stringize.h>
 #include <oString/string_codec.h>

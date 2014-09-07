@@ -4,9 +4,6 @@
     <ClCompile Include="text_document.cpp">
       <Filter>Source\text</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\External\smhasher\MurmurHash3.cpp">
-      <Filter>Source\hash</Filter>
-    </ClCompile>
     <ClCompile Include="scc.cpp">
       <Filter>Source\scc</Filter>
     </ClCompile>
@@ -155,18 +152,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\path.h">
       <Filter>oBase\types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\djb2.h">
-      <Filter>oBase\hash</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\fnv1a.h">
-      <Filter>oBase\hash</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\External\smhasher\MurmurHash3.h">
-      <Filter>Source\hash</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\murmur3.h">
-      <Filter>oBase\hash</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\uri.h">
       <Filter>oBase\types</Filter>
@@ -420,14 +405,8 @@
     <Filter Include="Source\text">
       <UniqueIdentifier>{c25da8f7-f63f-46b7-bd00-3fc2e5ec27c3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\hash">
-      <UniqueIdentifier>{e3dc22ea-5155-4a45-831d-942d07c523aa}</UniqueIdentifier>
-    </Filter>
     <Filter Include="oBase\containers">
       <UniqueIdentifier>{f6f94d2f-b3e2-4c61-b2e5-8a7fbbe8f2db}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="oBase\hash">
-      <UniqueIdentifier>{c7a9dc6d-1391-4cb7-b517-ff831fbcaa78}</UniqueIdentifier>
     </Filter>
     <Filter Include="oBase\text">
       <UniqueIdentifier>{3f1040d7-d083-4d58-a596-6bc86bce2028}</UniqueIdentifier>

@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oCore/reporting.h>
 #include <oBase/algorithm.h>
-#include <oBase/fnv1a.h>
+#include <oMemory/fnv1a.h>
 #include <oBase/fixed_vector.h>
 #include <oCore/debugger.h>
 #include <oCore/filesystem.h>

@@ -4,7 +4,7 @@
 #ifndef oBase_djb2_h
 #define oBase_djb2_h
 
-#include <oBase/uint128.h>
+#include <oMemory/uint128.h>
 
 namespace ouro {
 
@@ -41,7 +41,7 @@ template<> struct djb2_traits<unsigned long long>
 #endif
 
 template<typename T>
-T djb2(const void* buf, size_t buf_size, const T& _Seed = djb2_traits<T>::seed)
+T djb2(const void* buf, size_t buf_size, const T& seed = djb2_traits<T>::seed)
 {
 	/** <citation
 		usage="Implementation" 
@@ -54,7 +54,7 @@ T djb2(const void* buf, size_t buf_size, const T& _Seed = djb2_traits<T>::seed)
 	/>*/
 	// $(CitedCodeBegin)
 	const char* s = static_cast<const char*>(buf);
-	djb2_traits<T>::value_type h = _Seed;
+	djb2_traits<T>::value_type h = seed;
 	while(buf_size--)
 		h = (h + (h << 5)) ^ *s++;
 	return h;

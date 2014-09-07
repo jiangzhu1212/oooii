@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/concurrent_hash_map.h>
-#include <oBase/fnv1a.h>
+#include <oMemory/fnv1a.h>
 #include <oBase/throw.h>
 #include <string>
 #include <vector>

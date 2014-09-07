@@ -32,6 +32,7 @@
     <ClCompile Include="memset2d8.cpp" />
     <ClCompile Include="memset4.cpp" />
     <ClCompile Include="memset8.cpp" />
+    <ClCompile Include="MurmurHash3.cpp" />
     <ClCompile Include="rle_decode.cpp" />
     <ClCompile Include="rle_decoden.cpp" />
     <ClCompile Include="utfcmp.cpp" />
@@ -41,10 +42,15 @@
     <ClInclude Include="..\..\Include\oMemory\allocate.h" />
     <ClInclude Include="..\..\Include\oMemory\bit.h" />
     <ClInclude Include="..\..\Include\oMemory\byte.h" />
+    <ClInclude Include="..\..\Include\oMemory\djb2.h" />
     <ClInclude Include="..\..\Include\oMemory\endian.h" />
     <ClInclude Include="..\..\Include\oMemory\equal.h" />
+    <ClInclude Include="..\..\Include\oMemory\fnv1a.h" />
     <ClInclude Include="..\..\Include\oMemory\memory.h" />
+    <ClInclude Include="..\..\Include\oMemory\murmur3.h" />
+    <ClInclude Include="..\..\Include\oMemory\uint128.h" />
     <ClInclude Include="memduff.h" />
+    <ClInclude Include="MurmurHash3.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{995587D3-B1D0-4C01-BB52-A4B84A2DCB27}</ProjectGuid>
