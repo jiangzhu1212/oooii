@@ -86,6 +86,7 @@ namespace detail
 			switch (errcode)
 			{
 				case allocate_errc::invalid: return "invalid: allocator is not in a valid state";
+				case allocate_errc::invalid_ptr: return "invalid_ptr: deallocate attempt on a pointer not managed by the allocator";
 				case allocate_errc::out_of_memory: return "out_of_memory: there is no memory available from this allocator";
 				case allocate_errc::fragmented: return "fragmented: not enough contiguous memory to fulfill request";
 				case allocate_errc::corrupt: return "corrupt: allocator bookkeeping is corrupt";

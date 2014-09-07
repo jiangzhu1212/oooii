@@ -192,7 +192,7 @@ size_t sbb_allocator::size(void* ptr) const
 	return sbb_block_size((sbb_t)heap, ptr);
 }
 
-bool sbb_allocator::in_range(void* ptr) const
+bool sbb_allocator::owns(void* ptr) const
 {
 	return ptr >= heap && ptr < ((uint8_t*)heap + heap_size);
 }

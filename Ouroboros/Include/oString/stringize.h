@@ -6,12 +6,12 @@
 // Template policy for converting data types to and from string without
 // requiring std::string. Also as-string for constant types like enums.
 
-#include <oBase/enum_iterator.h>
 #include <oString/string.h>
+#include <type_traits>
 #include <vector>
 
 #define oDEFINE_ENUM_TO_STRING(_T) char* to_string(char* dst, size_t dst_size, const _T& value) { return detail::to_string(dst, dst_size, value); }
-#define oDEFINE_ENUM_FROM_STRING(_T) bool from_string(_T* out_value, const char* src) { return from_string<_T>(out_value, src); }
+#define oDEFINE_ENUM_FROM_STRING(_T) bool from_string(_T* out_value, const char* src) { return detail::from_string<_T>(out_value, src, _T(0)); }
 #define oDEFINE_ENUM_FROM_STRING2(_T, invalid_value) bool from_string(_T* out_value, const char* src) { return detail::from_string<_T>(out_value, src, invalid_value); }
 #define oDEFINE_TO_FROM_STRING(_T) oDEFINE_ENUM_TO_STRING(_T) oDEFINE_ENUM_FROM_STRING(_T)
 
@@ -35,22 +35,17 @@ template<size_t size> bool from_string(char (&dst)[size], const char* src) { ret
 	
 namespace detail {
 
-// allows binding to a true_type or false_type based on T being an enum
-template <typename T> struct is_enum_integral 
-	: std::integral_constant<bool, std::is_enum<T>::value> {};
-
 // enum from_string: this requires the enum have a memory count that is the 
 // number of enums to consider.
 template<typename T> bool from_string(T* out_value, const char* src, const T& invalid_value, std::true_type)
 {
-  std::cout << "enum ";
   static_assert(std::is_enum<T>::value, "not enum");
   *out_value = invalid_value;
-  for (int e = 0; e < (int)T::count; e++)
+  for (std::underlying_type<T>::type e = 0; e < (std::underlying_type<T>::type)T::count; e++)
   {
     if (!_stricmp(src, as_string(T(e))))
     {
-      *out_value = e;
+      *out_value = T(e);
       return true;
     }
   }
@@ -61,6 +56,11 @@ template<typename T> bool from_string(T* out_value, const char* src, const T& in
 template<typename T> bool from_string(T* out_value, const char* src, const T& invalid_value, std::false_type)
 {
   return ouro::from_string(out_value, src);
+}
+
+template<typename T> bool from_string(T* out_value, const char* src, const T& invalid_value)
+{
+  return ouro::detail::from_string<T>(out_value, src, invalid_value, std::is_enum<T>::type());
 }
 
 // A default implementation that copies the as_string to the destination

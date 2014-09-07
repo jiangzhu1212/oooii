@@ -1,78 +1,38 @@
-/**************************************************************************
-* The MIT License                                                        *
-* Copyright (c) 2014 Antony Arciuolo.                                    *
-* arciuolo@gmail.com                                                     *
-*                                                                        *
-* Permission is hereby granted, free of charge, to any person obtaining  *
-* a copy of this software and associated documentation files (the        *
-* "Software"), to deal in the Software without restriction, including    *
-* without limitation the rights to use, copy, modify, merge, publish,    *
-* distribute, sublicense, and/or sell copies of the Software, and to     *
-* permit persons to whom the Software is furnished to do so, subject to  *
-* the following conditions:                                              *
-*                                                                        *
-* The above copyright notice and this permission notice shall be         *
-* included in all copies or substantial portions of the Software.        *
-*                                                                        *
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
-* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
-* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
-* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
-* LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
-* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
-* WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
-**************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/pool.h>
-#include <oMemory/allocate.h>
-#include <oMemory/bit.h>
-#include <oMemory/byte.h>
-#include <oBase/macros.h>
 #include <stdexcept>
 
 namespace ouro {
 
 pool::pool()
-	: blocks(nullptr)
+	: next(nullptr)
+	, blocks(nullptr)
 	, stride(0)
 	, nblocks(0)
 	, nfree(0)
 	, head(nullidx)
-	, owns_memory(false)
 {}
 
-pool::pool(pool&& _That)
-	: blocks(_That.blocks)
-	, stride(_That.stride)
-	, nblocks(_That.nblocks)
-	, nfree(_That.nfree)
-	, head(_That.head)
-	, owns_memory(_That.owns_memory)
+pool::pool(pool&& that)
+	: next(that.next)
+	, blocks(that.blocks)
+	, stride(that.stride)
+	, nblocks(that.nblocks)
+	, nfree(that.nfree)
+	, head(that.head)
 { 
-	_That.owns_memory = false;
-	_That.deinitialize();
+	that.deinitialize();
 }
 
-pool::pool(void* memory, size_type block_size, size_type capacity, size_type alignment)
-	: blocks(nullptr)
+pool::pool(void* memory, size_type block_size, size_type capacity)
+	: next(nullptr)
+	, blocks(nullptr)
 	, stride(0)
 	, nblocks(0)
 	, nfree(0)
 	, head(nullidx)
-	, owns_memory(false)
 {
-	if (!initialize(memory, block_size, capacity, alignment))
-		throw std::invalid_argument("pool initialize failed");
-}
-
-pool::pool(size_type block_size, size_type capacity, size_type alignment)
-	: blocks(nullptr)
-	, stride(0)
-	, nblocks(0)
-	, head(nullidx)
-	, owns_memory(false)
-{
-	if (!initialize(block_size, capacity, alignment))
-		throw std::invalid_argument("pool initialize failed");
+	initialize(memory, block_size, capacity);
 }
 
 pool::~pool()
@@ -80,75 +40,51 @@ pool::~pool()
 	deinitialize();
 }
 
-pool& pool::operator=(pool&& _That)
+pool& pool::operator=(pool&& that)
 {
-	if (this != &_That)
+	if (this != &that)
 	{
 		deinitialize();
 
-		oMOVE0(blocks);
-		oMOVE0(stride);
-		oMOVE0(nblocks);
-		oMOVE0(nfree);
-		oMOVE0(owns_memory);
-		head = _That.head; _That.head = nullidx;
+		next = that.next; that.next = nullptr;
+		blocks = that.blocks; that.blocks = nullptr;
+		stride = that.stride; that.stride = 0;
+		nblocks = that.nblocks; that.nblocks = 0;
+		nfree = that.nfree; that.nfree = 0;
+		head = that.head; that.head = nullidx;
 	}
 
 	return *this;
 }
 
-pool::index_type pool::initialize(void* memory, size_type block_size, size_type capacity, size_type alignment)
+pool::size_type pool::initialize(void* memory, size_type block_size, size_type capacity)
 {
 	if (capacity > max_capacity())
-		return 0;
+		std::invalid_argument("capacity is too large");
 
 	if (block_size < sizeof(index_type))
-		return 0;
+		std::invalid_argument("block_size must be a minimum of 4 bytes");
 
-	if (!ispow2(alignment))
-		return 0;
+	size_type req = max(block_size, size_type(sizeof(index_type))) * capacity;
 
-	size_type req = __max(block_size, sizeof(index_type)) * capacity;
 	if (memory)
 	{
-		if (!byte_aligned(memory, alignment))
-			return 0;
-
 		head = 0;
-		blocks = memory;
+		blocks = (uint8_t*)memory;
 		stride = block_size;
 		nblocks = capacity;
 		nfree = capacity;
 		const index_type n = nblocks - 1;
 		for (index_type i = 0; i < n; i++)
-			*byte_add((index_type*)blocks, stride, i) = i + 1;
-		*byte_add((index_type*)blocks, stride, n) = nullidx;
+			*(index_type*)(stride*i + blocks) = i + 1;
+		*(index_type*)(stride*n + blocks) = nullidx;
 	}
 
 	return req;
 }
 
-pool::size_type pool::initialize(size_type block_size, size_type capacity, size_type block_alignment)
-{
-	size_type req = initialize(nullptr, block_size, capacity, block_alignment);
-	if (!req)
-		return 0;
-
-	allocate_options o;
-	o.alignment = bithigh(block_alignment);
-
-	void* p = default_allocate(req, o);
-	return initialize(p, block_size, capacity, block_alignment);
-}
-
 void* pool::deinitialize()
 {
-	if (owns_memory)
-	{
-		default_deallocate(blocks);
-		blocks = nullptr;
-	}
-
 	void* p = blocks;
 	blocks = nullptr;
 	stride = 0;
@@ -170,7 +106,7 @@ pool::index_type pool::allocate()
 void pool::deallocate(index_type index)
 {
 	if (!owns(index))
-		throw std::out_of_range("the specified index was not allocated from this allocator");
+		throw std::invalid_argument("pool does not own the specified index or pointer");
 	*(index_type*)pointer(index) = index_type(head);
 	head = index;
 	nfree++;
@@ -179,12 +115,12 @@ void pool::deallocate(index_type index)
 // convert between allocated index and pointer values
 void* pool::pointer(index_type index) const
 {
-	return index != nullidx ? byte_add(blocks, stride, index) : nullptr;
+	return index != nullidx ? (stride*index + blocks) : nullptr;
 }
 
 pool::index_type pool::index(void* pointer) const
 {
-	return pointer ? (index_type)index_of(pointer, blocks, stride) : nullidx;
+	return pointer ? index_type(((uint8_t*)pointer - blocks) / stride) : nullidx;
 }
 
 }

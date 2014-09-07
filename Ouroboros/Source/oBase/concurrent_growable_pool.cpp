@@ -106,7 +106,7 @@ concurrent_growable_pool::chunk_t* concurrent_growable_pool::allocate_chunk()
 	req = byte_align((size_type)sizeof(chunk_t), oCACHE_LINE_SIZE) + byte_align(req, block_alignment);
 	chunk_t* c = new (default_allocate(req, memory_alignment::cacheline)) chunk_t();
 	void* p = byte_align(c + 1, block_alignment);
-	c->pool.initialize(p, block_size, capacity_per_chunk, block_alignment);
+	c->pool.initialize(p, block_size, capacity_per_chunk);
 	c->next = nullptr;
 	return c;
 }

@@ -1,6 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oMemory/sbb.h>
 #include <oBase/finally.h>
+#include <oBase/assert.h>
 #include <oBase/throw.h>
 #include <stdlib.h>
 #include <vector>
@@ -105,6 +106,7 @@ void TESTsbb(test_services& services)
 	finally FreeArena([&] { if (arena) delete [] arena; });
 
 	bool ExpectedFailSucceeded = true;
+	oTRACE("About to test an invalid case, an exception may be caught by the debugger. CONTINUE.");
 	try
 	{
 		sbb_create(arena, kBadArenaSize, kBadMinBlockSize, bookkeeping);
@@ -114,6 +116,7 @@ void TESTsbb(test_services& services)
 	catch (...) {}
 	oCHECK0(ExpectedFailSucceeded);
 
+	oTRACE("About to test an invalid case, an exception may be caught by the debugger. CONTINUE.");
 	try
 	{
 		sbb_create(arena, kArenaSize, kBadMinBlockSize, bookkeeping);

@@ -48,9 +48,9 @@ public:
 				, uri(_uri)
 			{
 				if (!_data)
-					throw std::invalid_argument("[text_buffer] invalid data buffer");
+					throw std::invalid_argument("invalid data buffer");
 				if (!_deallocate)
-					throw std::invalid_argument("[text_buffer] invalid deallocate function");
+					throw std::invalid_argument("invalid deallocate function");
 			}
 
 			text_buffer(const char* _uri, const char* data_src, const allocator& alloc, const char* label)
