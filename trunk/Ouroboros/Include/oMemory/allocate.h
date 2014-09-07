@@ -14,7 +14,7 @@ namespace ouro {
 // _____________________________________________________________________________
 // Error handling
 	
-enum class allocate_errc { invalid, out_of_memory, fragmented, corrupt, alignment, outstanding_allocations };
+enum class allocate_errc { invalid, invalid_ptr, out_of_memory, fragmented, corrupt, alignment, outstanding_allocations };
 
 const std::error_category& allocate_category();
 

@@ -283,6 +283,7 @@ void oWindowUITest::OnCreate(HWND _hWnd, ouro::menu_handle _hMenu)
 
 	oWinControlSetValue(Controls[ID_FLOATBOX], 1.234f);
 
+	oTRACE("About to test an invalid case, an exception may be caught by the debugger. CONTINUE.");
 	try
 	{
 		oWinControlSetText(Controls[ID_FLOATBOX], "Error!"); // should not show up

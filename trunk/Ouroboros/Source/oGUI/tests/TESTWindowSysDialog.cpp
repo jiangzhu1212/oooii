@@ -276,7 +276,7 @@ bool oSystemProperties::Reload(HWND _hParent, const int2& _ClientSize)
 		std::shared_ptr<char> buffer = ouro::filesystem::load(p, ouro::filesystem::load_option::text_read);
 		XML = std::make_shared<ouro::xml>(p, buffer.get(), nullptr);
 	#else
-		XML = std::make_shared<ouro::xml>("cpp:///SystemProperties.xml", (char*)SystemProperties_xml, nullptr);
+		XML = std::make_shared<ouro::xml>("cpp:///SystemProperties.xml", (const char*)SystemProperties_xml);
 	#endif
 
 	ControlSet.Deinitialize();

@@ -173,7 +173,7 @@ size_t tlsf_allocator::size(void* ptr) const
 	return tlsf_block_size(ptr);
 }
 
-bool tlsf_allocator::in_range(void* ptr) const
+bool tlsf_allocator::owns(void* ptr) const
 {
 	return ptr >= heap && ptr < byte_add(heap, heap_size);
 }

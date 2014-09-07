@@ -19,8 +19,8 @@ class csv
 public:
 	typedef uint32_t index_type;
 	
-	csv(const char* _uri, char* data, deallocate_fn deallocate, size_t est_num_rows = 100, size_t est_num_cols = 20)
-		: buffer(_uri, data, deallocate)
+	csv(const char* uri, char* data, deallocate_fn deallocate, size_t est_num_rows = 100, size_t est_num_cols = 20)
+		: buffer(uri, data, deallocate)
 		, num_cols(0)
 	{
 		size_ = sizeof(*this) + strlen(buffer.data) + 1;
@@ -30,8 +30,8 @@ public:
 			size_ += cell.capacity() * sizeof(index_type);
 	}
 
-	csv(const char* _uri, const char* data, const allocator& alloc, size_t est_num_rows = 100, size_t est_num_cols = 20)
-		: buffer(_uri, data, alloc, "csv doc")
+	csv(const char* uri, const char* data, const allocator& alloc = default_allocator, size_t est_num_rows = 100, size_t est_num_cols = 20)
+		: buffer(uri, data, alloc, "csv doc")
 		, num_cols(0)
 	{
 		size_ = sizeof(*this) + strlen(buffer.data) + 1;

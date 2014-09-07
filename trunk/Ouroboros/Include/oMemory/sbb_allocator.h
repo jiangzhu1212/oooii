@@ -35,7 +35,7 @@ public:
 	void* reallocate(void* ptr, size_t bytes);
 	void deallocate(void* ptr);
 	size_t size(void* ptr) const;
-	bool in_range(void* ptr) const;
+	bool owns(void* ptr) const;
 	bool valid() const;
 	void reset();
 	void walk_heap(const std::function<void(void* ptr, size_t bytes, bool used)>& enumerator);

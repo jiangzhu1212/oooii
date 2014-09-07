@@ -1,10 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#ifndef oMemory_pool_h
+#define oMemory_pool_h
+
 // allocate in O(1) time from a preallocated array of blocks (fixed block
 // allocator).
-#ifndef oBase_pool_h
-#define oBase_pool_h
 
-#include <oCompiler.h>
+#include <cstdint>
 
 namespace ouro
 {
@@ -12,11 +13,10 @@ namespace ouro
 class pool
 {
 public:
-	typedef unsigned int index_type;
-	typedef unsigned int size_type;
+	typedef uint32_t index_type;
+	typedef uint32_t size_type;
 
 	// if at capacity allocate() will return this value
-	// (upper bits reserved for atomic tagging)
 	static const index_type nullidx = 0xffffffff;
 
 	// the largest index issued by this pool, also serving as a static max_capacity()
@@ -29,29 +29,22 @@ public:
 	pool();
 
 	// ctor that moves an existing pool into this one
-	pool(pool&& _That);
+	pool(pool&& that);
 
 	// ctor creates as a valid pool using external memory
-	pool(void* memory, size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
-
-	// ctor creates as a valid pool using internally allocated memory
-	pool(size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
+	pool(void* memory, size_type block_size, size_type capacity);
 
 	// dtor
 	~pool();
 
 	// calls deinit on this, moves that's memory under the same config
-	pool& operator=(pool&& _That);
+	pool& operator=(pool&& that);
 
-	// returns the bytes required for this class. If memory is not nullptr then the class
-	// is initialized as a full pool of memory blocks.
-	size_type initialize(void* memory, size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
+	// Returns bytes required for memory; pass nullptr to obtain size, allocate
+	// and then pass that to memory in a second call to initialize the class.
+	size_type initialize(void* memory, size_type block_size, size_type capacity);
 
-	// self-allocates and manages memory used, otherwise this is like the other initialize()
-	size_type initialize(size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
-
-	// deinitializes the pool, returning it to a default-constructed state. This returns the
-	// memory used in initialize or nullptr if self-allocated memory was used.
+	// deinitializes the pool and returns the memory passed to initialize()
 	void* deinitialize();
 
 	// returns the number of items available
@@ -87,12 +80,12 @@ public:
 	bool owns(void* pointer) const { return owns(index(pointer)); }
 
 private:
-	void* blocks;
+	pool* next; // reserved for use with linked-lists
+	uint8_t* blocks;
 	size_type stride;
 	size_type nblocks;
 	size_type nfree;
-	unsigned int head;
-	bool owns_memory;
+	uint32_t head;
 
 	pool(const pool&); /* = delete; */
 	const pool& operator=(const pool&); /* = delete; */

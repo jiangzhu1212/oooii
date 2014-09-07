@@ -1,9 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// provides typed simplification of some concurrent_pool APIs as well as 
-// create/destroy for constructor/destructor semantics.
 #pragma once
 #ifndef oBase_concurrent_object_pool_h
 #define oBase_concurrent_object_pool_h
+
+// provides typed simplification of some concurrent_pool APIs as well as 
+// create/destroy for constructor/destructor semantics.
 
 #include <oBase/callable.h>
 #include <oBase/concurrent_pool.h>
@@ -31,13 +32,12 @@ public:
 	// non-concurrent api
 
 	concurrent_object_pool() {}
-	concurrent_object_pool(concurrent_object_pool&& _That) : concurrent_pool(std::move((concurrent_pool&&)_That)) {}
+	concurrent_object_pool(concurrent_object_pool&& that) : concurrent_pool(std::move((concurrent_pool&&)that)) {}
 	concurrent_object_pool(void* memory, size_type capacity) : concurrent_pool(memory, sizeof(T), capacity) {}
-	concurrent_object_pool(size_type capacity) : concurrent_pool(sizeof(T), capacity) {}
 	~concurrent_object_pool() { ((concurrent_pool*)this)->~concurrent_pool(); }
-	concurrent_object_pool& operator=(concurrent_object_pool&& _That) { return (concurrent_object_pool&)concurrent_pool::operator=(std::move((concurrent_pool&&)_That)); }
-	index_type initialize(void* memory, size_type capacity) { return concurrent_pool::initialize(memory, sizeof(T), capacity); }
-	size_type initialize(size_type capacity) { return concurrent_pool::initialize(sizeof(T), capacity); }
+	concurrent_object_pool& operator=(concurrent_object_pool&& that) { return (concurrent_object_pool&)concurrent_pool::operator=(std::move((concurrent_pool&&)that)); }
+	size_type initialize(void* memory, size_type capacity) { return concurrent_pool::initialize(memory, sizeof(T), capacity); }
+
 
 	// concurrent api
 

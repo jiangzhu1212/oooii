@@ -1,34 +1,13 @@
-/**************************************************************************
-* The MIT License                                                        *
-* Copyright (c) 2014 Antony Arciuolo.                                    *
-* arciuolo@gmail.com                                                     *
-*                                                                        *
-* Permission is hereby granted, free of charge, to any person obtaining  *
-* a copy of this software and associated documentation files (the        *
-* "Software"), to deal in the Software without restriction, including    *
-* without limitation the rights to use, copy, modify, merge, publish,    *
-* distribute, sublicense, and/or sell copies of the Software, and to     *
-* permit persons to whom the Software is furnished to do so, subject to  *
-* the following conditions:                                              *
-*                                                                        *
-* The above copyright notice and this permission notice shall be         *
-* included in all copies or substantial portions of the Software.        *
-*                                                                        *
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,        *
-* EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF     *
-* MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND                  *
-* NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE *
-* LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION *
-* OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION  *
-* WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.        *
-**************************************************************************/
+// Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef oMemory_concurrent_pool_h
+#define oMemory_concurrent_pool_h
+
 // concurrently allocate in O(1) time from a preallocated array of blocks 
 // (fixed block allocator).
-#pragma once
-#ifndef oBase_concurrent_pool_h
-#define oBase_concurrent_pool_h
 
 #include <oCompiler.h>
+#include <cstdint>
 #include <atomic>
 
 namespace ouro {
@@ -36,8 +15,8 @@ namespace ouro {
 class concurrent_pool
 {
 public:
-	typedef unsigned int index_type;
-	typedef unsigned int size_type;
+	typedef uint32_t index_type;
+	typedef uint32_t size_type;
 
 	// if at capacity allocate() will return this value
 	// (upper bits reserved for atomic tagging)
@@ -59,10 +38,7 @@ public:
 	concurrent_pool(concurrent_pool&& _That);
 
 	// ctor creates as a valid pool using external memory
-	concurrent_pool(void* memory, size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
-
-	// ctor creates as a valid pool using internally allocated memory
-	concurrent_pool(size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
+	concurrent_pool(void* memory, size_type block_size, size_type capacity);
 
 	// dtor
 	~concurrent_pool();
@@ -70,15 +46,11 @@ public:
 	// calls deinit on this, moves that's memory under the same config
 	concurrent_pool& operator=(concurrent_pool&& _That);
 
-	// returns the bytes required for this class. If memory is not nullptr then the class
-	// is initialized as a full pool of memory blocks.
-	size_type initialize(void* memory, size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
+	// Returns bytes required for memory; pass nullptr to obtain size, allocate
+	// and then pass that to memory in a second call to initialize the class.
+	size_type initialize(void* memory, size_type block_size, size_type capacity);
 
-	// self-allocates and manages memory used, otherwise this is like the other initialize()
-	size_type initialize(size_type block_size, size_type capacity, size_type block_alignment = oDEFAULT_MEMORY_ALIGNMENT);
-
-	// deinitializes the pool, returning it to a default-constructed state. This returns the
-	// memory used in initialize or nullptr if self-allocated memory was used.
+	// deinitializes the pool and returns the memory passed to initialize()
 	void* deinitialize();
 
 	// SLOW! walks the free list and returns the count
@@ -117,16 +89,24 @@ public:
 	bool owns(void* pointer) const { return owns(index(pointer)); }
 
 private:
-	void* blocks;
-	size_type stride;
-	size_type nblocks;
-	std::atomic_uint head;
-	bool owns_memory;
-	char cache_padding[oCACHE_LINE_SIZE - (sizeof(void*) + 2*sizeof(size_type) + sizeof(std::atomic_uint) + sizeof(bool))];
+	union
+	{
+		char cache_padding[oCACHE_LINE_SIZE];
+		struct
+		{
+			concurrent_pool* next;
+			uint8_t* blocks;
+			size_type stride;
+			size_type nblocks;
+			std::atomic_uint head;
+			bool owns_memory;
+		};
+	};
 
 	concurrent_pool(const concurrent_pool&); /* = delete; */
 	const concurrent_pool& operator=(const concurrent_pool&); /* = delete; */
 };
+static_assert(sizeof(concurrent_pool) == oCACHE_LINE_SIZE, "size mismatch");
 
 }
 

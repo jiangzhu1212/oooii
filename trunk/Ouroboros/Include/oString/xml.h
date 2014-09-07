@@ -55,8 +55,8 @@ public:
 	};
 
 	xml() : Size(0) {}
-	xml(const char_type* _URI, char_type* _pData, deallocate_fn _Delete, size_t _EstNumNodes = 100, size_t _EstNumAttrs = 500)
-		: Buffer(_URI, _pData, _Delete)
+	xml(const char_type* _URI, char_type* _pData, deallocate_fn deallocate, size_t _EstNumNodes = 100, size_t _EstNumAttrs = 500)
+		: Buffer(_URI, _pData, deallocate)
 	{
 		Size = sizeof(*this) + strlen(Buffer.data) + 1;
 		Nodes.reserve(_EstNumNodes);
@@ -65,7 +65,7 @@ public:
 		Size += Nodes.capacity() * sizeof(index_type) + Attrs.capacity() * sizeof(index_type);
 	}
 
-	xml(const char_type* _URI, const char_type* _pData, const allocator& alloc, size_t _EstNumNodes = 100, size_t _EstNumAttrs = 500)
+	xml(const char_type* _URI, const char_type* _pData, const allocator& alloc = default_allocator, size_t _EstNumNodes = 100, size_t _EstNumAttrs = 500)
 		: Buffer(_URI, _pData, alloc, "xml doc")
 	{
 		Size = sizeof(*this) + strlen(Buffer.data) + 1;
