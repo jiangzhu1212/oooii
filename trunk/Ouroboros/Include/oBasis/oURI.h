@@ -9,7 +9,7 @@
 #ifndef oURI_h
 #define oURI_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/macros.h> // oCOUNTOF
 #include <oBase/operators.h>
 #include <oBasis/oRTTI.h>

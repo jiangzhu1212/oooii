@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="text_document.cpp">
-      <Filter>Source\text</Filter>
-    </ClCompile>
     <ClCompile Include="scc.cpp">
       <Filter>Source\scc</Filter>
     </ClCompile>
@@ -120,35 +117,14 @@
     <ClInclude Include="..\..\Include\oBase\unordered_map.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\uint128.h">
-      <Filter>oBase\types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\color.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\guid.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\fixed_string.h">
-      <Filter>oBase\types</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\all.h">
       <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\xml.h">
-      <Filter>oBase\text</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\ini.h">
-      <Filter>oBase\text</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\csv.h">
-      <Filter>oBase\text</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\text_document.h">
-      <Filter>oBase\text</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\json.h">
-      <Filter>oBase\text</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\path.h">
       <Filter>oBase\types</Filter>
@@ -402,14 +378,8 @@
     <Filter Include="Source\types">
       <UniqueIdentifier>{c27deb6f-a0b6-4c75-a1d1-93fb595d0465}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source\text">
-      <UniqueIdentifier>{c25da8f7-f63f-46b7-bd00-3fc2e5ec27c3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="oBase\containers">
       <UniqueIdentifier>{f6f94d2f-b3e2-4c61-b2e5-8a7fbbe8f2db}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="oBase\text">
-      <UniqueIdentifier>{3f1040d7-d083-4d58-a596-6bc86bce2028}</UniqueIdentifier>
     </Filter>
     <Filter Include="oBase\types">
       <UniqueIdentifier>{50ae8ce8-bcf2-4d43-b130-18d954a2237d}</UniqueIdentifier>

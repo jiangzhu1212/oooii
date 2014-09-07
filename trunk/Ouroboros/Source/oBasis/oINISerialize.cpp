@@ -2,7 +2,7 @@
 #include <oBasis/oINISerialize.h>
 #include <oBasis/oError.h>
 #include <oBasis/oStrTok.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <vector>
 
 using namespace ouro;

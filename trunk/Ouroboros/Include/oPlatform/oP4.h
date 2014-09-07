@@ -3,7 +3,7 @@
 #ifndef oP4_h
 #define oP4_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBasis/oRTTI.h>
 
 enum oP4_STATUS

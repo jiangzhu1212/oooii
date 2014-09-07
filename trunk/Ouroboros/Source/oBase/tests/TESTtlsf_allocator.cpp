@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/assert.h>
 #include <oCompiler.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>

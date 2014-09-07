@@ -7,7 +7,7 @@
 #ifndef oCore_win_socket_h
 #define oCore_win_socket_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <functional>
 
 #define WIN32_LEAN_AND_MEAN

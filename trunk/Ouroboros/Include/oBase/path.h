@@ -3,7 +3,7 @@
 #ifndef oBase_path_h
 #define oBase_path_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/path_traits.h>
 #include <oString/stringize.h>
 #include <oBase/throw.h>

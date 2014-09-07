@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oSurface/fill.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oMemory/byte.h>
 
 namespace ouro {

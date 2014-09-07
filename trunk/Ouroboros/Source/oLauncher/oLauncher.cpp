@@ -1,6 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 using namespace ouro;
 
+#include <oString/opttok.h>
 #include <oGUI/msgbox.h>
 //#include <oPlatform/oVersionUpdate.h>
 

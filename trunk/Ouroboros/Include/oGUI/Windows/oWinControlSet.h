@@ -88,9 +88,9 @@ An example XML:
 
 #include <oGUI/oGUI.h>
 #include <oGUI/Windows/oWinWindowing.h>
-#include <oBase/fixed_string.h>
 #include <oBase/container_support.h>
-#include <oBase/xml.h>
+#include <oString/fixed_string.h>
+#include <oString/xml.h>
 #include <map>
 #include <string>
 #include <vector>

@@ -2,7 +2,7 @@
 #include "oIOCP.h"
 #include <oBase/backoff.h>
 #include <oBase/concurrent_pool.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oCore/thread_traits.h>
 #include <oBasis/oRefCount.h>
 #include <oPlatform/oSingleton.h>

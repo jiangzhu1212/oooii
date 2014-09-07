@@ -5,7 +5,7 @@
 #ifndef oCore_cpu_h
 #define oCore_cpu_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <functional>
 
 namespace ouro {

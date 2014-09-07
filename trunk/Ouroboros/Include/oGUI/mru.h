@@ -4,7 +4,7 @@
 #ifndef oGUI_mru_h
 #define oGUI_mru_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oGUI/oGUI.h>
 #include <vector>
 

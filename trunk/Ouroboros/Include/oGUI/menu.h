@@ -8,7 +8,7 @@
 #define oGUI_menu_h
 
 #include <oGUI/oGUI.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/throw.h>
 
 namespace ouro { namespace gui { namespace menu {

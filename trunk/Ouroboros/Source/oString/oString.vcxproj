@@ -21,6 +21,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\Include\oString\all.h" />
     <ClInclude Include="..\..\Include\oString\atof.h" />
+    <ClInclude Include="..\..\Include\oString\csv.h" />
+    <ClInclude Include="..\..\Include\oString\fixed_string.h" />
+    <ClInclude Include="..\..\Include\oString\ini.h" />
+    <ClInclude Include="..\..\Include\oString\json.h" />
     <ClInclude Include="..\..\Include\oString\opttok.h" />
     <ClInclude Include="..\..\Include\oString\string.h" />
     <ClInclude Include="..\..\Include\oString\stringize.h" />
@@ -30,6 +34,8 @@
     <ClInclude Include="..\..\Include\oString\string_platform.h" />
     <ClInclude Include="..\..\Include\oString\string_source.h" />
     <ClInclude Include="..\..\Include\oString\string_traits.h" />
+    <ClInclude Include="..\..\Include\oString\text_document.h" />
+    <ClInclude Include="..\..\Include\oString\xml.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\External\OpenBSD\src\lib\libc\string\strlcat.c">
@@ -87,6 +93,7 @@
     <ClCompile Include="strbitmask.cpp" />
     <ClCompile Include="stringize.cpp" />
     <ClCompile Include="strtok.cpp" />
+    <ClCompile Include="text_document.cpp" />
     <ClCompile Include="to_lower.cpp" />
     <ClCompile Include="to_upper.cpp" />
     <ClCompile Include="trim.cpp" />

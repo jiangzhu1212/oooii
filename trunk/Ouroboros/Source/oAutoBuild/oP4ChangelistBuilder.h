@@ -3,7 +3,7 @@
 #ifndef oP4ChangelistBuilder_h
 #define oP4ChangelistBuilder_h
 
-#include <oBase/ini.h>
+#include <oString/ini.h>
 
 static const char* oAUTO_BUILD_SPECIAL_PREFIX = "Daily";
 static const char* oBUILD_TOOL_FAIL_TITLE = " Fail";

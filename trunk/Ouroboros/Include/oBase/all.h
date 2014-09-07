@@ -21,12 +21,10 @@
 #include <oBase/enum_iterator.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>
-#include <oBase/fixed_string.h>
 #include <oBase/fixed_vector.h>
 #include <oBase/fourcc.h>
 #include <oBase/guid.h>
 #include <oBase/gzip.h>
-#include <oBase/ini.h>
 #include <oBase/input.h>
 #include <oBase/intrusive_ptr.h>
 #include <oBase/invalid.h>
@@ -38,7 +36,6 @@
 #include <oBase/macros.h>
 #include <oBase/moving_average.h>
 #include <oBase/operators.h>
-#include <oString/opttok.h>
 #include <oBase/osc.h>
 #include <oBase/path.h>
 #include <oBase/path_traits.h>
@@ -50,10 +47,7 @@
 #include <oBase/sphere.h>
 #include <oBase/snappy.h>
 #include <oBase/std_linear_allocator.h>
-#include <oString/string.h>
-#include <oString/string_traits.h>
 #include <oBase/tagged_pointer.h>
-#include <oBase/text_document.h>
 #include <oBase/throw.h>
 #include <oBase/threadpool.h>
 #include <oBase/timer.h>
@@ -64,5 +58,4 @@
 #include <oBase/udec3.h>
 #include <oBase/unordered_map.h>
 #include <oBase/uri.h>
-#include <oBase/xml.h>
 #endif
