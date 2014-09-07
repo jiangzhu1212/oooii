@@ -6,7 +6,6 @@
 #define oBase_all_h
 #include <oBase/aabox.h>
 #include <oBase/algorithm.h>
-#include <oMemory/allocate.h>
 #include <oBase/assert.h>
 #include <oBase/color.h>
 #include <oBase/colors.h>
@@ -41,8 +40,6 @@
 #include <oBase/path_traits.h>
 #include <oBase/plane.h>
 #include <oBase/rgb.h>
-#include <oBase/sbb.h>
-#include <oBase/sbb_allocator.h>
 #include <oBase/scc.h>
 #include <oBase/sphere.h>
 #include <oBase/snappy.h>
@@ -51,7 +48,6 @@
 #include <oBase/throw.h>
 #include <oBase/threadpool.h>
 #include <oBase/timer.h>
-#include <oBase/tlsf_allocator.h>
 #include <oBase/type_id.h>
 #include <oBase/type_info.h>
 #include <oBase/types.h>

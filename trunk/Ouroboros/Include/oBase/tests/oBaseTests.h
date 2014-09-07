@@ -11,7 +11,6 @@ namespace ouro {
 	namespace tests {
 
 		void TESTaaboxf();
-		void TESTatof(test_services& _Services);
 		void TESTcompression(test_services& _Services);
 		void TESTconcurrent_growable_object_pool();
 		void TESTconcurrent_hash_map(test_services& _Services);
@@ -24,7 +23,6 @@ namespace ouro {
 		void TESTconcurrent_stack();
 		void TESTcoroutine();
 		void TESTcountdown_latch();
-		void TESTcsv();
 		void TESTdate(test_services& _Services);
 		void TESTequal();
 		void TESTfilter_chain();
@@ -32,19 +30,14 @@ namespace ouro {
 		void TESTfourcc();
 		void TESTfuture(test_services& _Services);
 		void TESThash_map(test_services& _Services);
-		void TESTini();
-		void TESTjson();
 		void TESTosc();
 		void TESTparallel_for();
 		void TESTpath();
 		void TESTpool();
-		void TESTsbb(test_services& _Services);
 		void TESTtask_group();
-		void TESTtlsf_allocator(test_services& _Services);
 		void TESTthreadpool();
 		void TESTthreadpool_perf(ouro::test_services& _Services);
 		void TESTuri();
-		void TESTxml();
 
 		// Utility functions, do not register these as tests.
 		struct test_threadpool

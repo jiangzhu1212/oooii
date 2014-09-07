@@ -28,9 +28,6 @@
     <ClCompile Include="uri.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="tlsf_allocator.cpp">
-      <Filter>Source\allocator</Filter>
-    </ClCompile>
     <ClCompile Include="type_id.cpp">
       <Filter>Source\traits</Filter>
     </ClCompile>
@@ -84,12 +81,6 @@
     </ClCompile>
     <ClCompile Include="gpu_api.cpp">
       <Filter>Source\types</Filter>
-    </ClCompile>
-    <ClCompile Include="sbb.cpp">
-      <Filter>Source\allocator</Filter>
-    </ClCompile>
-    <ClCompile Include="sbb_allocator.cpp">
-      <Filter>Source\allocator</Filter>
     </ClCompile>
     <ClCompile Include="osc.cpp">
       <Filter>Source</Filter>
@@ -170,9 +161,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\container_support.h">
       <Filter>oBase\containers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\tlsf_allocator.h">
-      <Filter>oBase\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\backoff.h">
       <Filter>oBase\concurrency</Filter>
@@ -336,15 +324,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\gpu_api.h">
       <Filter>oBase\types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\cbtree.h">
-      <Filter>oBase</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\sbb.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\sbb_allocator.h">
-      <Filter>oBase\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\enum_iterator.h">
       <Filter>oBase\c++ support</Filter>

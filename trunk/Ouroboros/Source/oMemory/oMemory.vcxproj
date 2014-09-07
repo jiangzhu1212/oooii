@@ -35,6 +35,15 @@
     <ClCompile Include="MurmurHash3.cpp" />
     <ClCompile Include="rle_decode.cpp" />
     <ClCompile Include="rle_decoden.cpp" />
+    <ClCompile Include="sbb.cpp" />
+    <ClCompile Include="sbb_allocator.cpp" />
+    <ClCompile Include="tlsf.c">
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">CompileAsCpp</CompileAs>
+      <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">CompileAsCpp</CompileAs>
+    </ClCompile>
+    <ClCompile Include="tlsf_allocator.cpp" />
     <ClCompile Include="utfcmp.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -48,9 +57,15 @@
     <ClInclude Include="..\..\Include\oMemory\fnv1a.h" />
     <ClInclude Include="..\..\Include\oMemory\memory.h" />
     <ClInclude Include="..\..\Include\oMemory\murmur3.h" />
+    <ClInclude Include="..\..\Include\oMemory\sbb.h" />
+    <ClInclude Include="..\..\Include\oMemory\sbb_allocator.h" />
+    <ClInclude Include="..\..\Include\oMemory\tlsf_allocator.h" />
     <ClInclude Include="..\..\Include\oMemory\uint128.h" />
+    <ClInclude Include="cbtree.h" />
     <ClInclude Include="memduff.h" />
     <ClInclude Include="MurmurHash3.h" />
+    <ClInclude Include="tlsf.h" />
+    <ClInclude Include="tlsfbits.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{995587D3-B1D0-4C01-BB52-A4B84A2DCB27}</ProjectGuid>

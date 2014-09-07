@@ -9,18 +9,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Tests\TESTcsv.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTini.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTxml.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="Tests\TESTjson.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="Tests\TESTpath.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -37,9 +25,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTconcurrent_linear_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTtlsf_allocator.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTcompression.cpp">
@@ -82,9 +67,6 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTconcurrent_pool.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTsbb.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTosc.cpp">

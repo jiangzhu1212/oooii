@@ -192,6 +192,7 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTGUI.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMemory.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTMesh.cpp" />
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTString.cpp" />
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTSurface.cpp" />
     <ClCompile Include="oooii_icon.cpp" />
     <ClCompile Include="oUnitTests.cpp" />
@@ -273,6 +274,9 @@
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oString\oString.vcxproj">
       <Project>{45860521-7dc9-456b-9813-ac6a10569fab}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\Ouroboros\Source\oString\oStringTests.vcxproj">
+      <Project>{1e4005d5-1431-4ed0-b0b4-63d61134189d}</Project>
     </ProjectReference>
     <ProjectReference Include="..\Ouroboros\Source\oSurface\oSurface.vcxproj">
       <Project>{ec39f58b-4343-4884-9bae-5d5a8d101440}</Project>

@@ -9,19 +9,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oMemory\tests\oMemoryTests.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
+    <ClCompile Include="tests\TESTcsv.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TESTini.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TESTjson.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TESTxml.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tests\TESTatof.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTsbb.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTtlsf_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
+    <ClInclude Include="..\..\Include\oString\tests\oStringTests.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

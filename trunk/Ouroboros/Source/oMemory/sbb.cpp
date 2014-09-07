@@ -1,10 +1,9 @@
 // $(header)
-#include <oBase/sbb.h>
-#include <oBase/throw.h>
-#include <oBase/assert.h>
-#include <oBase/cbtree.h>
+#include <oMemory/sbb.h>
+#include "cbtree.h"
+#include <stdexcept>
 
-#define SBB_FATAL(msg) oTHROW_INVARG(msg)
+#define SBB_FATAL(msg) throw std::invalid_argument(msg)
 #define SBB_MAX(x,y) ((x) > (y) ? (x) : (y))
 #define SBB_ALIGNED(x,align) (((((uintptr_t)x) + (align) - 1) & ~(align-1)) == (uintptr_t)x)
 
@@ -199,7 +198,7 @@ void* sbb_realloc(sbb_t sbb, void* ptr, size_t bytes)
 		SBB_FATAL("ptr is not from this sbb allocator");
 
 	size_t level_block_size = bookkeeping->min_block_size;
-	size_t block_size = max(level_block_size, nextpow2(bytes));
+	size_t block_size = std::max(level_block_size, nextpow2(bytes));
 	if (block_size == level_block_size)
 		return ptr;
 

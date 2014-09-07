@@ -1,9 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/tlsf_allocator.h>
-#include <oMemory/memory.h>
 #include <oCore/page_allocator.h>
 #include <oBasis/oError.h>
 #include <oBase/event.h>
+#include <oMemory/memory.h>
+#include <oMemory/tlsf_allocator.h>
 #include <oPlatform/oMirroredArena.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>
