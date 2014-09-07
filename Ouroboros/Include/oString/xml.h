@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_xml_h
-#define oBase_xml_h
+#ifndef oString_xml_h
+#define oString_xml_h
 
 // Parses a string as an XML document by replacing certain delimiters inline 
 // with null terminators and caching indices into the buffers where values
@@ -15,9 +15,10 @@
 // todo: add support for text fragments: multiple node values interspersed with
 // child nodes. I guess add a new handle "text" and have a first/next text.
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oString/stringize.h>
-#include <oBase/text_document.h>
+#include <oString/text_document.h>
+#include <cstdint>
 #include <cstring>
 #include <vector>
 
@@ -30,7 +31,7 @@ namespace ouro {
 class xml
 {
 public:
-	typedef unsigned int index_type;
+	typedef uint32_t index_type;
 	typedef char char_type;
 
 	typedef struct node__ {}* node;

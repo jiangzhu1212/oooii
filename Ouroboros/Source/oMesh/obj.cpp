@@ -4,7 +4,7 @@
 #include <oBase/algorithm.h>
 #include <oString/atof.h>
 #include <oBase/finally.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/assert.h>
 #include <oBase/macros.h>
 #include <oBase/std_linear_allocator.h>

@@ -53,7 +53,6 @@
     <ClCompile Include="sphere.cpp" />
     <ClCompile Include="stringize.cpp" />
     <ClCompile Include="stringize_hlsl.cpp" />
-    <ClCompile Include="text_document.cpp" />
     <ClCompile Include="tlsf_allocator.cpp" />
     <ClCompile Include="type_id.cpp" />
     <ClCompile Include="uri.cpp" />
@@ -88,14 +87,12 @@
     <ClInclude Include="..\..\Include\oBase\container_support.h" />
     <ClInclude Include="..\..\Include\oBase\coroutine.h" />
     <ClInclude Include="..\..\Include\oBase\countdown_latch.h" />
-    <ClInclude Include="..\..\Include\oBase\csv.h" />
     <ClInclude Include="..\..\Include\oBase\date.h" />
     <ClInclude Include="..\..\Include\oBase\dec3n.h" />
     <ClInclude Include="..\..\Include\oBase\enum_iterator.h" />
     <ClInclude Include="..\..\Include\oBase\event.h" />
     <ClInclude Include="..\..\Include\oBase\filter_chain.h" />
     <ClInclude Include="..\..\Include\oBase\finally.h" />
-    <ClInclude Include="..\..\Include\oBase\fixed_string.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
     <ClInclude Include="..\..\Include\oBase\fourcc.h" />
     <ClInclude Include="..\..\Include\oBase\future.h" />
@@ -103,12 +100,10 @@
     <ClInclude Include="..\..\Include\oBase\guid.h" />
     <ClInclude Include="..\..\Include\oBase\gzip.h" />
     <ClInclude Include="..\..\Include\oBase\hash_map.h" />
-    <ClInclude Include="..\..\Include\oBase\ini.h" />
     <ClInclude Include="..\..\Include\oBase\input.h" />
     <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
     <ClInclude Include="..\..\Include\oBase\invalid.h" />
     <ClInclude Include="..\..\Include\oBase\ip4.h" />
-    <ClInclude Include="..\..\Include\oBase\json.h" />
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\linear_allocator_base.h" />
@@ -135,7 +130,6 @@
     <ClInclude Include="..\..\Include\oBase\std_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oBase\std_make_unique.h" />
     <ClInclude Include="..\..\Include\oBase\tagged_pointer.h" />
-    <ClInclude Include="..\..\Include\oBase\text_document.h" />
     <ClInclude Include="..\..\Include\oBase\threadpool.h" />
     <ClInclude Include="..\..\Include\oBase\throw.h" />
     <ClInclude Include="..\..\Include\oBase\timer.h" />
@@ -144,13 +138,11 @@
     <ClInclude Include="..\..\Include\oBase\type_id.h" />
     <ClInclude Include="..\..\Include\oBase\type_info.h" />
     <ClInclude Include="..\..\Include\oBase\udec3.h" />
-    <ClInclude Include="..\..\Include\oBase\uint128.h" />
     <ClInclude Include="..\..\Include\oBase\unordered_map.h" />
     <ClInclude Include="..\..\Include\oBase\uri.h" />
     <ClInclude Include="..\..\Include\oBase\uri_traits.h" />
     <ClInclude Include="..\..\Include\oBase\vendor.h" />
     <ClInclude Include="..\..\Include\oBase\version.h" />
-    <ClInclude Include="..\..\Include\oBase\xml.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="scc_svn.h" />
   </ItemGroup>

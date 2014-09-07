@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/text_document.h>
+#include <oString/text_document.h>
 #include <oCompiler.h>
 
 namespace ouro

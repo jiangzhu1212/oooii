@@ -5,8 +5,8 @@
 #define oCore_filesystem_util_h
 
 #include <oCore/filesystem.h>
-#include <oBase/ini.h>
-#include <oBase/xml.h>
+#include <oString/ini.h>
+#include <oString/xml.h>
 
 namespace ouro {
 	namespace filesystem {

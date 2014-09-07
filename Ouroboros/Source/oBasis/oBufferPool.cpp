@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBasis/oBufferPool.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oBase/lock_free_queue.h>
 #include <oBasis/oRefCount.h>

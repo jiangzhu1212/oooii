@@ -5,7 +5,7 @@
 #ifndef oCore_win_registry_h
 #define oCore_win_registry_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 
 namespace ouro {
 	namespace windows {

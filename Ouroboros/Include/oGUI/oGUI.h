@@ -9,7 +9,7 @@
 #include <oBase/assert.h>
 #include <oBase/color.h>
 #include <oBase/colors.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/input.h>
 #include <oBase/macros.h>
 #include <oBase/aabox.h>

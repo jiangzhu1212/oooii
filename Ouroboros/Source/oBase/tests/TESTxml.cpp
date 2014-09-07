@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/xml.h>
+#include <oString/xml.h>
 #include <oBase/assert.h>
 #include <oBase/throw.h>
 #include <memory>

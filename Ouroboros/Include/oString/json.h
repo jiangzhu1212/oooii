@@ -1,46 +1,46 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_json_h
-#define oBase_json_h
+#ifndef oString_json_h
+#define oString_json_h
 
 // Parses a string as a JSON document by replacing certain delimiters inline 
 // with null terminators and caching indices into the buffers where values
 // begin for very fast access to contents.
 
-#include <oBase/text_document.h>
-#include <oBase/macros.h>
+#include <oString/text_document.h>
+#include <cstdint>
 #include <cstring>
 #include <vector>
 
 namespace ouro {
 
-namespace json_node_type { enum type { object, array, value }; }
-namespace json_value_type { enum type { string, number, object, array, true_, false_, null }; }
+enum class json_node_type { object, array, value };
+enum class json_value_type { string, number, object, array, true_, false_, null };
 
 class json
 {
 public:
-	typedef unsigned int index_type;
+	typedef uint32_t index_type;
 
-	oDECLARE_HANDLE(node);
+	typedef struct node__ {}* node;
 
-	json() : Size(0) {}
+	json() : size_(0) {}
 	json(const char* _URI, char* _pData, deallocate_fn _Delete, size_t _EstNumNodes = 100)
 		: Buffer(_URI, _pData, _Delete)
 	{
-		Size = sizeof(*this) + strlen(Buffer.data) + 1;
-		Nodes.reserve(_EstNumNodes);
+		size_ = sizeof(*this) + strlen(Buffer.data) + 1;
+		nodes.reserve(_EstNumNodes);
 		index_buffer();
-		Size += Nodes.capacity() * sizeof(index_type) * 7;
+		size_ += nodes.capacity() * sizeof(index_type) * 7;
 	}
 
 	json(const char* _URI, const char* _pData, const allocator& alloc = default_allocator, size_t _EstNumNodes = 100)
 		: Buffer(_URI, _pData, alloc, "json doc")
 	{
-		Size = sizeof(*this) + strlen(Buffer.data) + 1;
-		Nodes.reserve(_EstNumNodes);
+		size_ = sizeof(*this) + strlen(Buffer.data) + 1;
+		nodes.reserve(_EstNumNodes);
 		index_buffer();
-		Size += Nodes.capacity() * sizeof(index_type) * 7;
+		size_ += nodes.capacity() * sizeof(index_type) * 7;
 	}
 
 	json(json&& _That) { operator=(std::move(_That)); }
@@ -49,24 +49,24 @@ public:
 		if (this != &_That)
 		{
 			Buffer = std::move(_That.Buffer);
-			Nodes = std::move(_That.Nodes);
-			Size = std::move(_That.Size);
+			nodes = std::move(_That.nodes);
+			size_ = std::move(_That.size_);
 		}
 		return *this;
 	}
 
 	inline operator bool() const { return (bool)Buffer; }
 	inline const char* name() const { return Buffer.uri; }
-	inline size_t size() const { return Size; }
+	inline size_t size() const { return size_; }
 
 	// Node API
 	inline node root() const { return node(1); } 
-	inline node first_child(node _ParentNode) const { return node(Node(_ParentNode).Down); }
-	inline node next_sibling(node _PriorSibling) const { return node(Node(_PriorSibling).Next); }
-	inline const char* node_name(node _Node) const { return Buffer.data + Node(_Node).Name; }
-	inline const char* node_value(node _Node) const { return Buffer.data + Node(_Node).Value; }
-	json_node_type::type node_type(node _Node) const { return Node(_Node).Type; }
-	json_value_type::type value_type(node _Node) const { return Node(_Node).ValueType; }
+	inline node first_child(node _ParentNode) const { return node(Node(_ParentNode).down); }
+	inline node next_sibling(node _PriorSibling) const { return node(Node(_PriorSibling).next); }
+	inline const char* node_name(node _Node) const { return Buffer.data + Node(_Node).name; }
+	inline const char* node_value(node _Node) const { return Buffer.data + Node(_Node).value; }
+	json_node_type node_type(node _Node) const { return Node(_Node).type; }
+	json_value_type value_type(node _Node) const { return Node(_Node).value_type; }
 
 	// Convenience functions that use the above API
 	inline node first_child(node _ParentNode, const char* _Name) const
@@ -88,22 +88,22 @@ public:
 private:
 	detail::text_buffer Buffer;
 
-	struct NODE
+	struct node_t
 	{
-		NODE() : Next(0), Down(0), Attr(0), Name(0), Value(0), Type(json_node_type::object), ValueType(json_value_type::object) {}
-		index_type Next, Down, Attr, Name, Value;
-		json_node_type::type Type;
-		json_value_type::type ValueType;
+		node_t() : next(0), down(0), attr(0), name(0), value(0), type(json_node_type::object), value_type(json_value_type::object) {}
+		index_type next, down, attr, name, value;
+		json_node_type type;
+		json_value_type value_type;
 	};
 
-	typedef std::vector<NODE> nodes_t;
+	typedef std::vector<node_t> nodes_t;
 
-	nodes_t Nodes;
-	size_t Size;
+	nodes_t nodes;
+	size_t size_;
 
-	inline const NODE& Node(node _Node) const { return Nodes[(size_t)_Node]; }
+	inline const node_t& Node(node _Node) const { return nodes[(size_t)_Node]; }
 
-	inline NODE& Node(node _Node) { return Nodes[(size_t)_Node]; }
+	inline node_t& Node(node _Node) { return nodes[(size_t)_Node]; }
 
 	// Parsing functions
 	inline void index_buffer();
@@ -135,8 +135,8 @@ private:
 
 void json::index_buffer()
 {
-	Nodes.push_back(NODE()); // use up slot 0 so it can be used as a null handle
-	Nodes.push_back(NODE()); // add root node
+	nodes.push_back(node_t()); // use up slot 0 so it can be used as a null handle
+	nodes.push_back(node_t()); // add root node
 
 	char* start = Buffer.data + strcspn(Buffer.data, "{[");
 	bool isArray = *start++ == '[';
@@ -151,22 +151,22 @@ json::node json::make_next_node(char*& _JSON, node _Parent, node _Previous, bool
 {
 	_OpenTagCount++;
 
-	index_type newNode = static_cast<index_type>(Nodes.size());
-	if (_Parent) Nodes[(size_t)_Parent].Down = newNode;
+	index_type newNode = static_cast<index_type>(nodes.size());
+	if (_Parent) nodes[(size_t)_Parent].down = newNode;
 
 	node hPreviousNode = _Previous;
 	bool hasMoreSiblings = false;
 	do 
 	{
-		newNode = static_cast<index_type>(Nodes.size());
-		if (hPreviousNode) Nodes[(size_t)hPreviousNode].Next = newNode;
+		newNode = static_cast<index_type>(nodes.size());
+		if (hPreviousNode) nodes[(size_t)hPreviousNode].next = newNode;
 
-		NODE n;
-		n.Type = json_node_type::value;
+		node_t n;
+		n.type = json_node_type::value;
 
 		if (_IsArray)
 		{
-			n.Name = 0;
+			n.name = 0;
 
 			// Skip whitespace
 			_JSON += strspn(_JSON, " \t\v\r\n");
@@ -175,7 +175,7 @@ json::node json::make_next_node(char*& _JSON, node _Parent, node _Previous, bool
 		{
 			// Set name without the quotes, so zero terminate on the end quote
 			_JSON += strcspn(_JSON, "\"");
-			n.Name = static_cast<index_type>(std::distance(Buffer.data, ++_JSON));
+			n.name = static_cast<index_type>(std::distance(Buffer.data, ++_JSON));
 			if (!detail::skip_string(_JSON))
 				return 0;
 			*_JSON++ = 0;
@@ -185,10 +185,10 @@ json::node json::make_next_node(char*& _JSON, node _Parent, node _Previous, bool
 		}
 
 		// Set value
-		n.Value = static_cast<index_type>(std::distance(Buffer.data, _JSON));
+		n.value = static_cast<index_type>(std::distance(Buffer.data, _JSON));
 
 		// Push new node
-		Nodes.push_back(n);
+		nodes.push_back(n);
 
 		node parent = node(newNode);
 		node prev = 0;
@@ -196,52 +196,52 @@ json::node json::make_next_node(char*& _JSON, node _Parent, node _Previous, bool
 		// Determine node type and process it
 		if (*_JSON == '{')
 		{
-			Nodes[newNode].Type = json_node_type::object;
-			Nodes[newNode].Value = 0;
-			Nodes[newNode].ValueType = json_value_type::object;
+			nodes[newNode].type = json_node_type::object;
+			nodes[newNode].value = 0;
+			nodes[newNode].value_type = json_value_type::object;
 
-			// CreateNextNode sets Down and Next for newNode
+			// CreateNextNode sets down and next for newNode
 			hPreviousNode = make_next_node(++_JSON, parent, prev, false, _OpenTagCount, _CloseTagCount);
 			if (!hPreviousNode) return 0;
 		}
 		else if (*_JSON == '[')
 		{
-			Nodes[newNode].Type = json_node_type::array;
-			Nodes[newNode].Value = 0;
-			Nodes[newNode].ValueType = json_value_type::array;
+			nodes[newNode].type = json_node_type::array;
+			nodes[newNode].value = 0;
+			nodes[newNode].value_type = json_value_type::array;
 
-			// CreateNextNode sets Down and Next for newNode
+			// CreateNextNode sets down and next for newNode
 			hPreviousNode = make_next_node(++_JSON, parent, prev, true, _OpenTagCount, _CloseTagCount);
 			if (!hPreviousNode) return 0;
 		}
 		else if (*_JSON == '\"')
 		{
-			Nodes[newNode].ValueType = json_value_type::string;
+			nodes[newNode].value_type = json_value_type::string;
 			detail::skip_string(++_JSON);
 			_JSON++;
 		}
 		else if (*_JSON == 't')
 		{
-			Nodes[newNode].ValueType = json_value_type::true_;
+			nodes[newNode].value_type = json_value_type::true_;
 			if (0 != memcmp(_JSON, "true", 4)) return 0;
 			_JSON += 4;
 		}
 		else if (*_JSON == 'f')
 		{
-			Nodes[newNode].ValueType = json_value_type::false_;
+			nodes[newNode].value_type = json_value_type::false_;
 			if (0 != memcmp(_JSON, "false", 5)) return 0;
 			_JSON += 5;
 
 		}
 		else if (*_JSON == 'n')
 		{
-			Nodes[newNode].ValueType = json_value_type::null;
+			nodes[newNode].value_type = json_value_type::null;
 			if (0 != memcmp(_JSON, "null", 4)) return 0;
 			_JSON += 4;
 		}
 		else if (*_JSON != 0)
 		{
-			Nodes[newNode].ValueType = json_value_type::number;
+			nodes[newNode].value_type = json_value_type::number;
 			_JSON += strspn(_JSON, "0123456789eE+-.");
 		}
 		else
@@ -251,7 +251,7 @@ json::node json::make_next_node(char*& _JSON, node _Parent, node _Previous, bool
 
 		char* Marker = _JSON;
 
-		// Skip whitespace to either the next Name/Value pair
+		// Skip whitespace to either the next name/value pair
 		// or end of Object/Array marker
 		if (_IsArray)
 			_JSON += strcspn(_JSON, ",]");

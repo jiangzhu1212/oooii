@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBasis/oXMLSerialize.h>
 #include <oBasis/oStrTok.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBasis/oError.h>
 #include <vector>
 

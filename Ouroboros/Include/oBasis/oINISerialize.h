@@ -4,7 +4,7 @@
 #define oINISerialize_h
 
 #include <oBasis/oRTTI.h>
-#include <oBase/ini.h>
+#include <oString/ini.h>
 
 bool oINIReadCompound(void* _pDestination, const oRTTI& _RTTI, const ouro::ini& _INI, ouro::ini::section _Section, bool _FailOnMissingValues);
 bool oINIWriteCompound(char* _StrDestination, size_t _SizeofStrDestination, const void* _pSource, const oRTTI& _RTTI, const char* _Heading);

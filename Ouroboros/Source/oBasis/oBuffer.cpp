@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBasis/oBuffer.h>
 #include <oBase/assert.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRefCount.h>

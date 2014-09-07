@@ -9,7 +9,7 @@
 #ifndef oBase_date_h
 #define oBase_date_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/operators.h>
 #include <oMemory/uint128.h>
 #include <chrono>

@@ -12,7 +12,7 @@
 
 #include <system_error>
 #include <oMemory/allocate.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 
 namespace ouro {
 

@@ -3,7 +3,7 @@
 #ifndef oBase_version_h
 #define oBase_version_h
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/operators.h>
 
 namespace ouro {

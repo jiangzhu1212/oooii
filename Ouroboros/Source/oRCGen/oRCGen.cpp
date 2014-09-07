@@ -1,4 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#include <oString/opttok.h>
 #include <oBase/scc.h>
 
 using namespace ouro;

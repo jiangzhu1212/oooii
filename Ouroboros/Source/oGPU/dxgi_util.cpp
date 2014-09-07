@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include "dxgi_util.h"
 
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oCore/windows/win_error.h>
 #include <oCore/windows/win_util.h>
 #include <d3d11.h>

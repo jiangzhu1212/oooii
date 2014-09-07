@@ -4,7 +4,7 @@
 #include <oBase/colors.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oCore/filesystem.h>
 
 #include "../../test_services.h"

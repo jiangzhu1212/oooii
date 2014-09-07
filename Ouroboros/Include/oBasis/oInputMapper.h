@@ -10,7 +10,7 @@
 
 #include <oBasis/oInterface.h>
 #include <oBasis/oRTTI.h>
-#include <oBase/xml.h>
+#include <oString/xml.h>
 
 interface oInputSet : oInterface
 {

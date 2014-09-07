@@ -9,7 +9,7 @@
 #include <oCompute/linear_algebra.h>
 #include <oBasis/oError.h>
 #include <oBase/invalid.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oBase/fixed_vector.h>
 #include <vector>
 

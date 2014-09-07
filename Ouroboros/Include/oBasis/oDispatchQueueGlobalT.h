@@ -7,7 +7,7 @@
 #include <oBasis/oInitOnce.h>
 #include <oBasis/oDispatchQueue.h>
 #include <oBase/assert.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oCore/mutex.h>
 #include <list>
 #include <thread>

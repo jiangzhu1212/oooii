@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBasis/oJSONSerialize.h>
 #include <oBasis/oError.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <vector>
 
 using namespace ouro;

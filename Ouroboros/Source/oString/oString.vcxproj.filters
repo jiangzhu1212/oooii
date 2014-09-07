@@ -13,6 +13,9 @@
     <Filter Include="Source\encoding">
       <UniqueIdentifier>{7a84ad9c-47d4-45a5-8b84-70c81e8fc137}</UniqueIdentifier>
     </Filter>
+    <Filter Include="oString\File Formats">
+      <UniqueIdentifier>{5a92c8de-db2a-42af-886d-88fe240f5489}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oString\string_traits.h">
@@ -47,6 +50,24 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oString\atof.h">
       <Filter>oString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\fixed_string.h">
+      <Filter>oString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\csv.h">
+      <Filter>oString\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\ini.h">
+      <Filter>oString\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\json.h">
+      <Filter>oString\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\xml.h">
+      <Filter>oString\File Formats</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\text_document.h">
+      <Filter>oString\File Formats</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -186,6 +207,9 @@
       <Filter>Source\strlcpy</Filter>
     </ClCompile>
     <ClCompile Include="stringize.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="text_document.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

@@ -6,7 +6,7 @@
 
 #include <functional>
 #include <oBase/date.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <memory>
 
 namespace ouro {

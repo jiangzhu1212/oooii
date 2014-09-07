@@ -1,5 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include "oMSBuild.h"
+#include <oBase/container_support.h>
 #include <oBasis/oScopedPartialTimeout.h>
 
 using namespace ouro;

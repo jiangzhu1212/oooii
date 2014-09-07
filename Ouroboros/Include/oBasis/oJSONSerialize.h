@@ -4,7 +4,7 @@
 #define oJSONSerialize_h
 
 #include <oBasis/oRTTI.h>
-#include <oBase/json.h>
+#include <oString/json.h>
 
 bool oJSONReadCompound(void* _pDestination, const oRTTI& _RTTI, const ouro::json& _JSON, ouro::json::node _Node, bool _FailOnMissingValues);
 bool oJSONReadContainer(void* _pDestination, int _DestSizeInBytes, const oRTTI& _RTTI, const ouro::json& _JSON, ouro::json::node _Node, bool _FailOnMissingValues);

@@ -1,6 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/json.h>
+#include <oBase/macros.h>
 #include <oBase/throw.h>
+#include <oString/json.h>
 #include <oString/string_codec.h>
 
 namespace ouro {
@@ -25,7 +26,7 @@ static const char* sJSONTestReferenceResult =
 			"}"
 	"}";
 
-static void TESTjson_node(const json& _JSON, int _RootNode, int _Node, const char* _Name, json_node_type::type _Type, json_value_type::type _ValueType, const char* _Value)
+static void TESTjson_node(const json& _JSON, int _RootNode, int _Node, const char* _Name, json_node_type _Type, json_value_type _ValueType, const char* _Value)
 {
 	auto node = json::node(_Node);
 	if (_Name)

@@ -15,7 +15,7 @@
 #include <oBasis/oInterface.h>
 #include <oBase/aabox.h>
 #include <oBase/types.h>
-#include <oBase/xml.h>
+#include <oString/xml.h>
 
 struct oAIR_KEY
 {

@@ -5,7 +5,7 @@
 #define oBase_path_traits_h
 
 #include <oBase/assert.h>
-#include <oBase/fixed_string.h>
+#include <oString/fixed_string.h>
 #include <oMemory/fnv1a.h>
 #include <oString/string_path.h>
 #include <oBase/throw.h>
