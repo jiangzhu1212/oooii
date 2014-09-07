@@ -301,22 +301,22 @@ private:
 	// Parsing functions
 	static inline ATTR make_attr(char_type* xml_start, char_type*& xml_current, bool& at_end);
 	inline void index_buffer();
-	inline void make_node_attrs(char_type* xml_start, char_type*& _xml, NODE& _Node);
+	inline void make_node_attrs(char_type* xml_start, char_type*& _xml, NODE& n);
 	inline node make_next_node(char_type*& _xml, node parent_node, node previous, int& open_tag_count, int& close_tag_count);
 	inline void make_next_node_children(char_type*& _xml, node parent_node, int& open_tag_count, int& close_tag_count);
 
-	inline bool visit(node _Node, int _SiblingIndex, std::vector<visitor::attr_type>& _Attrs, visitor& visitor) const
+	inline bool visit(node n, int sibling_index, std::vector<visitor::attr_type>& attrs, visitor& visitor) const
 	{
-		const char_type* nname = node_name(_Node);
-		const char_type* nval = node_value(_Node);
-		_Attrs.clear();
-		for (attr a = first_attr(_Node); a; a = next_attr(a))
-			_Attrs.push_back(visitor::attr_type(attr_name(a), attr_value(a)));
+		const char_type* nname = node_name(n);
+		const char_type* nval = node_value(n);
+		attrs.clear();
+		for (attr a = first_attr(n); a; a = next_attr(a))
+			attrs.push_back(visitor::attr_type(attr_name(a), attr_value(a)));
 
 		mstring xref;
-		make_xref(xref, _Node);
+		make_xref(xref, n);
 
-		if (!visitor.node_begin(nname, xref, _Attrs.data(), _Attrs.size()))
+		if (!visitor.node_begin(nname, xref, attrs.data(), attrs.size()))
 			return false;
 
 		// note: this should become interspersed with children for cases like this:
@@ -331,8 +331,8 @@ private:
 			return false;
 
 		int i = 0;
-		for (node c = first_child(_Node); c; c = next_sibling(c), i++)
-			if (!visit(c, i, _Attrs, visitor))
+		for (node c = first_child(n); c; c = next_sibling(c), i++)
+			if (!visit(c, i, attrs, visitor))
 				return false;
 
 		if (!visitor.node_end(nname, xref))
@@ -341,22 +341,22 @@ private:
 		return true;
 	}
 
-	inline const char_type* get_id(node _Node) const
+	inline const char_type* get_id(node n) const
 	{
-		const char_type* id = find_attr_value(_Node, "id");
-		if (!id) id = find_attr_value(_Node, "name");
+		const char_type* id = find_attr_value(n, "id");
+		if (!id) id = find_attr_value(n, "name");
 		return id;
 	}
 
-	inline node find_id(node _Node, const char_type* _ID) const
+	inline node find_id(node n, const char_type* id) const
 	{
-		const char_type* id = get_id(_Node);
-		if (!_stricmp(id, _ID))
-			return _Node;
+		const char_type* id_ = get_id(n);
+		if (!_stricmp(id_, id))
+			return n;
 
-		for (node c = first_child(_Node); c; c = next_sibling(c))
+		for (node c = first_child(n); c; c = next_sibling(c))
 		{
-			node n = find_id(c, _ID);
+			node n = find_id(c, id);
 			if (n) return n;
 		}
 
@@ -364,32 +364,32 @@ private:
 	}
 
 	// Return the 0-based offset from the first child of this node's parent.
-	inline int find_sibling_offset(node _Node) const
+	inline int find_sibling_offset(node n) const
 	{
 		int offset = 0;
-		if (_Node)
+		if (n)
 		{
-			node p = parent(_Node);
-			node n = first_child(p);
-			while (n != _Node)
+			node p = parent(n);
+			node nd = first_child(p);
+			while (nd != n)
 			{
 				offset++;
-				n = next_sibling(n);
+				nd = next_sibling(nd);
 			}
 		}
 		return offset;
 	}
 
-	inline node find_xref(node _Node, const char_type* _XRef) const
+	inline node find_xref(node n, const char_type* xref) const
 	{
 		sstring tmp;
-		const char_type* slash = strchr(_XRef, '/');
+		const char_type* slash = strchr(xref, '/');
 		if (slash)
-			tmp.assign(_XRef, slash);
+			tmp.assign(xref, slash);
 		else 
-			tmp = _XRef;
+			tmp = xref;
 
-		node nd = _Node;
+		node nd = n;
 		int Index = -1;
 		if (from_string(&Index, tmp))
 		{ // by index
@@ -533,9 +533,9 @@ xml::ATTR xml::make_attr(xml::char_type* xml_start, xml::char_type*& xml_current
 	return a;
 }
 
-void xml::make_node_attrs(char_type* xml_start, char_type*& _xml, NODE& _Node)
+void xml::make_node_attrs(char_type* xml_start, char_type*& _xml, NODE& n)
 {
-	_Node.Attr = static_cast<index_type>(Attrs.size());
+	n.Attr = static_cast<index_type>(Attrs.size());
 	bool AtEnd = false;
 	while (*_xml != '>' && *_xml != '/' && !AtEnd)
 	{
@@ -544,7 +544,7 @@ void xml::make_node_attrs(char_type* xml_start, char_type*& _xml, NODE& _Node)
 			Attrs.push_back(a);
 	}
 	if (*_xml == '>') _xml++;
-	(_Node.Attr == Attrs.size()) ? _Node.Attr = 0 : Attrs.push_back(ATTR()); // either null the list if no elements added, or push a null terminator
+	(n.Attr == Attrs.size()) ? n.Attr = 0 : Attrs.push_back(ATTR()); // either null the list if no elements added, or push a null terminator
 }
 
 void xml::make_next_node_children(char_type*& _xml, node parent_node, int& open_tag_count, int& close_tag_count)
