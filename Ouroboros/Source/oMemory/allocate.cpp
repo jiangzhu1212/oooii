@@ -75,4 +75,32 @@ void default_allocate_track(uint64_t allocation_id, const allocation_stats& stat
 {
 }
 
+namespace detail
+{
+	class allocate_category_impl : public std::error_category
+	{
+	public:
+		const char* name() const override { return "allocate"; }
+		std::string message(int errcode) const override
+		{
+			switch (errcode)
+			{
+				case allocate_errc::invalid: return "invalid: allocator is not in a valid state";
+				case allocate_errc::out_of_memory: return "out_of_memory: there is no memory available from this allocator";
+				case allocate_errc::fragmented: return "fragmented: not enough contiguous memory to fulfill request";
+				case allocate_errc::corrupt: return "corrupt: allocator bookkeeping is corrupt";
+				case allocate_errc::alignment: return "alignment: allocator arena is aligned incorrectly";
+				case allocate_errc::outstanding_allocations: return "outstanding_allocations: an allocator is being destroyed while there are still allocations";
+				default: return "unrecognized allocate error";
+			}
+		}
+	};
+}
+
+const std::error_category& allocate_category()
+{
+	static detail::allocate_category_impl sSingleton;
+	return sSingleton;
+}
+
 }

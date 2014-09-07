@@ -119,7 +119,6 @@
     <ClInclude Include="..\..\Include\oBase\plane.h" />
     <ClInclude Include="..\..\Include\oBase\pool.h" />
     <ClInclude Include="..\..\Include\oBase\quat.h" />
-    <ClInclude Include="..\..\Include\oBase\resized_type.h" />
     <ClInclude Include="..\..\Include\oBase\rgb.h" />
     <ClInclude Include="..\..\Include\oBase\sbb.h" />
     <ClInclude Include="..\..\Include\oBase\sbb_allocator.h" />

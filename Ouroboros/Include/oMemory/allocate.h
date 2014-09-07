@@ -6,9 +6,27 @@
 // A generic interface for allocating memory.
 
 #include <cstdint>
+#include <system_error>
 #include <utility>
 
 namespace ouro {
+
+// _____________________________________________________________________________
+// Error handling
+	
+enum class allocate_errc { invalid, out_of_memory, fragmented, corrupt, alignment, outstanding_allocations };
+
+const std::error_category& allocate_category();
+
+/*constexpr*/ inline std::error_code make_error_code(allocate_errc err_code) { return std::error_code(static_cast<int>(err_code), allocate_category()); }
+/*constexpr*/ inline std::error_condition make_error_condition(allocate_errc err_code) { return std::error_condition(static_cast<int>(err_code), allocate_category()); }
+
+class allocate_error : public std::logic_error
+{
+public:
+	allocate_error(allocate_errc err_code) 
+		: logic_error(allocate_category().message(static_cast<int>(err_code))) {}
+};
 
 // _____________________________________________________________________________
 // Definitions of standard memory configuration options
@@ -138,6 +156,7 @@ typedef void* (*allocate_fn)(size_t num_bytes, const allocate_options& options, 
 typedef void (*deallocate_fn)(const void* pointer);
 typedef void (*deallocate_nonconst_fn)(void* pointer);
 typedef void (*allocate_track_fn)(uint64_t allocator_id, const allocation_stats& stats);
+typedef void (*allocate_heap_walk_fn)(void* ptr, size_t bytes, int used, void* user);
 
 class scoped_allocation
 {

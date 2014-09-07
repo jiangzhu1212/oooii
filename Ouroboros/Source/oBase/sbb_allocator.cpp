@@ -1,8 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/sbb_allocator.h>
 #include <oBase/sbb.h>
-#include <oString/string.h>
-#include <oBase/assert.h>
 
 #define USE_ALLOCATOR_STATS 1
 #define USE_ALLOCATION_STATS 1
@@ -47,30 +45,15 @@ size_t sbb_allocator::initialize(void* arena, size_t bytes, void* bookkeeping)
 	return bookkeeping_size;
 }
 
-static void trace_leaks(void* ptr, size_t bytes, int used, void* user)
-{
-	if (used)
-	{
-		char mem[64];
-		format_bytes(mem, bytes, 2);
-		oTRACE("tlsf leak: 0x%p %s", ptr, mem);
-	}
-}
-
 void* sbb_allocator::deinitialize()
 {
 	#if USE_ALLOCATOR_STATS
 		if (stats.num_allocations)
-		{
-			sbb_walk_heap((sbb_t)heap, trace_leaks, nullptr);
-			char str[96];
-			snprintf(str, "allocator destroyed with %u outstanding allocations", stats.num_allocations);
-			throw std::runtime_error(str);
-		}
+			throw allocate_error(allocate_errc::outstanding_allocations);
 	#endif
 
 	if (!valid())
-		throw std::runtime_error("sbb heap is corrupt");
+		throw allocate_error(allocate_errc::corrupt);
 
 	void* arena = heap;
 	sbb_destroy((sbb_t)heap);
@@ -221,7 +204,7 @@ bool sbb_allocator::valid() const
 void sbb_allocator::reset()
 {
 	if (!heap || !heap_size)
-		throw std::runtime_error("allocator not valid");
+		throw allocate_error(allocate_errc::invalid);
 	heap = sbb_create(sbb_arena((sbb_t)heap), heap_size, 16, heap);
 
 	#if USE_ALLOCATOR_STATS
