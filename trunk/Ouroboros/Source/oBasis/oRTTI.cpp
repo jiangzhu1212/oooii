@@ -285,7 +285,7 @@ bool oRTTI::FromString(const char* _String, void* _pValue, int _SizeOfValue) con
 			return oErrorSetLast(std::errc::invalid_argument, "Couldn't resolve enum '%s' %s to a value", enumData->TypeName, _String);
 		}
 
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 

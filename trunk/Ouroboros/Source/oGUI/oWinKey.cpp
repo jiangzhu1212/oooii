@@ -593,7 +593,7 @@ void oWinKeySend(HWND _hWnd, ouro::input::key _Key, bool _IsDown, const int2& _M
 					mouseDown = MOUSEEVENTF_LEFTDOWN;
 					mouseUp = MOUSEEVENTF_LEFTUP;
 					break;
-				oNODEFAULT;
+				default: oASSUME(0);
 			}
 
 			Input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE | (_IsDown ? mouseDown : mouseUp);
@@ -601,7 +601,7 @@ void oWinKeySend(HWND _hWnd, ouro::input::key _Key, bool _IsDown, const int2& _M
 			break;
 		}
 
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 	
 	AttachThreadInput(GetCurrentThreadId(), asdword(tid), false);
@@ -665,7 +665,7 @@ void oWinSendASCIIMessage(HWND _hWnd, unsigned int _ThreadID, const char* _pMess
 	if(MessageLength > oCOUNTOF(VirtualKeys))
 		oTHROW(no_buffer_space, "Only support %d length messages", oCOUNTOF(VirtualKeys));
 
-	oFORI(i, VirtualKeys)
+	for (auto i = 0; i < oCOUNTOF(VirtualKeys); i++)
 		VirtualKeys[i] = VkKeyScanEx(_pMessage[i], GetKeyboardLayout(0));
 
 	oWinSendKeys(_hWnd, _ThreadID, VirtualKeys, MessageLength);

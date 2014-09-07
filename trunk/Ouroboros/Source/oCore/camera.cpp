@@ -343,10 +343,10 @@ void directshow_camera::resize_target(const mode& _Mode)
 	MonotonicCounter = 0;
 	RingBufferReadIndex.exchange(0);
 	size_t frameSize = surface::mip_size(surface::format(_Mode.format), _Mode.dimensions);
-	oFORI(i, RingBuffer)
+	for (auto& r : RingBuffer)
 	{
-		RingBuffer[i].SampleTime = 0.0;
-		RingBuffer[i].Data.resize(frameSize);
+		r.SampleTime = 0.0;
+		r.Data.resize(frameSize);
 	}
 }
 

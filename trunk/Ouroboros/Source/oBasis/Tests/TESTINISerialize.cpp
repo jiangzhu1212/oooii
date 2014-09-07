@@ -72,7 +72,7 @@ oRTTI_COMPOUND_END_DESCRIPTION(oINIArrayTest)
 
 static bool TestCompound()
 {
-	ini INI("Test INI Document", const_cast<char*>(sINICompoundTest), nullptr, 100);
+	ini INI("Test INI Document", const_cast<char*>(sINICompoundTest));
 
 	oINICompoundTest Test;
 	oTESTB0(oINIReadCompound(&Test, oRTTI_OF(oINICompoundTest), INI, INI.find_section("CompoundTest"), true));
@@ -92,7 +92,7 @@ static bool TestCompound()
 
 static bool TestArray()
 {
-	ini INI("Test INI Document", const_cast<char*>(sINIArrayTest), nullptr, 100);
+	ini INI("Test INI Document", const_cast<char*>(sINIArrayTest));
 	oINIArrayTest Test;
 	oTESTB0(oINIReadCompound(&Test, oRTTI_OF(oINIArrayTest), INI, INI.find_section("ArrayTest"), true));
 	oTESTB(Test.IntValues.size() == 6, "TestArray: Expected 6 values of Int");

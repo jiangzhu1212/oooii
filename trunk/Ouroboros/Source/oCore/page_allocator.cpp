@@ -15,7 +15,7 @@ static status::value get_status(DWORD _State)
 		case MEM_COMMIT: return status::committed;
 		case MEM_FREE: return status::free;
 		case MEM_RESERVE: return status::reserved;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 
@@ -26,7 +26,7 @@ static DWORD get_access(access::value _Access)
 		case access::none: return PAGE_NOACCESS;
 		case access::read_only: return PAGE_EXECUTE_READ;
 		case access::read_write: return PAGE_EXECUTE_READWRITE;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 
@@ -95,7 +95,7 @@ static void get_allocation_type(allocation_type::value _AllocationType, void* _B
 		case allocation_type::commit: *_pflAllocationType |= MEM_COMMIT; *_pdwFreeType = MEM_DECOMMIT; break;
 		case allocation_type::reserve_and_commit_read_write: *_pflAllocationType |= MEM_WRITE_WATCH; // pass thru to allocation_type::reserve_and_commit
 		case allocation_type::reserve_and_commit: *_pflAllocationType |= MEM_RESERVE | MEM_COMMIT; *_pdwFreeType = MEM_RELEASE | MEM_DECOMMIT; break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 

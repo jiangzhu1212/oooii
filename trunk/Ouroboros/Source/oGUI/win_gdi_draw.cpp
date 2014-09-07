@@ -106,7 +106,7 @@ static void draw_text(HDC _hDC, const text_info& _Desc, const char* _Text, RECT*
 		case 0: uFormat |= DT_LEFT; break;
 		case 1: uFormat |= DT_CENTER; break;
 		case 2: uFormat |= DT_RIGHT; break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	switch (_Desc.alignment / 3)
@@ -114,7 +114,7 @@ static void draw_text(HDC _hDC, const text_info& _Desc, const char* _Text, RECT*
 		case 0: uFormat |= DT_TOP; break;
 		case 1: uFormat |= DT_VCENTER; break;
 		case 2: uFormat |= DT_BOTTOM; break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	bool forcedSingleLine = !_Desc.single_line && ((uFormat & DT_BOTTOM) || (uFormat & DT_VCENTER));

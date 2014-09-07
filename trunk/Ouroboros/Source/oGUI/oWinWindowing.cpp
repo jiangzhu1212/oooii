@@ -67,7 +67,7 @@ class oWinRegisteredMessages
 public:
 	oWinRegisteredMessages()
 	{
-		oFORI(i, kRegisteredWindowMessages)
+		for (auto i = 0; i < oCOUNTOF(kRegisteredWindowMessages); i++)
 			RegisteredMessages[i] = RegisterWindowMessage(kRegisteredWindowMessages[i]);
 	}
 
@@ -75,7 +75,7 @@ public:
 	{
 		if (oWinIsRegisteredMessage(_uMsg))
 		{
-			oFORI(i, RegisteredMessages)
+			for (auto i = 0; i < oCOUNTOF(RegisteredMessages); i++)
 				if (RegisteredMessages[i] == _uMsg)
 					return (UINT)(oWM_REGISTERED_FIRST + i);
 		}
@@ -431,7 +431,7 @@ static bool oWinTranslateDeviceChange(HWND _hWnd, WPARAM _wParam, LPARAM _lParam
 
 			break;
 		}
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	const unsigned int Timestamp = (unsigned int)GetMessageTime();
@@ -482,8 +482,8 @@ void oWinGetProcessTopWindowAndThread(process::id _ProcessID
 
 		if (!WindowText.empty())
 		{
-			oFORI(i, WindowsToSkip)
-				if( 0 == strcmp(WindowText.c_str(), WindowsToSkip[i]) )
+			for (auto& w : WindowsToSkip)
+				if( 0 == strcmp(WindowText.c_str(), w) )
 					return true;
 		}
 

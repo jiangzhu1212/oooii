@@ -312,7 +312,7 @@ void oWindowTestApp::EventHook(const window::basic_event& _Event)
 		case event_type::input_device_changed:
 			oTRACE("event_type::input_device_changed %s %s %s", as_string(_Event.as_input_device().type), as_string(_Event.as_input_device().status), _Event.as_input_device().instance_name);
 			break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 
@@ -418,7 +418,7 @@ void oWindowTestApp::ActionHook(const input::action& _Action)
 		case input::action_type::skeleton_lost:
 			oTRACE("input::skeleton_lost");
 			break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 

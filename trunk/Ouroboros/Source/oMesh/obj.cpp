@@ -172,7 +172,7 @@ static const char* parse_vline(const char* _V
 			atof(&_V, &temp.z); if (_FlipHandedness) temp.z = -temp.z;
 			_Normals.push_back(temp);
 			break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	return _V;
@@ -214,7 +214,7 @@ static const char* parse_fline(const char* _F
 					case face::position: NumElements = _NumPositions; break;
 					case face::normal: NumElements = _NumNormals; break;
 					case face::texcoord: NumElements = _NumTexcoords; break;
-					oNODEFAULT;
+					default: oASSUME(0);
 				}
 				ZeroBasedIndexFromFile = NumElements + NegativeIndex;
 			}

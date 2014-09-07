@@ -33,7 +33,7 @@ static const URI_PARTS_TEST sTESTuri_parts[] =
 
 static void TESTuri_parts()
 {
-	oFORI(i, sTESTuri_parts)
+	for (auto i = 0; i < oCOUNTOF(sTESTuri_parts); i++)
 	{
 		const auto& t = sTESTuri_parts[i];
 		uri u(t.URI);
@@ -89,7 +89,7 @@ static const URI_ABSOLUTE sTESTuri_absolute[] =
 
 static void TESTuri_absolute()
 {
-	oFORI(i, sTESTuri_absolute)
+	for (auto i = 0; i < oCOUNTOF(sTESTuri_absolute); i++)
 	{
 		const auto& t = sTESTuri_absolute[i];
 		uri u(t.String);
@@ -132,7 +132,7 @@ static const URI_SAME_DOCUMENT sTESTuri_same_document[] =
 
 void TESTuri_same_document()
 {
-	oFORI(i, sTESTuri_same_document)
+	for (auto i = 0; i < oCOUNTOF(sTESTuri_same_document); i++)
 	{
 		const auto& t = sTESTuri_same_document[i];
 		uri a(t.String1), b(t.String2);
@@ -274,7 +274,7 @@ static void TESTuri_make_absolute2()
 {
 	const uri sTESTuri_make_absolute_base2("file://DATA/Test/Scenes/TestTextureSet.xml");
 
-	oFORI(i, sTESTuri_make_absolute2)
+	for (auto i = 0; i < oCOUNTOF(sTESTuri_make_absolute2); i++)
 	{
 		const auto& t = sTESTuri_make_absolute2[i];
 		uri u(sTESTuri_make_absolute_base2, t.Ref); 
@@ -287,7 +287,7 @@ static void TESTuri_make_absolute3()
 {
 	const uri sTESTuri_make_absolute_base3("file:///c:/folder/file.ext");
 
-	oFORI(i, sTESTuri_make_absolute3)
+	for (auto i = 0; i < oCOUNTOF(sTESTuri_make_absolute3); i++)
 	{
 		const auto& t = sTESTuri_make_absolute3[i];
 		uri u(sTESTuri_make_absolute_base3, t.Ref); 
@@ -314,7 +314,7 @@ static void TESTuri_make_relative()
 {
 	const uri sTESTuri_make_relative_base("file://DATA/Test/Scenes/TestTextureSet.xml");
 
-	oFORI(i, sTESTuri_make_relative)
+	for (auto i = 0; i < oCOUNTOF(sTESTuri_make_relative); i++)
 	{
 		const auto& t = sTESTuri_make_relative[i];
 		uri u(t.Ref);
@@ -326,7 +326,7 @@ static void TESTuri_make_relative()
 
 static void TESTuri_replace()
 {
-	oFORI(i, sTESTuri_replace)
+	for (auto i = 0; i < oCOUNTOF(sTESTuri_replace); i++)
 	{
 		const auto& t = sTESTuri_replace[i];
 

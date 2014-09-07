@@ -249,7 +249,7 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const surfa
 bool from_string(surface::format* _pFormat, const char* _StrSource)
 {
 	*_pFormat = surface::format::unknown;
-	oFORI(i, surface::sFormatInfo)
+	for (int i = 0; i < oCOUNTOF(surface::sFormatInfo); i++)
 	{
 		if (!_stricmp(_StrSource, surface::sFormatInfo[i].string))
 		{
@@ -755,7 +755,7 @@ fourcc to_fourcc(const format& f)
 
 format from_fourcc(const fourcc& fcc)
 {
-	oFORI(i, sFormatInfo)
+	for (int i = 0; i < oCOUNTOF(surface::sFormatInfo); i++)
 	{
 		if (fcc == sFormatInfo[i].fourcc)
 			return format(i);
@@ -910,7 +910,7 @@ uint row_pitch(const info& inf, uint miplevel, uint subsurface)
 				return mip0RowSize;
 		}
 
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 
@@ -1027,7 +1027,7 @@ uint offset(const info& inf, uint miplevel, uint subsurface)
 		case mip_layout::tight: return offset_tight(inf, miplevel, subsurface);
 		case mip_layout::below: return offset_below(inf, miplevel, subsurface);
 		case mip_layout::right: return offset_right(inf, miplevel, subsurface);
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 
@@ -1057,7 +1057,7 @@ uint slice_pitch(const info& inf, uint subsurface)
 			pitch = (((pitch + (mip0RowPitch - 1)) / mip0RowPitch) * mip0RowPitch);
 			break;
 		}
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	return pitch;
@@ -1132,7 +1132,7 @@ uint2 slice_dimensions(const info& inf, uint subsurface)
 			}
 			return int2(mip0dimensions.x + mip1dimensions.x, ::max(mip0height, mip1andUpHeight));
 		}
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 }
 

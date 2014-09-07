@@ -129,7 +129,7 @@ private:
 			case 2: Show(ID_ADVANCED_FIRST, ID_ADVANCED_LAST, _Show); break;
 			case 3: Show(ID_SYSPROT_FIRST, ID_SYSPROT_LAST, _Show); break;
 			case 4: Show(ID_REMOTE_FIRST, ID_REMOTE_LAST, _Show); break;
-			oNODEFAULT;
+			default: oASSUME(0);
 		}
 	}
 

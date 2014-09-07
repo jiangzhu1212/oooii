@@ -148,7 +148,7 @@ D3D_TEXTURE_DESC get_texture_desc(Resource* r)
 			break;
 		};
 
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 
 	return d;
@@ -202,7 +202,7 @@ intrusive_ptr<ShaderResourceView> make_srv(Resource* r, DXGI_FORMAT format, uint
 		
 		case D3D11_RESOURCE_DIMENSION_TEXTURE1D: d.ViewDimension = D3D_SRV_DIMENSION_TEXTURE1D; break;
 		case D3D11_RESOURCE_DIMENSION_TEXTURE3D: d.ViewDimension = D3D_SRV_DIMENSION_TEXTURE3D; array_size = 0; break;
-		oNODEFAULT;
+		default: oASSUME(0);
 	}
 	
 	// because of unions, this works for all texture types

@@ -120,7 +120,7 @@ public:
 				case none:
 					R = qmul(R, make_quaternion(float3(_ScreenPointDelta.yx(), 0.0f)));
 					break;
-				oNODEFAULT;
+				default: oASSUME(0);
 			}
 
 			T = qmul(normalize(R), OldT) + LookAt;

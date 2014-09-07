@@ -34,7 +34,7 @@ public:
 		Size += Nodes.capacity() * sizeof(index_type) * 7;
 	}
 
-	json(const char* _URI, const char* _pData, const allocator& alloc, size_t _EstNumNodes = 100)
+	json(const char* _URI, const char* _pData, const allocator& alloc = default_allocator, size_t _EstNumNodes = 100)
 		: Buffer(_URI, _pData, alloc, "json doc")
 	{
 		Size = sizeof(*this) + strlen(Buffer.data) + 1;

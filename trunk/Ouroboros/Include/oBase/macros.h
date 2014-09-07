@@ -37,13 +37,6 @@
 // _____________________________________________________________________________
 // Runtime macros
 
-// Use this in switch statements where there is no valid default behavior. On 
-// some compilers this can generate more efficient code.
-#define oNODEFAULT default: oASSUME(0)
-
-// Shorthand for a simple loop through a fixed array
-#define oFORI(_IndexVariable, _Array) for (unsigned int _IndexVariable = 0; _IndexVariable < oCOUNTOF(_Array); _IndexVariable++)
-
 // Wrappers that should be used to protect against null pointers to strings
 #define oSAFESTR(str) ((str) ? (str) : "")
 #define oSAFESTRN(str) ((str) ? (str) : "(null)")

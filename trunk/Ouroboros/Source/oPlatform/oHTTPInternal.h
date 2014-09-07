@@ -76,7 +76,7 @@ public:
 
 	void Check() threadsafe
 	{
-		oFORI(i, guard)
+		for (auto i = 0; i < oCOUNTOF(guard); i++)
 		{
 			oASSERT(guard[i] == 0x0011f350, "Guardband corrupted!");
 		}

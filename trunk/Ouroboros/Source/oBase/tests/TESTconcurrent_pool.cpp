@@ -42,12 +42,12 @@ static void test_index_pool()
 	oCHECK(a.capacity() == CAPACITY, "Capacity mismatch.");
 
 	unsigned int index[4];
-	oFORI(i, index)
-		index[i] = a.allocate();
+	for (auto& i : index)
+		i = a.allocate();
 
 	oCHECK(a.nullidx == a.allocate(), "allocate succeed past allocator capacity");
 
-	oFORI(i, index)
+	for (unsigned int i = 0; i < oCOUNTOF(index); i++)
 		oCHECK(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);
 
 	a.deallocate(index[1]);

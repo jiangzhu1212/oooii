@@ -156,7 +156,7 @@ static const CASE2<char> kMoreCases[] =
 
 static void TESTpath_more_cases()
 {
-	oFORI(i, kMoreCases)
+	for (auto i = 0; i < oCOUNTOF(kMoreCases); i++)
 	{
 		try
 		{
@@ -201,7 +201,7 @@ static const CLEAN_CASE<char> kCleanCases[] =
 
 static void TESTpath_clean()
 {
-	oFORI(i, kCleanCases)
+	for (auto i = 0; i < oCOUNTOF(kCleanCases); i++)
 	{
 		try
 		{

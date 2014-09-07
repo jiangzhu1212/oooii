@@ -167,11 +167,11 @@ static const MAPPING sMappedColors[] =
 
 bool from_string(color* _pColor, const char* _String)
 {
-	oFORI(i, sMappedColors)
+	for (const auto& c : sMappedColors)
 	{
-		if (!_stricmp(sMappedColors[i].Name, _String))
+		if (!_stricmp(c.Name, _String))
 		{
-			*_pColor = sMappedColors[i].Value;
+			*_pColor = c.Value;
 			return true;
 		}
 	}
@@ -224,9 +224,9 @@ bool from_string(color* _pValue, const char* _StrSource)
 
 const char* as_string(const color& _Color)
 {
-	oFORI(i, detail::sMappedColors)
-		if (detail::sMappedColors[i].Value == _Color)
-			return detail::sMappedColors[i].Name;
+	for (const auto& c : detail::sMappedColors)
+		if (c.Value == _Color)
+			return c.Name;
 	return nullptr;
 }
 
