@@ -14,13 +14,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tests\TESTatof.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="tests\TESTsbb.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTtlsf_allocator.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TESTconcurrent_pool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="tests\TESTpool.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

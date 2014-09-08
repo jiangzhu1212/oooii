@@ -5,17 +5,7 @@
 // allocate in O(1) time from a preallocated array of blocks (fixed block
 // allocator).
 
-#include <oBase/callable.h>
-#include <oBase/pool.h>
-
-// emulate variadic macros for passing various parameters to create()
-#define oOBJECT_POOL_CREATE_N(n) \
-	template<oCALLABLE_CONCAT(oARG_TYPENAMES,n)> \
-	T* create(oCALLABLE_CONCAT(oARG_DECL,n)) { void* p = allocate_pointer(); return p ? new (p) T(oCALLABLE_CONCAT(oARG_PASS,n)) : nullptr; }
-#define oOBJECT_POOL_CREATE_DESTROY \
-	oCALLABLE_PROPAGATE_SKIP0(oOBJECT_POOL_CREATE_N) \
-	T* create() { void* p = allocate_pointer(); return p ? new (p) T() : nullptr; } \
-	void destroy(T* _Pointer) { _Pointer->T::~T(); deallocate(_Pointer); }
+#include <oMemory/pool.h>
 
 namespace ouro {
 
@@ -34,9 +24,21 @@ public:
 	object_pool& operator=(object_pool&& that) { return (object_pool&)pool::operator=(std::move((pool&&)that)); }
 	size_type initialize(void* memory, size_type capacity) { return pool::initialize(memory, sizeof(T), capacity); }
 
-	// define destroy(T* p) which calls the dtor before deallocating
-	// define create( ... ) which takes whatever ctor parameters type T provides
-	oOBJECT_POOL_CREATE_DESTROY
+	T* create() { void* p = allocate_pointer(); return p ? new (p) T() : nullptr; }
+	
+	template<typename A> 
+	T* create(const A& a) { void* p = allocate_pointer(); return p ? new (p) T(a) : nullptr; }
+	
+	template<typename A, typename B>
+	T* create(const A& a, const B& b) { void* p = allocate_pointer(); return p ? new (p) T(a,b) : nullptr; }
+	
+	template<typename A, typename B, typename C>
+	T* create(const A& a, const B& b, const C& c) { void* p = allocate_pointer(); return p ? new (p) T(a,b,c) : nullptr; }
+	
+	template<typename A, typename B, typename C, typename D>
+	T* create(const A& a, const B& b, const C& c, const D& d) { void* p = allocate_pointer(); return p ? new (p) T(a,b,c,d) : nullptr; }
+
+	void destroy(T* ptr) { ptr->T::~T(); deallocate(ptr); }
 
 	T* typed_pointer(index_type index) const { return (T*)pool::pointer(index); }
 

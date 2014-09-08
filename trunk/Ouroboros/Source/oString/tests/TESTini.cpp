@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oString/ini.h>
-#include <oBase/throw.h>
 #include <memory>
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
@@ -64,7 +64,7 @@ static const char* sTestINI_RN = {
 	"\r\n"
 };
 
-static void TESTini(const char* _pData)
+static void TESTini(test_services& services, const char* _pData)
 {
 	static const char* ININame = "Test INI";
 	std::shared_ptr<ini> INI = std::make_shared<ini>(ININame, _pData, default_allocator, 100);
@@ -73,25 +73,25 @@ static void TESTini(const char* _pData)
 	int i = 0;
 	for (ini::section s = INI->first_section(); s; s = INI->next_section(s), i++)
 	{
-		oCHECK(!strcmp(INI->section_name(s), sExpectedSectionNames[i]), "%s: Name of %d%s section is incorrect", ININame, i, ordinal(i));
-		oCHECK(!strcmp(INI->find_value(s, "Artist"), sExpectedArtists[i]), "%s: Artist in %d%s section did not match", ININame, i, ordinal(i));
-		oCHECK(!strcmp(INI->find_value(s, "Year"), sExpectedYears[i]), "%s: Year in %d%s section did not match", ININame, i, ordinal(i));
+		oTEST(!strcmp(INI->section_name(s), sExpectedSectionNames[i]), "%s: Name of %d%s section is incorrect", ININame, i, ordinal(i));
+		oTEST(!strcmp(INI->find_value(s, "Artist"), sExpectedArtists[i]), "%s: Artist in %d%s section did not match", ININame, i, ordinal(i));
+		oTEST(!strcmp(INI->find_value(s, "Year"), sExpectedYears[i]), "%s: Year in %d%s section did not match", ININame, i, ordinal(i));
 		AtLeastOneExecuted = true;
 	}
 
-	oCHECK(AtLeastOneExecuted, "No sections were read");
+	oTEST(AtLeastOneExecuted, "No sections were read");
 
 	ini::section s = INI->find_section("CD2");
-	oCHECK(s, "Section [CD2] could not be read");
+	oTEST(s, "Section [CD2] could not be read");
 	i = 0;
 	for (ini::key k = INI->first_key(s); k; k = INI->next_key(k), i++)
-		oCHECK(!strcmp(INI->value(k), sExpectedCD2Values[i]), "%s: Reading CD2 %d%s entry.", ININame, i, ordinal(i));
+		oTEST(!strcmp(INI->value(k), sExpectedCD2Values[i]), "%s: Reading CD2 %d%s entry.", ININame, i, ordinal(i));
 }
 
-void TESTini()
+void TESTini(test_services& services)
 {
-	TESTini(sTestINI);
-	TESTini(sTestINI_RN);
+	TESTini(services, sTestINI);
+	TESTini(services, sTestINI_RN);
 }
 
 	} // namespace tests

@@ -23,20 +23,20 @@ class test_services_implementation : public test_services
 public:
 	int rand() override { return ::rand(); }
 	
-	void vreport(const char* _Format, va_list _Args) override
+	void vreport(const char* fmt, va_list args) override
 	{
-		oErrorSetLastV(0, _Format, _Args);
+		oErrorSetLastV(0, fmt, args);
 		oTRACEA("%s", oErrorGetLastString());
 	}
 
-	int vsnprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args) override
+	int vsnprintf(char* dst, size_t dst_size, const char* fmt, va_list args) override
 	{
-		return ouro::vsnprintf(_StrDestination, _SizeofStrDestination, _Format, _Args);
+		return ouro::vsnprintf(dst, dst_size, fmt, args);
 	}
 
-	void begin_thread(const char* _Name) override
+	void begin_thread(const char* name) override
 	{
-		core_thread_traits::begin_thread(_Name);
+		core_thread_traits::begin_thread(name);
 	}
 
 	void update_thread() override
@@ -49,9 +49,9 @@ public:
 		core_thread_traits::end_thread();
 	}
 
-	char* test_root_path(char* _StrDestination, size_t _SizeofStrDestination) const override
+	char* test_root_path(char* dst, size_t dst_size) const override
 	{
-		return strlcpy(_StrDestination, filesystem::data_path().c_str(), _SizeofStrDestination) < _SizeofStrDestination ? _StrDestination : nullptr;
+		return strlcpy(dst, filesystem::data_path().c_str(), dst_size) < dst_size ? dst : nullptr;
 	}
 
 	scoped_allocation load_buffer(const char* _Path) override
@@ -78,19 +78,19 @@ public:
 		return static_cast<size_t>(hi.total_physical);
 	}
 
-	void get_cpu_utilization(float* _pAverage, float* _pPeek) override
+	void get_cpu_utilization(float* out_avg, float* out_peek) override
 	{
 		ouro::process_stats_monitor::info stats = PSM.get_info();
-		*_pAverage = stats.average_usage;
-		*_pPeek = stats.high_usage;
+		*out_avg = stats.average_usage;
+		*out_peek = stats.high_usage;
 	}
 
 	void reset_cpu_utilization() override { PSM.reset(); }
 	
-	void check(const surface::image& _Buffer, int _NthTest = 0, float _MaxRMSError = -1.0f)
+	void check(const surface::image& img, int nth = 0, float max_rms_error = -1.0f)
 	{
 		extern oTest* g_Test;
-		if (!g_Test->TestImage(_Buffer, _NthTest, oDEFAULT, _MaxRMSError, oDEFAULT))
+		if (!g_Test->TestImage(img, nth, oDEFAULT, max_rms_error, oDEFAULT))
 			oThrowLastError();
 	}
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oMemory_atof_h
-#define oMemory_atof_h
+#ifndef oString_atof_h
+#define oString_atof_h
 
 // A fast, but limited atof implementation that's reportedly 5x faster than the 
 // standard atof in simple cases. In benchmarking we've found ~3.2x on Intel i7 

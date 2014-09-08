@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="tests\TESTatof.cpp" />
     <ClCompile Include="tests\TESTcsv.cpp" />
     <ClCompile Include="tests\TESTini.cpp" />
     <ClCompile Include="tests\TESTjson.cpp" />

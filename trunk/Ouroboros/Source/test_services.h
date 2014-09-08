@@ -18,6 +18,10 @@
 #include <chrono>
 #include <cstdarg>
 #include <memory>
+#include <stdexcept>
+
+#define oTEST(expr, msg, ...) do { if (!(expr)) services.error(msg, ## __VA_ARGS__); } while(false)
+#define oTEST0(expr) do { if (!(expr)) services.error("\"" #expr "\" failed"); } while(false)
 
 namespace ouro {
 
@@ -26,6 +30,21 @@ namespace surface { class buffer; }
 class test_services
 {
 public:
+
+	// Detail some timings to TTY
+	class scoped_timer
+	{
+	public:
+		scoped_timer(test_services& services, const char* name) : srv(services), n(name) { start = srv.now(); }
+		~scoped_timer() { trace(); }
+	
+		inline void trace() { srv.report("%s took %.03f sec", n ? n : "(null)", srv.now() - start); }
+
+	private:
+		const char* n;
+		double start;
+		test_services& srv;
+	};
 
 	// Generate a random number. The seed is often configurable from the test
 	// infrastructure so behavior can be reproduced.
@@ -36,20 +55,25 @@ public:
 	inline double now() const { return std::chrono::duration_cast<std::chrono::duration<double, std::ratio<1>>>(std::chrono::high_resolution_clock::now().time_since_epoch()).count(); }
 	
 	// Write to the test infrastructure's TTY
-	virtual void vreport(const char* _Format, va_list _Args) = 0;
-	inline void report(const char* _Format, ...) { va_list a; va_start(a, _Format); vreport(_Format, a); va_end(a); }
+	virtual void vreport(const char* fmt, va_list args) = 0;
+	inline void report(const char* fmt, ...) { va_list a; va_start(a, fmt); vreport(fmt, a); va_end(a); }
+
+	// throws the specified message
+	inline void verror(const char* fmt, va_list args) { char msg[1024]; vsnprintf(msg, 1024, fmt, args); throw std::logic_error(msg); }
+	inline void error(const char* fmt, ...) { va_list a; va_start(a, fmt); verror(fmt, a); va_end(a); }
 
 	// Abstracts vsnprintf and snprintf (since Visual Studio complains about it)
-	virtual int vsnprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, va_list _Args) = 0;
-	inline int snprintf(char* _StrDestination, size_t _SizeofStrDestination, const char* _Format, ...) { va_list a; va_start(a, _Format); int x = vsnprintf(_StrDestination, _SizeofStrDestination, _Format, a); va_end(a); return x; }
+	virtual int vsnprintf(char* dst, size_t dst_size, const char* fmt, va_list args) = 0;
+	inline int snprintf(char* dst, size_t dst_size, const char* fmt, ...) { va_list a; va_start(a, fmt); int x = vsnprintf(dst, dst_size, fmt, a); va_end(a); return x; }
+	template<size_t size> int snprintf(char (&dst)[size], const char* fmt, ...) { va_list a; va_start(a, fmt); int x = vsnprintf(dst, size, fmt, a); va_end(a); return x; }
 
-	virtual void begin_thread(const char* _Name) = 0;
+	virtual void begin_thread(const char* name) = 0;
 	virtual void update_thread() = 0;
 	virtual void end_thread() = 0;
 
 	// Returns the root path from which any test data should be loaded.
-	virtual char* test_root_path(char* _StrDestination, size_t _SizeofStrDestination) const = 0;
-	template<size_t size> char* test_root_path(char (&_StrDestination)[size]) const { return test_root_path(_StrDestination, size); }
+	virtual char* test_root_path(char* dst, size_t dst_size) const = 0;
+	template<size_t size> char* test_root_path(char (&dst)[size]) const { return test_root_path(dst, size); }
 
 	// Load the entire contents of the specified file into a newly allocated 
 	// buffer.
@@ -62,16 +86,16 @@ public:
 	virtual size_t total_physical_memory() const = 0;
 
 	// Returns the average and peek percent usage of the CPU by this process
-	virtual void get_cpu_utilization(float* _pAverage, float* _pPeek) = 0;
+	virtual void get_cpu_utilization(float* out_avg, float* out_peek) = 0;
 
 	// Resets the frame of recording average and peek percentage CPU utilization
 	virtual void reset_cpu_utilization() = 0;
 	
 	// This function compares the specified surface to a golden image named after
-	// the test's name suffixed with _NthTest. If _NthTest is 0 then the golden 
-	// image should not have a suffix. If _MaxRMSError is negative a default 
+	// the test's name suffixed with nth. If nth is 0 then the golden 
+	// image should not have a suffix. If max_rms_error is negative a default 
 	// should be used. If the surfaces are not similar this throws an exception.
-	virtual void check(const surface::image& _Buffer, int _NthTest = 0, float _MaxRMSError = -1.0f) = 0;
+	virtual void check(const surface::image& img, int nth = 0, float max_rms_error = -1.0f) = 0;
 };
 
 } // namespace ouro

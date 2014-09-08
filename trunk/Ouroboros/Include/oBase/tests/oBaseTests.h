@@ -15,7 +15,6 @@ namespace ouro {
 		void TESTconcurrent_growable_object_pool();
 		void TESTconcurrent_hash_map(test_services& _Services);
 		void TESTconcurrent_linear_allocator();
-		void TESTconcurrent_pool();
 		void TESTconcurrent_queue();
 		void TESTconcurrent_queue_concrt();
 		void TESTconcurrent_queue_opt();
@@ -33,7 +32,6 @@ namespace ouro {
 		void TESTosc();
 		void TESTparallel_for();
 		void TESTpath();
-		void TESTpool();
 		void TESTtask_group();
 		void TESTthreadpool();
 		void TESTthreadpool_perf(ouro::test_services& _Services);
