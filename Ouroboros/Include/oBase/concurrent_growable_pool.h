@@ -3,7 +3,7 @@
 #define oBase_concurrent_growable_pool_h
 
 #include <oBase/concurrent_stack.h>
-#include <oBase/concurrent_pool.h>
+#include <oMemory/concurrent_pool.h>
 
 namespace ouro {
 

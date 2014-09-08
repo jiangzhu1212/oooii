@@ -64,9 +64,6 @@
     <ClCompile Include="rgb.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="concurrent_pool.cpp">
-      <Filter>Source\allocator</Filter>
-    </ClCompile>
     <ClCompile Include="concurrent_growable_pool.cpp">
       <Filter>Source\allocator</Filter>
     </ClCompile>
@@ -75,9 +72,6 @@
     </ClCompile>
     <ClCompile Include="concurrent_hash_map.cpp">
       <Filter>Source\containers</Filter>
-    </ClCompile>
-    <ClCompile Include="pool.cpp">
-      <Filter>Source\allocator</Filter>
     </ClCompile>
     <ClCompile Include="gpu_api.cpp">
       <Filter>Source\types</Filter>
@@ -285,9 +279,6 @@
     <ClInclude Include="..\..\Include\oBase\coroutine.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\pool.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\std_cbegin.h">
       <Filter>oBase\c++ support</Filter>
     </ClInclude>
@@ -304,12 +295,6 @@
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h" />
-    <ClInclude Include="..\..\Include\oBase\concurrent_pool.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_object_pool.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
@@ -318,9 +303,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_stack.h">
       <Filter>oBase\containers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\object_pool.h">
-      <Filter>oBase\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\gpu_api.h">
       <Filter>oBase\types</Filter>

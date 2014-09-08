@@ -1,8 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oString/xml.h>
-#include <oBase/assert.h>
-#include <oBase/throw.h>
 #include <memory>
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
@@ -56,24 +55,24 @@ public:
 	std::string s;
 };
 
-void TESTxml()
+void TESTxml(test_services& services)
 {
 	std::shared_ptr<xml> XML = std::make_shared<xml>("Test XML", sTestXML, default_allocator, 200);
 
 	xml::node hCatalog = XML->first_child(XML->root(), "CATALOG");
-	oCHECK(hCatalog, "Cannot find CATALOG node");
-	oCHECK(!strcmp(XML->find_attr_value(hCatalog, "title"), "My play list"), "CATALOG title is incorrect");
+	oTEST(hCatalog, "Cannot find CATALOG node");
+	oTEST(!strcmp(XML->find_attr_value(hCatalog, "title"), "My play list"), "CATALOG title is incorrect");
 
 	int count = atoi(XML->find_attr_value(hCatalog, "count"));
-	oCHECK(count == 3, "Failed to get a valid count");
+	oTEST(count == 3, "Failed to get a valid count");
 
 	int i = 0;
 	for (xml::node n = XML->first_child(hCatalog); n; n = XML->next_sibling(n), i++)
 	{
-		oCHECK(!strcmp(XML->node_name(n), i == 1 ? "SpecialCD" : "CD"), "Invalid node name %s", XML->node_name(n));
+		oTEST(!strcmp(XML->node_name(n), i == 1 ? "SpecialCD" : "CD"), "Invalid node name %s", XML->node_name(n));
 		xml::node hArtist = XML->first_child(n, "ARTIST");
-		oCHECK(hArtist, "Invalid CD structure");
-		oCHECK(!strcmp(XML->node_value(hArtist), sExpectedArtists[i]), "Artist in %d%s section did not match", i, ordinal(i));
+		oTEST(hArtist, "Invalid CD structure");
+		oTEST(!strcmp(XML->node_value(hArtist), sExpectedArtists[i]), "Artist in %d%s section did not match", i, ordinal(i));
 	}
 	 
 	// Test xref
@@ -103,37 +102,37 @@ void TESTxml()
 
 	xml::node xref_m = XML->find_xref(xref);
 	const char* v = XML->node_value(xref_m);
-	oCHECK(!_stricmp("UK", v), "failed: Xref %s", xref.c_str());
+	oTEST(!_stricmp("UK", v), "failed: Xref %s", xref.c_str());
 
 	// Test boolean attrs
 
 	xml::node nTest1 = XML->find_xref("/2");
-	oCHECK(nTest1, "Did not find first boolean attr test");
+	oTEST(nTest1, "Did not find first boolean attr test");
 
 	val = XML->find_attr_value(nTest1, "anotherboolattr");
-	oCHECK(!strcmp(val, "anotherboolattr"), "anotherboolattr failed");
+	oTEST(!strcmp(val, "anotherboolattr"), "anotherboolattr failed");
 	val = XML->find_attr_value(nTest1, "not_there");
-	oCHECK(!val || !strcmp(val, ""), "not_there should really not be there, but something was: %s", val);
+	oTEST(!val || !strcmp(val, ""), "not_there should really not be there, but something was: %s", val);
 	val = XML->find_attr_value(nTest1, "boolattr3");
-	oCHECK(!strcmp(val, "boolattr3"), "boolattr3 failed");
+	oTEST(!strcmp(val, "boolattr3"), "boolattr3 failed");
 
 	xml::node nTest2 = XML->find_xref("/3");
-	oCHECK(nTest2, "Did not find second boolean attr test");
+	oTEST(nTest2, "Did not find second boolean attr test");
 	val = XML->find_attr_value(nTest2, "boolattr3");
-	oCHECK(!strcmp(val, "boolattr3"), "boolattr3 2 failed");
+	oTEST(!strcmp(val, "boolattr3"), "boolattr3 2 failed");
 
 	// Test compacted XML
  	XML = std::make_shared<xml>("Test CompactXML", sCompactTestXML, default_allocator, 200);
 
 	xml::node HeadNode = XML->first_child(XML->first_child(XML->root()), "head");
-	oCHECK(!_stricmp(XML->node_name(HeadNode), "head"), "Failed to get head node");
+	oTEST(!_stricmp(XML->node_name(HeadNode), "head"), "Failed to get head node");
 	
 	xml::node Title = XML->first_child(HeadNode, "title");
-	oCHECK(!_stricmp(XML->node_value(Title), "foo bar"), "Title is wrong");
+	oTEST(!_stricmp(XML->node_value(Title), "foo bar"), "Title is wrong");
 
 	test_visitor t;
 	XML->visit(t);
-	oCHECK(!strcmp(t.s.c_str(), sCompactExpectedVisitOrder), "Visit out of order: %s", t.s.c_str());
+	oTEST(!strcmp(t.s.c_str(), sCompactExpectedVisitOrder), "Visit out of order: %s", t.s.c_str());
 }
 
 	} // namespace tests

@@ -7,7 +7,8 @@
 
 namespace ouro { class test_services; namespace tests {
 
-void TESTatof(test_services& services);
+void TESTconcurrent_pool(test_services& services);
+void TESTpool(test_services& services);
 void TESTsbb(test_services& services);
 void TESTtlsf_allocator(test_services& services);
 

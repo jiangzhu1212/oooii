@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/pool.h>
+#include <oMemory/pool.h>
 #include <stdexcept>
 
 namespace ouro {
@@ -65,7 +65,7 @@ pool::size_type pool::initialize(void* memory, size_type block_size, size_type c
 	if (block_size < sizeof(index_type))
 		std::invalid_argument("block_size must be a minimum of 4 bytes");
 
-	size_type req = max(block_size, size_type(sizeof(index_type))) * capacity;
+	size_type req = std::max(block_size, size_type(sizeof(index_type))) * capacity;
 
 	if (memory)
 	{

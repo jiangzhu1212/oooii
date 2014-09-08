@@ -57,16 +57,10 @@
     <ClCompile Include="tests\TESTconcurrent_growable_object_pool.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tests\TESTpool.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="tests\TESTfilter_chain.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTconcurrent_hash_map.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
-    <ClCompile Include="tests\TESTconcurrent_pool.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="tests\TESTosc.cpp">

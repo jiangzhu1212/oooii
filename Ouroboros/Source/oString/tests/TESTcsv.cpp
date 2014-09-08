@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oString/csv.h>
-#include <oBase/throw.h>
 #include <memory>
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
@@ -33,23 +33,23 @@ static const char* sTestCSV =
 	"C78,The Electric Company,\"The Electric Marketing Co., LLC\",23456789,Y,FERC Electric Tariff Original Volume No. 2,Service Agreement 1,1/2/1992,1/2/1992,1/1/2012,,Renewable annually by mutual agreement after termination date.,UP,LT,Y,FP,CB,ENERGY,0,MWH,53, , ,,$/MWH,,,PJM,Bus 4321,20110101,20120101,EP_end"
 };
 
-void TESTcsv()
+void TESTcsv(test_services& services)
 {
 	std::shared_ptr<csv> CSV = std::make_shared<csv>("Test CSV", sTestCSV, default_allocator, 400);
-	oCHECK(23 == CSV->rows(), "Wrong row count");
-	oCHECK(32 == CSV->cols(), "Wrong column count");
+	oTEST(23 == CSV->rows(), "Wrong row count");
+	oTEST(32 == CSV->cols(), "Wrong column count");
 
 	const char* c = CSV->cell(0, 0);
-	oCHECK(c && !strcmp(c, "contract_id"), "CSV parsing failed");
+	oTEST(c && !strcmp(c, "contract_id"), "CSV parsing failed");
 
 	c = CSV->cell(9, 16);
-	oCHECK(c && !strcmp(c, "2/2/2013"), "CSV parsing failed");
+	oTEST(c && !strcmp(c, "2/2/2013"), "CSV parsing failed");
 
 	c = CSV->cell(31, 24);
-	oCHECK(*c == '\0', "out of bounds access succeeded (it should have failed)");
+	oTEST(*c == '\0', "out of bounds access succeeded (it should have failed)");
 
 	c = CSV->cell(31, 22);
-	oCHECK(c && !strcmp(c, "EP_end"), "CSV parsing failed");
+	oTEST(c && !strcmp(c, "EP_end"), "CSV parsing failed");
 }
 
 	} // namespace tests

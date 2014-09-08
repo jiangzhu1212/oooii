@@ -7,10 +7,11 @@
 
 namespace ouro { class test_services; namespace tests {
 
-void TESTcsv();
-void TESTini();
-void TESTjson();
-void TESTxml();
+void TESTatof(test_services& services);
+void TESTcsv(test_services& services);
+void TESTini(test_services& services);
+void TESTjson(test_services& services);
+void TESTxml(test_services& services);
 
 }}
 

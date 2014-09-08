@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/concurrent_pool.h>
+#include <oMemory/concurrent_pool.h>
 #include <stdexcept>
 
 namespace ouro {
@@ -80,7 +80,7 @@ concurrent_pool::size_type concurrent_pool::initialize(void* memory, size_type b
 	if (block_size < sizeof(index_type))
 		std::invalid_argument("block_size must be a minimum of 4 bytes");
 
-	size_type req = max(block_size, size_type(sizeof(index_type))) * capacity;
+	size_type req = std::max(block_size, size_type(sizeof(index_type))) * capacity;
 
 	if (memory)
 	{

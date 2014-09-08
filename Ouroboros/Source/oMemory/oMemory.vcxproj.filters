@@ -84,6 +84,12 @@
     <ClCompile Include="tlsf.c">
       <Filter>Source\Allocators</Filter>
     </ClCompile>
+    <ClCompile Include="concurrent_pool.cpp">
+      <Filter>Source\Allocators</Filter>
+    </ClCompile>
+    <ClCompile Include="pool.cpp">
+      <Filter>Source\Allocators</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="memduff.h">
@@ -141,6 +147,18 @@
       <Filter>Source\Allocators</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oMemory\sbb.h">
+      <Filter>oMemory\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\object_pool.h">
+      <Filter>oMemory\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\pool.h">
+      <Filter>oMemory\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\concurrent_object_pool.h">
+      <Filter>oMemory\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\concurrent_pool.h">
       <Filter>oMemory\Allocators</Filter>
     </ClInclude>
   </ItemGroup>

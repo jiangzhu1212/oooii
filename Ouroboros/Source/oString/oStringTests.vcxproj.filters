@@ -21,6 +21,9 @@
     <ClCompile Include="tests\TESTxml.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TESTatof.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Include\oString\tests\oStringTests.h">

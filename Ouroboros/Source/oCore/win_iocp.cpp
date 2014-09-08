@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oCore/windows/win_iocp.h>
 #include <oBase/backoff.h>
-#include <oBase/concurrent_object_pool.h>
+#include <oMemory/concurrent_object_pool.h>
 #include <oBase/invalid.h>
 #include <oCore/debugger.h>
 #include <oCore/process_heap.h>

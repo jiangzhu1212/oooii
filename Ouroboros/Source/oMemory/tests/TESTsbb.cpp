@@ -1,8 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oMemory/sbb.h>
 #include <oBase/finally.h>
-#include <oBase/assert.h>
-#include <oBase/throw.h>
 #include <stdlib.h>
 #include <vector>
 
@@ -11,7 +9,7 @@
 namespace ouro {
 	namespace tests {
 
-void TESTsbb_trivial()
+void TESTsbb_trivial(test_services& services)
 {
 	const size_t kArenaSize = 64;
 	const size_t kMinBlockSize = 16;
@@ -27,7 +25,7 @@ void TESTsbb_trivial()
 	finally DestroySbb([&] { if (sbb) sbb_destroy(sbb); });
 
 	void* ExpectedFailBiggerThanArena = sbb_malloc(sbb, 65);
-	oCHECK0(!ExpectedFailBiggerThanArena);
+	oTEST0(!ExpectedFailBiggerThanArena);
 
 //   0    0x7fffffffffffffff
 //   1    
@@ -41,7 +39,7 @@ void TESTsbb_trivial()
 // 0   1
 //0 1 1 1
 
-	oCHECK0(a == arena);
+	oTEST0(a == arena);
 	void* b = sbb_malloc(sbb, 1);
 
 //   0    0x13ffffffffffffff
@@ -49,7 +47,7 @@ void TESTsbb_trivial()
 // 0   1
 //0 0 1 1
 
-	oCHECK0(b == ((char*)arena + kMinBlockSize));
+	oTEST0(b == ((char*)arena + kMinBlockSize));
 	void* c = sbb_malloc(sbb, 17);
 
 //   0    0x03ffffffffffffff
@@ -57,9 +55,9 @@ void TESTsbb_trivial()
 // 0   0
 //0 0 1 1
 
-	oCHECK0(c);
+	oTEST0(c);
 	void* ExpectedFailOOM = sbb_malloc(sbb, 1);
-	oCHECK0(!ExpectedFailOOM);
+	oTEST0(!ExpectedFailOOM);
 
 	sbb_free(sbb, b);
 
@@ -83,13 +81,13 @@ void TESTsbb_trivial()
 //1 1 1 1
 
 	void* d = sbb_malloc(sbb, kArenaSize);
-	oCHECK0(d);
+	oTEST0(d);
 	sbb_free(sbb, d);
 }
 
 void TESTsbb(test_services& services)
 {
-	TESTsbb_trivial();
+	TESTsbb_trivial(services);
 
 	const size_t kBadArenaSize = 123445;
 	const size_t kBadMinBlockSize = 7;
@@ -106,7 +104,7 @@ void TESTsbb(test_services& services)
 	finally FreeArena([&] { if (arena) delete [] arena; });
 
 	bool ExpectedFailSucceeded = true;
-	oTRACE("About to test an invalid case, an exception may be caught by the debugger. CONTINUE.");
+	services.report("About to test an invalid case, an exception may be caught by the debugger. CONTINUE.");
 	try
 	{
 		sbb_create(arena, kBadArenaSize, kBadMinBlockSize, bookkeeping);
@@ -114,9 +112,9 @@ void TESTsbb(test_services& services)
 	}
 
 	catch (...) {}
-	oCHECK0(ExpectedFailSucceeded);
+	oTEST0(ExpectedFailSucceeded);
 
-	oTRACE("About to test an invalid case, an exception may be caught by the debugger. CONTINUE.");
+	services.report("About to test an invalid case, an exception may be caught by the debugger. CONTINUE.");
 	try
 	{
 		sbb_create(arena, kArenaSize, kBadMinBlockSize, bookkeeping);
@@ -124,7 +122,7 @@ void TESTsbb(test_services& services)
 	}
 
 	catch (...) {}
-	oCHECK0(ExpectedFailSucceeded);
+	oTEST0(ExpectedFailSucceeded);
 
 	sbb_t sbb = sbb_create(arena, kArenaSize, kMinBlockSize, bookkeeping);
 	finally DestroySbb([&] { if (sbb) sbb_destroy(sbb); });
@@ -164,7 +162,7 @@ void TESTsbb(test_services& services)
 	}
 
 	void* FullBlock = sbb_malloc(sbb, kArenaSize);
-	oCHECK0(FullBlock);
+	oTEST0(FullBlock);
 }
 
 	} // namespace tests

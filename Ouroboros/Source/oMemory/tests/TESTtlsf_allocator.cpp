@@ -1,14 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/assert.h>
 #include <oCompiler.h>
-#include <oBase/macros.h>
-#include <oBase/throw.h>
-#include <oBase/timer.h>
-#include <oHLSL/oHLSLMath.h>
 #include <oMemory/tlsf_allocator.h>
-#include <oString/fixed_string.h>
 #include <vector>
-
 #include "../../test_services.h"
 
 namespace ouro {
@@ -31,15 +24,13 @@ void TESTtlsf_allocator(test_services& services)
 		const size_t ArenaSize = oMB(500);
 	#endif
 
-	sstring strArenaSize;
-	format_bytes(strArenaSize, ArenaSize, 2);
-	oTRACE("Allocating %s arena using CRT... (SLOW! OS has to defrag virtual memory to get a linear run of this size)", strArenaSize.c_str());
+	services.report("Allocating %u MB arena using CRT... (SLOW! OS has to defrag virtual memory to get a linear run of this size)", ArenaSize/(1024*1024));
 
-	#if oENABLE_TRACES
-		timer t;
-	#endif
-	std::vector<char> arena(ArenaSize); // _ArenaSize should be bigger than 32-bit's 4 GB limitation
-	oTRACE("Allocation took %.02f seconds", t.seconds());
+	std::vector<char> arena;
+	{
+		test_services::scoped_timer t(services, "std::vector allocation");
+		arena.resize(ArenaSize); // should be bigger than 32-bit's 4 GB limitation
+	}
 
 	tlsf_allocator a(arena.data(), arena.size());
 
@@ -81,11 +72,11 @@ void TESTtlsf_allocator(test_services& services)
 			if (PercentAboutToBeUsed < 97.0f && percentUsed < 97.0f) // TLSF is expected to have ~3% fragmentation
 			{
 				pointers[i] = (char*)a.allocate(s);
-				oCHECK(pointers[i], "Failed on allocate %u of %u bytes (total used %0.1f%%)", i, s, percentUsed);
+				oTEST(pointers[i], "Failed on allocate %u of %u bytes (total used %0.1f%%)", i, s, percentUsed);
 				totalUsed += s;
 				smallestAlloc = __min(smallestAlloc, s);
 				largestAlloc = __max(largestAlloc, s);
-				oCHECK(a.valid(), "Heap corrupt on allocate %u of %u bytes.", i, s);
+				oTEST(a.valid(), "Heap corrupt on allocate %u of %u bytes.", i, s);
 			}
 		}
 
@@ -103,29 +94,24 @@ void TESTtlsf_allocator(test_services& services)
 		{
 			a.deallocate(pointers[i]);
 			pointers[i] = 0;
-			oCHECK(a.valid(), "Heap corrupt on deallocate %u.", i);
+			oTEST(a.valid(), "Heap corrupt on deallocate %u.", i);
 		}
 	}
 
 	// test really small
 	void* p1 = a.allocate(1);
-	oCHECK(a.valid(), "Heap corrupt on allocate of %u.", 1);
+	oTEST(a.valid(), "Heap corrupt on allocate of %u.", 1);
 	void* p2 = a.allocate(0);
-	oCHECK(a.valid(), "Heap corrupt on allocate of %u.", 0);
+	oTEST(a.valid(), "Heap corrupt on allocate of %u.", 0);
 	a.deallocate(p2);
-	oCHECK(a.valid(), "Heap corrupt on deallocate");
+	oTEST(a.valid(), "Heap corrupt on deallocate");
 	a.deallocate(p1);
-	oCHECK(a.valid(), "Heap corrupt on deallocate");
+	oTEST(a.valid(), "Heap corrupt on deallocate");
 
 	// Fill out statistics and report
-	sstring RAMused, MINsize, MAXsize;
-	format_bytes(RAMused, ArenaSize, 2);
-	format_bytes(MINsize, smallestAlloc, 2);
-	format_bytes(MAXsize, largestAlloc, 2);
-	
-	services.report("%sRAMused: %s, minsize:%s, maxsize:%s"
+	services.report("%sRAMused: %u bytes, minsize:%u bytes, maxsize:%u bytes"
 		, EnoughPhysRamForFullTest ? "" : "WARNING: system memory not enough to run full test quickly. "
-		, RAMused.c_str(), MINsize.c_str(), MAXsize.c_str());
+		, ArenaSize, smallestAlloc, largestAlloc);
 }
 	} // namespace tests
 } // namespace ouro

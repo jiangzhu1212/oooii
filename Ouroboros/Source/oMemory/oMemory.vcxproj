@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="allocate.cpp" />
+    <ClCompile Include="concurrent_pool.cpp" />
     <ClCompile Include="dtoull.cpp" />
     <ClCompile Include="is_ascii.cpp" />
     <ClCompile Include="memcmp4.cpp" />
@@ -33,6 +34,7 @@
     <ClCompile Include="memset4.cpp" />
     <ClCompile Include="memset8.cpp" />
     <ClCompile Include="MurmurHash3.cpp" />
+    <ClCompile Include="pool.cpp" />
     <ClCompile Include="rle_decode.cpp" />
     <ClCompile Include="rle_decoden.cpp" />
     <ClCompile Include="sbb.cpp" />
@@ -51,12 +53,16 @@
     <ClInclude Include="..\..\Include\oMemory\allocate.h" />
     <ClInclude Include="..\..\Include\oMemory\bit.h" />
     <ClInclude Include="..\..\Include\oMemory\byte.h" />
+    <ClInclude Include="..\..\Include\oMemory\concurrent_object_pool.h" />
+    <ClInclude Include="..\..\Include\oMemory\concurrent_pool.h" />
     <ClInclude Include="..\..\Include\oMemory\djb2.h" />
     <ClInclude Include="..\..\Include\oMemory\endian.h" />
     <ClInclude Include="..\..\Include\oMemory\equal.h" />
     <ClInclude Include="..\..\Include\oMemory\fnv1a.h" />
     <ClInclude Include="..\..\Include\oMemory\memory.h" />
     <ClInclude Include="..\..\Include\oMemory\murmur3.h" />
+    <ClInclude Include="..\..\Include\oMemory\object_pool.h" />
+    <ClInclude Include="..\..\Include\oMemory\pool.h" />
     <ClInclude Include="..\..\Include\oMemory\sbb.h" />
     <ClInclude Include="..\..\Include\oMemory\sbb_allocator.h" />
     <ClInclude Include="..\..\Include\oMemory\tlsf_allocator.h" />

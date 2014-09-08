@@ -22,7 +22,8 @@
     <ClInclude Include="..\..\Include\oMemory\tests\oMemoryTests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tests\TESTatof.cpp" />
+    <ClCompile Include="tests\TESTconcurrent_pool.cpp" />
+    <ClCompile Include="tests\TESTpool.cpp" />
     <ClCompile Include="tests\TESTsbb.cpp" />
     <ClCompile Include="tests\TESTtlsf_allocator.cpp" />
   </ItemGroup>
