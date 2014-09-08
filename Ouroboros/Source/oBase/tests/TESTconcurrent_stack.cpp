@@ -1,12 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/assert.h>
-#include <oMemory/allocate.h>
-#include <oBase/concurrent_object_pool.h>
 #include <oBase/concurrent_stack.h>
 #include <oBase/concurrency.h>
 #include <oBase/finally.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
+#include <oMemory/allocate.h>
+#include <oMemory/concurrent_object_pool.h>
 #include <vector>
 
 namespace ouro {

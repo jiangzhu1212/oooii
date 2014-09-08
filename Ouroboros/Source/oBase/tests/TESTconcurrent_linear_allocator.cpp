@@ -35,7 +35,7 @@ static void test_basics()
 	size_t nFree = 1024;
 	nFree -= 4 * byte_align(kAllocSize, oDEFAULT_MEMORY_ALIGNMENT) - 2;
 
-	oCHECK(Allocator.bytes_free() == nFree, "Bytes available is incorrect");
+	oCHECK(Allocator.size_free() == nFree, "Bytes available is incorrect");
 
 	Allocator.reset();
 

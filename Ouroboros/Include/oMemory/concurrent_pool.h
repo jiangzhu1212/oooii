@@ -34,7 +34,7 @@ public:
 	// ctor creates as empty
 	concurrent_pool();
 
-	// ctor that moves an existing pool into this one
+	// ctor moves an existing pool into this one
 	concurrent_pool(concurrent_pool&& _That);
 
 	// ctor creates as a valid pool using external memory
@@ -43,10 +43,10 @@ public:
 	// dtor
 	~concurrent_pool();
 
-	// calls deinit on this, moves that's memory under the same config
+	// calls deinitialize on this, moves that's memory under the same config
 	concurrent_pool& operator=(concurrent_pool&& _That);
 
-	// Returns bytes required for memory; pass nullptr to obtain size, allocate
+	// returns bytes required for memory; pass nullptr to obtain size, allocate
 	// and then pass that to memory in a second call to initialize the class.
 	size_type initialize(void* memory, size_type block_size, size_type capacity);
 
@@ -82,11 +82,11 @@ public:
 
 	// convert between allocated index and pointer values
 	void* pointer(index_type index) const;
-	index_type index(void* pointer) const;
+	index_type index(void* ptr) const;
 
 	// simple range check that returns true if this index/pointer could have been allocated from this pool
 	bool owns(index_type index) const { return index < nblocks; }
-	bool owns(void* pointer) const { return owns(index(pointer)); }
+	bool owns(void* ptr) const { return owns(index(ptr)); }
 
 private:
 	union
