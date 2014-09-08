@@ -15,7 +15,7 @@ namespace ouro {
 // _____________________________________________________________________________
 // Alignment 
 
-	template<typename T> T byte_align(T value, size_t alignment) { return (T)(((size_t)value + alignment - 1) & ~(alignment - 1)); }
+template<typename T> T byte_align(T value, size_t alignment) { return (T)(((size_t)value + alignment - 1) & ~(alignment - 1)); }
 template<typename T> T byte_align_down(T value, size_t alignment) { return (T)((size_t)value & ~(alignment - 1)); }
 template<typename T> bool byte_aligned(T value, size_t alignment) { return byte_align(value, alignment) == value; }
 

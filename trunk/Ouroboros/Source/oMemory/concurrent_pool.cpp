@@ -156,9 +156,9 @@ void* concurrent_pool::pointer(index_type index) const
 	return index != nullidx ? (stride*index + blocks) : nullptr;
 }
 
-concurrent_pool::index_type concurrent_pool::index(void* pointer) const
+concurrent_pool::index_type concurrent_pool::index(void* ptr) const
 {
-	return pointer ? index_type(((uint8_t*)pointer - blocks) / stride) : nullidx;
+	return ptr ? index_type(((uint8_t*)ptr - blocks) / stride) : nullidx;
 }
 
 }

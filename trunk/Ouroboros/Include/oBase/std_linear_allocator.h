@@ -52,7 +52,7 @@ public:
 	
 	inline void deallocate(pointer p, size_type count)
 	{
-		if (!pAllocator->valid(p))
+		if (!pAllocator->owns(p))
 			FallbackAllocator.deallocate(p, count);
 	}
 	

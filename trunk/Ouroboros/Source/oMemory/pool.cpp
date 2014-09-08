@@ -118,9 +118,9 @@ void* pool::pointer(index_type index) const
 	return index != nullidx ? (stride*index + blocks) : nullptr;
 }
 
-pool::index_type pool::index(void* pointer) const
+pool::index_type pool::index(void* ptr) const
 {
-	return pointer ? index_type(((uint8_t*)pointer - blocks) / stride) : nullidx;
+	return ptr ? index_type(((uint8_t*)ptr - blocks) / stride) : nullidx;
 }
 
 }
