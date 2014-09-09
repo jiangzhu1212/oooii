@@ -1,6 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
 #include <oBasis/oRTTI.h>
+#include <oCore/filesystem.h>
+#include <oCore/reporting.h>
 #include <oGUI/Windows/win_gdi_bitmap.h>
 #include <oGUI/menu.h>
 #include <oGUI/enum_radio_handler.h>

@@ -2,6 +2,8 @@
 #include "oAutoBuildOutput.h"
 #include "oMSBuild.h"
 #include <oPlatform/oEMail.h>
+#include <oPlatform/oP4.h>
+#include <oCore/filesystem.h>
 #include <oGUI/msgbox.h>
 
 using namespace ouro;

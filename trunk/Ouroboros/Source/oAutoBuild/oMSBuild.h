@@ -3,6 +3,8 @@
 #ifndef oMSBuild_h
 #define oMSBuild_h
 #include <oBase/event.h>
+#include <oBase/invalid.h>
+#include <oBasis/oRTTI.h>
 #include "oP4ChangelistBuilder.h"
 
 struct oMSBUILD_SETTINGS

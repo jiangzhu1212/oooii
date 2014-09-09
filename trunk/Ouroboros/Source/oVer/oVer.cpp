@@ -1,5 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#include <oBase/path.h>
+#include <oBase/throw.h>
+#include <oCore/module.h>
 #include <oString/opttok.h>
+#include <memory.h>
 
 using namespace ouro;
 

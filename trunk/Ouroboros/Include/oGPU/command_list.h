@@ -3,6 +3,8 @@
 #ifndef oGPU_command_list_h
 #define oGPU_command_list_h
 
+#include <oBase/types.h>
+
 namespace ouro { namespace gpu {
 
 class device;

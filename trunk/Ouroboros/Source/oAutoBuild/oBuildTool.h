@@ -3,6 +3,9 @@
 #ifndef oBuildTool_h
 #define oBuildTool_h
 #include <oBase/event.h>
+#include <oBase/types.h>
+#include <oString/fixed_string.h>
+#include <oBasis/oRTTI.h>
 
 struct oBUILD_TOOL_TESTING_SETTINGS
 {

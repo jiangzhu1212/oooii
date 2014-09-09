@@ -3,7 +3,11 @@
 #ifndef oP4ChangelistBuilder_h
 #define oP4ChangelistBuilder_h
 
+#include <oBase/types.h>
+#include <oBasis/oInterface.h>
 #include <oString/ini.h>
+#include <functional>
+#include <list>
 
 static const char* oAUTO_BUILD_SPECIAL_PREFIX = "Daily";
 static const char* oBUILD_TOOL_FAIL_TITLE = " Fail";
@@ -45,7 +49,7 @@ interface oP4ChangelistBuilder : oInterface
 	virtual void Cancel() = 0;
 };
 
-oAPI bool oChangelistManagerCreate(const ouro::ini& _INI, const char* _LogRoot, int _ServerPort, oP4ChangelistBuilder** _ppChangelistManager);
+bool oChangelistManagerCreate(const ouro::ini& _INI, const char* _LogRoot, int _ServerPort, oP4ChangelistBuilder** _ppChangelistManager);
 
 
 #endif

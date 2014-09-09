@@ -1,5 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/backoff.h>
+#include <oCore/filesystem.h>
+#include <oCore/reporting.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
 #include <oGUI/Windows/win_gdi_bitmap.h>
@@ -125,7 +127,7 @@ private:
 	void on_event(const window::basic_event& e);
 	void on_drop(const window::basic_event& e);
 	void on_zoom(int id);
-	bool CreateMenus(const window::create_event& e);
+	void CreateMenus(const window::create_event& e);
 	void open_file_dialog();
 	void open_file(const path& p);
 };
@@ -189,7 +191,7 @@ oTexViewApp::~oTexViewApp()
 	filesystem::join();
 }
 
-bool oTexViewApp::CreateMenus(const window::create_event& _CreateEvent)
+void oTexViewApp::CreateMenus(const window::create_event& _CreateEvent)
 {
 	for (auto& m : Menus)
 		m = menu::make_menu();
@@ -229,7 +231,6 @@ bool oTexViewApp::CreateMenus(const window::create_event& _CreateEvent)
 
 	// Help menu
 	menu::append_item(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "About...");
-	return true;
 }
 
 void oTexViewApp::on_event(const window::basic_event& e)
@@ -247,8 +248,7 @@ void oTexViewApp::on_event(const window::basic_event& e)
 		case event_type::creating:
 		{
 			oTRACE("event_type::creating");
-			if (!CreateMenus(e.as_create()))
-				oThrowLastError();
+			CreateMenus(e.as_create());
 			break;
 		}
 

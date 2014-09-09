@@ -98,7 +98,7 @@ private:
 			double usage = process::cpu_usage(PID, &PreviousSystemTime, &PreviousProcessTime);
 			float usagef = static_cast<float>(usage);
 			float avg = static_cast<float>(MA.calculate(usage));
-			std::lock_guard<shared_mutex> lock(StatsMutex);
+			ouro::lock_guard<shared_mutex> lock(StatsMutex);
 			Stats.average_usage = avg;
 			Stats.low_usage = __min(Stats.low_usage, usagef);
 			Stats.high_usage = __max(Stats.high_usage, usagef);

@@ -3,8 +3,15 @@
 #include "oMSBuild.h"
 #include "oAutoBuildOutput.h"
 #include <oBasis/oINISerialize.h>
+#include <oBasis/oRefcount.h>
+#include <oPlatform/oP4.h>
 #include <oBase/future.h>
+#include <oBase/timer.h>
+#include <oCore/filesystem_util.h>
+#include <oCore/mutex.h>
+#include <oCore/process.h>
 #include <oCore/system.h>
+#include <oString/xml.h>
 #include <chrono>
 #include <mutex>
 #include <thread>

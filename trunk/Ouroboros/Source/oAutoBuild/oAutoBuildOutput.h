@@ -6,6 +6,7 @@
 #include "oP4ChangelistBuilder.h"
 #include "oMSBuild.h"
 #include "oBuildTool.h"
+#include <oPlatform/oSocket.h>
 
 struct oAutoBuildEmailSettings
 {

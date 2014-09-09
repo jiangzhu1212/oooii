@@ -1,12 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-using namespace ouro;
 
+#include <oBase/throw.h>
 #include <oString/opttok.h>
 #include <oGUI/msgbox.h>
 //#include <oPlatform/oVersionUpdate.h>
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+using namespace ouro;
 
 static option sCmdOptions[] = 
 {

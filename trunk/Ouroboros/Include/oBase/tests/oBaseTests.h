@@ -4,6 +4,8 @@
 #ifndef oBaseTests_h
 #define oBaseTests_h
 
+#include <functional>
+
 namespace ouro {
 
 	class test_services;
@@ -11,9 +13,9 @@ namespace ouro {
 	namespace tests {
 
 		void TESTaaboxf();
-		void TESTcompression(test_services& _Services);
+		void TESTcompression(test_services& services);
 		void TESTconcurrent_growable_object_pool();
-		void TESTconcurrent_hash_map(test_services& _Services);
+		void TESTconcurrent_hash_map(test_services& services);
 		void TESTconcurrent_queue();
 		void TESTconcurrent_queue_concrt();
 		void TESTconcurrent_queue_opt();
@@ -21,19 +23,19 @@ namespace ouro {
 		void TESTconcurrent_stack();
 		void TESTcoroutine();
 		void TESTcountdown_latch();
-		void TESTdate(test_services& _Services);
+		void TESTdate(test_services& services);
 		void TESTequal();
 		void TESTfilter_chain();
 		void TESTfixed_block_allocator();
 		void TESTfourcc();
-		void TESTfuture(test_services& _Services);
-		void TESThash_map(test_services& _Services);
+		void TESTfuture(test_services& services);
+		void TESThash_map(test_services& services);
 		void TESTosc();
 		void TESTparallel_for();
 		void TESTpath();
 		void TESTtask_group();
 		void TESTthreadpool();
-		void TESTthreadpool_perf(ouro::test_services& _Services);
+		void TESTthreadpool_perf(ouro::test_services& services);
 		void TESTuri();
 
 		// Utility functions, do not register these as tests.
@@ -63,14 +65,14 @@ namespace ouro {
 
 		// This can be used to do an apples-to-apples benchmark with various 
 		// threadpools, just implement test_threadpool and pass it to this test.
-		void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool& _Threadpool);
+		void TESTthreadpool_performance(ouro::test_services& services, test_threadpool& _Threadpool);
 
 		// Implement this inside a TESTMyThreadpool() function.
-		template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl(ouro::test_services& _Services)
+		template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl(ouro::test_services& services)
 		{
 			test_threadpool_impl_t tp;
 			ouro::finally Release([&] { tp.release(); });
-			TESTthreadpool_performance(_Services, tp);
+			TESTthreadpool_performance(services, tp);
 		}
 
 	} // namespace tests
