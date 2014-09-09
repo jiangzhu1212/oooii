@@ -161,5 +161,17 @@
     <ClInclude Include="..\..\Include\oMemory\concurrent_pool.h">
       <Filter>oMemory\Allocators</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\concurrent_linear_allocator.h">
+      <Filter>oMemory\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\linear_allocator.h">
+      <Filter>oMemory\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\std_linear_allocator.h">
+      <Filter>oMemory\Allocators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\std_allocator.h">
+      <Filter>oMemory\Allocators</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

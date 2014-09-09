@@ -1,15 +1,16 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/concurrent_linear_allocator.h>
+#include <oMemory/concurrent_linear_allocator.h>
 #include <oMemory/byte.h>
 #include <oBase/future.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
 #include <vector>
+#include "../../test_services.h"
 
 namespace ouro {
 	namespace tests {
 
-static void test_basics()
+static void test_basics(test_services& services)
 {
 	std::vector<unsigned char> buffer(1024, 0xcc);
 	concurrent_linear_allocator Allocator(&buffer[0], buffer.size());
@@ -17,30 +18,30 @@ static void test_basics()
 	static const size_t kAllocSize = 30;
 
 	char* c1 = Allocator.allocate<char>(kAllocSize);
-	oCHECK(c1, "Allocation failed (1)");
+	oTEST(c1, "Allocation failed (1)");
 	char* c2 = Allocator.allocate<char>(kAllocSize);
-	oCHECK(c2, "Allocation failed (2)");
+	oTEST(c2, "Allocation failed (2)");
 	char* c3 = Allocator.allocate<char>(kAllocSize);
-	oCHECK(c3, "Allocation failed (3)");
+	oTEST(c3, "Allocation failed (3)");
 	char* c4 = Allocator.allocate<char>(kAllocSize);
-	oCHECK(c4, "Allocation failed (4)");
+	oTEST(c4, "Allocation failed (4)");
 
 	memset(c1, 0, kAllocSize);
 	memset(c3, 0, kAllocSize);
-	oCHECK(!memcmp(c2, c4, kAllocSize), "Allocation failed (5)");
+	oTEST(!memcmp(c2, c4, kAllocSize), "Allocation failed (5)");
 
 	char* c5 = Allocator.allocate<char>(1024);
-	oCHECK(!c5, "Too large an allocation should have failed, but succeeded");
+	oTEST(!c5, "Too large an allocation should have failed, but succeeded");
 
 	size_t nFree = 1024;
 	nFree -= 4 * byte_align(kAllocSize, oDEFAULT_MEMORY_ALIGNMENT) - 2;
 
-	oCHECK(Allocator.size_free() == nFree, "Bytes available is incorrect");
+	oTEST(Allocator.size_free() == nFree, "Bytes available is incorrect");
 
 	Allocator.reset();
 
 	char* c6 = Allocator.allocate<char>(880);
-	oCHECK(c6, "Should've been able to allocate a large allocation after reset");
+	oTEST(c6, "Should've been able to allocate a large allocation after reset");
 }
 
 static size_t* AllocAndAssign(concurrent_linear_allocator* _pAllocator, int _Int)
@@ -51,7 +52,7 @@ static size_t* AllocAndAssign(concurrent_linear_allocator* _pAllocator, int _Int
 	return p;
 }
 
-static void test_concurrency()
+static void test_concurrency(test_services& services)
 {
 	static const size_t nAllocs = 100;
 
@@ -85,14 +86,14 @@ static void test_concurrency()
 			nNulls++;
 	}
 
-	oCHECK(nFailures == 0, "There were %d failures", nFailures);
-	oCHECK(nNulls == 10, "There should have been 10 failed allocations");
+	oTEST(nFailures == 0, "There were %d failures", nFailures);
+	oTEST(nNulls == 10, "There should have been 10 failed allocations");
 }
 
-void TESTconcurrent_linear_allocator()
+void TESTconcurrent_linear_allocator(test_services& services)
 {
-	test_basics();
-	test_concurrency();
+	test_basics(services);
+	test_concurrency(services);
 }
 
 	} // namespace tests

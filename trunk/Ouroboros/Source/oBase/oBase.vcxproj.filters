@@ -144,12 +144,6 @@
     <ClInclude Include="..\..\Include\oBase\moving_average.h">
       <Filter>oBase</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\linear_allocator.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_linear_allocator.h">
-      <Filter>oBase\allocator</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\container_support.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
@@ -254,9 +248,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\rgb.h">
       <Filter>oBase\types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\std_linear_allocator.h">
-      <Filter>oBase\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\hash_map.h">
       <Filter>oBase\containers</Filter>
