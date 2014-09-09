@@ -24,11 +24,11 @@ struct HDR
 	size_t UncompressedSize;
 };
 
-static size_t lzma_estimate_compressed_size(size_t _SizeofSource)
+static size_t lzma_estimate_compressed_size(size_t src_size)
 {
 	// http://sourceforge.net/projects/sevenzip/forums/forum/45797/topic/3420786
 	// a post by ipavlov...
-	return static_cast<size_t>(1.1f * _SizeofSource + 0.5f) + oKB(16);
+	return static_cast<size_t>(1.1f * src_size + 0.5f) + oKB(16);
 }
 
 static const char* as_string_lzma_error(int _Error)
@@ -55,16 +55,16 @@ static const char* as_string_lzma_error(int _Error)
 	return "Unrecognized LZMA error code";
 }
 
-size_t lzma_compress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT src, size_t _SizeofSource)
+size_t lzma_compress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT src, size_t src_size)
 {
 	size_t CompressedSize = 0;
 	if (dst)
 	{
-		const size_t EstSize = lzma_compress(nullptr, 0, nullptr, _SizeofSource);
+		const size_t EstSize = lzma_compress(nullptr, 0, nullptr, src_size);
 		if (dst && dst_size < EstSize)
 			oTHROW0(no_buffer_space);
 
-		((HDR*)dst)->UncompressedSize = _SizeofSource;
+		((HDR*)dst)->UncompressedSize = src_size;
 		CompressedSize = dst_size;
 		size_t outPropsSize = LZMA_PROPS_SIZE;
 		unsigned char outProps[LZMA_PROPS_SIZE];
@@ -72,7 +72,7 @@ size_t lzma_compress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT
 			static_cast<unsigned char*>(byte_add(dst, sizeof(HDR)))
 			, &CompressedSize
 			, static_cast<const unsigned char*>(src)
-			, _SizeofSource
+			, src_size
 			, outProps
 			, &outPropsSize
 			, LZMADEFAULT_level
@@ -88,19 +88,19 @@ size_t lzma_compress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT
 	}
 
 	else
-		CompressedSize = sizeof(HDR) + lzma_estimate_compressed_size(_SizeofSource);
+		CompressedSize = sizeof(HDR) + lzma_estimate_compressed_size(src_size);
 
 	return CompressedSize;
 }
 
-size_t lzma_decompress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT src, size_t _SizeofSource)
+size_t lzma_decompress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRICT src, size_t src_size)
 {
 	size_t UncompressedSize = ((const HDR*)src)->UncompressedSize;
 		if (dst && dst_size < UncompressedSize)
 			oTHROW0(no_buffer_space);
 
 	size_t destLen = dst_size;
-	size_t srcLen = _SizeofSource;
+	size_t srcLen = src_size;
 	int LZMAError = LzmaUncompress(
 		static_cast<unsigned char*>(dst)
 		, &destLen

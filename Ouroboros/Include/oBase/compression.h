@@ -1,20 +1,19 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// All compression wrappers should comply with this API definition. Compression
-// wrappers are named for their algorithm (i.e. gzip.h or snappy.h).
 #pragma once
 #ifndef oBase_compression_h
 #define oBase_compression_h
+
+// All compression wrappers should comply with this API definition. Compression
+// wrappers are named for their algorithm (i.e. gzip.h or snappy.h).
 
 #include <oCompiler.h>
 
 namespace ouro {
 
-// If dst is nullptr, this will return an estimation of the size 
-// dst should be. If dst is valid, this will return the 
-// actual compressed size. In either case if there is a failure this will throw.
-typedef size_t (*compress_fn)(
-	void* oRESTRICT dst, size_t dst_size
-	, const void* oRESTRICT src, size_t _SizeofSource);
+// If dst is nullptr, return an estimation of the size dst should be. If dst is 
+// valid, return the actual compressed size. In failure in either case, throw.
+typedef size_t (*compress_fn)(void* oRESTRICT dst, size_t dst_size
+	, const void* oRESTRICT src, size_t src_size);
 
 // Returns the uncompressed size of src. Call this first with 
 // dst = nullptr to get the size value to properly allocate a 
@@ -25,9 +24,8 @@ typedef size_t (*compress_fn)(
 // such a buffer correctly. (Implementation note: if an algorithm doesn't store 
 // the uncompressed size, then it should be tacked onto the compressed buffer 
 // and accessible by this function to comply with the API specification.)
-typedef size_t (*decompress_fn)(
-	void* oRESTRICT dst, size_t dst_size
-	, const void* oRESTRICT src, size_t _SizeofSource);
+typedef size_t (*decompress_fn)(void* oRESTRICT dst, size_t dst_size
+	, const void* oRESTRICT src, size_t src_size);
 
 }
 
