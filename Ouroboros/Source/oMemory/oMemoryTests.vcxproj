@@ -22,6 +22,7 @@
     <ClInclude Include="..\..\Include\oMemory\tests\oMemoryTests.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="tests\TESTconcurrent_linear_allocator.cpp" />
     <ClCompile Include="tests\TESTconcurrent_pool.cpp" />
     <ClCompile Include="tests\TESTpool.cpp" />
     <ClCompile Include="tests\TESTsbb.cpp" />

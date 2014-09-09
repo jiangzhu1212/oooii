@@ -9,6 +9,7 @@
 
 #include <oBase/algorithm.h>
 #include <oBase/countdown_latch.h>
+#include <oMemory/std_allocator.h>
 #include <oString/fixed_string.h>
 #include <oBase/macros.h>
 #include <atomic>

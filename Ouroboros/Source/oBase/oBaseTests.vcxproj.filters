@@ -24,9 +24,6 @@
     <ClCompile Include="tests\TESTcountdown_latch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tests\TESTconcurrent_linear_allocator.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="tests\TESTcompression.cpp">
       <Filter>Source</Filter>
     </ClCompile>

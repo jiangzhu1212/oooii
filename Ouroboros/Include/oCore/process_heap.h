@@ -8,7 +8,7 @@
 #ifndef oCore_process_heap_h
 #define oCore_process_heap_h
 
-#include <oBase/macros.h>
+#include <oMemory/std_allocator.h>
 #include <functional>
 
 namespace ouro {
