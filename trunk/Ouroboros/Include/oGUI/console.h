@@ -5,6 +5,7 @@
 #define oGUI_console_h
 
 #include <oBase/color.h>
+#include <oBase/path.h>
 #include <oGUI/oGUI.h>
 #include <cstdarg>
 #include <functional>

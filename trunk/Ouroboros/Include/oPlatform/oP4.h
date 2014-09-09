@@ -102,49 +102,49 @@ struct oP4_LABEL_SPEC
 
 // _____________________________________________________________________________
 
-oAPI bool oP4IsAvailable();
+bool oP4IsAvailable();
 
 // _____________________________________________________________________________
 // Direct communication API with P4... mostly these wrap a spawn-command as if 
 // typing the P4 command line at a prompt. The output is captured and returned.
 
-oAPI bool oP4GetWorkspaceString(char* _StrDestination, size_t _SizeofStrDestination);
+bool oP4GetWorkspaceString(char* _StrDestination, size_t _SizeofStrDestination);
 template<size_t size> inline bool oP4GetWorkspaceString(char (&_StrDestination)[size]) { return oP4GetWorkspaceString(_StrDestination, size); }
 template<size_t capacity> inline bool oP4GetWorkspaceString(ouro::fixed_string<char, capacity>& _StrDestination) { return oP4GetWorkspaceString(_StrDestination, _StrDestination.capacity()); }
 
-oAPI bool oP4GetLabelSpecString(char* _P4LabelSpecString, size_t _SizeofP4LabelSpecString, const char* _Label);
+bool oP4GetLabelSpecString(char* _P4LabelSpecString, size_t _SizeofP4LabelSpecString, const char* _Label);
 template<size_t size> inline bool oP4GetLabelSpecString(char (&_StrDestination)[size], const char* _Label) { return oP4GetLabelSpecString(_StrDestination, size, _Label); }
 template<size_t capacity> inline bool oP4GetLabelSpecString(ouro::fixed_string<char, capacity>& _StrDestination, const char* _Label) { return oP4GetLabelSpecString(_StrDestination, _StrDestination.capacity(), _Label); }
 
 // OpenType can only be one of the first 3 status values or this will return 
 // false.
-oAPI bool oP4Open(oP4_STATUS _OpenType, const char* _Path);
-oAPI bool oP4Revert(const char* _Path);
+bool oP4Open(oP4_STATUS _OpenType, const char* _Path);
+bool oP4Revert(const char* _Path);
 
 // Syncs the tree or specified path if the entire tree is not needed.
 // If _Force is true this will run p4 sync with -f
-oAPI bool oP4Sync(int _ChangeList, const char* _Path = nullptr, bool _Force = false);
+bool oP4Sync(int _ChangeList, const char* _Path = nullptr, bool _Force = false);
 
 // Sets a label based on the specification.
-oAPI bool oP4Label(const oP4_LABEL_SPEC& _Label);
+bool oP4Label(const oP4_LABEL_SPEC& _Label);
 
 // Returns the user supplied description associated with a given changelist
-oAPI bool oP4GetChangelistDescription(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
+bool oP4GetChangelistDescription(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
 template<size_t size> bool oP4GetChangelistDescription(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistDescription(_StrDestination, size, _ChangeList); }
 template<size_t capacity> bool oP4GetChangelistDescription(ouro::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistDescription(_StrDestination, _StrDestination.capacity(), _ChangeList); }
 
 // Returns the username associated with a specific changelist
-oAPI bool oP4GetChangelistUser(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
+bool oP4GetChangelistUser(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
 template<size_t size> bool oP4GetChangelistUser(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistUser(_StrDestination, size, _ChangeList); }
 template<size_t capacity> bool oP4GetChangelistUser(ouro::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistUser(_StrDestination, _StrDestination.capacity(), _ChangeList); }
 
 // Returns the date associated with a specific changelist
-oAPI bool oP4GetChangelistDate(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
+bool oP4GetChangelistDate(char* _StrDestination, size_t _SizeofStrDestination, int _ChangeList);
 template<size_t size> bool oP4GetChangelistDate(char (&_StrDestination)[size], int _ChangeList) { return oP4GetChangelistDate(_StrDestination, size, _ChangeList); }
 template<size_t capacity> bool oP4GetChangelistDate(ouro::fixed_string<char, capacity>& _StrDestination, int _ChangeList){ return oP4GetChangelistDate(_StrDestination, _StrDestination.capacity(), _ChangeList); }
 
 // Takes a p4 depot path and converts it into a client file path
-oAPI bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pDepotPath);
+bool oP4GetClientPath(char* _StrDestination, size_t _SizeofStrDestination, const char* _pDepotPath);
 template<size_t size> bool oP4GetClientPath(char (&_StrDestination)[size], const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, size, _pDepotPath); }
 template<size_t capacity> bool oP4GetClientPath(ouro::fixed_string<char, capacity>& _StrDestination, const char* _pDepotPath) { return oP4GetClientPath(_StrDestination, _StrDestination.capacity(), _pDepotPath); }
 
@@ -169,12 +169,12 @@ template<size_t size> size_t oP4ListOutOfDate(oP4_FILE_DESC (&_pOutOfDateFiles)[
 // P4 String Parsing: convert the raw string as returned by one of the above
 // calls and turn it into a more manageable struct.
 
-oAPI time_t oP4ParseTime(const char* _P4TimeString);
-oAPI bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceString);
-oAPI bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecString);
+time_t oP4ParseTime(const char* _P4TimeString);
+bool oP4ParseWorkspace(oP4_WORKSPACE* _pWorkspace, const char* _P4WorkspaceString);
+bool oP4ParseLabelSpec(oP4_LABEL_SPEC* _pLabelSpec, const char* _P4LabelSpecString);
 
 // Returns the changelist from a line from the resulting from p4 changes
-oAPI int oP4ParseChangesLine(const char* _ChangesLine);
+int oP4ParseChangesLine(const char* _ChangesLine);
 
 inline bool oP4GetLabelSpec(const char* _Label, oP4_LABEL_SPEC* _pLabelSpec)
 {
@@ -203,10 +203,10 @@ inline bool oP4GetWorkspace(oP4_WORKSPACE* _pWorkspace)
 // NOTE: This uses oTRACEA for the first several files that cause the changelist
 // to be corrupt. When using tools that call this, dbgview.exe can be run to see
 // why a changelist is labeled as corrupt.
-oAPI int oP4GetCurrentChangelist(const char* _P4Base = nullptr);
+int oP4GetCurrentChangelist(const char* _P4Base = nullptr);
 
 // Gets the next change based on a specified _CurrentCL (which can be estimated
 // from oP4GetCurrentChangelist)
-oAPI int oP4GetNextChangelist(int _CurrentChangelist, const char* _P4Base = nullptr);
+int oP4GetNextChangelist(int _CurrentChangelist, const char* _P4Base = nullptr);
 
 #endif

@@ -95,6 +95,6 @@ interface oMirroredArena : oInterface
 	virtual bool IsInChanges(const void* _pAddress, size_t _Size, const void* _pChangeBuffer) const threadsafe = 0;
 };
 
-oAPI bool oMirroredArenaCreate(const oMirroredArena::DESC& _Desc, oMirroredArena** _ppMirroredArena);
+bool oMirroredArenaCreate(const oMirroredArena::DESC& _Desc, oMirroredArena** _ppMirroredArena);
 
 #endif

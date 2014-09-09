@@ -305,7 +305,7 @@ bool oHTTPClient_Impl::PostPutImpl(oHTTP_METHOD _Method, const char* _pRelativeP
 	return true;
 }
 
-oAPI bool oHTTPClientCreate(const oHTTPClient::DESC& _Desc, oHTTPClient** _ppClient)
+bool oHTTPClientCreate(const oHTTPClient::DESC& _Desc, oHTTPClient** _ppClient)
 {
 	bool success = false;
 	oCONSTRUCT(_ppClient, oHTTPClient_Impl(_Desc, &success));

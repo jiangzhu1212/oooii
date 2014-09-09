@@ -212,11 +212,11 @@ struct oHTTP_RESPONSE
 	oHTTP_CONTENT_BODY Content;
 };
 
-oAPI bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char* _Value);
-oAPI bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int _Value);
-oAPI bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char** _Value);
-oAPI bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int* _Value);
-oAPI bool oHTTPRemoveHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field);
-oAPI void oHTTPClearHeaders(oHTTP_HEADER_FIELDS _HeaderFields);
+bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char* _Value);
+bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int _Value);
+bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char** _Value);
+bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int* _Value);
+bool oHTTPRemoveHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field);
+void oHTTPClearHeaders(oHTTP_HEADER_FIELDS _HeaderFields);
 
 #endif // oHTTP_h

@@ -145,7 +145,7 @@ bool oP4Revert(const char* _Path)
 	return oP4Execute(cmdline, ", reverted", response);
 }
 
-oAPI bool oP4Sync(int _ChangeList, const char* _Path/*= nullptr*/, bool _Force/*= false*/)
+bool oP4Sync(int _ChangeList, const char* _Path/*= nullptr*/, bool _Force/*= false*/)
 {
 	xlstring cmdline, response;
 	snprintf(cmdline, "p4 sync %s \"%s\"@%d", _Force ? "-f":"", _Path, _ChangeList);

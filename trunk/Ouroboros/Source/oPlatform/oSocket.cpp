@@ -153,26 +153,26 @@ bool from_string(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
 
 } // namespace ouro
 
-oAPI void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort)
+void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort)
 {
 	const oNetAddr_Internal* pAddr = reinterpret_cast<const oNetAddr_Internal*>(&_Addr);
 	*_pPort = ntohs(pAddr->Port);
 }
 
-oAPI void oSocketPortSet(const unsigned short _Port, oNetAddr* _pAddr)
+void oSocketPortSet(const unsigned short _Port, oNetAddr* _pAddr)
 {
 	oNetAddr_Internal* pAddr = reinterpret_cast<oNetAddr_Internal*>(_pAddr);
 	pAddr->Port = htons(_Port);
 }
 
 
-oAPI bool oSocketHostIsLocal( oNetHost _Host )
+bool oSocketHostIsLocal( oNetHost _Host )
 {
 	oNetHost_Internal* pHost = reinterpret_cast<oNetHost_Internal*>(&_Host);
 	return 16777343 == pHost->IP;
 }
 
-oAPI void oSocketEnumerateAllAddress( std::function<void(oNetAddr _Addr)> _Enumerator )
+void oSocketEnumerateAllAddress( std::function<void(oNetAddr _Addr)> _Enumerator )
 {
 	winsock::enumerate_addresses(
 		[&](sockaddr_in _SockAddr)
@@ -881,14 +881,14 @@ oSocket* oSocketCreateFromServer(const char* _DebugName, SOCKET _hTarget, oSocke
 	return pSocket;
 }
 
-oAPI bool oSocketCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocket** _ppSocket)
+bool oSocketCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocket** _ppSocket)
 {
 	bool success = false;
 	oCONSTRUCT(_ppSocket, oSocketImplProxy(_DebugName, _Desc, INVALID_SOCKET, &success));
 	return success;
 }
 
-oAPI bool oSocketEncryptedCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocketEncrypted** _ppSocket)
+bool oSocketEncryptedCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocketEncrypted** _ppSocket)
 {
 	if (_Desc.Style == oSocket::BLOCKING && _Desc.Protocol == oSocket::TCP)
 	{

@@ -123,7 +123,7 @@ private:
 	oTASK ParentDestructionTask;
 };
 
-oAPI int oIOCPThreadCount()
+int oIOCPThreadCount()
 {
 	SYSTEM_INFO sysInfo;
 	GetSystemInfo(&sysInfo);

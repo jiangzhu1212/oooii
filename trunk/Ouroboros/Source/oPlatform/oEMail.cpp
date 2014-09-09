@@ -336,7 +336,7 @@ bool oEMail_Impl::Send(const char *_pToAddress, const char *_pFromAddress, const
 	return true;
 }
 
-oAPI bool oEMailCreate(oEMail::Encryption _EncryptionType, oNetAddr _ServerAddress, oEMail** _ppEMail) 
+bool oEMailCreate(oEMail::Encryption _EncryptionType, oNetAddr _ServerAddress, oEMail** _ppEMail) 
 {
 	bool success = false;
 	oCONSTRUCT( _ppEMail, oEMail_Impl(_EncryptionType, _ServerAddress, &success) );

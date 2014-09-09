@@ -37,6 +37,6 @@ private:
 #endif
 };
 
-oAPI bool oGfxPickBufferCreate(ouro::gpu::device* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer);
+bool oGfxPickBufferCreate(ouro::gpu::device* _pDevice, const void* _pComputeShader, oGfxPickBuffer** _ppPickBuffer);
 
 #endif // oGfxPickBuffer_h
