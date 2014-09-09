@@ -51,6 +51,6 @@ interface oHTTPClient : oInterface
 	}
 };
 
-oAPI bool oHTTPClientCreate(const oHTTPClient::DESC& _Desc, oHTTPClient** _ppClient);
+bool oHTTPClientCreate(const oHTTPClient::DESC& _Desc, oHTTPClient** _ppClient);
 
 #endif // oHTTPClient_h

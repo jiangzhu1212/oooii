@@ -37,14 +37,14 @@
 
 #if defined(_DLL) && !defined(oSTATICLIB)
 	#ifdef _EXPORT_SYMBOLS
-		oBUILD_TRACE("oAPI exporting dynamic module symbols")
-		#define oAPI __declspec(dllexport)
+		oBUILD_TRACE("exporting dynamic module symbols")
+		#define __declspec(dllexport)
 	#else
-		oBUILD_TRACE("oAPI importing dynamic module symbols")
-		#define oAPI __declspec(dllimport)
+		oBUILD_TRACE("importing dynamic module symbols")
+		#define __declspec(dllimport)
 	#endif
 #else
-	oBUILD_TRACE("oAPI linking static module symbols")
+	oBUILD_TRACE("linking static module symbols")
 	#define oAPI
 #endif
 

@@ -72,11 +72,11 @@ interface oIOCP : oInterface
 // the IOCP system has a lazy destruction system.  When using oIOCP the parent object should not
 // do refcounting but instead rely on the IOCP system to tell it when to destroy itself.  This
 // is handled via the ParentDestructionTask.  All refcouting should be routed to the IOCP object.
-oAPI bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oIOCP** _ppIOCP);
+bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oIOCP** _ppIOCP);
 
 //Useful to avoid over subscription issues. Can use to decide the best number of iocp operations to have in flight at once.
-oAPI int oIOCPThreadCount();
+int oIOCPThreadCount();
 
-oAPI void oIOCPJoin();
+void oIOCPJoin();
 
 #endif // oIOCP_h

@@ -21,16 +21,16 @@ struct oBasisTestServices
 // if not successful. In either case oErrorSetLast is used to set a string as
 // to what occurred. In success the last error is set to 0.
 
-oAPI bool oBasisTest_oBuffer(const oBasisTestServices& _Services);
+bool oBasisTest_oBuffer(const oBasisTestServices& _Services);
 
-oAPI bool oBasisTest_oINISerialize();
-oAPI bool oBasisTest_oJSONSerialize();
-oAPI bool oBasisTest_oMath();
-oAPI bool oBasisTest_oRTTI();
-oAPI bool oBasisTest_oString();
-oAPI bool oBasisTest_oURI();
-oAPI bool oBasisTest_oURIQuerySerialize();
-oAPI bool oBasisTest_oXML();
-oAPI bool oBasisTest_oXMLSerialize();
+bool oBasisTest_oINISerialize();
+bool oBasisTest_oJSONSerialize();
+bool oBasisTest_oMath();
+bool oBasisTest_oRTTI();
+bool oBasisTest_oString();
+bool oBasisTest_oURI();
+bool oBasisTest_oURIQuerySerialize();
+bool oBasisTest_oXML();
+bool oBasisTest_oXMLSerialize();
 
 #endif

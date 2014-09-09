@@ -101,6 +101,6 @@ enum oMIME_TYPE
 oRTTI_ENUM_DECLARATION(oRTTI_CAPS_ARRAY, oMIME_TYPE)
 
 //only common extensions supported currently. if returns false, _pType will also be set to oMIME_UNKNOWN
-oAPI bool oMIMEFromExtension(oMIME_TYPE* _pType, const char* _Extension);
+bool oMIMEFromExtension(oMIME_TYPE* _pType, const char* _Extension);
 
 #endif

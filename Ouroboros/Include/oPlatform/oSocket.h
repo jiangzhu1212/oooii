@@ -46,9 +46,9 @@ private:
 };
 
 // In addition to ouro::from_string/ouro::to_string these helper functions aid in working with oNetAddr
-oAPI void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort);
-oAPI void oSocketPortSet(const unsigned short _Port, oNetAddr* _pAddr);
-oAPI bool oSocketHostIsLocal(oNetHost _Host);
+void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort);
+void oSocketPortSet(const unsigned short _Port, oNetAddr* _pAddr);
+bool oSocketHostIsLocal(oNetHost _Host);
 
 interface oSocketAsyncCallback;
 
@@ -175,7 +175,7 @@ interface oSocket : oInterface
 // {68F693CE-B01B-4235-A401-787691707365}
 oDEFINE_GUID_I(oSocket, 0x68f693ce, 0xb01b, 0x4235, 0xa4, 0x1, 0x78, 0x76, 0x91, 0x70, 0x73, 0x65);
 
-oAPI bool oSocketCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocket** _pSocket);
+bool oSocketCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocket** _pSocket);
 
 // Encrypted sockets work only in blocking mode, supporting all the same behavior
 // as regular sockets, but with the additional ability to receive and send encrypted data
@@ -185,7 +185,7 @@ interface oSocketEncrypted : public oSocket
 	virtual oSocket::size_t RecvEncrypted(void* _pBuffer, oSocket::size_t _Size) threadsafe = 0;
 };
 
-oAPI bool oSocketEncryptedCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocketEncrypted** _ppSocket);
+bool oSocketEncryptedCreate(const char* _DebugName, const oSocket::DESC& _Desc, threadsafe oSocketEncrypted** _ppSocket);
 
 interface oSocketAsyncCallback : oInterface
 {
@@ -251,9 +251,9 @@ interface oSocketServer2 : oInterface
 };
 
 //Note that callbacks can start before this function even returns.
-oAPI bool oSocketServer2Create(const char* _DebugName, const oSocketServer2::DESC& _Desc, threadsafe oSocketServer2** _ppSocketServer);
+bool oSocketServer2Create(const char* _DebugName, const oSocketServer2::DESC& _Desc, threadsafe oSocketServer2** _ppSocketServer);
 
 // Enumerate the addresses of all cmd
-oAPI void oSocketEnumerateAllAddress(std::function<void(oNetAddr _Addr)> _Enumerator);
+void oSocketEnumerateAllAddress(std::function<void(oNetAddr _Addr)> _Enumerator);
 
 #endif

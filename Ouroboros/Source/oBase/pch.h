@@ -4,4 +4,5 @@
 #include <oHLSL/all.h>
 #include <oBase/all_libc.h>
 #include <oMemory/all.h>
+#include <oString/all.h>
 #endif

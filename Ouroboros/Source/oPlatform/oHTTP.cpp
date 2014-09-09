@@ -380,13 +380,13 @@ void oHTTPResponseInternal::Reset()
 	Content.Length = 0;
 }
 
-oAPI bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char* _Value)
+bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char* _Value)
 {
 	if(!_HeaderFields)
 		return false;
 	return _HeaderFields->AddHeader(ouro::as_string(_Field), _Value);
 }
-oAPI bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int _Value)
+bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int _Value)
 {
 	if(!_HeaderFields)
 		return false;
@@ -394,13 +394,13 @@ oAPI bool oHTTPAddHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _
 	snprintf(StrValue, "%u", _Value);
 	return _HeaderFields->AddHeader(ouro::as_string(_Field), StrValue.c_str());
 }
-oAPI bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char** _Value)
+bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, const char** _Value)
 {
 	if(!_HeaderFields)
 		return false;
 	return _HeaderFields->FindHeader(ouro::as_string(_Field), _Value);
 }
-oAPI bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int* _Value)
+bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field, unsigned int* _Value)
 {
 	if(!_HeaderFields)
 		return false;
@@ -409,13 +409,13 @@ oAPI bool oHTTPFindHeader(const oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_
 		return false;
 	return ouro::from_string(_Value, Value);
 }
-oAPI bool oHTTPRemoveHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field)
+bool oHTTPRemoveHeader(oHTTP_HEADER_FIELDS _HeaderFields, oHTTP_HEADER_FIELD _Field)
 {
 	if(!_HeaderFields)
 		return false;
 	return _HeaderFields->RemoveHeader(ouro::as_string(_Field));
 }
-oAPI void oHTTPClearHeaders(oHTTP_HEADER_FIELDS _HeaderFields)
+void oHTTPClearHeaders(oHTTP_HEADER_FIELDS _HeaderFields)
 {
 	if(!_HeaderFields)
 		return;

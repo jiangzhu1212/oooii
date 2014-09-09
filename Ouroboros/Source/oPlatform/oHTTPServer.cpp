@@ -99,7 +99,7 @@ private:
 
 oHTTPServer_Impl::oHTTPServer_Impl(const DESC& _Desc, bool* _pSuccess) : Server(_Desc, _pSuccess) {}
 
-oAPI bool oHTTPServerCreate(const oHTTPServer::DESC& _Desc, oHTTPServer** _ppServer)
+bool oHTTPServerCreate(const oHTTPServer::DESC& _Desc, oHTTPServer** _ppServer)
 {
 	bool success = false;
 	oCONSTRUCT(_ppServer, oHTTPServer_Impl(_Desc, &success));

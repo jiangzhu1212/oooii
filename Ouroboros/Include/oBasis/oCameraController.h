@@ -35,7 +35,7 @@
 
 // Expands a bitmask of OR'ed values from above into a string for development/
 // debugging purposes.
-oAPI char* oCameraControllerParseResponse(char* _StrDestination, size_t _SizeofStrDestination, int _ResponseFlags);
+char* oCameraControllerParseResponse(char* _StrDestination, size_t _SizeofStrDestination, int _ResponseFlags);
 template<size_t size> char* oCameraControllerParseResponse(char (&_StrDestination)[size], int _ResponseFlags) { return oCameraControllerParseResponse(_StrDestination, size, _ResponseFlags); }
 template<size_t capacity> char* oCameraControllerParseResponse(ouro::fixed_string<char, capacity>& _StrDestination, int _ResponseFlags) { return oCameraControllerParseResponse(_StrDestination, _StrDestination.capacity(), _ResponseFlags); }
 
