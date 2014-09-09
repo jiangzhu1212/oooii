@@ -1,15 +1,20 @@
 // $(header)
 #include <oBase/concurrency.h>
-#include <oString/opttok.h>
 #include <oBase/scc.h>
+#include <oBase/timer.h>
+#include <oCore/debugger.h>
+#include <oCore/filesystem.h>
+#include <oCore/module.h>
 #include <oCore/reporting.h>
 #include <oCore/system.h>
 #include <oGUI/console.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
-#include <oPlatform/oTest.h>
 #include <oGUI/Windows/win_gdi.h>
 #include <oGUI/Windows/win_gdi_bitmap.h>
+#include <oBasis/oPlatformFeatures.h>
+#include <oPlatform/oTest.h>
+#include <oString/opttok.h>
 #include "resource.h"
 
 #include <oCore/windows/win_exception_handler.h>

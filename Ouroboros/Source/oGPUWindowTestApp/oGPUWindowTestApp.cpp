@@ -1,5 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/backoff.h>
+#include <oCore/filesystem.h>
+#include <oCore/reporting.h>
 #include <oString/string_source.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
@@ -268,7 +270,7 @@ private:
 private:
 	void ActionHook(const input::action& _Action);
 	void AppEventHook(const window::basic_event& _Event);
-	bool CreateMenus(const window::create_event& _CreateEvent);
+	void CreateMenus(const window::create_event& _CreateEvent);
 	void CheckState(window_state::value _State);
 	void CheckStyle(window_style::value _Style);
 	void EnableStatusBarStyles(bool _Enabled);
@@ -446,7 +448,7 @@ void oGPUWindowTestApp::ToggleFullscreenCooperative(window* _pWindow)
 	}
 }
 
-bool oGPUWindowTestApp::CreateMenus(const window::create_event& _CreateEvent)
+void oGPUWindowTestApp::CreateMenus(const window::create_event& _CreateEvent)
 {
 	for (auto& m : Menus)
 		m = menu::make_menu();
@@ -479,7 +481,6 @@ bool oGPUWindowTestApp::CreateMenus(const window::create_event& _CreateEvent)
 
 	// Help menu
 	menu::append_item(Menus[oWMENU_HELP], oWMI_HELP_ABOUT, "About...");
-	return true;
 }
 
 void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
@@ -505,8 +506,7 @@ void oGPUWindowTestApp::AppEventHook(const window::basic_event& _Event)
 		case event_type::creating:
 		{
 			oTRACE("event_type::creating");
-			if (!CreateMenus(_Event.as_create()))
-				oThrowLastError();
+			CreateMenus(_Event.as_create());
 			break;
 		}
 

@@ -5,6 +5,7 @@
 #define oCore_filesystem_monitor_h
 
 #include <oBase/path.h>
+#include <memory>
 
 namespace ouro {
 	namespace filesystem {

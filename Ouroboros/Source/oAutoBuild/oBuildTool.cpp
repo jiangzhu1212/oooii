@@ -1,6 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include "oBuildTool.h"
+#include <oBasis/oError.h>
 #include <oBasis/oScopedPartialTimeout.h>
+#include <oBasis/oURI.h>
+#include <oBase/timer.h>
+#include <oCore/filesystem.h>
+#include <oCore/process.h>
+#include <oCore/system.h>
 
 using namespace ouro;
 

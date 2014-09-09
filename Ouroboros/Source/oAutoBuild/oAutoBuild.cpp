@@ -3,7 +3,12 @@
 #include <oBasis/oINISerialize.h>
 #include <oBasis/oJSONSerialize.h>
 #include <oBasis/oURIQuerySerialize.h>
+#include <oBasis/oRefcount.h>
 #include <oPlatform/oHTTPHandler.h>
+#include <oPlatform/oP4.h>
+#include <oCore/filesystem_util.h>
+#include <oCore/filesystem_monitor.h>
+#include <oCore/reporting.h>
 #include <oGUI/msgbox.h>
 #include <oGUI/msgbox_reporting.h>
 #include <oPlatform/oHTTPServer.h>

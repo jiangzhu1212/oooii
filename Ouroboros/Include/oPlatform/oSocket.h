@@ -6,6 +6,7 @@
 #ifndef oSocket_h
 #define oSocket_h
 
+#include <oBasis/oPlatformFeatures.h>
 #include <oBasis/oInterface.h>
 
 // A Host is a simple identifier for a net device. This is an IP address

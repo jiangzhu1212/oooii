@@ -1,7 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include "oMSBuild.h"
 #include <oBase/container_support.h>
+#include <oBase/timer.h>
 #include <oBasis/oScopedPartialTimeout.h>
+#include <oBasis/oContainer.h>
+#include <oCore/filesystem.h>
+#include <oCore/process.h>
+#include <memory>
 
 using namespace ouro;
 

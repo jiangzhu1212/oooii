@@ -11,6 +11,7 @@
 #include "../../test_services.h"
 
 #include <oBase/assert.h>
+#include <oCore/filesystem.h>
 #include <oCore/process.h>
 #include <oCore/process_stats_monitor.h>
 #include <oCore/system.h>
