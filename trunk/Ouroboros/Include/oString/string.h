@@ -203,8 +203,8 @@ void end_strtok(char** ctx);
 // _____________________________________________________________________________
 // Misc
 
-// This function takes a single value (usually an enum value) and returns a 
-// constant string representation of it.
+// This function takes a single value (usually an enum) and returns a constant
+// string representation of it.
 typedef const char* (*asstr_fn)(const int& single_flag);
 
 // Fill dst with a string representation of flags by going through
