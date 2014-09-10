@@ -1,14 +1,14 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef oBase_future_h
+#define oBase_future_h
+
 // An approximation of C++11's std::future but with dangling calls for a client 
 // lib to implement. GCC Source, VS2010, just::thread: all implement std::async 
 // as a right-now-alloc-a-thread-and-exec-task style system. Such implementa-
 // tions have a lot more overhead than a threadpool so reimplement future here 
 // with some dangling interface usage so that a work-stealing threadpool can be 
 // implemented to improve performance.
-
-#pragma once
-#ifndef oBase_future_h
-#define oBase_future_h
 
 #include <oBase/callable.h>
 #include <oBase/concurrency.h>

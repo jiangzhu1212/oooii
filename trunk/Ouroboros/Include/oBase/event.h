@@ -1,4 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef oBase_event_h
+#define oBase_event_h
+
 // A cross-platform event built on condition_variable, which is basically how 
 // the Window's event is implemented. This supports the "WaitMultiple" concept 
 // by storing a 32-bit mask of bools, rather than just one bool like the Windows 
@@ -7,9 +11,6 @@
 // condition_variables directly. Using this implementation as a reference but 
 // quite often an event is enough. NOTE: For a trivial bool-like event, just use 
 // default parameters.
-#pragma once
-#ifndef oBase_event_h
-#define oBase_event_h
 
 #include <condition_variable>
 #include <mutex>
@@ -28,157 +29,157 @@ public:
 
 	// When set() is called, this will unblock all threads waiting on this event 
 	// but then atomically leaves the event in the reset state.
-	event(autoreset_t _AutoReset);
+	event(autoreset_t);
 
 	// Sets the event mask by or'ing it with the existing mask, thus unblocking 
 	// any threads waiting on this event.
-	void set(int _Mask = 1);
+	void set(int mask = 1);
 
 	// Reset all set events in the specified mask. If autoreset is not specified 
 	// no wait will block after a set() call until this is called.
-	void reset(int _Mask = ~0);
+	void reset(int mask = ~0);
 
-	// Sleep the calling thread until all bits in the specified mask are Set().
-	void wait(int _Mask = 1);
+	// Sleep the calling thread until all bits in the specified mask are set_mask().
+	void wait(int mask = 1);
 
-	// Sleep the calling thread until any bit in the specified mask is Set(). 
-	// This will return the Set mask as it is when the wait is unblocked.
-	int wait_any(int _Mask = 1);
+	// Sleep the calling thread until any bit in the specified mask is set_mask(). 
+	// This will return the set_mask mask as it is when the wait is unblocked.
+	int wait_any(int mask = 1);
 
-	// Sleep the calling thread until the Set mask matches the one specified, or
+	// Sleep the calling thread until the set_mask mask matches the one specified, or
 	// absolute the timeout threshold is reached.
 	template <typename Clock, typename Duration>
-	bool wait_until(const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1);
+	bool wait_until(const std::chrono::time_point<Clock, Duration>& absolute_time, int mask = 1);
 
-	// Sleep the calling thread until any bit in the Set mask is set, or the 
+	// Sleep the calling thread until any bit in the set_mask mask is set, or the 
 	// absolute timeout threshold is reached. This returns the mask as it is 
 	// when the wait is unblocked.
 	template <typename Clock, typename Duration>
-	int wait_until_any(const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask = 1);
+	int wait_until_any(const std::chrono::time_point<Clock, Duration>& absolute_time, int mask = 1);
 
-	// Sleep the calling thread until the Set mask matches the one specified, or
+	// Sleep the calling thread until the set_mask mask matches the one specified, or
 	// the relative timeout threshold is reached.
 	template <typename Rep, typename Period>
-	bool wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1);
+	bool wait_for(const std::chrono::duration<Rep, Period>& relative_time, int mask = 1);
 
-	// Sleep the calling thread until the Set mask matches the one specified, or
+	// Sleep the calling thread until the set_mask mask matches the one specified, or
 	// the relative timeout threshold is reached. This returns the mask as it is
 	// when the wait is unblocked.
 	template <typename Rep, typename Period>
-	int wait_for_any(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask = 1);
+	int wait_for_any(const std::chrono::duration<Rep, Period>& relative_time, int mask = 1);
 
 	// Poll the state of the event mask and returns true if the masks match 
 	// exactly. Use of this API is discouraged, but is sometimes useful for 
 	// debug interrogatory API.
-	bool is_set(int _Mask = 1) const;
+	bool is_set(int mask = 1) const;
 
 	// Like is_set, but will return true if any bit in the mask is set
-	bool is_any_set(int _Mask = 1) const;
+	bool is_any_set(int mask = 1) const;
 
 private:
-	std::mutex M;
-	std::condition_variable CV;
-	int Set;
-	bool DoAutoReset;
+	std::mutex mtx;
+	std::condition_variable cv;
+	int set_mask;
+	bool do_auto_reset;
 };
 
 inline event::event()
-	: Set(0)
-	, DoAutoReset(false)
+	: set_mask(0)
+	, do_auto_reset(false)
 {}
 
-inline event::event(autoreset_t _AutoReset)
-	: Set(0)
-	, DoAutoReset(true)
+inline event::event(autoreset_t auto_reset)
+	: set_mask(0)
+	, do_auto_reset(true)
 {}
 
-inline void event::set(int _Mask)
+inline void event::set(int mask)
 {
-	if (!is_set(_Mask))
+	if (!is_set(mask))
 	{
-		if (DoAutoReset)
-			CV.notify_one();
+		if (do_auto_reset)
+			cv.notify_one();
 		else
 		{
-			M.lock();
-			Set |= _Mask;
-			M.unlock();
-			CV.notify_all();
+			mtx.lock();
+			set_mask |= mask;
+			mtx.unlock();
+			cv.notify_all();
 		}
 	}
 }
 
-inline void event::reset(int _Mask)
+inline void event::reset(int mask)
 {
-	std::lock_guard<std::mutex> lock(M);
-	Set &=~ _Mask;
+	std::lock_guard<std::mutex> lock(mtx);
+	set_mask &=~ mask;
 }
 
-inline void event::wait(int _Mask)
+inline void event::wait(int mask)
 {
-	std::unique_lock<std::mutex> lock(M);
-	while (!is_set(_Mask))
-		CV.wait(lock);
+	std::unique_lock<std::mutex> lock(mtx);
+	while (!is_set(mask))
+		cv.wait(lock);
 }
 
-inline int event::wait_any(int _Mask)
+inline int event::wait_any(int mask)
 {
-	std::unique_lock<std::mutex> lock(M);
-	while (!is_any_set(_Mask))
-		CV.wait(lock);
-	return Set;
+	std::unique_lock<std::mutex> lock(mtx);
+	while (!is_any_set(mask))
+		cv.wait(lock);
+	return set_mask;
 }
 
 template <typename Clock, typename Duration>
 inline bool event::wait_until(
-	const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask)
+	const std::chrono::time_point<Clock, Duration>& absolute_time, int mask)
 {
-	std::unique_lock<std::mutex> lock(M);
-	while (!is_set(_Mask))
-		if (ouro::cv_status::timeout == CV.wait_until(lock, _AbsoluteTime))
+	std::unique_lock<std::mutex> lock(mtx);
+	while (!is_set(mask))
+		if (ouro::cv_status::timeout == cv.wait_until(lock, absolute_time))
 			return false;
 	return true;
 }
 
 template <typename Clock, typename Duration>
 inline int event::wait_until_any(
-	const std::chrono::time_point<Clock, Duration>& _AbsoluteTime, int _Mask)
+	const std::chrono::time_point<Clock, Duration>& absolute_time, int mask)
 {
-	std::unique_lock<std::mutex> lock(M);
-	while (!is_any_set(_Mask))
-		if (ouro::cv_status::timeout == CV.wait_until(lock, _AbsoluteTime))
+	std::unique_lock<std::mutex> lock(mtx);
+	while (!is_any_set(mask))
+		if (ouro::cv_status::timeout == cv.wait_until(lock, absolute_time))
 			return 0;
-	return Set;
+	return set_mask;
 }
 
 template <typename Rep, typename Period>
-inline bool event::wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
+inline bool event::wait_for(const std::chrono::duration<Rep, Period>& relative_time, int mask)
 {
-	std::unique_lock<std::mutex> lock(M);
-	while (!is_set(_Mask))
-		if (std::cv_status::timeout == CV.wait_for(lock, _RelativeTime))
+	std::unique_lock<std::mutex> lock(mtx);
+	while (!is_set(mask))
+		if (std::cv_status::timeout == cv.wait_for(lock, relative_time))
 			return false;
 	return true;
 }
 
 template <typename Rep, typename Period>
-inline int event::wait_for_any(const std::chrono::duration<Rep, Period>& _RelativeTime, int _Mask)
+inline int event::wait_for_any(const std::chrono::duration<Rep, Period>& relative_time, int mask)
 {
-	std::unique_lock<std::mutex> lock(M);
-	while (!is_any_set(_Mask))
-		if (ouro::cv_status::timeout == CV.wait_for(lock, _RelativeTime))
+	std::unique_lock<std::mutex> lock(mtx);
+	while (!is_any_set(mask))
+		if (ouro::cv_status::timeout == cv.wait_for(lock, relative_time))
 			return 0;
-	return Set;
+	return set_mask;
 }
 
-inline bool event::is_set(int _Mask) const
+inline bool event::is_set(int mask) const
 {
-	return (Set & _Mask) == _Mask;
+	return (set_mask & mask) == mask;
 }
 
-inline bool event::is_any_set(int _Mask) const
+inline bool event::is_any_set(int mask) const
 {
-	return !!(Set & _Mask);
+	return !!(set_mask & mask);
 }
 
 }

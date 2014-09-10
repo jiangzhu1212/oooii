@@ -1,8 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Get the builtin type underlying a std::atomic
 #pragma once
 #ifndef oBase_atomic_type_traits_h
 #define oBase_atomic_type_traits_h
+
+// Get the builtin type underlying a std::atomic
 
 #include <atomic>
 
