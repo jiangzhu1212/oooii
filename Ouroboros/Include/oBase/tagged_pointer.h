@@ -1,21 +1,24 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// A pointer that gives up some of its address space to protect against ABA 
-// concurrency issues.
 #pragma once
 #ifndef oBase_tagged_pointer_h
 #define oBase_tagged_pointer_h
 
+// A pointer that gives up some of its address space to protect against ABA 
+// concurrency issues.
+
 #include <oCompiler.h>
 #include <atomic>
-#include <exception>
+#include <stdexcept>
 
 #if o32BIT == 1
-	#define oTAGGED_POINTER_ALIGNMENT 8
+	#define oTAGGED_POINTER_ALIGNMENT 16
 #else
 	#define oTAGGED_POINTER_ALIGNMENT 1
 #endif
 
 namespace ouro {
+
+enum tagged_ptr_marked_t { marked };
 
 template<typename T>
 class tagged_pointer
@@ -24,41 +27,50 @@ public:
 	#if o32BIT == 1
 		static const size_t tag_bits = 3;
 		static const size_t tag_shift = 0;
+		static const size_t mark_shift = 3;
 	#else
-		static const size_t tag_bits = 8;
+		static const size_t tag_bits = 7;
 		static const size_t tag_shift = (sizeof(void*) * 8) - tag_bits;
+		static const size_t mark_shift = (sizeof(void*) * 8) - 1;
 	#endif
-	static const size_t tag_mask = ((1ull << tag_bits) - 1ull) << tag_shift;
+	static const size_t tag_mask = ((size_t(1) << tag_bits) - size_t(1)) << tag_shift;
+	static const size_t mark_mask = size_t(1) << mark_shift;
+	static const size_t tag_mark_mask = tag_mask | mark_mask;
 
 	tagged_pointer() : tag_and_pointer(0) {}
-	tagged_pointer(const tagged_pointer& _That) : tag_and_pointer((uintptr_t)_That.tag_and_pointer) {}
-	tagged_pointer(tagged_pointer&& _That) : tag_and_pointer((uintptr_t)_That.tag_and_pointer) { _That.tag_and_pointer = 0; }
-	const tagged_pointer<T>& operator=(const tagged_pointer<T>& _That) { tag_and_pointer = (uintptr_t)_That.tag_and_pointer; return *this; }
-	tagged_pointer<T>& operator=(tagged_pointer<T>&& _That) { tag_and_pointer = (uintptr_t)_That.tag_and_pointer; _That.tag_and_pointer = 0; return *this; }
-	bool operator==(const tagged_pointer<T>& _That) const { return tag_and_pointer == _That.tag_and_pointer; }
-	bool operator!=(const tagged_pointer<T>& _That) const { return tag_and_pointer != _That.tag_and_pointer; }
+	tagged_pointer(const tagged_pointer& that) : tag_and_pointer((uintptr_t)that.tag_and_pointer) {}
+	tagged_pointer(tagged_pointer&& that) : tag_and_pointer((uintptr_t)that.tag_and_pointer) { that.tag_and_pointer = 0; }
+	const tagged_pointer<T>& operator=(const tagged_pointer<T>& that) { tag_and_pointer = (uintptr_t)that.tag_and_pointer; return *this; }
+	tagged_pointer<T>& operator=(tagged_pointer<T>&& that) { tag_and_pointer = (uintptr_t)that.tag_and_pointer; that.tag_and_pointer = 0; return *this; }
+	bool operator==(const tagged_pointer<T>& that) const { return tag_and_pointer == that.tag_and_pointer; }
+	bool operator!=(const tagged_pointer<T>& that) const { return tag_and_pointer != that.tag_and_pointer; }
 
-	tagged_pointer(void* _pointer, size_t _tag)
+	tagged_pointer(void* ptr, size_t _tag)
 	{
 		#ifdef _DEBUG
-		if (((uintptr_t)_pointer & tag_mask) != 0)
-			throw std::exception("tagged_pointer pointers must be aligned to 8-bytes allow room for the tag");
+		if (((uintptr_t)ptr & tag_mark_mask) != 0)
+			throw std::invalid_argument("tagged_pointer pointers must be aligned to 16-bytes allow room for the tag and mark");
 		#endif
-		tag_and_pointer = (uintptr_t)_pointer 
-		#if o32BIT == 1
-			| (uintptr_t)(_tag & tag_mask);
-		#else
-			| (uintptr_t)(_tag << tag_shift);
-		#endif
+		tag_and_pointer = uintptr_t(ptr) | uintptr_t((_tag & tag_mask) << tag_shift);
 	}
-		
+
+	tagged_pointer(void* ptr, size_t _tag, tagged_ptr_marked_t)
+	{
+		#ifdef _DEBUG
+		if (((uintptr_t)ptr & tag_mark_mask) != 0)
+			throw std::invalid_argument("tagged_pointer pointers must be aligned to 16-bytes allow room for the tag and mark");
+		#endif
+		tag_and_pointer = uintptr_t(ptr) | uintptr_t((_tag & tag_mask) << tag_shift) | uintptr_t(mark_mask);
+	}
+
+	bool marked() const
+	{
+		return tag_and_pointer & mark_mask;
+	}
+
 	size_t tag() const
 	{
-		#if o32BIT == 1
-			return tag_and_pointer & tag_mask;
-		#else
-			return tag_and_pointer >> tag_shift;
-		#endif
+		return (tag_and_pointer & tag_mask) >> tag_shift;
 	}
 	
 	T* pointer() const { return (T*)(tag_and_pointer & ~(tag_mask)); }

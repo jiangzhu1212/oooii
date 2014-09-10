@@ -1,9 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// A useful concept for minimizing locks from TBB source: this object 
-// encapsulates a temporary spin lock.
 #pragma once
 #ifndef oBase_backoff_h
 #define oBase_backoff_h
+
+// A smarter spin lock useful as a prelude to a mutex lock or other act that 
+// will remove a thread from its timeslice. (from TBB source)
 
 #include <thread>
 
@@ -26,28 +27,28 @@ public:
 	void reset();
 
 private:
-	static const size_t SpinThreshold = 16;
-	size_t SpinCount;
-	void spin(size_t _Count);
+	static const size_t threshold = 16;
+	size_t spin_count;
+	void spin(size_t count);
 };
 
 inline backoff::backoff()
-	: SpinCount(1)
+	: spin_count(1)
 {}
 
 #pragma optimize("", off)
-inline void backoff::spin(size_t _Count)
+inline void backoff::spin(size_t count)
 {
-	for (size_t i = 0; i < _Count; i++) {}
+	for (size_t i = 0; i < count; i++) {}
 }
 #pragma optimize("", on)
 
 inline void backoff::pause()
 {
-	if (SpinCount <= SpinThreshold)
+	if (spin_count <= threshold)
 	{
-		spin(SpinCount);
-		SpinCount *= 2;
+		spin(spin_count);
+		spin_count *= 2;
 	}
 
 	else
@@ -56,10 +57,10 @@ inline void backoff::pause()
 
 inline bool backoff::try_pause()
 {
-	if (SpinCount <= SpinThreshold)
+	if (spin_count <= threshold)
 	{
-		spin(SpinCount);
-		SpinCount *= 2;
+		spin(spin_count);
+		spin_count *= 2;
 		return true;
 	}
 
@@ -68,7 +69,7 @@ inline bool backoff::try_pause()
 
 inline void backoff::reset()
 {
-	SpinCount = 1;
+	spin_count = 1;
 }
 
 }

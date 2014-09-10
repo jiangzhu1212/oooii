@@ -1,11 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef oBase_countdown_latch_h
+#define oBase_countdown_latch_h
+
 // Synchronization object often described as a reverse semaphore. This object
 // gets initialized with a count and gives the system API to decrement the 
 // count. When the count reaches 0, this object becomes unblocked. This object
 // must be manually reset to a new count in order to be reused.
-#pragma once
-#ifndef oBase_countdown_latch_h
-#define oBase_countdown_latch_h
 
 #include <chrono>
 #include <condition_variable>
@@ -17,25 +18,25 @@ namespace ouro {
 class countdown_latch
 {
 public:
-	// In either construction or reset(), setting _InitialCount to a negative 
-	// number will immediately set the underlying event. Setting _InitialCount
+	// In either construction or reset(), setting initial_count to a negative 
+	// number will immediately set the underlying event. Setting initial_count
 	// to zero or above will reset the event and allow functionality to proceed,
 	// so setting the event to zero will require a reference then a release to 
 	// really make sense.
-	countdown_latch(int _InitialCount);
+	countdown_latch(int initial_count);
 
 	// Returns the count of outstanding references on this latch. This should only 
 	// be used for a user-facing update/UI or debug spew. This should not be used 
 	// in control logic, use wait() instead.
 	int outstanding() const;
 	
-	// Sets _InitialCount as it was done during the constructor. This is 
+	// Sets initial_count as it was done during the constructor. This is 
 	// in the sense that it will change the current state of the latch,
 	// but client code calling this while a wait() is just waking up means that if
 	// the intent was to prevent that wake, then there's a race condition in the
 	// client code. Use this only when it is know there aren't concurrent calls to 
 	// reference or release or wait going on.
-	void reset(int _InitialCount);
+	void reset(int initial_count);
 	
 	// For systems that cannot know an initial count, this will make the latch 
 	// require one more release() call before unblocking. This is not a preferred
@@ -65,43 +66,43 @@ public:
 	// Block the calling thread for a time or until the number of outstanding 
 	// items reaches zero.
 	template<typename Rep, typename Period>
-	std::cv_status::cv_status wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime);
+	std::cv_status::cv_status wait_for(const std::chrono::duration<Rep, Period>& relative_time);
 
 private:
-	std::condition_variable ZeroReferences;
-	std::mutex Mutex;
-	int NumOutstanding;
+	std::condition_variable zero_references;
+	std::mutex mtx;
+	int num_outstanding;
 
 	countdown_latch(const countdown_latch&); /* = delete */
 	const countdown_latch& operator=(const countdown_latch&); /* = delete */
 };
 
-inline countdown_latch::countdown_latch(int _InitialCount)
-	: NumOutstanding(_InitialCount)
+inline countdown_latch::countdown_latch(int initial_count)
+	: num_outstanding(initial_count)
 {
 	// to centralize code, have all operations on NumOutStanding go through 
 	// release, so add one first so this all ends up being a noop
-	NumOutstanding++;
+	num_outstanding++;
 	release();
 }
 
 inline int countdown_latch::outstanding() const
 {
-	return NumOutstanding;
+	return num_outstanding;
 }
 
-inline void countdown_latch::reset(int _InitialCount)
+inline void countdown_latch::reset(int initial_count)
 {
-	Mutex.lock();
-	NumOutstanding = _InitialCount + 1;
-	Mutex.unlock();
+	mtx.lock();
+	num_outstanding = initial_count + 1;
+	mtx.unlock();
 	release();
 }
 
 inline void countdown_latch::reference()
 {
-	std::lock_guard<std::mutex> Lock(Mutex);
-	if (NumOutstanding <= 0)
+	std::lock_guard<std::mutex> Lock(mtx);
+	if (num_outstanding <= 0)
 		throw std::runtime_error(
 		"countdown_latch::reference() called too late to keep any waiting threads "
 		"blocked. This is a race condition in client code because references are "
@@ -110,30 +111,30 @@ inline void countdown_latch::reference()
 		"A classic semaphore does not have API to reference after initialization for "
 		"this very reason, but there are cases where careful coding can allow for "
 		"reference() calls to be appropriate.");
-	NumOutstanding++;
+	num_outstanding++;
 }
 
 inline void countdown_latch::release()
 {
-	std::lock_guard<std::mutex> Lock(Mutex);
-	if (--NumOutstanding <= 0)
-		ZeroReferences.notify_all();
+	std::lock_guard<std::mutex> Lock(mtx);
+	if (--num_outstanding <= 0)
+		zero_references.notify_all();
 }
 
 inline void countdown_latch::wait()
 {
-	std::unique_lock<std::mutex> Lock(Mutex);
-	while (NumOutstanding > 0) // Guarded Suspension
-		ZeroReferences.wait(Lock);
+	std::unique_lock<std::mutex> Lock(mtx);
+	while (num_outstanding > 0) // Guarded Suspension
+		zero_references.wait(Lock);
 }
 
 template<typename Rep, typename Period>
-std::cv_status::cv_status countdown_latch::wait_for(const std::chrono::duration<Rep, Period>& _RelativeTime)
+std::cv_status::cv_status countdown_latch::wait_for(const std::chrono::duration<Rep, Period>& relative_time)
 {
 	std::cv_status::cv_status status = std::cv_status::no_timeout;
-	std::unique_lock<std::mutex> Lock(Mutex);
-	while (std::cv_status::no_timeout == status && NumOutstanding > 0)
-		status = ZeroReferences.wait_for(Lock, _RelativeTime);
+	std::unique_lock<std::mutex> Lock(mtx);
+	while (std::cv_status::no_timeout == status && num_outstanding > 0)
+		status = zero_references.wait_for(Lock, relative_time);
 	return status;
 }
 

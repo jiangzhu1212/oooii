@@ -1,11 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef oBase_concurrency_h
+#define oBase_concurrency_h
+
 // Concurrent interfaces. These are not implemented in oBase but are used by 
 // oBase implementations since concurrency is such a big performance win and 
 // should be provided by the C++1x standard. Until then, client code must 
 // implement these interfaces.
-#pragma once
-#ifndef oBase_concurrency_h
-#define oBase_concurrency_h
 
 #include <functional>
 #include <memory>
@@ -23,7 +24,7 @@ public:
 	virtual ~task_group() {}
 
 	// dispatches a task flagged as part of this group
-	virtual void run(const std::function<void()>& _Task) = 0;
+	virtual void run(const std::function<void()>& task) = 0;
 
 	// waits for only tasks dispatched with run() to finish
 	virtual void wait() = 0;
@@ -50,21 +51,21 @@ void ensure_scheduler_initialized();
 
 // issues a task for asynchronous execution on any thread in the underlying
 // threadpool.
-void dispatch(const std::function<void()>& _Task);
+void dispatch(const std::function<void()>& task);
 
 // Implements the parallel for pattern, executing the specified task with the index
-// from _Begin to _End.
-void parallel_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task);
+// from begin to end.
+void parallel_for(size_t begin, size_t end, const std::function<void(size_t index)>& task);
 
 // For debugging
-inline void serial_for(size_t _Begin, size_t _End, const std::function<void(size_t _Index)>& _Task)
+inline void serial_for(size_t begin, size_t end, const std::function<void(size_t index)>& task)
 {
-	for (size_t i = 0; i < _End; i++)
-		_Task(i);
+	for (size_t i = 0; i < end; i++)
+		task(i);
 }
 
 // Runs a task when the calling thread exits.
-void at_thread_exit(const std::function<void()>& _Task);
+void at_thread_exit(const std::function<void()>& task);
 
 }
 
