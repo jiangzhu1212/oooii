@@ -23,6 +23,8 @@
     <ClCompile Include="tests\TESTcsv.cpp" />
     <ClCompile Include="tests\TESTini.cpp" />
     <ClCompile Include="tests\TESTjson.cpp" />
+    <ClCompile Include="tests\TESTpath.cpp" />
+    <ClCompile Include="tests\TESTuri.cpp" />
     <ClCompile Include="tests\TESTxml.cpp" />
   </ItemGroup>
   <ItemGroup>

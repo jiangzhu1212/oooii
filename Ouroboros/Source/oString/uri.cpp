@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/uri.h>
+#include <oString/uri.h>
 
 // http://tools.ietf.org/html/rfc3986#appendix-B
 static std::regex reURI("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?", std::regex_constants::optimize); // ok static (duplication in dynamic libswon't affect correctness)

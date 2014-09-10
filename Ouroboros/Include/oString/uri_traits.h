@@ -5,7 +5,7 @@
 
 // Traits of uri rules used in ouro::uri
 
-#include <oBase/path_traits.h>
+#include <oString/path_traits.h>
 
 #define oMAX_URI 2048
 

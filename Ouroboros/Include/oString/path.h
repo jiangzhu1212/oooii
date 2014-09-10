@@ -6,7 +6,7 @@
 // Encapsulation of parsing a string representing a file on a local hard drive.
 
 #include <oString/fixed_string.h>
-#include <oBase/path_traits.h>
+#include <oString/path_traits.h>
 #include <oString/stringize.h>
 #include <functional>
 

@@ -5,7 +5,7 @@
 #define oGPU_d3d_compile_h
 
 #include <oMemory/allocate.h>
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <oBase/version.h>
 #include <oGPU/shader.h>
 #include "d3d_util.h"

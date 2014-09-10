@@ -50,7 +50,6 @@
     <ClCompile Include="stringize.cpp" />
     <ClCompile Include="stringize_hlsl.cpp" />
     <ClCompile Include="type_id.cpp" />
-    <ClCompile Include="uri.cpp" />
     <ClCompile Include="vendor.cpp" />
     <ClCompile Include="version.cpp" />
   </ItemGroup>
@@ -102,8 +101,6 @@
     <ClInclude Include="..\..\Include\oBase\moving_average.h" />
     <ClInclude Include="..\..\Include\oBase\operators.h" />
     <ClInclude Include="..\..\Include\oBase\osc.h" />
-    <ClInclude Include="..\..\Include\oBase\path.h" />
-    <ClInclude Include="..\..\Include\oBase\path_traits.h" />
     <ClInclude Include="..\..\Include\oBase\plane.h" />
     <ClInclude Include="..\..\Include\oBase\quat.h" />
     <ClInclude Include="..\..\Include\oBase\rgb.h" />
@@ -121,8 +118,6 @@
     <ClInclude Include="..\..\Include\oBase\type_info.h" />
     <ClInclude Include="..\..\Include\oBase\udec3.h" />
     <ClInclude Include="..\..\Include\oBase\unordered_map.h" />
-    <ClInclude Include="..\..\Include\oBase\uri.h" />
-    <ClInclude Include="..\..\Include\oBase\uri_traits.h" />
     <ClInclude Include="..\..\Include\oBase\vendor.h" />
     <ClInclude Include="..\..\Include\oBase\version.h" />
     <ClInclude Include="pch.h" />

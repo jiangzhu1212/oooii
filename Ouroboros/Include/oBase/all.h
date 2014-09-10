@@ -34,8 +34,6 @@
 #include <oBase/moving_average.h>
 #include <oBase/operators.h>
 #include <oBase/osc.h>
-#include <oBase/path.h>
-#include <oBase/path_traits.h>
 #include <oBase/plane.h>
 #include <oBase/rgb.h>
 #include <oBase/scc.h>
@@ -50,5 +48,4 @@
 #include <oBase/types.h>
 #include <oBase/udec3.h>
 #include <oBase/unordered_map.h>
-#include <oBase/uri.h>
 #endif

@@ -25,9 +25,6 @@
     <ClCompile Include="..\..\External\calfaq\calfaq.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
-    <ClCompile Include="uri.cpp">
-      <Filter>Source\types</Filter>
-    </ClCompile>
     <ClCompile Include="type_id.cpp">
       <Filter>Source\traits</Filter>
     </ClCompile>
@@ -111,12 +108,6 @@
     <ClInclude Include="..\..\Include\oBase\all.h">
       <Filter>oBase</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\path.h">
-      <Filter>oBase\types</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\uri.h">
-      <Filter>oBase\types</Filter>
-    </ClInclude>
     <ClInclude Include="scc_svn.h">
       <Filter>Source\scc</Filter>
     </ClInclude>
@@ -156,16 +147,10 @@
     <ClInclude Include="..\..\Include\oBase\event.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\uri_traits.h">
-      <Filter>oBase\traits</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\type_info.h">
       <Filter>oBase\traits</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\type_id.h">
-      <Filter>oBase\traits</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\path_traits.h">
       <Filter>oBase\traits</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\input.h">

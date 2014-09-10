@@ -26,6 +26,8 @@
     <ClInclude Include="..\..\Include\oString\ini.h" />
     <ClInclude Include="..\..\Include\oString\json.h" />
     <ClInclude Include="..\..\Include\oString\opttok.h" />
+    <ClInclude Include="..\..\Include\oString\path.h" />
+    <ClInclude Include="..\..\Include\oString\path_traits.h" />
     <ClInclude Include="..\..\Include\oString\string.h" />
     <ClInclude Include="..\..\Include\oString\stringize.h" />
     <ClInclude Include="..\..\Include\oString\string_codec.h" />
@@ -35,6 +37,8 @@
     <ClInclude Include="..\..\Include\oString\string_source.h" />
     <ClInclude Include="..\..\Include\oString\string_traits.h" />
     <ClInclude Include="..\..\Include\oString\text_document.h" />
+    <ClInclude Include="..\..\Include\oString\uri.h" />
+    <ClInclude Include="..\..\Include\oString\uri_traits.h" />
     <ClInclude Include="..\..\Include\oString\xml.h" />
   </ItemGroup>
   <ItemGroup>
@@ -98,6 +102,7 @@
     <ClCompile Include="to_upper.cpp" />
     <ClCompile Include="trim.cpp" />
     <ClCompile Include="type_name.cpp" />
+    <ClCompile Include="uri.cpp" />
     <ClCompile Include="wcmnroot.cpp" />
     <ClCompile Include="wcselipsize.cpp" />
     <ClCompile Include="wcsltombs.cpp" />

@@ -4,7 +4,7 @@
 #ifndef oCore_module_h
 #define oCore_module_h
 
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <oBase/version.h>
 
 namespace ouro {

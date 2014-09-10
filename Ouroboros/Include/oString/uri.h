@@ -6,11 +6,10 @@
 // Encapsulation of parsing a Universal Resource Identifier (URI) that
 // should be compliant with specification: http://tools.ietf.org/html/rfc3986
 
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <oString/stringize.h>
 #include <oString/string_codec.h>
-#include <oBase/throw.h>
-#include <oBase/uri_traits.h>
+#include <oString/uri_traits.h>
 #include <regex>
 
 namespace ouro {
@@ -40,19 +39,19 @@ public:
 	basic_uri() { clear(); }
 	basic_uri(const char_type* _URIReference) { operator=(_URIReference); }
 	basic_uri(const char_type* _URIBase, const char_type* _URIRelative) { operator=(_URIRelative); make_absolute(_URIBase); }
-	basic_uri(const basic_uri& _That) { operator=(_That); }
+	basic_uri(const basic_uri& that) { operator=(that); }
 	basic_uri(const path& _Path) { operator=(_Path); }
-	const basic_uri& operator=(const basic_uri& _That)
+	const basic_uri& operator=(const basic_uri& that)
 	{
-		if (this != &_That)
+		if (this != &that)
 		{
-			URI = _That.URI;
-			Scheme = _That.Scheme;
-			Authority = _That.Authority;
-			Path = _That.Path;
-			Query = _That.Query;
-			Fragment = _That.Fragment;
-			Hash = _That.Hash;
+			URI = that.URI;
+			Scheme = that.Scheme;
+			Authority = that.Authority;
+			Path = that.Path;
+			Query = that.Query;
+			Fragment = that.Fragment;
+			Hash = that.Hash;
 		}
 		return *this;
 	}
@@ -93,16 +92,16 @@ public:
 		Hash = 0;
 	}
 
-	void swap(basic_uri& _That)
+	void swap(basic_uri& that)
 	{
-		if (this != &_That)
+		if (this != &that)
 		{
-			std::swap(Scheme, _That.Scheme);
-			std::swap(Authority, _That.Authority);
-			std::swap(Path, _That.Path);
-			std::swap(Query, _That.Query);
-			std::swap(Fragment, _That.Fragment);
-			std::swap(Hash, _That.Hash);
+			std::swap(Scheme, that.Scheme);
+			std::swap(Authority, that.Authority);
+			std::swap(Path, that.Path);
+			std::swap(Query, that.Query);
+			std::swap(Fragment, that.Fragment);
+			std::swap(Hash, that.Hash);
 		}
 	}
 
@@ -330,33 +329,37 @@ public:
 	// a.is_same_docment(b) != b.is_same_document(a) The "larger" more explicit 
 	// document should be the parameter and this should hold the smaller/relative
 	// part. http://tools.ietf.org/html/rfc3986#section-4.4
-	bool is_same_document(const basic_uri& _That) const
+	bool is_same_document(const basic_uri& that) const
 	{
-		if (empty() || _That.empty() || URI[0] == *traits::fragment_str() || _That.URI[0] == *traits::fragment_str())
+		if (empty() || that.empty() || URI[0] == *traits::fragment_str() || that.URI[0] == *traits::fragment_str())
 			return true;
-		uri tmp(*this, _That);
-		return (!traits::compare(tmp.scheme(), _That.scheme())
-			&& !traits::compare(tmp.authority(), _That.authority())
-			&& !traits::compare(tmp.path(), _That.path())
-			&& !traits::compare(tmp.query(), _That.query()));
+		uri tmp(*this, that);
+		return (!traits::compare(tmp.scheme(), that.scheme())
+			&& !traits::compare(tmp.authority(), that.authority())
+			&& !traits::compare(tmp.path(), that.path())
+			&& !traits::compare(tmp.query(), that.query()));
 	}
 
-	int compare(const basic_uri& _That) const
+	int compare(const basic_uri& that) const
 	{
-		if (Hash == _That.Hash)
+		if (Hash == that.Hash)
 		{
 			#ifdef _DEBUG
-				if (traits::compare(URI, _That.URI))
-					oTHROW(protocol_error, "has collision between \"%s\" and \"%s\"", URI.c_str(), _That.URI.c_str());
+				if (traits::compare(URI, that.URI))
+				{
+					char msg[oMAX_URI*2 + 64];
+					snprintf(msg, "has collision between \"%s\" and \"%s\"", URI.c_str(), that.URI.c_str());
+					throw std::logic_error(msg);
+				}
 			#endif
 			return 0;
 		}
-		return traits::compare(URI, _That.URI);
+		return traits::compare(URI, that.URI);
 	}
 
-	bool operator==(const basic_uri& _That) const { return compare(_That) == 0; }
-	bool operator!=(const basic_uri& _That) const { return !(*this == _That); }
-	bool operator<(const basic_uri& _That) const { return compare(_That) < 0; }
+	bool operator==(const basic_uri& that) const { return compare(that) == 0; }
+	bool operator!=(const basic_uri& that) const { return !(*this == that); }
+	bool operator<(const basic_uri& that) const { return compare(that) < 0; }
 
 private:
 
@@ -388,7 +391,7 @@ private:
 		std::match_results<const char_type*> matches;
 		std::regex_search(URI.c_str(), matches, reURI);
 		if (matches.empty())
-			oTHROW(protocol_error, "invalid basic_uri");
+			throw std::invalid_argument("invalid basic_uri");
 
 		// apply good practices from http://www.textuality.com/tag/uri-comp-2.html
 		bool hadprefix = matches[2].matched || matches[4].matched;

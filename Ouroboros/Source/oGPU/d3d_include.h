@@ -5,7 +5,7 @@
 #define oGPU_d3d_include_h
 
 #include <oBase/hash_map.h>
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <d3d11.h>
 #include <atomic>
 

@@ -4,7 +4,7 @@
 #ifndef oCore_debugger_h
 #define oCore_debugger_h
 
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <thread>
 
 namespace ouro {

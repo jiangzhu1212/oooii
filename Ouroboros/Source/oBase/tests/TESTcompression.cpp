@@ -3,7 +3,7 @@
 #include <oBase/lzma.h>
 #include <oBase/snappy.h>
 #include <oBase/finally.h>
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 

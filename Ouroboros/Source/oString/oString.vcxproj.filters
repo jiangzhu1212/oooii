@@ -69,6 +69,18 @@
     <ClInclude Include="..\..\Include\oString\text_document.h">
       <Filter>oString\File Formats</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oString\path_traits.h">
+      <Filter>oString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\uri.h">
+      <Filter>oString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\uri_traits.h">
+      <Filter>oString</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oString\path.h">
+      <Filter>oString</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ordinal.cpp">
@@ -210,6 +222,9 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="text_document.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="uri.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

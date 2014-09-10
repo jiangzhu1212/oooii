@@ -1,6 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/uri.h>
-#include <exception>
+#include <oString/uri.h>
 #include <stdexcept>
 #include <thread>
 #include <vector>
