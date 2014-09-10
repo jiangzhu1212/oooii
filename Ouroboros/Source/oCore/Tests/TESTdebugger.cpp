@@ -1,5 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oCore/debugger.h>
+#include <oBase/throw.h>
 
 #include "../../test_services.h"
 

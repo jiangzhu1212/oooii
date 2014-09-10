@@ -1,12 +1,13 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Traits of uri rules used in ouro::uri
 #pragma once
-#ifndef oBase_uri_traits_h
-#define oBase_uri_traits_h
+#ifndef oString_uri_traits_h
+#define oString_uri_traits_h
+
+// Traits of uri rules used in ouro::uri
 
 #include <oBase/path_traits.h>
 
-#define oSTD_MAX_URI 2048
+#define oMAX_URI 2048
 
 namespace ouro {
 
@@ -18,7 +19,7 @@ struct uri_traits
 	typedef hashT hash_type;
 	typedef path_traitsT path_traits_type;
 	typedef basic_path<char_type, path_traits_type> path_type;
-	static const size_type capacity = oSTD_MAX_URI;
+	static const size_type capacity = oMAX_URI;
 
 	static const char_type* empty_str();
 	static const char_type* scheme_str();
@@ -28,9 +29,9 @@ struct uri_traits
 	static const char_type* fragment_str();
 	static const char_type* file_scheme_prefix_str();
 
-	static bool is_file_scheme(const char_type* _URI);
+	static bool is_file_scheme(const char_type* uri);
 
-	static int compare(const char_type* _URIStringA, const char_type* _URIStringB);
+	static int compare(const char_type* uri1, const char_type* uri2);
 };
 
 template<> struct uri_traits<char, unsigned long long, default_posix_path_traits<char>>
@@ -40,7 +41,7 @@ template<> struct uri_traits<char, unsigned long long, default_posix_path_traits
 	typedef unsigned long long hash_type;
 	typedef default_posix_path_traits<char_type> path_traits_type;
 	typedef basic_path<char_type, path_traits_type> path_type;
-	static const size_type capacity = oSTD_MAX_URI;
+	static const size_type capacity = oMAX_URI;
 
 	static const char_type* empty_str() { return ""; }
 	static const char_type* scheme_str() { return ":"; }
@@ -50,8 +51,8 @@ template<> struct uri_traits<char, unsigned long long, default_posix_path_traits
 	static const char_type* fragment_str() { return "#"; }
 	static const char_type* file_scheme_prefix_str() { return "file://"; }
 
-	static bool is_file_scheme(const char_type* _URI) { return 0 == _memicmp("file", _URI, 4); }
-	static int compare(const char_type* _URIStringA, const char_type* _URIStringB) { return strcmp(_URIStringA, _URIStringB); }
+	static bool is_file_scheme(const char_type* uri) { return 0 == _memicmp("file", uri, 4); }
+	static int compare(const char_type* uri1, const char_type* uri2) { return strcmp(uri1, uri2); }
 };
 
 template<> struct uri_traits<wchar_t, unsigned long long, default_posix_path_traits<wchar_t>>
@@ -61,7 +62,7 @@ template<> struct uri_traits<wchar_t, unsigned long long, default_posix_path_tra
 	typedef unsigned long long hash_type;
 	typedef default_posix_path_traits<char_type> path_traits_type;
 	typedef basic_path<char_type, path_traits_type> path_type;
-	static const size_type capacity = oSTD_MAX_URI;
+	static const size_type capacity = oMAX_URI;
 
 	static const char_type* empty_str() { return L""; }
 	static const char_type* scheme_str() { return L":"; }
@@ -71,8 +72,8 @@ template<> struct uri_traits<wchar_t, unsigned long long, default_posix_path_tra
 	static const char_type* fragment_str() { return L"#"; }
 	static const char_type* file_scheme_prefix_str() { return L"file://"; }
 
-	static bool is_file_scheme(const char_type* _URI) { return 0 == _memicmp(L"file", _URI, 8); }
-	static int compare(const char_type* _URIStringA, const char_type* _URIStringB) { return wcscmp(_URIStringA, _URIStringB); }
+	static bool is_file_scheme(const char_type* uri) { return 0 == _memicmp(L"file", uri, 8); }
+	static int compare(const char_type* uri1, const char_type* uri2) { return wcscmp(uri1, uri2); }
 };
 
 }

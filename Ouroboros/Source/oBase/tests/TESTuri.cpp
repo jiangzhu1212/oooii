@@ -1,15 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/uri.h>
-#include <oBase/timer.h>
 #include <exception>
 #include <stdexcept>
 #include <thread>
 #include <vector>
+#include "../../test_services.h"
 
-#pragma warning(disable:4505)
-
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 struct URI_PARTS_TEST
 {
@@ -31,7 +28,7 @@ static const URI_PARTS_TEST sTESTuri_parts[] =
 	{ "ftp:///c:/a%20file.txt", "ftp", "", "/c:/a file.txt", "", "" },
 };
 
-static void TESTuri_parts()
+static void TESTuri_parts(test_services& services)
 {
 	for (auto i = 0; i < oCOUNTOF(sTESTuri_parts); i++)
 	{
@@ -44,17 +41,17 @@ static void TESTuri_parts()
 		auto q = u.query();
 		auto f = u.fragment();
 
-		oCHECK0(!strcmp(s, t.Scheme));
-		oCHECK0(!strcmp(a, t.Authority));
-		oCHECK(!p.compare(t.Path), "fail(%d): path(%s) == %s", i, u.c_str(), t.Path);
-		oCHECK0(!strcmp(q, t.Query));
-		oCHECK0(!strcmp(f, t.Fragment));
+		oTEST0(!strcmp(s, t.Scheme));
+		oTEST0(!strcmp(a, t.Authority));
+		oTEST(!p.compare(t.Path), "fail(%d): path(%s) == %s", i, u.c_str(), t.Path);
+		oTEST0(!strcmp(q, t.Query));
+		oTEST0(!strcmp(f, t.Fragment));
 
-		oCHECK0(u == u);
+		oTEST0(u == u);
 		if (i)
 		{
 			uri u2(sTESTuri_parts[i-1].URI);
-			oCHECK(u != u2, "fail(%d): %s != %s", i, u.c_str(), u2.c_str());
+			oTEST(u != u2, "fail(%d): %s != %s", i, u.c_str(), u2.c_str());
 		}
 	}
 }
@@ -87,13 +84,13 @@ static const URI_ABSOLUTE sTESTuri_absolute[] =
 	{ "http://server/file#file", false },
 };
 
-static void TESTuri_absolute()
+static void TESTuri_absolute(test_services& services)
 {
 	for (auto i = 0; i < oCOUNTOF(sTESTuri_absolute); i++)
 	{
 		const auto& t = sTESTuri_absolute[i];
 		uri u(t.String);
-		oCHECK(u.absolute() == t.IsAbsolute, "fail(%d): %s is %sabsolute when %sexpected to be."
+		oTEST(u.absolute() == t.IsAbsolute, "fail(%d): %s is %sabsolute when %sexpected to be."
 			, i
 			, t.String
 			, t.IsAbsolute ? "not " : ""
@@ -130,13 +127,13 @@ static const URI_SAME_DOCUMENT sTESTuri_same_document[] =
 	{ "file:///path/path/file.txt#some_item", "file:///path/path2/file.txt", false },
 };
 
-void TESTuri_same_document()
+void TESTuri_same_document(test_services& services)
 {
 	for (auto i = 0; i < oCOUNTOF(sTESTuri_same_document); i++)
 	{
 		const auto& t = sTESTuri_same_document[i];
 		uri a(t.String1), b(t.String2);
-		oCHECK(a.is_same_document(b), "fail(%d): %s is_same_document %s", i, t.String1, t.String2);
+		oTEST(a.is_same_document(b), "fail(%d): %s is_same_document %s", i, t.String1, t.String2);
 	}
 }
 
@@ -237,16 +234,16 @@ static const URI_REPLACE sTESTuri_replace[] =
 	{ "file://USER/desktop/test.xml", nullptr, nullptr, nullptr, "test", nullptr, "file://USER/desktop/test.xml?test" },
 };
 
-typedef void (*fn_t)();
-static void thread_proc(const char* _Name, fn_t _Test, std::exception_ptr* _pException)
+typedef void (*fn_t)(test_services& services);
+static void thread_proc(test_services& services, const char* _Name, fn_t _Test, std::exception_ptr* _pException)
 {
 	*_pException = std::exception_ptr();
-	try { _Test(); }
+	try { _Test(services); }
 	catch (...) { *_pException = std::current_exception(); }
-	oTRACE("%s %s", _Name, *_pException == std::exception_ptr() ? "succeeded" : "failed");
+	services.report("%s %s", _Name, *_pException == std::exception_ptr() ? "succeeded" : "failed");
 }
 
-static void TESTuri_make_absolute(size_t _Start, size_t _NumResolves)
+static void TESTuri_make_absolute(test_services& services, size_t _Start, size_t _NumResolves)
 {
 	const uri sTESTuri_make_absolute_base("http://a/b/c/d;p?q");
 
@@ -255,22 +252,22 @@ static void TESTuri_make_absolute(size_t _Start, size_t _NumResolves)
 		const auto& t = sTESTuri_make_absolute[i];
 		uri u(sTESTuri_make_absolute_base, t.Ref); 
 		uri r(t.Resolved);
-		oCHECK(u == r, "fail(%d) (absolute): %s + %s != %s", i, sTESTuri_make_absolute_base.c_str(), t.Ref, t.Resolved);
+		oTEST(u == r, "fail(%d) (absolute): %s + %s != %s", i, sTESTuri_make_absolute_base.c_str(), t.Ref, t.Resolved);
 	}
 }
 
-static void TESTuri_make_absolute1a()
+static void TESTuri_make_absolute1a(test_services& services)
 {
-	TESTuri_make_absolute(0, oCOUNTOF(sTESTuri_make_absolute) / 2);
+	TESTuri_make_absolute(services, 0, oCOUNTOF(sTESTuri_make_absolute) / 2);
 }
 
-static void TESTuri_make_absolute1b()
+static void TESTuri_make_absolute1b(test_services& services)
 {
 	const size_t count = oCOUNTOF(sTESTuri_make_absolute) / 2;
-	TESTuri_make_absolute(count, count);
+	TESTuri_make_absolute(services, count, count);
 }
 
-static void TESTuri_make_absolute2()
+static void TESTuri_make_absolute2(test_services& services)
 {
 	const uri sTESTuri_make_absolute_base2("file://DATA/Test/Scenes/TestTextureSet.xml");
 
@@ -279,11 +276,11 @@ static void TESTuri_make_absolute2()
 		const auto& t = sTESTuri_make_absolute2[i];
 		uri u(sTESTuri_make_absolute_base2, t.Ref); 
 		uri r(t.Resolved);
-		oCHECK(u == r, "fail(%d) (absolute2): %s + %s != %s", i, sTESTuri_make_absolute_base2.c_str(), t.Ref, t.Resolved);
+		oTEST(u == r, "fail(%d) (absolute2): %s + %s != %s", i, sTESTuri_make_absolute_base2.c_str(), t.Ref, t.Resolved);
 	}
 }
 
-static void TESTuri_make_absolute3()
+static void TESTuri_make_absolute3(test_services& services)
 {
 	const uri sTESTuri_make_absolute_base3("file:///c:/folder/file.ext");
 
@@ -292,7 +289,7 @@ static void TESTuri_make_absolute3()
 		const auto& t = sTESTuri_make_absolute3[i];
 		uri u(sTESTuri_make_absolute_base3, t.Ref); 
 		uri r(t.Resolved);
-		oCHECK(u == r, "fail(%d) (absolute3): %s + %s != %s", i, sTESTuri_make_absolute_base3.c_str(), t.Ref, t.Resolved);
+		oTEST(u == r, "fail(%d) (absolute3): %s + %s != %s", i, sTESTuri_make_absolute_base3.c_str(), t.Ref, t.Resolved);
 	}
 }
 
@@ -310,7 +307,7 @@ static const URI_RESOLVE sTESTuri_make_relative[] =
 	{ "file://DATA/", "../../" },
 };
 
-static void TESTuri_make_relative()
+static void TESTuri_make_relative(test_services& services)
 {
 	const uri sTESTuri_make_relative_base("file://DATA/Test/Scenes/TestTextureSet.xml");
 
@@ -320,11 +317,11 @@ static void TESTuri_make_relative()
 		uri u(t.Ref);
 		u.make_relative(sTESTuri_make_relative_base);
 		uri r(t.Resolved);
-		oCHECK(u == r, "fail(%d) (relative): %s - %s != %s", i, sTESTuri_make_relative_base.c_str(), t.Ref, t.Resolved);
+		oTEST(u == r, "fail(%d) (relative): %s - %s != %s", i, sTESTuri_make_relative_base.c_str(), t.Ref, t.Resolved);
 	}
 }
 
-static void TESTuri_replace()
+static void TESTuri_replace(test_services& services)
 {
 	for (auto i = 0; i < oCOUNTOF(sTESTuri_replace); i++)
 	{
@@ -333,11 +330,11 @@ static void TESTuri_replace()
 		uri u(t.Orig);
 		u.replace(t.NewScheme, t.NewAuthority, t.NewPath, t.NewQuery, t.NewFragment);
 		uri e(t.Expected);
-		oCHECK(u == e, "fail(%d) (replace) got %s, expected %s", i, u.c_str(), t.Expected);
+		oTEST(u == e, "fail(%d) (replace) got %s, expected %s", i, u.c_str(), t.Expected);
 	}
 }
 
-void TESTuri()
+void TESTuri(test_services& services)
 {
 	const char* Names[] = 
 	{
@@ -366,7 +363,7 @@ void TESTuri()
 	};
 	static_assert(oCOUNTOF(Names) == oCOUNTOF(Functions), "array mismatch");
 
-	timer t;
+	test_services::scoped_timer t(services, "TESTuri");
 
 	std::vector<std::thread> Threads;
 	Threads.resize(oCOUNTOF(Names));
@@ -375,7 +372,7 @@ void TESTuri()
 	Exceptions.resize(oCOUNTOF(Names));
 
 	for (size_t i = 0; i < Threads.size(); i++)
-		Threads[i] = std::thread(thread_proc, Names[i], Functions[i], &Exceptions[i]);
+		Threads[i] = std::thread(thread_proc, std::ref(services), Names[i], Functions[i], &Exceptions[i]);
 
 	for (auto& t : Threads)
 		t.join();
@@ -384,8 +381,7 @@ void TESTuri()
 		if (e != std::exception_ptr())
 			std::rethrow_exception(e);
 
-	oTRACE("all tests completed in %.03fs", t.seconds());
+	services.report("all tests completed in %.03fs", t.seconds());
 }
 
-	} // namespace tests
-} // namespace ouro
+}}

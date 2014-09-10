@@ -1,12 +1,13 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_path_h
-#define oBase_path_h
+#ifndef oString_path_h
+#define oString_path_h
+
+// Encapsulation of parsing a string representing a file on a local hard drive.
 
 #include <oString/fixed_string.h>
 #include <oBase/path_traits.h>
 #include <oString/stringize.h>
-#include <oBase/throw.h>
 #include <functional>
 
 namespace ouro {
@@ -15,7 +16,7 @@ template<typename charT, typename traitsT = default_posix_path_traits<charT>>
 class basic_path
 {
 public:
-	static const size_t Capacity = _MAX_PATH;
+	static const size_t Capacity = oMAX_PATH;
 	typedef typename traitsT traits;
 	typedef typename traits::char_type char_type;
 	typedef size_t hash_type;
@@ -26,15 +27,15 @@ public:
 	typedef const char_type(&const_array_ref)[Capacity];
 
 	basic_path() { clear(); }
-	basic_path(const char_type* _Start, const char_type* _End) : p(_Start, _End) { parse(); }
-	basic_path(const char_type* _That) { operator=(_That); }
-	basic_path(const basic_path& _That) { operator=(_That); }
-	basic_path& operator=(const basic_path& _That) { return operator=(_That.c_str()); }
-	basic_path& operator=(const char_type* _That)
+	basic_path(const char_type* start, const char_type* end) : p(start, end) { parse(); }
+	basic_path(const char_type* that) { operator=(that); }
+	basic_path(const basic_path& that) { operator=(that); }
+	basic_path& operator=(const basic_path& that) { return operator=(that.c_str()); }
+	basic_path& operator=(const char_type* that)
 	{
-		if (_That)
+		if (that)
 		{
-			p = _That;
+			p = that;
 			parse();
 		}
 		else
@@ -53,100 +54,100 @@ public:
 		Hash = 0;
 	}
 
-	basic_path& assign(const char_type* _Start, const char_type* _End) { p.assign(_Start, _End); parse(); return *this; }
+	basic_path& assign(const char_type* start, const char_type* end) { p.assign(start, end); parse(); return *this; }
 
-	basic_path& append(const char_type* _PathElement, bool _EnsureSeparator = true)
+	basic_path& append(const char_type* path_element, bool ensure_separator = true)
 	{
-		if (_EnsureSeparator && !traits::is_sep(*_PathElement) && !EndsWithSep)
+		if (ensure_separator && !traits::is_sep(*path_element) && !EndsWithSep)
 			p.append(traits::generic_sep_str());
-		p.append(_PathElement);
+		p.append(path_element);
 		parse();
 		return *this;
 	}
 
-	basic_path& append(const char_type* _Start, const char_type* _End, bool _EnsureSeparator = true)
+	basic_path& append(const char_type* start, const char_type* end, bool ensure_separator = true)
 	{
-		if (_EnsureSeparator && !traits::is_sep(*_Start) && !EndsWithSep)
+		if (ensure_separator && !traits::is_sep(*start) && !EndsWithSep)
 			p.append(traits::generic_sep_str());
-		p.append(_Start, _End);
+		p.append(start, end);
 		parse();
 		return *this;
 	}
 
-	basic_path& append(const string_piece_type& _StringPiece, bool _EnsureSeparator = true) { return append(_StringPiece.first, _StringPiece.second, _EnsureSeparator); }
+	basic_path& append(const string_piece_type& string_piece, bool ensure_separator = true) { return append(string_piece.first, string_piece.second, ensure_separator); }
 
-	void swap(basic_path& _That)
+	void swap(basic_path& that)
 	{
-		if (this != &_That)
+		if (this != &that)
 		{
-			std::swap(p, _That.p);
-			std::swap(RootDirOffset, _That.RootDirOffset);
-			std::swap(ParentEndOffset, _That.ParentEndOffset);
-			std::swap(BasenameOffset, _That.BasenameOffset);
-			std::swap(ExtensionOffset, _That.ExtensionOffset);
-			std::swap(HasRootName, _That.HasRootName);
-			std::swap(EndsWithSep, _That.EndsWithSep);
+			std::swap(p, that.p);
+			std::swap(RootDirOffset, that.RootDirOffset);
+			std::swap(ParentEndOffset, that.ParentEndOffset);
+			std::swap(BasenameOffset, that.BasenameOffset);
+			std::swap(ExtensionOffset, that.ExtensionOffset);
+			std::swap(HasRootName, that.HasRootName);
+			std::swap(EndsWithSep, that.EndsWithSep);
 		}
 	}
 
-	basic_path operator/(const basic_path& _That) const
+	basic_path operator/(const basic_path& that) const
 	{
 		basic_path p(*this);
-		return p /= _That;
+		return p /= that;
 	}
 
-	basic_path& operator/=(const char_type* _That)
+	basic_path& operator/=(const char_type* that)
 	{
-		append(_That);
+		append(that);
 		return *this;
 	}
 
-	basic_path& replace_extension(const char_type* _NewExtension = traits::empty_str())
+	basic_path& replace_extension(const char_type* new_ext = traits::empty_str())
 	{
 		if (has_extension()) p[ExtensionOffset] = 0;
-		if (_NewExtension && !traits::is_dot(_NewExtension[0])) p.append(traits::dot_str());
-		p.append(_NewExtension);
+		if (new_ext && !traits::is_dot(new_ext[0])) p.append(traits::dot_str());
+		p.append(new_ext);
 		parse();
 		return *this;
 	}
 
-	basic_path& replace_extension(const string_type& _NewExtension)
+	basic_path& replace_extension(const string_type& new_ext)
 	{
-		return replace_extension(_NewExtension.c_str());
+		return replace_extension(new_ext.c_str());
 	}
 
-	basic_path& replace_extension_with_suffix(const char_type* _NewExtension = traits::empty_str())
+	basic_path& replace_extension_with_suffix(const char_type* new_ext = traits::empty_str())
 	{
 		if (has_extension()) p[ExtensionOffset] = 0;
-		p.append(_NewExtension);
+		p.append(new_ext);
 		parse();
 		return *this;
 	}
 
-	basic_path& replace_extension_with_suffix(const string_type& _NewExtension)
+	basic_path& replace_extension_with_suffix(const string_type& new_ext)
 	{
-		return replace_extension_with_suffix(_NewExtension.c_str());
+		return replace_extension_with_suffix(new_ext.c_str());
 	}
 
-	basic_path& replace_filename(const char_type* _NewFilename = traits::empty_str())
+	basic_path& replace_filename(const char_type* new_filename = traits::empty_str())
 	{
 		if (BasenameOffset != npos)
 			p[BasenameOffset] = 0;
 		else if (ExtensionOffset != npos)
 			p[ExtensionOffset] = 0;
-		p.append(_NewFilename);
+		p.append(new_filename);
 		parse();
 		return *this;
 	}
 
-	basic_path& replace_filename(const string_type& _NewFilename)
+	basic_path& replace_filename(const string_type& new_filename)
 	{
-		return replace_filename(_NewFilename.c_str());
+		return replace_filename(new_filename.c_str());
 	}
 
-	basic_path& replace_filename(const basic_path& _NewFilename)
+	basic_path& replace_filename(const basic_path& new_filename)
 	{
-		return replace_filename(_NewFilename.c_str());
+		return replace_filename(new_filename.c_str());
 	}
 
 	basic_path& remove_filename()
@@ -166,31 +167,31 @@ public:
 	}
 
 	// Inserts text after basename and before extension
-	basic_path& insert_basename_suffix(const char_type* _NewSuffix)
+	basic_path& insert_basename_suffix(const char_type* new_suffix)
 	{
 		auto tmp = extension();
 		if (has_extension())
 			p[ExtensionOffset] = 0;
-		p.append(_NewSuffix).append(tmp);
+		p.append(new_suffix).append(tmp);
 		parse();
 		return *this;
 	}
 
-	basic_path& insert_basename_suffix(const string_type& _NewSuffix)
+	basic_path& insert_basename_suffix(const string_type& new_suffix)
 	{
-		return insert_basename_suffix(_NewSuffix.c_str());
+		return insert_basename_suffix(new_suffix.c_str());
 	}
 
-	basic_path& remove_basename_suffix(const char_type* _Suffix)
+	basic_path& remove_basename_suffix(const char_type* suffix)
 	{
-		if (has_basename() && _Suffix)
+		if (has_basename() && suffix)
 		{
-			string_type s = _Suffix;
+			string_type s = suffix;
 			char_type* ext = has_extension() ? &p[ExtensionOffset] : nullptr;
 			if (ext) s += ext;
 			char_type* suf = ext ? ext : &p[BasenameOffset];
 			while (*suf && suf < ext) suf++; // move to end of basename
-			suf -= strlen(_Suffix);
+			suf -= strlen(suffix);
 			if (suf >= p.c_str())
 			{
 				if (!traits::compare(suf, s))
@@ -205,9 +206,9 @@ public:
 		return *this;
 	}
 
-	basic_path& remove_basename_suffix(const string_type& _Suffix)
+	basic_path& remove_basename_suffix(const string_type& suffix)
 	{
-		return remove_basename_suffix(_Suffix.c_str());
+		return remove_basename_suffix(suffix.c_str());
 	}
 	
 	// decomposition
@@ -269,23 +270,23 @@ public:
 
 	// Returns similar to strcmp/stricmp depending on path_traits. NOTE: A clean
 	// and unclean path will not compare to be the same.
-	int compare(const basic_path& _That) const { return traits::compare(this->c_str(), _That.c_str()); }
-	int compare(const char_type* _That) const { return traits::compare(this->c_str(), _That); }
+	int compare(const basic_path& that) const { return traits::compare(this->c_str(), that.c_str()); }
+	int compare(const char_type* that) const { return traits::compare(this->c_str(), that); }
 
-	const basic_path& make_relative(const char* _Root)
+	const basic_path& make_relative(const char* root)
 	{
-		if (_Root && *_Root)
+		if (root && *root)
 		{
 			basic_path relPath;
 
-			size_t CommonLen = cmnroot(p, _Root);
+			size_t CommonLen = cmnroot(p, root);
 			if (CommonLen)
 			{
 				size_t nSeperators = 0;
 				size_t index = CommonLen - 1;
-				while (_Root[index])
+				while (root[index])
 				{
-					if (traits::is_sep(_Root[index]) && 0 != _Root[index + 1])
+					if (traits::is_sep(root[index]) && 0 != root[index + 1])
 						nSeperators++;
 					index++;
 				}
@@ -317,9 +318,9 @@ private:
 
 	static const char_type* after_seps(const char_type* p) { while (*p && traits::is_sep(*p)) p++; return p; }
 	static const char_type* to_sep(const char_type* p) { while (*p && !traits::is_sep(*p)) p++; return p; }
-	static const char_type* find_root_directory(const char_type* _Path, const char_type* _RootName)
+	static const char_type* find_root_directory(const char_type* path, const char_type* root_name)
 	{
-		const char_type* dir = _RootName;
+		const char_type* dir = root_name;
 		if (dir)
 		{
 			dir = after_seps(dir); // move past unc seps
@@ -327,21 +328,21 @@ private:
 			if (!*dir) dir = nullptr; // if after-unc sep, then no rootdir
 		}
 
-		else if (traits::is_sep(_Path[0])) // rootdir is has_root_name() || is_sep(p[0])
-			dir = _Path;
+		else if (traits::is_sep(path[0])) // rootdir is has_root_name() || is_sep(p[0])
+			dir = path;
 		return dir;
 	}
 
-	static size_t common_base_length(const char* _Path1, const char* _Path2)
+	static size_t common_base_length(const char* path1, const char* path2)
 	{
 		size_t last_sep = 0;
 		size_t len = 0;
-		if (_Path1 && *_Path1 && _Path2 && *_Path2)
+		if (path1 && *path1 && path2 && *path2)
 		{
-			while (_Path1[len] && _Path2[len])
+			while (path1[len] && path2[len])
 			{
-				char_type a = tolower(_Path1[len]);
-				char_type b = tolower(_Path2[len]);
+				char_type a = tolower(path1[len]);
+				char_type b = tolower(path2[len]);
 
 				if (a != b || traits::is_sep(a) != traits::is_sep(b))
 					break;
@@ -381,17 +382,17 @@ typedef posix_path path;
 typedef posix_wpath wpath;
 
 template<typename charT, typename traitsT>
-char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const basic_path<charT, traitsT>& value)
+char* to_string(char* dst, size_t dst_size, const basic_path<charT, traitsT>& value)
 {
-	try { ((const basic_path<charT, traitsT>::string_type&)value).copy_to(_StrDestination, _SizeofStrDestination); }
+	try { ((const basic_path<charT, traitsT>::string_type&)value).copy_to(dst, dst_size); }
 	catch (std::exception&) { return nullptr; }
-	return _StrDestination;
+	return dst;
 }
 
 template<typename charT, typename traitsT>
-bool from_string(basic_path<charT, traitsT>* _pValue, const char* _StrSource)
+bool from_string(basic_path<charT, traitsT>* out_value, const char* src)
 {
-	try { *_pValue = _StrSource; }
+	try { *out_value = src; }
 	catch (std::exception&) { return false; }
 	return true;
 }
@@ -401,7 +402,7 @@ bool from_string(basic_path<charT, traitsT>* _pValue, const char* _StrSource)
 namespace std {
 
 template<typename charT, typename traitsT>
-struct hash<ouro::basic_path<charT, traitsT>> { std::size_t operator()(const ouro::basic_path<charT, traitsT>& _Path) const { return _Path.hash(); } };
+struct hash<ouro::basic_path<charT, traitsT>> { std::size_t operator()(const ouro::basic_path<charT, traitsT>& path) const { return path.hash(); } };
 
 } // namespace std
 

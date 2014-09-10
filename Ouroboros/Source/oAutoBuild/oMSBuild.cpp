@@ -6,6 +6,7 @@
 #include <oBasis/oContainer.h>
 #include <oCore/filesystem.h>
 #include <oCore/process.h>
+#include <oBase/algorithm.h>
 #include <memory>
 
 using namespace ouro;

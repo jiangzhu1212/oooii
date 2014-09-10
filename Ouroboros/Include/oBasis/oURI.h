@@ -15,10 +15,10 @@
 #include <oBasis/oRTTI.h>
 
 #define oMAX_SCHEME 32
-#define oMAX_URI 512
+#define oMAX_URI_OLD 512
 #define oMAX_AUTHORITY 128
 #define oMAX_URIREF _MAX_PATH
-#define oMAX_QUERY (2048 - oMAX_URI) // http://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url
+#define oMAX_QUERY (2048 - oMAX_URI_OLD) // http://stackoverflow.com/questions/417142/what-is-the-maximum-length-of-a-url
 #define oMAX_FRAGMENT 128
 
 struct oURIParts

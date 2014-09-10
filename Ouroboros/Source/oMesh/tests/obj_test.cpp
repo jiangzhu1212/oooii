@@ -1,6 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include "obj_test.h"
 #include <oBase/aabox.h>
+#include <oBase/throw.h>
 
 namespace ouro {
 	namespace tests {

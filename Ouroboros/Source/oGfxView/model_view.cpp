@@ -1,5 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include "model_view.h"
+#include <oBase/assert.h>
 
 namespace ouro { namespace gfx {
 
