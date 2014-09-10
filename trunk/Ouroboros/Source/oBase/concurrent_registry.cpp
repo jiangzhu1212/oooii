@@ -1,5 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/concurrent_registry.h>
+#include <oBase/assert.h>
 #include <oMemory/byte.h>
 
 namespace ouro {

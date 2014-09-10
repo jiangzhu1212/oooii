@@ -32,11 +32,11 @@ namespace ouro {
 		void TESThash_map(test_services& services);
 		void TESTosc();
 		void TESTparallel_for();
-		void TESTpath();
+		void TESTpath(test_services& services);
 		void TESTtask_group();
 		void TESTthreadpool();
-		void TESTthreadpool_perf(ouro::test_services& services);
-		void TESTuri();
+		void TESTthreadpool_perf(test_services& services);
+		void TESTuri(test_services& services);
 
 		// Utility functions, do not register these as tests.
 		struct test_threadpool

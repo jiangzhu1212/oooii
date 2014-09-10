@@ -20,6 +20,7 @@
 #include <memory>
 #include <stdexcept>
 
+#define oTEST_THROW(msg, ...) do { services.error(msg, ## __VA_ARGS__); } while(false)
 #define oTEST(expr, msg, ...) do { if (!(expr)) services.error(msg, ## __VA_ARGS__); } while(false)
 #define oTEST0(expr) do { if (!(expr)) services.error("\"" #expr "\" failed"); } while(false)
 
@@ -38,7 +39,9 @@ public:
 		scoped_timer(test_services& services, const char* name) : srv(services), n(name) { start = srv.now(); }
 		~scoped_timer() { trace(); }
 	
-		inline void trace() { srv.report("%s took %.03f sec", n ? n : "(null)", srv.now() - start); }
+		double seconds() const { return srv.now() - start; }
+
+		inline void trace() { srv.report("%s took %.03f sec", n ? n : "(null)", seconds()); }
 
 	private:
 		const char* n;

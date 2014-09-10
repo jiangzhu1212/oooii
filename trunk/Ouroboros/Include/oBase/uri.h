@@ -1,21 +1,20 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_uri_h
-#define oBase_uri_h
+#ifndef oString_uri_h
+#define oString_uri_h
 
-#include <oBase/algorithm.h>
-#include <oMemory/fnv1a.h>
+// Encapsulation of parsing a Universal Resource Identifier (URI) that
+// should be compliant with specification: http://tools.ietf.org/html/rfc3986
+
 #include <oBase/path.h>
 #include <oString/stringize.h>
 #include <oString/string_codec.h>
+#include <oBase/throw.h>
 #include <oBase/uri_traits.h>
 #include <regex>
 
 namespace ouro {
-
-	namespace detail {
-		std::regex& uri_regex();
-	}
+	namespace detail { std::regex& uri_regex(); }
 
 template<typename charT, typename TraitsT>
 class basic_uri
@@ -477,6 +476,6 @@ namespace std {
 template<typename charT, typename TraitsT>
 struct hash<ouro::basic_uri<charT, TraitsT>> { std::size_t operator()(const ouro::basic_uri<charT, TraitsT>& _URI) const { return _URI.hash(); } };
 
-} // namespace std
+}
 
 #endif

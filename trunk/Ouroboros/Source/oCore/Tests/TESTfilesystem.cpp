@@ -2,6 +2,7 @@
 #include <oCore/filesystem.h>
 #include <oCore/windows/win_iocp.h>
 #include <oBase/assert.h>
+#include <oBase/throw.h>
 #include <oMemory/byte.h>
 #include <oBase/event.h>
 #include <oBase/finally.h>

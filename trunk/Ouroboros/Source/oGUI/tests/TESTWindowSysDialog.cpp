@@ -3,6 +3,7 @@
 #include <oGUI/window.h>
 #include <oGUI/Windows/oWinControlSet.h>
 #include <oGUI/Windows/win_gdi_draw.h>
+#include <oBase/throw.h>
 #include <oCore/filesystem.h>
 #include <oCore/system.h>
 

@@ -4,8 +4,7 @@
 // http://tools.ietf.org/html/rfc3986#appendix-B
 static std::regex reURI("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?", std::regex_constants::optimize); // ok static (duplication in dynamic libswon't affect correctness)
 
-namespace ouro {
-	namespace detail {
+namespace ouro { namespace detail {
 
 		std::regex& uri_regex()
 		{
@@ -14,6 +13,4 @@ namespace ouro {
 			return reURI;
 		}
 
-	} // namespace detail
-
-}
+}}

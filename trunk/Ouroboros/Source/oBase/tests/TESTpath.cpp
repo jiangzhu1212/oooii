@@ -1,9 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/path.h>
-#include <oBase/throw.h>
 
-namespace ouro {
-	namespace tests {
+#include "../../test_services.h"
+
+namespace ouro { namespace tests {
 
 template<typename charT>
 struct CASE
@@ -86,7 +86,7 @@ struct boost_and_std_proposal_compliant : path_traits<charT, true, false> {};
 
 typedef basic_path<char, boost_and_std_proposal_compliant<char>> test_path;
 
-static void TESTpath_standard_cases()
+static void TESTpath_standard_cases(test_services& services)
 {
 	int i = 0;
 	for (const auto& c : kCases)
@@ -97,23 +97,15 @@ static void TESTpath_standard_cases()
 
 			#define TEST_CASE(_API, _Field) do \
 			{	auto test = P._API(); \
-				if (c._Field == nullptr && P.has_##_API()) \
-					oTHROW(protocol_error, "\"%s\"." "has_" #_API "() returned true when it should be false (thinks its \"%s\")", c.CtorArgument ? c.CtorArgument : "(empty)", test.c_str()); \
-				if (c._Field != nullptr && strcmp(test, c._Field)) \
-					oTHROW(protocol_error, "\"%s\"." #_API "(): expected \"%s\", got \"%s\"" \
-						, c.CtorArgument ? c.CtorArgument : "(empty)" \
-						, c._Field ? c._Field : "empty" \
-						, test.empty() ? "(empty)" : test.c_str()); \
+				oTEST(c._Field || !P.has_##_API(), "\"%s\"." "has_" #_API "() returned true when it should be false (thinks its \"%s\")", c.CtorArgument ? c.CtorArgument : "(empty)", test.c_str()); \
+				oTEST(!c._Field || !strcmp(test, c._Field), "\"%s\"." #_API "(): expected \"%s\", got \"%s\"" \
+						, c.CtorArgument ? c.CtorArgument : "(empty)", c._Field ? c._Field : "empty", test.empty() ? "(empty)" : test.c_str()); \
 			} while (false)
 
-			//TEST_ITER();
-
 			path::string_type test = P.string();
-			if (!c.AsStr && !test.empty())
-				oTHROW(protocol_error, "string() should have an empty value instead of \"%s\"", test.c_str());
+			oTEST(c.AsStr || test.empty(), "string() should have an empty value instead of \"%s\"", test.c_str());
 
-			if (c.AsStr && strcmp(test, c.AsStr))
-				oTHROW(protocol_error, "\"%s\".string(): expected \"%s\", got \"%s\""
+			oTEST(!c.AsStr || !strcmp(test, c.AsStr), "\"%s\".string(): expected \"%s\", got \"%s\""
 					, test.c_str(), c.AsStr ? c.AsStr : "empty"
 					, test.empty() ? "(empty)" : test.c_str());
 
@@ -128,7 +120,7 @@ static void TESTpath_standard_cases()
 
 		catch (std::exception& e)
 		{
-			oTHROW(protocol_error, "path test %d failed: %s", i, e.what());
+			oTEST_THROW("path test %d failed: %s", i, e.what());
 		}
 
 		i++;
@@ -154,7 +146,7 @@ static const CASE2<char> kMoreCases[] =
 	{ "c:/foo/bar/base.not-ext.not-ext.ext", "base.not-ext.not-ext", ".ext", "c:/foo/bar/base.not-ext.not-ext" },
 };
 
-static void TESTpath_more_cases()
+static void TESTpath_more_cases(test_services& services)
 {
 	for (auto i = 0; i < oCOUNTOF(kMoreCases); i++)
 	{
@@ -165,12 +157,9 @@ static void TESTpath_more_cases()
 
 			#define TEST_CASE2(_API, _Field) do \
 			{ auto test = P._API(); \
-				if (!c._Field && !test.empty()) \
-					oTHROW(protocol_error, #_API "() should have an empty value instead of \"%s\"", test.c_str()); \
-				if (c._Field && strcmp(test, c._Field)) \
-					oTHROW(protocol_error, "\"%s\"." #_API "(): expected \"%s\", got \"%s\"" \
-						, test.c_str(), c._Field ? c._Field : "empty" \
-						, test.empty() ? "(empty)" : test.c_str()); \
+				oTEST(c._Field || test.empty(), #_API "() should have an empty value instead of \"%s\"", test.c_str()); \
+				oTEST(!c._Field || !strcmp(test, c._Field), "\"%s\"." #_API "(): expected \"%s\", got \"%s\"" \
+						, test.c_str(), c._Field ? c._Field : "empty", test.empty() ? "(empty)" : test.c_str()); \
 			} while (false)
 
 			TEST_CASE2(basename, Base);
@@ -180,7 +169,7 @@ static void TESTpath_more_cases()
 
 		catch (std::exception& e)
 		{
-			oTHROW(protocol_error, "path test2 %d failed: %s", i, e.what());
+			oTEST_THROW("path test2 %d failed: %s", i, e.what());
 		}
 	}
 }
@@ -199,7 +188,7 @@ static const CLEAN_CASE<char> kCleanCases[] =
 	{ "C:/AutoBuild/1.0.002.6398//../WebRoot/26417/oUnitTests.txt.stderr", "C:/AutoBuild/WebRoot/26417/oUnitTests.txt.stderr" },
 };
 
-static void TESTpath_clean()
+static void TESTpath_clean(test_services& services)
 {
 	for (auto i = 0; i < oCOUNTOF(kCleanCases); i++)
 	{
@@ -207,50 +196,42 @@ static void TESTpath_clean()
 		{
 			const CLEAN_CASE<char>& c = kCleanCases[i];
 			path P(c.CtorArgument);
-			if (strcmp(P, c.Clean))
-				oTHROW(protocol_error, "\"%s\".clean() expected \"%s\", got \"%s\"", c.CtorArgument, c.Clean, P.c_str());
+			oTEST(!strcmp(P, c.Clean), "\"%s\".clean() expected \"%s\", got \"%s\"", c.CtorArgument, c.Clean, P.c_str());
 		}
 
 		catch (std::exception& e)
 		{
-			oTHROW(protocol_error, "path test2 %d failed: %s", i, e.what());
+			oTEST_THROW("path test2 %d failed: %s", i, e.what());
 		}
 	}
 }
 
-void TESTpath()
+void TESTpath(test_services& services)
 {
-	TESTpath_standard_cases();
-	TESTpath_more_cases();
-	TESTpath_clean();
+	TESTpath_standard_cases(services);
+	TESTpath_more_cases(services);
+	TESTpath_clean(services);
 
 	test_path P("c:/foo/bar/img.png");
 
 	P.replace_extension(".jpg");
-	if (strcmp(P, "c:/foo/bar/img.jpg"))
-		oTHROW(protocol_error, "replace_extension failed");
+	oTEST(!strcmp(P, "c:/foo/bar/img.jpg"), "replace_extension failed");
 
 	P.replace_extension("bmp");
-	if (strcmp(P, "c:/foo/bar/img.bmp"))
-		oTHROW(protocol_error, "replace_extension failed");
+	oTEST(!strcmp(P, "c:/foo/bar/img.bmp"), "replace_extension failed");
 
 	P.replace_filename("file.txt");
-	if (strcmp(P, "c:/foo/bar/file.txt"))
-		oTHROW(protocol_error, "replace_filename failed");
+	oTEST(!strcmp(P, "c:/foo/bar/file.txt"), "replace_filename failed");
 
 	P.remove_filename();
-	if (strcmp(P, "c:/foo/bar/"))
-		oTHROW(protocol_error, "remove_leaf failed");
+	oTEST(!strcmp(P, "c:/foo/bar/"), "remove_leaf failed");
 
 	P.remove_filename();
-	if (strcmp(P, "c:/foo/bar"))
-		oTHROW(protocol_error, "remove_leaf failed");
+	oTEST(!strcmp(P, "c:/foo/bar"), "remove_leaf failed");
 
 	P = "/";
 	P.remove_filename();
-	if (!P.empty())
-		oTHROW(protocol_error, "remove_leaf failed");
+	oTEST(P.empty(), "remove_leaf failed");
 }
 
-	} // namespace tests
-} // namespace ouro
+}}
