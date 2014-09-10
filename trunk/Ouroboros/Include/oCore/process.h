@@ -4,7 +4,7 @@
 #ifndef oCore_process_h
 #define oCore_process_h
 
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <chrono>
 #include <functional>
 #include <memory>

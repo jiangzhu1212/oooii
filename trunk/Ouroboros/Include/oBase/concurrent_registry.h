@@ -8,7 +8,7 @@
 #include <oMemory/allocate.h>
 #include <oBase/concurrent_hash_map.h>
 #include <oBase/concurrent_stack.h>
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <oMemory/concurrent_object_pool.h>
 #include <oMemory/pool.h>
 #include <functional>

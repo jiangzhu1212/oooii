@@ -5,7 +5,7 @@
 #define oGUI_win_common_dialog_h
 
 #include <oBase/color.h>
-#include <oBase/path.h>
+#include <oString/path.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

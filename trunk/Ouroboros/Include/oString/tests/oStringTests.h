@@ -11,6 +11,8 @@ void TESTatof(test_services& services);
 void TESTcsv(test_services& services);
 void TESTini(test_services& services);
 void TESTjson(test_services& services);
+void TESTpath(test_services& services);
+void TESTuri(test_services& services);
 void TESTxml(test_services& services);
 
 }}

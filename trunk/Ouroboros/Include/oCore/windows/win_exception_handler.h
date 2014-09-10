@@ -6,7 +6,7 @@
 #ifndef oCore_win_exception_handler_h
 #define oCore_win_exception_handler_h
 
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <functional>
 #include <string>
 

@@ -4,7 +4,7 @@
 #ifndef oCore_filesystem_monitor_h
 #define oCore_filesystem_monitor_h
 
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <memory>
 
 namespace ouro {

@@ -4,7 +4,7 @@
 #ifndef oBasisTests_h
 #define oBasisTests_h
 
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <oBasis/oPlatformFeatures.h>
 #include <oSurface/surface.h>
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oSurface/codec.h>
 #include <oBase/colors.h>
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <oBase/throw.h>
 
 #include "../../test_services.h"

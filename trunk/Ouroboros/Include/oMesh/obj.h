@@ -7,7 +7,7 @@
 
 #include <oBase/invalid.h>
 #include <oBase/colors.h>
-#include <oBase/path.h>
+#include <oString/path.h>
 #include <oBase/rgb.h>
 #include <oMesh/mesh.h>
 #include <memory>

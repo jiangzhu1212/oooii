@@ -6,7 +6,7 @@
 #define oCore_reporting_h
 
 #include <oBase/assert.h>
-#include <oBase/path.h>
+#include <oString/path.h>
 
 namespace ouro {
 	namespace reporting {

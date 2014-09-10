@@ -5,14 +5,14 @@
 
 #include <oBase/assert.h>
 #include <oBase/aabox.h>
-#include <oMemory/byte.h>
 #include <oBase/color.h>
 #include <oBase/fourcc.h>
 #include <oBase/macros.h>
-#include <oBase/path.h>
 #include <oBase/rgb.h>
 #include <oBase/type_info.h>
-#include <oBase/uri.h>
+#include <oMemory/byte.h>
+#include <oString/path.h>
+#include <oString/uri.h>
 #include <typeinfo>
 #include <vector>
 

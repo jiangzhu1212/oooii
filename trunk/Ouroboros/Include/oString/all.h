@@ -10,6 +10,7 @@
 #include <oString/ini.h>
 #include <oString/json.h>
 #include <oString/opttok.h>
+#include <oString/path.h>
 #include <oString/string.h>
 #include <oString/string_codec.h>
 #include <oString/string_fast_scan.h>
@@ -19,5 +20,6 @@
 #include <oString/string_traits.h>
 #include <oString/stringize.h>
 #include <oString/text_document.h>
+#include <oString/uri.h>
 #include <oString/xml.h>
 #endif
