@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_event_h
-#define oBase_event_h
+#ifndef oConcurrency_event_h
+#define oConcurrency_event_h
 
 // A cross-platform event built on condition_variable, which is basically how 
 // the Window's event is implemented. This supports the "WaitMultiple" concept 

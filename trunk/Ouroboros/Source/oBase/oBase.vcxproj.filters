@@ -138,15 +138,6 @@
     <ClInclude Include="..\..\Include\oBase\container_support.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\backoff.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\countdown_latch.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\event.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\type_info.h">
       <Filter>oBase\traits</Filter>
     </ClInclude>
@@ -168,13 +159,7 @@
     <ClInclude Include="..\..\Include\oBase\snappy.h">
       <Filter>oBase\compression</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\threadpool.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\future.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrency.h">
       <Filter>oBase\concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\fourcc.h">
@@ -237,20 +222,11 @@
     <ClInclude Include="..\..\Include\oBase\hash_map.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\tagged_pointer.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\lock_free_queue.h">
-      <Filter>oBase\containers</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_queue.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_queue_opt.h">
       <Filter>oBase\containers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\coroutine.h">
-      <Filter>oBase\concurrency</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\std_cbegin.h">
       <Filter>oBase\c++ support</Filter>
@@ -272,9 +248,6 @@
       <Filter>oBase\allocator</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_registry.h">
-      <Filter>oBase\containers</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_stack.h">
       <Filter>oBase\containers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\gpu_api.h">

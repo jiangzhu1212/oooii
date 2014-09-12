@@ -5,9 +5,9 @@
 #ifndef oBase_concurrent_queue_h
 #define oBase_concurrent_queue_h
 
-#include <oBase/concurrency.h>
+#include <oConcurrency/concurrency.h>
 #include <oBase/concurrent_growable_object_pool.h>
-#include <oBase/tagged_pointer.h>
+#include <oConcurrency/tagged_pointer.h>
 #include <atomic>
 
 namespace ouro {

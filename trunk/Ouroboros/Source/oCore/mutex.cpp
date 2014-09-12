@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oCore/mutex.h>
-#include <oBase/backoff.h>
+#include <oConcurrency/backoff.h>
 #include <stdexcept>
 
 #if NTDDI_VERSION >= NTDDI_WIN7

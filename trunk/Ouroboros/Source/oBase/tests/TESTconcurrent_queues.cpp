@@ -1,8 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/concurrent_queue.h>
 #include <oBase/concurrent_queue_opt.h>
-#include <oBase/threadpool.h>
-#include <oBase/event.h>
+#include <oConcurrency/threadpool.h>
+#include <oConcurrency/event.h>
 #include <oBase/finally.h>
 #include <oBase/assert.h>
 #include <oBase/throw.h>
