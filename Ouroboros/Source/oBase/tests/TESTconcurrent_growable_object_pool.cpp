@@ -1,14 +1,13 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/concurrent_growable_object_pool.h>
 #include <oBase/assert.h>
-#include <oBase/concurrency.h>
+#include <oConcurrency/concurrency.h>
 #include <oCore/windows/win_crt_leak_tracker.h>
 #include <oBase/throw.h>
 #include <vector>
 
 // @tony: hack: 
 #include <oBase/finally.h>
-#include "../../../Include/oCore/windows/win_crt_leak_tracker.h"
 
 namespace ouro {
 	namespace tests {

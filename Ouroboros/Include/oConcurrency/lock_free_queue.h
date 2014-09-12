@@ -1,12 +1,13 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+#pragma once
+#ifndef oConcurrency_lock_free_queue_h
+#define oConcurrency_lock_free_queue_h
+
 // Single-reader, single-writer queue that uses no explicit mechanism for
 // synchronization.
-#pragma once
-#ifndef oBase_lock_free_queue_h
-#define oBase_lock_free_queue_h
 
+#include <oConcurrency/concurrency.h>
 #include <oMemory/allocate.h>
-#include <oBase/concurrency.h>
 #include <atomic>
 #include <memory>
 

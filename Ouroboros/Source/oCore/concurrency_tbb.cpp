@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/concurrency.h>
+#include <oConcurrency/concurrency.h>
 #include <oBase/throw.h>
 #include <oCore/process_heap.h>
 #include <oCore/thread_traits.h>

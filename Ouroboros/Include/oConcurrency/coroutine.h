@@ -1,4 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // An implementation of a stack based co-routine using a Duffs device
 // http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
 
@@ -24,8 +25,8 @@ void MyExecute(MyContext& _MyContext)
 }
 */
 #pragma once
-#ifndef oBase_coroutine_h
-#define oBase_coroutine_h
+#ifndef oConcurrency_coroutine_h
+#define oConcurrency_coroutine_h
 
 // Internal implementation details
 #define oCoYielder__(continuation,_YieldID) coroutine_context__->yield_id(_YieldID); continuation; return; case _YieldID:

@@ -11,7 +11,7 @@
 // implemented to improve performance.
 
 #include <oBase/callable.h>
-#include <oBase/concurrency.h>
+#include <oConcurrency/concurrency.h>
 
 #include <atomic>
 #include <chrono>

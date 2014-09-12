@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oMemory/concurrent_pool.h>
 #include <oMemory/concurrent_object_pool.h>
-#include <oBase/concurrency.h>
+#include <oConcurrency/concurrency.h>
 #include <vector>
 #include "../../test_services.h"
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_concurrency_h
-#define oBase_concurrency_h
+#ifndef oConcurrency_concurrency_h
+#define oConcurrency_concurrency_h
 
 // Concurrent interfaces. These are not implemented in oBase but are used by 
 // oBase implementations since concurrency is such a big performance win and 

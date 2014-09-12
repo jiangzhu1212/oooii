@@ -5,6 +5,7 @@
 #include <oBasis/oError.h>
 #include <oBasis/oLockedPointer.h>
 #include <oBase/scc.h>
+#include <oConcurrency/event.h>
 #include <oCore/process.h>
 #include <oCore/reporting.h>
 #include <oCore/thread_traits.h>

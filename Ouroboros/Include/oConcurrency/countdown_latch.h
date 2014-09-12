@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_countdown_latch_h
-#define oBase_countdown_latch_h
+#ifndef oConcurrency_countdown_latch_h
+#define oConcurrency_countdown_latch_h
 
 // Synchronization object often described as a reverse semaphore. This object
 // gets initialized with a count and gives the system API to decrement the 
@@ -133,7 +133,7 @@ std::cv_status::cv_status countdown_latch::wait_for(const std::chrono::duration<
 {
 	std::cv_status::cv_status status = std::cv_status::no_timeout;
 	std::unique_lock<std::mutex> Lock(mtx);
-	while (std::cv_status::no_timeout == status && num_outstanding > 0)
+	while (std::cv_status::no_timeout == status && num_outstanding > 0) // Guarded Suspension
 		status = zero_references.wait_for(Lock, relative_time);
 	return status;
 }

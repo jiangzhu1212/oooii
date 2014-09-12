@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_tagged_pointer_h
-#define oBase_tagged_pointer_h
+#ifndef oConcurrency_tagged_pointer_h
+#define oConcurrency_tagged_pointer_h
 
 // A pointer that gives up some of its address space to protect against ABA 
 // concurrency issues.

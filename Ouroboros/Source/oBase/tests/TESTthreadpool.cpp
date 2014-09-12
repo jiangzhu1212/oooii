@@ -1,10 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/assert.h>
 #include <oMemory/byte.h>
-#include <oBase/concurrency.h>
+#include <oConcurrency/concurrency.h>
 #include <oBase/finally.h>
 #include <oString/fixed_string.h>
-#include <oBase/threadpool.h>
+#include <oConcurrency/threadpool.h>
 #include <oBase/throw.h>
 #include <oBase/timer.h>
 #include <oCore/thread_traits.h>

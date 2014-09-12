@@ -19,104 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\External\calfaq\calfaq.cpp" />
-    <ClCompile Include="aabox.cpp" />
-    <ClCompile Include="color.cpp" />
-    <ClCompile Include="concurrent_growable_pool.cpp" />
-    <ClCompile Include="concurrent_hash_map.cpp" />
-    <ClCompile Include="concurrent_registry.cpp" />
-    <ClCompile Include="date.cpp" />
-    <ClCompile Include="future.cpp" />
-    <ClCompile Include="gpu_api.cpp" />
-    <ClCompile Include="gzip.cpp" />
-    <ClCompile Include="input.cpp" />
-    <ClCompile Include="ip4.cpp" />
-    <ClCompile Include="leak_tracker.cpp" />
-    <ClCompile Include="lzma.cpp" />
-    <ClCompile Include="osc.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="plane.cpp" />
-    <ClCompile Include="quat.cpp" />
-    <ClCompile Include="rgb.cpp" />
-    <ClCompile Include="scc.cpp" />
-    <ClCompile Include="scc_svn.cpp" />
-    <ClCompile Include="snappy.cpp" />
-    <ClCompile Include="sphere.cpp" />
-    <ClCompile Include="stringize.cpp" />
-    <ClCompile Include="stringize_hlsl.cpp" />
-    <ClCompile Include="type_id.cpp" />
-    <ClCompile Include="vendor.cpp" />
-    <ClCompile Include="version.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="..\..\External\calfaq\calfaq.h" />
-    <ClInclude Include="..\..\Include\oBase\aabox.h" />
-    <ClInclude Include="..\..\Include\oBase\algorithm.h" />
-    <ClInclude Include="..\..\Include\oBase\all.h" />
-    <ClInclude Include="..\..\Include\oBase\all_libc.h" />
-    <ClInclude Include="..\..\Include\oBase\assert.h" />
-    <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h" />
-    <ClInclude Include="..\..\Include\oBase\callable.h" />
-    <ClInclude Include="..\..\Include\oBase\color.h" />
-    <ClInclude Include="..\..\Include\oBase\colors.h" />
-    <ClInclude Include="..\..\Include\oBase\compression.h" />
-    <ClInclude Include="..\..\Include\oBase\concurrent_growable_object_pool.h" />
-    <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h" />
-    <ClInclude Include="..\..\Include\oBase\concurrent_hash_map.h" />
-    <ClInclude Include="..\..\Include\oBase\concurrent_queue.h" />
-    <ClInclude Include="..\..\Include\oBase\concurrent_queue_opt.h" />
-    <ClInclude Include="..\..\Include\oBase\concurrent_registry.h" />
-    <ClInclude Include="..\..\Include\oBase\container_support.h" />
-    <ClInclude Include="..\..\Include\oBase\date.h" />
-    <ClInclude Include="..\..\Include\oBase\dec3n.h" />
-    <ClInclude Include="..\..\Include\oBase\enum_iterator.h" />
-    <ClInclude Include="..\..\Include\oBase\filter_chain.h" />
-    <ClInclude Include="..\..\Include\oBase\finally.h" />
-    <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
-    <ClInclude Include="..\..\Include\oBase\fourcc.h" />
-    <ClInclude Include="..\..\Include\oBase\future.h" />
-    <ClInclude Include="..\..\Include\oBase\gpu_api.h" />
-    <ClInclude Include="..\..\Include\oBase\guid.h" />
-    <ClInclude Include="..\..\Include\oBase\gzip.h" />
-    <ClInclude Include="..\..\Include\oBase\hash_map.h" />
-    <ClInclude Include="..\..\Include\oBase\input.h" />
-    <ClInclude Include="..\..\Include\oBase\intrusive_ptr.h" />
-    <ClInclude Include="..\..\Include\oBase\invalid.h" />
-    <ClInclude Include="..\..\Include\oBase\ip4.h" />
-    <ClInclude Include="..\..\Include\oBase\leak_tracker.h" />
-    <ClInclude Include="..\..\Include\oBase\lzma.h" />
-    <ClInclude Include="..\..\Include\oBase\macros.h" />
-    <ClInclude Include="..\..\Include\oBase\moving_average.h" />
-    <ClInclude Include="..\..\Include\oBase\operators.h" />
-    <ClInclude Include="..\..\Include\oBase\osc.h" />
-    <ClInclude Include="..\..\Include\oBase\plane.h" />
-    <ClInclude Include="..\..\Include\oBase\quat.h" />
-    <ClInclude Include="..\..\Include\oBase\rgb.h" />
-    <ClInclude Include="..\..\Include\oBase\scc.h" />
-    <ClInclude Include="..\..\Include\oBase\snappy.h" />
-    <ClInclude Include="..\..\Include\oBase\sphere.h" />
-    <ClInclude Include="..\..\Include\oBase\std_cbegin.h" />
-    <ClInclude Include="..\..\Include\oBase\std_make_unique.h" />
-    <ClInclude Include="..\..\Include\oBase\throw.h" />
-    <ClInclude Include="..\..\Include\oBase\timer.h" />
-    <ClInclude Include="..\..\Include\oBase\types.h" />
-    <ClInclude Include="..\..\Include\oBase\type_id.h" />
-    <ClInclude Include="..\..\Include\oBase\type_info.h" />
-    <ClInclude Include="..\..\Include\oBase\udec3.h" />
-    <ClInclude Include="..\..\Include\oBase\unordered_map.h" />
-    <ClInclude Include="..\..\Include\oBase\vendor.h" />
-    <ClInclude Include="..\..\Include\oBase\version.h" />
-    <ClInclude Include="pch.h" />
-    <ClInclude Include="scc_svn.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\all.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\backoff.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\concurrency.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\coroutine.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\countdown_latch.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\event.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\lock_free_queue.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\tagged_pointer.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\threadpool.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{B13F3CBD-B601-4196-BF6F-2EAA8CDFEDC3}</ProjectGuid>
-    <RootNamespace>oBase</RootNamespace>
+    <ProjectGuid>{22787A33-41A0-4E87-8115-DAA82AC40CDF}</ProjectGuid>
+    <RootNamespace>oConcurrency</RootNamespace>
     <SccProjectName>
     </SccProjectName>
     <SccLocalPath>

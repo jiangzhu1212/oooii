@@ -1,14 +1,15 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// A concurrent stack that assumes a struct with a next pointer. No 
-// memory management is done by the class itself.
-#ifndef oBase_concurrent_stack_h
-#define oBase_concurrent_stack_h
+#ifndef oConcurrency_concurrent_stack_h
+#define oConcurrency_concurrent_stack_h
+
+// A concurrent stack that assumes a struct with a next pointer. No memory 
+// management is done by the class itself.
 
 #include <oCompiler.h>
+#include <oConcurrency/tagged_pointer.h>
 #include <atomic>
+#include <cstdint>
 #include <stdexcept>
-
-#include <oBase/tagged_pointer.h>
 
 namespace ouro {
 
@@ -16,27 +17,18 @@ template<typename T>
 class concurrent_stack
 {
 public:
-	#if o64BIT == 1
-		static const size_t required_next_alignment = sizeof(void*);
-	#else
-		static const size_t required_next_alignment = 16; // leaves room for tag
-	#endif
-
-	typedef unsigned int size_type;
+	typedef uint32_t size_type;
 	typedef T value_type;
 	typedef value_type* pointer;
-	typedef const value_type* const_pointer;
-	typedef value_type& reference;
-	typedef const value_type& const_reference;
 
 	
 	// non-concurrent api
 
 	// initialized to a valid empty stack
 	concurrent_stack();
-	concurrent_stack(concurrent_stack&& _That);
+	concurrent_stack(concurrent_stack&& that);
 	~concurrent_stack();
-	concurrent_stack& operator=(concurrent_stack&& _That);
+	concurrent_stack& operator=(concurrent_stack&& that);
 
 	// returns the top of the stack without removing the item from the stack
 	pointer peek() const;
@@ -67,26 +59,22 @@ public:
 
 private:
 
-	tagged_pointer<T> head;
-	char cache_line_padding[oCACHE_LINE_SIZE - sizeof(std::atomic_uintptr_t)];
+	oALIGNAS(oCACHE_LINE_SIZE) tagged_pointer<T> head;
 
 	concurrent_stack(const concurrent_stack&); /* = delete; */
 	const concurrent_stack& operator=(const concurrent_stack&); /* = delete; */
 };
+static_assert(sizeof(concurrent_stack<int>) == oCACHE_LINE_SIZE, "size mismatch");
 
 template<typename T>
 concurrent_stack<T>::concurrent_stack()
 {
-	for (char& c : cache_line_padding)
-		c = 0;
 }
 
 template<typename T>
-concurrent_stack<T>::concurrent_stack(concurrent_stack&& _That)
+concurrent_stack<T>::concurrent_stack(concurrent_stack&& that)
 {
-	head = std::move(_That.head);
-	for (char& c : cache_line_padding)
-		c = 0;
+	head = std::move(that.head);
 }
 
 template<typename T>
@@ -97,10 +85,10 @@ concurrent_stack<T>::~concurrent_stack()
 }
 
 template<typename T>
-typename concurrent_stack<T>& concurrent_stack<T>::operator=(concurrent_stack&& _That)
+typename concurrent_stack<T>& concurrent_stack<T>::operator=(concurrent_stack&& that)
 {
-	if (this != &_That)
-		head = std::move(_That.head);
+	if (this != &that)
+		head = std::move(that.head);
 	return *this;
 }
 

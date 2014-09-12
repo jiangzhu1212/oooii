@@ -9,7 +9,8 @@
 #include <oGUI/Windows/oWinWindowing.h>
 #include <oCore/windows/win_error.h>
 #include <oSurface/codec.h>
-#include <oBase/backoff.h>
+#include <oConcurrency/backoff.h>
+#include <oConcurrency/event.h>
 #include <vector>
 #include <commctrl.h>
 #include <windowsx.h>
