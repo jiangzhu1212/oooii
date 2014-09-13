@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
 
 namespace ouro {
 
@@ -84,13 +85,18 @@ private:
 	oALIGNAS(oCACHE_LINE_SIZE) pointer_type head;
 	oALIGNAS(oCACHE_LINE_SIZE) pointer_type tail;
 	allocator_type alloc;
-	
+
+	void internal_init(std::false_type);
+	void internal_init(std::true_type);
+
 	void internal_push(node_type* n);
+
+	bool internal_try_pop(reference val, std::false_type);
+	bool internal_try_pop(reference val, std::true_type);
 };
 
 template<typename T, typename Alloc>
-concurrent_queue<T, Alloc>::concurrent_queue(const allocator_type& a)
-	: alloc(a)
+void concurrent_queue<T, Alloc>::internal_init(std::false_type)
 {
 	node_type* n = alloc.allocate(1);
 	alloc.construct(n, T());
@@ -99,6 +105,21 @@ concurrent_queue<T, Alloc>::concurrent_queue(const allocator_type& a)
 	// deallocation in try_pop code.
 	n->should_deallocate();
 	head = tail = pointer_type(n, 0);
+}
+
+template<typename T, typename Alloc>
+void concurrent_queue<T, Alloc>::internal_init(std::true_type)
+{
+	node_type* n = alloc.allocate(1);
+	alloc.construct(n, T());
+	head = tail = pointer_type(n, 0);
+}
+
+template<typename T, typename Alloc>
+concurrent_queue<T, Alloc>::concurrent_queue(const allocator_type& a)
+	: alloc(a)
+{
+	internal_init(std::is_trivially_destructible<T>());
 }
 
 template<typename T, typename Alloc>
@@ -156,7 +177,7 @@ void concurrent_queue<T, Alloc>::push(value_type&& val)
 }
 
 template<typename T, typename Alloc>
-bool concurrent_queue<T, Alloc>::try_pop(reference val)
+bool concurrent_queue<T, Alloc>::internal_try_pop(reference val, std::false_type)
 {
 	pointer_type h, t, next;
 	for (;;)
@@ -202,6 +223,43 @@ bool concurrent_queue<T, Alloc>::try_pop(reference val)
 	return true;
 }
 
+template<typename T, typename Alloc>
+bool concurrent_queue<T, Alloc>::internal_try_pop(reference val, std::true_type)
+{
+	pointer_type h, t, next;
+	for (;;)
+	{
+		h = head;
+		t = tail;
+		next = h.ptr()->next;
+		auto nptr = next.ptr();
+		if (h == head)
+		{
+			if (h.ptr() == t.ptr())
+			{
+				if (!nptr) return false;
+				tail.cas(t, pointer_type(nptr, t.tag()+1));
+			}
+
+			else
+			{
+				val = std::move(nptr->value);
+				if (head.cas(h, pointer_type(nptr, h.tag()+1)))
+					break;
+			}
+		}
+	}
+
+	alloc.deallocate(h.ptr(), sizeof(node_type)); // dtor called explicitly above so just deallocate
+	return true;
+}
+
+template<typename T, typename Alloc>
+bool concurrent_queue<T, Alloc>::try_pop(reference val)
+{
+	return internal_try_pop(val, std::is_trivially_destructible<T>());
+}
+	
 template<typename T, typename Alloc>
 void concurrent_queue<T, Alloc>::pop(reference val)
 {
