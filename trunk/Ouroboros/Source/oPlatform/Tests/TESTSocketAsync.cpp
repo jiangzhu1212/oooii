@@ -1,5 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBasis/oBuffer.h>
+#include <oConcurrency/concurrency.h>
 #include <oConcurrency/event.h>
 #include <oBase/finally.h>
 #include <oPlatform/oTest.h>

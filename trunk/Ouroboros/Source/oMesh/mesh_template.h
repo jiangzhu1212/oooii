@@ -5,12 +5,12 @@
 
 #include <oMesh/mesh.h>
 #include <oBase/algorithm.h>
-#include <oMemory/byte.h>
 #include <oBase/color.h>
-#include <oConcurrency/threadpool.h>
 #include <oBase/throw.h>
+#include <oConcurrency/concurrency.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>
+#include <oMemory/byte.h>
 #include <vector>
 
 namespace ouro {

@@ -1124,7 +1124,8 @@ oTest::RESULT oTestManager_Impl::RunTests(ouro::filter_chain::filter* _pTestFilt
 		}
 	}
 
-	windows::crt_leak_tracker::enable(Desc.EnableLeakTracking);
+	// disable this until it can be made lock-free
+	windows::crt_leak_tracker::enable(false/*Desc.EnableLeakTracking*/);
 	windows::crt_leak_tracker::capture_callstack(Desc.CaptureCallstackForTestLeaks);
 
 	xlstring timeMessage;

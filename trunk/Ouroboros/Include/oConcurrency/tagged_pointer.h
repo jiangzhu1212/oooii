@@ -77,7 +77,7 @@ public:
 		return (tag_and_pointer & tag_mask) >> tag_shift;
 	}
 	
-	T* ptr() const { return (T*)(tag_and_pointer & ~(tag_mask)); }
+	T* ptr() const { return (T*)(tag_and_pointer & ~(tag_mark_mask)); }
 	
 	inline bool cas(tagged_pointer<T>& Old, const tagged_pointer<T>& New)
 	{
