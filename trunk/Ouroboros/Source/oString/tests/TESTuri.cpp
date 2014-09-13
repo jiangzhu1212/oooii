@@ -379,8 +379,6 @@ void TESTuri(test_services& services)
 	for (auto& e : Exceptions)
 		if (e != std::exception_ptr())
 			std::rethrow_exception(e);
-
-	services.report("all tests completed in %.03fs", t.seconds());
 }
 
 }}

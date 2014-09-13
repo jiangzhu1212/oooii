@@ -25,8 +25,6 @@ void MyExecute(MyContext& _MyContext)
 }
 */
 #pragma once
-#ifndef oConcurrency_coroutine_h
-#define oConcurrency_coroutine_h
 
 // Internal implementation details
 #define oCoYielder__(continuation,_YieldID) coroutine_context__->yield_id(_YieldID); continuation; return; case _YieldID:
@@ -65,5 +63,3 @@ public:
 };
 
 }
-
-#endif

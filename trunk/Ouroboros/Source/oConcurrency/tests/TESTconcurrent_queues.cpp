@@ -1,19 +1,15 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/concurrent_queue.h>
-#include <oBase/concurrent_queue_opt.h>
 #include <oConcurrency/concurrency.h>
+#include <oConcurrency/concurrent_queue.h>
+#include <oConcurrency/concurrent_queue_opt.h>
 #include <oConcurrency/threadpool.h>
 #include <oConcurrency/event.h>
-#include <oBase/finally.h>
-#include <oBase/assert.h>
-#include <oBase/throw.h>
-#include <oBase/timer.h>
 #include <atomic>
 #include <thread>
 #include <vector>
+#include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 struct test_buffer
 {
@@ -29,7 +25,7 @@ struct test_buffer
 };
 
 template<typename T, typename QueueT>
-static void test_queue_basics(const char* _QueueName)
+static void test_queue_basics(test_services& services, const char* queue_name)
 {
 	QueueT q;
 
@@ -38,19 +34,19 @@ static void test_queue_basics(const char* _QueueName)
 	for (T i = 0; i < kNumPushes; i++)
 		q.push(i);
 
-	oCHECK(!q.empty(), "%s reports empty when it's not", _QueueName);
-	oCHECK(q.size() == kNumPushes, "%s reports size %u, expected %u", _QueueName, q.size(), kNumPushes);
+	oTEST(!q.empty(), "%s reports empty when it's not", queue_name);
+	oTEST(q.size() == kNumPushes, "%s reports size %u, expected %u", queue_name, q.size(), kNumPushes);
 
 	int test = -1;
 	for (T i = 0; i < (kNumPushes-1); i++)
 		q.pop(test);
 
-	oCHECK(!q.empty(), "%s should have 1 element, but reports as empty", _QueueName);
-	oCHECK(q.size() == 1, "%s reports size %u, expected 1", _QueueName, q.size());
+	oTEST(!q.empty(), "%s should have 1 element, but reports as empty", queue_name);
+	oTEST(q.size() == 1, "%s reports size %u, expected 1", queue_name, q.size());
 
 	q.clear();
-	oCHECK(q.empty(), "%s cleared, but reports non-empty when it's empty", _QueueName);
-	oCHECK(q.size() == 0, "%s reports size %u, expected %u", _QueueName, q.size(), 0);
+	oTEST(q.empty(), "%s cleared, but reports non-empty when it's empty", queue_name);
+	oTEST(q.size() == 0, "%s reports size %u, expected %u", queue_name, q.size(), 0);
 
 	for (T i = 0; i < kNumPushes; i++)
 		q.push(i);
@@ -60,8 +56,8 @@ static void test_queue_basics(const char* _QueueName)
 	{
 		for (T i = 0; i < kNumPushes; i++)
 		{
-			oCHECK(q.try_pop(test), "%s TryPop failed", _QueueName);
-			oCHECK(test == i, "%s value from TryPop failed", _QueueName);
+			oTEST(q.try_pop(test), "%s TryPop failed", queue_name);
+			oTEST(test == i, "%s value from TryPop failed", queue_name);
 		}
 	}
 
@@ -69,14 +65,14 @@ static void test_queue_basics(const char* _QueueName)
 	{
 		for (T i = kNumPushes-1; i >= 0; i--)
 		{
-			oCHECK(q.try_pop(test), "%s TryPop failed", _QueueName);
-			oCHECK(test == i, "%s value from TryPop failed", _QueueName);
+			oTEST(q.try_pop(test), "%s TryPop failed", queue_name);
+			oTEST(test == i, "%s value from TryPop failed", queue_name);
 		}
 	}
 
-	oCHECK(!q.try_pop(test), "%s TryPop on an empty list succeeded (it shouldn't)", _QueueName);
-	oCHECK(q.empty(), "%s not empty", _QueueName);
-	oCHECK(q.size() == 0, "%s should be empty and thus report size 0, got size %u", _QueueName, q.size());
+	oTEST(!q.try_pop(test), "%s TryPop on an empty list succeeded (it shouldn't)", queue_name);
+	oTEST(q.empty(), "%s not empty", queue_name);
+	oTEST(q.size() == 0, "%s should be empty and thus report size 0, got size %u", queue_name, q.size());
 }
 
 template<typename T, typename QueueT>
@@ -119,14 +115,14 @@ static void push_and_pop_task_performance(QueueT* _pQueue, size_t _NumPushPops, 
 }
 
 template<typename T, typename QueueT>
-static void test_concurrent_pushes(const char* _QueueName)
+static void test_concurrent_pushes(test_services& services, const char* queue_name)
 {
 	QueueT q;
-	ouro::finally ClearQueue([&] { q.clear(); });
+	test_services::finally ClearQueue([&] { q.clear(); });
 
 	const size_t NumPushes = 1000;
 	size_t ExpectedSize = 0;
-	oCHECK(q.size() == ExpectedSize, "Empty queue not reporting 0 elements");
+	oTEST(q.size() == ExpectedSize, "Empty queue not reporting 0 elements");
 
 	// Scope to ensure queue is cleaned up AFTER all threads.
 	{
@@ -141,17 +137,17 @@ static void test_concurrent_pushes(const char* _QueueName)
 	}
 
 	size_t ActualSize = q.size();
-	oCHECK(ActualSize == ExpectedSize, "Queue doesn't have as many items as it should");
+	oTEST(ActualSize == ExpectedSize, "Queue doesn't have as many items as it should");
 }
 
 template<typename T, typename QueueT>
-static void test_concurrent_pops(const char* _QueueName)
+static void test_concurrent_pops(test_services& services, const char* queue_name)
 {
 	QueueT q;
 	try
 	{
 		size_t ActualSize = q.size();
-		oCHECK(ActualSize == 0, "Queue should have initialized to zero items, but has %u", ActualSize);
+		oTEST(ActualSize == 0, "Queue should have initialized to zero items, but has %u", ActualSize);
 
 		// Scope to ensure queue is cleaned up AFTER all threads.
 		const size_t NumPops = 100;
@@ -162,7 +158,7 @@ static void test_concurrent_pops(const char* _QueueName)
 				q.push(i);
 
 			ActualSize = q.size();
-			oCHECK(ActualSize == InitialSize, "size (%u) != #pushes (%u)", ActualSize, InitialSize);
+			oTEST(ActualSize == InitialSize, "size (%u) != #pushes (%u)", ActualSize, InitialSize);
 
 			for (size_t i = 0; i < threadArray.size(); i++)
 				threadArray[i] = std::thread(pop_task<T, QueueT>, &q, NumPops);
@@ -171,9 +167,9 @@ static void test_concurrent_pops(const char* _QueueName)
 				threadArray[i].join();
 		}
 
-		oCHECK(q.empty(), "Queue should be empty, but isn't");
+		oTEST(q.empty(), "Queue should be empty, but isn't");
 		ActualSize = q.size();
-		oCHECK(ActualSize == 0, "Queue should have zero items, but has %u", ActualSize);
+		oTEST(ActualSize == 0, "Queue should have zero items, but has %u", ActualSize);
 	}
 
 	catch(std::exception&)
@@ -183,7 +179,7 @@ static void test_concurrent_pops(const char* _QueueName)
 }
 
 template<typename T, typename QueueT>
-static void test_concurrency(const char* _QueueName)
+static void test_concurrency(test_services& services, const char* queue_name)
 {
 	QueueT q;
 
@@ -198,12 +194,12 @@ static void test_concurrency(const char* _QueueName)
 			threadArray[i].join();
 	}
 
-	oCHECK(q.empty(), "Queue is not empty after all threads have been joined");
-	oCHECK(q.size() == 0, "Queue is empty, but size is non-zero (%u)", q.size());
+	oTEST(q.empty(), "Queue is not empty after all threads have been joined");
+	oTEST(q.size() == 0, "Queue is empty, but size is non-zero (%u)", q.size());
 }
 
 template<typename T, typename QueueT>
-static double test_performance(const char* _QueueName)
+static double test_performance(test_services& services, const char* queue_name)
 {
 	QueueT q;
 	event Start;
@@ -252,7 +248,7 @@ bool test_bufferCreate(size_t _Size, size_t* _pNumDeleted, test_buffer** _ppBuff
 }
 
 template<typename QueueT>
-static void test_nontrivial_contents(const char* _QueueName)
+static void test_nontrivial_contents(test_services& services, const char* queue_name)
 {
 	QueueT q;
 
@@ -272,46 +268,47 @@ static void test_nontrivial_contents(const char* _QueueName)
 			q.push(Buffers[i]);
 		}
 	}
-	oCHECK(numDeleted == 0, "Test buffers were deleted when the queue should be holding a reference");
+	oTEST(numDeleted == 0, "Test buffers were deleted when the queue should be holding a reference");
 
 	std::shared_ptr<test_buffer> b;
 	while (q.try_pop(b))
 	{
 		const char* p = b->Pointer;
 		for (size_t i = 0; i < kBufferSize; i++)
-			oCHECK(*p++ == 123, "Buffer mismatch on byte %u", i);
+			oTEST(*p++ == 123, "Buffer mismatch on byte %u", i);
 	}
 
 	b = nullptr;
 
-	oCHECK(q.empty() && numDeleted == kNumBuffers, "Queue is retaining a reference to an element though it's supposed to be empty.");
+	oTEST(q.empty() && numDeleted == kNumBuffers, "Queue is retaining a reference to an element though it's supposed to be empty.");
 }
 
-template<typename IntQueueT, typename test_bufferRefQueueT> void TestQueueT(const char* _QueueName)
+template<typename IntQueueT, typename test_bufferRefQueueT>
+void TestQueueT(test_services& services, const char* queue_name)
 {
-	test_queue_basics<int, IntQueueT>(_QueueName);
-	test_concurrent_pushes<int, IntQueueT>(_QueueName);
-	test_concurrent_pops<int, IntQueueT>(_QueueName);
-	test_concurrency<int, IntQueueT>(_QueueName);
-	test_nontrivial_contents<test_bufferRefQueueT>(_QueueName);
+	test_queue_basics<int, IntQueueT>(services, queue_name);
+	test_concurrent_pushes<int, IntQueueT>(services, queue_name);
+	test_concurrent_pops<int, IntQueueT>(services, queue_name);
+	test_concurrency<int, IntQueueT>(services, queue_name);
+	test_nontrivial_contents<test_bufferRefQueueT>(services, queue_name);
 
 	// Enable this for some performance reporting (assuming it still passes the
 	// above tests!) NOTE: for a fair test, use a custom block allocator for 
 	// ouro implementations.
 	#if 0
-		double time = test_performance<int, IntQueueT>(_QueueName);
-		oTRACE("%s perf test: %.03fs", _QueueName, time);
+		double time = test_performance<int, IntQueueT>(services, queue_name);
+		services.report("%s perf test: %.03fs", queue_name, time);
 	#endif
 }
 
-#define oTEST_QUEUET(_QueueType) TestQueueT<_QueueType<int>, _QueueType<std::shared_ptr<test_buffer>>>(#_QueueType)
+#define oTEST_QUEUET(_QueueType) TestQueueT<_QueueType<int>, _QueueType<std::shared_ptr<test_buffer>>>(services, #_QueueType)
 
-void TESTconcurrent_queue()
+void TESTconcurrent_queue(test_services& services)
 {
 	oTEST_QUEUET(concurrent_queue);
 }
 
-void TESTconcurrent_queue_opt()
+void TESTconcurrent_queue_opt(test_services& services)
 {
 	oTEST_QUEUET(concurrent_queue_opt);
 }
@@ -343,15 +340,15 @@ public:
 	size_type size() const { return queue_t::unsafe_size(); }
 };
 
-void TESTconcurrent_queue_concrt()
+void TESTconcurrent_queue_concrt(test_services& services)
 {
 	oTEST_QUEUET(concurrent_queue_concrt);
 }
 
 #else
-void TESTconcurrent_queue_concrt()
+void TESTconcurrent_queue_concrt(test_services& services)
 {
-	oTHROW(permission_denied, "concurrent_queue_concrt test not enabled");
+	services.skip("concurrent_queue_concrt test not enabled");
 }
 #endif
 
@@ -373,16 +370,15 @@ public:
 	size_type size() const { return queue_t::unsafe_size(); }
 };
 
-void TESTconcurrent_queue_tbb()
+void TESTconcurrent_queue_tbb(test_services& services)
 {
 	oTEST_QUEUET(concurrent_queue_tbb);
 }
 #else
-void TESTconcurrent_queue_tbb()
+void TESTconcurrent_queue_tbb(test_services& services)
 {
-	oTHROW(permission_denied, "concurrent_queue_tbb test not enabled");
+	services.skip("concurrent_queue_tbb test not enabled");
 }
 #endif
 
-	} // namespace tests
-} // namespace ouro
+}}

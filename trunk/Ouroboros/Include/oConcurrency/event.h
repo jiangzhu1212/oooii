@@ -1,7 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oConcurrency_event_h
-#define oConcurrency_event_h
 
 // A cross-platform event built on condition_variable, which is basically how 
 // the Window's event is implemented. This supports the "WaitMultiple" concept 
@@ -12,6 +9,7 @@
 // quite often an event is enough. NOTE: For a trivial bool-like event, just use 
 // default parameters.
 
+#pragma once
 #include <condition_variable>
 #include <mutex>
 
@@ -183,5 +181,3 @@ inline bool event::is_any_set(int mask) const
 }
 
 }
-
-#endif

@@ -16,25 +16,13 @@ namespace ouro {
 		void TESTcompression(test_services& services);
 		void TESTconcurrent_growable_object_pool();
 		void TESTconcurrent_hash_map(test_services& services);
-		void TESTconcurrent_queue();
-		void TESTconcurrent_queue_concrt();
-		void TESTconcurrent_queue_opt();
-		void TESTconcurrent_queue_tbb();
-		void TESTconcurrent_stack();
-		void TESTcoroutine();
-		void TESTcountdown_latch();
 		void TESTdate(test_services& services);
 		void TESTequal();
 		void TESTfilter_chain();
-		void TESTfixed_block_allocator();
 		void TESTfourcc();
 		void TESTfuture(test_services& services);
 		void TESThash_map(test_services& services);
 		void TESTosc();
-		void TESTparallel_for();
-		void TESTtask_group();
-		void TESTthreadpool();
-		void TESTthreadpool_perf(test_services& services);
 
 		// Utility functions, do not register these as tests.
 		struct test_threadpool

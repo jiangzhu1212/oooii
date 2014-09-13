@@ -19,24 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tests\TESTcompression.cpp" />
-    <ClCompile Include="tests\TESTconcurrent_growable_object_pool.cpp" />
-    <ClCompile Include="tests\TESTconcurrent_hash_map.cpp" />
-    <ClCompile Include="tests\TESTdate.cpp" />
-    <ClCompile Include="tests\TESTfilter_chain.cpp" />
-    <ClCompile Include="Tests\TESTfourcc.cpp" />
-    <ClCompile Include="tests\TESTfuture.cpp" />
-    <ClCompile Include="tests\TESThash_map.cpp" />
-    <ClCompile Include="tests\TESTmath.cpp" />
-    <ClCompile Include="tests\TESTosc.cpp" />
-    <ClCompile Include="tests\test_struct.cpp" />
+    <ClInclude Include="..\..\Include\oConcurrency\tests\oConcurrencyTests.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Include\oBase\tests\oBaseTests.h" />
-    <ClInclude Include="tests\test_struct.h" />
+    <ClCompile Include="tests\TESTconcurrent_queues.cpp" />
+    <ClCompile Include="tests\TESTconcurrent_stack.cpp" />
+    <ClCompile Include="tests\TESTcoroutine.cpp" />
+    <ClCompile Include="tests\TESTcountdown_latch.cpp" />
+    <ClCompile Include="tests\TESTparallel_for.cpp" />
+    <ClCompile Include="tests\TESTthreadpool.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{F02DF42C-54F3-4D80-B233-1D310B41917C}</ProjectGuid>
+    <ProjectGuid>{729E2C10-5E7B-409B-A881-AD62606A7827}</ProjectGuid>
     <RootNamespace>oBaseTests
     </RootNamespace>
     <SccProjectName>

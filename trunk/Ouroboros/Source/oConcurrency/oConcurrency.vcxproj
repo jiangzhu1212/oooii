@@ -22,6 +22,8 @@
     <ClInclude Include="..\..\Include\oConcurrency\all.h" />
     <ClInclude Include="..\..\Include\oConcurrency\backoff.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrency.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_opt.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack.h" />
     <ClInclude Include="..\..\Include\oConcurrency\coroutine.h" />
     <ClInclude Include="..\..\Include\oConcurrency\countdown_latch.h" />

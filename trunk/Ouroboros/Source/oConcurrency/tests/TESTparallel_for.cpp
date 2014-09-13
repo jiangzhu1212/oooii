@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oConcurrency/concurrency.h>
-#include <oBase/macros.h>
-#include <oBase/throw.h>
+#include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 static void test_a(size_t _Index, int* _pArray)
 {
@@ -27,7 +25,7 @@ static void test_abc(size_t _Index, int* _pArray, int _Loop, int _Test)
 	_pArray[_Index] = _Index % _Test ? 42 : final;
 }
 
-void TESTparallel_for()
+void TESTparallel_for(test_services& services)
 {
 	static const int mArraySize = 128;
 	int mTestArrayA[mArraySize];
@@ -38,7 +36,7 @@ void TESTparallel_for()
 		test_a(i, mTestArrayA);
 
 	parallel_for(0, mArraySize, std::bind(test_a, std::placeholders::_1, mTestArrayB));
-	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0, 
+	oTEST(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0, 
 		"ouro::parallel_for single param failed to compute singlethreaded result");
 
 	// Test two parameters
@@ -46,7 +44,7 @@ void TESTparallel_for()
 		test_ab(i, mTestArrayA, 2);
 
 	parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
-	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
+	oTEST(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
 		, "ouro::parallel_for failed to compute singlethreaded result");
 
 	// Test three parameters
@@ -54,11 +52,10 @@ void TESTparallel_for()
 		test_abc(i, mTestArrayA, 2, 7);
 
 	parallel_for(0, mArraySize, std::bind(test_abc, std::placeholders::_1, &mTestArrayB[0], 2, 7));
-	oCHECK(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
+	oTEST(memcmp(mTestArrayA, mTestArrayB, mArraySize * sizeof(int)) == 0
 		, "ouro::parallel_for failed to compute singlethreaded result");
 
 	parallel_for(0, mArraySize, std::bind(test_ab, std::placeholders::_1, &mTestArrayB[0], 2));
 };
 
-	} // namespace tests
-} // namespace ouro
+}}

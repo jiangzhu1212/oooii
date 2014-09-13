@@ -1,7 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef Ouroboros_test_services_h
-#define Ouroboros_test_services_h
 
 // This is an abstraction for the implementations required to run unit tests.
 // Libraries in Ouroboros are broken up into dependencies on each other and on 
@@ -13,10 +10,12 @@
 // an abstract interface for enabling the unit tests - it would be up to client 
 // code to implement these interfaces.
 
+#pragma once
 #include <oMemory/allocate.h>
 #include <oSurface/image.h>
 #include <chrono>
 #include <cstdarg>
+#include <functional>
 #include <memory>
 #include <stdexcept>
 
@@ -31,6 +30,28 @@ namespace surface { class buffer; }
 class test_services
 {
 public:
+
+	class finally
+	{
+	public:
+		explicit finally(std::function<void()>&& f) : fin(std::move(f)) {}
+		~finally() { fin(); }
+	private:
+		std::function<void()> fin;
+	};
+
+	// Detail some timings to TTY
+	class timer
+	{
+	public:
+		timer(test_services& services) : srv(services) { start = srv.now(); }
+		void reset() { start = srv.now(); }
+		double seconds() const { return srv.now() - start; }
+
+	private:
+		double start;
+		test_services& srv;
+	};
 
 	// Detail some timings to TTY
 	class scoped_timer
@@ -64,6 +85,9 @@ public:
 	// throws the specified message
 	inline void verror(const char* fmt, va_list args) { char msg[1024]; vsnprintf(msg, 1024, fmt, args); throw std::logic_error(msg); }
 	inline void error(const char* fmt, ...) { va_list a; va_start(a, fmt); verror(fmt, a); va_end(a); }
+
+	inline void vskip(const char* fmt, va_list args) { char msg[1024]; vsnprintf(msg, 1024, fmt, args); throw std::system_error(std::make_error_code(std::errc::permission_denied), msg); }
+	inline void skip(const char* fmt, ...) { va_list a; va_start(a, fmt); vskip(fmt, a); va_end(a); }
 
 	// Abstracts vsnprintf and snprintf (since Visual Studio complains about it)
 	virtual int vsnprintf(char* dst, size_t dst_size, const char* fmt, va_list args) = 0;
@@ -101,6 +125,4 @@ public:
 	virtual void check(const surface::image& img, int nth = 0, float max_rms_error = -1.0f) = 0;
 };
 
-} // namespace ouro
-
-#endif
+}

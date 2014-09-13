@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oConcurrency_threadpool_h
-#define oConcurrency_threadpool_h
 
 // A trivial thread pool that runs tasks on any thread at any time (no order 
 // guarantees).
 
+#pragma once
 #include <oConcurrency/backoff.h>
 #include <oConcurrency/countdown_latch.h>
 #include <atomic>
@@ -336,8 +334,5 @@ inline void parallel_for(threadpool<Traits, Alloc>& pool, size_t begin, size_t e
 	g.wait();
 }
 
-	} // namespace detail
-
+	}
 }
-
-#endif

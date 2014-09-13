@@ -1,13 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oConcurrency_concurrency_h
-#define oConcurrency_concurrency_h
 
 // Concurrent interfaces. These are not implemented in oBase but are used by 
 // oBase implementations since concurrency is such a big performance win and 
 // should be provided by the C++1x standard. Until then, client code must 
 // implement these interfaces.
 
+#pragma once
 #include <functional>
 #include <memory>
 
@@ -68,5 +66,3 @@ inline void serial_for(size_t begin, size_t end, const std::function<void(size_t
 void at_thread_exit(const std::function<void()>& task);
 
 }
-
-#endif

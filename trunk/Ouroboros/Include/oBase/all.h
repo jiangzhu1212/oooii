@@ -10,8 +10,6 @@
 #include <oBase/color.h>
 #include <oBase/colors.h>
 #include <oBase/compression.h>
-#include <oBase/concurrent_queue.h>
-#include <oBase/concurrent_queue_opt.h>
 #include <oBase/date.h>
 #include <oBase/dec3n.h>
 #include <oBase/enum_iterator.h>

@@ -1,10 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#ifndef oConcurrency_concurrent_stack_h
-#define oConcurrency_concurrent_stack_h
 
 // A concurrent stack that assumes a struct with a next pointer. No memory 
 // management is done by the class itself.
 
+#pragma once
 #include <oCompiler.h>
 #include <oConcurrency/tagged_pointer.h>
 #include <atomic>
@@ -175,5 +174,3 @@ typename concurrent_stack<T>::size_type concurrent_stack<T>::size()
 }
 
 }
-
-#endif
