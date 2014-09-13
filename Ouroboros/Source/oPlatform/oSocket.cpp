@@ -4,7 +4,7 @@
 #include <oBasis/oLockThis.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oScopedPartialTimeout.h>
-#include <oBase/concurrent_queue.h>
+#include <oConcurrency/concurrent_queue.h>
 #include <oPlatform/oSocket.h>
 #include <oCore/windows/win_winsock.h>
 #include "oIOCP.h"

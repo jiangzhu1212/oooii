@@ -1,13 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oConcurrency_countdown_latch_h
-#define oConcurrency_countdown_latch_h
 
 // Synchronization object often described as a reverse semaphore. This object
 // gets initialized with a count and gives the system API to decrement the 
 // count. When the count reaches 0, this object becomes unblocked. This object
 // must be manually reset to a new count in order to be reused.
 
+#pragma once
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -139,5 +137,3 @@ std::cv_status::cv_status countdown_latch::wait_for(const std::chrono::duration<
 }
 
 }
-
-#endif

@@ -2,9 +2,9 @@
 #include <oConcurrency/coroutine.h>
 #include <oBase/future.h>
 #include <thread>
+#include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 class MyContext : public coroutine_context
 {
@@ -33,7 +33,7 @@ void MyExecute(MyContext& _MyContext)
 	oCoEnd();
 }
 
-void TESTcoroutine()
+void TESTcoroutine(test_services& services)
 {
 	MyContext myContext;
 
@@ -44,5 +44,4 @@ void TESTcoroutine()
 	}
 }
 
-	} // namespace tests
-} // namespace ouro
+}}

@@ -1,13 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oConcurrency/countdown_latch.h>
-#include <oBase/finally.h>
 #include <oBase/future.h>
-#include <oBase/throw.h>
 #include <thread>
 #include <vector>
+#include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 static bool test(int _Count)
 {
@@ -44,11 +42,10 @@ static bool test(int _Count)
 	return count == latchCount;
 }
 
-void TESTcountdown_latch()
+void TESTcountdown_latch(test_services& services)
 {
-	oCHECK(test(5), "countdown_latch failed to wait properly.");
-	oCHECK(test(1), "countdown_latch failed to wait properly.");
+	oTEST(test(5), "countdown_latch failed to wait properly.");
+	oTEST(test(1), "countdown_latch failed to wait properly.");
 }
 
-	} // namespace tests
-} // namespace ouro
+}}

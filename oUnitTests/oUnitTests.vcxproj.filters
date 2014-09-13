@@ -37,6 +37,9 @@
     <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTString.cpp">
       <Filter>Source Files\Tests</Filter>
     </ClCompile>
+    <ClCompile Include="..\Ouroboros\Source\oPlatform\Tests\TESTConcurrency.cpp">
+      <Filter>Source Files\Tests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">

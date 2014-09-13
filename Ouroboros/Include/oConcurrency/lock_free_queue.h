@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oConcurrency_lock_free_queue_h
-#define oConcurrency_lock_free_queue_h
 
 // Single-reader, single-writer queue that uses no explicit mechanism for
 // synchronization.
 
+#pragma once
 #include <oConcurrency/concurrency.h>
 #include <oMemory/allocate.h>
 #include <atomic>
@@ -124,5 +122,3 @@ typename lock_free_queue<T>::size_type lock_free_queue<T>::size() const
 }
 
 }
-
-#endif

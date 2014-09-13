@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oConcurrency_backoff_h
-#define oConcurrency_backoff_h
 
 // A smarter spin lock useful as a prelude to a mutex lock or other act that 
 // will remove a thread from its timeslice. (from TBB source)
 
+#pragma once
 #include <thread>
 
 namespace ouro {
@@ -73,5 +71,3 @@ inline void backoff::reset()
 }
 
 }
-
-#endif

@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oConcurrency_tagged_pointer_h
-#define oConcurrency_tagged_pointer_h
 
 // A pointer that gives up some of its address space to protect against ABA 
 // concurrency issues.
 
+#pragma once
 #include <oCompiler.h>
 #include <atomic>
 #include <stdexcept>
@@ -98,5 +96,3 @@ private:
 };
 
 }
-
-#endif

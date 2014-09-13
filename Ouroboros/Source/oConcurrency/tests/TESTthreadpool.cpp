@@ -1,30 +1,24 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/assert.h>
-#include <oMemory/byte.h>
 #include <oConcurrency/concurrency.h>
-#include <oBase/finally.h>
-#include <oString/fixed_string.h>
 #include <oConcurrency/threadpool.h>
-#include <oBase/throw.h>
-#include <oBase/timer.h>
+#include <oConcurrency/tests/oConcurrencyTests.h>
+#include <oMemory/byte.h>
+#include <oString/fixed_string.h>
 #include <oCore/thread_traits.h>
 #include <atomic>
-#include <oBase/tests/oBaseTests.h>
-
 #include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
-template<typename ThreadpoolT> void test_basics(ThreadpoolT& t)
+template<typename ThreadpoolT> void test_basics(test_services& services, ThreadpoolT& t)
 {
-	oCHECK(t.joinable(), "Threadpool is not joinable");
+	oTEST(t.joinable(), "Threadpool is not joinable");
 
 	{
 		std::atomic<int> value(-1);
 		t.dispatch([&] { value++; });
 		t.flush();
-		oCHECK(value == 0, "Threadpool did not execute a single task correctly.");
+		oTEST(value == 0, "Threadpool did not execute a single task correctly.");
 	}
 
 	static const int kNumDispatches = 100;
@@ -34,11 +28,11 @@ template<typename ThreadpoolT> void test_basics(ThreadpoolT& t)
 			t.dispatch([&] { value++; });
 
 		t.flush();
-		oCHECK(value == kNumDispatches, "Threadpool did not dispatch correctly, or failed to properly block on flush");
+		oTEST(value == kNumDispatches, "Threadpool did not dispatch correctly, or failed to properly block on flush");
 	}
 }
 
-template<typename TaskGroupT> static void test_task_group(TaskGroupT& g)
+template<typename TaskGroupT> static void test_task_group(test_services& services, TaskGroupT& g)
 {
 	static const int kNumRuns = 100;
 	{
@@ -48,7 +42,7 @@ template<typename TaskGroupT> static void test_task_group(TaskGroupT& g)
 
 		g.wait();
 		std::atomic_thread_fence(std::memory_order_seq_cst);
-		oCHECK(value == kNumRuns, "std::function<void()>group either failed to run or failed to block on wait (1st run)");
+		oTEST(value == kNumRuns, "std::function<void()>group either failed to run or failed to block on wait (1st run)");
 	}
 
 	{
@@ -58,7 +52,7 @@ template<typename TaskGroupT> static void test_task_group(TaskGroupT& g)
 
 		g.wait();
 		std::atomic_thread_fence(std::memory_order_seq_cst);
-		oCHECK(value == kNumRuns, "std::function<void()>group was not able to be reused or either failed to run or failed to block on wait (2nd run)");
+		oTEST(value == kNumRuns, "std::function<void()>group was not able to be reused or either failed to run or failed to block on wait (2nd run)");
 	}
 }
 
@@ -67,48 +61,48 @@ static void set_value(size_t _Index, size_t* _pArray)
 	_pArray[_Index] = 1;
 }
 
-template<typename ThreadpoolT> static void test_parallel_for(ThreadpoolT& _Threadpool)
+template<typename ThreadpoolT> static void test_parallel_for(test_services& services, ThreadpoolT& thdpool)
 {
 	static const size_t kFullRange = 100;
 
 	size_t Results[kFullRange];
 	memset(Results, 0, kFullRange * sizeof(size_t));
 
-	ouro::detail::parallel_for<16>(_Threadpool, 10, kFullRange - 10, std::bind(set_value, std::placeholders::_1, Results));
+	ouro::detail::parallel_for<16>(thdpool, 10, kFullRange - 10, std::bind(set_value, std::placeholders::_1, Results));
 	for (size_t i = 0; i < 10; i++)
-		oCHECK(Results[i] == 0, "wrote out of range at beginning");
+		oTEST(Results[i] == 0, "wrote out of range at beginning");
 
 	for (size_t i = 10; i < kFullRange-10; i++)
-		oCHECK(Results[i] == 1, "bad write in main set_value loop");
+		oTEST(Results[i] == 1, "bad write in main set_value loop");
 
 	for (size_t i = kFullRange-10; i < kFullRange; i++)
-		oCHECK(Results[i] == 0, "wrote out of range at end");
+		oTEST(Results[i] == 0, "wrote out of range at end");
 }
 
-template<typename ThreadpoolT> static void TestT()
+template<typename ThreadpoolT> static void TestT(test_services& services)
 {
 	ThreadpoolT t;
-	ouro::finally OSE([&] { if (t.joinable()) t.join(); });
+	test_services::finally OSE([&] { if (t.joinable()) t.join(); });
 
-	test_basics(t);
+	test_basics(services, t);
 	t.join();
-	oCHECK(!t.joinable(), "Threadpool was joined, but remains joinable()");
+	oTEST(!t.joinable(), "Threadpool was joined, but remains joinable()");
 }
 
-void TESTthreadpool()
+void TESTthreadpool(test_services& services)
 {
-	TestT<threadpool<core_thread_traits>>();
+	TestT<threadpool<core_thread_traits>>(services);
 }
 
-void TESTtask_group()
+void TESTtask_group(test_services& services)
 {
 	threadpool<core_thread_traits> t;
-	ouro::finally OSE([&] { if (t.joinable()) t.join(); });
+	test_services::finally OSE([&] { if (t.joinable()) t.join(); });
 
 	detail::task_group<core_thread_traits> g(t);
-	test_task_group(g);
+	test_task_group(services, g);
 	
-	test_parallel_for(t);
+	test_parallel_for(services, t);
 }
 
 namespace RatcliffJobSwarm {
@@ -186,7 +180,7 @@ static void MandelbrotTask(size_t _Index, void* _pData, double _FX, double _FY, 
 
 } // namespace RatcliffJobSwarm
 
-void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool& _Threadpool)
+void TESTthreadpool_performance(ouro::test_services& services, test_threadpool& thdpool)
 {
 	const unsigned int taskRow = TILE_SIZE;
 	const unsigned int taskCount = taskRow*taskRow;
@@ -199,34 +193,34 @@ void TESTthreadpool_performance(ouro::test_services& _Services, test_threadpool&
 	std::vector<unsigned char> fractal;
 	fractal.resize(FRACTAL_SIZE*FRACTAL_SIZE);
 
-	const char* n = _Threadpool.name() ? _Threadpool.name() : "(null)";
+	const char* n = thdpool.name() ? thdpool.name() : "(null)";
 
-	oTRACEA("%s::dispatch()...", n);
-	timer t;
+	services.report("%s::dispatch()...", n);
+	test_services::timer t(services);
 	for (unsigned int y=0; y<TILE_SIZE; y++)
 		for (unsigned int x=0; x<TILE_SIZE; x++)
-			_Threadpool.dispatch(std::bind(RatcliffJobSwarm::MandelbrotTask
+			thdpool.dispatch(std::bind(RatcliffJobSwarm::MandelbrotTask
 			, y*TILE_SIZE + x, fractal.data(), x1, y1, xscale, yscale));
 
 	double scheduling_time = t.seconds();
 
-	_Threadpool.flush();
+	thdpool.flush();
 	double execution_time = t.seconds();
 
-	oTRACEA("%s::parallel_for()...", n);
+	services.report("%s::parallel_for()...", n);
 	t.reset();
-	bool DidParallelFor = _Threadpool.parallel_for(0, taskCount
+	bool DidParallelFor = thdpool.parallel_for(0, taskCount
 		, std::bind(RatcliffJobSwarm::MandelbrotTask, std::placeholders::_1, fractal.data(), x1, y1, xscale, yscale));
 
 	double parallel_for_time = t.seconds();
-	const char* DebuggerDisclaimer = _Services.is_debugger_attached() ? "(DEBUGGER ATTACHED: Non-authoritive) " : "";
+	const char* DebuggerDisclaimer = services.is_debugger_attached() ? "(DEBUGGER ATTACHED: Non-authoritive) " : "";
 
 	sstring st, et, pt;
 	format_duration(st, scheduling_time, true, true);
 	format_duration(et, execution_time, true, true);
 	format_duration(pt, parallel_for_time, true, true);
 
-	_Services.report(DEBUG_DISCLAIMER 
+	services.report(DEBUG_DISCLAIMER 
 		"%s%s: dispatch %s (%s sched), parallel_for %s"
 		, DebuggerDisclaimer, n, et.c_str(), st.c_str(), DidParallelFor ? pt.c_str() : "not supported");
 }
@@ -249,22 +243,21 @@ struct threadpool_impl : test_threadpool
 
 namespace {
 	// Implement this inside a TESTMyThreadpool() function.
-	template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl1(test_services& _Services)
+	template<typename test_threadpool_impl_t> void TESTthreadpool_performance_impl1(test_services& services)
 	{
 		test_threadpool_impl_t tp;
-		ouro::finally Release([&] { tp.release(); });
-		TESTthreadpool_performance(_Services, tp);
+		test_services::finally Release([&] { tp.release(); });
+		TESTthreadpool_performance(services, tp);
 	}
 }
 
-void TESTthreadpool_perf(test_services& _Services)
+void TESTthreadpool_perf(test_services& services)
 {
 	#ifdef _DEBUG
-		oTHROW(permission_denied, "This is slow in debug, and pointless as a benchmark.");
+		services.skip("This is slow in debug, and pointless as a benchmark.");
 	#else
-		TESTthreadpool_performance_impl1<threadpool_impl>(_Services);
+		TESTthreadpool_performance_impl1<threadpool_impl>(services);
 	#endif
 }
 
-	} // namespace tests
-} // namespace ouro
+}}
