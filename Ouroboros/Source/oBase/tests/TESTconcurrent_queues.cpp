@@ -1,6 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/concurrent_queue.h>
 #include <oBase/concurrent_queue_opt.h>
+#include <oConcurrency/concurrency.h>
 #include <oConcurrency/threadpool.h>
 #include <oConcurrency/event.h>
 #include <oBase/finally.h>
@@ -38,7 +39,7 @@ static void test_queue_basics(const char* _QueueName)
 		q.push(i);
 
 	oCHECK(!q.empty(), "%s reports empty when it's not", _QueueName);
-	oCHECK(q.size() == kNumPushes, "%s reports size %u, expected %u", _QueueName, q.size(), 100);
+	oCHECK(q.size() == kNumPushes, "%s reports size %u, expected %u", _QueueName, q.size(), kNumPushes);
 
 	int test = -1;
 	for (T i = 0; i < (kNumPushes-1); i++)
@@ -295,7 +296,8 @@ template<typename IntQueueT, typename test_bufferRefQueueT> void TestQueueT(cons
 	test_nontrivial_contents<test_bufferRefQueueT>(_QueueName);
 
 	// Enable this for some performance reporting (assuming it still passes the
-	// above tests!)
+	// above tests!) NOTE: for a fair test, use a custom block allocator for 
+	// ouro implementations.
 	#if 0
 		double time = test_performance<int, IntQueueT>(_QueueName);
 		oTRACE("%s perf test: %.03fs", _QueueName, time);

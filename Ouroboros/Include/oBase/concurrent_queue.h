@@ -1,17 +1,17 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 
-// Fine-grained concurrency FIFO queue based on:
+// Fine-grained concurrent FIFO queue based on:
 // http://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html
 // Use a concurrent fixed block allocator for concurrent_queue_nodes for 
 // best performance. This also ensures concurrency of non-trivial 
 // destructors.
 
 #pragma once
-#include <oConcurrency/concurrency.h>
-#include <oBase/concurrent_growable_object_pool.h>
+#include <oCompiler.h>
 #include <oConcurrency/tagged_pointer.h>
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 
 namespace ouro {
@@ -38,7 +38,7 @@ private:
 	std::atomic_flag flag;
 };
 
-template<typename T>
+template<typename T, typename Alloc = std::allocator<concurrent_queue_node<T>>>
 class concurrent_queue
 {
 public:
@@ -50,10 +50,11 @@ public:
 	typedef const value_type* const_pointer;
   typedef concurrent_queue_node<T> node_type;
   typedef typename node_type::pointer_type pointer_type;
+	typedef Alloc allocator_type;
 
 	// This implementation auto-grows capacity in a threadsafe manner if the 
 	// initial capacity is inadequate.
-	concurrent_queue();
+	concurrent_queue(const allocator_type& a = allocator_type());
 	~concurrent_queue();
 
 	// Push an element into the queue.
@@ -72,9 +73,8 @@ public:
 	// Returns true if no elements are in the queue
 	bool empty() const;
 
-	// SLOW! Returns the number of elements in the queue. Client code should not 
-	// be reliant on this value and the API is included only for debugging and 
-	// testing purposes. It is not threadsafe.
+	// Walks the nodes in a non-concurrent manner and returns the count (not 
+	// including the sentinel node). This should be used only for debugging.
 	size_type size() const;
 
 private:
@@ -83,16 +83,17 @@ private:
 	
 	oALIGNAS(oCACHE_LINE_SIZE) pointer_type head;
 	oALIGNAS(oCACHE_LINE_SIZE) pointer_type tail;
-	oALIGNAS(oCACHE_LINE_SIZE) concurrent_growable_object_pool<node_type> Pool;
+	allocator_type alloc;
 	
 	void internal_push(node_type* n);
 };
 
-template<typename T>
-concurrent_queue<T>::concurrent_queue()
-	: Pool(concurrent_growable_pool::max_blocks_per_chunk, oTAGGED_POINTER_ALIGNMENT)
+template<typename T, typename Alloc>
+concurrent_queue<T, Alloc>::concurrent_queue(const allocator_type& a)
+	: alloc(a)
 {
-	node_type* n = Pool.create(T());
+	node_type* n = alloc.allocate(1);
+	alloc.construct(n, T());
 	
 	// There's no potential for double-freeing here, so set it up for immediate 
 	// deallocation in try_pop code.
@@ -100,8 +101,8 @@ concurrent_queue<T>::concurrent_queue()
 	head = tail = pointer_type(n, 0);
 }
 
-template<typename T>
-concurrent_queue<T>::~concurrent_queue()
+template<typename T, typename Alloc>
+concurrent_queue<T, Alloc>::~concurrent_queue()
 {
 	if (!empty())
 		throw std::length_error("container not empty");
@@ -109,16 +110,16 @@ concurrent_queue<T>::~concurrent_queue()
 	node_type* n = head.ptr();
 	head = tail = pointer_type(nullptr, 0);
 	
-	// because the head value is destroyed in try_pop, don't double-destroy here.
-	Pool.deallocate(n);
+	// sentinel value should already be destroyed, so deallocate directly here
+	alloc.deallocate(n, sizeof(node_type));
 }
 
-template<typename T>
-void concurrent_queue<T>::internal_push(node_type* n)
+template<typename T, typename Alloc>
+void concurrent_queue<T, Alloc>::internal_push(node_type* n)
 {
 	if (!n) throw std::bad_alloc();
 	pointer_type t, next;
-	while (1)
+	for (;;)
 	{
 		t = tail;
 		next = t.ptr()->next;
@@ -138,38 +139,43 @@ void concurrent_queue<T>::internal_push(node_type* n)
 	tail.cas(t, pointer_type(n, t.tag()+1));
 }
 
-template<typename T>
-void concurrent_queue<T>::push(const_reference val)
+template<typename T, typename Alloc>
+void concurrent_queue<T, Alloc>::push(const_reference val)
 {
-	internal_push(Pool.create(val));
+	node_type* n = alloc.allocate(1);
+	alloc.construct(n, val);
+	internal_push(n);
 }
 
-template<typename T>
-void concurrent_queue<T>::push(value_type&& val)
+template<typename T, typename Alloc>
+void concurrent_queue<T, Alloc>::push(value_type&& val)
 {
-	internal_push(Pool.create(std::move(val)));
+	node_type* n = alloc.allocate(1);
+	alloc.construct(n, std::move(val));
+	internal_push(n);
 }
 
-template<typename T>
-bool concurrent_queue<T>::try_pop(reference val)
+template<typename T, typename Alloc>
+bool concurrent_queue<T, Alloc>::try_pop(reference val)
 {
 	pointer_type h, t, next;
-	while (1)
+	for (;;)
 	{
 		h = head;
 		t = tail;
 		next = h.ptr()->next;
+		auto nptr = next.ptr();
 		if (h == head)
 		{
 			if (h.ptr() == t.ptr())
 			{
-				if (!next.ptr()) return false;
-				tail.cas(t, pointer_type(next.ptr(), t.tag()+1));
+				if (!nptr) return false;
+				tail.cas(t, pointer_type(nptr, t.tag()+1));
 			}
 
 			else
 			{
-				if (head.cas(h, pointer_type(next.ptr(), h.tag()+1)))
+				if (head.cas(h, pointer_type(nptr, h.tag()+1)))
 				{
 					// Yes, the paper says the assignment should be outside the CAS,
 					// but we've worked around that so we can also call the destructor
@@ -179,46 +185,53 @@ bool concurrent_queue<T>::try_pop(reference val)
 					// memory immediately now that the CAS has made next the dummy head,
 					// or clean it up lazily later at the bottom. Either way, do it only 
 					// once.
-					val = std::move(next.ptr()->value);
-					next.ptr()->value.~T();
-					if (next.ptr()->should_deallocate())
-						Pool.deallocate(next.ptr());
-
+					val = std::move(nptr->value);
+					nptr->value.~T();
+					if (nptr->should_deallocate())
+						alloc.deallocate(nptr, sizeof(node_type));
 					break;
 				}
 			}
 		}
 	}
 
-	if (h.ptr()->should_deallocate())
-		Pool.deallocate(h.ptr()); // dtor called explicitly above so just deallocate
+	auto p = h.ptr();
+	if (p->should_deallocate())
+		alloc.deallocate(p, sizeof(node_type)); // dtor called explicitly above so just deallocate
+	
 	return true;
 }
 
-template<typename T>
-void concurrent_queue<T>::pop(reference val)
+template<typename T, typename Alloc>
+void concurrent_queue<T, Alloc>::pop(reference val)
 {
 	while (!try_pop(val));
 }
 
-template<typename T>
-void concurrent_queue<T>::clear()
+template<typename T, typename Alloc>
+void concurrent_queue<T, Alloc>::clear()
 {
 	value_type e;
 	while (try_pop(e));
 }
 
-template<typename T>
-bool concurrent_queue<T>::empty() const
+template<typename T, typename Alloc>
+bool concurrent_queue<T, Alloc>::empty() const
 {
 	return head == tail;
 }
 
-template<typename T>
-typename concurrent_queue<T>::size_type concurrent_queue<T>::size() const
+template<typename T, typename Alloc>
+typename concurrent_queue<T, Alloc>::size_type concurrent_queue<T, Alloc>::size() const
 {
-	// There's a dummy/extra node retained by this queue, so don't count that one.
-	return Pool.size() - 1;
+	size_type n = 0;
+	auto p = head.ptr()->next.ptr();
+	while (p)
+	{
+		n++;
+		p = p->next.ptr();
+	}
+	return n;
 }
 
 }
