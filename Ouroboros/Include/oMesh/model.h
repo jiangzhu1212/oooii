@@ -5,6 +5,7 @@
 
 // Runtime representation of vertex and index information
 
+#include <oMemory/allocate.h>
 #include <oMesh/mesh.h>
 
 namespace ouro { namespace mesh {

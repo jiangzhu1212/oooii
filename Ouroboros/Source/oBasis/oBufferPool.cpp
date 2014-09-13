@@ -2,7 +2,7 @@
 #include <oBasis/oBufferPool.h>
 #include <oString/fixed_string.h>
 #include <oBasis/oInitOnce.h>
-#include <oBase/lock_free_queue.h>
+#include <oConcurrency/lock_free_queue.h>
 #include <oBasis/oRefCount.h>
 #include <atomic>
 

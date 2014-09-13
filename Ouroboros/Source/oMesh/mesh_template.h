@@ -7,7 +7,7 @@
 #include <oBase/algorithm.h>
 #include <oMemory/byte.h>
 #include <oBase/color.h>
-#include <oBase/threadpool.h>
+#include <oConcurrency/threadpool.h>
 #include <oBase/throw.h>
 #include <oHLSL/oHLSLMath.h>
 #include <oHLSL/oHLSLTypes.h>

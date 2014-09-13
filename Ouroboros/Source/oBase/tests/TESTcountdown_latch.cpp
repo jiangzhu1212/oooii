@@ -1,5 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/countdown_latch.h>
+#include <oConcurrency/countdown_latch.h>
 #include <oBase/finally.h>
 #include <oBase/future.h>
 #include <oBase/throw.h>

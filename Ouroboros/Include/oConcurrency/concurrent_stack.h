@@ -98,7 +98,7 @@ void concurrent_stack<T>::push(pointer element)
 	tagged_pointer<T> n, o(head); 
 	do 
 	{	o = head;
-		element->next = reinterpret_cast<pointer>(o.pointer());
+		element->next = reinterpret_cast<pointer>(o.ptr());
 		n = tagged_pointer<T>(element, o.tag() + 1);
 	} while (!head.cas(o, n));
 }
@@ -107,7 +107,7 @@ template<typename T>
 typename concurrent_stack<T>::pointer concurrent_stack<T>::peek() const
 {
 	tagged_pointer<T> o(head);
-	return reinterpret_cast<pointer>(o.pointer());
+	return reinterpret_cast<pointer>(o.ptr());
 }
 
 template<typename T>
@@ -117,9 +117,9 @@ typename concurrent_stack<T>::pointer concurrent_stack<T>::pop()
 	pointer element = nullptr;
 	do 
 	{	o = head;
-		if (!o.pointer())
+		if (!o.ptr())
 			return nullptr;
-		element = reinterpret_cast<pointer>(o.pointer());
+		element = reinterpret_cast<pointer>(o.ptr());
 		n = tagged_pointer<T>(element->next, o.tag() + 1);
 	} while (!head.cas(o, n));
 	element->next = nullptr;
@@ -132,9 +132,9 @@ bool concurrent_stack<T>::pop(pointer* element)
 	tagged_pointer<T> n, o(head); 
 	do 
 	{	o = head;
-		if (!o.pointer())
+		if (!o.ptr())
 			return false;
-		*element = reinterpret_cast<pointer>(o.pointer());
+		*element = reinterpret_cast<pointer>(o.ptr());
 		n = tagged_pointer<T>((*element)->next, o.tag() + 1);
 	} while (!head.cas(o, n));
 	(*element)->next = nullptr;
@@ -145,7 +145,7 @@ template<typename T>
 bool concurrent_stack<T>::empty() const
 {
 	tagged_pointer<T> o(head);
-	return !o.pointer();
+	return !o.ptr();
 }
 
 template<typename T>
@@ -155,7 +155,7 @@ typename concurrent_stack<T>::pointer concurrent_stack<T>::pop_all()
 	tagged_pointer<T> n, o(head);
 	do 
 	{	o = head;		
-		element = reinterpret_cast<pointer>(o.pointer());
+		element = reinterpret_cast<pointer>(o.ptr());
 		n = tagged_pointer<T>(nullptr, o.tag() + 1);
 	} while (!head.cas(o, n));
 	return element;
