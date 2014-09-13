@@ -100,7 +100,7 @@ concurrent_queue_opt<T>::~concurrent_queue_opt()
 	if (!empty())
 		throw std::length_error("container not empty");
 
-	node_t* n = Head.pointer();
+	node_t* n = Head.ptr();
 	Head = Tail = pointer_t(nullptr, 0);
 
 	// Use deallocate, not destroy because the dummy value should not be valid to
@@ -116,14 +116,14 @@ void concurrent_queue_opt<T>::internal_push(node_t* _pNode)
 	while (true)
 	{
 		t = Tail;
-		_pNode->next = pointer_t(t.pointer(), t.tag()+1);
+		_pNode->next = pointer_t(t.ptr(), t.tag()+1);
 		if (Tail.cas(t, pointer_t(_pNode, t.tag()+1)))
 		{
 			// Seemingly during this time we have a new Tail, but Tail->next's prev 
 			// pointer is still uninitialized (that happens below) but any time 
 			// between the CAS and this next line a try_pop could try to deference
 			// its firstNodePrev, which might be pointing to the same thing as t here.
-			t.pointer()->prev = pointer_t(_pNode, t.tag());
+			t.ptr()->prev = pointer_t(_pNode, t.tag());
 			break;
 		}
 	}
@@ -148,9 +148,9 @@ void concurrent_queue_opt<T>::fix_list(pointer_t _Tail, pointer_t _Head)
 	curNode = _Tail;
 	while ((_Head == Head) && (curNode != _Head))
 	{
-		curNodeNext = curNode.pointer()->next;
-		curNodeNext.pointer()->prev = pointer_t(curNode.pointer(), curNode.tag()-1);
-		curNode = pointer_t(curNodeNext.pointer(), curNode.tag()-1);
+		curNodeNext = curNode.ptr()->next;
+		curNodeNext.ptr()->prev = pointer_t(curNode.ptr(), curNode.tag()-1);
+		curNode = pointer_t(curNodeNext.ptr(), curNode.tag()-1);
 	}
 }
 
@@ -162,7 +162,7 @@ bool concurrent_queue_opt<T>::try_pop(reference _Element)
 	{
 		h = Head;
 		t = Tail;
-		firstNodePrev = h.pointer()->prev;
+		firstNodePrev = h.ptr()->prev;
 		if (h == Head)
 		{
 			if (t != h)
@@ -174,7 +174,7 @@ bool concurrent_queue_opt<T>::try_pop(reference _Element)
 				// (or at least takes long enough that things settle). So here ensure 
 				// time is not wasted getting to the end-game only to try to dereference 
 				// a nullptr.
-				if (firstNodePrev.pointer() == nullptr)
+				if (firstNodePrev.ptr() == nullptr)
 					continue;
 
 				if (firstNodePrev.tag() != h.tag())
@@ -183,10 +183,10 @@ bool concurrent_queue_opt<T>::try_pop(reference _Element)
 					continue;
 				}
 
-				_Element = std::move(firstNodePrev.pointer()->value);
-				if (Head.cas(h, pointer_t(firstNodePrev.pointer(), h.tag()+1)))
+				_Element = std::move(firstNodePrev.ptr()->value);
+				if (Head.cas(h, pointer_t(firstNodePrev.ptr(), h.tag()+1)))
 				{
-					Pool.destroy(h.pointer());
+					Pool.destroy(h.ptr());
 					return true;
 				}
 			}

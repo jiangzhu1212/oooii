@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBasis/oError.h>
 #include <oBasis/oRefCount.h>
-#include <oBase/event.h>
+#include <oConcurrency/event.h>
 #include <oCore/process.h>
 #include <oPlatform/oSocket.h>
 #include <oPlatform/oTest.h>

@@ -4,7 +4,7 @@
 #include <oBase/assert.h>
 #include <oBase/throw.h>
 #include <oMemory/byte.h>
-#include <oBase/event.h>
+#include <oConcurrency/event.h>
 #include <oBase/finally.h>
 #include <oBase/guid.h>
 #include <oMemory/murmur3.h>

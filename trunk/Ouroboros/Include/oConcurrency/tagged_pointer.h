@@ -63,9 +63,13 @@ public:
 		tag_and_pointer = uintptr_t(ptr) | uintptr_t((_tag & tag_mask) << tag_shift) | uintptr_t(mark_mask);
 	}
 
-	bool marked() const
+	// similar to std::atomic_flag::test_and_flag(), this tests if the pointer is
+	// marked and returns its prior state. This can be used to have multiple code
+	// paths result in exactly one winner that can follow through on additional
+	// execution.
+	bool test_and_mark()
 	{
-		return tag_and_pointer & mark_mask;
+		return (tag_and_pointer.fetch_or(mark_mask) & mark_mask) != 0;
 	}
 
 	size_t tag() const
@@ -73,12 +77,20 @@ public:
 		return (tag_and_pointer & tag_mask) >> tag_shift;
 	}
 	
-	T* pointer() const { return (T*)(tag_and_pointer & ~(tag_mask)); }
+	T* ptr() const { return (T*)(tag_and_pointer & ~(tag_mask)); }
 	
 	inline bool cas(tagged_pointer<T>& Old, const tagged_pointer<T>& New)
 	{
 		uintptr_t O = Old.tag_and_pointer;
 		return tag_and_pointer.compare_exchange_strong(O, New.tag_and_pointer);
+	}
+
+	// convenience to do the common operation of cas'ing in a new value while 
+	// incrementing the tag. This should fail if old is different, same with a 
+	// different tag, or is marked.
+	bool assign(tagged_pointer<T>& old, tagged_pointer<T>& New)
+	{
+		return cas(old, tagged_pointer<T>(New.ptr(), old.tag()+1));
 	}
 
 private:
