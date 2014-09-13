@@ -1,27 +1,20 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/concurrent_hash_map.h>
-#include <oMemory/allocate.h>
-#include <oMemory/bit.h>
-#include <oMemory/byte.h>
-#include <oBase/macros.h>
-#include <atomic>
-
-#define DECLARE_KV std::atomic<key_type>* keys = (std::atomic<key_type>*)this->keys; std::atomic<value_type>* values = (std::atomic<value_type>*)this->values;
 
 namespace ouro {
 
 concurrent_hash_map::concurrent_hash_map()
-	: modulo_mask(0)
-	, keys(nullptr)
+	: keys(nullptr)
 	, values(nullptr)
+	, modulo_mask(0)
 {}
 
-concurrent_hash_map::concurrent_hash_map(concurrent_hash_map&& _That)
-	: modulo_mask(_That.modulo_mask)
-	, keys(_That.keys)
-	, values(_That.values)
+concurrent_hash_map::concurrent_hash_map(concurrent_hash_map&& that)
+	: keys(that.keys)
+	, values(that.values)
+	, modulo_mask(that.modulo_mask)
 {
-	_That.deinitialize();
+	that.deinitialize();
 }
 
 concurrent_hash_map::concurrent_hash_map(void* memory, size_type capacity)
@@ -41,15 +34,14 @@ concurrent_hash_map::~concurrent_hash_map()
 	deinitialize();
 }
 
-concurrent_hash_map& concurrent_hash_map::operator=(concurrent_hash_map&& _That)
+concurrent_hash_map& concurrent_hash_map::operator=(concurrent_hash_map&& that)
 {
-	if (this != &_That)
+	if (this != &that)
 	{
 		deinitialize();
-
-		oMOVE0(modulo_mask);
-		oMOVE0(keys);
-		oMOVE0(values);
+		modulo_mask = that.modulo_mask; that.modulo_mask = 0;
+		keys = that.keys; that.keys = 0;
+		values = that.values; that.values = 0;
 	}
 	return *this;
 }
@@ -63,8 +55,8 @@ concurrent_hash_map::size_type concurrent_hash_map::initialize(void* memory, siz
 	if (memory)
 	{
 		modulo_mask = n - 1;
-		keys = memory;
-		values = byte_add(memory, key_bytes);
+		keys = (std::atomic<key_type>*)memory;
+		values = (std::atomic<value_type>*)((uint8_t*)memory + key_bytes);
 		memset(keys, 0xff/*nullkey*/, key_bytes);
 		memset(values, nullidx, value_bytes);
 		this->alloc = alloc;
@@ -104,7 +96,6 @@ void concurrent_hash_map::clear()
 
 concurrent_hash_map::size_type concurrent_hash_map::size() const
 {
-	DECLARE_KV
 	size_type n = 0;
 	for (uint32_t i = 0; i <= modulo_mask; i++)
 		if (keys[i].load(std::memory_order_relaxed) != nullkey && 
@@ -115,7 +106,6 @@ concurrent_hash_map::size_type concurrent_hash_map::size() const
 
 concurrent_hash_map::size_type concurrent_hash_map::reclaim()
 {
-	DECLARE_KV
 	size_type n = 0;
 	uint32_t i = 0;
 	while (i <= modulo_mask)
@@ -156,7 +146,6 @@ concurrent_hash_map::size_type concurrent_hash_map::reclaim()
 
 concurrent_hash_map::size_type concurrent_hash_map::migrate(concurrent_hash_map& that, size_type max_moves)
 {
-	DECLARE_KV
 	size_type n = 0;
 	uint32_t i = 0;
 	while (i <= modulo_mask)
@@ -179,7 +168,6 @@ concurrent_hash_map::value_type concurrent_hash_map::set(const key_type& key, co
 {
 	if (key == nullkey)
 		throw std::invalid_argument("key must be non-zero");
-	DECLARE_KV
 	for (key_type k = key, j = 0;; k++, j++)
 	{
 		if (j > modulo_mask)
@@ -205,7 +193,6 @@ concurrent_hash_map::value_type concurrent_hash_map::get(const key_type& key) co
 {
 	if (key == nullkey)
 		throw std::invalid_argument("key must be non-zero");
-	DECLARE_KV
 	for (key_type k = key;; k++)
 	{
 		k &= modulo_mask;

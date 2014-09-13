@@ -1,17 +1,19 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// http://preshing.com/20130605/the-worlds-simplest-lock-free-hash-table/
+
 // A simple concurrent hash map
+// http://preshing.com/20130605/the-worlds-simplest-lock-free-hash-table/
+
 // Rules:
 // A hash value of nullkey is not allowed - it is used to flag invalid entries
 // A value of nullidx is not allowed - it is used to flag invalid entries
 // The hash cannot be resized. To make a bigger hash, create a new one and re-hash 
 // all entries.
-#pragma once
-#ifndef oBase_concurrent_hash_map
-#define oBase_concurrent_hash_map
 
+#pragma once
 #include <oMemory/allocate.h>
 #include <cstdint>
+#include <atomic>
+#include <memory>
 
 namespace ouro {
 
@@ -32,7 +34,7 @@ public:
 	concurrent_hash_map();
 
 	// moves another hash map into a new one
-	concurrent_hash_map(concurrent_hash_map&& _That);
+	concurrent_hash_map(concurrent_hash_map&& that);
 
 	// ctor creates as a valid hash map using external memory
 	concurrent_hash_map(void* memory, size_type capacity);
@@ -44,7 +46,7 @@ public:
 	~concurrent_hash_map();
 
 	// calls deinit on this, moves that's memory under the same config
-	concurrent_hash_map& operator=(concurrent_hash_map&& _That);
+	concurrent_hash_map& operator=(concurrent_hash_map&& that);
 
 	// initialize the hash map with external memory. Returns required 
 	// size for the specified capacity. Pass nullptr for memory to 
@@ -107,9 +109,9 @@ public:
 	value_type get(const key_type& key) const;
 
 private:
+	std::atomic<key_type>* keys;
+	std::atomic<value_type>* values;
 	uint32_t modulo_mask;
-	void* keys;
-	void* values;
 	allocator alloc;
 
 	concurrent_hash_map(const concurrent_hash_map&);
@@ -117,5 +119,3 @@ private:
 };
 
 }
-
-#endif
