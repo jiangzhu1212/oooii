@@ -13,7 +13,6 @@ using namespace ouro::tests;
 oTEST_REGISTER_BASE_TEST0(aaboxf);
 oTEST_REGISTER_BASE_TEST(compression);
 oTEST_REGISTER_BASE_TEST0(concurrent_growable_object_pool);
-oTEST_REGISTER_BASE_TEST(concurrent_hash_map);
 oTEST_REGISTER_BASE_TEST(date);
 oTEST_REGISTER_BASE_TEST0(equal);
 oTEST_REGISTER_BASE_TEST0(filter_chain);

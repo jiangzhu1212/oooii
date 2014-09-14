@@ -22,6 +22,7 @@
     <ClInclude Include="..\..\Include\oConcurrency\all.h" />
     <ClInclude Include="..\..\Include\oConcurrency\backoff.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrency.h" />
+    <ClInclude Include="..\..\Include\oConcurrency\concurrent_hash_map.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_opt.h" />
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_stack.h" />
@@ -31,6 +32,9 @@
     <ClInclude Include="..\..\Include\oConcurrency\lock_free_queue.h" />
     <ClInclude Include="..\..\Include\oConcurrency\tagged_pointer.h" />
     <ClInclude Include="..\..\Include\oConcurrency\threadpool.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="concurrent_hash_map.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{22787A33-41A0-4E87-8115-DAA82AC40CDF}</ProjectGuid>
@@ -66,7 +70,6 @@
     <Import Project="..\Build\msvs\Properties\Release32.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
@@ -74,7 +77,6 @@
     <Import Project="..\Build\msvs\Properties\Debug32.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
@@ -82,7 +84,6 @@
     <Import Project="..\Build\msvs\Properties\Release64.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
@@ -90,7 +91,6 @@
     <Import Project="..\Build\msvs\Properties\Debug64.props" />
     <Import Project="..\Build\msvs\Properties\Common.props" />
     <Import Project="..\Build\msvs\Properties\lib.props" />
-    <Import Project="..\Build\msvs\Properties\pch.props" />
     <Import Project="..\Build\msvs\Properties\OuroborosPrivateExternalDependencies.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />

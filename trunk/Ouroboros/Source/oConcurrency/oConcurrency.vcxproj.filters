@@ -45,5 +45,13 @@
     <ClInclude Include="..\..\Include\oConcurrency\concurrent_queue_opt.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oConcurrency\concurrent_hash_map.h">
+      <Filter>oConcurrency</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="concurrent_hash_map.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Declarations of oBase unit tests. These throw on failure.
-#pragma once
-#ifndef oBaseTests_h
-#define oBaseTests_h
 
+// Declarations of oBase unit tests. These throw on failure.
+
+#pragma once
 #include <functional>
 
 namespace ouro {
@@ -15,7 +14,6 @@ namespace ouro {
 		void TESTaaboxf();
 		void TESTcompression(test_services& services);
 		void TESTconcurrent_growable_object_pool();
-		void TESTconcurrent_hash_map(test_services& services);
 		void TESTdate(test_services& services);
 		void TESTequal();
 		void TESTfilter_chain();
@@ -61,7 +59,4 @@ namespace ouro {
 			TESTthreadpool_performance(services, tp);
 		}
 
-	} // namespace tests
-} // namespace ouro
-
-#endif
+}}

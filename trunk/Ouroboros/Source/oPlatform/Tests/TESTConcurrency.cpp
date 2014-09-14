@@ -9,6 +9,7 @@ using namespace ouro::tests;
 #define oTEST_REGISTER_CONCURRENCY_TEST_BUGGED0(_Name, _Bugged) oTEST_THROWS_REGISTER_BUGGED0(oCONCAT(oConcurrency_, _Name), oCONCAT(TEST, _Name), _Bugged)
 #define oTEST_REGISTER_CONCURRENCY_TEST_BUGGED(_Name, _Bugged) oTEST_THROWS_REGISTER_BUGGED(oCONCAT(oConcurrency_, _Name), oCONCAT(TEST, _Name), _Bugged)
 
+oTEST_REGISTER_CONCURRENCY_TEST(concurrent_hash_map);
 oTEST_REGISTER_CONCURRENCY_TEST(concurrent_queue);
 oTEST_REGISTER_CONCURRENCY_TEST(concurrent_queue_concrt);
 oTEST_REGISTER_CONCURRENCY_TEST(concurrent_queue_opt);

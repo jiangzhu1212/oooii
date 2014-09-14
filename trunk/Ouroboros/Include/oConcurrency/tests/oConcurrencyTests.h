@@ -7,6 +7,7 @@
 
 namespace ouro { class test_services; namespace tests {
 
+void TESTconcurrent_hash_map(test_services& services);
 void TESTconcurrent_queue(test_services& services);
 void TESTconcurrent_queue_concrt(test_services& services);
 void TESTconcurrent_queue_opt(test_services& services);

@@ -33,9 +33,6 @@
     <ClCompile Include="tests\TESTfilter_chain.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="tests\TESTconcurrent_hash_map.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="tests\TESTosc.cpp">
       <Filter>Source</Filter>
     </ClCompile>
