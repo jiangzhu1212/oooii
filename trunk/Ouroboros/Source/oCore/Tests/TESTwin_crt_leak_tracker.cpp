@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oPlatform/oTest.h>
-#include <oBase/future.h>
+#include <oConcurrency/future.h>
 #include <oBase/finally.h>
 #include <oCore/windows/win_crt_leak_tracker.h>
 

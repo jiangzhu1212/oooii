@@ -8,7 +8,7 @@
 #define oGUI_window_h
 
 #include <oGUI/oGUI.h>
-#include <oBase/future.h>
+#include <oConcurrency/future.h>
 #include <oCore/display.h>
 #include <oSurface/image.h>
 

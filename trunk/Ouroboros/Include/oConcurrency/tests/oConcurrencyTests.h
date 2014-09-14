@@ -16,6 +16,7 @@ void TESTconcurrent_stack(test_services& services);
 void TESTcoroutine(test_services& services);
 void TESTcountdown_latch(test_services& services);
 void TESTdate(test_services& services);
+void TESTfuture(test_services& services);
 void TESTparallel_for(test_services& services);
 void TESTtask_group(test_services& services);
 void TESTthreadpool(test_services& services);

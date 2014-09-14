@@ -5,7 +5,7 @@
 #include <oBasis/oINISerialize.h>
 #include <oBasis/oRefcount.h>
 #include <oPlatform/oP4.h>
-#include <oBase/future.h>
+#include <oConcurrency/future.h>
 #include <oBase/timer.h>
 #include <oCore/filesystem_util.h>
 #include <oConcurrency/mutex.h>

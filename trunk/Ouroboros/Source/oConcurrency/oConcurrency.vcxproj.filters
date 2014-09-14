@@ -51,12 +51,18 @@
     <ClInclude Include="..\..\Include\oConcurrency\mutex.h">
       <Filter>oConcurrency</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oConcurrency\future.h">
+      <Filter>oConcurrency</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="concurrent_hash_map.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="mutex.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="future.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>

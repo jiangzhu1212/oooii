@@ -43,9 +43,6 @@
     <ClCompile Include="gzip.cpp">
       <Filter>Source\compression</Filter>
     </ClCompile>
-    <ClCompile Include="future.cpp">
-      <Filter>Source\concurrency</Filter>
-    </ClCompile>
     <ClCompile Include="aabox.cpp">
       <Filter>Source\geometry</Filter>
     </ClCompile>
@@ -156,9 +153,6 @@
     <ClInclude Include="..\..\Include\oBase\snappy.h">
       <Filter>oBase\compression</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\future.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\fourcc.h">
       <Filter>oBase\types</Filter>
     </ClInclude>
@@ -228,9 +222,6 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_object_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h">
-      <Filter>oBase\concurrency</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h">
       <Filter>oBase\allocator</Filter>
@@ -252,6 +243,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h">
       <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h">
+      <Filter>oBase\traits</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -281,12 +275,6 @@
     </Filter>
     <Filter Include="Source\allocator">
       <UniqueIdentifier>{9894e0ad-b396-4c37-9e08-db792ce0fd10}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="oBase\concurrency">
-      <UniqueIdentifier>{4490e2e7-ee4b-4705-9c77-8c280786991e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\concurrency">
-      <UniqueIdentifier>{f538199e-3667-45d3-bc23-1779fd189b3f}</UniqueIdentifier>
     </Filter>
     <Filter Include="oBase\traits">
       <UniqueIdentifier>{13c70c7a-a442-4046-bcd7-01d043f5d2dc}</UniqueIdentifier>

@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oMemory/concurrent_linear_allocator.h>
 #include <oMemory/byte.h>
-#include <oBase/future.h>
+#include <oConcurrency/future.h>
 #include <oBase/macros.h>
 #include <oBase/throw.h>
 #include <vector>

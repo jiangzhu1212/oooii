@@ -1,7 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_future_h
-#define oBase_future_h
 
 // An approximation of C++11's std::future but with dangling calls for a client 
 // lib to implement. GCC Source, VS2010, just::thread: all implement std::async 
@@ -10,7 +7,7 @@
 // with some dangling interface usage so that a work-stealing threadpool can be 
 // implemented to improve performance.
 
-#include <oBase/callable.h>
+#pragma once
 #include <oConcurrency/concurrency.h>
 
 #include <atomic>
@@ -21,6 +18,10 @@
 #include <mutex>
 #include <system_error>
 #include <utility>
+
+// Vardiatic templates replaces this, but until they're available use callable
+// macros even though it pokes back into oBase.
+#include <oBase/callable.h>
 
 namespace ouro {
 
@@ -703,5 +704,3 @@ namespace future_detail {
 #endif
 
 }
-
-#endif
