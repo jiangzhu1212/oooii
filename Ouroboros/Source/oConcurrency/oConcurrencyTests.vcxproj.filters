@@ -35,5 +35,8 @@
     <ClCompile Include="tests\TESTconcurrent_hash_map.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="tests\TESTfuture.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

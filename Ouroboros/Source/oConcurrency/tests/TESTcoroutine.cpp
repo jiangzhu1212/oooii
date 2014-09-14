@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oConcurrency/coroutine.h>
-#include <oBase/future.h>
+#include <oConcurrency/future.h>
 #include <thread>
 #include "../../test_services.h"
 

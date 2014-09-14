@@ -1,8 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oConcurrency/concurrency.h>
-#include <oBase/future.h>
-#include <oBase/throw.h>
-#include <oBase/timer.h>
+#include <oConcurrency/future.h>
 #include <thread>
 
 #include "../../test_services.h"
@@ -25,7 +23,7 @@ static void exercise_thread(size_t _Index, int* _pResults, unsigned int _Runtime
 	_pResults[_Index] = n;
 }
 
-static bool exercise_all_threads(ouro::test_services& _Services)
+static bool exercise_all_threads(ouro::test_services& services)
 {
 	const int nTasks = 5 * std::thread::hardware_concurrency(); // ensure more work than the number of threads.
 	int* results = (int*)_alloca(nTasks * sizeof(int));
@@ -33,45 +31,41 @@ static bool exercise_all_threads(ouro::test_services& _Services)
 
 	parallel_for(0, size_t(nTasks), std::bind(exercise_thread, std::placeholders::_1, results, 2500));
 	for (int i = 0; i < nTasks; i++)
-		oCHECK(results[i] != -1, "Invalid results from parallel_for");
+		oTEST(results[i] != -1, "Invalid results from parallel_for");
 	return true;
 }
 
 static bool fail_and_report()
 {
 	if (1)
-		oTHROW(not_supported, "not supported");
+		throw std::invalid_argument("not supported");
 	return false;
 }
 
-static void test_workstealing(ouro::test_services& _Services)
+static void test_workstealing(ouro::test_services& services)
 {
 	float CPUavg = 0.0f, CPUpeak = 0.0f;
-	ouro::future<bool> Result = ouro::async(exercise_all_threads, std::ref(_Services));
+	ouro::future<bool> Result = ouro::async(exercise_all_threads, std::ref(services));
 
-	oTRACE("Waiting for result...");
+	services.report("Waiting for result...");
 	bool r = Result.get();
-	oCHECK(r, "future returned, but the algo returned the wrong result");
+	oTEST(r, "future returned, but the algo returned the wrong result");
 
-	_Services.get_cpu_utilization(&CPUavg, &CPUpeak);
+	services.get_cpu_utilization(&CPUavg, &CPUpeak);
 	if (CPUpeak <= 99.0f)
 	{
 		float CPUpeak2 = 0.0f;
-		_Services.reset_cpu_utilization();
+		services.reset_cpu_utilization();
 		std::this_thread::sleep_for(std::chrono::seconds(10));
-		_Services.get_cpu_utilization(&CPUavg, &CPUpeak2);
+		services.get_cpu_utilization(&CPUavg, &CPUpeak2);
 		if (CPUpeak2 > 5.0f)
-			oTHROW(permission_denied, "There is too much CPU activity currently on the system to properly judge ouro::future's workstealing capabilities.");
+			services.skip("There is too much CPU activity currently on the system to properly judge ouro::future's workstealing capabilities.");
 		else
-		{
-			char buf[128];
-			snprintf(buf, "Failed to achieve 100%c CPU utilization. Peaked at %.01f%c", '%', CPUpeak, '%');
-			oTHROW(protocol_error, buf);
-		}
+			services.error("Failed to achieve 100%c CPU utilization. Peaked at %.01f%c", '%', CPUpeak, '%');
 	}
 }
 
-void TESTfuture(ouro::test_services& _Services)
+void TESTfuture(ouro::test_services& services)
 {
 	// Test packaged_task with void return type
 	{
@@ -91,14 +85,14 @@ void TESTfuture(ouro::test_services& _Services)
 		// Get future before execution
 		ouro::future<int> hmmfuture = hmmm.get_future();
 		hmmm(10, "a", 20);
-		oCHECK(hmmfuture.get() == 30, "Unexpected result1");
+		oTEST(hmmfuture.get() == 30, "Unexpected result1");
 
 		// Test if reset works
 		hmmm.reset();
 		hmmm(20, "b", 30);
 		// Get future after execution
 		hmmfuture = hmmm.get_future();
-		oCHECK(hmmfuture.get() == 50, "Unexpected result2");
+		oTEST(hmmfuture.get() == 50, "Unexpected result2");
 	}
 
 	// Test swapping packaged_tasks
@@ -106,7 +100,7 @@ void TESTfuture(ouro::test_services& _Services)
 		ouro::packaged_task<int(int,int)> tasktest1([&](int _Param1, int _Param2)->int{ return _Param1 + _Param2; });
 		ouro::packaged_task<int(int,int)> tasktest2([&](int _Param1, int _Param2)->int{ return _Param1 - _Param2; });
 
-		oCHECK(tasktest1.valid() && tasktest2.valid(), "ouro::packaged_task should have been valid");
+		oTEST(tasktest1.valid() && tasktest2.valid(), "ouro::packaged_task should have been valid");
 
 		tasktest1.swap(tasktest2);
 
@@ -117,10 +111,10 @@ void TESTfuture(ouro::test_services& _Services)
 		ouro::future<int> tasktest2_future = tasktest2.get_future();
 
 		// tasktest1 should subtract
-		oCHECK(tasktest1_future.get() == 10, "Unexpected result3");
+		oTEST(tasktest1_future.get() == 10, "Unexpected result3");
 
 		// tasktest2 should add
-		oCHECK(tasktest2_future.get() == 30, "Unexpected result4");
+		oTEST(tasktest2_future.get() == 30, "Unexpected result4");
 	}
 
 	// Test a packaged_task through async with maximum number of arguments
@@ -134,7 +128,7 @@ void TESTfuture(ouro::test_services& _Services)
 				return false; 
 		}, 1,2,3,4,5,6,7,8,9,10);
 
-		oCHECK(Result2.get(), "Unexpected result5");
+		oTEST(Result2.get(), "Unexpected result5");
 	}
 
 	// test void async()
@@ -142,14 +136,14 @@ void TESTfuture(ouro::test_services& _Services)
 		std::atomic_int value;
 		value.store(0);
 		ouro::async([&] { value++; });
-		ouro::timer t;
+		test_services::timer t(services);
 		while (t.seconds() < 2.0) { if (value.load() != 0) break; }
-		oCHECK(value != 0, "timed out waiting for void async() to finish");
+		oTEST(value != 0, "timed out waiting for void async() to finish");
 	}
 
 	// test failure
 	{
-		oTRACE("Testing graceful failure - there should be some std::system_error \"not supported\" that come through.");
+		services.report("Testing graceful failure - there should be some std::system_error \"not supported\" that come through.");
 
 		ouro::future<bool> FutureToFail = ouro::async(fail_and_report);
 
@@ -157,15 +151,15 @@ void TESTfuture(ouro::test_services& _Services)
 		try { ThisShouldFail = FutureToFail.get(); }
 		catch (std::system_error& e)
 		{
-			oCHECK(e.code() == std::errc::not_supported, "error code not properly set");
+			oTEST(e.code() == std::errc::not_supported, "error code not properly set");
 			ThisShouldFail = false;
 		}
 
-		oCHECK(ThisShouldFail == false, "Error reporting failed");
-		oTRACE("Testing graceful failure - done.");
+		oTEST(ThisShouldFail == false, "Error reporting failed");
+		services.report("Testing graceful failure - done.");
 	}
 
-	test_workstealing(_Services);
+	test_workstealing(services);
 };
 
 	} // namespace tests

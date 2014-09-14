@@ -25,7 +25,6 @@
     <ClCompile Include="concurrent_growable_pool.cpp" />
     <ClCompile Include="concurrent_registry.cpp" />
     <ClCompile Include="date.cpp" />
-    <ClCompile Include="future.cpp" />
     <ClCompile Include="gpu_api.cpp" />
     <ClCompile Include="gzip.cpp" />
     <ClCompile Include="input.cpp" />
@@ -75,7 +74,6 @@
     <ClInclude Include="..\..\Include\oBase\finally.h" />
     <ClInclude Include="..\..\Include\oBase\fixed_vector.h" />
     <ClInclude Include="..\..\Include\oBase\fourcc.h" />
-    <ClInclude Include="..\..\Include\oBase\future.h" />
     <ClInclude Include="..\..\Include\oBase\gpu_api.h" />
     <ClInclude Include="..\..\Include\oBase\guid.h" />
     <ClInclude Include="..\..\Include\oBase\gzip.h" />
