@@ -13,5 +13,6 @@
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/event.h>
 #include <oConcurrency/lock_free_queue.h>
+#include <oConcurrency/mutex.h>
 #include <oConcurrency/tagged_pointer.h>
 #include <oConcurrency/threadpool.h>

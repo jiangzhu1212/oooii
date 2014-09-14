@@ -1,12 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_string_path_h
-#define oString_string_path_h
 
 // String manipulation for file paths.
 
-#include <oCompiler.h>
-#include <oBase/macros.h>
+#pragma once
 #include <functional>
 
 namespace ouro {
@@ -101,5 +97,3 @@ char* search_path(char (&dst)[size]
 const char** argtok(void* (*allocate)(size_t), const char* app_path, const char* command_line, int* out_num_args);
 
 }
-
-#endif

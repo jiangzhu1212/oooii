@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_string_h
-#define oString_string_h
 
 // String manipulation functions that really should be in the C/C++ standard.
 
-#include <oCompiler.h>
+#pragma once
+#include <oCompiler.h> // oRESTRICT
 #include <oString/string_platform.h>
 #include <cstdint>
 #include <ctype.h>
@@ -216,5 +214,3 @@ template<typename T> char* strbitmask(char* dst, size_t dst_size, int flags, con
 template<typename T, size_t size> char* strbitmask(char (&dst)[size], int flags, const char* all_zeros_value, const char* (*as_string)(T value)) { return strbitmask(dst, size, flags, all_zeros_value, (asstr_fn)as_string); }
 
 }
-
-#endif

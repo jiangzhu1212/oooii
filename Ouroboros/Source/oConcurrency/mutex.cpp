@@ -1,7 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oCore/mutex.h>
+#include <oConcurrency/mutex.h>
 #include <oConcurrency/backoff.h>
 #include <stdexcept>
+#include <Windows.h>
 
 #if NTDDI_VERSION >= NTDDI_WIN7
 	#define oHAS_SLIM_TRY_LOCK
@@ -15,9 +16,9 @@ static_assert(sizeof(ouro::recursive_mutex) == sizeof(CRITICAL_SECTION), "size m
 #endif
 
 #ifdef _DEBUG
-	#define ASSIGN_TID() ThreadID = std::this_thread::get_id()
-	#define ASSIGN_TID_CHECKED() do { if (Footprint && ThreadID == std::this_thread::get_id()) { throw std::logic_error("non-recursive already locked on this thread"); } ThreadID = std::this_thread::get_id(); } while(false)
-	#define CLEAR_TID()	ThreadID = std::thread::id()
+	#define ASSIGN_TID() tid = std::this_thread::get_id()
+	#define ASSIGN_TID_CHECKED() do { if (footprint && tid == std::this_thread::get_id()) { throw std::logic_error("non-recursive already locked on this thread"); } tid = std::this_thread::get_id(); } while(false)
+	#define CLEAR_TID()	tid = std::thread::id()
 	#ifdef oHAS_SLIM_TRY_LOCK
 		#define CHECK_UNLOCKED() if (!try_lock()) throw std::logic_error("mutex locked on destruction")
 	#else
@@ -38,7 +39,7 @@ namespace ouro {
 
 mutex::mutex()
 {
-	InitializeSRWLock((PSRWLOCK)&Footprint);
+	InitializeSRWLock((PSRWLOCK)&footprint);
 }
 
 mutex::~mutex()
@@ -48,19 +49,19 @@ mutex::~mutex()
 
 mutex::native_handle_type mutex::native_handle()
 {
-	return (PSRWLOCK)&Footprint;
+	return (PSRWLOCK)&footprint;
 }
 
 void mutex::lock()
 {
 	ASSIGN_TID_CHECKED();
-	AcquireSRWLockExclusive((PSRWLOCK)&Footprint);
+	AcquireSRWLockExclusive((PSRWLOCK)&footprint);
 }
 
 bool mutex::try_lock()
 {
 	#ifdef oHAS_SLIM_TRY_LOCK
-		return !!TryAcquireSRWLockExclusive((PSRWLOCK)&Footprint);
+		return !!TryAcquireSRWLockExclusive((PSRWLOCK)&footprint);
 	#else
 		return false;
 	#endif
@@ -69,19 +70,19 @@ bool mutex::try_lock()
 void mutex::unlock()
 {
 	CLEAR_TID();
-	ReleaseSRWLockExclusive((PSRWLOCK)&Footprint);
+	ReleaseSRWLockExclusive((PSRWLOCK)&footprint);
 }
 
 void shared_mutex::lock_shared()
 {
 	ASSIGN_TID_CHECKED();
-	AcquireSRWLockShared((PSRWLOCK)&Footprint);
+	AcquireSRWLockShared((PSRWLOCK)&footprint);
 }
 
 bool shared_mutex::try_lock_shared()
 {
 	#ifdef oHAS_SLIM_TRY_LOCK
-		return !!TryAcquireSRWLockShared((PSRWLOCK)&Footprint);
+		return !!TryAcquireSRWLockShared((PSRWLOCK)&footprint);
 	#else
 		return false;
 	#endif
@@ -90,38 +91,38 @@ bool shared_mutex::try_lock_shared()
 void shared_mutex::unlock_shared()
 {
 	CLEAR_TID();
-	ReleaseSRWLockShared((PSRWLOCK)&Footprint);
+	ReleaseSRWLockShared((PSRWLOCK)&footprint);
 }
 
 recursive_mutex::recursive_mutex()
 {
-	InitializeCriticalSection((LPCRITICAL_SECTION)Footprint);
+	InitializeCriticalSection((LPCRITICAL_SECTION)footprint);
 }
 
 recursive_mutex::~recursive_mutex()
 {
 	CHECK_UNLOCKED();
-	DeleteCriticalSection((LPCRITICAL_SECTION)Footprint);
+	DeleteCriticalSection((LPCRITICAL_SECTION)footprint);
 }
 
 recursive_mutex::native_handle_type recursive_mutex::native_handle()
 {
-	return (LPCRITICAL_SECTION)Footprint;
+	return (LPCRITICAL_SECTION)footprint;
 }
 
 void recursive_mutex::lock()
 {
-	EnterCriticalSection((LPCRITICAL_SECTION)Footprint);
+	EnterCriticalSection((LPCRITICAL_SECTION)footprint);
 }
 
 bool recursive_mutex::try_lock()
 {
-	return !!TryEnterCriticalSection((LPCRITICAL_SECTION)Footprint);
+	return !!TryEnterCriticalSection((LPCRITICAL_SECTION)footprint);
 }
 
 void recursive_mutex::unlock()
 {
-	LeaveCriticalSection((LPCRITICAL_SECTION)Footprint);
+	LeaveCriticalSection((LPCRITICAL_SECTION)footprint);
 }
 
 bool timed_mutex::try_lock_for(unsigned int _TimeoutMS)
@@ -149,9 +150,9 @@ bool timed_mutex::try_lock_for(unsigned int _TimeoutMS)
 }
 
 once_flag::once_flag()
-	: Footprint(0)
+	: footprint(0)
 {
-	InitOnceInitialize((PINIT_ONCE)Footprint);
+	InitOnceInitialize((PINIT_ONCE)footprint);
 }
 
 BOOL CALLBACK InitOnceCallback(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Context)
@@ -161,9 +162,9 @@ BOOL CALLBACK InitOnceCallback(PINIT_ONCE InitOnce, PVOID Parameter, PVOID* Cont
 	return TRUE;
 }
 
-void call_once(once_flag& _Flag, const std::function<void()>& _Function)
+void call_once(once_flag& flag, const std::function<void()>& fn)
 {
-	InitOnceExecuteOnce(*(PINIT_ONCE*)&_Flag, InitOnceCallback, (PVOID)&_Function, nullptr);
+	InitOnceExecuteOnce(*(PINIT_ONCE*)&flag, InitOnceCallback, (PVOID)&fn, nullptr);
 }
 
 } // namespace ouro

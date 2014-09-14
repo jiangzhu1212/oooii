@@ -84,7 +84,7 @@ void TESTfilesystem_monitor()
 		});
 
 	path FolderToMonitor = root / RelFolderToMonitor;
-	Monitor->watch(FolderToMonitor, oKB(64), true);
+	Monitor->watch(FolderToMonitor, 65536, true);
 
 	{
 		// should generate a modified event, windows a little iffy on that though, 

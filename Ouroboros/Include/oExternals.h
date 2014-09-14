@@ -1,7 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #pragma once
-#ifndef Ouroboros_Externals_h
-#define Ouroboros_Externals_h
 
 // Describes summary and description strings for each of the 3rd-party open-
 // source software used by Ouroboros.
@@ -22,5 +21,3 @@
 	oOUROBOROS_EXTERNAL("tbb", "v4.2 update 2", "https://www.threadingbuildingblocks.org/", "https://www.threadingbuildingblocks.org/licensing", "") \
 	oOUROBOROS_EXTERNAL("tlsf", "v3.0", "http://tlsf.baisoku.org/", "http://tlsf.baisoku.org/", "") \
 	oOUROBOROS_EXTERNAL("zlib", "v1.2.5", "http://www.zlib.net/", "https://www.threadingbuildingblocks.org/licensing", "")
-
-#endif

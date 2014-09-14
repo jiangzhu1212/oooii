@@ -171,6 +171,12 @@
     <ProjectReference Include="..\oBase\oBase.vcxproj">
       <Project>{b13f3cbd-b601-4196-bf6f-2eaa8cdfedc3}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\oConcurrency\oConcurrency.vcxproj">
+      <Project>{22787a33-41a0-4e87-8115-daa82ac40cdf}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\oCore\oConcurrencyOuro.vcxproj">
+      <Project>{ef2f3d98-d872-4fb8-8083-97bb5089972e}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\oCore\oCore.vcxproj">
       <Project>{7dc758b0-32cf-4bbc-abde-0eb53b9ef93c}</Project>
     </ProjectReference>

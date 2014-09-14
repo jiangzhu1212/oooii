@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMesh_obj_h
-#define oMesh_obj_h
 
 // Structures and utilities for loading the Wavefront OBJ 3D object file format
 
+#pragma once
 #include <oBase/invalid.h>
 #include <oBase/colors.h>
 #include <oString/path.h>
@@ -12,9 +10,7 @@
 #include <oMesh/mesh.h>
 #include <memory>
 
-namespace ouro {
-	namespace mesh {
-		namespace obj {
+namespace ouro { namespace mesh { namespace obj {
 
 // http://local.wasp.uwa.edu.au/~pbourke/dataformats/mtl/
 namespace illumination
@@ -201,8 +197,4 @@ public:
 	virtual material_lib_info get_info() const = 0;
 };
 
-		} // namespace obj
-	} // namespace mesh 
-} // namespace ouro
-
-#endif
+}}}

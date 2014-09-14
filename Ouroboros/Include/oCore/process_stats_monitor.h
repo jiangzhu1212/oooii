@@ -6,7 +6,7 @@
 #define oCore_process_stats_monitor_h
 
 #include <oCore/debugger.h>
-#include <oCore/mutex.h>
+#include <oConcurrency/mutex.h>
 #include <oCore/process.h>
 #include <oConcurrency/backoff.h>
 #include <oBase/moving_average.h>

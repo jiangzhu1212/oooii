@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMesh_h
-#define oMesh_h
 
 // Library for handling buffers of irregular networks of points, lines, indices and triangles.
 
+#pragma once
 #include <oBase/aabox.h>
 #include <oBase/color.h>
 #include <oBase/dec3n.h>
@@ -308,5 +306,3 @@ inline color lerp_colors(const color& a, const color& b, const float s) { return
 uint clip_convex(const planef& plane, const float3* oRESTRICT polygon, uint num_vertices, float3* oRESTRICT out_clipped_vertices);
 
 }}
-
-#endif

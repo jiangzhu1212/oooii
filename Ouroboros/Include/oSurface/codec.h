@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oSurface_codec_h
-#define oSurface_codec_h
 
 // Facade for encoding and decoding several image formats
 
+#pragma once
 #include <oSurface/image.h>
 #include <oSurface/surface.h>
 
@@ -79,5 +77,3 @@ inline image decode(const scoped_allocation& buffer
 	, const mip_layout& layout = mip_layout::none) { return decode(buffer, buffer.size(), default_allocator, default_allocator, desired_format, layout); }
 
 }}
-
-#endif

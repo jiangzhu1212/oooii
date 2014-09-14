@@ -1,12 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_csv_h
-#define oString_csv_h
 
-// Parses a string as an CSV document by replacing certain delimiters inline 
+// Parses a string as a CSV document by replacing certain delimiters inline 
 // with null terminators and caching indices into the Buffers where values
 // begin for very fast access to contents.
 
+#pragma once
 #include <oString/text_document.h>
 #include <cstdint>
 #include <cstring>
@@ -109,5 +107,3 @@ void csv::index_buffer(size_t est_num_cols)
 }
 
 }
-
-#endif

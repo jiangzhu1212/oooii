@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_uri_traits_h
-#define oString_uri_traits_h
 
 // Traits of uri rules used in ouro::uri
 
+#pragma once
 #include <oString/path_traits.h>
 
 #define oMAX_URI 2048
@@ -77,5 +75,3 @@ template<> struct uri_traits<wchar_t, unsigned long long, default_posix_path_tra
 };
 
 }
-
-#endif

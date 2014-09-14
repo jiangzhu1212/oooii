@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_stringize_h
-#define oString_stringize_h
 
 // Template policy for converting data types to and from string without
 // requiring std::string. Also as-string for constant types like enums.
 
+#pragma once
 #include <oString/string.h>
 #include <type_traits>
 #include <vector>
@@ -116,5 +114,3 @@ bool from_string_float_array(float* out_value, size_t num_values, const char* sr
 bool from_string_double_array(double* out_value, size_t num_values, const char* src);
 
 }
-
-#endif

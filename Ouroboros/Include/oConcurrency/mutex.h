@@ -1,14 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Approximation of the upcoming C++1x std::mutex objects.
 
 #pragma once
-#ifndef oCore_mutex_h
-#define oCore_mutex_h
-
 #include <cassert>
 #include <chrono>
 #include <thread>
-#include <oBase/callable.h>
 
 // To keep the main classes neat, collect all the platform-specific forward
 // declaration here. This is done in this vague manner to avoid including 
@@ -30,12 +27,12 @@ namespace ouro {
 
 	protected:
 		#if defined(_WIN32) || defined(_WIN64)
-			void* Footprint;
+			void* footprint;
 		#else
 			#error unsupported platform (mutex)
 		#endif
 		#ifdef _DEBUG
-			std::thread::id ThreadID;
+			std::thread::id tid;
 		#endif
 	
 	private:
@@ -72,9 +69,9 @@ namespace ouro {
 
 	private:
 		#ifdef _WIN64
-			mutable unsigned long long Footprint[5]; // RTL_CRITICAL_SECTION
+			mutable unsigned long long footprint[5]; // RTL_CRITICAL_SECTION
 		#elif defined(_WIN32)
-			mutable unsigned int Footprint[6];
+			mutable unsigned int footprint[6];
 		#else
 			#error unsupported platform (recursive_mutex)
 		#endif
@@ -90,19 +87,19 @@ namespace ouro {
 		~timed_mutex() {}
 
 		template<typename Rep, typename Period>
-		bool try_lock_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
+		bool try_lock_for(std::chrono::duration<Rep,Period> const& relative_time)
 		{
-			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(_RelativeTime);
+			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(relative_time);
 			Rep count = ms.count();
 			if (Rep(count) != count)
-				throw std::range_error("_RelativeTime is too large");
+				throw std::range_error("relative_time is too large");
 			return try_lock_for(static_cast<unsigned int>(ms.count()));
 		}
 
 		template<typename Clock, typename Duration>
-		bool try_lock_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
+		bool try_lock_until(std::chrono::time_point<Clock,Duration> const& absolute_time)
 		{
-			auto duration = time_point_cast<std::chrono::high_resolution_clock::time_point>(_AbsoluteTime) - 
+			auto duration = time_point_cast<std::chrono::high_resolution_clock::time_point>(absolute_time) - 
 				std::chrono::high_resolution_clock::now();
 			return try_lock_until(duration);
 		}
@@ -129,8 +126,8 @@ namespace ouro {
 	public:
 		typedef Mutex mutex_type;
 
-		explicit lock_guard(mutex_type& _Mutex) : m(_Mutex) { m.lock(); }
-		lock_guard(mutex_type& _Mutex, adopt_lock_t) : m(_Mutex) {}
+		explicit lock_guard(mutex_type& mtx) : m(mtx) { m.lock(); }
+		lock_guard(mutex_type& mtx, adopt_lock_t) : m(mtx) {}
 		~lock_guard() { m.unlock(); }
 	private:
 		Mutex& m;
@@ -142,8 +139,8 @@ namespace ouro {
 	{
 	public:
 		typedef Mutex mutex_type;
-		explicit shared_lock(mutex_type& _Mutex) : m(_Mutex) { m.lock_shared(); }
-		shared_lock(mutex_type& _Mutex, adopt_lock_t) : m(_Mutex) {}
+		explicit shared_lock(mutex_type& mtx) : m(mtx) { m.lock_shared(); }
+		shared_lock(mutex_type& mtx, adopt_lock_t) : m(mtx) {}
 		~shared_lock() { m.unlock_shared(); }
 	private:
 		Mutex& m;
@@ -152,8 +149,8 @@ namespace ouro {
 	};
 
 #define assert_not_owner() \
-	assert(pMutex && "Must have valid mutex"); \
-	assert((!pMutex || (pMutex && !OwnsLock)) && "Deadlock would occur")
+	assert(mtx && "Must have valid mutex"); \
+	assert((!mtx || (mtx && !owner)) && "Deadlock would occur")
 
 	template <class Mutex> class unique_lock
 	{
@@ -161,118 +158,118 @@ namespace ouro {
 		typedef Mutex mutex_type;
 
 		unique_lock()
-			: pMutex(nullptr)
-			, OwnsLock(false)
+			: mtx(nullptr)
+			, owner(false)
 		{}
 		
-		explicit unique_lock(mutex_type& _Mutex)
-			: pMutex(&_Mutex)
-			, OwnsLock(false)
+		explicit unique_lock(mutex_type& mtx)
+			: mtx(&mtx)
+			, owner(false)
 		{
 			lock();
-			OwnsLock = true;
+			owner = true;
 		}
 
-		unique_lock(mutex_type& _Mutex, adopt_lock_t)
-			: pMutex(&_Mutex)
-			, OwnsLock(true)
+		unique_lock(mutex_type& mtx, adopt_lock_t)
+			: mtx(&mtx)
+			, owner(true)
 		{}
 
-		unique_lock(mutex_type& _Mutex, defer_lock_t)
-			: pMutex(&_Mutex)
-			, OwnsLock(false)
+		unique_lock(mutex_type& mtx, defer_lock_t)
+			: mtx(&mtx)
+			, owner(false)
 		{}
 
-		unique_lock(mutex_type& _Mutex, try_to_lock_t)
-			: pMutex(&_Mutex)
-			, OwnsLock(pMutex->try_lock())
+		unique_lock(mutex_type& mtx, try_to_lock_t)
+			: mtx(&mtx)
+			, owner(mtx->try_lock())
 		{}
 
 		template<typename Clock,typename Duration>
-		unique_lock(mutex_type& _Mutex, std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
-			: pMutex(&_Mutex)
-			, OwnsLock(pMutex->try_lock_until(_AbsoluteTime))
+		unique_lock(mutex_type& mtx, std::chrono::time_point<Clock,Duration> const& absolute_time)
+			: mtx(&mtx)
+			, owner(mtx->try_lock_until(absolute_time))
 		{}
 
 		template<typename Rep,typename Period>
-		unique_lock(mutex_type& _Mutex, std::chrono::duration<Rep,Period> const& _RelativeTime)
-			: pMutex(&_Mutex)
-			, OwnsLock(pMutex->try_lock_for(_RelativeTime))
+		unique_lock(mutex_type& mtx, std::chrono::duration<Rep,Period> const& relative_time)
+			: mtx(&mtx)
+			, owner(mtx->try_lock_for(relative_time))
 		{}
 
 		~unique_lock()
 		{
-			if (OwnsLock)
+			if (owner)
 				unlock();
 		}
 
-		unique_lock(unique_lock&& _That)
-			: OwnsLock(_That.OwnsLock)
-			, pMutex(_That.release())
+		unique_lock(unique_lock&& that)
+			: owner(that.owner)
+			, mtx(that.release())
 		{}
 
-		unique_lock& operator=(unique_lock&& _That)
+		unique_lock& operator=(unique_lock&& that)
 		{
-			if (OwnsLock)
+			if (owner)
 				unlock();
 
-			OwnsLock = _That.OwnsLock;
-			pMutex = _That.release();
+			owner = that.owner;
+			mtx = that.release();
 			return *this;
 		}
 
-		void swap(unique_lock&& _That)
+		void swap(unique_lock&& that)
 		{
-			std::swap(pMutex, _That.pMutex);
-			std::swap(OwnsLock, _That.OwnsLock);
+			std::swap(mtx, that.mtx);
+			std::swap(owner, that.owner);
 		}
 
 		void lock()
 		{
 			assert_not_owner();
-			pMutex->lock();
-			OwnsLock = true;
+			mtx->lock();
+			owner = true;
 		}
 
 		bool try_lock()
 		{
 			assert_not_owner();
-			OwnsLock = pMutex->try_lock();
-			return OwnsLock;
+			owner = mtx->try_lock();
+			return owner;
 		}
 
-		template<typename Rep, typename Period> bool try_lock_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
+		template<typename Rep, typename Period> bool try_lock_for(std::chrono::duration<Rep,Period> const& relative_time)
 		{
 			assert_not_owner();
-			OwnsLock = pMutex->try_lock_for(_RelativeTime);
-			return OwnsLock;
+			owner = mtx->try_lock_for(relative_time);
+			return owner;
 		}
 
-		template<typename Clock, typename Duration> bool try_lock_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
+		template<typename Clock, typename Duration> bool try_lock_until(std::chrono::time_point<Clock,Duration> const& absolute_time)
 		{
 			assert_not_owner();
-			OwnsLock = pMutex->try_lock_until(_AbsoluteTime);
-			return OwnsLock;
+			owner = mtx->try_lock_until(absolute_time);
+			return owner;
 		}
 
 		void unlock()
 		{
-			assert(OwnsLock && "Cannot unlock a non-locked mutex (or a mutex whose lock is owned by another object)");
-			if (pMutex)
+			assert(owner && "Cannot unlock a non-locked mutex (or a mutex whose lock is owned by another object)");
+			if (mtx)
 			{
-				pMutex->unlock();
-				OwnsLock = false;
+				mtx->unlock();
+				owner = false;
 			}
 		}
 
 		/*explicit*/ operator bool() const { return owns_lock(); }
-		bool owns_lock() const { return OwnsLock; }
-		mutex_type* mutex() const { return pMutex; }
-		mutex_type* release() { mutex_type* pCopy = pMutex; OwnsLock = false; pMutex = nullptr; return pCopy; }
+		bool owns_lock() const { return owner; }
+		mutex_type* mutex() const { return mtx; }
+		mutex_type* release() { mutex_type* copy = mtx; owner = false; mtx = nullptr; return copy; }
 
 	private:
-		mutex_type* pMutex;
-		bool OwnsLock;
+		mutex_type* mtx;
+		bool owner;
 
 		unique_lock(unique_lock const&); /* = delete */
 		unique_lock& operator=(unique_lock const&); /* = delete */
@@ -285,7 +282,7 @@ namespace ouro {
 
 	private:
 		#if defined(_WIN32) || defined(_WIN64)
-			void* Footprint;
+			void* footprint;
 		#else
 			#error unsupported platform (once_flag)
 		#endif
@@ -293,11 +290,5 @@ namespace ouro {
 		once_flag& operator=(const once_flag&);
 	};
 
-	void call_once(once_flag& _Flag, const std::function<void>& _Function);
-	#ifndef oHAS_VARIADIC_TEMPLATES
-		#define oDEFINE_CALLABLE_call_once(_nArgs) oCALLABLE_CONCAT(oCALLABLE_TEMPLATE,_nArgs) void call_once(once_flag& _Flag, oCALLABLE_CONCAT(oCALLABLE_PARAMS,_nArgs)) { call_once(_Flag, oCALLABLE_CONCAT(oCALLABLE_BIND,_nArgs)); }
-		oCALLABLE_PROPAGATE(oDEFINE_CALLABLE_call_once);
-	#endif
-} // namespace ouro
-
-#endif
+	void call_once(once_flag& flag, const std::function<void>& fn);
+}

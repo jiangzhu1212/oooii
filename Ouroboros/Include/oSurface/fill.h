@@ -1,17 +1,15 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#ifndef oSurface_fill_h
-#define oSurface_fill_h
 
 // Simple utilities for filling a 2D surface with color in various patterns. 
 // This is useful in generating debug images/textures for infrastructure 
 // bringup.
 
+#pragma once
 #include <oBase/color.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <functional>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
 // Fills the specified 32-bit BGRA (color) buffer with the specified solid 
 // color.
@@ -39,7 +37,4 @@ bool fill_grid_numbers(const int2& _Dimensions, const int2& _GridDimensions, std
 // Fills a 3D texture with colors that go from black to white, red along U, green along V, blue along W
 void fill_color_cube(color* _pColors, size_t _RowPitch, size_t _SlicePitch, const int3& _Dimensions);
 
-	} // namespace surface
-} // namespace ouro
-
-#endif
+}}

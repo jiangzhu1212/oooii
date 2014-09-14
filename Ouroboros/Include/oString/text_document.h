@@ -1,8 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_text_document_h
-#define oString_text_document_h
-
 // A text document is basically a text file format considered solely as a string 
 // without any file I/O. This head includes a common base on which to build such 
 // parsers. The intent of an ouro::text_document is fast load speed, read-only
@@ -10,6 +6,7 @@
 // that a nul-terminated string that is compliant with the text document's 
 // format can be parsed inline into an indexable state.
 
+#pragma once
 #include <system_error>
 #include <oMemory/allocate.h>
 #include <oString/fixed_string.h>
@@ -110,5 +107,3 @@ public:
 		};
 	}
 }
-
-#endif

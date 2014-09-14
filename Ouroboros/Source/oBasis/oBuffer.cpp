@@ -6,7 +6,7 @@
 #include <oBasis/oLockedPointer.h>
 #include <oBasis/oRefCount.h>
 #include <oBasis/oURI.h>
-#include <oCOre/mutex.h>
+#include <oConcurrency/mutex.h>
 
 using namespace ouro;
 

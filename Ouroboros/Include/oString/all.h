@@ -1,9 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_all_h
-#define oBase_all_h
+
 // Convenience "all headers" header for precompiled header files. Do NOT use 
 // this to be lazy when including headers in .cpp files. Be explicit.
+
+#pragma once
 #include <oString/atof.h>
 #include <oString/csv.h>
 #include <oString/fixed_string.h>
@@ -22,4 +22,3 @@
 #include <oString/text_document.h>
 #include <oString/uri.h>
 #include <oString/xml.h>
-#endif
