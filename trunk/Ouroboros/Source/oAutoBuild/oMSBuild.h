@@ -2,7 +2,7 @@
 #pragma  once
 #ifndef oMSBuild_h
 #define oMSBuild_h
-#include <oBase/event.h>
+#include <oConcurrency/event.h>
 #include <oBase/invalid.h>
 #include <oBasis/oRTTI.h>
 #include "oP4ChangelistBuilder.h"
