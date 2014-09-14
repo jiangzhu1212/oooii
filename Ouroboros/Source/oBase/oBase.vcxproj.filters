@@ -67,9 +67,6 @@
     <ClCompile Include="concurrent_registry.cpp">
       <Filter>Source\containers</Filter>
     </ClCompile>
-    <ClCompile Include="concurrent_hash_map.cpp">
-      <Filter>Source\containers</Filter>
-    </ClCompile>
     <ClCompile Include="gpu_api.cpp">
       <Filter>Source\types</Filter>
     </ClCompile>
@@ -230,9 +227,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_object_pool.h">
       <Filter>oBase\allocator</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\concurrent_hash_map.h">
-      <Filter>oBase\containers</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h">
       <Filter>oBase\concurrency</Filter>

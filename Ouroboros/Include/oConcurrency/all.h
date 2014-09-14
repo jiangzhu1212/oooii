@@ -5,6 +5,7 @@
 #pragma once
 #include <oConcurrency/backoff.h>
 #include <oConcurrency/concurrency.h>
+#include <oConcurrency/concurrent_hash_map.h>
 #include <oConcurrency/concurrent_queue.h>
 #include <oConcurrency/concurrent_queue_opt.h>
 #include <oConcurrency/concurrent_stack.h>

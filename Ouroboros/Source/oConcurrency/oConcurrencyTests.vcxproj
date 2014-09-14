@@ -22,6 +22,7 @@
     <ClInclude Include="..\..\Include\oConcurrency\tests\oConcurrencyTests.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="tests\TESTconcurrent_hash_map.cpp" />
     <ClCompile Include="tests\TESTconcurrent_queues.cpp" />
     <ClCompile Include="tests\TESTconcurrent_stack.cpp" />
     <ClCompile Include="tests\TESTcoroutine.cpp" />

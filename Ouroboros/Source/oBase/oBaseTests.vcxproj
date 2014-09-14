@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="tests\TESTcompression.cpp" />
     <ClCompile Include="tests\TESTconcurrent_growable_object_pool.cpp" />
-    <ClCompile Include="tests\TESTconcurrent_hash_map.cpp" />
     <ClCompile Include="tests\TESTdate.cpp" />
     <ClCompile Include="tests\TESTfilter_chain.cpp" />
     <ClCompile Include="Tests\TESTfourcc.cpp" />

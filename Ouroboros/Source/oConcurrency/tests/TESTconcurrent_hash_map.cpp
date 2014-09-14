@@ -1,7 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#include <oBase/concurrent_hash_map.h>
+#include <oConcurrency/concurrent_hash_map.h>
 #include <oMemory/fnv1a.h>
-#include <oBase/throw.h>
 #include <string>
 #include <vector>
 
@@ -10,31 +9,31 @@
 namespace ouro {
 	namespace tests {
 
-static void generate_strings(test_services& _Services, std::vector<std::string>& _Strings, size_t _NumToGenerate)
+static void generate_strings(test_services& services, std::vector<std::string>& _Strings, size_t _NumToGenerate)
 {
 	_Strings.reserve(_NumToGenerate);
 
 	for (size_t i = 0; i < _NumToGenerate; i++)
 	{
-		size_t StringLength = _Services.rand();
+		size_t StringLength = services.rand();
 		std::string s;
 		s.reserve(StringLength);
 
 		for (size_t i = 0; i < StringLength; i++)
-			s += (char)_Services.rand();
+			s += (char)services.rand();
 
 		_Strings.push_back(s);
 	}
 }
 
-void TEST_chm_basics(test_services& _Services)
+void TEST_chm_basics(test_services& services)
 {
 	concurrent_hash_map h(12);
-	oCHECK(h.capacity() == 31, "pow-of-two rounding failed");
-	oCHECK(h.size() == 0, "should be empty");
+	oTEST(h.capacity() == 31, "pow-of-two rounding failed");
+	oTEST(h.size() == 0, "should be empty");
 
 	std::vector<std::string> Strings;
-	generate_strings(_Services, Strings, 10);
+	generate_strings(services, Strings, 10);
 
 	std::vector<concurrent_hash_map::key_type> Keys;
 	Keys.resize(Strings.size());
@@ -44,30 +43,30 @@ void TEST_chm_basics(test_services& _Services)
 	for (unsigned int i = 0; i < static_cast<unsigned int>(Strings.size()); i += 3)
 		h.set(Keys[i], i);
 
-	oCHECK(h.size() == ((Strings.size() / 3) + 1), "set failed");
+	oTEST(h.size() == ((Strings.size() / 3) + 1), "set failed");
 
 	for (unsigned int i = 0; i < static_cast<unsigned int>(Strings.size()); i += 3)
-		oCHECK(i == h.get(Keys[i]), "get failed");
+		oTEST(i == h.get(Keys[i]), "get failed");
 
 	for (unsigned int i = 0; i < static_cast<unsigned int>(Strings.size()); i++)
 		h.set(Keys[i], i);
 
-	oCHECK(h.size() == Strings.size(), "set2 failed");
+	oTEST(h.size() == Strings.size(), "set2 failed");
 
 	for (unsigned int i = 0; i < static_cast<unsigned int>(Strings.size()); i += 3)
 		h.remove(Keys[i]);
 
-	oCHECK(h.size() == (Strings.size() - 4), "set2 failed");
+	oTEST(h.size() == (Strings.size() - 4), "set2 failed");
 
-	oCHECK(4 == h.reclaim(), "reclaim failed");
+	oTEST(4 == h.reclaim(), "reclaim failed");
 
 	h.clear();
-	oCHECK(h.empty(), "clear failed");
+	oTEST(h.empty(), "clear failed");
 }
 
-void TESTconcurrent_hash_map(test_services& _Services)
+void TESTconcurrent_hash_map(test_services& services)
 {
-	TEST_chm_basics(_Services);
+	TEST_chm_basics(services);
 }
 
 	} // namespace tests
