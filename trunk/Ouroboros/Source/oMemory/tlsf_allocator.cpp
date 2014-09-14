@@ -5,6 +5,7 @@
 
 #define USE_ALLOCATOR_STATS 1
 #define USE_ALLOCATION_STATS 1
+#define USE_LABEL 1
 
 namespace ouro {
 
@@ -86,6 +87,13 @@ allocator_stats tlsf_allocator::get_stats() const
 void* tlsf_allocator::allocate(size_t bytes, const char* label, const allocate_options& options)
 {
 	bytes = std::max(bytes, size_t(1));
+
+	#if USE_LABEL
+		// tlsf uses a pointer at the end of a free block. When allocated, overwrite
+		// that location with a label for debugging memory stomps.
+		bytes += sizeof(const char*);
+	#endif
+
 	size_t align = options.get_alignment();
 	void* p = align == 16 ? tlsf_malloc(heap, bytes) : tlsf_memalign(heap, align, bytes);
 	if (p)
@@ -96,6 +104,11 @@ void* tlsf_allocator::allocate(size_t bytes, const char* label, const allocate_o
 			stats.num_allocations_peak = std::max(stats.num_allocations_peak, stats.num_allocations);
 			stats.allocated_bytes += block_size;
 			stats.allocated_bytes_peak = std::max(stats.allocated_bytes_peak, stats.allocated_bytes);
+		#endif
+
+		#if USE_LABEL
+			const char** label_dst = (const char**)byte_add(p, block_size - sizeof(const char*));
+			*label_dst = label;
 		#endif
 	}
 
