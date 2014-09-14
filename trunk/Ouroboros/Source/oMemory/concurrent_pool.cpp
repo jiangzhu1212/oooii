@@ -23,6 +23,11 @@ struct tagged
 	};
 };
 
+concurrent_pool::size_type concurrent_pool::calc_size(size_type block_size, size_type capacity)
+{
+	return block_size * capacity;
+}
+
 concurrent_pool::concurrent_pool()
 	: next(nullptr)
 	, blocks(nullptr)
@@ -72,8 +77,11 @@ concurrent_pool& concurrent_pool::operator=(concurrent_pool&& that)
 	return *this;
 }
 
-concurrent_pool::size_type concurrent_pool::initialize(void* memory, size_type block_size, size_type capacity)
+void concurrent_pool::initialize(void* memory, size_type block_size, size_type capacity)
 {
+	if (!memory)
+		std::invalid_argument("invalid memory");
+
 	if (capacity > max_capacity())
 		std::invalid_argument("capacity is too large");
 
@@ -82,19 +90,14 @@ concurrent_pool::size_type concurrent_pool::initialize(void* memory, size_type b
 
 	size_type req = std::max(block_size, size_type(sizeof(index_type))) * capacity;
 
-	if (memory)
-	{
-		head = 0;
-		blocks = (uint8_t*)memory;
-		stride = block_size;
-		nblocks = capacity;
-		const index_type n = nblocks - 1;
-		for (index_type i = 0; i < n; i++)
-			*(index_type*)(stride*i + blocks) = i + 1;
-		*(index_type*)(stride*n + blocks) = nullidx;
-	}
-	
-	return req;
+	head = 0;
+	blocks = (uint8_t*)memory;
+	stride = block_size;
+	nblocks = capacity;
+	const index_type n = nblocks - 1;
+	for (index_type i = 0; i < n; i++)
+		*(index_type*)(stride*i + blocks) = i + 1;
+	*(index_type*)(stride*n + blocks) = nullidx;
 }
 
 void* concurrent_pool::deinitialize()
@@ -126,7 +129,7 @@ bool concurrent_pool::empty() const
 	return o.index == nullidx;
 }
 
-concurrent_pool::index_type concurrent_pool::allocate()
+concurrent_pool::index_type concurrent_pool::allocate_index()
 {
 	index_type i;
 	tagged n, o(head);

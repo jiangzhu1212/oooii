@@ -1,12 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_tlsf_allocator_h
-#define oBase_tlsf_allocator_h
 
 // Allocator implementation using the two-level segregated fit allocation 
 // algorithm. This is a wrapper for the excellent allocator found at 
 // http://tlsf.baisoku.org/.
 
+#pragma once
 #include <oMemory/allocate.h>
 #include <functional>
 
@@ -50,5 +48,3 @@ private:
 };
 
 }
-
-#endif

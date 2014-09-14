@@ -4,6 +4,11 @@
 
 namespace ouro {
 
+pool::size_type pool::calc_size(size_type block_size, size_type capacity)
+{
+	return block_size * capacity;
+}
+
 pool::pool()
 	: next(nullptr)
 	, blocks(nullptr)
@@ -57,8 +62,11 @@ pool& pool::operator=(pool&& that)
 	return *this;
 }
 
-pool::size_type pool::initialize(void* memory, size_type block_size, size_type capacity)
+void pool::initialize(void* memory, size_type block_size, size_type capacity)
 {
+	if (!memory)
+		std::invalid_argument("invalid memory");
+
 	if (capacity > max_capacity())
 		std::invalid_argument("capacity is too large");
 
@@ -67,20 +75,15 @@ pool::size_type pool::initialize(void* memory, size_type block_size, size_type c
 
 	size_type req = std::max(block_size, size_type(sizeof(index_type))) * capacity;
 
-	if (memory)
-	{
-		head = 0;
-		blocks = (uint8_t*)memory;
-		stride = block_size;
-		nblocks = capacity;
-		nfree = capacity;
-		const index_type n = nblocks - 1;
-		for (index_type i = 0; i < n; i++)
-			*(index_type*)(stride*i + blocks) = i + 1;
-		*(index_type*)(stride*n + blocks) = nullidx;
-	}
-
-	return req;
+	head = 0;
+	blocks = (uint8_t*)memory;
+	stride = block_size;
+	nblocks = capacity;
+	nfree = capacity;
+	const index_type n = nblocks - 1;
+	for (index_type i = 0; i < n; i++)
+		*(index_type*)(stride*i + blocks) = i + 1;
+	*(index_type*)(stride*n + blocks) = nullidx;
 }
 
 void* pool::deinitialize()
@@ -93,7 +96,7 @@ void* pool::deinitialize()
 	return p;
 }
 
-pool::index_type pool::allocate()
+pool::index_type pool::allocate_index()
 {
 	index_type i = index_type(head);
 	if (i == nullidx)

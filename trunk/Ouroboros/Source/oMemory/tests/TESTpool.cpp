@@ -42,9 +42,9 @@ static void test_index_pool(test_services& services)
 
 	unsigned int index[4];
 	for (auto i = 0; i < 4; i++)
-		index[i] = a.allocate();
+		index[i] = a.allocate_index();
 
-	oTEST(a.nullidx == a.allocate(), "allocate succeed past allocator capacity");
+	oTEST(a.nullidx == a.allocate_index(), "allocate succeed past allocator capacity");
 
 	for (auto i = 0; i < 4; i++)
 		oTEST(index[i] == static_cast<unsigned int>(i), "Allocation mismatch %u.", i);
@@ -70,11 +70,11 @@ static void test_allocate(test_services& services)
 	void* tests[NumBlocks];
 	for (size_t i = 0; i < NumBlocks; i++)
 	{
-		tests[i] = Allocator.allocate_pointer();
+		tests[i] = Allocator.allocate();
 		oTEST(tests[i], "test_obj %u should have been allocated", i);
 	}
 
-	void* shouldBeNull = Allocator.allocate_pointer();
+	void* shouldBeNull = Allocator.allocate();
 	oTEST(!shouldBeNull, "Allocation should have failed");
 
 	oTEST(0 == Allocator.size_free(), "There should be 0 available blocks");

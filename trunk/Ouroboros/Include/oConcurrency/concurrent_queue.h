@@ -8,6 +8,8 @@
 #pragma once
 #include <oCompiler.h>
 #include <oConcurrency/tagged_pointer.h>
+#include <oMemory/allocate.h>
+#include <oMemory/concurrent_object_pool.h>
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -54,7 +56,7 @@ private:
 	std::atomic_flag flag;
 };
 
-template<typename T, typename Alloc = std::allocator<concurrent_queue_node<T>>>
+template<typename T>
 class concurrent_queue
 {
 public:
@@ -66,12 +68,32 @@ public:
 	typedef const value_type* const_pointer;
   typedef concurrent_queue_node<T> node_type;
   typedef typename node_type::pointer_type pointer_type;
-	typedef Alloc allocator_type;
 
-	// This implementation auto-grows capacity in a threadsafe manner if the 
-	// initial capacity is inadequate.
-	concurrent_queue(const allocator_type& a = allocator_type());
+	static const size_type default_capacity = 65536;
+
+	static size_type calc_size(size_type capacity);
+
+
+	// non-concurrent api
+
+	concurrent_queue(size_type capacity = default_capacity, const char* label = "concurrent_queue", const allocator& a = default_allocator);
 	~concurrent_queue();
+
+	// initializes the queue with memory allocated from allocator
+	void initialize(size_type capacity, const char* label = "concurrent_queue", const allocator& a = default_allocator);
+
+	// use calc_size() to determine memory size
+	void initialize(void* memory, size_type capacity);
+
+	// deinitializes the queue and returns the memory passed to initialize()
+	void* deinitialize();
+
+	// Walks the nodes in a non-concurrent manner and returns the count (not 
+	// including the sentinel node). This should be used only for debugging.
+	size_type size() const;
+
+
+	// concurrent api
 
 	// Push an element into the queue.
 	void push(const_reference val);
@@ -89,20 +111,17 @@ public:
 	// Returns true if no elements are in the queue
 	bool empty() const;
 
-	// Walks the nodes in a non-concurrent manner and returns the count (not 
-	// including the sentinel node). This should be used only for debugging.
-	size_type size() const;
-
 private:
 	// alignment is required so that pointers to node_type's are at least 8-bytes.
 	// This allows tagged_pointer to use the bottom 3-bits for its tag.
 	
 	oALIGNAS(oCACHE_LINE_SIZE) pointer_type head;
 	oALIGNAS(oCACHE_LINE_SIZE) pointer_type tail;
-	allocator_type alloc;
+	concurrent_object_pool<node_type> pool;
+	allocator alloc;
 
-	void internal_init(std::false_type);
-	void internal_init(std::true_type);
+	node_type* internal_construct_sentinel(std::false_type);
+	node_type* internal_construct_sentinel(std::true_type);
 
 	void internal_push(node_type* n);
 
@@ -110,50 +129,90 @@ private:
 	bool internal_try_pop(reference val, std::true_type);
 };
 
-template<typename T, typename Alloc>
-void concurrent_queue<T, Alloc>::internal_init(std::false_type)
+template<typename T>
+typename concurrent_queue<T>::size_type concurrent_queue<T>::calc_size(size_type capacity)
 {
-	node_type* n = alloc.allocate(1);
-	alloc.construct(n, T());
-	
-	// There's no potential for double-freeing here, so set it up for immediate 
-	// deallocation in try_pop code.
-	n->should_deallocate();
+	return concurrent_object_pool<node_type>::calc_size(capacity);
+}
+
+template<typename T>
+typename concurrent_queue<T>::node_type* concurrent_queue<T>::internal_construct_sentinel(std::false_type)
+{
+	node_type* n = pool.create(value_type());
+	n->should_deallocate(); // mark for immediate since this won't be popped
+	return n;
+}
+
+template<typename T>
+typename concurrent_queue<T>::node_type* concurrent_queue<T>::internal_construct_sentinel(std::true_type)
+{
+	return pool.create(value_type());
+}
+
+template<typename T>
+concurrent_queue<T>::concurrent_queue(size_type capacity, const char* label, const allocator& a)
+{
+	initialize(capacity, label, a);
+}
+
+template<typename T>
+concurrent_queue<T>::~concurrent_queue()
+{
+	deinitialize();
+}
+
+template<typename T>
+void concurrent_queue<T>::initialize(size_type capacity, const char* label, const allocator& a)
+{
+	alloc = a;
+	void* mem = alloc.allocate(calc_size(capacity), memory_alignment::cacheline, label);
+	pool.initialize(mem, capacity);
+	node_type* n = internal_construct_sentinel(std::is_trivially_destructible<T>());
 	head = tail = pointer_type(n, 0);
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue<T, Alloc>::internal_init(std::true_type)
+template<typename T>
+void concurrent_queue<T>::initialize(void* memory, size_type capacity)
 {
-	node_type* n = alloc.allocate(1);
-	alloc.construct(n, T());
+	alloc = noop_allocator;
+	pool.initialize(memory, capacity);
+	node_type* n = internal_construct_sentinel(std::is_trivially_destructible<T>());
 	head = tail = pointer_type(n, 0);
 }
 
-template<typename T, typename Alloc>
-concurrent_queue<T, Alloc>::concurrent_queue(const allocator_type& a)
-	: alloc(a)
-{
-	internal_init(std::is_trivially_destructible<T>());
-}
-
-template<typename T, typename Alloc>
-concurrent_queue<T, Alloc>::~concurrent_queue()
+template<typename T>
+void* concurrent_queue<T>::deinitialize()
 {
 	if (!empty())
 		throw std::length_error("container not empty");
-
 	node_type* n = head.ptr();
 	head = tail = pointer_type(nullptr, 0);
-	
-	// sentinel value should already be destroyed, so deallocate directly here
-	alloc.deallocate(n, sizeof(node_type));
+	pool.destroy(n); // sentinel already destroyed, so deallocate directly here
+	void* mem = pool.deinitialize();
+	alloc.deallocate(mem);
+	mem = alloc == noop_allocator ? nullptr : mem;
+	alloc = noop_allocator;
+	return mem;
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue<T, Alloc>::internal_push(node_type* n)
+template<typename T>
+typename concurrent_queue<T>::size_type concurrent_queue<T>::size() const
 {
-	if (!n) throw std::bad_alloc();
+	size_type n = 0;
+	auto p = head.ptr()->next.ptr();
+	while (p)
+	{
+		n++;
+		p = p->next.ptr();
+	}
+	return n;
+}
+
+template<typename T>
+void concurrent_queue<T>::internal_push(node_type* n)
+{
+	if (!n)
+		throw std::bad_alloc();
 	pointer_type t, next;
 	for (;;)
 	{
@@ -175,24 +234,20 @@ void concurrent_queue<T, Alloc>::internal_push(node_type* n)
 	tail.cas(t, pointer_type(n, t.tag()+1));
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue<T, Alloc>::push(const_reference val)
+template<typename T>
+void concurrent_queue<T>::push(const_reference val)
 {
-	node_type* n = alloc.allocate(1);
-	alloc.construct(n, val);
-	internal_push(n);
+	internal_push(pool.create(val));
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue<T, Alloc>::push(value_type&& val)
+template<typename T>
+void concurrent_queue<T>::push(value_type&& val)
 {
-	node_type* n = alloc.allocate(1);
-	alloc.construct(n, std::move(val));
-	internal_push(n);
+	internal_push(pool.create(std::move(val)));
 }
 
-template<typename T, typename Alloc>
-bool concurrent_queue<T, Alloc>::internal_try_pop(reference val, std::false_type)
+template<typename T>
+bool concurrent_queue<T>::internal_try_pop(reference val, std::false_type)
 {
 	pointer_type h, t, next;
 	for (;;)
@@ -224,7 +279,7 @@ bool concurrent_queue<T, Alloc>::internal_try_pop(reference val, std::false_type
 					val = std::move(nptr->value);
 					nptr->value.~T();
 					if (nptr->should_deallocate())
-						alloc.deallocate(nptr, sizeof(node_type));
+						pool.destroy(nptr);
 					break;
 				}
 			}
@@ -233,13 +288,13 @@ bool concurrent_queue<T, Alloc>::internal_try_pop(reference val, std::false_type
 
 	auto p = h.ptr();
 	if (p->should_deallocate())
-		alloc.deallocate(p, sizeof(node_type)); // dtor called explicitly above so just deallocate
+		pool.destroy(p); // dtor called explicitly above so just deallocate
 	
 	return true;
 }
 
-template<typename T, typename Alloc>
-bool concurrent_queue<T, Alloc>::internal_try_pop(reference val, std::true_type)
+template<typename T>
+bool concurrent_queue<T>::internal_try_pop(reference val, std::true_type)
 {
 	pointer_type h, t, next;
 	for (;;)
@@ -265,46 +320,33 @@ bool concurrent_queue<T, Alloc>::internal_try_pop(reference val, std::true_type)
 		}
 	}
 
-	alloc.deallocate(h.ptr(), sizeof(node_type)); // dtor called explicitly above so just deallocate
+	pool.destroy(h.ptr()); // dtor called explicitly above so just deallocate
 	return true;
 }
 
-template<typename T, typename Alloc>
-bool concurrent_queue<T, Alloc>::try_pop(reference val)
+template<typename T>
+bool concurrent_queue<T>::try_pop(reference val)
 {
 	return internal_try_pop(val, std::is_trivially_destructible<T>());
 }
 	
-template<typename T, typename Alloc>
-void concurrent_queue<T, Alloc>::pop(reference val)
+template<typename T>
+void concurrent_queue<T>::pop(reference val)
 {
 	while (!try_pop(val));
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue<T, Alloc>::clear()
+template<typename T>
+void concurrent_queue<T>::clear()
 {
 	value_type e;
 	while (try_pop(e));
 }
 
-template<typename T, typename Alloc>
-bool concurrent_queue<T, Alloc>::empty() const
+template<typename T>
+bool concurrent_queue<T>::empty() const
 {
 	return head == tail;
-}
-
-template<typename T, typename Alloc>
-typename concurrent_queue<T, Alloc>::size_type concurrent_queue<T, Alloc>::size() const
-{
-	size_type n = 0;
-	auto p = head.ptr()->next.ptr();
-	while (p)
-	{
-		n++;
-		p = p->next.ptr();
-	}
-	return n;
 }
 
 }

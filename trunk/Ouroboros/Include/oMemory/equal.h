@@ -1,7 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMemory_equal_h
-#define oMemory_equal_h
 
 // Approximate equality for float/double types. This uses absolute bit 
 // differences rather than epsilon or some very small float value because eps
@@ -16,6 +13,8 @@
 // specify the maximum number of floating-point steps, not absolute (fixed) 
 // value that something should differ by, so it scales across all of float's 
 // range.
+
+#pragma once
 #include <stdexcept>
 
 #define oDEFAULT_ULPS 5
@@ -92,5 +91,3 @@ template<> inline bool equal(const double& A, const double& B, unsigned int _Max
 }
 
 }
-
-#endif

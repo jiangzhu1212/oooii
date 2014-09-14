@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMemory_h
-#define oMemory_h
 
 // Advanced memcpy intended to encapsulate some special-case behaviors in a 
 // generic way, such as AOS to SOA, 2D copies, full 32-bit memset, etc.
 
+#pragma once
 #include <memory.h>
 #include <cstdint>
 #include <oCompiler.h> // oRESTRICT
@@ -157,5 +155,3 @@ inline void memcpy2delements(void* oRESTRICT dst, size_t dst_pitch,
 }
 
 }
-
-#endif

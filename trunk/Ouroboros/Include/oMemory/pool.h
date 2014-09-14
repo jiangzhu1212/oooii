@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#ifndef oMemory_pool_h
-#define oMemory_pool_h
 
-// allocate in O(1) time from a preallocated array of blocks (fixed block
-// allocator).
+// O(1) block allocator: uses space inside free blocks to maintain freelist.
 
+#pragma once
 #include <cstdint>
 
 namespace ouro
@@ -19,11 +17,14 @@ public:
 	// if at capacity allocate() will return this value
 	static const index_type nullidx = 0xffffffff;
 
-	// the largest index issued by this pool, also serving as a static max_capacity()
+	// largest index issued by this pool, also serving as a static max_capacity()
 	static const size_type max_index = nullidx - 1;
 
 	// the maximum number of items a pool can hold
 	static size_type max_capacity() { return max_index; }
+
+	// returns the size the memory param must be in init methods below
+	static size_type calc_size(size_type block_size, size_type capacity);
 
 	// ctor creates as empty
 	pool();
@@ -40,9 +41,8 @@ public:
 	// calls deinitialize on this, moves that's memory under the same config
 	pool& operator=(pool&& that);
 
-	// returns bytes required for memory; pass nullptr to obtain size, allocate
-	// and then pass that to memory in a second call to initialize the class.
-	size_type initialize(void* memory, size_type block_size, size_type capacity);
+	// use calc_size() to determine memory size
+	void initialize(void* memory, size_type block_size, size_type capacity);
 
 	// deinitializes the pool and returns the memory passed to initialize()
 	void* deinitialize();
@@ -62,20 +62,21 @@ public:
 	// returns true if all items have been allocated
 	inline bool empty() const { return head == nullidx; }
 
-	// allocate/deallocate an index into the pool. If empty out of resources nullidx
-	// will be returned.
-	index_type allocate();
+	// allocate/deallocate an index into the pool. If empty out of resources 
+	// nullidx will be returned.
+	index_type allocate_index();
 	void deallocate(index_type index);
 
 	// Wrappers for treating the block as a pointer to block_size memory.
-	inline void* allocate_pointer() { index_type i = allocate(); return pointer(i); }
+	inline void* allocate() { index_type i = allocate_index(); return pointer(i); }
 	inline void deallocate(void* pointer) { deallocate(index(pointer)); }
 
 	// convert between allocated index and pointer values
 	void* pointer(index_type index) const;
 	index_type index(void* ptr) const;
 
-	// simple range check that returns true if this index/pointer could have been allocated from this pool
+	// simple range check that returns true if this index/pointer could have been 
+	// allocated from this pool
 	bool owns(index_type index) const { return index < nblocks; }
 	bool owns(void* ptr) const { return owns(index(ptr)); }
 
@@ -92,5 +93,3 @@ private:
 };
 
 }
-
-#endif

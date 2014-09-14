@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMemory_std_allocator_h
-#define oMemory_std_allocator_h
-
-#include <memory.h> // malloc/free
 
 // Macros to reduce the boilerplate associated with custom std::allocators
+
+#pragma once
+#include <memory.h> // malloc/free
 
 #define oDEFINE_STD_ALLOCATOR_BOILERPLATE(ClassName) \
 	typedef size_t size_type; typedef ptrdiff_t difference_type; typedef T value_type; typedef T* pointer; typedef T const* const_pointer; typedef T& reference; typedef T const& const_reference; \
@@ -50,5 +48,3 @@ template<typename T> struct std_user_allocator
 
 oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(std_user_allocator)
 oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(std_user_allocator) { return a.user_alloc == b.user_alloc && a.user_dealloc == b.user_dealloc; }
-
-#endif

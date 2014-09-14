@@ -86,7 +86,7 @@ protected:
 		placeholders.compiled_failed = std::move(failed);
 		placeholders.compiled_making = std::move(making);
 
-		size_type ssize = s.initialize(nullptr, capacity);
+		size_type ssize = s.calc_size(capacity);
 		size_type aligned_ssize = byte_align(ssize, sizeof(void*));
 		size_type rsize = r.initialize(nullptr, capacity, lifetime, placeholders);
 		size_type req = aligned_ssize + rsize;

@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_allocate_h
-#define oBase_allocate_h
 
 // A generic interface for allocating memory.
+
+#pragma once
 
 #include <cstdint>
 #include <system_error>
@@ -149,7 +148,7 @@ struct allocator_stats
 };
 
 // _____________________________________________________________________________
-// Allocator definitions: c-stype functions, RAII pointer wrapper and a simple 
+// Allocator definitions: callback functions, RAII pointer wrapper and a simple 
 // allocator interface that can easily be passed around and retained by objects.
 
 typedef void* (*allocate_fn)(size_t num_bytes, const allocate_options& options, const char* label);
@@ -238,13 +237,15 @@ struct allocator
 	
 	operator bool() const { return allocate && deallocate; }
 
+	bool operator==(const allocator& that) const { return allocate == that.allocate && deallocate == that.deallocate; }
+
 	scoped_allocation scoped_allocate(size_t num_bytes, const allocate_options& options = allocate_options(), const char* label = "") const { return scoped_allocation(allocate(num_bytes, options, label), num_bytes, deallocate); }
 
 	template<typename T>
-	T* construct(uint32_t options = memory_alignment::align_default) { void* p = allocate(sizeof(T), options); return (T*)new (p) T(); }
+	T* construct(uint32_t options = memory_alignment::align_default, const char* label = "unlabeled") { void* p = allocate(sizeof(T), options, label); return (T*)new (p) T(); }
 	
 	template<typename T>
-	T* construct_array(size_t capacity, const allocate_options& options = allocate_options(), const char* label = "")
+	T* construct_array(size_t capacity, const allocate_options& options = allocate_options(), const char* label = "unlabeled")
 	{
 		T* p = (T*)allocate(sizeof(T) * capacity, options, label);
 		for (size_t i = 0; i < capacity; i++)
@@ -273,5 +274,3 @@ extern allocator default_allocator;
 extern allocator noop_allocator;
 
 }
-
-#endif

@@ -3,6 +3,14 @@
 
 namespace ouro {
 
+concurrent_hash_map::size_type concurrent_hash_map::calc_size(size_type capacity)
+{
+	const size_type n = __max(8, nextpow2(capacity * 2));
+	const size_type key_bytes = n * sizeof(std::atomic<key_type>);
+	const size_type value_bytes = n * sizeof(std::atomic<value_type>);
+	return key_bytes + value_bytes;
+}
+
 concurrent_hash_map::concurrent_hash_map()
 	: keys(nullptr)
 	, values(nullptr)

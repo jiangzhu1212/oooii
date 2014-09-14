@@ -1,13 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMemory_std_linear_allocator_h
-#define oMemory_std_linear_allocator_h
 
 // Wraps a linear_allocator in std::allocator's API as well as falling back
 // on the default std::allocator if the original arena is insufficient so
 // this can gain efficiency if the size of allocations is known ahead of time
 // but also won't fail if that estimate comes up short.
 
+#pragma once
 #include <oMemory/std_allocator.h>
 #include <oMemory/linear_allocator.h>
 
@@ -72,5 +70,3 @@ private:
 
 oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(ouro::std_linear_allocator)
 oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(ouro::std_linear_allocator) { return a.alloc == b.alloc; }
-
-#endif

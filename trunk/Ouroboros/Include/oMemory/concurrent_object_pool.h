@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
+// O(1) fine-grained concurrent typed block allocator: uses space inside free 
+// blocks to maintain freelist.
+
 #pragma once
-#ifndef oBase_concurrent_object_pool_h
-#define oBase_concurrent_object_pool_h
-
-// provides typed simplification of some concurrent_pool APIs as well as 
-// create/destroy for constructor/destructor semantics.
-
 #include <oMemory/concurrent_pool.h>
 
 namespace ouro {
@@ -18,6 +16,8 @@ public:
 	typedef concurrent_pool::size_type size_type;
 	typedef T value_type;
 
+	static size_type calc_size(size_type capacity) { return concurrent_pool::calc_size(sizeof(T), capacity); }
+
 	
 	// non-concurrent api
 
@@ -26,24 +26,27 @@ public:
 	concurrent_object_pool(void* memory, size_type capacity) : concurrent_pool(memory, sizeof(T), capacity) {}
 	~concurrent_object_pool() { ((concurrent_pool*)this)->~concurrent_pool(); }
 	concurrent_object_pool& operator=(concurrent_object_pool&& that) { return (concurrent_object_pool&)concurrent_pool::operator=(std::move((concurrent_pool&&)that)); }
-	size_type initialize(void* memory, size_type capacity) { return concurrent_pool::initialize(memory, sizeof(T), capacity); }
+	void initialize(void* memory, size_type capacity) { concurrent_pool::initialize(memory, sizeof(T), capacity); }
 
 
 	// concurrent api
 
-	T* create() { void* p = allocate_pointer(); return p ? new (p) T() : nullptr; }
+	T* create() { void* p = allocate(); return p ? new (p) T() : nullptr; }
 	
 	template<typename A> 
-	T* create(const A& a) { void* p = allocate_pointer(); return p ? new (p) T(a) : nullptr; }
+	T* create(A&& that) { void* p = allocate(); return p ? new (p) T(std::move(that)) : nullptr; }
+	
+	template<typename A> 
+	T* create(const A& a) { void* p = allocate(); return p ? new (p) T(a) : nullptr; }
 	
 	template<typename A, typename B>
-	T* create(const A& a, const B& b) { void* p = allocate_pointer(); return p ? new (p) T(a,b) : nullptr; }
+	T* create(const A& a, const B& b) { void* p = allocate(); return p ? new (p) T(a,b) : nullptr; }
 	
 	template<typename A, typename B, typename C>
-	T* create(const A& a, const B& b, const C& c) { void* p = allocate_pointer(); return p ? new (p) T(a,b,c) : nullptr; }
+	T* create(const A& a, const B& b, const C& c) { void* p = allocate(); return p ? new (p) T(a,b,c) : nullptr; }
 	
 	template<typename A, typename B, typename C, typename D>
-	T* create(const A& a, const B& b, const C& c, const D& d) { void* p = allocate_pointer(); return p ? new (p) T(a,b,c,d) : nullptr; }
+	T* create(const A& a, const B& b, const C& c, const D& d) { void* p = allocate(); return p ? new (p) T(a,b,c,d) : nullptr; }
 
 	void destroy(T* ptr) { ptr->T::~T(); deallocate(ptr); }
 
@@ -55,5 +58,3 @@ private:
 };
 
 }
-
-#endif

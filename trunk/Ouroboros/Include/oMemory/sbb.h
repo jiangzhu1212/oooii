@@ -1,9 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef sbb_h
-#define sbb_h
-
-#include <cstddef>
 
 // Segregated Binary-Buddy memory allocator.
 // This is an implementation of a binary-buddy memory allocator that keeps 
@@ -12,6 +7,9 @@
 // binary tree comprised of 1 bit per allocation block at any level rather 
 // than a linked-list freelist node. O(log n) allocation/free time.
 // Per-sbb overhead: 32-bit: 24-bytes + pages; 64-bit: 32-bytes + pages.
+
+#pragma once
+#include <cstddef>
 
 typedef struct sbb__ {}* sbb_t;
 
@@ -67,5 +65,3 @@ void* sbb_malloc(sbb_t sbb, size_t bytes);
 void* sbb_realloc(sbb_t sbb, void* ptr, size_t bytes);
 void sbb_free(sbb_t sbb, void* ptr);
 void* sbb_memalign(sbb_t sbb, size_t align, size_t bytes);
-
-#endif

@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMemory_endian_h
-#define oMemory_endian_h
 
 // Utilities helpful when dealing with little v. big endian data serialization.
 
+#pragma once
 #include <stddef.h>
 #include <cstdint>
 #include <type_traits>
@@ -44,5 +42,3 @@ inline uint64_t from_big_endian_double(const double& x) { return to_big_endian_d
 inline double from_big_endian_double(const uint64_t& x) { return to_big_endian_double(x); }
 
 }
-
-#endif

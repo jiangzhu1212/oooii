@@ -78,7 +78,7 @@ void concurrent_growable_pool::deinitialize()
 concurrent_growable_pool::chunk_t* concurrent_growable_pool::allocate_chunk()
 {
 	concurrent_pool pool;
-	size_type req = pool.initialize(nullptr, block_size, capacity_per_chunk);
+	size_type req = pool.calc_size(block_size, capacity_per_chunk);
 	req = byte_align((size_type)sizeof(chunk_t), oCACHE_LINE_SIZE) + byte_align(req, block_alignment);
 	chunk_t* c = new (default_allocate(req, memory_alignment::cacheline)) chunk_t();
 	void* p = byte_align(c + 1, block_alignment);
@@ -212,7 +212,7 @@ void* concurrent_growable_pool::allocate_pointer()
 	// check cached last-used chunk (racy but it's only an optimization hint)
 	concurrent_pool* pool = last_allocate;
 	if (pool)
-		p = pool->allocate_pointer();
+		p = pool->allocate();
 
 	// search for another chunk
 	if (!p)
@@ -223,7 +223,7 @@ void* concurrent_growable_pool::allocate_pointer()
 		chunk_t* c = chunks.peek();
 		while (c)
 		{
-			p = c->pool.allocate_pointer();
+			p = c->pool.allocate();
 			if (p)
 			{
 				last_allocate = &c->pool; // racy but only an optimization hint
@@ -236,7 +236,7 @@ void* concurrent_growable_pool::allocate_pointer()
 		if (!p)
 		{
 			chunk_t* new_chunk = allocate_chunk();
-			p = new_chunk->pool.allocate_pointer();
+			p = new_chunk->pool.allocate();
 			chunks.push(new_chunk);
 			last_allocate = &new_chunk->pool; // racy but only an optimization hint
 		}

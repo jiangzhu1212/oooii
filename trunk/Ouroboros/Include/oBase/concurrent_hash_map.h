@@ -27,6 +27,8 @@ public:
 	static const key_type nullkey = key_type(-1);
 	static const value_type nullidx = value_type(-1);
 
+	static size_type calc_size(size_type capacity);
+
 
 	// non-concurrent api
 

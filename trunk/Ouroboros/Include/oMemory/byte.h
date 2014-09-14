@@ -1,12 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMemory_byte_h
-#define oMemory_byte_h
 
 // Utility functions helpful when dealing with memory buffers and pointers, 
 // especially when it is useful to go back and forth between thinking of the 
 // buffer as bytes and as its type without a lot of casting.
 
+#pragma once
 #include <stddef.h>
 #include <cstdint>
 
@@ -107,5 +105,3 @@ inline float uf32tosf32(float x) { return x * 2.0f - 1.0f; }
 inline float sf32touf32(float x) { return x * 0.5f + 0.5f; }
 
 }
-
-#endif
