@@ -17,11 +17,27 @@
 
 namespace ouro {
 
+template<typename T, bool has_trivial_dtor = std::is_trivially_destructible<T>::value>
+struct concurrent_queue_node {};
+
 template<typename T>
-struct oALIGNAS(oTAGGED_POINTER_ALIGNMENT) concurrent_queue_node
+struct concurrent_queue_node<T, true>
 {
   typedef T value_type;
-  typedef tagged_pointer<concurrent_queue_node<value_type>> pointer_type;
+  typedef tagged_pointer<concurrent_queue_node<value_type, true>> pointer_type;
+  
+  concurrent_queue_node(const value_type& v) : next(nullptr, 0), value(v) {}
+  concurrent_queue_node(value_type&& v) : next(nullptr, 0), value(std::move(v)) {}
+
+  pointer_type next;
+  value_type value;
+};
+
+template<typename T>
+struct concurrent_queue_node<T, false>
+{
+  typedef T value_type;
+  typedef tagged_pointer<concurrent_queue_node<value_type, false>> pointer_type;
   
   concurrent_queue_node(const value_type& v) : next(nullptr, 0), value(v) { flag.clear(); }
   concurrent_queue_node(value_type&& v) : next(nullptr, 0), value(std::move(v)) { flag.clear(); }
