@@ -25,16 +25,14 @@ concurrent_hash_map::concurrent_hash_map(concurrent_hash_map&& that)
 	that.deinitialize();
 }
 
-concurrent_hash_map::concurrent_hash_map(void* memory, size_type capacity)
-{
-	if (!initialize(memory, capacity))
-		throw std::invalid_argument("concurrent_hash_map initialize failed");
-}
-
 concurrent_hash_map::concurrent_hash_map(size_type capacity, const char* alloc_label, const allocator& alloc_)
 {
-	if (!initialize(capacity, alloc_label, alloc_))
-		throw std::invalid_argument("concurrent_hash_map initialize failed");
+	initialize(capacity, alloc_label, alloc_);
+}
+
+concurrent_hash_map::concurrent_hash_map(void* memory, size_type capacity)
+{
+	initialize(memory, capacity);
 }
 
 concurrent_hash_map::~concurrent_hash_map()
@@ -54,40 +52,33 @@ concurrent_hash_map& concurrent_hash_map::operator=(concurrent_hash_map&& that)
 	return *this;
 }
 
-concurrent_hash_map::size_type concurrent_hash_map::initialize(void* memory, size_type capacity, const allocator& alloc)
+void concurrent_hash_map::initialize(size_type capacity, const char* alloc_label, const allocator& a)
+{
+	alloc = a;
+	initialize(alloc.allocate(calc_size(capacity), 0, alloc_label), capacity);
+}
+
+void concurrent_hash_map::initialize(void* memory, size_type capacity)
 {
 	const size_type n = __max(8, nextpow2(capacity * 2));
 	const size_type key_bytes = n * sizeof(std::atomic<key_type>);
 	const size_type value_bytes = n * sizeof(std::atomic<value_type>);
 	const size_type req = key_bytes + value_bytes;
-	if (memory)
-	{
-		modulo_mask = n - 1;
-		keys = (std::atomic<key_type>*)memory;
-		values = (std::atomic<value_type>*)((uint8_t*)memory + key_bytes);
-		memset(keys, 0xff/*nullkey*/, key_bytes);
-		memset(values, nullidx, value_bytes);
-		this->alloc = alloc;
-	}
-	return req;
-}
-
-concurrent_hash_map::size_type concurrent_hash_map::initialize(size_type capacity, const char* alloc_label, const allocator& alloc)
-{
-	size_type req = initialize(nullptr, capacity);
-	return initialize(alloc.allocate(req, 0, alloc_label), capacity, alloc);
+	modulo_mask = n - 1;
+	keys = (std::atomic<key_type>*)memory;
+	values = (std::atomic<value_type>*)((uint8_t*)memory + key_bytes);
+	memset(keys, 0xff/*nullkey*/, key_bytes);
+	memset(values, nullidx, value_bytes);
+	alloc = noop_allocator;
 }
 
 void* concurrent_hash_map::deinitialize()
 {
 	void* p = keys;
-	if (alloc)
-	{
-		alloc.deallocate(p);
-		p = nullptr;
-	}
+	alloc.deallocate(p);
+	p = alloc == noop_allocator ? p : nullptr;
 	modulo_mask = 0;
-	alloc = default_allocator;
+	alloc = noop_allocator;
 	keys = nullptr;
 	values = nullptr;
 	return p;

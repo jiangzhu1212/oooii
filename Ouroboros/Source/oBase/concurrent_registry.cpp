@@ -84,7 +84,7 @@ concurrent_registry& concurrent_registry::operator=(concurrent_registry&& _That)
 concurrent_registry::size_type concurrent_registry::initialize(void* memory, size_type capacity, const lifetime_t& lifetime, placeholder_source_t& placeholder_source)
 {
 	const size_type pool_req = byte_align(pool.calc_size(capacity), oDEFAULT_MEMORY_ALIGNMENT);
-	const size_type lookup_req = byte_align(lookup.initialize(nullptr, capacity), oDEFAULT_MEMORY_ALIGNMENT);
+	const size_type lookup_req = byte_align(lookup.calc_size(capacity), oDEFAULT_MEMORY_ALIGNMENT);
 	const size_type entries_req = capacity * sizeof(void*);
 
 	if (!pool_req || !lookup_req)

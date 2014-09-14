@@ -38,11 +38,11 @@ public:
 	// moves another hash map into a new one
 	concurrent_hash_map(concurrent_hash_map&& that);
 
-	// ctor creates as a valid hash map using external memory
-	concurrent_hash_map(void* memory, size_type capacity);
-
 	// ctor creates as a valid hash map using internally allocated memory
-	concurrent_hash_map(size_type capacity, const char* alloc_label = "concurrent_hash_map", const allocator& alloc = default_allocator);
+	concurrent_hash_map(size_type capacity, const char* alloc_label = "concurrent_hash_map", const allocator& a = default_allocator);
+
+	// use calc_size() to determine memory size
+	concurrent_hash_map(void* memory, size_type capacity);
 
 	// dtor
 	~concurrent_hash_map();
@@ -50,19 +50,13 @@ public:
 	// calls deinit on this, moves that's memory under the same config
 	concurrent_hash_map& operator=(concurrent_hash_map&& that);
 
-	// initialize the hash map with external memory. Returns required 
-	// size for the specified capacity. Pass nullptr for memory to 
-	// calculate the size only. Note: This calculates size for optimal 
-	// performance which is twice the number of entries asked for rounded 
-	// up to the next power of two.
-	size_type initialize(void* memory, size_type capacity, const allocator& alloc = noop_allocator);
+	// initializes the queue with memory allocated from allocator
+	void initialize(size_type capacity, const char* alloc_label = "concurrent_hash_map", const allocator& a = default_allocator);
 
-	// initialize the hash map with internally allocated memory that will 
-	// be freed on deinitialization.
-	size_type initialize(size_type capacity, const char* alloc_label = "concurrent_hash_map", const allocator& alloc = default_allocator);
+	// use calc_size() to determine memory size
+	void initialize(void* memory, size_type capacity);
 
-	// invalidates the hash map. returns the memory passed in initialize 
-	// or nullptr if internally allocated memory was used.
+	// deinitializes the hash map and returns the memory passed to initialize()
 	void* deinitialize();
 
 	// returns the hash map to the empty state it was after initialize
