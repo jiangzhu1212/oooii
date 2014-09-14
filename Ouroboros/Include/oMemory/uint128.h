@@ -1,4 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
+// 128-bit unsigned integer type.
+
 #pragma once
 #ifndef oUint128_h
 #define oUint128_h

@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// fnva1 hash.
-#pragma once
-#ifndef oBase_fnv1a_h
-#define oBase_fnv1a_h
 
+// fnva1 hash.
+
+#pragma once
 #include <oMemory/uint128.h>
 #include <cstdint>
 #include <ctype.h>
@@ -133,5 +132,3 @@ template<typename T, typename U>
 T fnv1a_reduced(const U& fnv1a_hash, int num_bits) { return static_cast<T>((fnv1a_hash >> num_bits) ^ (U(1) << num_bits)); }
 
 }
-
-#endif

@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_sbb_allocator_h
-#define oBase_sbb_allocator_h
 
 // Allocator implementation using the segregated binary buddy algorithm.
 
+#pragma once
 #include <oMemory/allocate.h>
 #include <functional>
 
@@ -50,5 +48,3 @@ private:
 };
 
 }
-
-#endif

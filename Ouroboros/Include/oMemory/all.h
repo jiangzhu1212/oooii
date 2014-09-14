@@ -1,9 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMemory_all_h
-#define oMemory_all_h
+
 // Convenience "all headers" header for precompiled header files. Do NOT use 
 // this to be lazy when including headers in .cpp files. Be explicit.
+
+#pragma once
 #include <oMemory/bit.h>
 #include <oMemory/byte.h>
 #include <oMemory/concurrent_linear_allocator.h>
@@ -20,4 +20,3 @@
 #include <oMemory/pool.h>
 #include <oMemory/std_allocator.h>
 #include <oMemory/std_linear_allocator.h>
-#endif

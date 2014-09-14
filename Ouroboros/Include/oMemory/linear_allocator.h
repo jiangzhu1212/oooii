@@ -1,11 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
+// O(1) linear allocator: cannot free but is extremely quick to allocate
+
 #pragma once
-#ifndef oMemory_linear_allocator_h
-#define oMemory_linear_allocator_h
-
-// Simple allocator the cannot free but is very quick to allocate available
-// memory.
-
 #include <oMemory/byte.h>
 #include <oCompiler.h> // oDEFAULT_MEMORY_ALIGNMENT
 #include <cstdint>
@@ -106,5 +103,3 @@ private:
 };
 
 }
-
-#endif

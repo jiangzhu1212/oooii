@@ -161,11 +161,10 @@ iocp_threadpool::iocp_threadpool(size_t _OverlappedCapacity, size_t _NumWorkers)
 	, NumRunningThreads(0)
 	, NumAssociations(0)
 {
-	auto req = pool.initialize(nullptr, as_uint(_OverlappedCapacity));
+	auto req = pool.calc_size(as_uint(_OverlappedCapacity));
 	void* mem = default_allocate(req, memory_alignment::cacheline);
 
-	if (!pool.initialize(mem, as_uint(_OverlappedCapacity)))
-		throw std::exception("iocp pool init failed");
+	pool.initialize(mem, as_uint(_OverlappedCapacity));
 	
 	reporting::ensure_initialized();
 

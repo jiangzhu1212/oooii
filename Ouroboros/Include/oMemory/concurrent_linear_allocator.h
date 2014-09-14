@@ -1,10 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
+// O(1) fine-grained concurrent linear allocator: cannot free but is extremely 
+// quick to allocate
+
 #pragma once
-#ifndef oMemory_concurrent_linear_allocator_h
-#define oMemory_concurrent_linear_allocator_h
-
-// Simple concurrent linear allocator using atomics
-
 #include <oMemory/byte.h>
 #include <oCompiler.h> // oDEFAULT_MEMORY_ALIGNMENT
 #include <atomic>
@@ -108,5 +107,3 @@ private:
 };
 
 }
-
-#endif

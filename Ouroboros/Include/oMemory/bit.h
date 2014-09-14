@@ -1,8 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMemory_bit_h
-#define oMemory_bit_h
 
+// Efficient bit manipulation using intrinsics where possible.
+
+#pragma once
 #include <cstdint>
 
 #ifdef _MSC_VER
@@ -197,5 +197,4 @@ inline int32_t bitlow(uint32_t x)
 
 #else
 #error unsupported platform
-#endif
 #endif

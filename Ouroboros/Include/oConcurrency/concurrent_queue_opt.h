@@ -11,6 +11,8 @@
 #pragma once
 #include <oCompiler.h>
 #include <oConcurrency/tagged_pointer.h>
+#include <oMemory/allocate.h>
+#include <oMemory/concurrent_object_pool.h>
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -31,11 +33,11 @@ struct oALIGNAS(oTAGGED_POINTER_ALIGNMENT) concurrent_queue_opt_node
 	value_type value;
 };
 
-template<typename T, typename Alloc = std::allocator<concurrent_queue_opt_node<T>>>
+template<typename T>
 class concurrent_queue_opt
 {
 public:
-	typedef size_t size_type;
+	typedef uint32_t size_type;
 	typedef T value_type;
 	typedef value_type& reference;
 	typedef const value_type& const_reference;
@@ -43,10 +45,32 @@ public:
 	typedef const value_type* const_pointer;
   typedef concurrent_queue_opt_node<T> node_type;
   typedef typename node_type::pointer_type pointer_type;
-	typedef Alloc allocator_type;
 
-	concurrent_queue_opt(const allocator_type& a = allocator_type());
+	static const size_type default_capacity = 65536;
+
+	static size_type calc_size(size_type capacity);
+
+	
+	// non-concurrent api
+
+	concurrent_queue_opt(size_type capacity = default_capacity, const char* label = "concurrent_queue_opt", const allocator& a = default_allocator);
 	~concurrent_queue_opt();
+
+	// initializes the queue with memory allocated from allocator
+	void initialize(size_type capacity, const char* label = "concurrent_queue", const allocator& a = default_allocator);
+
+	// use calc_size() to determine memory size
+	void initialize(void* memory, size_type capacity);
+
+	// deinitializes the queue and returns the memory passed to initialize()
+	void* deinitialize();
+
+	// Walks the nodes in a non-concurrent manner and returns the count (not 
+	// including the sentinel node). This should be used only for debugging.
+	size_type size() const;
+
+
+	// concurrent api
 
 	// Push an element into the queue.
 	void push(const_reference val);
@@ -64,44 +88,82 @@ public:
 	// Returns true if no elements are in the queue
 	bool empty() const;
 
-	// Walks the nodes in a non-concurrent manner and returns the count (not 
-	// including the sentinel node). This should be used only for debugging.
-	size_type size() const;
-
 private:
 
 	oALIGNAS(oCACHE_LINE_SIZE) pointer_type head;
 	oALIGNAS(oCACHE_LINE_SIZE) pointer_type tail;
-	allocator_type alloc;
+	concurrent_object_pool<node_type> pool;
+	allocator alloc;
 
 	void internal_push(node_type* n);
 	void fix_list(pointer_type _tail, pointer_type _head);
 };
 
-template<typename T, typename Alloc>
-concurrent_queue_opt<T, Alloc>::concurrent_queue_opt(const allocator_type& a)
-	: alloc(a)
+template<typename T>
+typename concurrent_queue_opt<T>::size_type concurrent_queue_opt<T>::calc_size(size_type capacity)
 {
-	node_type* n = alloc.allocate(1);
-	alloc.construct(n, T());
-	head = tail = pointer_type(n, 0);
+	return concurrent_object_pool<node_type>::calc_size(capacity);
 }
 
-template<typename T, typename Alloc>
-concurrent_queue_opt<T, Alloc>::~concurrent_queue_opt()
+template<typename T>
+concurrent_queue_opt<T>::concurrent_queue_opt(size_type capacity, const char* label, const allocator& a)
+{
+	initialize(capacity, label, a);
+}
+
+template<typename T>
+concurrent_queue_opt<T>::~concurrent_queue_opt()
+{
+	deinitialize();
+}
+
+template<typename T>
+void concurrent_queue_opt<T>::initialize(size_type capacity, const char* label, const allocator& a)
+{
+	alloc = a;
+	void* mem = alloc.allocate(calc_size(capacity), memory_alignment::cacheline, label);
+	pool.initialize(mem, capacity);
+	head = tail = pointer_type(pool.create(value_type()), 0);
+}
+
+template<typename T>
+void concurrent_queue_opt<T>::initialize(void* memory, size_type capacity)
+{
+	alloc = noop_allocator;
+	pool.initialize(memory, capacity);
+	head = tail = pointer_type(pool.create(value_type()), 0);
+}
+
+template<typename T>
+void* concurrent_queue_opt<T>::deinitialize()
 {
 	if (!empty())
 		throw std::length_error("container not empty");
-
 	node_type* n = head.ptr();
 	head = tail = pointer_type(nullptr, 0);
-
-	// sentinel value should already be destroyed, so deallocate directly here
-	alloc.deallocate(n, sizeof(node_type));
+	pool.destroy(n);
+	void* mem = pool.deinitialize();
+	alloc.deallocate(mem);
+	mem = alloc == noop_allocator ? nullptr : mem;
+	alloc = noop_allocator;
+	return mem;
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue_opt<T, Alloc>::internal_push(node_type* n)
+template<typename T>
+typename concurrent_queue_opt<T>::size_type concurrent_queue_opt<T>::size() const
+{
+	size_type n = 0;
+	auto p = head.ptr()->prev.ptr();
+	while (p)
+	{
+		n++;
+		p = p->prev.ptr();
+	}
+	return n;
+}
+
+template<typename T>
+void concurrent_queue_opt<T>::internal_push(node_type* n)
 {
 	if (!n) throw std::bad_alloc();
 	pointer_type t;
@@ -121,24 +183,20 @@ void concurrent_queue_opt<T, Alloc>::internal_push(node_type* n)
 	}
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue_opt<T, Alloc>::push(const_reference val)
+template<typename T>
+void concurrent_queue_opt<T>::push(const_reference val)
 {
-	node_type* n = alloc.allocate(1);
-	alloc.construct(n, val);
-	internal_push(n);
+	internal_push(pool.create(val));
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue_opt<T, Alloc>::push(value_type&& val)
+template<typename T>
+void concurrent_queue_opt<T>::push(value_type&& val)
 {
-	node_type* n = alloc.allocate(1);
-	alloc.construct(n, std::move(val));
-	internal_push(n);
+	internal_push(pool.create(std::move(val)));
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue_opt<T, Alloc>::fix_list(pointer_type _tail, pointer_type _head)
+template<typename T>
+void concurrent_queue_opt<T>::fix_list(pointer_type _tail, pointer_type _head)
 {
 	pointer_type curNode, curNodeNext;
 	curNode = _tail;
@@ -150,8 +208,8 @@ void concurrent_queue_opt<T, Alloc>::fix_list(pointer_type _tail, pointer_type _
 	}
 }
 
-template<typename T, typename Alloc>
-bool concurrent_queue_opt<T, Alloc>::try_pop(reference val)
+template<typename T>
+bool concurrent_queue_opt<T>::try_pop(reference val)
 {
 	pointer_type t, h, firstNodePrev;
 	for (;;)
@@ -182,7 +240,7 @@ bool concurrent_queue_opt<T, Alloc>::try_pop(reference val)
 				val = std::move(firstNodePrev.ptr()->value);
 				if (head.cas(h, pointer_type(firstNodePrev.ptr(), h.tag()+1)))
 				{
-					alloc.deallocate(h.ptr(), sizeof(node_type));
+					pool.destroy(h.ptr());
 					return true;
 				}
 			}
@@ -195,36 +253,23 @@ bool concurrent_queue_opt<T, Alloc>::try_pop(reference val)
 	return false;
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue_opt<T, Alloc>::pop(reference val)
+template<typename T>
+void concurrent_queue_opt<T>::pop(reference val)
 {
 	while (!try_pop(val));
 }
 
-template<typename T, typename Alloc>
-void concurrent_queue_opt<T, Alloc>::clear()
+template<typename T>
+void concurrent_queue_opt<T>::clear()
 {
 	value_type e;
 	while (try_pop(e));
 }
 
-template<typename T, typename Alloc>
-bool concurrent_queue_opt<T, Alloc>::empty() const
+template<typename T>
+bool concurrent_queue_opt<T>::empty() const
 {
 	return head == tail;
-}
-
-template<typename T, typename Alloc>
-typename concurrent_queue_opt<T, Alloc>::size_type concurrent_queue_opt<T, Alloc>::size() const
-{
-	size_type n = 0;
-	auto p = head.ptr()->prev.ptr();
-	while (p)
-	{
-		n++;
-		p = p->prev.ptr();
-	}
-	return n;
 }
 
 }

@@ -5,6 +5,7 @@
 
 #pragma once
 #include <oConcurrency/concurrency.h>
+#include <oMemory/allocate.h>
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -12,7 +13,7 @@
 
 namespace ouro {
 
-template<typename T, typename Alloc = std::allocator<T>>
+template<typename T>
 class lock_free_queue
 {
 public:
@@ -22,8 +23,6 @@ public:
 	typedef const value_type& const_reference;
 	typedef value_type* pointer;
 	typedef const value_type* const_pointer;
-	typedef Alloc allocator_type;
-
 
 	// returns the number of bytes required to pass as memory to initialize().
 	static size_type calc_size(size_type capacity);
@@ -35,11 +34,11 @@ public:
 	lock_free_queue();
 
 	// capacity must be a power of two.
-	lock_free_queue(size_type capacity, const allocator_type& a = allocator_type());
+	lock_free_queue(size_type capacity, const char* label = "lock_free_queue", const allocator& a = default_allocator);
 	~lock_free_queue();
 
 	// capacity must be a power of two.
-	void initialize(size_type capacity, const allocator_type& a = allocator_type());
+	void initialize(size_type capacity, const char* label = "lock_free_queue", const allocator& a = default_allocator);
 	
 	// capacity must be a power of two.
 	void initialize(void* memory, size_type capacity);
@@ -73,34 +72,33 @@ private:
 	size_type wrap_mask;
 	volatile size_type read;
 	volatile size_type write;
-	bool owns_memory;
-	allocator_type alloc;
+	allocator alloc;
 };
 
-template<typename T, typename Alloc>
-lock_free_queue<T, Alloc>::lock_free_queue()
-	: elements(nullptr)
-	, wrap_mask(0)
-	, read(0)
-	, write(0)
-	, owns_memory(false)
-{
-}
-
-template<typename T, typename Alloc>
-typename lock_free_queue<T, Alloc>::size_type lock_free_queue<T, Alloc>::calc_size(size_type capacity)
+template<typename T>
+typename lock_free_queue<T>::size_type lock_free_queue<T>::calc_size(size_type capacity)
 {
 	return sizeof(T) * capacity;
 }
 
-template<typename T, typename Alloc>
-lock_free_queue<T, Alloc>::lock_free_queue(size_type capacity, const allocator_type& a)
+template<typename T>
+lock_free_queue<T>::lock_free_queue()
+	: elements(nullptr)
+	, wrap_mask(0)
+	, read(0)
+	, write(0)
+	, alloc(noop_allocator)
 {
-	initialize(capacity, a);
 }
 
-template<typename T, typename Alloc>
-lock_free_queue<T, Alloc>::~lock_free_queue()
+template<typename T>
+lock_free_queue<T>::lock_free_queue(size_type capacity, const char* label, const allocator& a)
+{
+	initialize(capacity, label, a);
+}
+
+template<typename T>
+lock_free_queue<T>::~lock_free_queue()
 {
 	if (!empty())
 		throw std::length_error("container not empty");
@@ -109,51 +107,48 @@ lock_free_queue<T, Alloc>::~lock_free_queue()
 		throw std::invalid_argument("container not empty");
 }
 
-template<typename T, typename Alloc>
-void lock_free_queue<T, Alloc>::initialize(size_type capacity, const allocator_type& a)
+template<typename T>
+void lock_free_queue<T>::initialize(size_type capacity, const char* label, const allocator& a)
 {
 	if (capacity & (capacity-1))
 		throw std::invalid_argument("capacity must be a power of two");
 	alloc = a;
-	elements = memory;
+	elements = alloc.allocate(calc_size(capacity), memory_alignment::align_default, label);
 	read = write = 0;	
 	wrap_mask = capacity - 1;
-	owns_memory = true;
 }
 
-template<typename T, typename Alloc>
-void lock_free_queue<T, Alloc>::initialize(void* memory, size_type capacity)
+template<typename T>
+void lock_free_queue<T>::initialize(void* memory, size_type capacity)
 {
 	if (capacity & (capacity-1))
 		throw std::invalid_argument("capacity must be a power of two");
 	elements = memory;
 	read = write = 0;	
 	wrap_mask = capacity - 1;
-	owns_memory = false;
+	alloc = noop_allocator;
 }
 
-template<typename T, typename Alloc>
-void* lock_free_queue<T, Alloc>::deinitialize()
+template<typename T>
+void* lock_free_queue<T>::deinitialize()
 {
-	void* mem = owns_memory ? elements : nullptr;
-	if (owns_memory)
-		alloc.deallocate(elements, capacity());
+	void* mem = alloc == noop_allocator ? elements : nullptr;
+	alloc.deallocate(elements);
 	elements = nullptr;
 	read = write = 0;
 	wrap_mask = 0;
-	owns_memory = false;
-	alloc = allocator_type();
+	alloc = noop_allocator;
 	return mem;
 }
 
-template<typename T, typename Alloc>
-typename lock_free_queue<T, Alloc>::size_type lock_free_queue<T, Alloc>::size() const
+template<typename T>
+typename lock_free_queue<T>::size_type lock_free_queue<T>::size() const
 {
 	return ((write + wrap_mask) - read) & wrap_mask;
 }
 
-template<typename T, typename Alloc>
-void lock_free_queue<T, Alloc>::push(const_reference val)
+template<typename T>
+void lock_free_queue<T>::push(const_reference val)
 {
 	size_type r = read;
 	size_type w = write;
@@ -170,8 +165,8 @@ void lock_free_queue<T, Alloc>::push(const_reference val)
 		throw std::length_error("lock_free_queue cannot hold any more elements");
 }
 
-template<typename T, typename Alloc>
-bool lock_free_queue<T, Alloc>::try_pop(reference val)
+template<typename T>
+bool lock_free_queue<T>::try_pop(reference val)
 {
 	bool popped = false;
 	size_type r = read;
@@ -190,14 +185,14 @@ bool lock_free_queue<T, Alloc>::try_pop(reference val)
 	return popped;
 }
 
-template<typename T, typename Alloc>
-bool lock_free_queue<T, Alloc>::empty() const
+template<typename T>
+bool lock_free_queue<T>::empty() const
 {
 	return read == write;
 }
 
-template<typename T, typename Alloc>
-typename lock_free_queue<T, Alloc>::size_type lock_free_queue<T, Alloc>::capacity() const
+template<typename T>
+typename lock_free_queue<T>::size_type lock_free_queue<T>::capacity() const
 {
 	return wrap_mask ? (wrap_mask + 1) : 0;
 }

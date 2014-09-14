@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
+// O(1) fine-grained concurrent block allocator: uses space inside free blocks to 
+// maintain freelist.
+
 #pragma once
-#ifndef oMemory_concurrent_pool_h
-#define oMemory_concurrent_pool_h
-
-// concurrently allocate in O(1) time from a preallocated array of blocks 
-// (fixed block allocator).
-
 #include <oCompiler.h>
 #include <cstdint>
 #include <atomic>
@@ -28,6 +26,9 @@ public:
 	// the maximum number of items a concurrent_pool can hold
 	static size_type max_capacity() { return max_index; }
 
+	// returns the size the memory param must be in init methods below
+	static size_type calc_size(size_type block_size, size_type capacity);
+
 
 	// non-concurrent api
 
@@ -46,9 +47,8 @@ public:
 	// calls deinitialize on this, moves that's memory under the same config
 	concurrent_pool& operator=(concurrent_pool&& _That);
 
-	// returns bytes required for memory; pass nullptr to obtain size, allocate
-	// and then pass that to memory in a second call to initialize the class.
-	size_type initialize(void* memory, size_type block_size, size_type capacity);
+	// use calc_size() to determine memory size
+	void initialize(void* memory, size_type block_size, size_type capacity);
 
 	// deinitializes the pool and returns the memory passed to initialize()
 	void* deinitialize();
@@ -73,11 +73,11 @@ public:
 
 	// allocate/deallocate an index into the pool. If empty out of resources nullidx
 	// will be returned.
-	index_type allocate();
+	index_type allocate_index();
 	void deallocate(index_type index);
 
 	// Wrappers for treating the block as a pointer to block_size memory.
-	inline void* allocate_pointer() { index_type i = allocate(); return pointer(i); }
+	inline void* allocate() { index_type i = allocate_index(); return pointer(i); }
 	inline void deallocate(void* pointer) { deallocate(index(pointer)); }
 
 	// convert between allocated index and pointer values
@@ -109,5 +109,3 @@ private:
 static_assert(sizeof(concurrent_pool) == oCACHE_LINE_SIZE, "size mismatch");
 
 }
-
-#endif

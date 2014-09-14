@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// djb2 hash
-#pragma once
-#ifndef oBase_djb2_h
-#define oBase_djb2_h
 
+// djb2 hash
+
+#pragma once
 #include <oMemory/uint128.h>
 
 namespace ouro {
@@ -62,5 +61,3 @@ T djb2(const void* buf, size_t buf_size, const T& seed = djb2_traits<T>::seed)
 }
 
 }
-
-#endif

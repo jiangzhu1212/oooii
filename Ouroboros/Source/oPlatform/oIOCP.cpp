@@ -329,7 +329,7 @@ bool oIOCPCreate(const oIOCP::DESC& _Desc, oTASK _ParentDestructionTask, oIOCP**
 
 oIOCPOp* oIOCPContext::GetOp()
 {
-	unsigned int AllocIndex = pSocketAllocator->allocate();
+	unsigned int AllocIndex = pSocketAllocator->allocate_index();
 	if (AllocIndex == pSocketAllocator->nullidx)
 		return nullptr;
 
