@@ -72,9 +72,6 @@
 // BC7     R8G8B8(A8)   1            High-quality color maps (w/ alpha)
 
 #pragma once
-#ifndef oSurface_h
-#define oSurface_h
-
 #include <oMemory/byte.h>
 #include <oBase/color.h>
 #include <oBase/fourcc.h>
@@ -83,8 +80,7 @@
 #include <oHLSL/oHLSLMath.h>
 #include <functional>
 
-namespace ouro {
-	namespace surface {
+namespace ouro { namespace surface {
 
 enum class format : uchar
 {
@@ -816,7 +812,4 @@ float calc_rms(const info& _SurfaceInfoInput
 void histogram8(const info& inf, const const_mapped_subresource& mapped, uint _Histogram[256]);
 void histogram16(const info& inf, const const_mapped_subresource& mapped, uint _Histogram[65536]);
 
-	} // namespace surface
-} // namespace ouro
-
-#endif
+}}

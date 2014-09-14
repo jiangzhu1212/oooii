@@ -1,12 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_string_codec_h
-#define oString_string_codec_h
 
 // String encoding and decoding low-level code to keep it isloated from the 
 // containers and standards often encapsulated in higher-level container classes.
 
-#include <oCompiler.h>
+#pragma once
+#include <oCompiler.h> // oRESTRICT
 
 #define oRESERVED_URI_CHARS "!*'();:@&=+$,?#[]/"
 #define oRESERVED_URI_CHARS_WITH_SPACE oRESERVED_URI_CHARS " "
@@ -48,5 +46,3 @@ char* json_escape_decode(char* oRESTRICT dst, size_t dst_size, const char* oREST
 template<size_t size> char* json_escape_decode(char (&dst)[size], const char* src) { return json_escape_decode(dst, size, src); }
 
 }
-
-#endif

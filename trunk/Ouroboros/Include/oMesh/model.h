@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oMesh_model_h
-#define oMesh_model_h
 
 // Runtime representation of vertex and index information
 
+#pragma once
 #include <oMemory/allocate.h>
 #include <oMesh/mesh.h>
 
@@ -153,5 +151,3 @@ private:
 };
 
 }}
-
-#endif

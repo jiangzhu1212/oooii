@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oCore/filesystem_monitor.h>
 #include <oCore/filesystem.h>
-#include <oCore/mutex.h>
+#include <oConcurrency/mutex.h>
 #include <oCore/windows/win_error.h>
 #include <oCore/windows/win_iocp.h>
 #include <oConcurrency/backoff.h>

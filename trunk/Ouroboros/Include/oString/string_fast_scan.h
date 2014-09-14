@@ -1,7 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_string_fast_scan_h
-#define oString_string_fast_scan_h
 
 // The macros below are an inner-loop optimization with 5+% performance 
 // implications, so please bear with the oddity. Basically this set of API is a 
@@ -15,6 +12,8 @@
 // so code locality advantages can be retained. Call oDEFINE_WHITESPACE_PARSING() 
 // in a .cpp file and use the API documented below for pretty-darn-fast parsing 
 // capabilities.
+
+#pragma once
 
 // Returns true if c is any kind of whitespace
 /// inline bool is_whitespace(int c)
@@ -65,5 +64,3 @@
 		oDEFINE_WHITESPACE_FUNCTION(move_past_newline, is_newline) \
 		inline void move_next_word(const char** out_str) { move_to_whitespace(out_str); move_past_line_whitespace(out_str); } \
 	}
-
-#endif

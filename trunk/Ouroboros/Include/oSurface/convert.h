@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oSurface_convert_h
-#define oSurface_convert_h
 
 // Facade for various conversion formats. Not all are supported, but could be
 // added over time.
 
+#pragma once
 #include <oSurface/surface.h>
 
 namespace ouro { namespace surface {
@@ -32,5 +30,3 @@ void convert(const info& src_info
 void convert_swizzle(const info& i, const format& new_format, const mapped_subresource& mapped);
 
 }}
-
-#endif

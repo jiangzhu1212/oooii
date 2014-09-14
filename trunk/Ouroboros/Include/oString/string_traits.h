@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_string_traits_h
-#define oString_string_traits_h
 
 // For when std::char_traits does not provide the desired API.
 
+#pragma once
 #include <oString/string.h>
 
 namespace ouro {
@@ -62,5 +60,3 @@ template<> struct string_traits<wchar_t>
 };
 
 }
-
-#endif

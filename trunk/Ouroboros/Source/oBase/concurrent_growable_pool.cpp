@@ -1,5 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/concurrent_growable_pool.h>
+#include <oBase/macros.h>
 #include <oMemory/allocate.h>
 #include <oMemory/byte.h>
 #include <oCompiler.h>

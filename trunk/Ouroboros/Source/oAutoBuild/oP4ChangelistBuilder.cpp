@@ -8,7 +8,7 @@
 #include <oBase/future.h>
 #include <oBase/timer.h>
 #include <oCore/filesystem_util.h>
-#include <oCore/mutex.h>
+#include <oConcurrency/mutex.h>
 #include <oCore/process.h>
 #include <oCore/system.h>
 #include <oString/xml.h>

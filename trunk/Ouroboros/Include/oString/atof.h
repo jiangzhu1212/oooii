@@ -1,7 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_atof_h
-#define oString_atof_h
 
 // A fast, but limited atof implementation that's reportedly 5x faster than the 
 // standard atof in simple cases. In benchmarking we've found ~3.2x on Intel i7 
@@ -17,6 +14,7 @@
 	modification="wchar_t -> char, namespaced for lib consistency, modify input string pointer to point to just after parsed value"
 />*/
 
+#pragma once
 #include <cmath>
 
 namespace ouro {
@@ -235,5 +233,3 @@ inline bool atof(const char** pp_str, float* val)
 inline bool atof(const char* str, float* val) { return atof(&str, val); }
 
 }
-
-#endif

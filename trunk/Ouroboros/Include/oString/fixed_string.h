@@ -1,8 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oString_fixed_string_h
-#define oString_fixed_string_h
-
 #include <oString/string_traits.h>
 #include <cstring>
 #include <cwchar>
@@ -186,5 +183,3 @@ TSTR size_t wcsltombs(ouro::STRT& dst, const wchar_t* src) { return wcsltombs(ds
 #undef STRT
 #undef TSTR
 #undef TSTR_PARAMS
-
-#endif

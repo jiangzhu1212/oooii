@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_uri_h
-#define oString_uri_h
 
 // Encapsulation of parsing a Universal Resource Identifier (URI) that
 // should be compliant with specification: http://tools.ietf.org/html/rfc3986
 
+#pragma once
 #include <oString/path.h>
 #include <oString/stringize.h>
 #include <oString/string_codec.h>
@@ -480,5 +478,3 @@ template<typename charT, typename TraitsT>
 struct hash<ouro::basic_uri<charT, TraitsT>> { std::size_t operator()(const ouro::basic_uri<charT, TraitsT>& _URI) const { return _URI.hash(); } };
 
 }
-
-#endif

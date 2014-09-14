@@ -1,7 +1,4 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_xml_h
-#define oString_xml_h
 
 // Parses a string as an XML document by replacing certain delimiters inline 
 // with null terminators and caching indices into the buffers where values
@@ -15,6 +12,7 @@
 // todo: add support for text fragments: multiple node values interspersed with
 // child nodes. I guess add a new handle "text" and have a first/next text.
 
+#pragma once
 #include <oString/fixed_string.h>
 #include <oString/stringize.h>
 #include <oString/text_document.h>
@@ -602,5 +600,3 @@ xml::node xml::make_next_node(char_type*& _xml, node parent_node, node previous,
 }
 
 }
-
-#endif

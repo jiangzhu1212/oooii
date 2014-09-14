@@ -1,12 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_string_source_h
-#define oString_string_source_h
 
 // String manipulation functions for making sense of cpp, shader and similar 
 // language source code.
 
-#include <oCompiler.h>
+#pragma once
+#include <oCompiler.h> // oRESTRICT
 
 namespace ouro {
 
@@ -58,5 +56,3 @@ size_t codify_data(char* oRESTRICT dst
 									 , size_t word_size);
 
 }
-
-#endif

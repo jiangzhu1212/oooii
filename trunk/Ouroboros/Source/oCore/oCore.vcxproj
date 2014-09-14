@@ -27,7 +27,6 @@
     <ClCompile Include="filesystem.cpp" />
     <ClCompile Include="filesystem_monitor.cpp" />
     <ClCompile Include="module.cpp" />
-    <ClCompile Include="mutex.cpp" />
     <ClCompile Include="openssl.cpp" />
     <ClCompile Include="page_allocator.cpp" />
     <ClCompile Include="pch.cpp">
@@ -66,7 +65,6 @@
     <ClInclude Include="..\..\Include\oCore\filesystem_monitor.h" />
     <ClInclude Include="..\..\Include\oCore\filesystem_util.h" />
     <ClInclude Include="..\..\Include\oCore\module.h" />
-    <ClInclude Include="..\..\Include\oCore\mutex.h" />
     <ClInclude Include="..\..\Include\oCore\page_allocator.h" />
     <ClInclude Include="..\..\Include\oCore\process.h" />
     <ClInclude Include="..\..\Include\oCore\process_heap.h" />

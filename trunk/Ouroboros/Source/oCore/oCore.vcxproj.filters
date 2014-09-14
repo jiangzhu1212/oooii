@@ -99,9 +99,6 @@
     <ClCompile Include="thread_traits.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="mutex.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="openssl.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -192,9 +189,6 @@
       <Filter>oCore\windows</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\thread_traits.h">
-      <Filter>oCore</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Include\oCore\mutex.h">
       <Filter>oCore</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oCore\filesystem_util.h">

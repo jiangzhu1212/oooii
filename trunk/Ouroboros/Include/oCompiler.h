@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef Ouroboros_Compiler_h
-#define Ouroboros_Compiler_h
 
 // compiler-dependent definitions
+
+#pragma once
 
 #define oVS2010_VER 1600
 #define oVS2012_VER 1700
@@ -47,6 +46,4 @@
 
 #else
 	#error unsupported compiler
-#endif
-
 #endif

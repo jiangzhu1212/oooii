@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_opttok_h
-#define oString_opttok_h
 
 // Provide a simple, clean way of handling command line parameters.
+
+#pragma once
 
 namespace ouro {
 
@@ -48,5 +47,3 @@ template<size_t capacity> char* optdoc(char (&dst)[capacity], const char* app_na
 template<size_t capacity, size_t size> char* optdoc(char (&dst)[capacity], const char* app_name, const option (&options)[size], const char* loose_parameters = "") { return optdoc(dst, capacity, app_name, options, size, loose_parameters); }
 
 }
-
-#endif

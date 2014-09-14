@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_path_traits_h
-#define oString_path_traits_h
 
 // Traits of file path rules used in ouro::path.
 
+#pragma once
 #include <oMemory/fnv1a.h>
 #include <oString/string_path.h>
 
@@ -129,5 +127,3 @@ template<typename charT>
 struct default_windows_path_traits : path_traits<charT, false, true> {};
 
 }
-
-#endif

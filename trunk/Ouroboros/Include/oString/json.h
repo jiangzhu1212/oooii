@@ -1,12 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_json_h
-#define oString_json_h
 
 // Parses a string as a JSON document by replacing certain delimiters inline 
 // with null terminators and caching indices into the buffers where values
 // begin for very fast access to contents.
 
+#pragma once
 #include <oString/text_document.h>
 #include <cstdint>
 #include <cstring>
@@ -275,5 +273,3 @@ json::node json::make_next_node(char*& json_buffer, node parent, node previous, 
 }
 
 }
-
-#endif

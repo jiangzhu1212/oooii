@@ -1,7 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oCore/camera.h>
 #include <oCore/module.h>
-#include <oCore/mutex.h>
+#include <oConcurrency/mutex.h>
 #include <oCore/windows/win_com.h>
 #include <oCore/windows/win_util.h>
 #include <oBase/throw.h>

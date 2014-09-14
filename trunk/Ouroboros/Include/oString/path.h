@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_path_h
-#define oString_path_h
 
 // Encapsulation of parsing a string representing a file on a local hard drive.
 
+#pragma once
 #include <oString/fixed_string.h>
 #include <oString/path_traits.h>
 #include <oString/stringize.h>
@@ -404,6 +402,4 @@ namespace std {
 template<typename charT, typename traitsT>
 struct hash<ouro::basic_path<charT, traitsT>> { std::size_t operator()(const ouro::basic_path<charT, traitsT>& path) const { return path.hash(); } };
 
-} // namespace std
-
-#endif
+}

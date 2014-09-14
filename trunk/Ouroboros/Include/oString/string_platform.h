@@ -1,13 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_string_platform_h
-#define oString_string_platform_h
 
 // Abstract secureCRT and other platform-specific permutations of stdc string
 // manipulators.
 
-#include <oCompiler.h>
-
+#pragma once
 #ifdef _MSC_VER
 
 #include <cstdarg>
@@ -66,11 +62,9 @@ template<size_t size> int snprintf(char (&dst)[size], const char* fmt, ...)
 }
 
 // Posix form of a safer strtok
-inline char* strtok_r(char* _StrToken, const char* _StrDelim, char** ctx)
+inline char* strtok_r(char* token, const char* delim, char** ctx)
 {
-	return strtok_s(_StrToken, _StrDelim, ctx);
+	return strtok_s(token, delim, ctx);
 }
-
-#endif
 
 #endif

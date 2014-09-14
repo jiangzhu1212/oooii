@@ -1,14 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oSurface_image_h
-#define oSurface_image_h
 
 // Uses surface utility functions to manage a buffer filled with all that a 
 // surface can support. This is basically a CPU-side version of similar GPU 
 // buffers in D3D and OGL.
 
+#pragma once
 #include <oMemory/allocate.h>
-#include <oCore/mutex.h>
+#include <oConcurrency/mutex.h>
 #include <oSurface/surface.h>
 #include <oSurface/resize.h>
 #include <memory>
@@ -191,5 +189,3 @@ float calc_rms(const image& b1, const image& b2);
 float calc_rms(const image& b1, const image& b2, image* out_diffs, int diff_scale = 1, const allocator& a = default_allocator);
 
 }}
-
-#endif

@@ -1,6 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oCore/windows/win_skeleton.h>
-#include <oCore/mutex.h>
+#include <oConcurrency/mutex.h>
 #include <oCore/process_heap.h>
 
 namespace ouro {

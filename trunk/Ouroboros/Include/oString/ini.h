@@ -1,12 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oString_ini_h
-#define oString_ini_h
 
 // Parses a string as an INI document by replacing certain delimiters inline 
 // with null terminators and caching indices into the Buffers where values
 // begin for very fast access to contents.
 
+#pragma once
 #include <oString/stringize.h>
 #include <oString/text_document.h>
 #include <cstdint>
@@ -184,5 +182,3 @@ void ini::index_buffer()
 }
 
 }
-
-#endif

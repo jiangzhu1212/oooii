@@ -2,7 +2,7 @@
 #include <oBasis/oInputMapper.h>
 #include <oBasis/oError.h>
 #include <oBasis/oRefCount.h>
-#include <oCore/mutex.h>
+#include <oConcurrency/mutex.h>
 #include <array>
 
 using namespace ouro;
