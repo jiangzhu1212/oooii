@@ -98,4 +98,4 @@ oAS_STRING(gfx_gs)
 oAS_STRING(gfx_ps)
 oAS_STRING(gfx_cs)
 
-} // namespace ouro
+}

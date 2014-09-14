@@ -1,4 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // A simple intrusive smart pointer implementation. This requires the user to 
 // define the following unqualified API:
 // void intrusive_ptr_add_ref(T* p);
@@ -24,8 +25,6 @@
 // More here: http://blogs.msdn.com/b/andypennell/archive/2004/02/06/69004.aspx
 
 #pragma once
-#ifndef oBase_intrusive_ptr_h
-#define oBase_intrusive_ptr_h
 
 namespace ouro {
 
@@ -109,5 +108,3 @@ private:
 };
 
 }
-
-#endif

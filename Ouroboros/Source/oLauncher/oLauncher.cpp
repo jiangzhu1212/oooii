@@ -22,7 +22,7 @@ namespace ouro {
 
 	bool from_string(const char** _ppConstStr, const char* _Value) { *_ppConstStr = _Value; return true; }
 
-} // namespace ouro
+}
 
 #define oOPT_CASE(_ShortNameConstant, _Value, _Dest) case _ShortNameConstant: { if (!from_string(&(_Dest), value)) { return oErrorSetLast(std::errc::invalid_argument, "-%c %s cannot be interpreted as a(n) %s", (_ShortNameConstant), (_Value), typeid(_Dest).name()); } break; }
 #define oOPT_CASE_DEFAULT(_ShortNameVariable, _Value, _NthOption) \

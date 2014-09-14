@@ -3,7 +3,7 @@
 
 namespace ouro {
 
-const char* as_string(const vendor::value& _Vendor)
+const char* as_string(const vendor& _Vendor)
 {
 	switch (_Vendor)
 	{

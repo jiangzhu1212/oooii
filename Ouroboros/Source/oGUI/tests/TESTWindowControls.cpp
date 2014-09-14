@@ -509,5 +509,5 @@ void TESTWindowControls(test_services& _Services)
 	_Services.check(s, 0);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

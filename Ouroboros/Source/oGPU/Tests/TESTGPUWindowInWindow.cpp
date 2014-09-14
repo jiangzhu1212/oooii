@@ -186,5 +186,5 @@ void TESTwindow_in_window(test_services& _Services)
 	}
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

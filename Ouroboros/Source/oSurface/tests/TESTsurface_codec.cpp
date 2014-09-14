@@ -117,5 +117,5 @@ void TESTsurface_codec(test_services& _Services)
 	compare_checkboards(uint2(11,21), surface::format::b8g8r8a8_unorm, surface::file_format::tga, 1.0f);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

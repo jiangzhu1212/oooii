@@ -1,17 +1,16 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #pragma once
-#ifndef oBase_input_h
-#define oBase_input_h
-
 #include <oBase/invalid.h>
 #include <oBase/macros.h>
 #include <oBase/enum_iterator.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <array>
+#include <cstdint>
 #include <functional>
+
 namespace ouro { namespace input {
 
-enum class type : unsigned char
+enum class type : uint8_t
 {
 	unknown,
 	keyboard,
@@ -40,7 +39,7 @@ enum class status
 	count,
 };
 
-enum key : unsigned short
+enum key : uint16_t
 {
 	none,
 
@@ -172,7 +171,7 @@ enum class skeleton_bone
 	invalid_bone = count,
 };
 
-enum class action_type : unsigned char
+enum class action_type : uint8_t
 {
 	unknown,
 	
@@ -346,7 +345,4 @@ inline bool is_standard(const key& _Key) { return _Key >= standard_first && _Key
 void record_state(const ouro::input::action& _Action, const ouro::input::key* _pKeys, size_t _NumKeys, bool* _pKeyStates, size_t _NumKeyStates, float3* _pPointerPosition);
 template<size_t NumKeys, size_t NumKeyStates> void record_state(const ouro::input::action& _Action, const ouro::input::key (&_pKeys)[NumKeys], bool (&_pKeyStates)[NumKeyStates], float3* _pPointerPosition) { record_state(_Action, _pKeys, NumKeys, _pKeyStates, NumKeyStates, _pPointerPosition); }
 
-	} // namespace input
-}
-
-#endif
+}}

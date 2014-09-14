@@ -3,8 +3,7 @@
 #include <memory>
 #include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 static const char* sExpectedArtists[] = { "Bob Dylan", "Bonnie Tyler", "Dolly Parton", };
 
@@ -135,5 +134,4 @@ void TESTxml(test_services& services)
 	oTEST(!strcmp(t.s.c_str(), sCompactExpectedVisitOrder), "Visit out of order: %s", t.s.c_str());
 }
 
-	} // namespace tests
-} // namespace ouro
+}}

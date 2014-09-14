@@ -1,9 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Convenience "all headers" header for precompiled header files. Do NOT use 
 // this to be lazy when including headers in .cpp files. Be explicit.
+
 #pragma once
-#ifndef oBase_all_h
-#define oBase_all_h
 #include <oBase/aabox.h>
 #include <oBase/algorithm.h>
 #include <oBase/assert.h>
@@ -40,4 +40,3 @@
 #include <oBase/types.h>
 #include <oBase/udec3.h>
 #include <oBase/unordered_map.h>
-#endif

@@ -46,7 +46,7 @@ const char* font_family(BYTE _tmPitchAndFamily);
 const char* char_set(BYTE _tmCharSet);
 
 		} // namespace gdi
-	} // namespace windows
-} // namespace ouro
+	}
+}
 
 #endif

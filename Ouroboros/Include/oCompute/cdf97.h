@@ -11,6 +11,6 @@ void cdf97fwd(float* _pValues, size_t _NumValues);
 // Inverse biorthogonal CDF 9/7 wavelet transform. Transforms in place.
 void cdf97inv(float* _pValues, size_t _NumValues);
 
-} // namespace ouro
+}
 
 #endif

@@ -11,7 +11,7 @@ namespace ouro {
 		void TESTcompute();
 		void TESTeasing();
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 
 #endif

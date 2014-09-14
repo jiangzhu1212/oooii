@@ -22,7 +22,7 @@ namespace ouro {
 			void TESTwin_registry();
 		#endif
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 
 #endif

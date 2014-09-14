@@ -300,4 +300,4 @@ assert_action::value vtracef(const assert_context& _Assertion, const char* _Form
 	return reporting::context::singleton().vformatf(_Assertion, _Format, _Args);
 }
 
-} // namespace ouro
+}

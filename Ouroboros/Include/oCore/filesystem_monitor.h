@@ -1,14 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Object that redirects file lifetime events to a functor.
-#pragma once
-#ifndef oCore_filesystem_monitor_h
-#define oCore_filesystem_monitor_h
 
+// Object that redirects file lifetime events to a functor.
+
+#pragma once
 #include <oString/path.h>
 #include <memory>
 
-namespace ouro {
-	namespace filesystem {
+namespace ouro { namespace filesystem {
 
 /* enum class */ namespace file_event
 {	enum value {
@@ -53,7 +51,4 @@ public:
   virtual void unwatch(const path& _Path) = 0;
 };
 
-	} // namespace filesystem
-} // namespace ouro
-
-#endif
+}}

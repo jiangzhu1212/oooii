@@ -1,4 +1,5 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Describes an ordered list of regular expressions that refine a query 
 // through a series of inclusion patterns and exclusion patterns. For example, 
 // if writing a parsing tool that operated on C++ source this can be used to 
@@ -7,9 +8,6 @@
 // ParseCpp -includefiles "s.*" -excludesymbols "std\:\:vector.*" -include "std\:\:vector<SYMBOL>"
 
 #pragma once
-#ifndef oBase_filter_chain_h
-#define oBase_filter_chain_h
-
 #include <oBase/algorithm.h>
 #include <oBase/throw.h>
 #include <vector>
@@ -91,6 +89,4 @@ private:
 	}
 };
 
- }
-
-#endif
+}

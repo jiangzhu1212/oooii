@@ -1,10 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 #pragma once
-#ifndef oCore_win_util_h
-#define oCore_win_util_h
-
 #include <oCore/windows/win_error.h>
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <comutil.h>
@@ -17,8 +14,7 @@ inline void intrusive_ptr_release(IUnknown* unk) { unk->Release(); }
 #define oSAFE_RELEASE(p) do { if (p) { p->Release(); p = nullptr; } } while(false)
 #define oSAFE_RELEASEV(p) do { if (p) { ((IUnknown*)p)->Release(); p = nullptr; } } while(false)
 
-namespace ouro {
-	namespace windows {
+namespace ouro { namespace windows {
 
 class scoped_handle
 {
@@ -55,8 +51,8 @@ private:
 	void close() { if (h && h != INVALID_HANDLE_VALUE) { ::CloseHandle(h); h = nullptr; } }
 };
 
-	} // namespace windows
-} // namespace ouro
+	}
+}
 
 // primarily intended for id classes
 template<typename T> DWORD asdword(const T& _ID) { return *((DWORD*)&_ID); }
@@ -69,5 +65,3 @@ inline std::thread::id astid(DWORD _ID)
 	tid._Id = _ID;
 	return *(std::thread::id*)&tid;
 }
-
-#endif

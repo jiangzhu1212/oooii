@@ -23,5 +23,5 @@ void TESTcpu(test_services& _Services)
 	_Services.report("%s %s %s%s%s %d HWThreads", ouro::as_string(inf.type), inf.string.c_str(), inf.brand_string.c_str(), HasHT ? " HT" : "", HasAVX ? " AVX" : "", inf.hardware_thread_count);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

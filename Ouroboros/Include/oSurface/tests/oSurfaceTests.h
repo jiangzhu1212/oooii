@@ -17,7 +17,7 @@ namespace ouro {
 		void TESTsurface_generate_mips(test_services& services);
 		void TESTsurface_resize(test_services& services);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 
 #endif

@@ -334,4 +334,4 @@ module::id get_id()
 }
 
 	} // namespace this_module
-} // namespace ouro
+}

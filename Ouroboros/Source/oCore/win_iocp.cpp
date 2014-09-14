@@ -358,5 +358,5 @@ void join()
 }
 
 		} // namespace iocp
-	} // namespace windows
-} // namespace ouro
+	}
+}

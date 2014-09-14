@@ -29,5 +29,5 @@ public:
 
 oGPU_COMMON_TEST(clear);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

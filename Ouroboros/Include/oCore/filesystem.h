@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// File system abstraction.
-#pragma once
-#ifndef oCore_filesystem_h
-#define oCore_filesystem_h
 
+// File system abstraction.
+
+#pragma once
 #include <oMemory/allocate.h>
 #include <oString/path.h>
 #include <functional>
@@ -11,8 +10,7 @@
 #include <memory>
 #include <system_error>
 
-namespace ouro {
-	namespace filesystem {
+namespace ouro { namespace filesystem {
 
 template<typename charT, typename TraitsT = default_posix_path_traits<charT>>
 class basic_filesystem_error : public std::system_error
@@ -397,7 +395,4 @@ bool joinable();
 // this must be called before the application ends.
 void join();
 
-	} // namespace filesystem
-} // namespace ouro
-
-#endif
+}}

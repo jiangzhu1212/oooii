@@ -119,5 +119,5 @@ void TESTfilesystem_monitor()
 	oCHECK(Events->FileRemoved.wait_for(kTimeout), "timed out waiting for the removed event");
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

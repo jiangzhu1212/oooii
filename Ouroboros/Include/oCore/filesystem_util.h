@@ -1,15 +1,13 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Wrappers for some commonly loaded file types
-#pragma once
-#ifndef oCore_filesystem_util_h
-#define oCore_filesystem_util_h
 
+// Wrappers for some commonly loaded file types
+
+#pragma once
 #include <oCore/filesystem.h>
 #include <oString/ini.h>
 #include <oString/xml.h>
 
-namespace ouro {
-	namespace filesystem {
+namespace ouro { namespace filesystem {
 
 inline std::unique_ptr<xml> load_xml(const path& _Path)
 {
@@ -23,7 +21,4 @@ inline std::unique_ptr<ini> load_ini(const path& _Path)
 	return std::unique_ptr<ini>(new ini(_Path, (char*)a.release(), a.get_deallocate()));
 }
 
-	} // namespace filesystem
-} // namespace ouro
-
-#endif
+}}

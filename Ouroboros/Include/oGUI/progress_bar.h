@@ -56,6 +56,6 @@ public:
 	virtual void add_percentage(int _Percentage) = 0;
 };
 
-} // namespace ouro
+}
 
 #endif

@@ -114,6 +114,6 @@ bool dump(const path& _Path, bool _Full, void* _Exceptions);
 void dump_and_terminate(void* _exception, const char* _Message);
 
 	} // namespace debugger
-} // namespace ouro
+}
 
 #endif

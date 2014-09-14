@@ -1,8 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Serial communication interface
+
 #pragma once
-#ifndef oCore_serial_port
-#define oCore_serial_port
 
 namespace ouro {
 
@@ -61,6 +61,4 @@ public:
 	static std::shared_ptr<serial_port> make(const info& _Info);
 };
 
-} // namespace ouro
-
-#endif
+}

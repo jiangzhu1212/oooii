@@ -1,14 +1,13 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Extension to C++'s type_info that includes basic, generic built-in 
-// construction. Note that vtable() can be somewhat expensive since it must call
-// the default constructor to have C++ populate the vtable correctly. If the 
-// default constructor is complex, then that call will reflect such complexity.
-// If the destructor is not properly implemented, then resource issues could 
-// arise too. Use with care.
-#pragma once
-#ifndef oBase_type_info_h
-#define oBase_type_info_h
 
+// Extension to C++'s type_info that includes basic, generic built-in 
+// construction. Note vtable() can be somewhat expensive since it must call the 
+// default constructor to have C++ populate the vtable correctly. If the default 
+// constructor is complex, then that call will reflect such complexity. If the 
+// destructor is not properly implemented, then resource issues could arise too. 
+// Use with care.
+
+#pragma once
 #include <oBase/type_id.h>
 #include <oBase/types.h>
 #include <oMemory/fnv1a.h>
@@ -181,5 +180,3 @@ template<typename T> struct type_info
 };
 
 }
-
-#endif

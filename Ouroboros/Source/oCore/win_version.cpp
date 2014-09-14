@@ -92,5 +92,5 @@ version::value get_version()
 	return version::unknown;
 }
 
-	} // namespace windows
-} // namespace ouro
+	}
+}

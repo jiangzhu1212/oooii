@@ -74,4 +74,4 @@ HRESULT include::Open(D3D_INCLUDE_TYPE IncludeType, LPCSTR pFileName, LPCVOID pP
 
 		} // namespace d3d
 	} // namespace gpu
-} // namespace ouro
+}

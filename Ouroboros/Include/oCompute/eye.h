@@ -82,6 +82,6 @@ private:
 	float3 L; // center of interest/focal point/lookat
 };
 
-} // namespace ouro
+}
 
 #endif

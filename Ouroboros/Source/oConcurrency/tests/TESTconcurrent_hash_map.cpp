@@ -6,8 +6,7 @@
 
 #include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 static void generate_strings(test_services& services, std::vector<std::string>& _Strings, size_t _NumToGenerate)
 {
@@ -69,5 +68,4 @@ void TESTconcurrent_hash_map(test_services& services)
 	TEST_chm_basics(services);
 }
 
-	} // namespace tests
-} // namespace ouro
+}}

@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Collection of primitive macros useful in many system-level cases
-#pragma once
-#ifndef oBase_macros_h
-#define oBase_macros_h
 
+// Collection of primitive macros useful in many system-level cases
+
+#pragma once
 #include <oCompiler.h>
 #include <cstddef>
 
@@ -64,8 +63,3 @@
 // Encapsulate the pattern of declaring typed handles by defining a typed pointer
 #define oDECLARE_HANDLE(_HandleName) typedef struct _HandleName##__tag {}* _HandleName;
 #define oDECLARE_DERIVED_HANDLE(_BaseHandleName, _DerivedHandleName) typedef struct _DerivedHandleName##__tag : public _BaseHandleName##__tag {}* _DerivedHandleName;
-
-// Declare an enum whose size will be that of the specified type.
-#define oDECLARE_SMALL_ENUM(_Name, _Type) __pragma(warning(disable:4480)) enum _Name : _Type __pragma(warning(default:4480))
-
-#endif

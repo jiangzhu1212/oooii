@@ -1,10 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_atomic_type_traits_h
-#define oBase_atomic_type_traits_h
 
 // Get the builtin type underlying a std::atomic
 
+#pragma once
 #include <atomic>
 
 namespace ouro {
@@ -38,5 +36,3 @@ template<> struct remove_atomic<std::atomic_llong> { typedef long long type; };
 template<> struct remove_atomic<std::atomic_ullong> { typedef unsigned long long type; };
 
 }
-
-#endif

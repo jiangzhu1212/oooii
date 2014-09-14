@@ -268,5 +268,5 @@ void release_delay()
 }
 
 		} // namespace crt_leak_tracker
-	} // namespace windows
-} // namespace ouro
+	}
+}

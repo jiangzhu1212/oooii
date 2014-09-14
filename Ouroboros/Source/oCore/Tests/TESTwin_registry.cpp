@@ -25,5 +25,5 @@ void TESTwin_registry()
 	registry::delete_key(hKey, "Software/Ouroboros/oUnitTests");
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

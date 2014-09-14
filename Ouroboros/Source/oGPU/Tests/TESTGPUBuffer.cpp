@@ -61,5 +61,5 @@ void TESTbuffer()
 		oCHECK(find_and_erase(Values, GPU_BufferAppendIndices[i]), "GPU Appended bad value");
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

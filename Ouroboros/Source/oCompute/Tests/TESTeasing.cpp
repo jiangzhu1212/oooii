@@ -172,5 +172,5 @@ void TESTeasing()
 	oCHECK(equal(result, 5.f), "circular_ease_inout returned incorrect value");
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

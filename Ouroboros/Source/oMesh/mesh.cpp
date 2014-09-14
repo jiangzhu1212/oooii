@@ -934,4 +934,4 @@ uint clip_convex(const planef& plane, const float3* oRESTRICT polygon, uint num_
 }
 
 	} // namespace gpu
-} // namespace ouro
+}

@@ -242,5 +242,5 @@ std::shared_ptr<obj_test> obj_test::make(which _Which)
 }
 
 	} // tests
-} // namespace ouro
+}
 

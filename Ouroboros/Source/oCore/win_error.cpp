@@ -239,5 +239,5 @@ const std::error_category& category()
 	return sInstance;
 }
 
-	} // namespace windows
-} // namespace ouro
+	}
+}

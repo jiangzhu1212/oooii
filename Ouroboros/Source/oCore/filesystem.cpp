@@ -41,7 +41,7 @@ const char* as_string(const filesystem::file_type::value& _Type)
 	return "?";
 }
 
-} // namespace ouro
+}
 
 #define oFSTHROW0(_ErrCode) throw filesystem_error(make_error_code(errc::_ErrCode))
 #define oFSTHROW01(_ErrCode, _Path1) throw filesystem_error(_Path1, make_error_code(errc::_ErrCode))
@@ -1038,4 +1038,4 @@ void join()
 
 
 	} // namespace filesystem
-} // namespace ouro
+}

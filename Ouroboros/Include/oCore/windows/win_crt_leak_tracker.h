@@ -2,15 +2,10 @@
 // Tracks CRT allocations. Mainly this is glue code linking oBase/leak_tracker
 // to libcrt malloc.
 #pragma once
-#ifndef oCore_win_crt_leak_tracker_h
-#define oCore_win_crt_leak_tracker_h
-
 #include <oBase/leak_tracker.h>
 #include <unordered_map>
 
-namespace ouro {
-	namespace windows {
-		namespace crt_leak_tracker {
+namespace ouro { namespace windows { namespace crt_leak_tracker {
 
 // This ensures the crt_leak_tracker has been initialized
 void ensure_initialized();
@@ -50,8 +45,4 @@ void ignore(void* _Pointer);
 void add_delay();
 void release_delay();
 
-		} // namespace crt_leak_tracker
-	} // namespace windows
-} // namespace ouro
-
-#endif
+}}}

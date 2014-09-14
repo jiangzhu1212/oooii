@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Declaration of common functors for standard containers.
-#pragma once
-#ifndef oBase_container_support_h
-#define oBase_container_support_h
 
+// Declaration of common functors for standard containers.
+
+#pragma once
 #include <functional>
 
 namespace ouro {
@@ -24,5 +23,3 @@ template<> struct same<const char*> { int operator()(const char* x, const char* 
 template<> struct same_i<const char*> { bool operator()(const char* x, const char* y) const { return !_stricmp(x, y); } };
 
 }
-
-#endif

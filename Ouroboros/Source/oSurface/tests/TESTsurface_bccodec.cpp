@@ -53,5 +53,5 @@ void TESTsurface_bccodec(test_services& services)
 	//convert_and_test(services, view, format::bc6h_uf16, "_BC6HU", 2);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

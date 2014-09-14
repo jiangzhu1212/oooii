@@ -123,5 +123,5 @@ private:
 
 oGPU_COMMON_TEST(render_target);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

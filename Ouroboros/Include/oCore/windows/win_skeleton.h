@@ -1,17 +1,14 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // This provides an API similar to that for touch-based devices to abstract 
 // skeleton-tracking input devices such as Kinect.
-#pragma once
-#ifndef oCore_win_skeleton_h
-#define oCore_win_skeleton_h
 
+#pragma once
 #include <oBase/macros.h>
 #include <array>
 #include <functional>
 
-namespace ouro {
-	namespace windows {
-		namespace skeleton {
+namespace ouro { namespace windows { namespace skeleton {
 
 // Handle used in window messages to identify a particular skeleton
 typedef void* handle;
@@ -58,8 +55,4 @@ void unregister_source(handle _hSkeleton);
 // _pSkeleton are not valid.
 bool get_info(handle _hSkeleton, bone_info* _pSkeleton);
 
-		} // namespace skeleton
-	} // namespace windows
-} // namespace ouro
-
-#endif
+}}}

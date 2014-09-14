@@ -325,4 +325,4 @@ float calc_rms(const image& b1, const image& b2, image* out_diffs, int diff_scal
 }
 
 	} // namespace surface
-} // namespace ouro
+}

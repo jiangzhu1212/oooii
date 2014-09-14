@@ -366,7 +366,7 @@ public:
 };
 
 		} // namespace gdi
-	} // namespace windows
-} // namespace ouro
+	}
+}
 
 #endif

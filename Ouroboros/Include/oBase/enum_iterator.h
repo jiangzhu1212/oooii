@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_enum_iterator_h
-#define oBase_enum_iterator_h
 
 // support for iterating enum classes with range based for under the 
 // assumption the enum starts at 0 and has a member called count
 
+#pragma once
 #include <type_traits>
 
 namespace ouro {
@@ -45,5 +43,3 @@ template<typename E> bool in_range_incl(const E& a, const E& start, const E& end
 }
 
 #define oCHECK_COUNTS_MATCH(_enum, _array) static_assert((size_t)_enum::count == oCOUNTOF(_array), "array mismatch");
-
-#endif

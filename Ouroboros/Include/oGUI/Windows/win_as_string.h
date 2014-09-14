@@ -51,7 +51,7 @@ template<size_t size> inline char* parse_wm_message(char (&_StrDestination)[size
 inline char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWINKEY_CONTROL_STATE* _pState, const CWPSTRUCT* _pCWPStruct) { return parse_wm_message(_StrDestination, _SizeofStrDestination, _pState, _pCWPStruct->hwnd, _pCWPStruct->message, _pCWPStruct->wParam, _pCWPStruct->lParam); }
 template<size_t size> inline char* parse_wm_message(char (&_StrDestination)[size], const CWPSTRUCT* _pCWPStruct) { return parse_wm_message(_StrDestination, size, _pCWPStruct); }
 
-	} // namespace windows
-} // namespace ouro
+	}
+}
 
 #endif

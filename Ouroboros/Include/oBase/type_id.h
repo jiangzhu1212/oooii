@@ -1,10 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Record a runtime generically accessible form of a type idenifier for either
 // arithmetic or linear algebra types.
-#pragma once
-#ifndef oBase_type_id_h
-#define oBase_type_id_h
 
+#pragma once
 #include <oHLSL/oHLSLTypes.h>
 #include <type_traits>
 
@@ -88,5 +87,3 @@ template<typename T> struct is_type_id
 };
 
 }
-
-#endif

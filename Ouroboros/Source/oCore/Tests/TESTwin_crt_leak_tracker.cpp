@@ -51,5 +51,5 @@ void TESTwin_crt_leak_tracker(test_services& _Services)
 	#endif
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

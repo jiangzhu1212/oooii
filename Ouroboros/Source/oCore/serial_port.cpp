@@ -132,4 +132,4 @@ size_t serial_port_impl::receive(void* _pBuffer, size_t _SizeofBuffer)
 	return read;
 }
 
-} // namespace ouro
+}

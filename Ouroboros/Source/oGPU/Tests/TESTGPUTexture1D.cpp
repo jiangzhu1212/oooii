@@ -27,5 +27,5 @@ struct gpu_test_texture1d : public gpu_texture_test
 
 oGPU_COMMON_TEST(texture1d);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

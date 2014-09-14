@@ -560,4 +560,4 @@ void spawn_associated_application(const char* _DocumentName, bool _ForEdit)
 }
 
 	} // namespace system
-} // namespace ouro
+}

@@ -37,5 +37,5 @@ struct gpu_test_texturecubemip : public gpu_texture_test
 
 oGPU_COMMON_TEST(texturecubemip);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

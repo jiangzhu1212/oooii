@@ -1,18 +1,15 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Utilities for working with the default heap used by the platform's C runtime.
 // Often the default malloc/free API is supported by robust introspection and 
 // debugging facilities, and if not they should be added! So here is a cross-
 // platform API for interacting with memory based on the robust Microsoft 
 // crtdbg feature set.
-#pragma once
-#ifndef oCore_win_crt_heap_h
-#define oCore_win_crt_heap_h
 
+#pragma once
 #include <stddef.h>
 
-namespace ouro {
-	namespace windows {
-		namespace crt_heap {
+namespace ouro { namespace windows { namespace crt_heap {
 
 // Returns true if the specified pointer is allocated the MSVCRT malloc heap, 
 // false if nullptr or not a pointer that can be passed to free (i.e. an offset
@@ -83,8 +80,4 @@ void enable_at_exit_leak_report(bool _Enable = true);
 // as those done by TBB.
 bool enable_memory_tracking(bool _Enable = true);
 
-		} // namespace crt_heap
-	} // namespace windows
-} // namespace ouro
-
-#endif
+}}}

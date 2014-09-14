@@ -69,7 +69,7 @@ namespace ouro {
 		const frustum<T>& operator=(const matrix_type& _Projection) { oExtractFrustumPlanes(&Left, _Projection, true); return *this; }
 		inline const plane_type& GetPlane(oFRUSTUM_CORNER _Corner) const { return (&Left)[_Index]; }
 	};
-} // namespace ouro
+}
 
 typedef ouro::frustum<float> oFrustumf; //typedef TFRUSTUM<double> oFrustumd; // @tony: Need an oIntersects for double
 

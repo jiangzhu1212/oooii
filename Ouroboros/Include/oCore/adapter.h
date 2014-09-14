@@ -1,20 +1,15 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Interface for working with display adapters (video cards)
-#pragma once
-#ifndef oCore_adapter_h
-#define oCore_adapter_h
 
+// Interface for working with display adapters (video cards)
+
+#pragma once
 #include <oBase/macros.h>
 #include <oBase/vendor.h>
 #include <oBase/version.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <functional>
 
-namespace ouro {
-
-	namespace display { class id; }
-	
-	namespace adapter {
+namespace ouro { namespace display { class id; } namespace adapter {
 
 class id
 {
@@ -35,7 +30,7 @@ struct info
 	mstring description;
 	mstring plugnplay_id;
 	struct version version;
-	vendor::value vendor;
+	vendor vendor;
 	struct version feature_level;
 };
 
@@ -43,7 +38,7 @@ void enumerate(const std::function<bool(const info& _Info)>& _Enumerator);
 
 // Ouroboros requires a minimum adapter driver version. This returns that 
 // version.
-version minimum_version(vendor::value _Vendor);
+version minimum_version(const vendor& v);
 
 // Checks that all adapters meet or exceed the minimum version
 inline bool all_up_to_date()
@@ -69,7 +64,4 @@ inline info find(const version& _MinVersion, bool _ExactVersion = true) { return
 
 info find(display::id* _DisplayID);
 
-	} // namespace adapter
-} // namespace ouro
-
-#endif
+}}

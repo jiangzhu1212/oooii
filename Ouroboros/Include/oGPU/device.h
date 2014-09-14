@@ -106,10 +106,10 @@ struct device_info
 	int adapter_index;
 
 	// Describes the API used to implement the oGPU API
-	gpu_api::value api;
+	gpu_api api;
 
 	// Describes the company that made the device.
-	vendor::value vendor;
+	vendor vendor;
 
 	// True if the device was created in software emulation mode.
 	bool is_software_emulation;

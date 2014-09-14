@@ -641,4 +641,4 @@ void enumerate_threads(const function<bool(std::thread::id _ThreadID)>& _Enumera
 }
 
 	} // namespace this_process
-} // namespace ouro
+}

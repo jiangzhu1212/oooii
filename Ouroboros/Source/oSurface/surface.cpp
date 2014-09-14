@@ -1691,4 +1691,4 @@ void histogram16(const info& inf, const const_mapped_subresource& mapped, uint _
 }
 
 	} // namespace surface
-} // namespace ouro
+}

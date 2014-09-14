@@ -94,6 +94,6 @@ template<typename T> T circular_ease_inout(float _TimeInSeconds, const T& _Start
 }
 // $(CitedCodeEnd)
 
-} // namespace ouro
+}
 
 #endif

@@ -152,4 +152,4 @@ size_t gzip_decompress(void* oRESTRICT dst, size_t dst_size, const void* oRESTRI
 	return UncompressedSize;
 }
 
-} // namespace ouro
+}

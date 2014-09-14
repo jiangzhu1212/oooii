@@ -520,4 +520,4 @@ void dump_and_terminate(void* _exception, const char* _Message)
 }
 
 	} // namespace debugger
-} // namespace ouro
+}

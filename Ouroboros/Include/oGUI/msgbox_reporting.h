@@ -8,6 +8,6 @@ namespace ouro {
 
 assert_action::value prompt_msgbox(const assert_context& _Assertion, const char* _Message);
 
-} // namespace ouro
+}
 
 #endif

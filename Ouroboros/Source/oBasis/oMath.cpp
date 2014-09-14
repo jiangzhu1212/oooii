@@ -23,7 +23,7 @@ const char* as_string(const oFRUSTUM_CORNER& _Corner)
 	}
 }
 
-} // namespace ouro
+}
 
 float4x4 oFitToView(const float4x4& _View, float _FovYRadians, const spheref& _Bounds, float _OffsetMultiplier = 1.0f)
 {

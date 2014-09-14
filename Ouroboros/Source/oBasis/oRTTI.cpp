@@ -130,7 +130,7 @@ char* to_string(char* _StrDestination, size_t _SizeofDestination, const std::str
 	return _StrDestination;
 }
 
-} // namespace ouro
+}
 
 oRTTI_ATOM_DEFAULT_DESCRIPTION_CONSTRUCTOR(oRTTI_CAPS_ARRAY, std_string, std_string, -1)
 

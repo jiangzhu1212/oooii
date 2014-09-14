@@ -98,5 +98,5 @@ char* get(char* _StrDestination, size_t _SizeofStrDestination, hkey _hKey, const
 }
 
 		} // namespace registry
-	} // namespace windows
-} // namespace ouro
+	}
+}

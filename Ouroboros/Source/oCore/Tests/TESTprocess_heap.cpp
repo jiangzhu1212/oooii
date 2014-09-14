@@ -45,5 +45,5 @@ void TESTprocess_heap()
 	process_heap::deallocate(c);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

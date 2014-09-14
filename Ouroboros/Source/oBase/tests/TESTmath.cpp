@@ -45,5 +45,5 @@ void TESTaaboxf()
 	oCHECK(equal(dim.x, 6.0f) && equal(dim.y, 6.0f) && equal(dim.z, 6.0f), "aaboxf::ExtendBy() failed");
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

@@ -29,7 +29,7 @@ namespace ouro {
 		void TESTtriangle(test_services& _Services);
 		void TESTwindow_in_window(test_services& _Services);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 
 #endif

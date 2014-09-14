@@ -167,4 +167,4 @@ void call_once(once_flag& flag, const std::function<void()>& fn)
 	InitOnceExecuteOnce(*(PINIT_ONCE*)&flag, InitOnceCallback, (PVOID)&fn, nullptr);
 }
 
-} // namespace ouro
+}

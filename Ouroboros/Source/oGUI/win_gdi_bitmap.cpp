@@ -275,5 +275,5 @@ HICON bitmap_to_icon(HBITMAP _hBmp)
 }
 
 		} // namespace gdi
-	} // namespace windows
-} // namespace ouro
+	}
+}

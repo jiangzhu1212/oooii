@@ -43,5 +43,5 @@ void TESTfilter_chain()
 			oTHROW(protocol_error, "Failed filter on %d%s symbol", i, ordinal(i));
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

@@ -60,5 +60,5 @@ void unregister_source(handle _handle) { context::singleton().unregister_source(
 bool get_info(handle _handle, bone_info* _pSkeleton) { return context::singleton().get_info(_handle, _pSkeleton); }
 
 		} // namespace skeleton
-	} // namespace windows
-} // namespace ouro
+	}
+}

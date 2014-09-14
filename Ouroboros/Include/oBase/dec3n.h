@@ -1,12 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // A compressed float3+ format that can store a signed normalized value[-1,1].
 // This also can store a 2-bit value for a 4th term. Sometimes this can be 
 // useful such as when storing geometric tangents along with a winding order 
 // value of either -1 or 1.
-#pragma once
-#ifndef oBase_dec3n_h
-#define oBase_dec3n_h
 
+#pragma once
 #include <oMemory/byte.h>
 #include <oHLSL/oHLSLTypes.h>
 #include <stdexcept>
@@ -44,5 +43,3 @@ private:
 };
 
 }
-
-#endif

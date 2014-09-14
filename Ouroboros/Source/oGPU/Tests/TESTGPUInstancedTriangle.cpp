@@ -75,6 +75,6 @@ private:
 
 oGPU_COMMON_TEST(instanced_triangle);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 

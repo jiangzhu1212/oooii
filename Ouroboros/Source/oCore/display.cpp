@@ -232,4 +232,4 @@ void set_power_on(bool _On)
 }
 
 	} // namespace display
-} // namespace ouro
+}

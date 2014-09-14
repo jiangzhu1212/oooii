@@ -1,12 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Simplify classes that behave a lot like intrinsic types by simplifying the 
 // implementation requirements. This exposes macros for the cases where 
 // inheriting from these mixins would cause a simple struct to lose its non-
 // aggregate status.
-#pragma once
-#ifndef oBase_operators_h
-#define oBase_operators_h
 
+#pragma once
 #include <oBase/macros.h>
 
 // If the user type implements:
@@ -69,5 +68,3 @@ template<typename ThisT, typename A = oOperatorsNullA, typename B = oOperatorsNu
 template<typename ThisT, typename A = oOperatorsNullA, typename B = oOperatorsNullB, typename C = oOperatorsNullC, typename D = oOperatorsNullD> struct oArithmetic { oOPERATORS_BROADCAST(oOPERATORS_ARITHMETIC) };
 template<typename ThisT, typename A = oOperatorsNullA, typename B = oOperatorsNullB, typename C = oOperatorsNullC, typename D = oOperatorsNullD> struct oLogical { oOPERATORS_BROADCAST(oOPERATORS_LOGICAL) };
 template<typename ThisT, typename A = oOperatorsNullA, typename B = oOperatorsNullB, typename C = oOperatorsNullC, typename D = oOperatorsNullD> struct oOperators { oOPERATORS_BROADCAST(oOPERATORS_COMPARABLE) oOPERATORS_INCREMENTABLE(ThisT) oOPERATORS_BROADCAST(oOPERATORS_ARITHMETIC) oOPERATORS_BROADCAST(oOPERATORS_LOGICAL) };
-
-#endif

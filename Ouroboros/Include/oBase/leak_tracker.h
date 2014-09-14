@@ -1,25 +1,24 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // An interface for hooking a malloc routine to report allocations unmatched by
 // deallocation and report the file line and callstack of where the allocation
 // occurred. This is not threadsafe since usage of std::mutex at this level
 // can itself trigger C++ runtime calls that could deadlock on malloc.
 #pragma once
-#ifndef oBase_leak_tracker_h
-#define oBase_leak_tracker_h
-
 #include <oBase/algorithm.h>
 #include <oConcurrency/countdown_latch.h>
 #include <oMemory/std_allocator.h>
 #include <oString/fixed_string.h>
 #include <oBase/macros.h>
 #include <atomic>
+#include <cstdint>
 
 namespace ouro {
 
 class leak_tracker
 {
 public:
-	static const size_t stack_trace_max_depth = 32; // how many entries to savfe
+	static const size_t stack_trace_max_depth = 32; // how many entries to save
 	static const size_t stack_trace_offset = 8; // start at nth entry (bypass common infrastructure code)
 	static const size_t std_bind_internal_offset = 5; // number of symbols internal to std::bind to skip
 
@@ -27,8 +26,8 @@ public:
 
 	// Used to allocate and deallocate tracking entries. These allocations them-
 	// selves will not be tracked.
-	typedef void* (*allocate_fn)(size_t _Size);
-	typedef void (*deallocate_fn)(void* _Pointer);
+	typedef void* (*allocate_fn)(size_t size);
+	typedef void (*deallocate_fn)(void* ptr);
 
 	// Tracking can come from 3rd party libraries with their own idea of timing
 	// when freeing memory. For example TBB keeps its threads around in a way that 
@@ -41,17 +40,17 @@ public:
 
 	// Returns the number of symbols retreived into _pSymbols. _Offset allows
 	// the capture to ignore internal details of the capture.
-	typedef size_t (*callstack_fn)(symbol_t* _pSymbols, size_t _NumSymbols, size_t _Offset);
+	typedef size_t (*callstack_fn)(symbol_t* symbols, size_t num_symbols, size_t offset);
 
 	// snprintf to the specified destination the decoded symbol_t with optional
 	// prefix. This should also be able to detect if the symbol_t is a std::bind
 	// detail and set the optional bool accordingly, optionally skipping the 
 	// noisy inner details of std::bind.
-	typedef int (*format_fn)(char* _StrDestination, size_t _SizeofStrDestination
-		, symbol_t _Symbol, const char* _Prefix, bool* _pIsStdBind);
+	typedef int (*format_fn)(char* dst, size_t dst_size, symbol_t symbol
+		, const char* prefix, bool* out_is_std_bind);
 
 	// Print a fixed string to some destination
-	typedef void (*print_fn)(const char* _String);
+	typedef void (*print_fn)(const char* str);
 
 	struct info
 	{
@@ -75,21 +74,21 @@ public:
 		format_fn format;
 		print_fn print;
 
-		unsigned int expected_delay_ms;
-		unsigned int unexpected_delay_ms;
+		uint32_t expected_delay_ms;
+		uint32_t unexpected_delay_ms;
 		bool use_hex_for_alloc_id;
 		bool capture_callstack;
 	};
 
 	struct entry
 	{
-		unsigned int id;
+		uint32_t id;
 		size_t size;
 		symbol_t stack[stack_trace_max_depth];
-		unsigned char num_stack_entries;
+		uint8_t num_stack_entries;
 		bool tracked; // true if the allocation occurred when tracking wasn't enabled
-		unsigned short line;
-		unsigned short context;
+		uint16_t line;
+		uint16_t context;
 		ouro::path_string source;
 		bool operator==(const entry& _That) { return id == _That.id; }
 		bool operator<(const entry& _That) { return id < _That.id; }
@@ -103,11 +102,11 @@ public:
 		, Internal(false)
 	{}
 
-	void thread_local_tracking(bool _Enabled);
+	void thread_local_tracking(bool enabled);
 	bool thread_local_tracking() const { return Info.thread_local_tracking_enabled(); }
 
 	// Slow! but will pinpoint exactly where a leak was allocated.
-	void capture_callstack(bool _Enabled) { Info.capture_callstack = _Enabled; }
+	void capture_callstack(bool enabled) { Info.capture_callstack = enabled; }
 	bool capture_callstack() const { return Info.capture_callstack; }
 
 	// Some operations are asynchronous and allocate memory. If such operations 
@@ -132,32 +131,30 @@ public:
 	// call to new_context() will be reported. If _CurrentContextOnly is false, 
 	// all allocations since the start of tracking will be reported. This returns 
 	// the number of leaks reported.
-	size_t report(bool _CurrentContextOnly = true);
+	size_t report(bool current_context_only = true);
 
 	// Call this when an allocation occurs. If a realloc, pass the id of the 
-	// original pointer to _OldAllocationID.
-	void on_allocate(unsigned int _AllocationID, size_t _Size, const char* _Path, unsigned int _Line, unsigned int _OldAllocationID = 0);
+	// original pointer to old_alloc_id.
+	void on_allocate(uint32_t alloc_id, size_t size, const char* path, uint32_t line, uint32_t old_alloc_id = 0);
 
 	// Call this when a deallocation occurs
-	void on_deallocate(unsigned int _AllocationID);
+	void on_deallocate(uint32_t alloc_id);
 
 private:
 
-	static struct hasher { size_t operator()(unsigned int _AllocationID) const { return _AllocationID; } };
-	typedef std::pair<const unsigned int, entry> pair_t;
+	static struct hasher { size_t operator()(uint32_t alloc_id) const { return alloc_id; } };
+	typedef std::pair<const uint32_t, entry> pair_t;
 	typedef std_user_allocator<pair_t> allocator_t;
-	typedef ouro::unordered_map<unsigned int, entry, hasher
-		, std::equal_to<unsigned int>, std::less<unsigned int>, allocator_t> allocations_t;
+	typedef ouro::unordered_map<uint32_t, entry, hasher
+		, std::equal_to<uint32_t>, std::less<uint32_t>, allocator_t> allocations_t;
 
 	info Info;
 	allocations_t Allocations;
 	countdown_latch DelayLatch;
-	std::atomic<unsigned short> CurrentContext;
+	std::atomic<uint16_t> CurrentContext;
 	bool Internal;
 
-	size_t num_outstanding_allocations(bool _CurrentContextOnly);
+	size_t num_outstanding_allocations(bool current_context_only);
 };
 
 }
-
-#endif

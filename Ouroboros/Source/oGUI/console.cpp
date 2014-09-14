@@ -396,4 +396,4 @@ int vfprintf(FILE* _pStream, color _Foreground, color _Background, const char* _
 }
 
 	} // namespace console
-} // namespace ouro
+}

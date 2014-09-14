@@ -651,5 +651,5 @@ public:
 static wsa_startup sWSAStartup;
 
 		} // namespace winsock
-	} // namespace windows
-} // namespace ouro
+	}
+}

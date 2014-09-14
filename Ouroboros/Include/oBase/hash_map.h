@@ -1,13 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Simple open addressing linear probe hash map. This auto-grows with 
 // occupancy > 75%. Since this has to rehash on removal, there's extra
 // API to mark entries for removal and sweep them up later with a 
 // slightly more efficient rehash-all pass.
 
 #pragma once
-#ifndef oBase_hash_map_h
-#define oBase_hash_map_h
-
 #include <oMemory/allocate.h>
 #include <functional>
 #include <memory.h>
@@ -348,11 +346,11 @@ private:
 
 private:
 
-	// This hash map is basically a linear search with a smart starting 
-	// index guess. All its performance benefits come from minimizing
-	// collisions or said in another way over-allocating the storage, so
-	// here are two accessors that semi-document good numbers for the 
-	// given user number of entries before performance degrades.
+	// This hash map is basically a linear search with a smart starting index 
+	// guess. All its performance benefits come from minimizing collisions or said 
+	// in another way over-allocating the storage, so here are two accessors that 
+	// semi-document good numbers for the given user number of entries before 
+	// performance degrades.
 	static size_type optimal_capacity(const size_type& _NumEntries) { return __max(8, _NumEntries * 2); }
 	static size_type balanced_capacity(const size_type& _NumEntries) { return __max(8, 3 * _NumEntries / 2); }
 
@@ -373,5 +371,3 @@ private:
 };
 
 }
-
-#endif

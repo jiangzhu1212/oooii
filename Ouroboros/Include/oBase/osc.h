@@ -14,9 +14,6 @@
 //        field_size param will still be strlen()+1.
 
 #pragma once
-#ifndef oBase_osc_h
-#define oBase_osc_h
-
 #include <oBase/date.h>
 #include <functional>
 
@@ -151,5 +148,3 @@ const void* tokenize(const void* osc_packet, size_t osc_packet_size, void** out_
 void close_tokenize(void** out_ctx);
 
 }}
-
-#endif

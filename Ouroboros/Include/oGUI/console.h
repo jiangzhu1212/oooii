@@ -89,6 +89,6 @@ inline int printf(color _Foreground, color _Background, const char* _Format, ...
 inline int printf(const char* _Format, ...) { va_list args; va_start(args, _Format); int n = vfprintf(stdout, _Format, args); va_end(args); return n; }
 
 	} // namespace console
-} // namespace ouro
+}
 
 #endif

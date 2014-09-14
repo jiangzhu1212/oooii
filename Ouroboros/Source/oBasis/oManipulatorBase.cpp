@@ -23,7 +23,7 @@ const char* as_string(const oManipulator::AXIS& _Axis)
 	}
 }
 
-} // namespace ouro
+}
 
 using namespace ouro;
 

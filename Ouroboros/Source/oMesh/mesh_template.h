@@ -377,6 +377,6 @@ void prune_unindexed_vertices(const IndexT* oRESTRICT indices, uint num_indices
 
 		} // namespace detail
 	} // namespace mesh
-} // namespace ouro
+}
 
 #endif

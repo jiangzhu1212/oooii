@@ -31,7 +31,7 @@ bool pick_color(color* _pColor, HWND _hParent = nullptr);
 bool pick_font(LOGFONT* _pLogicalFont, color* _pColor, HWND _hParent);
 
 		} // namespace common_dialog
-	} // namespace windows
-} // namespace ouro
+	}
+}
 
 #endif

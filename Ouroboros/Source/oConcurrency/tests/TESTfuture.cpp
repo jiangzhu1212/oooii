@@ -5,8 +5,7 @@
 
 #include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 static void exercise_thread(size_t _Index, int* _pResults, unsigned int _RuntimeMS)
 {
@@ -162,5 +161,4 @@ void TESTfuture(ouro::test_services& services)
 	test_workstealing(services);
 };
 
-	} // namespace tests
-} // namespace ouro
+}}

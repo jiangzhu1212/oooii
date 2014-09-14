@@ -82,6 +82,6 @@ const void* byte_code(const gfx_ps::value& shader);
 const void* byte_code(const gfx_cs::value& shader);
 
 	} // namespace gfx
-} // namespace ouro
+}
 
 #endif

@@ -215,5 +215,5 @@ bool pick_font(LOGFONT* _pLogicalFont, color* _pColor, HWND _hParent)
 	return true;
 }
 		} // namespace common_dialog
-	} // namespace windows
-} // namespace ouro
+	}
+}

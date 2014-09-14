@@ -1,7 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
+// Object encapsulating an ip4 internet address with port
+
 #pragma once
-#ifndef oNet_ip4_h
-#define oNet_ip4_h
 
 namespace ouro {
 
@@ -32,5 +33,3 @@ private:
 };
 
 }
-
-#endif

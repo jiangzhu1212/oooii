@@ -201,4 +201,4 @@ bool coordinate_transform(const float3 _FromCoords[4], const float3 _ToCoords[4]
 	return template_::coordinate_transform<float>(_FromCoords, _ToCoords, _pMatrix);
 }
 
-} // namespace ouro
+}

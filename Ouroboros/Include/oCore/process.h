@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Abstraction for a platform's process 
-#pragma once
-#ifndef oCore_process_h
-#define oCore_process_h
 
+// Abstraction for a platform's process 
+
+#pragma once
 #include <oString/path.h>
 #include <chrono>
 #include <functional>
@@ -234,7 +233,5 @@ void enumerate_children(const std::function<bool(process::id _ChildID, const pat
 // Return false to exit early.
 void enumerate_threads(const std::function<bool(std::thread::id _ThreadID)>& _Enumerator);
 
-	} // namespace this_process
-} // namespace ouro
-
-#endif
+	}
+}

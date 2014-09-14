@@ -1,12 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Winsock is built on top of a sockets API. It is a complex and just awful API
 // so this tries to wrap up some of the gory details to simplify usage. It's not 
 // quite a socket interface, just enough to make implementing a socket interface 
 // bareable on top of sockets and winsock.
-#pragma once
-#ifndef oCore_win_socket_h
-#define oCore_win_socket_h
 
+#pragma once
 #include <oString/fixed_string.h>
 #include <functional>
 
@@ -166,8 +165,4 @@ async_result accept_async(SOCKET _ListenSocket, SOCKET _AcceptSocket, void* _Out
 // sockaddr structure.
 async_result acceptexsockaddrs_async(SOCKET _ListenSocket, void* _Buffer, LPSOCKADDR* _LocalAddr, LPINT _SzLocalAddr, LPSOCKADDR* _RemoteAddr, LPINT _SzRemoteAddr);
 
-		} // namespace winsock
-	} // namespace windows
-} // namespace ouro
-
-#endif
+}}}

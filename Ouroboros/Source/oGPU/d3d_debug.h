@@ -36,6 +36,6 @@ inline int trace(DeviceContext* dc, D3D11_MESSAGE_SEVERITY severity, const char*
 
 		} // namespace d3d
 	} // namespace gpu
-} // namespace ouro
+}
 
 #endif

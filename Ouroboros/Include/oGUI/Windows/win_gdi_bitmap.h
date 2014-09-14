@@ -57,7 +57,7 @@ HICON bitmap_to_icon(HBITMAP _hBmp);
 inline HICON load_icon(int _ResourceID) { return (HICON)LoadImage(GetModuleHandle(NULL), MAKEINTRESOURCE(_ResourceID), IMAGE_ICON, 0, 0, 0); }
 
 		} // namespace gdi
-	} // namespace windows
-} // namespace ouro
+	}
+}
 
 #endif

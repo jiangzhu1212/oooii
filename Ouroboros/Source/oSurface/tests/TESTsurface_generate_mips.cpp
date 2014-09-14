@@ -147,5 +147,5 @@ void TESTsurface_generate_mips(test_services& _Services)
 	test_mipchain_layouts(_Services, image, kFilter, 18);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

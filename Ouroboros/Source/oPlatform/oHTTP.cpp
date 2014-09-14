@@ -245,7 +245,7 @@ bool from_string(oHTTPResponseInternal* _pValue, const char* _StrSource)
 	return true;
 }
 
-} // namespace ouro
+}
 
 bool oHTTPHeaderFields::AddHeader(const char* _Header, const char* _Value)
 {

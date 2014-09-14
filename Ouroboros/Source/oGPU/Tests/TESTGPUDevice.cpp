@@ -32,5 +32,5 @@ void TESTdevice(test_services& _Services)
 		, i.driver_description.c_str());
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

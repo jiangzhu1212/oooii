@@ -99,7 +99,7 @@ private:
 	ouro::process_stats_monitor PSM;
 };
 
-} // namespace ouro
+}
 
 // _____________________________________________________________________________
 // oTest wrapper/integration

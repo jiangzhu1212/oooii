@@ -3,7 +3,7 @@
 
 namespace ouro {
 
-const char* as_string(const gpu_api::value& value)
+const char* as_string(const gpu_api& value)
 {
 	switch (value)
 	{

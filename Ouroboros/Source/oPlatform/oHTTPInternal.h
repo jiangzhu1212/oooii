@@ -54,7 +54,7 @@ bool from_string(oHTTPRequestInternal* _pValue, const char* _StrSource);
 char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oHTTPResponseInternal& _Response);
 bool from_string(oHTTPResponseInternal* _pValue, const char* _StrSource);
 
-} // namespace ouro
+}
 
 bool oExtractHTTPHeader(const char* _pData, size_t _SizeofData, char* _pHeader, size_t* _pSizeofHeader, size_t _MaxHeaderSize, size_t* _pSizeofDataTaken);
 bool oExtractContent(const void* _pData, size_t _SizeofData, void* _pContent, size_t* _pSizeofContent, size_t _TotalContentSize, size_t* _pSizeofDataTaken);

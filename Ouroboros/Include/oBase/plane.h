@@ -1,8 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // A plane defined as Ax + By + Cz + D = 0. Primarily it means positive D 
 // values are in the direction/on the side of the normal and negative 
 // values are in the opposite direction/on the opposite side of the normal.
 // This header cross-compiles for C++ and HLSL.
+
 #ifndef oHLSL
 	#pragma once
 #endif

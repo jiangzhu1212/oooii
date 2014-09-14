@@ -1,11 +1,9 @@
-
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// A vectored exception handler that redirects some other handlers to the 
-// main exception path and calls to the handler when an exception occurs.
-#pragma once
-#ifndef oCore_win_exception_handler_h
-#define oCore_win_exception_handler_h
 
+// A vectored exception handler that redirects some other handlers to the main 
+// exception path and calls to the handler when an exception occurs.
+
+#pragma once
 #include <oString/path.h>
 #include <functional>
 #include <string>
@@ -13,9 +11,7 @@
 namespace ATL { struct CAtlException; }
 class _com_error;
 
-namespace ouro {
-	namespace windows {
-		namespace exception {
+namespace ouro { namespace windows { namespace exception {
 
 namespace type
 {	enum value {
@@ -72,8 +68,4 @@ bool prompt_after_dump();
 // Set the enable state of debug CRT asserts and errors
 void enable_dialogs(bool _Enable);
 
-		} // namespace exception
-	} // namespace windows
-} // namespace ouro
-
-#endif
+}}}

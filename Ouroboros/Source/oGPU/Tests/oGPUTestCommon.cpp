@@ -202,5 +202,5 @@ surface::image make_1D(int _Width, bool _Mips)
 	return s;
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

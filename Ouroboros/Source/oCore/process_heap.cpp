@@ -501,4 +501,4 @@ bool find(const char* _Name, scope _Scope, void** _pPointer)
 }
 
 	} // namespace process_heap
-} // namespace ouro
+}

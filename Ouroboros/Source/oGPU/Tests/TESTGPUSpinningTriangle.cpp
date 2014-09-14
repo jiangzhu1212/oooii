@@ -70,5 +70,5 @@ private:
 
 oGPU_COMMON_TEST(spinning_triangle);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

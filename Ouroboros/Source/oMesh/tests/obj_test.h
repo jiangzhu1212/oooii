@@ -31,6 +31,6 @@ struct obj_test
 };
 
 	} // tests
-} // namespace ouro
+}
 
 #endif

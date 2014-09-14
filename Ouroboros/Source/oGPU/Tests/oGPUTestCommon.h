@@ -126,7 +126,7 @@ surface::image surface_load(const path& _Path, bool _Mips);
 
 surface::image make_1D(int _Width, bool _Mips);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 
 #endif
