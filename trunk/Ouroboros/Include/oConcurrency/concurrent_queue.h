@@ -2,9 +2,8 @@
 
 // Fine-grained concurrent FIFO queue based on:
 // http://www.cs.rochester.edu/research/synchronization/pseudocode/queues.html
-// Use a concurrent fixed block allocator for concurrent_queue_nodes for 
-// best performance. This also ensures concurrency of non-trivial 
-// destructors.
+// Use a concurrent fixed block allocator for best performance. This also 
+// ensures concurrency of non-trivial destructors.
 
 #pragma once
 #include <oCompiler.h>
