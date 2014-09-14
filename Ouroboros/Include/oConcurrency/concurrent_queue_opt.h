@@ -5,7 +5,8 @@
 // This is advertised as more efficient than concurrent_queue's algorithm because 
 // it goes to great lengths to avoid atomic operations, optimistically assuming 
 // contention does not happen and going back to fix any confusion if it does. 
-// My benchmarks show marginal if any benefits.
+// My benchmarks show marginal if any benefits. Use a concurrent block allocator
+// for best performance.
 
 #pragma once
 #include <oCompiler.h>
