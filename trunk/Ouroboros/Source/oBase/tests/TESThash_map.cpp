@@ -108,5 +108,5 @@ void TESThash_map(test_services& _Services)
 	oCHECK(map.empty(), "unexpected map size");
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

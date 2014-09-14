@@ -77,4 +77,4 @@ int vtrace(ID3D11InfoQueue* iq, D3D11_MESSAGE_SEVERITY severity, const char* for
 
 		} // namespace d3d
 	} // namespace gpu
-} // namespace ouro
+}

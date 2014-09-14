@@ -237,9 +237,9 @@ void enumerate(const std::function<bool(const info& _Info)>& _Enumerator)
 	}
 }
 
-version minimum_version(vendor::value _Vendor)
+version minimum_version(const vendor& v)
 {
-	switch (_Vendor)
+	switch (v)
 	{
 		case vendor::nvidia: return version(oNVVER_MAJOR, oNVVER_MINOR);
 		case vendor::amd: return version(oAMDVER_MAJOR, oAMDVER_MINOR);
@@ -341,4 +341,4 @@ info find(const display::id& _DisplayID)
 }
 
 	} // namespace adapter
-} // namespace ouro
+}

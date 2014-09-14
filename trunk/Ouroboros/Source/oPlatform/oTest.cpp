@@ -222,7 +222,7 @@ const char* as_string(const oTest::RESULT& _Result)
 	return sStrings[_Result];
 }
 
-} // namespace ouro
+}
 
 struct oTestManager_Impl : public oTestManager
 {
@@ -354,7 +354,7 @@ bool oTest::TestBinary(const void* _pBuffer, size_t _SizeofBuffer, const char* _
 {
 	oTestManager::DESC desc;
 	oTestManager::Singleton()->GetDesc(&desc);
-	vendor::value Vendor = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0].vendor; // todo: Make this more elegant
+	vendor Vendor = static_cast<oTestManager_Impl*>(oTestManager::Singleton())->DriverDescs[0].vendor; // todo: Make this more elegant
 
 	path_string golden;
 	BuildDataPath(golden.c_str(), GetName(), desc.DataPath, "GoldenBinaries", desc.GoldenBinariesPath, _NthBinary, _FileExtension);

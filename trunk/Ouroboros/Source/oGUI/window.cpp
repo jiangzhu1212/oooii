@@ -1237,4 +1237,4 @@ LRESULT window_impl::WndProc(HWND _hWnd, UINT _uMsg, WPARAM _wParam, LPARAM _lPa
 	return DefWindowProc(_hWnd, _uMsg, _wParam, _lParam);
 }
 
-} // namespace ouro
+}

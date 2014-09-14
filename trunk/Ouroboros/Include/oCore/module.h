@@ -1,14 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Interface for working with monitors/displays
-#pragma once
-#ifndef oCore_module_h
-#define oCore_module_h
 
+// Interface for working with monitors/displays
+
+#pragma once
 #include <oString/path.h>
 #include <oBase/version.h>
 
-namespace ouro {
-	namespace module {
+namespace ouro { namespace module {
 
 /* enum class */ namespace type
 {	enum value {
@@ -112,7 +110,4 @@ module::id get_id();
 path get_path();
 module::info get_info();
 
-	} // namespace this_module
-} // namespace ouro
-
-#endif
+}}

@@ -1,15 +1,13 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Utility for querying the Central Processing Unit hardware of the current 
 // computer.
-#pragma once
-#ifndef oCore_cpu_h
-#define oCore_cpu_h
 
+#pragma once
 #include <oString/fixed_string.h>
 #include <functional>
 
-namespace ouro {
-	namespace cpu { 
+namespace ouro { namespace cpu { 
 
 /* enum class */ namespace type
 {	enum value {
@@ -58,7 +56,4 @@ info get_info();
 // exit early.
 void enumerate_features(const std::function<bool(const char* _FeatureName, const support::value& _Support)>& _Enumerator);
 
-	} // namespace cpu
-} // namespace ouro
-
-#endif
+}}

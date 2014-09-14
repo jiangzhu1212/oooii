@@ -78,5 +78,5 @@ void TESTsurface_fill(test_services& _Services)
 	_Services.check(s, 3);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

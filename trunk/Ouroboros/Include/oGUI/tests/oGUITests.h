@@ -13,7 +13,7 @@ namespace ouro {
 		void TESTWindowControls(test_services& _Services);
 		void TESTSysDialog(test_services& _Services);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 
 #endif

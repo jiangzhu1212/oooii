@@ -96,5 +96,5 @@ void TESTconcurrent_linear_allocator(test_services& services)
 	test_concurrency(services);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

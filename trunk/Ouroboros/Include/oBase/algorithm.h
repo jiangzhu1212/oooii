@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Wrappers for common operations on STL containers that are not in <algorithm>
-#pragma once
-#ifndef oBase_algorithm_h
-#define oBase_algorithm_h
 
+// Wrappers for common operations on STL containers that are not in <algorithm>
+
+#pragma once
 #include <algorithm>
 #include <cstdarg>
 #include <functional>
@@ -418,5 +417,3 @@ OutputIterator transform(InputIterator _First, InputIterator _Last, OutputIterat
 }
 
 }
-
-#endif

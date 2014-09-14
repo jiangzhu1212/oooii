@@ -12,7 +12,7 @@ namespace ouro {
 
 		void TESTobj(test_services& _Services);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 
 #endif

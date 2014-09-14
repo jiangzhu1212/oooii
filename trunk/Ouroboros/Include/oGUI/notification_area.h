@@ -48,6 +48,6 @@ void restore(ouro::window_handle _hWnd);
 #endif
 
 	} // namespace notification_area
-} // namespace ouro
+}
 
 #endif

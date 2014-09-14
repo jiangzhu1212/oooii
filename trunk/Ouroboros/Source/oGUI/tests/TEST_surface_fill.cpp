@@ -48,4 +48,4 @@ void core_fill_grid_numbers(surface::image* _pBuffer, const int2& _GridDimension
 	windows::gdi::memcpy2d(lock.mapped.data, lock.mapped.row_pitch, hBmp, si.dimensions.y, true);
 }
 
-} // namespace ouro
+}

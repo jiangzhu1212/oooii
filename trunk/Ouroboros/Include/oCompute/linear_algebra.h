@@ -223,6 +223,6 @@ inline float trilaterate(const float3 _Observers[4], float _Distance, float3* _p
 	return trilaterate(_Observers, distances, _pPosition);
 }
 
-} // namespace ouro
+}
 
 #endif

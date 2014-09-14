@@ -261,4 +261,4 @@ void progress_bar_impl::set_percentage_internal(HWND _hProgress, HWND _hMarquee,
 	Percentage = _Percentage;
 }
 
-} // namespace ouro
+}

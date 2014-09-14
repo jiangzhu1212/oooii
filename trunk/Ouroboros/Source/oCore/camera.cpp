@@ -828,4 +828,4 @@ void camera::enumerate(const std::function<bool(std::shared_ptr<camera> _Camera)
 		_Enumerator(_Camera);
 }
 
-} // namespace ouro
+}

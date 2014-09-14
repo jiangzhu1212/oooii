@@ -27,5 +27,5 @@ struct gpu_test_texture2dmip : public gpu_texture_test
 
 oGPU_COMMON_TEST(texture2dmip);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

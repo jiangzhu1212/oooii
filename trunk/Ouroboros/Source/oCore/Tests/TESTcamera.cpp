@@ -189,6 +189,6 @@ void TESTcamera(test_services& _Services)
 #endif
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 

@@ -1,14 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oCore_win_iocp_h
-#define oCore_win_iocp_h
 
+#pragma once
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace ouro {
-	namespace windows {
-		namespace iocp {
+namespace ouro { namespace windows { namespace iocp {
 
 // _pContext is specified at the same time a completion_t is. It it responsible
 // for its own cleanup. The completion will be called once and not recycled.
@@ -52,8 +48,4 @@ bool joinable();
 // waits for all associated IO operations to complete then joins all IO threads
 void join();
 
-		} // namespace iocp
-	} // namespace windows
-} // namespace ouro
-
-#endif
+}}}

@@ -39,6 +39,6 @@ namespace ouro {
 	msg_result::value msgboxv(msg_type::value _Type, ouro::window_handle _hParent, const char* _Title, const char* _Format, va_list _Args);
   inline msg_result::value msgbox(msg_type::value _Type, ouro::window_handle _hParent, const char* _Title, const char* _Format, ...) { va_list args; va_start(args, _Format); msg_result::value r = msgboxv(_Type, _hParent, _Title, _Format, args); va_end(args); return r; }
 
-} // namespace ouro
+}
 
 #endif

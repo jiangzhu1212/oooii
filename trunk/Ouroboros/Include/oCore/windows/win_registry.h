@@ -1,15 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Read / Write info to the registry
 // http://msdn.microsoft.com/en-us/library/windows/desktop/ms724897%28v=vs.85%29.aspx
-#pragma once
-#ifndef oCore_win_registry_h
-#define oCore_win_registry_h
 
+#pragma once
 #include <oString/fixed_string.h>
 
-namespace ouro {
-	namespace windows {
-		namespace registry {
+namespace ouro { namespace windows { namespace registry {
 
 enum hkey
 {
@@ -41,8 +38,4 @@ template<typename T> bool get(T* _pTypedValue, hkey _hKey, const char* _KeyPath,
 	return from_string(_pTypedValue, buf);
 }
 
-		} // namespace registry
-	} // namespace windows
-} // namespace ouro
-
-#endif
+}}}

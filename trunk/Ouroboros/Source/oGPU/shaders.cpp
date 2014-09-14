@@ -202,4 +202,4 @@ oAS_STRING(geometry_shader)
 oAS_STRING(pixel_shader)
 oAS_STRING(compute_shader)
 
-} // namespace ouro
+}

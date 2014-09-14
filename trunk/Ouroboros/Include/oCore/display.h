@@ -1,13 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Interface for working with monitors/displays
-#pragma once
-#ifndef oCore_display_h
-#define oCore_display_h
 
+// Interface for working with monitors/displays
+
+#pragma once
 #include <oBase/macros.h>
 
-namespace ouro {
-	namespace display {
+namespace ouro { namespace display {
 
 class id
 {
@@ -93,7 +91,4 @@ void taskbar_rect(int* _pX, int* _pY, int* _pWidth, int* _pHeight);
 // turns all monitors on or sets them to a low-power state
 void set_power_on(bool _On = true);
 
-	} // namespace display
-} // namespace ouro
-
-#endif
+}}

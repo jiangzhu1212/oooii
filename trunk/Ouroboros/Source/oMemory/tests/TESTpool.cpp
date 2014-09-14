@@ -118,5 +118,5 @@ void TESTpool(test_services& services)
 	test_create<object_pool<test_obj>>(services);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

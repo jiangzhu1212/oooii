@@ -1,8 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_version_h
-#define oBase_version_h
 
+#pragma once
 #include <oString/fixed_string.h>
 #include <oBase/operators.h>
 
@@ -56,5 +54,3 @@ template<size_t capacity> char* to_string2(fixed_string<char, capacity>& _StrDes
 bool from_string2(version* _pType, const char* _StrSource);
 
 }
-
-#endif

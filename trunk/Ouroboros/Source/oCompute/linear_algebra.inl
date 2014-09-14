@@ -673,4 +673,4 @@ template<typename T> bool coordinate_transform(const TVEC3<T> _FromCoords[4], co
 }
 
 	} // namespace template_
-} // namespace ouro
+}

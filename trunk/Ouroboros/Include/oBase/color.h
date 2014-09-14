@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Encapsulate simple RGB(A) color as an argb (aka bgra, same as D3DCOLOR). 
-#pragma once
-#ifndef oBase_color_h
-#define oBase_color_h
 
+// Encapsulate simple RGB(A) color as an argb (aka bgra, same as D3DCOLOR). 
+
+#pragma once
 #include <oMemory/byte.h>
 #include <oBase/operators.h>
 #include <limits>
@@ -113,5 +112,3 @@ inline ouro::color lerp(const ouro::color& a, const ouro::color& b, float s)
 	a.decompose(&ra, &ga, &ba, &aa); b.decompose(&rb, &gb, &bb, &ab);
 	return ouro::color(ouro::detail::lerp(ra,rb,s), ouro::detail::lerp(ga,gb,s), ouro::detail::lerp(ba,bb,s), ouro::detail::lerp(aa,ab,s));
 }
-
-#endif

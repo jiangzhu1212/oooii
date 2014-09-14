@@ -426,7 +426,7 @@ bool from_string(oURIParts* _pURIParts, const char* _StrSource)
 	return oURIDecompose(_StrSource, _pURIParts);
 }
 
-} // namespace ouro
+}
 
 static std::regex QueryRegex("(.+?)=(.+?)&", std::tr1::regex_constants::optimize); // @tony: ok static (duplication in DLLs won't affect correctness)
 void oURIQueryEnumKeyValuePairs(const char* _URIQuery, std::function<void(const char* _Key, const char* _Value)> _Enumerator)
@@ -497,7 +497,7 @@ char* to_string(char* _StrDestination, size_t _SizeofStrDestination, const oURI&
 	return oURIRecompose(_StrDestination, _SizeofStrDestination, _URI.GetParts());
 }
 
-} // namespace ouro
+}
 
 typedef bool (*s_oURI_FromString)(oURI*, const char*);
 typedef char* (*s_oURI_ToString)(char*, size_t, const oURI&);

@@ -82,4 +82,4 @@ void at_thread_exit(const std::function<void()>& _Task)
 	oTHROW0(operation_not_supported);
 }
 
-} // namespace ouro
+}

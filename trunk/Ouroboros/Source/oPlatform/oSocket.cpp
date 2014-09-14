@@ -151,7 +151,7 @@ bool from_string(oSocket::PROTOCOL* _Protocol, const char* _StrSource)
 	return true;
 }
 
-} // namespace ouro
+}
 
 void oSocketPortGet(const oNetAddr& _Addr, unsigned short* _pPort)
 {

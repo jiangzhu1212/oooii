@@ -1,8 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oCore_win_error_h
-#define oCore_win_error_h
 
+#pragma once
 #include <system_error>
 #include <cstdio>
 
@@ -19,8 +17,7 @@ unsigned long __declspec(dllimport) WINERR_APICALL GetLastError();
 
 } // extern "C"
 
-namespace ouro {
-	namespace windows {
+namespace ouro { namespace windows {
 
 const std::error_category& category();
 
@@ -40,8 +37,7 @@ private:
 	void trace() { char msg[1024]; _snprintf_s(msg, sizeof(msg), "\nouro::windows::error: 0x%08x: %s\n\n", code().value(), what()); OutputDebugStringA(msg); }
 };
 
-	} // namespace windows
-} // namespace ouro
+}}
 
 // For Windows API that returns an HRESULT, this captures that value and throws 
 // on failure.
@@ -52,5 +48,3 @@ private:
 #define oVB(_BoolWinFn) do { if (!(_BoolWinFn)) throw ::ouro::windows::error(); } while(false)
 
 #define oVB_MSG(_BoolWinFn, _Format, ...) do { if (!(_BoolWinFn)) { char msg[1024]; _snprintf_s(msg, sizeof(msg), _Format, ## __VA_ARGS__); throw ::ouro::windows::error(msg); } } while(false)
-
-#endif

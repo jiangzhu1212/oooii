@@ -381,6 +381,6 @@ const window::drop_event& window::basic_event::as_drop() const { oASSERT(type ==
 const window::input_device_event& window::basic_event::as_input_device() const { oASSERT(type == event_type::input_device_changed, "wrong type"); return *static_cast<const input_device_event*>(this); }
 const window::custom_event& window::basic_event::as_custom() const { oASSERT(type == event_type::custom_event, "wrong type"); return *static_cast<const custom_event*>(this); }
 
-} // namespace ouro
+}
 
 #endif

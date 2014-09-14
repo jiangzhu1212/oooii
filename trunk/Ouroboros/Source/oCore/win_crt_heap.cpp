@@ -126,5 +126,5 @@ bool enable_memory_tracking(bool _Enable)
 	return (flags & _CRTDBG_ALLOC_MEM_DF) == _CRTDBG_ALLOC_MEM_DF;
 }
 		} // namespace crt_heap
-	} // namespace windows
-} // namespace ouro
+	}
+}

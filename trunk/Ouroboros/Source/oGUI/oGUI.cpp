@@ -243,5 +243,5 @@ rect resolve_rect(const rect& _Parent, const rect& _UnadjustedChild, alignment::
 	return resolved;
 }
 
-} // namespace ouro
+}
 

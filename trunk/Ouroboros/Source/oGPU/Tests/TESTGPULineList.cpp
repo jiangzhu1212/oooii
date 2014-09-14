@@ -89,5 +89,5 @@ private:
 
 oGPU_COMMON_TEST(lines);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

@@ -15,6 +15,6 @@ const char* as_string(const D3D11_RESOURCE_DIMENSION& _Type);
 const char* as_string(const D3D11_UAV_DIMENSION& _Type);
 const char* as_string(const D3D11_USAGE& _Usage);
 
-} // namespace ouro
+}
 
 #endif

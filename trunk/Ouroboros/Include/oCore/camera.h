@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Abstraction for direct-show cameras.
-#pragma once
-#ifndef oCore_camera_h
-#define oCore_camera_h
 
+// Abstraction for direct-show cameras.
+
+#pragma once
 #include <functional>
 #include <memory>
 #include <oSurface/surface.h>
@@ -63,6 +62,4 @@ public:
 	static void enumerate(const std::function<bool(std::shared_ptr<camera> _Camera)>& _Enumerator);
 };
 
-} // namespace ouro
-
-#endif
+}

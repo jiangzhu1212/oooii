@@ -26,5 +26,5 @@ void TESTfourcc()
 		oTHROW(protocol_error, "from_string on fourcc failed 2");
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

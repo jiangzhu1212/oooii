@@ -165,5 +165,5 @@ void TESTsbb(test_services& services)
 	oTEST0(FullBlock);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

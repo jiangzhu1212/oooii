@@ -134,6 +134,6 @@ private:
 	float UpsideDownScalar;
 };
 
-} // namespace ouro
+}
 
 #endif

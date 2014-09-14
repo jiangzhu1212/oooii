@@ -248,4 +248,4 @@ void enumerate_features(const std::function<bool(const char* _FeatureName, const
 }
 
 	} // namespace cpu
-} // namespace ouro
+}

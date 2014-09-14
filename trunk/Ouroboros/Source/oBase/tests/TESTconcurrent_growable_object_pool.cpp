@@ -112,4 +112,4 @@ void TESTconcurrent_growable_object_pool()
 }
 
 	} // namespace test
-} // namespace ouro
+}

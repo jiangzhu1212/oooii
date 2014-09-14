@@ -3,8 +3,7 @@
 #include <memory>
 #include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 static const char* sExpectedSectionNames[] = { "CD0", "CD1", "CD2", };
 static const char* sExpectedArtists[] = { "Bob Dylan", "Bonnie Tyler", "Dolly Parton", };
@@ -94,5 +93,4 @@ void TESTini(test_services& services)
 	TESTini(services, sTestINI_RN);
 }
 
-	} // namespace tests
-} // namespace ouro
+}}

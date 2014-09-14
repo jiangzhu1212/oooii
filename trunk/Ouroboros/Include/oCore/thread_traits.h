@@ -1,10 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Use oCore functionality for more robust threads. Pass this to threadpool 
 // and derivatives.
-#pragma once
-#ifndef oCore_thread_traits_h
-#define oCore_thread_traits_h
 
+#pragma once
 #include <oBase/callable.h>
 
 namespace ouro {
@@ -18,6 +17,4 @@ struct core_thread_traits
 	oDEFINE_CALLABLE_WRAPPERS(static, at_thread_exit,, at_thread_exit);
 };
 
-} // namespace ouro
-
-#endif
+}

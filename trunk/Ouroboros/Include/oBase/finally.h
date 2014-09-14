@@ -1,15 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// A simple class that calls a std::function when the current scope ends. This 
-// is useful for using an exit-early-on-failure pattern, but being able to 
-// centralize cleanup code without gotos or scope worries. The C++ luminaries 
-// are against this pattern because good design should leverage RAII, but how
-// does RAII work with std::thread? If client code doesn't explicitly call
-// join(), the app just terminates, and there's no thread_guard. So continue to
-// favor RAII, but have this fallback just in case.
-#pragma once
-#ifndef oBase_finally_h
-#define oBase_finally_h
 
+// A simple class that calls a std::function when the current scope ends to 
+// support exception-safe programming patterns.
+
+#pragma once
 #include <oBase/callable.h>
 
 namespace ouro {
@@ -57,5 +51,3 @@ private:
 };
 
 }
-
-#endif

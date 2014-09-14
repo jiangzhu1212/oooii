@@ -35,5 +35,5 @@ struct gpu_test_texture3d : public gpu_texture_test
 
 oGPU_COMMON_TEST(texture3d);
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

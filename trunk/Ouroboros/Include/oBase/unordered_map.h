@@ -1,19 +1,18 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Basically this is a super-set of std::map and std::unordered_map that uses 
-// std::map in debug builds and std::unordered_map in release builds. Why?
+
+// A super-set of std::map and std::unordered_map that uses std::map in debug 
+// builds and std::unordered_map in release builds. Why?
 
 // unordered_map for MSVC is pathologically slow in its destructor. Because of 
-// potential use of 3rd-party pre-compiled libs the idea of changing iterator 
-// debug level will cause build headaches. Read more about the issue here:
+// potential use of 3rd-party pre-compiled libs, changing iterator debug level 
+// is untenable. Read more about the issue here:
 
 // "C++11 Hash Containers and Debug Mode"
 // November 29, 2011
 // http://drdobbs.com/blogs/cpp/232200410?pgno=2
 // Also note Stephan T. Lavavej's response to the blog.
 
-#ifndef oBase_unordered_map_h
-#define oBase_unordered_map_h
-
+#pragma once
 #include <map>
 #include <unordered_map>
 
@@ -66,5 +65,3 @@ public:
 };
 
 }
-
-#endif

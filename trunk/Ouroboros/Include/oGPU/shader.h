@@ -7,8 +7,7 @@
 #include <oBase/gpu_api.h>
 #include <oGPU/vertex_layout.h>
 
-namespace ouro {
-	namespace gpu {
+namespace ouro { namespace gpu {
 
 static const uint3 max_dispatches = uint3(65535, 65535, 65535);
 static const uint3 max_num_group_threads = uint3(1024, 1024, 64);
@@ -18,7 +17,7 @@ class command_list;
 class raw_buffer;
 
 namespace stage
-{ oDECLARE_SMALL_ENUM(value, uchar) {
+{ enum value : uchar {
 	
 	vertex,
 	hull,
@@ -32,7 +31,7 @@ namespace stage
 };}
 
 namespace stage_flag
-{ oDECLARE_SMALL_ENUM(value, uchar) {
+{ enum value : uchar {
 	
 	vertex = 1<<0,
 	hull = 1<<1,
@@ -146,7 +145,6 @@ scoped_allocation compile_shader(const char* include_paths
 	, const char* shader_source
 	, const allocator& alloc = default_allocator);
 
-	} // namespace gpu
-} // namespace ouro
+}}
 
 #endif

@@ -1,8 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // A small class to encapsulate calculating a cumulative moving average
+
 #pragma once
-#ifndef oBase_moving_average_h
-#define oBase_moving_average_h
 
 namespace ouro {
 
@@ -30,5 +30,3 @@ private:
 };
 
 }
-
-#endif

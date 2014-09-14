@@ -113,6 +113,6 @@ void TESTtlsf_allocator(test_services& services)
 		, EnoughPhysRamForFullTest ? "" : "WARNING: system memory not enough to run full test quickly. "
 		, ArenaSize, smallestAlloc, largestAlloc);
 }
-	} // namespace tests
-} // namespace ouro
+	}
+}
 

@@ -541,6 +541,6 @@ inline int2 resolve_rect_position(const int2& _Position, const int2& _DefaultPos
 rect resolve_rect(const rect& _Parent, const rect& _UnadjustedChild, alignment::value _Alignment, bool _Clip);
 inline rect resolve_rect(const rect& _Parent, const int2& _UnadjustedChildPosition, const int2& _UnadjustedChildSize, alignment::value _Alignment, bool _Clip) { rect r; r.Min = resolve_rect_position(_UnadjustedChildPosition); r.Max = r.Min + _UnadjustedChildSize; return resolve_rect(_Parent, r, _Alignment, _Clip); }
 
-} // namespace ouro
+}
 
 #endif

@@ -1,18 +1,16 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // This object represents a memory heap that is independent of and persistent 
 // across modules loaded into a process. This is useful for implementing objects 
 // that require process-wide scope and need to retain their memory independent 
 // of dynamic modules that might come and go or cause duplicate global static 
 // objects such as singletons.
-#pragma once
-#ifndef oCore_process_heap_h
-#define oCore_process_heap_h
 
+#pragma once
 #include <oMemory/std_allocator.h>
 #include <functional>
 
-namespace ouro {
-	namespace process_heap {
+namespace ouro { namespace process_heap {
 
 enum scope
 {
@@ -90,8 +88,7 @@ template<typename T> struct std_allocator
 };
 oDEFINE_STD_ALLOCATOR_VOID_INSTANTIATION(std_allocator)
 
-	} // namespace process_heap
-} // namespace ouro
+}}
 
 oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(ouro::process_heap::std_allocator) { return true; }
 
@@ -112,5 +109,3 @@ oDEFINE_STD_ALLOCATOR_OPERATOR_EQUAL(ouro::process_heap::std_allocator) { return
 	}
 
 #define oDEFINE_PROCESS_SINGLETON(_StrName, _ClassName) oDEFINE_PROCESS_SINGLETON__(singleton, _StrName, _ClassName)
-
-#endif

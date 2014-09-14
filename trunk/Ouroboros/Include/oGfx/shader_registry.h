@@ -119,6 +119,6 @@ protected:
 };
 
 	} // namespace gfx
-} // namespace ouro
+}
 
 #endif

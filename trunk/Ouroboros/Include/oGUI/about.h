@@ -45,6 +45,6 @@ public:
 	virtual void show_modal(const std::shared_ptr<window>& _Parent) = 0;
 };
 
-} // namespace ouro
+}
 
 #endif

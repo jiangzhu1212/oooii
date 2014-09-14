@@ -432,5 +432,5 @@ struct install_exception_handler
 static install_exception_handler InstallExceptionHandler;
 
 		} // namespace exception
-	} // namespace windows
-} // namespace ouro
+	}
+}

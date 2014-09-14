@@ -1,11 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oBase_compression_h
-#define oBase_compression_h
 
 // All compression wrappers should comply with this API definition. Compression
 // wrappers are named for their algorithm (i.e. gzip.h or snappy.h).
 
+#pragma once
 #include <oCompiler.h>
 
 namespace ouro {
@@ -28,5 +26,3 @@ typedef size_t (*decompress_fn)(void* oRESTRICT dst, size_t dst_size
 	, const void* oRESTRICT src, size_t src_size);
 
 }
-
-#endif

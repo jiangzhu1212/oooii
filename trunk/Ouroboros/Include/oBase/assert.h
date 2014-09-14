@@ -3,10 +3,8 @@
 // assert() by itself doesn't organize enough debug information. It also breaks
 // inside utility functions rather than the assertion itself. To present a 
 // richer, more convenient assertion experience use the macros defined here.
-#pragma once
-#ifndef oBase_assert_h
-#define oBase_assert_h
 
+#pragma once
 #include <oCompiler.h>
 #include <cstdarg>
 #include <cstdlib>
@@ -99,6 +97,4 @@ namespace ouro {
 #else
 	#define oTRACE(_Format, ...) do {} while(false)
 	#define oTRACE_ONCE(_Format, ...) do {} while(false)
-#endif
-
 #endif

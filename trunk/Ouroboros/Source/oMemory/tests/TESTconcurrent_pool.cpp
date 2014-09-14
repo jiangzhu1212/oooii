@@ -157,5 +157,5 @@ void TESTconcurrent_pool(test_services& services)
 	test_concurrency(services);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

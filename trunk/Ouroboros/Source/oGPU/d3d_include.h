@@ -50,6 +50,6 @@ protected:
 
 		} // namespace d3d
 	} // namespace gpu
-} // namespace ouro
+}
 
 #endif

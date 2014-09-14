@@ -1,14 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// API for dealing with system-wide functionality
-#pragma once
-#ifndef oCore_system_h
-#define oCore_system_h
 
+// API for dealing with system-wide functionality
+
+#pragma once
 #include <oBase/date.h>
 #include <functional>
 
-namespace ouro {
-	namespace system {
+namespace ouro { namespace system {
 
 enum privilege
 {
@@ -154,7 +152,4 @@ int spawn(const char* _CommandLine
 // operating system and opens or edits that document.
 void spawn_associated_application(const char* _DocumentName, bool _ForEdit = false);
 
-	} // namespace system
-} // namespace ouro
-
-#endif
+}}

@@ -3,8 +3,7 @@
 #include <oString/string_codec.h>
 #include "../../test_services.h"
 
-namespace ouro {
-	namespace tests {
+namespace ouro { namespace tests {
 
 static const char* sJSONTestReferenceResult = 
 	"{"
@@ -98,5 +97,4 @@ void TESTjson(test_services& services)
 	oTEST0(0 == strcmp(EscapedString.c_str(), JSON.node_value(json::node(9))));
 }
 
-	} // namespace tests
-} // namespace ouro
+}}

@@ -68,4 +68,4 @@ assert_action::value prompt_msgbox(const assert_context& _Assertion, const char*
 	return action;
 }
 
-} // namespace ouro
+}

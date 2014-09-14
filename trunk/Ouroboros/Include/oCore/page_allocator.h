@@ -1,13 +1,12 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Interface for the lowest-level system allocator capable of handling pages of 
 // memory that can map a very large address space to a combination of available 
 // RAM and a pagefile/swapfile on disk.
-#pragma once
-#ifndef oCore_page_allocator_h
-#define oCore_page_allocator_h
 
-namespace ouro {
-	namespace page_allocator {
+#pragma once
+
+namespace ouro { namespace page_allocator {
 
 /* enum class */ namespace status
 {	enum value {
@@ -88,7 +87,4 @@ void set_access(void* _BaseAddress, size_t _Size, access::value _Access);
 // never a page fault for such pages.
 void set_pagability(void* _BaseAddress, size_t _Size, bool _Pageable);
 
-	} // namespace page_allocator
-} // namespace ouro
-
-#endif
+}}

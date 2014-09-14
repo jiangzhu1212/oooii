@@ -486,4 +486,4 @@ msg_result::value msgboxv(msg_type::value _Type, ouro::window_handle _hParent, c
 	return result;
 }
 
-} // namespace ouro
+}

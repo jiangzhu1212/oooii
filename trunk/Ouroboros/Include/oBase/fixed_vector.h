@@ -1,11 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// This is the half-way point between std::array and std::vector: it uses a 
-// fixed buffer - no malloc/realloc - but also differentiates between capacity
-// and size as well as providing most of std::vector's interface.
-#pragma once
-#ifndef oBase_fixed_vector_h
-#define oBase_fixed_vector_h
 
+// std::array, but with some of std::vector's api
+
+#pragma once
 #include <oCompiler.h>
 #include <oString/stringize.h>
 #include <array>
@@ -207,5 +204,3 @@ template <typename T, size_t sourceN, size_t destinationN> char* to_string(char 
 template <typename T, size_t N> bool from_string(ouro::fixed_vector<T, N>* _pValue, const char* _StrSource) { return detail::from_string_container(_pValue, _StrSource); }
 
 }
-
-#endif

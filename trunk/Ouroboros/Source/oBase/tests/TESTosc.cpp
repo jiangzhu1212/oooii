@@ -54,5 +54,5 @@ void TESTosc()
 	}
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

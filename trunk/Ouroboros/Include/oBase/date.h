@@ -1,14 +1,13 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Support Date/Time/Wall Clock functionality in a way that should really be the 
 // final statement on the matter. NTPv4 has attosecond accuracy and inherently
 // supports more than one 136 era, so ntp_date should really be the ultimate 
 // thing. Support all the legacy formats too: time_t, file_time_t and a format 
 // that is human-workable: date.
 // NTP v4: http://tools.ietf.org/html/rfc5905#section-6
-#pragma once
-#ifndef oBase_date_h
-#define oBase_date_h
 
+#pragma once
 #include <oString/fixed_string.h>
 #include <oBase/operators.h>
 #include <oMemory/uint128.h>
@@ -232,6 +231,4 @@ namespace std {
 inline std::string to_string(const ouro::weekday::value& _Weekday) { return ouro::as_string(_Weekday); }
 inline std::string to_string(const ouro::month::value& _Month) { return ouro::as_string(_Month); }
 
-} // namespace std
-
-#endif
+}

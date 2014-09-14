@@ -54,5 +54,5 @@ void TESTsurface_resize(test_services& _Services)
 	}
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

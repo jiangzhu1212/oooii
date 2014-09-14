@@ -177,5 +177,5 @@ void TESTsurface()
 		oCHECK(surface::num_mips(surface::mip_layout::tight, MipDimensions[i]) == NumMips[i], "surface::num_mips(.., int3(%d,%d,%d))==%d failed", MipDimensions[i].x, MipDimensions[i].y, MipDimensions[i].z, NumMips[i]);
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

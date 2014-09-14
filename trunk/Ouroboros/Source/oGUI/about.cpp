@@ -389,4 +389,4 @@ void about_impl::show_modal(const std::shared_ptr<window>& _Parent)
 	Window->icon(nullptr);
 }
 
-} // namespace ouro
+}

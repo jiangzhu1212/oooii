@@ -1,9 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
+// This header includes system headers that rarely change and are common enough 
+// to include in precompiled headers
+
 #pragma once
-#ifndef oBase_all_libc_h
-#define oBase_all_libc_h
-// This header includes system headers that rarely change 
-// and are common enough to include in precompiled headers
 #include <algorithm>
 #include <assert.h>
 #include <atomic>
@@ -32,5 +32,4 @@
 #include <unordered_set>
 #ifdef _DEBUG
 	#include <crtdbg.h>
-#endif
 #endif

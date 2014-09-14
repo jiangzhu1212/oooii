@@ -1,12 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Pre-variadic templates we need to just type out templates with different 
 // counts of parameters, so here it is. This facilitates the std::thread pattern 
 // of wrapping the need for std::bind inside the calls to functions that take 
 // functors.
-#pragma once
-#ifndef oBase_callable_h
-#define oBase_callable_h
 
+#pragma once
 #include <functional>
 
 #define oCALLABLE_CONCAT(x, y) x##y
@@ -259,5 +258,4 @@
 
 #else
 	#error TODO: Implement all uses of the Callable pattern with true variadic macros.
-#endif
 #endif

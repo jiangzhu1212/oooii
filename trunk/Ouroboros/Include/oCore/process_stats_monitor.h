@@ -1,10 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // A small class that spawns a thread to monitor CPU usage by the calling 
 // process.
-#pragma once
-#ifndef oCore_process_stats_monitor_h
-#define oCore_process_stats_monitor_h
 
+#pragma once
 #include <oCore/debugger.h>
 #include <oConcurrency/mutex.h>
 #include <oCore/process.h>
@@ -131,6 +130,4 @@ private:
 	std::thread Thread;
 };
 
-} // namespace ouro
-
-#endif
+}

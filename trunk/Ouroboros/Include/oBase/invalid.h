@@ -1,11 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // -1 or 0xfff..ff is commonly used as a invalid value when 0 is a valid value.
 // however different types can have issues:~0u != ~0ull and size_t is thus a 
 // PITA. This object abstracts an invalid index value and also makes the code
 // more self-documenting.
+
 #pragma once
-#ifndef oBase_invalid_h
-#define oBase_invalid_h
 
 namespace ouro {
 	namespace detail {
@@ -37,5 +37,3 @@ static const detail::invalid_t invalid;
 static const detail::invalid_t infinite;
 
 }
-
-#endif

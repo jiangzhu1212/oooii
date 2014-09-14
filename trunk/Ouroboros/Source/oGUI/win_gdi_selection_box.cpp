@@ -125,5 +125,5 @@ void selection_box::on_mouse_up()
 }
 
 		} // namespace gdi
-	} // namespace windows
-} // namespace ouro
+	}
+}

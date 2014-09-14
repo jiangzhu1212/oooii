@@ -274,5 +274,5 @@ void TESTdate(test_services& _Services)
 	test_date_file_time();
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

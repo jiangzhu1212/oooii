@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// Abstraction for source code control.
-#pragma once
-#ifndef oBase_scc_h
-#define oBase_scc_h
 
+// Abstraction for source code control.
+
+#pragma once
 #include <functional>
 #include <oBase/date.h>
 #include <oString/fixed_string.h>
@@ -169,5 +168,3 @@ public:
 std::shared_ptr<scc> make_scc(scc_protocol::value _Protocol, const scc_spawn& _Spawn, unsigned int _TimeoutMS = 5000);
 
 }
-
-#endif

@@ -360,4 +360,4 @@ void decode_callback_message_params(uintptr_t _wParam, uintptr_t _lParam, unsign
 }
 
 	} // namespace notification_area
-} // namespace ouro
+}

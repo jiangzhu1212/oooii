@@ -138,7 +138,7 @@ private:
 	void ActionHook(const ouro::input::action& _Action);
 };
 
-} // namespace tests
+}
 
 bool from_string(tests::oSystemProperties::CONTROL* _pControl, const char* _StrSource)
 {
@@ -418,6 +418,6 @@ void TESTSysDialog(test_services& _Services)
 	}
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}
 

@@ -1,12 +1,11 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Standard/typical colors from http://www.codeproject.com/KB/GDI/XHtmlDraw/XHtmlDraw4.png
 // to/fromstrings whose values match the below will evaluate to be the below. i.e. fromstring
 // recognizes the names of the colors and tostring will yield a named color if the values
 // match.
-#pragma once
-#ifndef oBase_colors_h
-#define oBase_colors_h
 
+#pragma once
 #include <oBase/color.h>
 
 namespace ouro {
@@ -162,5 +161,3 @@ static const color tangent_space_normal_blue(0xFF7F7FFF); // Z-Up
 static const color object_space_normal_green(0xFF7FFF7F); // y-Up
 
 }
-
-#endif

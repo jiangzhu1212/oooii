@@ -29,5 +29,5 @@ void TESTquery()
 	}
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

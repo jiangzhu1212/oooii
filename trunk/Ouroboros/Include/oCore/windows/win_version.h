@@ -1,13 +1,10 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-#pragma once
-#ifndef oCore_win_version_h
-#define oCore_win_version_h
 
+#pragma once
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-namespace ouro {
-	namespace windows {
+namespace ouro { namespace windows {
 
 /* enum class */ namespace version
 {	enum value {
@@ -38,7 +35,4 @@ namespace ouro {
 
 version::value get_version();
 
-	} // namespace windows
-} // namespace ouro
-
-#endif
+}}

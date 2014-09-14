@@ -121,5 +121,5 @@ void cdf97inv(float* _pValues, size_t _NumValues)
 
 // $(CitedCodeEnd)
 
-} // namespace ouro
+}
 

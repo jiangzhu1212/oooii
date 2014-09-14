@@ -24,5 +24,5 @@ void TESTadapter(test_services& _Services)
 	});
 };
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

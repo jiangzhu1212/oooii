@@ -73,5 +73,5 @@ void TESTcompression(test_services& _Services)
 		, strGZipTime.c_str());
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

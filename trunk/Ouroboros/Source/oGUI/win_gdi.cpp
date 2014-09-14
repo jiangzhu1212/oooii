@@ -68,5 +68,5 @@ int estimate_point_size(int _PixelHeight)
 	return static_cast<int>((_PixelHeight * 36.0f / 48.0f) + 0.5f);
 }
 		} // namespace gdi
-	} // namespace windows
-} // namespace ouro
+	}
+}

@@ -1,5 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // An axis-aligned bounding box. This header cross-compiles in C++ and HLSL.
+
 #ifndef oHLSL
 	#pragma once
 #endif

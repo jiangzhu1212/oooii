@@ -144,4 +144,4 @@ void fill_color_cube(color* _pColors, size_t _RowPitch, size_t _SlicePitch, cons
 }
 
 	} // namespace surface
-} // namespace ouro
+}

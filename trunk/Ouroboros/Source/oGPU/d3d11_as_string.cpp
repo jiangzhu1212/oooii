@@ -98,4 +98,4 @@ const char* as_string(const D3D11_USAGE& _Usage)
 	return "?";
 }
 
-} // namespace ouro
+}

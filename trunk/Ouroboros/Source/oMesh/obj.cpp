@@ -837,4 +837,4 @@ material_lib_info material_lib_impl::get_info() const
 
 		} // namespace obj
 	} // namespace mesh
-} // namespace ouro 
+} 

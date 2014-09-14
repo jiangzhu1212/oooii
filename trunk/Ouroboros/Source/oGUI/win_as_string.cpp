@@ -732,5 +732,5 @@ char* parse_wm_message(char* _StrDestination, size_t _SizeofStrDestination, oWIN
 	return _StrDestination;
 }
 
-	} // namespace windows
-} // namespace ouro
+	}
+}

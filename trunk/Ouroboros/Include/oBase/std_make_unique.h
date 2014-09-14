@@ -1,8 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Missing make_unique is considered an oversight in C++11, so here it is.
+
 #pragma once
-#ifndef oBase_std_make_unique_h
-#define oBase_std_make_unique_h
 #include <memory>
 
 // Herb Sutter's implementation from http://herbsutter.com/gotw/_102/ should  
@@ -81,5 +81,3 @@ namespace std
 		return unique_ptr<T>(new T(forward<Arg1>(_Arg1), forward<Arg2>(_Arg2), forward<Arg3>(_Arg3), forward<Arg4>(_Arg4), forward<Arg5>(_Arg5), forward<Arg6>(_Arg6), forward<Arg7>(_Arg7), forward<Arg8>(_Arg8), forward<Arg9>(_Arg9), forward<Arg10>(_Arg10)));
 	}
 }
-
-#endif

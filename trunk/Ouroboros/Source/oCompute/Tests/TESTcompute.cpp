@@ -191,5 +191,5 @@ void TESTcompute()
 	test_hsv();
 }
 
-	} // namespace tests
-} // namespace ouro
+	}
+}

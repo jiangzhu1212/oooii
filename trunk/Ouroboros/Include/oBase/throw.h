@@ -1,10 +1,9 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Creating a standard exception can be very tedious, so wrap common patterns in 
 // convenience macros.
-#pragma once
-#ifndef oBase_throw_h
-#define oBase_throw_h
 
+#pragma once
 #include <oString/string.h>
 #include <system_error>
 
@@ -39,5 +38,3 @@ inline std::string formatf(const char* _Format, ...)
 #define oTHROW_INVARG0() do { throw std::invalid_argument("invalid argument"); } while(false)
 #define oCHECK_ARG(_Expression, _Message, ...) do { if (!(_Expression)) oTHROW_INVARG(#_Expression); } while(false)
 #define oCHECK_ARG0(_Expression) do { if (!(_Expression)) oTHROW_INVARG(_Message, ## __VA_ARGS__); } while(false)
-
-#endif

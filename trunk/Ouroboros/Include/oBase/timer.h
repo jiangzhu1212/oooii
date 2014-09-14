@@ -1,9 +1,8 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
-// A simple timer for down-and-dirty code timing.
-#pragma once
-#ifndef oBase_timer_h
-#define oBase_timer_h
 
+// Simple timer for quick-and-dirty code timing.
+
+#pragma once
 #include <oBase/assert.h>
 #include <chrono>
 
@@ -63,5 +62,3 @@ private:
 };
 
 }
-
-#endif

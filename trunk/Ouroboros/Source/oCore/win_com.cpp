@@ -44,5 +44,5 @@ void ensure_initialized()
 }
 		
 		} // namespace com
-	} // namespace windows
-} // namespace ouro
+	}
+}
