@@ -55,8 +55,8 @@ concurrent_hash_map& concurrent_hash_map::operator=(concurrent_hash_map&& that)
 
 void concurrent_hash_map::initialize(size_type capacity, const char* alloc_label, const allocator& a)
 {
+	initialize(a.allocate(calc_size(capacity), 0, alloc_label), capacity);
 	alloc = a;
-	initialize(alloc.allocate(calc_size(capacity), 0, alloc_label), capacity);
 }
 
 void concurrent_hash_map::initialize(void* memory, size_type capacity)

@@ -83,6 +83,15 @@ public:
 	// so this can be done over multiple steps.
 	size_type migrate(concurrent_hash_map& that, size_type max_moves = size_type(-1));
 
+	// visit every non-null value with a function: void visit(value_type v)
+	template<typename visitor_t>
+	void visit(visitor_t visitor)
+	{
+		for (uint32_t i = 0; i <= modulo_mask; i++)
+			if (values[i] != nullidx)
+				visitor(values[i]);
+	}
+
 	
 	// concurrent api
 
