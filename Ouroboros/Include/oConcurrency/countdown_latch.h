@@ -16,12 +16,19 @@ namespace ouro {
 class countdown_latch
 {
 public:
+	// default ctor leaves this instance unblocking
+	countdown_latch();
+
 	// In either construction or reset(), setting initial_count to a negative 
 	// number will immediately set the underlying event. Setting initial_count
 	// to zero or above will reset the event and allow functionality to proceed,
 	// so setting the event to zero will require a reference then a release to 
 	// really make sense.
 	countdown_latch(int initial_count);
+
+	// move operators
+	countdown_latch(countdown_latch&& that);
+	countdown_latch& operator=(countdown_latch&& that);
 
 	// Returns the count of outstanding references on this latch. This should only 
 	// be used for a user-facing update/UI or debug spew. This should not be used 
@@ -75,13 +82,42 @@ private:
 	const countdown_latch& operator=(const countdown_latch&); /* = delete */
 };
 
+inline countdown_latch::countdown_latch()
+	: num_outstanding(0)
+{
+}
+
 inline countdown_latch::countdown_latch(int initial_count)
 	: num_outstanding(initial_count)
 {
-	// to centralize code, have all operations on NumOutStanding go through 
+	// to centralize code, have all operations on num_outstanding go through 
 	// release, so add one first so this all ends up being a noop
 	num_outstanding++;
 	release();
+}
+
+inline countdown_latch::countdown_latch(countdown_latch&& that)
+	: num_outstanding(that.num_outstanding)
+{
+	std::lock_guard<std::mutex> Lock(that.mtx);
+	that.num_outstanding = 0;
+	that.zero_references.notify_all();
+}
+
+inline countdown_latch& countdown_latch::operator=(countdown_latch&& that)
+{
+	if (this != &that)
+	{
+		std::lock_guard<std::mutex> Lock1(mtx);
+		std::lock_guard<std::mutex> Lock2(that.mtx);
+
+		num_outstanding = that.num_outstanding; that.num_outstanding = 0;
+		if (--num_outstanding <= 0)
+			zero_references.notify_all();
+
+		that.zero_references.notify_all();
+	}
+	return *this;
 }
 
 inline int countdown_latch::outstanding() const

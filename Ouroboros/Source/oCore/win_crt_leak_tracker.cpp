@@ -6,21 +6,14 @@
 #include <oCore/reporting.h>
 #include <oCore/windows/win_crt_heap.h>
 
-namespace ouro {
-	namespace windows {
-		namespace crt_leak_tracker {
-
-static void* untracked_malloc(size_t _Size) { return process_heap::allocate(_Size); }
-static void untracked_free(void* _Pointer) { process_heap::deallocate(_Pointer); }
-
-const static size_t kTrackingInternalReserve = oMB(4);
+namespace ouro { namespace windows { namespace crt_leak_tracker {
 
 static bool& thread_local_tracking_enabled()
 {
 	// has to be a pointer so for multi-module support (all instances of this from
 	// a DLL perspective must point to the same bool value)
-	oTHREAD_LOCAL static bool* pEnabled = nullptr;
-	if (!pEnabled)
+	oTHREAD_LOCAL static bool* enabled = nullptr;
+	if (!enabled)
 	{
 		process_heap::find_or_allocate(
 			"thread_local_tracking_enabled"
@@ -28,83 +21,65 @@ static bool& thread_local_tracking_enabled()
 			, process_heap::none
 			, [=](void* _pMemory) { *(bool*)_pMemory = true; }
 			, nullptr
-			, &pEnabled);
+			, &enabled);
 	}
 
-	return *pEnabled;
+	return *enabled;
 }
 
-class context
+class context : public leak_tracker
 {
 public:
 	static context& singleton();
 
-	void enable(bool _Enable);
-	inline bool enabled() const { return Enabled; }
+	void enable(bool enable);
+	inline bool enabled() const { return enabled_; }
 
-	inline void enable_report(bool _Enable) { ReportEnabled = _Enable; }
-	inline bool enable_report() { return ReportEnabled; }
+	inline void enable_report(bool enable) { report_enabled = enable; }
+	inline bool enable_report() { return report_enabled; }
 
-	inline void new_context() { lock_t lock(Mutex); pLeakTracker->new_context(); }
+	bool report(bool current_context_only);
 
-	inline void capture_callstack(bool _Capture) { lock_t lock(Mutex); pLeakTracker->capture_callstack(_Capture); }
-	inline bool capture_callstack() const { lock_t lock(Mutex); return pLeakTracker->capture_callstack(); }
-
-	void thread_local_tracking(bool _Enable) { lock_t lock(Mutex); pLeakTracker->thread_local_tracking(_Enable); }
-	bool thread_local_tracking() { lock_t lock(Mutex); return pLeakTracker->thread_local_tracking(); }
-
-	bool report(bool _CurrentContextOnly);
-	inline void reset() { lock_t lock(Mutex); pLeakTracker->reset(); }
-	inline void ignore(void* _Pointer) { lock_t lock(Mutex); pLeakTracker->on_deallocate(crt_heap::allocation_id(_Pointer)); }
+	inline void ignore(void* ptr) 
+	{
+		allocation_stats s;
+		s.pointer = ptr;
+		s.ordinal = windows::crt_heap::allocation_id(ptr);
+		s.operation = memory_operation::deallocate;
+		on_stat_ordinal(s);
+	}
 	
-	inline void add_delay() { lock_t lock(Mutex); pLeakTracker->add_delay(); }
-	inline void release_delay() { lock_t lock(Mutex); pLeakTracker->release_delay(); }
-
-	int on_malloc_event(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
+	int on_malloc_event(int alloc_type, void* user_data, size_t size, int block_type, long request_number, const unsigned char* path, int line);
 
 protected:
 	context();
 	~context();
 
-	static int malloc_hook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line);
+	static int malloc_hook(int alloc_type, void* user_data, size_t size, int block_type, long request_number, const unsigned char* path, int line);
 	
-	// VS2012's std::mutex calls complex crt functions that grab a global mutex. If called
-	// from other crt functions that then call malloc then deadlocks occur, so use an ouro
-	// mutex to avoid that issue.
-	typedef ouro::mutex mutex_t;
-	typedef ouro::lock_guard<mutex_t> lock_t;
-
-	mutable mutex_t Mutex;
-	ouro::leak_tracker* pLeakTracker;
-	size_t NonLinearBytes;
+	size_t NonLinearBytes; // todo: make this track memory that was allocated and not recorded.
 	_CRT_ALLOC_HOOK OriginalAllocHook;
-	bool Enabled;
-	bool ReportEnabled;
+	bool enabled_;
+	bool report_enabled;
 };
 
 context::context()
 	: NonLinearBytes(0)
-	, Enabled(false)
+	, enabled_(false)
 	, OriginalAllocHook(nullptr)
 {
 	ouro::reporting::ensure_initialized();
 
-	// This touches conCRT to ensure the lib is loaded. If not it can grab the CRT mutex
-	// and can do so from the leak tracker inside an alloc, thus causing a deadlock.
-	//{
-	//	recursive_mutex m;
-	//	m.lock();
-	//	m.unlock();
-	//}
+	leak_tracker::init_t i;
+	i.thread_local_tracking_enabled = thread_local_tracking_enabled;
+	i.callstack = debugger::callstack;
+	i.format = debugger::format;
+	i.print = debugger::print;
 
-	leak_tracker::info lti;
-	lti.allocate = untracked_malloc;
-	lti.deallocate = untracked_free;
-	lti.thread_local_tracking_enabled = thread_local_tracking_enabled;
-	lti.callstack = debugger::callstack;
-	lti.format = debugger::format;
-	lti.print = debugger::print;
-	pLeakTracker = new leak_tracker(lti);
+	static const uint32_t kNumAllocs = 200000;
+	auto req = leak_tracker::calc_size(kNumAllocs);
+	void* mem = process_heap::allocate(req);
+	initialize(i, mem, kNumAllocs);
 }
 
 context::~context()
@@ -118,6 +93,8 @@ context::~context()
 		format_bytes(buf, NonLinearBytes, 2);
 		oTRACE("CRT leak tracker: Allocated %s beyond the internal reserve. Increase kTrackingInternalReserve to improve performance, especially on shutdown.", buf.c_str());
 	}
+
+	process_heap::deallocate(deinitialize());
 }
 
 context& context::singleton()
@@ -129,67 +106,87 @@ context& context::singleton()
 			"crt_leak_tracker context"
 			, process_heap::per_process
 			, process_heap::none
-			, [=](void* _pMemory) { new (_pMemory) context(); }
-			, [=](void* _pMemory) { ((context*)_pMemory)->~context(); }
+			, [=](void* mem) { new (mem) context(); }
+			, [=](void* mem) { ((context*)mem)->~context(); }
 			, &sInstance);
 	}
 	return *sInstance;
 }
 
-void context::enable(bool _Enable)
+void context::enable(bool enable)
 {
-	if (_Enable && !Enabled)
+	if (enable && !enabled_)
 		OriginalAllocHook = _CrtSetAllocHook(malloc_hook);
-	else if (!_Enable && Enabled)
+	else if (!enable && enabled_)
 	{
 		_CrtSetAllocHook(OriginalAllocHook);
 		OriginalAllocHook = nullptr;
 	}
 
-	Enabled = _Enable;
+	enabled_ = enable;
 }
 
-bool context::report(bool _CurrentContextOnly)
+bool context::report(bool current_context_only)
 {
 	size_t nLeaks = 0;
-	if (ReportEnabled)
+	if (report_enabled)
 	{
-		lock_t lock(Mutex);
-		bool OldValue = enabled();
+		bool prior = enabled();
 		enable(false);
-		nLeaks = pLeakTracker->report(_CurrentContextOnly);
-		enable(OldValue);
+		nLeaks = leak_tracker::report(current_context_only);
+		enable(prior);
 	}
 
 	return nLeaks > 0;
 }
 
-int context::on_malloc_event(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line)
+int context::on_malloc_event(int alloc_type, void* user_data, size_t size
+	, int block_type, long request_number, const unsigned char* path, int line)
 {
 	int allowAllocationToProceed = 1;
 
 	// Call any prior hook first
 	if (OriginalAllocHook)
-		allowAllocationToProceed = OriginalAllocHook(_AllocationType, _UserData, _Size, _BlockType, _RequestNumber, _Path, _Line);
+		allowAllocationToProceed = OriginalAllocHook(alloc_type, user_data, size, block_type, request_number, path, line);
 
-	if (allowAllocationToProceed && _BlockType != _IGNORE_BLOCK && _BlockType != _CRT_BLOCK)
+	if (allowAllocationToProceed && block_type != _IGNORE_BLOCK && block_type != _CRT_BLOCK)
 	{
-		lock_t lock(Mutex);
-		switch (_AllocationType)
+		allocation_stats s;
+		s.pointer = user_data;
+		s.label = "crt";
+		s.size = size;
+		//s.options;
+		s.frame = 0;
+
+		uint32_t old_id = uint32_t(-1);
+
+		switch (alloc_type)
 		{
-			case _HOOK_ALLOC: pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line); break;
-			case _HOOK_REALLOC: pLeakTracker->on_allocate(static_cast<unsigned int>(_RequestNumber), _Size, (const char*)_Path, _Line, windows::crt_heap::allocation_id(_UserData)); break;
-			case _HOOK_FREE: pLeakTracker->on_deallocate(windows::crt_heap::allocation_id(_UserData)); break;
-			default: __assume(0);
+			case _HOOK_ALLOC:
+				s.ordinal = uint32_t(request_number);
+				s.operation = memory_operation::allocate;
+				break;
+			case _HOOK_REALLOC:
+				s.ordinal = uint32_t(request_number);
+				s.operation = memory_operation::reallocate;
+				old_id = windows::crt_heap::allocation_id(user_data);
+				break;
+			case _HOOK_FREE:
+				s.ordinal = windows::crt_heap::allocation_id(user_data);
+				s.operation = memory_operation::deallocate;
+				break;
+			default: oASSUME(0);
 		}
+
+		on_stat_ordinal(s, old_id);
 	}
 
 	return allowAllocationToProceed;
 }
 
-int context::malloc_hook(int _AllocationType, void* _UserData, size_t _Size, int _BlockType, long _RequestNumber, const unsigned char* _Path, int _Line)
+int context::malloc_hook(int alloc_type, void* user_data, size_t size, int block_type, long request_number, const unsigned char* path, int line)
 {
-	return context::singleton().on_malloc_event(_AllocationType, _UserData, _Size, _BlockType, _RequestNumber, _Path, _Line);
+	return context::singleton().on_malloc_event(alloc_type, user_data, size, block_type, request_number, path, line);
 }
 
 void ensure_initialized()
@@ -197,9 +194,9 @@ void ensure_initialized()
 	context::singleton();
 }
  
-void enable(bool _Enable)
+void enable(bool enable)
 {
-	context::singleton().enable(_Enable);
+	context::singleton().enable(enable);
 }
  
 bool enabled()
@@ -207,9 +204,9 @@ bool enabled()
 	return context::singleton().enabled();
 }
 
-void enable_report(bool _Enable)
+void enable_report(bool enable)
 {
-	context::singleton().enable_report(_Enable);
+	context::singleton().enable_report(enable);
 }
 
 bool enable_report()
@@ -222,9 +219,9 @@ void new_context()
 	context::singleton().new_context();
 }
 
-void capture_callstack(bool _Capture)
+void capture_callstack(bool capture)
 {
-	context::singleton().capture_callstack(_Capture);
+	context::singleton().capture_callstack(capture);
 }
 
 bool capture_callstack()
@@ -232,9 +229,9 @@ bool capture_callstack()
 	return context::singleton().capture_callstack();
 }
 
-void thread_local_tracking(bool _Enable)
+void thread_local_tracking(bool enable)
 {
-	context::singleton().thread_local_tracking(_Enable);
+	context::singleton().thread_local_tracking(enable);
 }
 
 bool thread_local_tracking()
@@ -242,9 +239,9 @@ bool thread_local_tracking()
 	return context::singleton().thread_local_tracking();
 }
 
-bool report(bool _CurrentContextOnly)
+bool report(bool current_context_only)
 {
-	return context::singleton().report(_CurrentContextOnly);
+	return context::singleton().report(current_context_only);
 }
 
 void reset()
@@ -267,6 +264,4 @@ void release_delay()
 	context::singleton().release_delay();
 }
 
-		} // namespace crt_leak_tracker
-	}
-}
+}}}

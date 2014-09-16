@@ -1,19 +1,20 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
+
 // Tracks CRT allocations. Mainly this is glue code linking oBase/leak_tracker
 // to libcrt malloc.
+
 #pragma once
 #include <oBase/leak_tracker.h>
-#include <unordered_map>
 
 namespace ouro { namespace windows { namespace crt_leak_tracker {
 
 // This ensures the crt_leak_tracker has been initialized
 void ensure_initialized();
 
-void enable(bool _Enable);
+void enable(bool enable);
 bool enabled();
 
-void enable_report(bool _Enable);
+void enable_report(bool enable);
 bool enable_report();
 
 // All outstanding allocations are cleared as if they never happened. This is
@@ -23,14 +24,14 @@ void new_context();
 
 // For each allocation the callstack leading to malloc is recorded. This is very
 // slow, but can easily identify the source of memory leaks.
-void capture_callstack(bool _Capture);
+void capture_callstack(bool capture);
 bool capture_callstack();
 
-void thread_local_tracking(bool _Enable);
+void thread_local_tracking(bool enable);
 bool thread_local_tracking();
 
 // Returns true if there were leaks or false if there were none.
-bool report(bool _CurrentContextOnly = true);
+bool report(bool current_context_only = true);
 
 // Reset all tracking bookkeeping
 void reset();
@@ -39,7 +40,7 @@ void reset();
 // reported it is helpful not to report those allocations as a leak. For example 
 // a log file that is going to retain the leak report itself should not be 
 // reported as a leak.
-void ignore(void* _Pointer);
+void ignore(void* ptr);
 
 // See oBase/leak_tracker for more details
 void add_delay();
