@@ -32,6 +32,7 @@ void TESTwin_crt_leak_tracker(test_services& _Services)
 		char* pCharAlloc = new char;
 		oCHECK(report(), "Tracker failed to detect char leak");
 		delete pCharAlloc;
+		oCHECK(!report(), "Tracker failed to detect char delete");
 
 		ouro::future<void> check = ouro::async([=] {});
 		check.wait();
