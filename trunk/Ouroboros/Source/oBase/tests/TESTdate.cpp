@@ -1,5 +1,6 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oBase/date.h>
+#include <oBase/assert.h>
 #include <oBase/throw.h>
 
 #include "../../test_services.h"
@@ -85,6 +86,7 @@ template<typename DateT1, typename DateT2>
 static void expected_fail(const DateT1& _Destination, const DateT2& _Source)
 {
 	bool ExceptionThrown = false;
+	oTRACE("Expecting a domain_exception failure as part of test...");
 	try { DateT1 d = date_cast<DateT1>(_Source); }
 	catch (...) { ExceptionThrown = true; }
 	if (!ExceptionThrown)
