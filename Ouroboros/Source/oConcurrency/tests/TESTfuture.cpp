@@ -4,6 +4,7 @@
 #include <thread>
 
 #include "../../test_services.h"
+#include <oCore/windows/win_crt_leak_tracker.h>
 
 namespace ouro { namespace tests {
 
@@ -37,7 +38,7 @@ static bool exercise_all_threads(ouro::test_services& services)
 static bool fail_and_report()
 {
 	if (1)
-		throw std::invalid_argument("not supported");
+		throw std::invalid_argument("fail_and_report throw, this should have been caught");
 	return false;
 }
 
@@ -62,11 +63,12 @@ static void test_workstealing(ouro::test_services& services)
 		else
 			services.error("Failed to achieve 100%c CPU utilization. Peaked at %.01f%c", '%', CPUpeak, '%');
 	}
+	else
+		services.report("");
 }
 
 void TESTfuture(ouro::test_services& services)
 {
-	// Test packaged_task with void return type
 	{
 		ouro::packaged_task<void(int, int, char*)> test_no_return([&](int _Param1, int _Param2, char*_Param3){});
 		test_no_return(1,2,"t");
@@ -129,15 +131,22 @@ void TESTfuture(ouro::test_services& services)
 
 		oTEST(Result2.get(), "Unexpected result5");
 	}
-
+	
 	// test void async()
 	{
 		std::atomic_int value;
 		value.store(0);
-		ouro::async([&] { value++; });
+		ouro::future<void> Result3 = ouro::async([&] { value++; });
 		test_services::timer t(services);
 		while (t.seconds() < 2.0) { if (value.load() != 0) break; }
 		oTEST(value != 0, "timed out waiting for void async() to finish");
+
+		// @tony: the standard async always requires a return future. Calling get()
+		// in a future's dtor seems bad since it would turn things into a sync call.
+		// Still it seems there should be a way to fire-and-forget (or maybe there
+		// shouldn't?) so swing back to ouro::async sometime and try to get a void
+		// version.
+		Result3.get();
 	}
 
 	// test failure
@@ -145,16 +154,15 @@ void TESTfuture(ouro::test_services& services)
 		services.report("Testing graceful failure - there should be some std::system_error \"not supported\" that come through.");
 
 		ouro::future<bool> FutureToFail = ouro::async(fail_and_report);
-
 		bool ThisShouldFail = true;
+
 		try { ThisShouldFail = FutureToFail.get(); }
-		catch (std::system_error& e)
+		catch (std::invalid_argument&)
 		{
-			oTEST(e.code() == std::errc::not_supported, "error code not properly set");
 			ThisShouldFail = false;
 		}
 
-		oTEST(ThisShouldFail == false, "Error reporting failed");
+		oTEST(!ThisShouldFail, "Error reporting failed");
 		services.report("Testing graceful failure - done.");
 	}
 
