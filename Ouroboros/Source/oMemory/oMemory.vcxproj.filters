@@ -173,5 +173,8 @@
     <ClInclude Include="..\..\Include\oMemory\std_allocator.h">
       <Filter>oMemory\Allocators</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\wang_hash.h">
+      <Filter>oMemory\Hashes</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

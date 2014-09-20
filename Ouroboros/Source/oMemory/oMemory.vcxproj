@@ -71,6 +71,7 @@
     <ClInclude Include="..\..\Include\oMemory\std_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oMemory\tlsf_allocator.h" />
     <ClInclude Include="..\..\Include\oMemory\uint128.h" />
+    <ClInclude Include="..\..\Include\oMemory\wang_hash.h" />
     <ClInclude Include="cbtree.h" />
     <ClInclude Include="memduff.h" />
     <ClInclude Include="MurmurHash3.h" />

@@ -2,11 +2,17 @@
 #include <oBase/leak_tracker.h>
 #include <oBase/assert.h>
 #include <oMemory/byte.h>
+#include <oMemory/wang_hash.h>
 #include <oCompiler.h>
 
 using namespace std;
 
 namespace ouro {
+
+static inline uint64_t leak_tracker_hash(uintptr_t key)
+{
+	return wang_hash(key);
+}
 
 leak_tracker::size_type leak_tracker::calc_size(size_type capacity)
 {
@@ -101,7 +107,7 @@ void leak_tracker::internal_on_stat(uintptr_t new_ptr, const allocation_stats& s
 	switch (stats.operation)
 	{
 		case memory_operation::reallocate:
-			idx = allocs.remove(fnv1a<uint64_t>(&old_ptr, sizeof(old_ptr)));
+			idx = allocs.remove(leak_tracker_hash(old_ptr));
 			if (idx == concurrent_hash_map::nullidx)
 				oTRACE("[leak_tracker] failed to find old_ptr for realloc");
 			// pass thru to allocate
@@ -121,9 +127,14 @@ void leak_tracker::internal_on_stat(uintptr_t new_ptr, const allocation_stats& s
 				e->context = current_context;
 				e->id = stats.ordinal;
 
-				idx = allocs.set(fnv1a<uint64_t>(&new_ptr, sizeof(new_ptr)), idx);
+				idx = allocs.set(leak_tracker_hash(new_ptr), idx);
 				if (idx != concurrent_hash_map::nullidx)
-					oTRACE("[leak_tracker] hash collision");
+				{
+					e = pool.typed_pointer(idx);
+					oTRACE("[leak_tracker] hash collision:\n  incoming: ordinal=%u size=%u new_ptr=%p old_ptr=%p ptr=%p\n"
+						"  outgoing: ordinal=%u size=%u"
+						, stats.ordinal, uint32_t(stats.size), new_ptr, old_ptr, stats.pointer, e->id, uint32_t(e->size));
+				}
 			}
 
 			break;
@@ -131,7 +142,7 @@ void leak_tracker::internal_on_stat(uintptr_t new_ptr, const allocation_stats& s
 
 		case memory_operation::deallocate:
 		{
-			idx = allocs.remove(fnv1a<uint64_t>(&new_ptr, sizeof(new_ptr)));
+			idx = allocs.remove(leak_tracker_hash(new_ptr));
 			if (idx != concurrent_hash_map::nullidx)
 				pool.deallocate(idx);
 			break;
