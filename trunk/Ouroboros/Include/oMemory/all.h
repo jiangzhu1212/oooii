@@ -20,3 +20,4 @@
 #include <oMemory/pool.h>
 #include <oMemory/std_allocator.h>
 #include <oMemory/std_linear_allocator.h>
+#include <oMemory/wang_hash.h>
