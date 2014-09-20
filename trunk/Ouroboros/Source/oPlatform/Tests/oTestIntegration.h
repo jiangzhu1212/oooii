@@ -57,17 +57,10 @@ public:
 
 	scoped_allocation load_buffer(const char* _Path) override
 	{
-		scoped_allocation b;
-		try { b = filesystem::load(_Path); }
-		catch (std::system_error& e)
-		{
-			if (e.code().value() != std::errc::no_such_file_or_directory)
-				throw;
-
-			path FullPath = filesystem::data_path() / _Path;
-			b = filesystem::load(FullPath);
-		}
-		return b;
+		path p(_Path);
+		if (!filesystem::exists(p))
+			p = filesystem::data_path() / p;
+		return filesystem::load(p);
 	}
 
 	bool is_debugger_attached() const override { return this_process::has_debugger_attached(); }
