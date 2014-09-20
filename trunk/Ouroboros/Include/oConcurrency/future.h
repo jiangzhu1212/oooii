@@ -25,19 +25,19 @@
 
 namespace ouro {
 
-/*enum class*/ namespace launch { enum value { async, deferred }; };
-/*enum class*/ namespace future_status { enum value { ready, timeout, deferred }; };
-/*enum class*/ namespace future_errc { enum value { broken_promise, future_already_retrieved, promise_already_satisfied, no_state, not_work_stealing, no_implementation }; };
+enum class launch { async, deferred };
+enum class future_status { ready, timeout, deferred };
+enum class future_errc { broken_promise, future_already_retrieved, promise_already_satisfied, no_state, not_work_stealing, no_implementation };
 
 const std::error_category& future_category();
 
-/*constexpr*/ inline std::error_code make_error_code(future_errc::value _Errc) { return std::error_code(static_cast<int>(_Errc), future_category()); }
-/*constexpr*/ inline std::error_condition make_error_condition(future_errc::value _Errc) { return std::error_condition(static_cast<int>(_Errc), future_category()); }
+/*constexpr*/ inline std::error_code make_error_code(future_errc errc) { return std::error_code(static_cast<int>(errc), future_category()); }
+/*constexpr*/ inline std::error_condition make_error_condition(future_errc errc) { return std::error_condition(static_cast<int>(errc), future_category()); }
 
 class future_error : public std::logic_error
 {
 public:
-	future_error(future_errc::value _Errc) : logic_error(future_category().message(_Errc)) {}
+	future_error(future_errc errc) : logic_error(future_category().message(static_cast<int>(errc))) {}
 };
 
 template<typename T> class future;
@@ -66,7 +66,7 @@ namespace future_detail {
 		inline void operator delete(void* p) { commitment_deallocate(p); } \
 		inline void operator delete[](void* p) { commitment_deallocate(p); }
 
-	#define oFUTURE_CHECK(_Expr, _Errc) do { if (!(_Expr)) throw future_error(future_errc::_Errc); } while(false)
+	#define oFUTURE_CHECK(_Expr, errc) do { if (!(_Expr)) throw future_error(future_errc::errc); } while(false)
 	#define oFUTURE_WAIT_AND_CHECK_ERROR() do { wait(); if (has_exception()) std::rethrow_exception(pException); } while(false)
 
 	class commitment_state
@@ -131,7 +131,7 @@ namespace future_detail {
 		}
 
 		template<typename Rep, typename Period>
-		future_status::value wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
+		future_status wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
 			oFUTURE_CHECK(work_steals(), not_work_stealing);
 			std::unique_lock<std::mutex> lock(Mutex);
@@ -507,14 +507,14 @@ namespace future_detail {
 		inline void wait() { oFUTURE_CHECK(valid(), no_state); This()->Commitment->wait(); }
 
 		template<typename Rep, typename Period>
-		future_status::value wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
+		future_status wait_for(std::chrono::duration<Rep,Period> const& _RelativeTime)
 		{
 			oFUTURE_CHECK(valid(), no_state); 
 			return This()->Commitment->wait_for(_RelativeTime);
 		}
 
 		template<typename Clock, typename Duration>
-		future_status::value wait_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
+		future_status wait_until(std::chrono::time_point<Clock,Duration> const& _AbsoluteTime)
 		{
 			oFUTURE_CHECK(valid(), no_state); 
 			chrono::high_resolution_clock::duration duration = time_point_cast<chrono::high_resolution_clock::time_point>(_AbsoluteTime) - chrono::high_resolution_clock::now();
