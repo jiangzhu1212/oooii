@@ -999,7 +999,7 @@ static void oTraceCPUFeatures()
 
 	cpu::enumerate_features([&](const char* _FeatureName, const cpu::support::value& _Support)->bool
 	{
-		oTRACE(" CPU Feature %s has %s", _FeatureName, as_string(_Support));
+		oTRACE("- %s: %s", _FeatureName, as_string(_Support));
 		return true;
 	});
 }
