@@ -15,7 +15,6 @@ public:
 			case future_errc::future_already_retrieved: return "future_already_retrieved: get_future can only be called once per promise. Use shared_future for multiple futures.";
 			case future_errc::promise_already_satisfied: return "promise_already_satisfied: this promise has already had a value or error set on it. Thus the future waiting on the value may have already unblocked itself as a result.";
 			case future_errc::no_state: return "no_state: The future/promise is not initialized.";
-			case future_errc::not_work_stealing: return "wait_adopt is incompatible with work stealing";
 			case future_errc::no_implementation: return "this case is not yet handled by ouro::future";
 			default: return "unrecognized future state";
 		}

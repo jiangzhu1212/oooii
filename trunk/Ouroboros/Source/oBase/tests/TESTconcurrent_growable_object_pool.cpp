@@ -43,8 +43,8 @@ void TESTconcurrent_growable_object_pool()
 		test_obj* tests[NumBlocks];
 		memset(tests, 0xaa, sizeof(tests));
 
-		ouro::windows::crt_leak_tracker::enable(false);
-		finally reenable([&] { ouro::windows::crt_leak_tracker::enable(true); });
+		//ouro::windows::crt_leak_tracker::enable(false);
+		//finally reenable([&] { ouro::windows::crt_leak_tracker::enable(true); });
 
 		ouro::parallel_for(0, NumBlocks, [&](size_t _Index)
 		{

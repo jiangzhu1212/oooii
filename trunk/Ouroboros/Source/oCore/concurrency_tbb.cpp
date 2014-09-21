@@ -3,6 +3,7 @@
 #include <oBase/throw.h>
 #include <oCore/process_heap.h>
 #include <oCore/thread_traits.h>
+#include <oMemory/allocate.h>
 #include <tbb/tbb.h>
 #include <tbb/task_scheduler_init.h>
 
@@ -103,9 +104,25 @@ public:
 	bool is_canceling() override { return g.is_canceling(); }
 };
 
-std::shared_ptr<task_group> make_task_group()
+ouro::task_group* new_task_group()
 {
-	return std::make_shared<task_group_tbb>();
+	void* p = default_allocate(sizeof(task_group_tbb), memory_alignment::cacheline, scheduler_name());
+	return p ? new (p) task_group_tbb() : nullptr;
+}
+
+void delete_task_group(ouro::task_group* g)
+{
+	default_deallocate(g);
+}
+
+void* commitment_allocate(size_t bytes)
+{
+	return default_allocate(bytes, memory_alignment::cacheline, scheduler_name());
+}
+
+void commitment_deallocate(void* ptr)
+{
+	default_deallocate(ptr);
 }
 
 const char* scheduler_name()

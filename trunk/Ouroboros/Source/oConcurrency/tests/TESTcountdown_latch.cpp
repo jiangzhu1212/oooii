@@ -1,6 +1,7 @@
 // Copyright (c) 2014 Antony Arciuolo. See License.txt regarding use.
 #include <oConcurrency/countdown_latch.h>
 #include <oConcurrency/future.h>
+#include <atomic>
 #include <thread>
 #include <vector>
 #include "../../test_services.h"

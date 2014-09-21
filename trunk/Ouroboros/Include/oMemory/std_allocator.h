@@ -41,7 +41,7 @@ template<typename T> struct std_user_allocator
 	template<typename U> std_user_allocator(std_user_allocator<U> const& other) : user_alloc(other.user_alloc), user_dealloc(other.user_dealloc) {}
 	inline pointer allocate(size_type count, const_pointer hint = 0) { return static_cast<pointer>(user_alloc(sizeof(T) * count)); }
 	inline void deallocate(pointer p, size_type count) { user_dealloc(p); }
-	inline const std_user_allocator& operator=(const std_user_allocator& other) { user_alloc = other.user_alloc; user_dealloc = other.user_dealloc; return *this; }
+	inline const std_user_allocator& operator=(const std_user_allocator& that) { user_alloc = that.user_alloc; user_dealloc = that.user_dealloc; return *this; }
 	void* (*user_alloc)(size_t size);
 	void (*user_dealloc)(void* p);
 };

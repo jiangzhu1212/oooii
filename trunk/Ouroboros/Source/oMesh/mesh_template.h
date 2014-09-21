@@ -362,7 +362,7 @@ void prune_unindexed_vertices(const IndexT* oRESTRICT indices, uint num_indices
 
 	else
 	{
-		std::shared_ptr<task_group> g = make_task_group();
+		task_group* g = new_task_group();
 		g->run([&] { newNumVertices = prune_stream(refed, positions, num_vertices); });
 		g->run([&] { prune_stream(refed, normals, num_vertices); });
 		g->run([&] { prune_stream(refed, tangents, num_vertices); });
@@ -370,6 +370,7 @@ void prune_unindexed_vertices(const IndexT* oRESTRICT indices, uint num_indices
 		g->run([&] { prune_stream(refed, texcoords1, num_vertices); });
 		g->run([&] { prune_stream(refed, colors, num_vertices); });
 		g->wait();
+		delete_task_group(g);
 	}
 
 	*out_new_num_vertices = newNumVertices;
