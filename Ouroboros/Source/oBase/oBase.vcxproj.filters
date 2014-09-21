@@ -222,7 +222,6 @@
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_object_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h" />
     <ClInclude Include="..\..\Include\oBase\concurrent_growable_pool.h">
       <Filter>oBase\allocator</Filter>
     </ClInclude>
@@ -243,6 +242,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\leak_tracker.h">
       <Filter>oBase</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h">
+      <Filter>oBase\traits</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Include\oBase\atomic_type_traits.h">
       <Filter>oBase\traits</Filter>
