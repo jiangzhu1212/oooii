@@ -231,8 +231,8 @@ struct PLATFORM_oSocketAsync : public oTest
 
 		// Create our server thread
 		
-		std::shared_ptr<ouro::task_group> g = ouro::make_task_group();
-		ouro::finally onexit([&] { g->wait(); });
+		ouro::task_group* g = ouro::new_task_group();
+		ouro::finally onexit([&] { g->wait(); ouro::delete_task_group(g); });
 
 		static const unsigned short TestPort = 30777;
 

@@ -52,9 +52,25 @@ public:
 	bool is_canceling() override { return g.is_canceling(); }
 };
 
-std::shared_ptr<ouro::task_group> make_task_group()
+ouro::task_group* new_task_group()
 {
-	return std::make_shared<task_group_ouro>();
+	void* p = default_allocate(sizeof(task_group_ouro), memory_alignment::cacheline, scheduler_name());
+	return p ? new (p) task_group_ouro() : nullptr;
+}
+
+void delete_task_group(ouro::task_group* g)
+{
+	default_deallocate(g);
+}
+
+void* commitment_allocate(size_t bytes)
+{
+	return default_allocate(bytes, memory_alignment::cacheline, scheduler_name());
+}
+
+void commitment_deallocate(void* ptr)
+{
+	default_deallocate(ptr);
 }
 
 const char* scheduler_name()

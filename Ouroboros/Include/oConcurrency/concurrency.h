@@ -38,8 +38,14 @@ public:
 	virtual bool is_canceling() = 0;
 };
 
-// factory function for creating a task_group
-std::shared_ptr<task_group> make_task_group();
+// create/destroy a task group
+task_group* new_task_group();
+void delete_task_group(task_group* g);
+
+// general-purpose allocator mainly used to allocate commitments themselves,
+// which because they're templated on the storage type can be any size.
+void* commitment_allocate(size_t bytes);
+void commitment_deallocate(void* ptr);
 
 // Returns the name of the current job scheduler
 const char* scheduler_name();
