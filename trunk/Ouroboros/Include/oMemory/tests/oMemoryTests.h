@@ -10,6 +10,7 @@ void TESTconcurrent_linear_allocator(test_services& services);
 void TESTconcurrent_pool(test_services& services);
 void TESTpool(test_services& services);
 void TESTsbb(test_services& services);
+void TESTsmall_block_allocator(test_services& services);
 void TESTtlsf_allocator(test_services& services);
 
 }}

@@ -4,6 +4,7 @@
 #include <oBase/throw.h>
 #include <oCore/process_heap.h>
 #include <oCore/thread_traits.h>
+#include <oMemory/allocate.h>
 
 namespace ouro {
 

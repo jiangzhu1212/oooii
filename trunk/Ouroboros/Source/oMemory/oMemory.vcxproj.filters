@@ -90,6 +90,9 @@
     <ClCompile Include="pool.cpp">
       <Filter>Source\Allocators</Filter>
     </ClCompile>
+    <ClCompile Include="small_block_allocator.cpp">
+      <Filter>Source\Allocators</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="memduff.h">
@@ -175,6 +178,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Include\oMemory\wang_hash.h">
       <Filter>oMemory\Hashes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Include\oMemory\small_block_allocator.h">
+      <Filter>oMemory\Allocators</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
