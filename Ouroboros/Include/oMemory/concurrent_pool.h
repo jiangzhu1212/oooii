@@ -53,6 +53,9 @@ public:
 	// deinitializes the pool and returns the memory passed to initialize()
 	void* deinitialize();
 
+	// returns the size each allocated block will be
+	inline size_type block_size() const { return stride; }
+
 	// SLOW! walks the free list and returns the count
 	size_type count_free() const;
 

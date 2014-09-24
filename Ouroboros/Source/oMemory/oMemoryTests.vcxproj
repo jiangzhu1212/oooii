@@ -26,6 +26,7 @@
     <ClCompile Include="tests\TESTconcurrent_pool.cpp" />
     <ClCompile Include="tests\TESTpool.cpp" />
     <ClCompile Include="tests\TESTsbb.cpp" />
+    <ClCompile Include="tests\TESTsmall_block_allocator.cpp" />
     <ClCompile Include="tests\TESTtlsf_allocator.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

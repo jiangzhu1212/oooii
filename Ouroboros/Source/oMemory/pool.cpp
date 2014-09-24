@@ -10,8 +10,7 @@ pool::size_type pool::calc_size(size_type block_size, size_type capacity)
 }
 
 pool::pool()
-	: next(nullptr)
-	, blocks(nullptr)
+	: blocks(nullptr)
 	, stride(0)
 	, nblocks(0)
 	, nfree(0)
@@ -19,8 +18,7 @@ pool::pool()
 {}
 
 pool::pool(pool&& that)
-	: next(that.next)
-	, blocks(that.blocks)
+	: blocks(that.blocks)
 	, stride(that.stride)
 	, nblocks(that.nblocks)
 	, nfree(that.nfree)
@@ -30,8 +28,7 @@ pool::pool(pool&& that)
 }
 
 pool::pool(void* memory, size_type block_size, size_type capacity)
-	: next(nullptr)
-	, blocks(nullptr)
+	: blocks(nullptr)
 	, stride(0)
 	, nblocks(0)
 	, nfree(0)
@@ -51,7 +48,6 @@ pool& pool::operator=(pool&& that)
 	{
 		deinitialize();
 
-		next = that.next; that.next = nullptr;
 		blocks = that.blocks; that.blocks = nullptr;
 		stride = that.stride; that.stride = 0;
 		nblocks = that.nblocks; that.nblocks = 0;

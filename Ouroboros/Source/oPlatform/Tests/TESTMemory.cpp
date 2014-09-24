@@ -14,5 +14,6 @@ oTEST_REGISTER_MEMORY_TEST(concurrent_linear_allocator);
 oTEST_REGISTER_MEMORY_TEST(concurrent_pool);
 oTEST_REGISTER_MEMORY_TEST(pool);
 oTEST_REGISTER_MEMORY_TEST(sbb);
+oTEST_REGISTER_MEMORY_TEST(small_block_allocator);
 oTEST_REGISTER_MEMORY_TEST(tlsf_allocator);
 

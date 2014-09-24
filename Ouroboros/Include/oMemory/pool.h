@@ -47,6 +47,9 @@ public:
 	// deinitializes the pool and returns the memory passed to initialize()
 	void* deinitialize();
 
+	// returns the size each allocated block will be
+	inline size_type block_size() const { return stride; }
+
 	// returns the number of items available
 	inline size_type size_free() const { return nfree; }
 
@@ -81,7 +84,6 @@ public:
 	bool owns(void* ptr) const { return owns(index(ptr)); }
 
 private:
-	pool* next; // reserved for use with linked-lists
 	uint8_t* blocks;
 	size_type stride;
 	size_type nblocks;

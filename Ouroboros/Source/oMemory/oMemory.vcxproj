@@ -39,6 +39,7 @@
     <ClCompile Include="rle_decoden.cpp" />
     <ClCompile Include="sbb.cpp" />
     <ClCompile Include="sbb_allocator.cpp" />
+    <ClCompile Include="small_block_allocator.cpp" />
     <ClCompile Include="tlsf.c">
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">CompileAsCpp</CompileAs>
       <CompileAs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">CompileAsCpp</CompileAs>
@@ -67,6 +68,7 @@
     <ClInclude Include="..\..\Include\oMemory\pool.h" />
     <ClInclude Include="..\..\Include\oMemory\sbb.h" />
     <ClInclude Include="..\..\Include\oMemory\sbb_allocator.h" />
+    <ClInclude Include="..\..\Include\oMemory\small_block_allocator.h" />
     <ClInclude Include="..\..\Include\oMemory\std_allocator.h" />
     <ClInclude Include="..\..\Include\oMemory\std_linear_allocator.h" />
     <ClInclude Include="..\..\Include\oMemory\tlsf_allocator.h" />
